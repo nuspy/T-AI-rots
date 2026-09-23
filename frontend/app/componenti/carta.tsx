@@ -2,11 +2,10 @@
 
 /* Una carta: dorso, faccia e il giro fra i due.
  *
- * **La faccia è un segnaposto disegnato**, finché non arrivano le immagini
- * definitive: numero, nome, lettera ebraica, elemento e astrologia, sui
- * colori della carta. Con `NEXT_PUBLIC_CARD_IMAGES=true` si prova prima
- * `public/cards/{id}.webp`, e se manca si torna al disegno — un'immagine
- * mancante non deve mai lasciare una carta vuota sul tavolo.
+ * **La faccia è un'immagine** in `public/cards/{id}.{estensione}`. Finché
+ * non arrivano quelle definitive sono segnaposto col solo valore della carta,
+ * generati da `scripts/genera-carte.mjs`. Se un file manca resta il nome
+ * della carta in testo: mai una carta vuota sul tavolo.
  *
  * **Il rovescio è la faccia girata di 180°**, come sul tavolo vero: la
  * rotazione sta sulla faccia, non sulla carta, così il giro 3D resta lo
@@ -18,146 +17,9 @@ import { motion } from "framer-motion";
 import type { Carta as TipoCarta } from "@/lib/api";
 import stili from "./carta.module.css";
 
-const IMMAGINI = process.env.NEXT_PUBLIC_CARD_IMAGES === "true";
-
-const SIMBOLI_ASTRALI: Record<string, string> = {
-  Ariete: "♈", Toro: "♉", Gemelli: "♊", Cancro: "♋", Leone: "♌", Vergine: "♍",
-  Bilancia: "♎", Scorpione: "♏", Sagittario: "♐", Capricorno: "♑", Acquario: "♒", Pesci: "♓",
-  Sole: "☉", Luna: "☽", Mercurio: "☿", Venere: "♀", Marte: "♂", Giove: "♃", Saturno: "♄",
-};
-
-const COLORE_ELEMENTO: Record<string, string> = {
-  fuoco: "#e8744a", acqua: "#4a9ee8", aria: "#e8d84a", terra: "#5fae6b", spirito: "#c7b5ff",
-};
-
-const NOMI_RANGO: Record<string, string> = {
-  asso: "A", due: "II", tre: "III", quattro: "IV", cinque: "V", sei: "VI", sette: "VII",
-  otto: "VIII", nove: "IX", dieci: "X", cavaliere: "♞", regina: "♛", principe: "♚", principessa: "♕",
-};
-
-/** Il primo simbolo astrologico che compare nel testo dell'attribuzione. */
-function simboloAstrale(testo: string): string | null {
-  for (const [nome, simbolo] of Object.entries(SIMBOLI_ASTRALI)) {
-    if (testo.includes(nome)) return simbolo + "︎";
-  }
-  return null;
-}
-
-/** Il triangolo alchemico dell'elemento, disegnato e non preso da un font. */
-function Elemento({ elemento, x, y, r }: { elemento: string; x: number; y: number; r: number }) {
-  const colore = COLORE_ELEMENTO[elemento] ?? "#c7b5ff";
-  if (elemento === "spirito") {
-    return (
-      <g stroke={colore} strokeWidth={3} fill="none">
-        <circle cx={x} cy={y} r={r * 0.8} />
-        <circle cx={x} cy={y} r={r * 0.25} fill={colore} />
-      </g>
-    );
-  }
-  const su = elemento === "fuoco" || elemento === "aria";
-  const h = r * 1.7;
-  const punti = su
-    ? `${x},${y - h / 2} ${x + r},${y + h / 2} ${x - r},${y + h / 2}`
-    : `${x},${y + h / 2} ${x + r},${y - h / 2} ${x - r},${y - h / 2}`;
-  const barra = elemento === "aria" || elemento === "terra";
-  const yBarra = su ? y + h * 0.1 : y - h * 0.1;
-  return (
-    <g stroke={colore} strokeWidth={3} fill="none" strokeLinejoin="round">
-      <polygon points={punti} />
-      {barra && <line x1={x - r * 0.75} x2={x + r * 0.75} y1={yBarra} y2={yBarra} />}
-    </g>
-  );
-}
-
-/** Il simbolo del seme, al centro delle minori. */
-function Seme({ seme, x, y }: { seme: string; x: number; y: number }) {
-  const oro = "#f1d68e";
-  switch (seme) {
-    case "bastoni":
-      return (
-        <g stroke={oro} strokeWidth={5} strokeLinecap="round" fill="none">
-          <line x1={x - 40} y1={y + 55} x2={x + 40} y2={y - 55} />
-          <line x1={x + 40} y1={y + 55} x2={x - 40} y2={y - 55} />
-          <circle cx={x} cy={y} r={10} fill={oro} />
-        </g>
-      );
-    case "coppe":
-      return (
-        <g stroke={oro} strokeWidth={4} fill="none">
-          <path d={`M${x - 45},${y - 40} Q${x},${y + 45} ${x + 45},${y - 40} Z`} />
-          <line x1={x} y1={y + 3} x2={x} y2={y + 45} />
-          <line x1={x - 25} y1={y + 48} x2={x + 25} y2={y + 48} />
-        </g>
-      );
-    case "spade":
-      return (
-        <g stroke={oro} strokeWidth={4} fill="none" strokeLinecap="round">
-          <path d={`M${x},${y - 70} L${x + 9},${y + 20} L${x - 9},${y + 20} Z`} />
-          <line x1={x - 32} y1={y + 22} x2={x + 32} y2={y + 22} />
-          <line x1={x} y1={y + 22} x2={x} y2={y + 58} />
-          <circle cx={x} cy={y + 64} r={6} />
-        </g>
-      );
-    default:
-      return (
-        <g stroke={oro} strokeWidth={4} fill="none">
-          <circle cx={x} cy={y} r={52} />
-          <circle cx={x} cy={y} r={34} />
-          {Array.from({ length: 8 }, (_, i) => {
-            const a = (i * Math.PI) / 4;
-            return (
-              <line key={i} x1={x + Math.cos(a) * 34} y1={y + Math.sin(a) * 34}
-                x2={x + Math.cos(a) * 52} y2={y + Math.sin(a) * 52} />
-            );
-          })}
-        </g>
-      );
-  }
-}
-
-export function FacciaDisegnata({ carta }: { carta: TipoCarta }) {
-  const [c1, c2] = carta.colori?.length ? carta.colori : ["#2a1f4d", "#d8b45a"];
-  const gid = `g-${carta.id}`;
-  const maggiore = carta.arcano === "maggiore";
-  const astro = simboloAstrale(carta.astrologia ?? "");
-  const testata = maggiore ? carta.numero_romano : NOMI_RANGO[carta.rango ?? ""] ?? "";
-  const nome = maggiore ? carta.nome_it : carta.nome_it.split(" — ")[0];
-  const sottotitolo = maggiore ? carta.nome_thoth : (carta.titolo_thoth ?? carta.nome_thoth);
-
-  return (
-    <svg viewBox="0 0 300 500" className={stili.svg} role="img" aria-label={carta.nome_it}>
-      <defs>
-        <linearGradient id={gid} x1="0" y1="0" x2="0.4" y2="1">
-          <stop offset="0" stopColor={c1} />
-          <stop offset="1" stopColor="#0b0818" />
-        </linearGradient>
-        <radialGradient id={`${gid}-l`} cx="0.5" cy="0.45" r="0.55">
-          <stop offset="0" stopColor={c2} stopOpacity="0.55" />
-          <stop offset="1" stopColor={c2} stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      <rect x="0" y="0" width="300" height="500" rx="18" fill={`url(#${gid})`} />
-      <rect x="0" y="0" width="300" height="500" rx="18" fill={`url(#${gid}-l)`} />
-      <rect x="12" y="12" width="276" height="476" rx="12" fill="none" stroke="#d8b45a" strokeOpacity="0.8" strokeWidth="2" />
-      <rect x="20" y="20" width="260" height="460" rx="8" fill="none" stroke="#d8b45a" strokeOpacity="0.3" strokeWidth="1" />
-
-      <text x="150" y="62" textAnchor="middle" className={stili.numero}>{testata}</text>
-
-      {maggiore && carta.lettera_ebraica ? (
-        <text x="150" y="262" textAnchor="middle" className={stili.lettera}>{carta.lettera_ebraica.glifo}</text>
-      ) : (
-        <Seme seme={carta.seme ?? "dischi"} x={150} y={225} />
-      )}
-
-      <Elemento elemento={carta.elemento} x={astro ? 118 : 150} y={330} r={16} />
-      {astro && <text x="182" y="342" textAnchor="middle" className={stili.astro}>{astro}</text>}
-
-      <line x1="60" y1="378" x2="240" y2="378" stroke="#d8b45a" strokeOpacity="0.5" />
-      <text x="150" y="415" textAnchor="middle" className={stili.nome}>{nome}</text>
-      <text x="150" y="446" textAnchor="middle" className={stili.sottotitolo}>{sottotitolo}</text>
-    </svg>
-  );
-}
+/* `svg` per i segnaposto generati da `npm run carte`; `webp` (o altro) quando
+ * arrivano le immagini definitive con lo stesso nome. */
+const ESTENSIONE = process.env.NEXT_PUBLIC_CARD_EXT ?? "svg";
 
 export function Dorso() {
   /* L'esagramma unicursale e la rosa a cinque petali: i due emblemi della
@@ -198,15 +60,15 @@ export function Dorso() {
 }
 
 export function Faccia({ carta }: { carta: TipoCarta }) {
-  const [senzaImmagine, setSenzaImmagine] = useState(!IMMAGINI);
-  if (senzaImmagine) return <FacciaDisegnata carta={carta} />;
+  const [mancante, setMancante] = useState(false);
+  if (mancante) return <div className={stili.testo}>{carta.nome_it}</div>;
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={`/cards/${carta.id}.webp`}
+      src={`/cards/${carta.id}.${ESTENSIONE}`}
       alt={carta.nome_it}
       className={stili.immagine}
-      onError={() => setSenzaImmagine(true)}
+      onError={() => setMancante(true)}
       draggable={false}
     />
   );

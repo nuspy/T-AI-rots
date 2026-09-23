@@ -154,13 +154,15 @@ fornitore vero, come Stripe, si aggiunge implementando `ProviderPagamenti`.
 
 ## Le immagini delle carte
 
-Finché non arrivano le immagini definitive, ogni carta ha una faccia disegnata
-in SVG: numero, nome, lettera ebraica o seme, elemento e astrologia sui colori
-della carta. Per usare le immagini vere:
+Per ora le facce sono segnaposto col solo valore della carta in testo, generati
+da uno script a partire dal mazzo del backend:
 
-1. Copia i file in `frontend/public/cards/{id}.webp` (vedi `LEGGIMI.md` in
-   quella cartella).
-2. Imposta `NEXT_PUBLIC_CARD_IMAGES=true`.
+```bash
+cd frontend && npm run carte    # scrive public/cards/{id}.svg per le 78 carte
+```
+
+Per le immagini definitive: copia i file in `frontend/public/cards/` con lo
+stesso nome (`{id}.webp`, vedi `LEGGIMI.md`) e imposta `NEXT_PUBLIC_CARD_EXT=webp`.
 
 ## Funzioni per la viralità, già incluse
 

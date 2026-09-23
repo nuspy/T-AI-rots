@@ -7,7 +7,7 @@ import Link from "next/link";
 import { elencaCarte } from "@/lib/api";
 import { useLingua } from "@/lib/lingua";
 import { useCarica } from "@/lib/usa";
-import { FacciaDisegnata } from "../componenti/carta";
+import { Faccia } from "../componenti/carta";
 import { Involucro } from "../componenti/testata";
 import stili from "../pagine.module.css";
 
@@ -36,7 +36,7 @@ export default function PaginaCarte() {
         {visibili.map((c) => (
           <Link key={c.id} href={`/carte/${c.id}`} className={stili.cartaLink}>
             <div style={{ width: "100%", aspectRatio: "3 / 5", borderRadius: 8, overflow: "hidden" }}>
-              <FacciaDisegnata carta={c} />
+              <Faccia carta={c} />
             </div>
             {c.nome_it}
           </Link>
