@@ -1,0 +1,20 @@
+# Dipendenze del backend: quelle di Personalities, senza RAG, voce e worker.
+fastapi>=0.115
+uvicorn[standard]>=0.32
+pydantic>=2.9
+pydantic-settings>=2.6
+sqlalchemy>=2.0
+alembic>=1.14
+psycopg[binary]>=3.2
+httpx>=0.27
+# Il checkout simulato risponde a un modulo HTML.
+python-multipart>=0.0.9
+# I guardrail sono Markdown con frontmatter YAML, letti all'avvio.
+pyyaml>=6.0
+python-jose[cryptography]>=3.3
+opentelemetry-api>=1.28
+opentelemetry-sdk>=1.28
+opentelemetry-instrumentation-fastapi>=0.49b0
+opentelemetry-instrumentation-sqlalchemy>=0.49b0
+opentelemetry-instrumentation-httpx>=0.49b0
+opentelemetry-exporter-otlp-proto-http>=1.28

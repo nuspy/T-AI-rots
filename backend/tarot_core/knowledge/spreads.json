@@ -1,0 +1,654 @@
+[
+ {
+  "id": "tre-carte",
+  "nome": "Tre carte",
+  "nome_en": "Three cards",
+  "mazzo": "maggiori",
+  "carte_da_scegliere": 3,
+  "origine": "La stesa più diffusa al mondo: una linea temporale di tre Arcani maggiori.",
+  "descrizione": "Passato, presente e futuro: la traiettoria della questione letta attraverso le sole forze archetipiche dei 22 Arcani maggiori.",
+  "posizioni": [
+   {
+    "n": 1,
+    "nome": "Passato",
+    "nome_en": "Past",
+    "significato": "Le forze che hanno generato la situazione e che ancora agiscono come radice.",
+    "domanda": "Da dove viene questa situazione?",
+    "x": 0.2,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 2,
+    "nome": "Presente",
+    "nome_en": "Present",
+    "significato": "Il nodo attuale: l'energia dominante in questo momento, ciò con cui chi consulta si confronta ora.",
+    "domanda": "Qual è il cuore della questione adesso?",
+    "x": 0.5,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 3,
+    "nome": "Futuro",
+    "nome_en": "Future",
+    "significato": "La tendenza più probabile se le forze in gioco proseguono senza cambiamenti di rotta.",
+    "domanda": "Verso dove tende la situazione?",
+    "x": 0.8,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   }
+  ],
+  "linee": [
+   [
+    1,
+    2,
+    3
+   ]
+  ],
+  "coppie": [
+   [
+    1,
+    3,
+    "Il confronto fra radice ed esito mostra se la questione evolve o ripete sé stessa."
+   ]
+  ],
+  "regole": [
+   "Si legge da sinistra a destra come un racconto: la carta centrale è il perno e colora le altre due.",
+   "Le dignità si calcolano sulla linea: la carta del presente è modulata da passato e futuro.",
+   "Tre Arcani maggiori indicano forze che superano la volontà personale: il consiglio verte sull'atteggiamento con cui attraversarle."
+  ]
+ },
+ {
+  "id": "croce-semplice",
+  "nome": "Croce semplice",
+  "nome_en": "Simple cross (Wirth)",
+  "mazzo": "maggiori",
+  "carte_da_scegliere": 4,
+  "origine": "Metodo diffuso da Oswald Wirth e cardine della tradizione italiana: quattro Arcani maggiori e una sintesi calcolata.",
+  "descrizione": "A favore, contro, il perché e il giudice; al centro la sintesi, che non si pesca ma si calcola sommando gli Arcani.",
+  "posizioni": [
+   {
+    "n": 1,
+    "nome": "A favore",
+    "nome_en": "For",
+    "significato": "Ciò che sostiene chi consulta: le risorse, le forze alleate, l'affermazione.",
+    "domanda": "Cosa gioca a favore?",
+    "x": 0.2,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 2,
+    "nome": "Contro",
+    "nome_en": "Against",
+    "significato": "Ciò che si oppone: ostacoli, paure, la negazione.",
+    "domanda": "Cosa si oppone?",
+    "x": 0.8,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 3,
+    "nome": "Il perché",
+    "nome_en": "The why",
+    "significato": "La discussione: la causa profonda della domanda e il modo in cui la questione si sta sviluppando.",
+    "domanda": "Perché la questione si pone ora?",
+    "x": 0.5,
+    "y": 0.17,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 4,
+    "nome": "Il giudice",
+    "nome_en": "The judge",
+    "significato": "La sentenza: la risposta delle carte al quesito, l'indicazione che risolve la tensione fra favore e contrasto.",
+    "domanda": "Qual è la risposta?",
+    "x": 0.5,
+    "y": 0.83,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 5,
+    "nome": "Sintesi",
+    "nome_en": "Synthesis",
+    "significato": "La sintesi: l'Arcano che riassume l'intera stesa. Si ottiene sommando i numeri delle prime quattro carte; se il totale supera 22 si sommano le sue cifre.",
+    "domanda": "Qual è il senso complessivo?",
+    "x": 0.5,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": true
+   }
+  ],
+  "linee": [
+   [
+    1,
+    5,
+    2
+   ],
+   [
+    3,
+    5,
+    4
+   ]
+  ],
+  "coppie": [
+   [
+    1,
+    2,
+    "Favore e contrasto si leggono insieme: la loro tensione è il tema della domanda."
+   ],
+   [
+    3,
+    4,
+    "Il perché e il giudice formano l'asse verticale: dalla causa alla soluzione."
+   ]
+  ],
+  "sintesi_wirth": true,
+  "regole": [
+   "La quinta carta non si sceglie: è la riduzione teosofica della somma dei numeri delle carte 1–4 (il Matto vale 0; se la somma è 0 vale 22, cioè il Matto).",
+   "Se l'Arcano di sintesi è già uscito nella stesa, ha doppia valenza: il suo messaggio è rafforzato e diventa la chiave della lettura.",
+   "Il giudice (4) è la risposta; la sintesi (5) ne è il senso profondo e il tono."
+  ]
+ },
+ {
+  "id": "ferro-di-cavallo",
+  "nome": "Ferro di cavallo",
+  "nome_en": "Horseshoe",
+  "mazzo": "completo",
+  "carte_da_scegliere": 7,
+  "origine": "Stesa tradizionale a sette carte disposte a V, diffusa nella cartomanzia europea per domande pratiche.",
+  "descrizione": "Sette carte a ferro di cavallo: dal passato all'esito, passando per ciò che è nascosto, gli ostacoli, l'ambiente e il consiglio.",
+  "posizioni": [
+   {
+    "n": 1,
+    "nome": "Passato",
+    "nome_en": "Past",
+    "significato": "Gli eventi e le scelte che hanno portato fin qui.",
+    "domanda": "Cosa ha preparato la situazione?",
+    "x": 0.1,
+    "y": 0.24,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 2,
+    "nome": "Presente",
+    "nome_en": "Present",
+    "significato": "La situazione attuale così come è vissuta.",
+    "domanda": "Com'è la situazione ora?",
+    "x": 0.18,
+    "y": 0.54,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 3,
+    "nome": "Influenze nascoste",
+    "nome_en": "Hidden influences",
+    "significato": "Ciò che agisce senza essere visto: fattori inconsci, informazioni mancanti.",
+    "domanda": "Cosa non si vede?",
+    "x": 0.32,
+    "y": 0.78,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 4,
+    "nome": "Ostacoli",
+    "nome_en": "Obstacles",
+    "significato": "Il punto di resistenza: ciò che frena o che va attraversato. È il vertice della stesa.",
+    "domanda": "Qual è l'ostacolo principale?",
+    "x": 0.5,
+    "y": 0.88,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 5,
+    "nome": "Ambiente",
+    "nome_en": "Surroundings",
+    "significato": "Le persone e le circostanze esterne: come gli altri influiscono.",
+    "domanda": "Come incide l'ambiente?",
+    "x": 0.68,
+    "y": 0.78,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 6,
+    "nome": "Consiglio",
+    "nome_en": "Advice",
+    "significato": "L'atteggiamento o l'azione suggeriti dalle carte.",
+    "domanda": "Cosa conviene fare?",
+    "x": 0.82,
+    "y": 0.54,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 7,
+    "nome": "Esito",
+    "nome_en": "Outcome",
+    "significato": "La tendenza più probabile se si segue il consiglio e le forze restano quelle attuali.",
+    "domanda": "Dove porta?",
+    "x": 0.9,
+    "y": 0.24,
+    "rotazione": 0,
+    "calcolata": false
+   }
+  ],
+  "linee": [
+   [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ]
+  ],
+  "coppie": [
+   [
+    1,
+    7,
+    "Le due punte del ferro: da dove si parte e dove si arriva."
+   ],
+   [
+    4,
+    6,
+    "Ostacolo e consiglio: il consiglio è la chiave per superare l'ostacolo."
+   ],
+   [
+    3,
+    5,
+    "Interno ed esterno: ciò che è nascosto in chi consulta e ciò che viene dagli altri."
+   ]
+  ],
+  "regole": [
+   "La carta 4 è il vertice: ogni lettura del ferro di cavallo gira intorno all'ostacolo.",
+   "Una figura di corte in posizione 5 indica di solito una persona concreta dell'ambiente di chi consulta.",
+   "Le dignità si leggono lungo l'arco: ogni carta è modulata dalle due vicine."
+  ]
+ },
+ {
+  "id": "croce-celtica",
+  "nome": "Croce Celtica",
+  "nome_en": "Celtic Cross",
+  "mazzo": "completo",
+  "carte_da_scegliere": 10,
+  "origine": "Pubblicata da A. E. Waite nel 1910 e divenuta la stesa più famosa del tarocco moderno.",
+  "descrizione": "Dieci carte: la croce descrive la situazione e il suo tempo, il bastone a destra descrive chi consulta, l'ambiente e l'esito.",
+  "posizioni": [
+   {
+    "n": 1,
+    "nome": "Il presente",
+    "nome_en": "Present",
+    "significato": "Il cuore della situazione: ciò che ricopre chi consulta.",
+    "domanda": "Cosa sta accadendo?",
+    "x": 0.3,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 2,
+    "nome": "La sfida",
+    "nome_en": "Challenge",
+    "significato": "Ciò che attraversa il presente: l'ostacolo o la forza da integrare. Si posa di traverso sulla prima.",
+    "domanda": "Cosa incrocia la strada?",
+    "x": 0.3,
+    "y": 0.5,
+    "rotazione": 90,
+    "calcolata": false
+   },
+   {
+    "n": 3,
+    "nome": "Passato recente",
+    "nome_en": "Recent past",
+    "significato": "Ciò che sta finendo e si allontana, ma ha ancora effetto.",
+    "domanda": "Cosa sta passando?",
+    "x": 0.1,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 4,
+    "nome": "Il fondamento",
+    "nome_en": "Foundation",
+    "significato": "Ciò che sta sotto: la radice inconscia, la base su cui poggia tutto.",
+    "domanda": "Su cosa poggia la situazione?",
+    "x": 0.3,
+    "y": 0.84,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 5,
+    "nome": "La corona",
+    "nome_en": "Crown",
+    "significato": "Ciò che sta sopra: la meta cosciente, il meglio che si può ottenere.",
+    "domanda": "A cosa si aspira?",
+    "x": 0.3,
+    "y": 0.16,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 6,
+    "nome": "Futuro prossimo",
+    "nome_en": "Near future",
+    "significato": "Ciò che sta arrivando nelle prossime settimane.",
+    "domanda": "Cosa si avvicina?",
+    "x": 0.5,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 7,
+    "nome": "L'atteggiamento",
+    "nome_en": "Self",
+    "significato": "Come chi consulta si pone di fronte alla questione.",
+    "domanda": "Come ti poni?",
+    "x": 0.82,
+    "y": 0.86,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 8,
+    "nome": "L'ambiente",
+    "nome_en": "Environment",
+    "significato": "Le persone, le circostanze esterne, il modo in cui gli altri vedono la cosa.",
+    "domanda": "Cosa viene dall'esterno?",
+    "x": 0.82,
+    "y": 0.62,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 9,
+    "nome": "Speranze e paure",
+    "nome_en": "Hopes and fears",
+    "significato": "Ciò che si desidera e ciò che si teme: spesso sono la stessa cosa.",
+    "domanda": "Cosa speri, cosa temi?",
+    "x": 0.82,
+    "y": 0.38,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 10,
+    "nome": "L'esito",
+    "nome_en": "Outcome",
+    "significato": "La tendenza più probabile, sintesi di tutte le forze in campo.",
+    "domanda": "Dove porta tutto questo?",
+    "x": 0.82,
+    "y": 0.14,
+    "rotazione": 0,
+    "calcolata": false
+   }
+  ],
+  "linee": [
+   [
+    3,
+    1,
+    6
+   ],
+   [
+    5,
+    1,
+    4
+   ],
+   [
+    7,
+    8,
+    9,
+    10
+   ]
+  ],
+  "coppie": [
+   [
+    1,
+    2,
+    "Presente e sfida sono il nodo: la seconda carta dice cosa il presente deve integrare."
+   ],
+   [
+    4,
+    5,
+    "Fondamento e corona: ciò che muove dal profondo e ciò che la coscienza desidera."
+   ],
+   [
+    3,
+    6,
+    "Passato recente e futuro prossimo: la linea del tempo attraverso il presente."
+   ],
+   [
+    5,
+    10,
+    "Se la corona e l'esito concordano, la meta cosciente è raggiungibile."
+   ],
+   [
+    7,
+    10,
+    "L'atteggiamento di chi consulta pesa direttamente sull'esito."
+   ]
+  ],
+  "regole": [
+   "La croce (1–6) descrive la situazione; il bastone (7–10) descrive chi consulta e l'evoluzione.",
+   "La carta 2 non si legge mai come rovesciata in senso proprio: posata di traverso, è per natura ciò che si oppone o si aggiunge al presente.",
+   "Le dignità si leggono lungo le linee: orizzontale (3–1–6), verticale (5–1–4) e il bastone (7–10).",
+   "L'esito (10) va letto insieme alla corona (5) e all'atteggiamento (7) prima di concludere."
+  ]
+ },
+ {
+  "id": "ruota-astrologica",
+  "nome": "Ruota astrologica",
+  "nome_en": "Astrological wheel",
+  "mazzo": "completo",
+  "carte_da_scegliere": 13,
+  "origine": "Stesa a dodici case modellata sul tema natale, tradizionalmente usata per l'anno a venire; qui con un significatore al centro.",
+  "descrizione": "Una carta per ciascuna delle dodici case astrologiche e una al centro come tema dominante: un panorama completo della vita.",
+  "posizioni": [
+   {
+    "n": 1,
+    "nome": "Casa I",
+    "nome_en": "House I",
+    "significato": "L'io, la personalità, l'aspetto e l'inizio di ogni cosa.",
+    "domanda": "Cosa accade nel campo della casa i?",
+    "x": 0.114,
+    "y": 0.604,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 2,
+    "nome": "Casa II",
+    "nome_en": "House II",
+    "significato": "Il denaro, i beni, i valori e le risorse personali.",
+    "domanda": "Cosa accade nel campo della casa ii?",
+    "x": 0.217,
+    "y": 0.783,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 3,
+    "nome": "Casa III",
+    "nome_en": "House III",
+    "significato": "La comunicazione, i fratelli, i viaggi brevi, l'ambiente vicino.",
+    "domanda": "Cosa accade nel campo della casa iii?",
+    "x": 0.396,
+    "y": 0.886,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 4,
+    "nome": "Casa IV",
+    "nome_en": "House IV",
+    "significato": "La casa, la famiglia d'origine, le radici e la fine delle cose.",
+    "domanda": "Cosa accade nel campo della casa iv?",
+    "x": 0.604,
+    "y": 0.886,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 5,
+    "nome": "Casa V",
+    "nome_en": "House V",
+    "significato": "L'amore, il piacere, la creatività, i figli, il gioco.",
+    "domanda": "Cosa accade nel campo della casa v?",
+    "x": 0.783,
+    "y": 0.783,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 6,
+    "nome": "Casa VI",
+    "nome_en": "House VI",
+    "significato": "Il lavoro quotidiano, la salute come abitudine, il servizio.",
+    "domanda": "Cosa accade nel campo della casa vi?",
+    "x": 0.886,
+    "y": 0.604,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 7,
+    "nome": "Casa VII",
+    "nome_en": "House VII",
+    "significato": "Il partner, il matrimonio, i soci e gli avversari dichiarati.",
+    "domanda": "Cosa accade nel campo della casa vii?",
+    "x": 0.886,
+    "y": 0.396,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 8,
+    "nome": "Casa VIII",
+    "nome_en": "House VIII",
+    "significato": "Le trasformazioni, le crisi, la sessualità, le eredità e i beni altrui.",
+    "domanda": "Cosa accade nel campo della casa viii?",
+    "x": 0.783,
+    "y": 0.217,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 9,
+    "nome": "Casa IX",
+    "nome_en": "House IX",
+    "significato": "I viaggi lontani, la spiritualità, lo studio, la visione del mondo.",
+    "domanda": "Cosa accade nel campo della casa ix?",
+    "x": 0.604,
+    "y": 0.114,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 10,
+    "nome": "Casa X",
+    "nome_en": "House X",
+    "significato": "La carriera, la reputazione, la vocazione e gli obiettivi.",
+    "domanda": "Cosa accade nel campo della casa x?",
+    "x": 0.396,
+    "y": 0.114,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 11,
+    "nome": "Casa XI",
+    "nome_en": "House XI",
+    "significato": "Gli amici, i gruppi, i progetti e le speranze.",
+    "domanda": "Cosa accade nel campo della casa xi?",
+    "x": 0.217,
+    "y": 0.217,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 12,
+    "nome": "Casa XII",
+    "nome_en": "House XII",
+    "significato": "L'inconscio, le prove nascoste, i ritiri, ciò che si deve sciogliere.",
+    "domanda": "Cosa accade nel campo della casa xii?",
+    "x": 0.114,
+    "y": 0.396,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 13,
+    "nome": "Il significatore",
+    "nome_en": "Significator",
+    "significato": "Il centro della ruota: il tema dominante dell'anno o della fase, il filo che unisce le dodici case.",
+    "domanda": "Qual è il tema che unisce tutto?",
+    "x": 0.5,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   }
+  ],
+  "linee": [
+   [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    1
+   ]
+  ],
+  "coppie": [
+   [
+    1,
+    7,
+    "L'asse Ascendente–Discendente: io e l'altro."
+   ],
+   [
+    4,
+    10,
+    "L'asse Fondo cielo–Medio cielo: radici e realizzazione."
+   ],
+   [
+    2,
+    8,
+    "L'asse delle risorse: ciò che è mio e ciò che è condiviso."
+   ],
+   [
+    5,
+    11,
+    "L'asse della creatività: il cuore personale e i progetti collettivi."
+   ]
+  ],
+  "regole": [
+   "Le case si leggono in senso antiorario a partire dall'Ascendente (Casa I, a sinistra).",
+   "Una carta forte in una casa angolare (I, IV, VII, X) pesa più delle altre.",
+   "Gli assi opposti (I–VII, II–VIII, III–IX, IV–X, V–XI, VI–XII) si leggono in coppia.",
+   "Il significatore al centro dà il tono a tutta la ruota: le case che concordano con esso descrivono i campi dove il tema si manifesta.",
+   "Le dignità si calcolano sull'anello: ogni casa è modulata dalle due vicine; il significatore resta neutro."
+  ]
+ }
+]

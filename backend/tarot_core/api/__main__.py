@@ -1,0 +1,89 @@
+"""Avvio del servizio API.
+
+    python -m tarot_core.api            # porta 8100
+
+Esiste per una ragione sola, ed è Windows. uvicorn sceglie da sé come costruire
+l'event loop e su Windows costruisce un `ProactorEventLoop`, che psycopg 3 non
+sa usare in modalità asincrona: ogni accesso al database fallisce. Non è una
+policy globale — quella la si può impostare all'import, e infatti
+`tarot_core/__init__.py` lo fa — ma una *factory* passata al momento
+dell'avvio, che sovrascrive qualunque cosa sia stata decisa prima.
+
+Su Linux non cambia nulla rispetto a `uvicorn tarot_core.api.app:app`, e in
+container si può continuare a usare quel comando. Qui però il modo giusto di
+avviare il servizio è uno solo, ed è questo: chi sviluppa su Windows non deve
+scoprire da un errore di connessione che gli serviva un flag.
+"""
+from __future__ import annotations
+
+import argparse
+import asyncio
+import sys
+from typing import Callable, Optional
+
+import uvicorn
+
+from ..settings import get_settings
+
+
+def loop_factory() -> Optional[Callable[[], asyncio.AbstractEventLoop]]:
+    """Il costruttore di event loop adatto alla piattaforma.
+
+    `None` significa «vada uvicorn per la sua strada»: su Linux sceglie uvloop
+    se c'è, che è più veloce e perfettamente compatibile.
+    """
+    if sys.platform == "win32":
+        return asyncio.SelectorEventLoop
+    return None
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(prog="tarot_core.api")
+    parser.add_argument("--host", default="127.0.0.1")
+    # 8100 e non 8000: sulla macchina di sviluppo la 8000 è già usata da
+    # altri progetti, e un avvio che ci si sovrappone fallisce — o peggio,
+    # riesce su un'interfaccia diversa e i client parlano col servizio
+    # sbagliato senza accorgersene.
+    parser.add_argument("--port", type=int, default=8100)
+    parser.add_argument("--reload", action="store_true")
+    args = parser.parse_args(argv)
+
+    settings = get_settings()
+
+    if sys.platform != "win32":
+        uvicorn.run(
+            "tarot_core.api.app:app",
+            host=args.host, port=args.port, reload=args.reload,
+            log_level=settings.log_level.lower(),
+        )
+        return 0
+
+    if args.reload:
+        # Il ricaricamento automatico gira in un sottoprocesso, e in quel caso
+        # uvicorn sceglie già il selettore da sé: si può usare la via normale.
+        uvicorn.run(
+            "tarot_core.api.app:app",
+            host=args.host, port=args.port, reload=True,
+            log_level=settings.log_level.lower(),
+        )
+        return 0
+
+    from .app import app
+
+    config = uvicorn.Config(
+        app,
+        host=args.host, port=args.port,
+        log_level=settings.log_level.lower(),
+        # «none» non significa senza loop: significa che il loop lo fornisce
+        # chi avvia, qui sotto.
+        loop="none",
+    )
+    server = uvicorn.Server(config)
+
+    with asyncio.Runner(loop_factory=loop_factory()) as runner:
+        runner.run(server.serve())
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

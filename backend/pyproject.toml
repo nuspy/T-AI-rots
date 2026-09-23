@@ -1,0 +1,23 @@
+[project]
+name = "tarot-core"
+version = "0.1.0"
+description = "T-AI-rots: letture dei tarocchi di Thoth con AI — backend"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["tarot_core/tests"]
+filterwarnings = [
+    "ignore::DeprecationWarning:pydantic.*",
+]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+exclude = [".venv", "tarot_core/migrations/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E501"]

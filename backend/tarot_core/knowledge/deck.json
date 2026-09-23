@@ -1,0 +1,3588 @@
+[
+ {
+  "id": "maj-00",
+  "arcano": "maggiore",
+  "numero": 0,
+  "numero_romano": "0",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "The Fool",
+  "titolo_thoth": null,
+  "nome_it": "Il Matto",
+  "lettera_ebraica": {
+   "nome": "Aleph",
+   "glifo": "א",
+   "valore": 1
+  },
+  "percorso": 11,
+  "collega": [
+   "Kether",
+   "Chokmah"
+  ],
+  "sefira": null,
+  "elemento": "aria",
+  "sottoelemento": null,
+  "astrologia": "Aria",
+  "parole_chiave": [
+   "potenziale puro",
+   "libertà",
+   "inizio",
+   "innocenza divina",
+   "salto nell'ignoto"
+  ],
+  "significati": {
+   "essoterico": "Un inizio che nasce senza calcolo, da un impulso spontaneo e fiducioso. Annuncia idee originali, viaggi, imprevisti e la disponibilità a lasciare il noto per seguire un'ispirazione che non sa ancora dove porta.",
+   "psicologico": "È la parte della psiche che non si identifica con ruoli e aspettative, lo spazio vuoto da cui nasce ogni creatività. Chiede di tollerare l'incertezza invece di colmarla subito con piani rigidi.",
+   "iniziatico": "Percorso 11 da Kether a Chokmah, lettera Aleph (il bue, valore 1) e Aria elementare: il primo moto dello Zero verso la manifestazione. È il soffio che precede ogni forma, il Nulla che si scopre fecondo e diventa Due.",
+   "ombra": "Mal dignificato diventa leggerezza irresponsabile, fuga, stravaganza priva di radici: un'azione che disperde l'energia invece di fondarla."
+  },
+  "dritto": "La situazione chiede un salto di fiducia: conta l'apertura, non la garanzia del risultato. Momento propizio per cominciare qualcosa di davvero nuovo, restando leggeri e curiosi.",
+  "rovescio": "L'impulso al nuovo è trattenuto dalla paura oppure si sfoga in scelte impulsive e disordinate. Occorre distinguere la libertà autentica dall'evasione e dall'incoscienza.",
+  "ambiti": {
+   "amore": "Un incontro inatteso o un modo più libero e giocoso di vivere il legame; scarso desiderio di vincoli e definizioni.",
+   "lavoro": "Idee originali, cambi di rotta, progetti avviati per intuizione; da sostenere con un minimo di concretezza e di scadenze.",
+   "spirito": "Invito a lasciar cadere le certezze acquisite e a ritrovare lo stupore che precede ogni conoscenza."
+  },
+  "nota_crowley": "Crowley vede nel Matto l'Uomo Verde della primavera e il Dioniso fanciullo, cornuto e ridente, circondato da tigre, coccodrillo, colomba e grappoli d'uva dentro un vortice a spirale: non un folle, ma lo Spirito prima della creazione.",
+  "colori": [
+   "#FFF8A6",
+   "#87CEEB"
+  ]
+ },
+ {
+  "id": "maj-01",
+  "arcano": "maggiore",
+  "numero": 1,
+  "numero_romano": "I",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "The Magus",
+  "titolo_thoth": null,
+  "nome_it": "Il Mago",
+  "lettera_ebraica": {
+   "nome": "Beth",
+   "glifo": "ב",
+   "valore": 2
+  },
+  "percorso": 12,
+  "collega": [
+   "Kether",
+   "Binah"
+  ],
+  "sefira": null,
+  "elemento": "spirito",
+  "sottoelemento": null,
+  "astrologia": "Mercurio",
+  "parole_chiave": [
+   "volontà",
+   "abilità",
+   "parola creatrice",
+   "comunicazione",
+   "strumenti"
+  ],
+  "significati": {
+   "essoterico": "Destrezza, intelligenza e capacità di usare gli strumenti disponibili per dare forma a un'intenzione. Indica comunicazioni, trattative, studi e iniziative guidate dall'ingegno.",
+   "psicologico": "È la mente che nomina, collega e dirige, la coscienza che sa di poter agire sul mondo. Invita a riconoscere le proprie capacità senza confonderle con l'onnipotenza.",
+   "iniziatico": "Percorso 12 da Kether a Binah, lettera Beth (la casa, 2) e Mercurio: il Logos che porta l'unità primordiale verso la Madre che darà forma. È la Parola creatrice e il messaggero che trasmette la Volontà senza alterarla.",
+   "ombra": "Mal dignificato indica astuzia, manipolazione, menzogna e dispersione mentale: l'intelligenza posta al servizio dell'inganno o dell'autoinganno."
+  },
+  "dritto": "Hai gli strumenti e le capacità per agire: la chiave è la chiarezza dell'intenzione. Favoriti colloqui, contratti, apprendimento e iniziative che richiedono abilità.",
+  "rovescio": "Capacità presenti ma non usate, oppure usate con eccesso di calcolo; parole che non diventano azione. Possibile raggiro, anche verso se stessi.",
+  "ambiti": {
+   "amore": "Dialogo brillante e seduzione intellettuale; verifica che alle parole corrispondano i fatti.",
+   "lavoro": "Momento ideale per presentare, negoziare, insegnare o avviare progetti tecnici e comunicativi.",
+   "spirito": "La pratica come allineamento di pensiero, parola e azione alla propria Volontà Vera."
+  },
+  "nota_crowley": "Nel Thoth il Mago è Thoth-Mercurio stesso, che fa volteggiare nell'aria i suoi strumenti; accanto a lui la scimmia di Thoth imita e distorce il messaggio, a ricordare che ogni Parola rischia di essere fraintesa.",
+  "colori": [
+   "#FFE135",
+   "#7B3F9E"
+  ]
+ },
+ {
+  "id": "maj-02",
+  "arcano": "maggiore",
+  "numero": 2,
+  "numero_romano": "II",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "The Priestess",
+  "titolo_thoth": null,
+  "nome_it": "La Sacerdotessa",
+  "lettera_ebraica": {
+   "nome": "Gimel",
+   "glifo": "ג",
+   "valore": 3
+  },
+  "percorso": 13,
+  "collega": [
+   "Kether",
+   "Tiphareth"
+  ],
+  "sefira": null,
+  "elemento": "spirito",
+  "sottoelemento": null,
+  "astrologia": "Luna",
+  "parole_chiave": [
+   "intuizione",
+   "mistero",
+   "purezza",
+   "attesa",
+   "conoscenza interiore"
+  ],
+  "significati": {
+   "essoterico": "Conoscenza nascosta, intuizione, sviluppi ancora in gestazione. Consiglia di attendere, osservare e ascoltare prima di agire.",
+   "psicologico": "È la voce interiore che parla per immagini, sogni e presentimenti: l'aspetto ricettivo e autonomo della psiche, che non si lascia possedere né forzare.",
+   "iniziatico": "Percorso 13 da Kether a Tiphareth, lettera Gimel (il cammello, 3) e la Luna: il sentiero che attraversa il deserto dell'Abisso e unisce la Corona al Sé. La Luce si vela per poter essere contemplata.",
+   "ombra": "Mal dignificata diventa passività, freddezza, segretezza sterile o fantasia scambiata per intuizione."
+  },
+  "dritto": "La risposta non è ancora manifesta: fidati dell'intuito e lascia maturare le cose. Qualcosa di importante si muove sotto la superficie.",
+  "rovescio": "L'intuito è ignorato o confuso con la paura; isolamento, segreti che pesano, rifiuto di vedere ciò che in fondo si sa già.",
+  "ambiti": {
+   "amore": "Legame profondo ma riservato, sentimenti non dichiarati; servono pazienza e rispetto dei tempi dell'altro.",
+   "lavoro": "Fase di studio e di osservazione; informazioni riservate o non ancora disponibili, meglio non forzare.",
+   "spirito": "Meditazione, lavoro con i sogni, custodia della purezza della propria aspirazione."
+  },
+  "nota_crowley": "Crowley la raffigura come Iside e come Artemide, con l'arco sulle ginocchia e un velo di luce che è insieme rivelazione e occultamento: la sua verginità è l'intangibilità dello spirito.",
+  "colori": [
+   "#0047AB",
+   "#C0C0C0"
+  ]
+ },
+ {
+  "id": "maj-03",
+  "arcano": "maggiore",
+  "numero": 3,
+  "numero_romano": "III",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "The Empress",
+  "titolo_thoth": null,
+  "nome_it": "L'Imperatrice",
+  "lettera_ebraica": {
+   "nome": "Daleth",
+   "glifo": "ד",
+   "valore": 4
+  },
+  "percorso": 14,
+  "collega": [
+   "Chokmah",
+   "Binah"
+  ],
+  "sefira": null,
+  "elemento": "spirito",
+  "sottoelemento": null,
+  "astrologia": "Venere",
+  "parole_chiave": [
+   "fertilità",
+   "amore",
+   "bellezza",
+   "abbondanza",
+   "natura"
+  ],
+  "significati": {
+   "essoterico": "Fertilità, piacere, abbondanza materiale e affettiva. Indica gestazioni in senso ampio: progetti che crescono, relazioni che fioriscono, benessere e armonia domestica.",
+   "psicologico": "Incarna la capacità di accogliere, nutrire e godere della vita; il rapporto con il corpo, con la bellezza e con il principio materno.",
+   "iniziatico": "Percorso 14 da Chokmah a Binah, lettera Daleth (la porta, 4) e Venere: il sentiero orizzontale che unisce il Padre e la Madre supremi. È la porta attraverso cui la forza divina diventa forma vivente, l'amore che genera.",
+   "ombra": "Mal dignificata indica dissipazione, lusso, possessività, dipendenza affettiva o stagnazione nel comfort."
+  },
+  "dritto": "Tempo di crescita e fecondità: ciò che curi darà frutto. Apri spazio al piacere, alla creatività e alla generosità.",
+  "rovescio": "La fecondità è bloccata o si trasforma in eccesso: indulgenza, gelosia, cura che soffoca. Riporta il nutrimento anche verso di te.",
+  "ambiti": {
+   "amore": "Relazione calda, sensuale, nutriente; possibile desiderio di famiglia o di un nuovo inizio affettivo.",
+   "lavoro": "Progetti creativi e produttivi in espansione, ambienti collaborativi, guadagni nati da una cura paziente.",
+   "spirito": "La natura come tempio: il divino riconosciuto nella bellezza e nella generazione."
+  },
+  "nota_crowley": "Crowley collega l'Imperatrice al Sale alchemico e alla porta di Daleth; ai suoi piedi il pellicano che nutre i piccoli con il proprio sangue, sullo scudo l'aquila bianca: madre e sposa, forma che accoglie la forza.",
+  "colori": [
+   "#50C878",
+   "#87CEEB"
+  ]
+ },
+ {
+  "id": "maj-04",
+  "arcano": "maggiore",
+  "numero": 4,
+  "numero_romano": "IV",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "The Emperor",
+  "titolo_thoth": null,
+  "nome_it": "L'Imperatore",
+  "lettera_ebraica": {
+   "nome": "Tzaddi",
+   "glifo": "צ",
+   "valore": 90
+  },
+  "percorso": 15,
+  "collega": [
+   "Chokmah",
+   "Tiphareth"
+  ],
+  "sefira": null,
+  "elemento": "fuoco",
+  "sottoelemento": null,
+  "astrologia": "Ariete",
+  "parole_chiave": [
+   "autorità",
+   "struttura",
+   "iniziativa",
+   "potere",
+   "ordine"
+  ],
+  "significati": {
+   "essoterico": "Autorità, stabilità, leadership, potere costituito. Indica una persona o una situazione che impone regole e realizza con energia ciò che ha deciso.",
+   "psicologico": "Rappresenta la capacità di assumersi responsabilità, porre confini e trasformare l'energia in ordine: il principio paterno interiorizzato.",
+   "iniziatico": "Percorso 15 da Chokmah a Tiphareth, lettera Tzaddi (l'amo, 90) e Ariete, segno di Marte in cui il Sole è esaltato: la forza del Padre discende nel cuore dell'Albero come energia che fonda e governa. È il fuoco dell'inizio primaverile reso istituzione.",
+   "ombra": "Mal dignificato diventa tirannia, rigidità, aggressività, bisogno di controllo che soffoca la vita."
+  },
+  "dritto": "Prendi in mano la situazione con decisione e metodo. Energia, coraggio e capacità di strutturare sono favoriti.",
+  "rovescio": "Autorità vacillante o eccessiva: rigidità, conflitti con figure di potere, incapacità di porre limiti o, all'opposto, dispotismo.",
+  "ambiti": {
+   "amore": "Partner protettivo e deciso, oppure dinamiche di controllo da riequilibrare; forte bisogno di stabilità.",
+   "lavoro": "Leadership, fondazione di un'impresa, rapporti con istituzioni e superiori; l'iniziativa è premiata.",
+   "spirito": "Governare se stessi prima di governare il mondo: la disciplina come espressione della Volontà."
+  },
+  "nota_crowley": "Seguendo il Liber Legis, Crowley scambia le lettere: Tzaddi passa all'Imperatore e He alla Stella («Tzaddi non è la Stella»). L'Imperatore siede fra arieti himalayani, con ape e giglio araldici, simboli di potere che nasce dall'energia creativa.",
+  "colori": [
+   "#FF2400",
+   "#B22222"
+  ]
+ },
+ {
+  "id": "maj-05",
+  "arcano": "maggiore",
+  "numero": 5,
+  "numero_romano": "V",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "The Hierophant",
+  "titolo_thoth": null,
+  "nome_it": "Il Ierofante",
+  "lettera_ebraica": {
+   "nome": "Vau",
+   "glifo": "ו",
+   "valore": 6
+  },
+  "percorso": 16,
+  "collega": [
+   "Chokmah",
+   "Chesed"
+  ],
+  "sefira": null,
+  "elemento": "terra",
+  "sottoelemento": null,
+  "astrologia": "Toro",
+  "parole_chiave": [
+   "insegnamento",
+   "tradizione",
+   "rivelazione",
+   "iniziazione",
+   "perseveranza"
+  ],
+  "significati": {
+   "essoterico": "Istituzioni, insegnamento, consiglio saggio, unioni e contratti formali. Indica la ricerca di una guida o l'adesione a una tradizione consolidata.",
+   "psicologico": "È la voce interiore che collega esperienza e significato, la capacità di apprendere e trasmettere; ma anche il rapporto con norme e autorità morali.",
+   "iniziatico": "Percorso 16 da Chokmah a Chesed, lettera Vau (il chiodo, 6) e Toro, segno fisso di Terra dove la Luna è esaltata: la Sapienza che si fissa in dottrina. È il chiodo che unisce il mondo superiore a quello inferiore, la rivelazione che diventa insegnamento paziente.",
+   "ombra": "Mal dignificato indica dogmatismo, conformismo, ipocrisia, dipendenza da un maestro esterno."
+  },
+  "dritto": "Cerca o offri un insegnamento; le vie consolidate e un consiglio autorevole sono utili ora. Possibile impegno formale.",
+  "rovescio": "Rigetto di regole divenute strette oppure attaccamento a dogmi; il vero maestro va cercato anche dentro di sé.",
+  "ambiti": {
+   "amore": "Unione formalizzata, valori condivisi; oppure legame vissuto per dovere più che per scelta.",
+   "lavoro": "Formazione, mentoring, enti e istituzioni; contratti e percorsi strutturati che richiedono costanza.",
+   "spirito": "Iniziazione e trasmissione: la tradizione come veicolo, non come gabbia."
+  },
+  "nota_crowley": "Il Ierofante del Thoth annuncia il nuovo Eone: nel pentagramma sul suo petto danza il fanciullo Horus e davanti a lui sta una donna armata; il suo sorriso ambiguo custodisce un segreto non ancora del tutto rivelato.",
+  "colori": [
+   "#E2582C",
+   "#2E1A47"
+  ]
+ },
+ {
+  "id": "maj-06",
+  "arcano": "maggiore",
+  "numero": 6,
+  "numero_romano": "VI",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "The Lovers",
+  "titolo_thoth": null,
+  "nome_it": "Gli Amanti",
+  "lettera_ebraica": {
+   "nome": "Zain",
+   "glifo": "ז",
+   "valore": 7
+  },
+  "percorso": 17,
+  "collega": [
+   "Binah",
+   "Tiphareth"
+  ],
+  "sefira": null,
+  "elemento": "aria",
+  "sottoelemento": null,
+  "astrologia": "Gemelli",
+  "parole_chiave": [
+   "scelta",
+   "unione",
+   "dualità",
+   "amore",
+   "analisi"
+  ],
+  "significati": {
+   "essoterico": "Amore, attrazione, scelte importanti fra alternative. Indica relazioni, alleanze e decisioni che richiedono un coinvolgimento profondo.",
+   "psicologico": "Rappresenta l'incontro degli opposti interiori e il momento della scelta consapevole; anche la tensione fra ragione e desiderio.",
+   "iniziatico": "Percorso 17 da Binah a Tiphareth, lettera Zain (la spada, 7) e Gemelli, segno d'Aria di Mercurio: la spada che divide per rendere possibile l'unione. È l'avvio del Matrimonio Chimico, l'incontro dei principi opposti che dovranno fondersi.",
+   "ombra": "Mal dignificati indicano indecisione, infedeltà, idealizzazione, o scelte che dividono la persona contro se stessa."
+  },
+  "dritto": "Una scelta va fatta con cuore e mente allineati; un'unione o un'alleanza significativa è possibile.",
+  "rovescio": "Divisione interiore, conflitto di valori, rapporti sbilanciati, oppure paura di scegliere che lascia tutto in sospeso.",
+  "ambiti": {
+   "amore": "Attrazione forte, legame significativo; oppure un bivio sentimentale che richiede sincerità.",
+   "lavoro": "Partnership e collaborazioni; decisioni fra due strade da ponderare con analisi e integrità.",
+   "spirito": "L'unione degli opposti come via: prima l'analisi che distingue, poi la sintesi che unisce."
+  },
+  "nota_crowley": "Crowley ne fa la prima fase delle nozze alchemiche: un re moro e una regina bianca sono uniti da una figura incappucciata sotto un Cupido che scocca la freccia, e l'opera iniziata qui si compirà nell'Arte (XIV).",
+  "colori": [
+   "#FF8C00",
+   "#D8BFD8"
+  ]
+ },
+ {
+  "id": "maj-07",
+  "arcano": "maggiore",
+  "numero": 7,
+  "numero_romano": "VII",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "The Chariot",
+  "titolo_thoth": null,
+  "nome_it": "Il Carro",
+  "lettera_ebraica": {
+   "nome": "Cheth",
+   "glifo": "ח",
+   "valore": 8
+  },
+  "percorso": 18,
+  "collega": [
+   "Binah",
+   "Geburah"
+  ],
+  "sefira": null,
+  "elemento": "acqua",
+  "sottoelemento": null,
+  "astrologia": "Cancro",
+  "parole_chiave": [
+   "avanzata",
+   "vittoria",
+   "protezione",
+   "volontà disciplinata",
+   "Graal"
+  ],
+  "significati": {
+   "essoterico": "Vittoria, avanzamento, dominio delle forze in gioco. Indica viaggi, conquiste e successi ottenuti con determinazione.",
+   "psicologico": "È la capacità di tenere insieme spinte contrastanti e dirigerle verso una meta: l'Io che si dà una corazza per proteggere un nucleo sensibile.",
+   "iniziatico": "Percorso 18 da Binah a Geburah, lettera Cheth (il recinto, 8) e Cancro, segno d'Acqua della Luna dove Giove è esaltato: la Madre invia la sua forza verso la Severità. L'auriga custodisce il Graal, il mistero del sangue della Madre.",
+   "ombra": "Mal dignificato diventa aggressività, fuga in avanti, corazza che isola, vittoria vuota."
+  },
+  "dritto": "Avanza con decisione: hai la forza di guidare la situazione. Proteggi ciò che per te è sacro mentre ti muovi.",
+  "rovescio": "Direzione confusa, forze interiori in conflitto, difesa eccessiva o stallo; rivedi la meta prima di spingere.",
+  "ambiti": {
+   "amore": "Protezione e impegno attivo; oppure emozioni blindate che impediscono l'intimità.",
+   "lavoro": "Progresso, trasferte, competizioni vinte con disciplina e controllo.",
+   "spirito": "Il cavaliere del Graal: custodire la coppa interiore mentre si attraversa il mondo."
+  },
+  "nota_crowley": "Nel Thoth l'auriga non tiene redini: siede immobile, chiuso in un'armatura d'ambra, reggendo il Santo Graal, mentre quattro sfingi elementali muovono il carro da sole.",
+  "colori": [
+   "#FFBF00",
+   "#800000"
+  ]
+ },
+ {
+  "id": "maj-08",
+  "arcano": "maggiore",
+  "numero": 8,
+  "numero_romano": "VIII",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "Adjustment",
+  "titolo_thoth": null,
+  "nome_it": "Regolazione",
+  "lettera_ebraica": {
+   "nome": "Lamed",
+   "glifo": "ל",
+   "valore": 30
+  },
+  "percorso": 22,
+  "collega": [
+   "Geburah",
+   "Tiphareth"
+  ],
+  "sefira": null,
+  "elemento": "aria",
+  "sottoelemento": null,
+  "astrologia": "Bilancia",
+  "parole_chiave": [
+   "equilibrio",
+   "giustizia",
+   "compensazione",
+   "verità",
+   "karma"
+  ],
+  "significati": {
+   "essoterico": "Giustizia, equilibrio, questioni legali e contratti. Indica che ogni azione riceve una risposta esatta e proporzionata.",
+   "psicologico": "È la capacità di valutare con lucidità, riconoscendo le conseguenze delle proprie scelte senza senso di colpa e senza autoindulgenza.",
+   "iniziatico": "Percorso 22 da Geburah a Tiphareth, lettera Lamed (il pungolo, 30) e Bilancia, segno di Venere dove Saturno è esaltato: l'aggiustamento continuo che mantiene l'universo in equilibrio. Ogni squilibrio genera da sé la propria correzione.",
+   "ombra": "Mal dignificata indica giudizio freddo, legalismo, parzialità, o paralisi nell'eccesso di ponderazione."
+  },
+  "dritto": "La situazione tende al riequilibrio: onestà e misura portano al risultato giusto. Possibili decisioni ufficiali o contratti.",
+  "rovescio": "Squilibrio non riconosciuto, giudizi severi verso sé o gli altri, esiti ritardati; fai i conti con la realtà.",
+  "ambiti": {
+   "amore": "Relazione in cerca di reciprocità; uno scambio da riequilibrare con sincerità.",
+   "lavoro": "Contratti, trattative, questioni legali; l'esito sarà proporzionato a quanto seminato.",
+   "spirito": "Accogliere la legge di causa ed effetto come maestra, non come punizione."
+  },
+  "nota_crowley": "Crowley rinomina la Giustizia «Regolazione» e la scambia di posto con la Lussuria, facendola VIII; la dipinge come Maat, danzatrice mascherata in perfetto equilibrio sulla punta dei piedi, con la spada e la bilancia sospesa al copricapo.",
+  "colori": [
+   "#50C878",
+   "#1E90FF"
+  ]
+ },
+ {
+  "id": "maj-09",
+  "arcano": "maggiore",
+  "numero": 9,
+  "numero_romano": "IX",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "The Hermit",
+  "titolo_thoth": null,
+  "nome_it": "L'Eremita",
+  "lettera_ebraica": {
+   "nome": "Yod",
+   "glifo": "י",
+   "valore": 10
+  },
+  "percorso": 20,
+  "collega": [
+   "Chesed",
+   "Tiphareth"
+  ],
+  "sefira": null,
+  "elemento": "terra",
+  "sottoelemento": null,
+  "astrologia": "Vergine",
+  "parole_chiave": [
+   "saggezza",
+   "solitudine",
+   "ricerca interiore",
+   "luce segreta",
+   "prudenza"
+  ],
+  "significati": {
+   "essoterico": "Ritiro, riflessione, prudenza, ricerca della verità. Indica un periodo di introspezione o l'incontro con un consigliere saggio e discreto.",
+   "psicologico": "È il bisogno di silenzio per ascoltare la propria voce; la maturità che nasce dall'esperienza elaborata in solitudine.",
+   "iniziatico": "Percorso 20 da Chesed a Tiphareth, lettera Yod (la mano, 10), seme da cui nascono tutte le lettere, e Vergine, terra mercuriale: il segreto della fecondità nascosto nella materia. La luce interiore portata come una lanterna nel mondo.",
+   "ombra": "Mal dignificato indica isolamento, chiusura, avarizia affettiva, rifiuto della vita."
+  },
+  "dritto": "Ritirati per chiarire: la risposta viene dall'interno o da una guida riservata. Agisci con prudenza e metodo.",
+  "rovescio": "Solitudine vissuta come fuga o esilio; oppure paura del silenzio che spinge a disperdersi negli altri.",
+  "ambiti": {
+   "amore": "Periodo di riflessione; bisogno di spazi personali, legami che chiedono profondità più che intensità.",
+   "lavoro": "Studio, ricerca, specializzazione; lavorare in modo indipendente e meticoloso.",
+   "spirito": "L'eremitaggio interiore: custodire il seme di luce che feconda il mondo."
+  },
+  "nota_crowley": "L'Eremita di Crowley osserva una lanterna con il Sole al centro, accompagnato da Cerbero ammansito; l'uovo orfico avvolto dal serpente, il campo di grano e la forma dello spermatozoo alludono alla vita che si trasmette nel segreto.",
+  "colori": [
+   "#9ACD32",
+   "#708090"
+  ]
+ },
+ {
+  "id": "maj-10",
+  "arcano": "maggiore",
+  "numero": 10,
+  "numero_romano": "X",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "Fortune",
+  "titolo_thoth": null,
+  "nome_it": "Fortuna",
+  "lettera_ebraica": {
+   "nome": "Kaph",
+   "glifo": "כ",
+   "valore": 20
+  },
+  "percorso": 21,
+  "collega": [
+   "Chesed",
+   "Netzach"
+  ],
+  "sefira": null,
+  "elemento": "spirito",
+  "sottoelemento": null,
+  "astrologia": "Giove",
+  "parole_chiave": [
+   "cambiamento",
+   "ciclo",
+   "fortuna",
+   "destino",
+   "movimento"
+  ],
+  "significati": {
+   "essoterico": "Mutamenti di sorte, eventi imprevisti, svolte. In genere favorevole, indica che la ruota ha cominciato a girare.",
+   "psicologico": "Mostra il rapporto con ciò che non si controlla; invita a stare nel movimento senza aggrapparsi né all'alto né al basso.",
+   "iniziatico": "Percorso 21 da Chesed a Netzach, lettera Kaph (il palmo, 20) e Giove, il grande benefico: l'espansione che mette in moto la vita. La ruota gira spinta dalle tre qualità della natura, mentre al centro immobile risiede lo Spirito.",
+   "ombra": "Mal dignificata indica instabilità, casualità caotica, affidamento passivo alla sorte, cadute improvvise."
+  },
+  "dritto": "Un ciclo cambia: cogli l'occasione. Espansione, buona sorte e nuove possibilità sono in arrivo.",
+  "rovescio": "Resistenza al cambiamento o sensazione di subire gli eventi; la ruota gira comunque, meglio collaborare con il suo moto.",
+  "ambiti": {
+   "amore": "Svolte improvvise, incontri che sembrano destinati; relazione in una fase di trasformazione.",
+   "lavoro": "Opportunità, espansione, colpi di fortuna; attenzione alla volatilità dei guadagni.",
+   "spirito": "Cercare il centro immobile della ruota, dove il mutare non tocca."
+  },
+  "nota_crowley": "Crowley pone sulla ruota a dieci raggi Tifone, Hermanubis e la Sfinge, che corrispondono ai tre guna (tamas, rajas, sattva) e ai tre principi alchemici, in perpetua alternanza fra fulmini e stelle.",
+  "colori": [
+   "#8F00FF",
+   "#0000CD"
+  ]
+ },
+ {
+  "id": "maj-11",
+  "arcano": "maggiore",
+  "numero": 11,
+  "numero_romano": "XI",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "Lust",
+  "titolo_thoth": null,
+  "nome_it": "Lussuria",
+  "lettera_ebraica": {
+   "nome": "Teth",
+   "glifo": "ט",
+   "valore": 9
+  },
+  "percorso": 19,
+  "collega": [
+   "Chesed",
+   "Geburah"
+  ],
+  "sefira": null,
+  "elemento": "fuoco",
+  "sottoelemento": null,
+  "astrologia": "Leone",
+  "parole_chiave": [
+   "forza vitale",
+   "passione",
+   "coraggio",
+   "estasi",
+   "integrazione"
+  ],
+  "significati": {
+   "essoterico": "Forza, coraggio, passione, vitalità. Indica un successo ottenuto non reprimendo gli istinti ma cavalcandoli con entusiasmo.",
+   "psicologico": "È la gioia della propria energia vitale accettata e integrata; la fine della guerra interiore fra spirito e istinto.",
+   "iniziatico": "Percorso 19 da Chesed a Geburah, lettera Teth (il serpente, 9) e Leone, domicilio del Sole: il sentiero orizzontale che unisce Misericordia e Severità. La forza solare, accolta senza paura, diventa estasi creativa.",
+   "ombra": "Mal dignificata indica eccessi, dominio degli impulsi, orgoglio, uso distruttivo della forza."
+  },
+  "dritto": "Metti passione e coraggio in ciò che fai: la tua vitalità è la tua risorsa principale. Momento di forza creativa e di magnetismo.",
+  "rovescio": "Energia repressa oppure sfogata senza misura; paura della propria potenza o suo abuso.",
+  "ambiti": {
+   "amore": "Passione intensa, attrazione fisica, relazione vitale; evita dinamiche di possesso.",
+   "lavoro": "Iniziative coraggiose, carisma, capacità di trascinare gli altri con l'entusiasmo.",
+   "spirito": "L'estasi come via: la forza vitale santificata anziché combattuta."
+  },
+  "nota_crowley": "Crowley sostituisce la Forza con la Lussuria, intesa come vigore gioioso più che come vizio: Babalon cavalca ebbra la Bestia dalle sette teste e leva il Graal fiammeggiante. La carta prende il numero XI, cedendo l'VIII alla Regolazione.",
+  "colori": [
+   "#DFFF00",
+   "#4B0082"
+  ]
+ },
+ {
+  "id": "maj-12",
+  "arcano": "maggiore",
+  "numero": 12,
+  "numero_romano": "XII",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "The Hanged Man",
+  "titolo_thoth": null,
+  "nome_it": "L'Appeso",
+  "lettera_ebraica": {
+   "nome": "Mem",
+   "glifo": "מ",
+   "valore": 40
+  },
+  "percorso": 23,
+  "collega": [
+   "Geburah",
+   "Hod"
+  ],
+  "sefira": null,
+  "elemento": "acqua",
+  "sottoelemento": null,
+  "astrologia": "Acqua",
+  "parole_chiave": [
+   "sacrificio",
+   "resa",
+   "sospensione",
+   "inversione",
+   "redenzione"
+  ],
+  "significati": {
+   "essoterico": "Sacrificio, attesa, sospensione, rinuncia volontaria in vista di un bene maggiore. Indica una situazione bloccata che chiede un cambio di prospettiva.",
+   "psicologico": "Rappresenta la resa dell'Io davanti a ciò che non può controllare; il capovolgimento dei valori che precede una nuova comprensione.",
+   "iniziatico": "Percorso 23 da Geburah a Hod, lettera Mem (l'acqua, 40) e Acqua elementare: l'immersione battesimale in cui la forma individuale si dissolve. È la formula del dio sacrificato, propria dell'Eone precedente.",
+   "ombra": "Mal dignificato indica vittimismo, sacrificio inutile, passività, uno stallo privo di senso."
+  },
+  "dritto": "Lascia andare il controllo e guarda la situazione da un'altra angolazione; una rinuncia consapevole può aprire la strada.",
+  "rovescio": "Sacrificio subìto o protratto oltre il necessario; resistenza a cambiare punto di vista, sensazione di essere intrappolati.",
+  "ambiti": {
+   "amore": "Rinunce e attese; attenzione ai rapporti in cui si dà senza ricevere.",
+   "lavoro": "Progetti sospesi e ritardi; tempo di ripensare metodi e priorità.",
+   "spirito": "L'abbandono dell'ego come offerta; l'immersione nelle acque della trasformazione."
+  },
+  "nota_crowley": "Per Crowley l'Appeso esprime la formula di Osiride, il dio che muore per risorgere, che il nuovo Eone considera superata: l'uomo pende da un ankh, inchiodato a una griglia verde, con un serpente ai piedi che annuncia la vita nuova.",
+  "colori": [
+   "#00338D",
+   "#2E8B57"
+  ]
+ },
+ {
+  "id": "maj-13",
+  "arcano": "maggiore",
+  "numero": 13,
+  "numero_romano": "XIII",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "Death",
+  "titolo_thoth": null,
+  "nome_it": "Morte",
+  "lettera_ebraica": {
+   "nome": "Nun",
+   "glifo": "נ",
+   "valore": 50
+  },
+  "percorso": 24,
+  "collega": [
+   "Tiphareth",
+   "Netzach"
+  ],
+  "sefira": null,
+  "elemento": "acqua",
+  "sottoelemento": null,
+  "astrologia": "Scorpione",
+  "parole_chiave": [
+   "trasformazione",
+   "fine",
+   "rinascita",
+   "putrefazione",
+   "rinnovamento"
+  ],
+  "significati": {
+   "essoterico": "Trasformazione profonda, fine di un ciclo, cambiamento irreversibile. Quasi mai indica una morte fisica: più spesso la chiusura necessaria di una fase.",
+   "psicologico": "È il processo di lasciar morire vecchie identità e attaccamenti; il lutto che rende possibile la rinascita.",
+   "iniziatico": "Percorso 24 da Tiphareth a Netzach, lettera Nun (il pesce, 50) e Scorpione, acqua fissa di Marte: la putrefazione alchemica che precede ogni rigenerazione. Scorpione, serpente e aquila sono i tre gradi della stessa energia che si trasforma.",
+   "ombra": "Mal dignificata indica paura del cambiamento, ristagno, attaccamento a ciò che è già finito."
+  },
+  "dritto": "Qualcosa si chiude per lasciare spazio al nuovo: accompagna la trasformazione invece di resisterle.",
+  "rovescio": "Resistenza a una fine inevitabile; un cambiamento rimandato che diventa lento logoramento.",
+  "ambiti": {
+   "amore": "Fine di una fase del rapporto o trasformazione radicale del legame.",
+   "lavoro": "Chiusura di un progetto o di un ruolo; ristrutturazioni che preparano un nuovo inizio.",
+   "spirito": "Morire a se stessi per rinascere: la trasformazione come iniziazione."
+  },
+  "nota_crowley": "Crowley dipinge uno scheletro coronato che danza e, con la falce, solleva bolle in cui germogliano nuove forme: la morte è un momento della danza della vita, non il suo contrario.",
+  "colori": [
+   "#008B8B",
+   "#6F4E37"
+  ]
+ },
+ {
+  "id": "maj-14",
+  "arcano": "maggiore",
+  "numero": 14,
+  "numero_romano": "XIV",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "Art",
+  "titolo_thoth": null,
+  "nome_it": "Arte",
+  "lettera_ebraica": {
+   "nome": "Samekh",
+   "glifo": "ס",
+   "valore": 60
+  },
+  "percorso": 25,
+  "collega": [
+   "Tiphareth",
+   "Yesod"
+  ],
+  "sefira": null,
+  "elemento": "fuoco",
+  "sottoelemento": null,
+  "astrologia": "Sagittario",
+  "parole_chiave": [
+   "alchimia",
+   "sintesi",
+   "temperanza",
+   "integrazione",
+   "aspirazione"
+  ],
+  "significati": {
+   "essoterico": "Equilibrio, moderazione, combinazione riuscita di elementi diversi. Indica soluzioni creative, guarigione e armonizzazione.",
+   "psicologico": "È la capacità di integrare parti opposte di sé in una sintesi nuova; la creatività come processo di trasformazione interiore.",
+   "iniziatico": "Percorso 25 da Tiphareth a Yesod, lettera Samekh (il sostegno, 60) e Sagittario, fuoco mutevole di Giove: la freccia dell'aspirazione che sale lungo il pilastro centrale. Qui si compie l'opera alchemica iniziata negli Amanti.",
+   "ombra": "Mal dignificata indica mescolanza confusa, compromesso tiepido, dosi sbagliate che guastano l'opera."
+  },
+  "dritto": "Trova la giusta combinazione: la soluzione nasce dalla fusione di ciò che sembrava inconciliabile. Servono pazienza e senso della misura.",
+  "rovescio": "Elementi che non si fondono, impazienza, eccessi o carenze; il processo alchemico si interrompe prima del compimento.",
+  "ambiti": {
+   "amore": "Integrazione, compromesso creativo, unione matura fra caratteri diversi.",
+   "lavoro": "Soluzioni innovative, sintesi di competenze diverse, progetti ben calibrati.",
+   "spirito": "Solve et coagula: l'Opera come via di trasformazione di sé."
+  },
+  "nota_crowley": "Crowley rinomina la Temperanza «Arte»: una figura androgina, fusione del re e della regina degli Amanti, versa fuoco e acqua in un calderone, e sullo sfondo compare la formula alchemica V.I.T.R.I.O.L.",
+  "colori": [
+   "#1F51FF",
+   "#FFD700"
+  ]
+ },
+ {
+  "id": "maj-15",
+  "arcano": "maggiore",
+  "numero": 15,
+  "numero_romano": "XV",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "The Devil",
+  "titolo_thoth": null,
+  "nome_it": "Il Diavolo",
+  "lettera_ebraica": {
+   "nome": "Ayin",
+   "glifo": "ע",
+   "valore": 70
+  },
+  "percorso": 26,
+  "collega": [
+   "Tiphareth",
+   "Hod"
+  ],
+  "sefira": null,
+  "elemento": "terra",
+  "sottoelemento": null,
+  "astrologia": "Capricorno",
+  "parole_chiave": [
+   "energia creativa",
+   "materia",
+   "ambizione",
+   "vincolo",
+   "desiderio"
+  ],
+  "significati": {
+   "essoterico": "Forza materiale, ambizione, desiderio, vincoli e tentazioni. Indica situazioni di dipendenza, ma anche una potente spinta creativa e sessuale.",
+   "psicologico": "È il rapporto con i propri istinti e le proprie ombre: ciò che si teme o si desidera fino a esserne dominati, oppure che, riconosciuto, diventa forza.",
+   "iniziatico": "Percorso 26 da Tiphareth a Hod, lettera Ayin (l'occhio, 70) e Capricorno, terra cardinale di Saturno dove Marte è esaltato: l'energia generativa nella sua espressione più terrestre. L'occhio che vede il divino anche nel più basso e nel più oscuro.",
+   "ombra": "Mal dignificato indica ossessione, dipendenza, materialismo cieco, sfruttamento di sé o degli altri."
+  },
+  "dritto": "Energia creativa potente e forte ambizione: riconosci le forze che ti muovono e usale consapevolmente.",
+  "rovescio": "Vincoli che cominciano a sciogliersi, oppure dipendenze negate; occorre guardare in faccia ciò che si teme.",
+  "ambiti": {
+   "amore": "Attrazione magnetica, sessualità intensa; possibili dinamiche di dipendenza o di potere.",
+   "lavoro": "Ambizione, tenacia, potere materiale; attenzione ai compromessi etici.",
+   "spirito": "Pan come totalità: accogliere anche l'ombra come parte del divino."
+  },
+  "nota_crowley": "Per Crowley il Diavolo è Pan generatore, un capro himalayano che ride sulla vetta del mondo: forza creativa senza giudizio morale, che gioisce dell'aspro e dello sterile quanto del fertile.",
+  "colori": [
+   "#3B1F6B",
+   "#1C1C1C"
+  ]
+ },
+ {
+  "id": "maj-16",
+  "arcano": "maggiore",
+  "numero": 16,
+  "numero_romano": "XVI",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "The Tower",
+  "titolo_thoth": null,
+  "nome_it": "La Torre",
+  "lettera_ebraica": {
+   "nome": "Pe",
+   "glifo": "פ",
+   "valore": 80
+  },
+  "percorso": 27,
+  "collega": [
+   "Netzach",
+   "Hod"
+  ],
+  "sefira": null,
+  "elemento": "spirito",
+  "sottoelemento": null,
+  "astrologia": "Marte",
+  "parole_chiave": [
+   "distruzione",
+   "risveglio",
+   "liberazione",
+   "crisi",
+   "purificazione"
+  ],
+  "significati": {
+   "essoterico": "Crollo improvviso di strutture, conflitti, crisi. Indica eventi che abbattono illusioni e costringono al cambiamento.",
+   "psicologico": "È il momento in cui l'ego viene scosso da una verità ineludibile; il cedimento delle difese che precede la liberazione.",
+   "iniziatico": "Percorso 27 da Netzach a Hod, lettera Pe (la bocca, 80) e Marte: il sentiero orizzontale più basso, dove il fuoco distrugge per purificare. Ciò che è costruito sull'illusione non può resistere allo sguardo che risveglia.",
+   "ombra": "Mal dignificata indica caos, collera, violenza, distruzione fine a se stessa."
+  },
+  "dritto": "Qualcosa di falso sta crollando: non trattenerlo. La crisi apre spazio alla verità e a una ricostruzione più sana.",
+  "rovescio": "Crisi rimandata o vissuta internamente; le tensioni si accumulano, meglio affrontarle prima che esplodano.",
+  "ambiti": {
+   "amore": "Rotture o crisi che rivelano verità nascoste; fine di un'illusione.",
+   "lavoro": "Cambiamenti improvvisi, crolli organizzativi; occasione di ricostruire su basi nuove.",
+   "spirito": "Il risveglio che demolisce l'illusione di un io separato e fortificato."
+  },
+  "nota_crowley": "Nella Torre del Thoth l'Occhio di Horus fulmina la costruzione mentre le fauci di Dite eruttano fiamme; la colomba e il serpente dalla testa leonina indicano che la distruzione porta con sé pace e desiderio rinnovato.",
+  "colori": [
+   "#FF0000",
+   "#C1121F"
+  ]
+ },
+ {
+  "id": "maj-17",
+  "arcano": "maggiore",
+  "numero": 17,
+  "numero_romano": "XVII",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "The Star",
+  "titolo_thoth": null,
+  "nome_it": "La Stella",
+  "lettera_ebraica": {
+   "nome": "He",
+   "glifo": "ה",
+   "valore": 5
+  },
+  "percorso": 28,
+  "collega": [
+   "Netzach",
+   "Yesod"
+  ],
+  "sefira": null,
+  "elemento": "aria",
+  "sottoelemento": null,
+  "astrologia": "Acquario",
+  "parole_chiave": [
+   "speranza",
+   "ispirazione",
+   "guarigione",
+   "apertura",
+   "fiducia"
+  ],
+  "significati": {
+   "essoterico": "Speranza, rinnovamento, ispirazione. Indica guarigione dopo una crisi, fiducia nel futuro e aiuti inattesi.",
+   "psicologico": "È la capacità di riconnettersi a una visione più ampia; la fiducia che nasce dall'aver attraversato il buio.",
+   "iniziatico": "Percorso 28 da Netzach a Yesod, lettera He (la finestra, 5) e Acquario, aria fissa: la finestra da cui si scorge l'infinito. Nuit versa le acque della vita e ricorda che ogni uomo e ogni donna è una stella.",
+   "ombra": "Mal dignificata indica illusione, delusione, idealismo sterile, speranze non radicate."
+  },
+  "dritto": "Speranza fondata e ispirazione: la direzione è giusta. Periodo di guarigione, rinnovamento e fiducia.",
+  "rovescio": "Fiducia smarrita, visione offuscata; occorre ritrovare il contatto con i propri ideali più autentici.",
+  "ambiti": {
+   "amore": "Amore sincero, apertura e fiducia reciproca; guarigione di ferite affettive.",
+   "lavoro": "Ispirazione, creatività, visione di lungo periodo; progetti orientati al futuro.",
+   "spirito": "Riconoscersi come stella: individualità divina in un cosmo infinito."
+  },
+  "nota_crowley": "In base alla correzione «Tzaddi non è la Stella», Crowley attribuisce alla Stella la lettera He; la figura è Nuit che versa acqua da due coppe, una d'oro e una d'argento, sotto la stella a sette punte di Babalon.",
+  "colori": [
+   "#8F00FF",
+   "#87CEEB"
+  ]
+ },
+ {
+  "id": "maj-18",
+  "arcano": "maggiore",
+  "numero": 18,
+  "numero_romano": "XVIII",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "The Moon",
+  "titolo_thoth": null,
+  "nome_it": "La Luna",
+  "lettera_ebraica": {
+   "nome": "Qoph",
+   "glifo": "ק",
+   "valore": 100
+  },
+  "percorso": 29,
+  "collega": [
+   "Netzach",
+   "Malkuth"
+  ],
+  "sefira": null,
+  "elemento": "acqua",
+  "sottoelemento": null,
+  "astrologia": "Pesci",
+  "parole_chiave": [
+   "illusione",
+   "inconscio",
+   "paura",
+   "soglia",
+   "passaggio"
+  ],
+  "significati": {
+   "essoterico": "Illusioni, inganni, paure e incertezze. Indica una fase di passaggio in cui le cose non sono ciò che sembrano.",
+   "psicologico": "È l'inconscio con i suoi sogni e le sue paure; il territorio in cui le emozioni non riconosciute prendono forma.",
+   "iniziatico": "Percorso 29 da Netzach a Malkuth, lettera Qoph (la nuca, 100) e Pesci, acqua mutevole di Giove dove Venere è esaltata: la soglia oscura prima dell'alba. Lo scarabeo Khephra spinge il sole attraverso le acque della notte.",
+   "ombra": "Mal dignificata indica inganno, confusione, paure irrazionali, fughe e dipendenze."
+  },
+  "dritto": "Attraversa l'incertezza senza farti dominare dalla paura; ciò che è nascosto verrà alla luce a suo tempo.",
+  "rovescio": "Illusioni che cominciano a dissolversi e verità che affiorano; oppure paure che si radicano perché evitate.",
+  "ambiti": {
+   "amore": "Dubbi, gelosie, proiezioni; servono chiarezza e verifica dei fatti.",
+   "lavoro": "Situazioni poco chiare, informazioni ingannevoli; prudenza nelle decisioni e nei documenti.",
+   "spirito": "L'attraversamento della notte oscura dell'anima, con la certezza che il sole sta già risalendo."
+  },
+  "nota_crowley": "La Luna di Crowley è una soglia inquietante: due torri nere e due figure di Anubi con gli sciacalli custodiscono il sentiero, mentre lo scarabeo sotto le acque trasporta il sole verso il mattino.",
+  "colori": [
+   "#8B0A50",
+   "#E0C589"
+  ]
+ },
+ {
+  "id": "maj-19",
+  "arcano": "maggiore",
+  "numero": 19,
+  "numero_romano": "XIX",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "The Sun",
+  "titolo_thoth": null,
+  "nome_it": "Il Sole",
+  "lettera_ebraica": {
+   "nome": "Resh",
+   "glifo": "ר",
+   "valore": 200
+  },
+  "percorso": 30,
+  "collega": [
+   "Hod",
+   "Yesod"
+  ],
+  "sefira": null,
+  "elemento": "spirito",
+  "sottoelemento": null,
+  "astrologia": "Sole",
+  "parole_chiave": [
+   "gioia",
+   "vitalità",
+   "successo",
+   "chiarezza",
+   "libertà"
+  ],
+  "significati": {
+   "essoterico": "Successo, gioia, vitalità, chiarezza. Indica un periodo luminoso, riconoscimenti, salute e buoni rapporti.",
+   "psicologico": "È la coscienza piena di sé, la gioia di esistere senza vergogna; l'innocenza ritrovata dopo la maturità.",
+   "iniziatico": "Percorso 30 da Hod a Yesod, lettera Resh (la testa, 200) e il Sole: la luce che illumina l'intelletto e il fondamento. È il Signore del nuovo Eone, la coscienza solare restituita all'umanità.",
+   "ombra": "Mal dignificato indica vanità, arroganza, ottimismo cieco, esibizionismo."
+  },
+  "dritto": "Tutto si fa più chiaro: successo, gioia e trasparenza. Momento favorevole in quasi ogni campo.",
+  "rovescio": "Gioia offuscata o gonfiata; il successo c'è ma non viene riconosciuto, oppure diventa autocompiacimento.",
+  "ambiti": {
+   "amore": "Felicità, calore, relazione solare e sincera; un periodo luminoso per la coppia e per le nuove conoscenze.",
+   "lavoro": "Successo, visibilità, energia creativa e riconoscimento dei meriti.",
+   "spirito": "La luce del Sé che illumina ogni cosa senza distinzione."
+  },
+  "nota_crowley": "Il Sole di Crowley annuncia la libertà del nuovo Eone: due bambini alati danzano su una collina verde cinta da un muro, limite che l'umanità è chiamata a superare, sotto un sole circondato dai dodici segni.",
+  "colori": [
+   "#FFA500",
+   "#FFD700"
+  ]
+ },
+ {
+  "id": "maj-20",
+  "arcano": "maggiore",
+  "numero": 20,
+  "numero_romano": "XX",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "The Aeon",
+  "titolo_thoth": null,
+  "nome_it": "L'Eone",
+  "lettera_ebraica": {
+   "nome": "Shin",
+   "glifo": "ש",
+   "valore": 300
+  },
+  "percorso": 31,
+  "collega": [
+   "Hod",
+   "Malkuth"
+  ],
+  "sefira": null,
+  "elemento": "fuoco",
+  "sottoelemento": null,
+  "astrologia": "Fuoco/Spirito",
+  "parole_chiave": [
+   "rinnovamento",
+   "risveglio",
+   "svolta",
+   "nuova era",
+   "decisione"
+  ],
+  "significati": {
+   "essoterico": "Rinnovamento, decisioni definitive, risveglio. Indica una svolta che chiude un capitolo e ne apre uno nuovo, spesso con una chiarezza improvvisa.",
+   "psicologico": "È la chiamata a una nuova coscienza di sé; la capacità di congedarsi dal passato e rinascere con una prospettiva diversa.",
+   "iniziatico": "Percorso 31 da Hod a Malkuth, lettera Shin (il dente, 300) e Fuoco con lo Spirito: il fuoco che scende a trasformare la materia. È l'avvento dell'Eone di Horus, il Fanciullo Coronato e Conquistatore.",
+   "ombra": "Mal dignificato indica decisioni rimandate, giudizi affrettati, paura del nuovo o fanatismo."
+  },
+  "dritto": "Una nuova fase comincia: rispondi alla chiamata e prendi la decisione che hai rimandato.",
+  "rovescio": "Risveglio rimandato o paura di essere giudicati; il cambiamento resta però inevitabile.",
+  "ambiti": {
+   "amore": "Rinnovamento profondo della relazione o decisione definitiva sul legame.",
+   "lavoro": "Svolta professionale, nuovo corso, necessità di aggiornarsi ai tempi.",
+   "spirito": "L'Eone di Horus: coscienza del fanciullo divino, libertà e Volontà Vera."
+  },
+  "nota_crowley": "Crowley sostituisce il Giudizio con l'Eone, ispirandosi alla Stele della Rivelazione: Nuit incurvata sullo sfondo, il globo alato di Hadit e Horus nella doppia forma di bambino e di dio seduto.",
+  "colori": [
+   "#FF4500",
+   "#E34234"
+  ]
+ },
+ {
+  "id": "maj-21",
+  "arcano": "maggiore",
+  "numero": 21,
+  "numero_romano": "XXI",
+  "seme": null,
+  "rango": null,
+  "corte": false,
+  "nome_thoth": "The Universe",
+  "titolo_thoth": null,
+  "nome_it": "L'Universo",
+  "lettera_ebraica": {
+   "nome": "Tau",
+   "glifo": "ת",
+   "valore": 400
+  },
+  "percorso": 32,
+  "collega": [
+   "Yesod",
+   "Malkuth"
+  ],
+  "sefira": null,
+  "elemento": "terra",
+  "sottoelemento": null,
+  "astrologia": "Saturno/Terra",
+  "parole_chiave": [
+   "compimento",
+   "totalità",
+   "sintesi",
+   "realizzazione",
+   "danza"
+  ],
+  "significati": {
+   "essoterico": "Compimento, realizzazione, successo finale. Indica la conclusione di un ciclo, il raggiungimento della meta e talvolta viaggi o ampliamenti di orizzonte.",
+   "psicologico": "È la totalità integrata della persona; la pace di chi ha dato forma al proprio potenziale e può riconoscersi intero.",
+   "iniziatico": "Percorso 32 da Yesod a Malkuth, lettera Tau (la croce, il sigillo, 400) e insieme Saturno e Terra: l'ultimo sentiero, dove la manifestazione si compie e da cui il ritorno ha inizio. Il sigillo della Grande Opera è anche la porta della risalita.",
+   "ombra": "Mal dignificato indica stagnazione, inerzia, opere lasciate incompiute, rigidità saturnina."
+  },
+  "dritto": "Compimento e integrazione: il ciclo si chiude con successo e si prepara quello successivo.",
+  "rovescio": "Qualcosa resta incompiuto o troppo pesante; va completato prima di iniziare altro.",
+  "ambiti": {
+   "amore": "Unione piena e matura, senso di completezza condivisa; talvolta un legame che si apre al mondo o a un viaggio insieme.",
+   "lavoro": "Obiettivi raggiunti, progetti conclusi, riconoscimento di un percorso lungo.",
+   "spirito": "La Grande Opera compiuta: la materia rivelata come danza dello spirito."
+  },
+  "nota_crowley": "L'Universo di Crowley è una fanciulla che danza con il serpente, facendo ruotare la spirale dell'energia dentro un'ellisse di settantadue sezioni; ai quattro angoli i Kerubim, e al centro lo schema degli elementi.",
+  "colori": [
+   "#2A0A5E",
+   "#1C1C1C"
+  ]
+ },
+ {
+  "id": "bastoni-01",
+  "arcano": "minore",
+  "numero": 1,
+  "numero_romano": null,
+  "seme": "bastoni",
+  "rango": "asso",
+  "corte": false,
+  "nome_thoth": "Ace of Wands",
+  "titolo_thoth": "Root of the Powers of Fire",
+  "nome_it": "Asso di Bastoni",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Kether",
+  "elemento": "fuoco",
+  "sottoelemento": null,
+  "astrologia": "Radice del Fuoco",
+  "parole_chiave": [
+   "energia primordiale",
+   "volontà",
+   "ispirazione",
+   "creazione",
+   "impulso"
+  ],
+  "significati": {
+   "essoterico": "Forza creativa allo stato nascente: uno slancio nuovo, un'idea che accende, un'iniziativa che parte con vigore. Annuncia energia, entusiasmo, desiderio di agire e di generare.",
+   "psicologico": "È la scintilla della volontà prima che abbia scelto una direzione; vitalità pura che chiede un canale per esprimersi e che, se ignorata, si trasforma in irrequietezza.",
+   "iniziatico": "Asso in Kether: radice del Fuoco e seme dello Yod del Tetragrammaton. Non è ancora un evento ma la potenza che lo rende possibile; il suo trono è il quadrante celeste di Cancro, Leone e Vergine, governato dalla Principessa di Bastoni.",
+   "ombra": "Mal dignificato indica fuoco di paglia, impulsività, energia che brucia senza costruire nulla."
+  },
+  "dritto": "Una forte spinta creativa è disponibile adesso: agisci finché la fiamma è viva. Ottimo momento per iniziare, proporre, osare.",
+  "rovescio": "Energia bloccata o dispersa, entusiasmo che non diventa atto; oppure irruenza che brucia le occasioni prima che maturino.",
+  "ambiti": {
+   "amore": "Attrazione ardente, un nuovo interesse, passione che nasce all'improvviso.",
+   "lavoro": "Nuovo progetto, iniziativa imprenditoriale, slancio creativo da canalizzare subito.",
+   "spirito": "Il risveglio della forza vitale come prima scintilla della Volontà Vera."
+  },
+  "nota_crowley": "Crowley dipinge una grande torcia primordiale da cui divampano dieci fiamme a forma di Yod, disposte come le sephiroth dell'Albero: il Fuoco come forza naturale non ancora disciplinata.",
+  "colori": [
+   "#F5F3E7",
+   "#D2461E"
+  ]
+ },
+ {
+  "id": "bastoni-02",
+  "arcano": "minore",
+  "numero": 2,
+  "numero_romano": null,
+  "seme": "bastoni",
+  "rango": "due",
+  "corte": false,
+  "nome_thoth": "Two of Wands",
+  "titolo_thoth": "Dominion",
+  "nome_it": "Due di Bastoni — Dominio",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Chokmah",
+  "elemento": "fuoco",
+  "sottoelemento": null,
+  "astrologia": "Marte in Ariete",
+  "parole_chiave": [
+   "dominio",
+   "audacia",
+   "volontà",
+   "conquista",
+   "iniziativa"
+  ],
+  "significati": {
+   "essoterico": "Potere personale, coraggio, capacità di imporsi e di guidare. Indica progetti ambiziosi e la forza per realizzarli, con una possibile vena di durezza.",
+   "psicologico": "È la volontà nella sua forma più pura e combattiva: la fiducia di poter piegare le circostanze. Chiede di distinguere la forza dalla prepotenza.",
+   "iniziatico": "Il Fuoco in Chokmah, la Sapienza come energia dinamica, con Marte nel suo domicilio d'Ariete nel primo decano: il fuoco nella sua espressione più ardente e virile. Il Dominio è la volontà che si afferma prima di ogni forma, pura potenza direttiva.",
+   "ombra": "Mal dignificato indica ostinazione, prepotenza, violenza, spreco di forza in battaglie inutili."
+  },
+  "dritto": "Hai il potere di guidare la situazione: prendi l'iniziativa con determinazione e visione chiara.",
+  "rovescio": "Forza senza direzione o frustrata; conflitti di potere, impazienza, aggressività trattenuta che cerca uno sfogo.",
+  "ambiti": {
+   "amore": "Passione dominante e desiderio di conquista; attenzione a non prevaricare l'altro.",
+   "lavoro": "Leadership, iniziativa, progetti audaci; posizione di comando da gestire con equilibrio.",
+   "spirito": "Imparare a dirigere la propria forza invece di esserne diretti."
+  },
+  "nota_crowley": "Nel Thoth due dorje tibetani incrociati, folgori della volontà, sprigionano fiamme e terminano in teste di serpente: il potere di distruggere per creare.",
+  "colori": [
+   "#8A8D8F",
+   "#D2461E"
+  ]
+ },
+ {
+  "id": "bastoni-03",
+  "arcano": "minore",
+  "numero": 3,
+  "numero_romano": null,
+  "seme": "bastoni",
+  "rango": "tre",
+  "corte": false,
+  "nome_thoth": "Three of Wands",
+  "titolo_thoth": "Virtue",
+  "nome_it": "Tre di Bastoni — Virtù",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Binah",
+  "elemento": "fuoco",
+  "sottoelemento": null,
+  "astrologia": "Sole in Ariete",
+  "parole_chiave": [
+   "virtù",
+   "integrità",
+   "primi successi",
+   "fiducia",
+   "nobiltà"
+  ],
+  "significati": {
+   "essoterico": "Primi risultati concreti, integrità, fiducia in sé stessi. Indica un'impresa avviata bene, sostenuta da valori chiari e da un'energia costante.",
+   "psicologico": "La forza trova una forma e si riconosce: nasce un senso di dignità e di coerenza interiore che non ha bisogno di conferme esterne.",
+   "iniziatico": "Il Fuoco in Binah, la Madre che dà forma, con il Sole esaltato in Ariete nel secondo decano: la volontà diventa carattere. La Virtù è la forza stabilita, il fuoco che ha trovato il suo contenitore e comincia a illuminare.",
+   "ombra": "Mal dignificato indica orgoglio, arroganza, presunzione di essere sempre nel giusto."
+  },
+  "dritto": "Le tue azioni sono coerenti con i tuoi valori: la strada è giusta, prosegui con fiducia e apertura.",
+  "rovescio": "Dubbi sulla propria integrità o successo non riconosciuto; oppure superbia che isola.",
+  "ambiti": {
+   "amore": "Rapporto fondato sulla stima reciproca e su un progetto condiviso.",
+   "lavoro": "Primi risultati tangibili, riconoscimenti, collaborazioni che partono con il piede giusto.",
+   "spirito": "La virtù come coerenza fra volontà, parola e azione."
+  },
+  "nota_crowley": "Tre bacchette terminanti in fiori di loto che si schiudono su una luce aurorale: la primavera dell'energia, il fuoco che fiorisce.",
+  "colori": [
+   "#1A1A1A",
+   "#D2461E"
+  ]
+ },
+ {
+  "id": "bastoni-04",
+  "arcano": "minore",
+  "numero": 4,
+  "numero_romano": null,
+  "seme": "bastoni",
+  "rango": "quattro",
+  "corte": false,
+  "nome_thoth": "Four of Wands",
+  "titolo_thoth": "Completion",
+  "nome_it": "Quattro di Bastoni — Compimento",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Chesed",
+  "elemento": "fuoco",
+  "sottoelemento": null,
+  "astrologia": "Venere in Ariete",
+  "parole_chiave": [
+   "compimento",
+   "stabilità",
+   "armonia",
+   "celebrazione",
+   "ordine"
+  ],
+  "significati": {
+   "essoterico": "Opera compiuta, armonia, celebrazione, stabilità raggiunta. Indica feste, traguardi, case e relazioni solide.",
+   "psicologico": "È la soddisfazione di chi ha concluso un ciclo e sa goderne senza perdere vitalità; il piacere di sentirsi al proprio posto.",
+   "iniziatico": "Il Fuoco in Chesed, la Misericordia che organizza, con Venere in Ariete nel terzo decano: la dolcezza venusiana tempera l'impeto marziale. Il Compimento è l'energia che diventa ordine e governo benevolo.",
+   "ombra": "Mal dignificato indica compiacimento, stasi, perdita di slancio, conclusioni premature."
+  },
+  "dritto": "Un obiettivo è raggiunto: celebra e consolida ciò che hai costruito prima di ripartire.",
+  "rovescio": "Successo instabile o non goduto; ansia di andare oltre, feste rimandate, fondamenta da rinforzare.",
+  "ambiti": {
+   "amore": "Unione stabile, convivenza, fidanzamenti o celebrazioni.",
+   "lavoro": "Progetto completato, contratti chiusi, ambiente di lavoro armonioso.",
+   "spirito": "La pace che segue l'opera compiuta, da vivere come base e non come fine."
+  },
+  "nota_crowley": "Nel Thoth le quattro bacchette terminano con teste d'ariete e colombe, simboli di Marte e Venere, disposte a ruota: forza e amore uniti in un cerchio perfetto.",
+  "colori": [
+   "#1F4E9A",
+   "#D2461E"
+  ]
+ },
+ {
+  "id": "bastoni-05",
+  "arcano": "minore",
+  "numero": 5,
+  "numero_romano": null,
+  "seme": "bastoni",
+  "rango": "cinque",
+  "corte": false,
+  "nome_thoth": "Five of Wands",
+  "titolo_thoth": "Strife",
+  "nome_it": "Cinque di Bastoni — Contesa",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Geburah",
+  "elemento": "fuoco",
+  "sottoelemento": null,
+  "astrologia": "Saturno in Leone",
+  "parole_chiave": [
+   "contesa",
+   "conflitto",
+   "sforzo",
+   "competizione",
+   "ostacolo"
+  ],
+  "significati": {
+   "essoterico": "Conflitti, rivalità, difficoltà che richiedono sforzo. Indica lotte, dispute e ostacoli, ma anche la forza necessaria per superarli.",
+   "psicologico": "Tensione fra desiderio di espandersi e limiti imposti; una frustrazione che può trasformarsi in stimolo se non degenera in rancore.",
+   "iniziatico": "Il Fuoco in Geburah, la Severità, con Saturno nel Leone nel primo decano: il peso saturnino compresso sull'energia solare. La Contesa è il fuoco che lotta con la forma, la volontà che incontra la resistenza della materia.",
+   "ombra": "Mal dignificato indica aggressività, litigi sterili, crudeltà, spreco di energia in contrasti."
+  },
+  "dritto": "La situazione è conflittuale: affronta la sfida apertamente e con lealtà, trasformando la tensione in forza.",
+  "rovescio": "Conflitto trattenuto che logora dall'interno; oppure lite che degenera oltre il necessario.",
+  "ambiti": {
+   "amore": "Discussioni, tensioni, gelosie; il confronto può chiarire se resta leale.",
+   "lavoro": "Competizione, concorrenti agguerriti, ostacoli burocratici o gerarchici.",
+   "spirito": "Il conflitto come fucina in cui la volontà si tempra."
+  },
+  "nota_crowley": "La bacchetta del Capo Adepto, sormontata dal globo alato, domina e incrocia quelle degli adepti minori con fenice e loto: l'energia combatte contro la gravità di Saturno.",
+  "colori": [
+   "#C8102E",
+   "#D2461E"
+  ]
+ },
+ {
+  "id": "bastoni-06",
+  "arcano": "minore",
+  "numero": 6,
+  "numero_romano": null,
+  "seme": "bastoni",
+  "rango": "sei",
+  "corte": false,
+  "nome_thoth": "Six of Wands",
+  "titolo_thoth": "Victory",
+  "nome_it": "Sei di Bastoni — Vittoria",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Tiphareth",
+  "elemento": "fuoco",
+  "sottoelemento": null,
+  "astrologia": "Giove in Leone",
+  "parole_chiave": [
+   "vittoria",
+   "riconoscimento",
+   "successo",
+   "fiducia",
+   "trionfo"
+  ],
+  "significati": {
+   "essoterico": "Vittoria, successo, riconoscimento pubblico. Indica il superamento degli ostacoli, buone notizie e il rispetto degli altri.",
+   "psicologico": "L'energia torna in equilibrio dopo la lotta: la fiducia in sé nasce dalla prova superata e non dalla presunzione, e per questo può permettersi di essere generosa.",
+   "iniziatico": "Il Fuoco in Tiphareth, il cuore armonioso dell'Albero, con Giove nel Leone nel secondo decano: l'espansione benefica sostiene la forza solare. La Vittoria è l'energia equilibrata che vince senza distruggere.",
+   "ombra": "Mal dignificato indica arroganza, vittoria effimera, bisogno di approvazione."
+  },
+  "dritto": "Il successo è a portata di mano o già raggiunto: accoglilo con generosità e condividilo.",
+  "rovescio": "Vittoria ritardata o poco riconosciuta; oppure trionfalismo che allontana gli alleati.",
+  "ambiti": {
+   "amore": "Relazione che supera una crisi, conquista affettiva, orgoglio reciproco.",
+   "lavoro": "Promozioni, riconoscimenti, trattative vinte, leadership apprezzata.",
+   "spirito": "La vittoria interiore: la volontà allineata con il cuore."
+  },
+  "nota_crowley": "Nel Thoth le bacchette degli adepti si incrociano ordinatamente, con nove fiamme che ardono stabili: l'energia disciplinata vince senza violenza.",
+  "colori": [
+   "#E6B422",
+   "#D2461E"
+  ]
+ },
+ {
+  "id": "bastoni-07",
+  "arcano": "minore",
+  "numero": 7,
+  "numero_romano": null,
+  "seme": "bastoni",
+  "rango": "sette",
+  "corte": false,
+  "nome_thoth": "Seven of Wands",
+  "titolo_thoth": "Valour",
+  "nome_it": "Sette di Bastoni — Valore",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Netzach",
+  "elemento": "fuoco",
+  "sottoelemento": null,
+  "astrologia": "Marte in Leone",
+  "parole_chiave": [
+   "valore",
+   "coraggio",
+   "resistenza",
+   "sfida",
+   "difesa"
+  ],
+  "significati": {
+   "essoterico": "Coraggio, determinazione, resistenza di fronte all'opposizione. Indica battaglie sostenute con valore, anche contro forze superiori, e vittorie possibili ma non garantite.",
+   "psicologico": "È il coraggio che emerge quando le strutture non bastano più e resta solo la fiducia personale; l'energia combattiva del singolo, che deve però evitare di vedere nemici ovunque.",
+   "iniziatico": "Il Fuoco in Netzach, la Vittoria emotiva ma instabile, con Marte nel Leone nel terzo decano: l'energia scende sotto l'equilibrio di Tiphareth e perde coordinazione. Il Valore è il coraggio individuale che supplisce all'ordine perduto: si può vincere, ma solo con il cuore.",
+   "ombra": "Mal dignificato indica testardaggine, ostilità, battaglie perse per mancanza di strategia."
+  },
+  "dritto": "Difendi la tua posizione con coraggio: la vittoria è possibile ma richiede impegno personale.",
+  "rovescio": "Stanchezza nella lotta, dubbio sulle proprie forze; oppure combattività eccessiva.",
+  "ambiti": {
+   "amore": "Difendere il legame da interferenze o dubbi; non trasformare ogni discussione in una battaglia.",
+   "lavoro": "Concorrenza, difesa di posizioni, iniziative controcorrente sostenute con grinta.",
+   "spirito": "Il coraggio come virtù spirituale: restare fedeli a sé anche senza appoggi."
+  },
+  "nota_crowley": "Crowley mette davanti alle sei bacchette ordinate un rozzo bastone grezzo: il valore individuale che sostituisce la disciplina collettiva.",
+  "colori": [
+   "#2E8B57",
+   "#D2461E"
+  ]
+ },
+ {
+  "id": "bastoni-08",
+  "arcano": "minore",
+  "numero": 8,
+  "numero_romano": null,
+  "seme": "bastoni",
+  "rango": "otto",
+  "corte": false,
+  "nome_thoth": "Eight of Wands",
+  "titolo_thoth": "Swiftness",
+  "nome_it": "Otto di Bastoni — Rapidità",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Hod",
+  "elemento": "fuoco",
+  "sottoelemento": null,
+  "astrologia": "Mercurio in Sagittario",
+  "parole_chiave": [
+   "rapidità",
+   "comunicazione",
+   "slancio",
+   "movimento",
+   "notizie"
+  ],
+  "significati": {
+   "essoterico": "Velocità, messaggi, spostamenti, notizie che arrivano all'improvviso. Indica sviluppi rapidi, viaggi, comunicazioni decisive e soluzioni trovate in un lampo.",
+   "psicologico": "La mente accesa dall'entusiasmo: pensieri che corrono veloci e cercano espressione immediata. Chiede di dare direzione alla velocità perché non diventi agitazione.",
+   "iniziatico": "Il Fuoco in Hod, lo Splendore dell'intelletto, con Mercurio in Sagittario nel primo decano: la volontà trasformata in pensiero e segnale. La Rapidità è il fuoco divenuto vibrazione luminosa, energia che viaggia più che bruciare.",
+   "ombra": "Mal dignificato indica precipitazione, dispersione, parole affrettate, messaggi fraintesi o partenze impulsive."
+  },
+  "dritto": "Le cose si muovono in fretta: rispondi con prontezza e sfrutta l'onda favorevole finché dura.",
+  "rovescio": "Ritardi, messaggi mancati o contraddittori; oppure una fretta che genera errori e malintesi.",
+  "ambiti": {
+   "amore": "Messaggi, dichiarazioni, colpi di fulmine; un rapporto che accelera di colpo.",
+   "lavoro": "Notizie attese, contratti veloci, progetti che prendono velocità; utile una comunicazione chiara.",
+   "spirito": "La luce come messaggera della Volontà: intuizioni improvvise da accogliere e verificare."
+  },
+  "nota_crowley": "Il Thoth mostra fasci di luce elettrica che si incrociano sotto un arcobaleno e disegnano un solido geometrico: l'energia come onda luminosa, pura velocità del pensiero.",
+  "colori": [
+   "#E07B24",
+   "#D2461E"
+  ]
+ },
+ {
+  "id": "bastoni-09",
+  "arcano": "minore",
+  "numero": 9,
+  "numero_romano": null,
+  "seme": "bastoni",
+  "rango": "nove",
+  "corte": false,
+  "nome_thoth": "Nine of Wands",
+  "titolo_thoth": "Strength",
+  "nome_it": "Nove di Bastoni — Forza",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Yesod",
+  "elemento": "fuoco",
+  "sottoelemento": null,
+  "astrologia": "Luna in Sagittario",
+  "parole_chiave": [
+   "forza",
+   "salute",
+   "resistenza",
+   "ricarica",
+   "perseveranza"
+  ],
+  "significati": {
+   "essoterico": "Forza, salute, energia fisica e morale. Indica la capacità di resistere e di recuperare grazie a risorse interiori solide, e una posizione ben difesa.",
+   "psicologico": "Stabilità interiore che nasce dall'accettare i propri ritmi; la fiducia nella vitalità che si rigenera dopo ogni sforzo.",
+   "iniziatico": "Il Fuoco in Yesod, il Fondamento, con la Luna in Sagittario nel secondo decano: la freccia dell'aspirazione trova una base stabile nel ritmo lunare. La Forza è energia che si rinnova ciclicamente, sostenuta dall'alternanza di Sole e Luna.",
+   "ombra": "Mal dignificata indica ostinazione, diffidenza, rigidità difensiva, sospetto verso chiunque si avvicini."
+  },
+  "dritto": "Hai le risorse per continuare: la tua tenuta è più grande di quanto credi. Il cambiamento non ti indebolisce, ti ricarica.",
+  "rovescio": "Stanchezza, difese eccessive, diffidenza; bisogno di riposo e di rigenerazione prima del prossimo sforzo.",
+  "ambiti": {
+   "amore": "Relazione solida che ha superato prove; attenzione a non vivere l'altro come una minaccia.",
+   "lavoro": "Perseveranza, capacità di reggere la pressione, recupero dopo un periodo difficile.",
+   "spirito": "La forza come armonia fra i cicli lunari e solari dell'energia interiore."
+  },
+  "nota_crowley": "Nove frecce, otto incrociate e una centrale più grande, portano il Sole e la Luna alle estremità: la forza nasce dalla loro alternanza armoniosa.",
+  "colori": [
+   "#6A3D9A",
+   "#D2461E"
+  ]
+ },
+ {
+  "id": "bastoni-10",
+  "arcano": "minore",
+  "numero": 10,
+  "numero_romano": null,
+  "seme": "bastoni",
+  "rango": "dieci",
+  "corte": false,
+  "nome_thoth": "Ten of Wands",
+  "titolo_thoth": "Oppression",
+  "nome_it": "Dieci di Bastoni — Oppressione",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Malkuth",
+  "elemento": "fuoco",
+  "sottoelemento": null,
+  "astrologia": "Saturno in Sagittario",
+  "parole_chiave": [
+   "oppressione",
+   "peso",
+   "sovraccarico",
+   "ostinazione",
+   "esaurimento"
+  ],
+  "significati": {
+   "essoterico": "Pesi, responsabilità eccessive, pressione. Indica un periodo di fatica, di obblighi accumulati e di energia spesa senza reale soddisfazione.",
+   "psicologico": "La volontà irrigidita in ostinazione: si continua a spingere per abitudine o per orgoglio, anche quando lo scopo si è perso.",
+   "iniziatico": "Il Fuoco in Malkuth, con Saturno in Sagittario nel terzo decano: la forza è imprigionata dalla densità della materia e dal limite saturnino. L'Oppressione è la volontà separata dalla sua sorgente spirituale, fuoco che brucia solo se stesso.",
+   "ombra": "Mal dignificato indica tirannia, crudeltà, esaurimento fisico e morale, cieca ostinazione."
+  },
+  "dritto": "Stai portando più di quanto sia sano: riduci, delega, lascia cadere ciò che non ti appartiene.",
+  "rovescio": "Il peso comincia ad alleggerirsi, oppure si nega il sovraccarico fino al punto di rottura.",
+  "ambiti": {
+   "amore": "Relazione vissuta come obbligo o carico; bisogno di rimettere in discussione i ruoli.",
+   "lavoro": "Troppo lavoro, stress, responsabilità sproporzionate; necessario ridefinire le priorità.",
+   "spirito": "Liberarsi dalle costrizioni autoimposte e ritrovare il perché del proprio agire."
+  },
+  "nota_crowley": "Otto bacchette sono sbarrate da due grandi dorje che le dominano, fra fiamme ormai scure: la forza del fuoco imprigionata, divenuta pura resistenza.",
+  "colori": [
+   "#9C8A3E",
+   "#D2461E"
+  ]
+ },
+ {
+  "id": "bastoni-cavaliere",
+  "arcano": "minore",
+  "numero": null,
+  "numero_romano": null,
+  "seme": "bastoni",
+  "rango": "cavaliere",
+  "corte": true,
+  "nome_thoth": "Knight of Wands",
+  "titolo_thoth": null,
+  "nome_it": "Cavaliere di Bastoni",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Chokmah",
+  "elemento": "fuoco",
+  "sottoelemento": "fuoco",
+  "astrologia": "21° Scorpione – 20° Sagittario",
+  "parole_chiave": [
+   "impeto",
+   "audacia",
+   "azione",
+   "generosità",
+   "fiamma"
+  ],
+  "significati": {
+   "essoterico": "Una persona ardente, rapida, generosa e impulsiva, oppure una fase di azione improvvisa. Indica partenze, imprese coraggiose, slanci difficili da trattenere.",
+   "psicologico": "L'aspetto della personalità che agisce prima di riflettere: entusiasmo, coraggio, bisogno di movimento. Può essere un dono o un eccesso.",
+   "iniziatico": "Fuoco del Fuoco, lo Yod dello Yod, riferito a Chokmah: la forza più veloce e violenta dell'elemento, simile al fulmine. Governa da 21° Scorpione a 20° Sagittario, unendo l'ardore marziale all'aspirazione gioviale.",
+   "ombra": "Mal dignificato è crudele, intollerante, brutale, incapace di completare ciò che inizia."
+  },
+  "dritto": "Agisci ora con energia: il momento premia il coraggio e l'iniziativa immediata.",
+  "rovescio": "Impulso bruciato o frenato; imprese abbandonate a metà, aggressività o precipitazione.",
+  "ambiti": {
+   "amore": "Passione travolgente, un amante impetuoso; il fuoco può spegnersi rapidamente.",
+   "lavoro": "Iniziative rapide, trasferimenti, progetti audaci da sostenere nel tempo.",
+   "spirito": "Il fuoco della Volontà che irrompe; imparare a mantenere la fiamma oltre il primo slancio."
+  },
+  "nota_crowley": "Crowley raffigura un guerriero in armatura su un destriero nero al galoppo, con una torcia fiammeggiante: la forza primordiale del fuoco nella sua corsa.",
+  "colori": [
+   "#FF7F24",
+   "#D2461E"
+  ]
+ },
+ {
+  "id": "bastoni-regina",
+  "arcano": "minore",
+  "numero": null,
+  "numero_romano": null,
+  "seme": "bastoni",
+  "rango": "regina",
+  "corte": true,
+  "nome_thoth": "Queen of Wands",
+  "titolo_thoth": null,
+  "nome_it": "Regina di Bastoni",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Binah",
+  "elemento": "fuoco",
+  "sottoelemento": "acqua",
+  "astrologia": "21° Pesci – 20° Ariete",
+  "parole_chiave": [
+   "magnetismo",
+   "fiducia",
+   "regalità",
+   "calore",
+   "autonomia"
+  ],
+  "significati": {
+   "essoterico": "Una donna o una persona carismatica, calda e sicura di sé, oppure la capacità di guidare con autorità affettuosa. Indica fascino, generosità e forza serena.",
+   "psicologico": "L'energia accolta e mantenuta: fiducia in sé, calore, capacità di sostenere gli altri senza perdersi. Può irrigidirsi in orgoglio.",
+   "iniziatico": "Acqua del Fuoco, lo He dello Yod, riferita a Binah: il fuoco reso fluido e costante. Governa da 21° Pesci a 20° Ariete, unendo la sensibilità nettuniana dei Pesci all'impeto dell'Ariete.",
+   "ombra": "Mal dignificata diventa vendicativa, tirannica, gelosa, facile a covare rancore."
+  },
+  "dritto": "Mostra la tua forza con calma e calore: puoi influenzare la situazione con la tua presenza.",
+  "rovescio": "Autostima ferita, possesso, orgoglio; oppure energia trattenuta per paura di brillare.",
+  "ambiti": {
+   "amore": "Una partner calda e appassionata; rapporto fondato su fiducia e passione.",
+   "lavoro": "Leadership carismatica, gestione con fiducia, progetti creativi.",
+   "spirito": "La fiamma custodita: il fuoco interiore alimentato con costanza."
+  },
+  "nota_crowley": "La Regina del Thoth, coronata dal disco alato, siede in contemplazione fra fiamme, con un leopardo al fianco e un tirso sormontato da una pigna: la forza del fuoco controllata e serena.",
+  "colori": [
+   "#4682B4",
+   "#D2461E"
+  ]
+ },
+ {
+  "id": "bastoni-principe",
+  "arcano": "minore",
+  "numero": null,
+  "numero_romano": null,
+  "seme": "bastoni",
+  "rango": "principe",
+  "corte": true,
+  "nome_thoth": "Prince of Wands",
+  "titolo_thoth": null,
+  "nome_it": "Principe di Bastoni",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Tiphareth",
+  "elemento": "fuoco",
+  "sottoelemento": "aria",
+  "astrologia": "21° Cancro – 20° Leone",
+  "parole_chiave": [
+   "dinamismo",
+   "nobiltà",
+   "slancio",
+   "orgoglio",
+   "generosità"
+  ],
+  "significati": {
+   "essoterico": "Un giovane o una persona energica, generosa e fiera, oppure un'impresa guidata con passione e rapidità. Indica azioni decise, iniziative coraggiose, desiderio di lasciare un segno.",
+   "psicologico": "È l'Io creativo che vuole affermarsi: entusiasmo, capacità di trascinare, ma anche bisogno di riconoscimento e tendenza a prendersela per un nulla.",
+   "iniziatico": "Aria del Fuoco, il Vau dello Yod, riferito a Tiphareth: il fuoco che si fa intelligenza attiva e visione. Governa da 21° Cancro a 20° Leone, trasformando la sensibilità protettiva del Cancro nell'orgoglio solare del Leone.",
+   "ombra": "Mal dignificato è arrogante, violento, intollerante, vanitoso e pronto a imporsi con la forza."
+  },
+  "dritto": "Porta avanti le tue idee con passione e velocità: la tua energia contagia e apre la strada.",
+  "rovescio": "Orgoglio ferito, scatti d'ira, progetti bloccati dalla vanità o dall'impazienza.",
+  "ambiti": {
+   "amore": "Un amante generoso e romantico, a tratti vanitoso; relazione intensa e movimentata.",
+   "lavoro": "Iniziative dinamiche, leadership creativa, promozione di sé e dei propri progetti.",
+   "spirito": "Nobilitare la forza con uno scopo che vada oltre l'ego."
+  },
+  "nota_crowley": "Il Principe del Thoth guida un carro trainato da un leone fra le fiamme, con in mano la bacchetta della fenice: il fuoco che diventa volontà consapevole e rinasce da se stesso.",
+  "colori": [
+   "#F0E68C",
+   "#D2461E"
+  ]
+ },
+ {
+  "id": "bastoni-principessa",
+  "arcano": "minore",
+  "numero": null,
+  "numero_romano": null,
+  "seme": "bastoni",
+  "rango": "principessa",
+  "corte": true,
+  "nome_thoth": "Princess of Wands",
+  "titolo_thoth": null,
+  "nome_it": "Principessa di Bastoni",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Malkuth",
+  "elemento": "fuoco",
+  "sottoelemento": "terra",
+  "astrologia": "Quadrante celeste di Cancro, Leone, Vergine; trono dell'Asso",
+  "parole_chiave": [
+   "entusiasmo",
+   "audacia",
+   "spontaneità",
+   "ispirazione",
+   "trasformazione"
+  ],
+  "significati": {
+   "essoterico": "Una giovane persona brillante e audace, oppure un inizio pieno di entusiasmo. Indica notizie stimolanti, idee nuove, iniziative coraggiose e un'energia difficile da contenere.",
+   "psicologico": "È la parte fresca e temeraria di sé che sperimenta, osa e si lascia trasportare dall'entusiasmo; il fuoco vissuto nel corpo senza paura.",
+   "iniziatico": "Terra del Fuoco, lo He finale dello Yod, riferita a Malkuth: il fuoco che si incarna e si offre. Trono dell'Asso di Bastoni, governa il quadrante celeste di Cancro, Leone e Vergine, portando la scintilla dentro la materia.",
+   "ombra": "Mal dignificata è superficiale, crudele, instabile, facile ai capricci e all'ira improvvisa."
+  },
+  "dritto": "Osa: una scintilla di ispirazione chiede di diventare gesto concreto, adesso.",
+  "rovescio": "Entusiasmo spento o disperso in mille direzioni; capricci, instabilità, promesse non mantenute.",
+  "ambiti": {
+   "amore": "Seduzione, passione spontanea, flirt; molto calore, meno costanza.",
+   "lavoro": "Idee nuove, progetti creativi, spirito d'iniziativa; utile un metodo che dia continuità.",
+   "spirito": "La fiamma incarnata: il sacro vissuto nell'impulso vitale e nel coraggio."
+  },
+  "nota_crowley": "La Principessa del Thoth è nuda fra le fiamme, con una bacchetta sormontata dal sole, una tigre accanto e un'ara ornata di teste d'ariete: il fuoco che si fa corpo, audace e libero.",
+  "colori": [
+   "#8B6F47",
+   "#D2461E"
+  ]
+ },
+ {
+  "id": "coppe-01",
+  "arcano": "minore",
+  "numero": 1,
+  "numero_romano": null,
+  "seme": "coppe",
+  "rango": "asso",
+  "corte": false,
+  "nome_thoth": "Ace of Cups",
+  "titolo_thoth": "Root of the Powers of Water",
+  "nome_it": "Asso di Coppe",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Kether",
+  "elemento": "acqua",
+  "sottoelemento": null,
+  "astrologia": "Radice dell'Acqua",
+  "parole_chiave": [
+   "amore nascente",
+   "ricettività",
+   "grazia",
+   "fertilità emotiva",
+   "apertura"
+  ],
+  "significati": {
+   "essoterico": "Il principio dell'amore, della gioia e della fertilità emotiva. Annuncia un sentimento nuovo, una riconciliazione, un dono, un periodo di apertura del cuore.",
+   "psicologico": "È la capacità di ricevere: il cuore che si fa vuoto per potersi riempire. Invita ad abbassare le difese e a lasciarsi toccare dalla vita.",
+   "iniziatico": "Asso in Kether: radice dell'Acqua e primo He del Tetragrammaton, la Madre come coppa che accoglie la forza del Padre. Il suo trono è il quadrante celeste di Bilancia, Scorpione e Sagittario, governato dalla Principessa di Coppe.",
+   "ombra": "Mal dignificato indica sentimentalismo, emotività traboccante, dipendenza dal bisogno di essere amati."
+  },
+  "dritto": "Il cuore si apre: accogli ciò che arriva senza calcolare. Momento favorevole per l'amore, la creatività e la guarigione emotiva.",
+  "rovescio": "Emozioni trattenute o prosciugate, difficoltà a ricevere; oppure un'onda sentimentale che sommerge il giudizio.",
+  "ambiti": {
+   "amore": "Nuovo amore, dichiarazioni, riconciliazione, profonda intimità possibile.",
+   "lavoro": "Ambiente armonioso, progetti che nascono da una passione sincera, lavori di cura o artistici.",
+   "spirito": "Il Graal interiore: la ricettività come condizione della grazia."
+  },
+  "nota_crowley": "Crowley dipinge il Santo Graal che poggia su una falce di luna e riceve dall'alto un raggio di luce bianca, sopra un mare di loti: la Coppa come matrice della Madre suprema.",
+  "colori": [
+   "#F5F3E7",
+   "#1E6FB0"
+  ]
+ },
+ {
+  "id": "coppe-02",
+  "arcano": "minore",
+  "numero": 2,
+  "numero_romano": null,
+  "seme": "coppe",
+  "rango": "due",
+  "corte": false,
+  "nome_thoth": "Two of Cups",
+  "titolo_thoth": "Love",
+  "nome_it": "Due di Coppe — Amore",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Chokmah",
+  "elemento": "acqua",
+  "sottoelemento": null,
+  "astrologia": "Venere in Cancro",
+  "parole_chiave": [
+   "amore",
+   "unione",
+   "reciprocità",
+   "armonia",
+   "attrazione"
+  ],
+  "significati": {
+   "essoterico": "Amore, amicizia, reciprocità, armonia fra due persone o due parti. Indica un incontro felice, un accordo, una riconciliazione sincera.",
+   "psicologico": "È l'esperienza dello specchiarsi nell'altro e riconoscersi; il desiderio di condividere che nasce da una pienezza, non da una mancanza.",
+   "iniziatico": "L'Acqua in Chokmah, la forza originaria dell'amore, con Venere nel Cancro nel primo decano: l'affetto nella sua forma più tenera e protettiva. L'Amore è la volontà di unione che precede ogni forma, la polarità che si riconosce e si attrae.",
+   "ombra": "Mal dignificato indica infatuazione, dipendenza affettiva, sentimentalismo o dissoluzione in un rapporto."
+  },
+  "dritto": "Un'unione armoniosa è possibile o già in atto: coltivala con apertura e reciprocità.",
+  "rovescio": "Sbilanciamento nel rapporto, attese non corrisposte, difficoltà a comunicare i sentimenti.",
+  "ambiti": {
+   "amore": "Innamoramento reciproco, fidanzamento, riconciliazione dopo un malinteso.",
+   "lavoro": "Partnership felici, collaborazioni armoniose, accordi basati sulla fiducia.",
+   "spirito": "L'amore come legge: la polarità che si riconcilia in unità."
+  },
+  "nota_crowley": "Nel Thoth due delfini intrecciati sorgono da un loto e versano acqua in due coppe su un mare calmo: l'amore come armonia di polarità.",
+  "colori": [
+   "#8A8D8F",
+   "#1E6FB0"
+  ]
+ },
+ {
+  "id": "coppe-03",
+  "arcano": "minore",
+  "numero": 3,
+  "numero_romano": null,
+  "seme": "coppe",
+  "rango": "tre",
+  "corte": false,
+  "nome_thoth": "Three of Cups",
+  "titolo_thoth": "Abundance",
+  "nome_it": "Tre di Coppe — Abbondanza",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Binah",
+  "elemento": "acqua",
+  "sottoelemento": null,
+  "astrologia": "Mercurio in Cancro",
+  "parole_chiave": [
+   "abbondanza",
+   "festa",
+   "fertilità",
+   "gioia condivisa",
+   "grazia"
+  ],
+  "significati": {
+   "essoterico": "Abbondanza, celebrazione, fertilità, gioia condivisa con altri. Indica feste, incontri, momenti di grazia e un raccolto emotivo generoso.",
+   "psicologico": "È la gioia che nasce dalla condivisione; il piacere di ricevere e di dare senza calcolare. Richiede consapevolezza perché l'abbondanza non diventi dispersione.",
+   "iniziatico": "L'Acqua in Binah, la Grande Madre, con Mercurio nel Cancro nel secondo decano: l'amore diventa forma fertile e condivisa. L'Abbondanza è la pienezza della Madre, che però richiede attenzione a non essere presa per garantita.",
+   "ombra": "Mal dignificato indica eccesso, dissipazione, piaceri effimeri, superficialità."
+  },
+  "dritto": "Momento di gioia e abbondanza: condividila e festeggia con chi ami.",
+  "rovescio": "Eccesso di festeggiamenti, piaceri che si svuotano, difficoltà a godere di ciò che si ha.",
+  "ambiti": {
+   "amore": "Gioia, festeggiamenti, possibili notizie felici, anche di gravidanza.",
+   "lavoro": "Successo collettivo, team affiatato, progetti che danno frutto.",
+   "spirito": "La gratitudine come riconoscimento dell'abbondanza divina."
+  },
+  "nota_crowley": "Crowley disegna tre coppe a forma di melagrana che traboccano dai loti: il frutto di Persefone, dolce ma legato al mondo sotterraneo, che ricorda il prezzo di ogni abbondanza.",
+  "colori": [
+   "#1A1A1A",
+   "#1E6FB0"
+  ]
+ },
+ {
+  "id": "coppe-04",
+  "arcano": "minore",
+  "numero": 4,
+  "numero_romano": null,
+  "seme": "coppe",
+  "rango": "quattro",
+  "corte": false,
+  "nome_thoth": "Four of Cups",
+  "titolo_thoth": "Luxury",
+  "nome_it": "Quattro di Coppe — Lusso",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Chesed",
+  "elemento": "acqua",
+  "sottoelemento": null,
+  "astrologia": "Luna in Cancro",
+  "parole_chiave": [
+   "lusso",
+   "comfort",
+   "stabilità emotiva",
+   "appagamento",
+   "inerzia"
+  ],
+  "significati": {
+   "essoterico": "Comfort, piacere, stabilità affettiva, ma anche un inizio di stanchezza e di noia. Indica una situazione emotiva appagata che rischia di diventare statica.",
+   "psicologico": "È il desiderio di sicurezza affettiva che, soddisfatto, rischia di trasformarsi in immobilità: si custodisce ciò che si ha per paura di perderlo, e intanto il sentimento smette di scorrere.",
+   "iniziatico": "L'Acqua in Chesed, la Misericordia, con la Luna nel Cancro nel terzo decano: l'emozione diventa abitudine rassicurante. Il Lusso è il piacere stabilito, ma l'acqua stagnante contiene già il germe della decadenza.",
+   "ombra": "Mal dignificato indica apatia, sazietà, compiacimento, rifiuto di crescere."
+  },
+  "dritto": "Godi di ciò che hai, ma resta vigile: la stabilità emotiva può diventare una gabbia dorata.",
+  "rovescio": "Noia, insoddisfazione, desiderio di qualcosa di più; oppure resistenza al cambiamento emotivo.",
+  "ambiti": {
+   "amore": "Relazione comoda e rassicurante, forse un po' abitudinaria; il benessere va rinnovato con piccoli gesti nuovi.",
+   "lavoro": "Posizione stabile, ma forse poco stimolante; rischio di stagnazione.",
+   "spirito": "Distinguere il nutrimento che sostiene dalla gabbia dorata che addormenta."
+  },
+  "nota_crowley": "Nel Thoth quattro coppe poggiano su una base quadrata sopra un mare agitato: la stabilità costruita sull'instabilità delle emozioni.",
+  "colori": [
+   "#1F4E9A",
+   "#1E6FB0"
+  ]
+ },
+ {
+  "id": "coppe-05",
+  "arcano": "minore",
+  "numero": 5,
+  "numero_romano": null,
+  "seme": "coppe",
+  "rango": "cinque",
+  "corte": false,
+  "nome_thoth": "Five of Cups",
+  "titolo_thoth": "Disappointment",
+  "nome_it": "Cinque di Coppe — Delusione",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Geburah",
+  "elemento": "acqua",
+  "sottoelemento": null,
+  "astrologia": "Marte in Scorpione",
+  "parole_chiave": [
+   "delusione",
+   "perdita",
+   "rimpianto",
+   "frustrazione",
+   "dolore"
+  ],
+  "significati": {
+   "essoterico": "Delusione, perdita, aspettative tradite. Indica rotture, rimpianti, sentimenti feriti e il bisogno di elaborare un dolore, spesso arrivato proprio quando tutto sembrava tranquillo.",
+   "psicologico": "È il contraccolpo di un'illusione che crolla: la frustrazione può diventare amarezza se non viene riconosciuta e pianta, oppure maturità se viene compresa.",
+   "iniziatico": "L'Acqua in Geburah, la Severità, con Marte nello Scorpione nel primo decano: il fuoco marziale fa evaporare le acque. La Delusione è l'emozione che si scontra con la realtà, il dolore necessario della purificazione.",
+   "ombra": "Mal dignificata indica vittimismo, rancore, disperazione, fissazione sul passato."
+  },
+  "dritto": "Riconosci la perdita e lascia fluire il dolore: non tutto è perduto, ma serve tempo per elaborare prima di ricominciare.",
+  "rovescio": "Dolore negato o prolungato; ci si fissa su ciò che manca e non si vede ciò che resta.",
+  "ambiti": {
+   "amore": "Delusioni, distacchi, sentimenti non ricambiati; il cuore chiede tempo e sincerità.",
+   "lavoro": "Progetti falliti o aspettative disattese; rivedere obiettivi e alleanze.",
+   "spirito": "La delusione come liberazione dalle illusioni e primo passo verso un amore più vero."
+  },
+  "nota_crowley": "Crowley raffigura cinque coppe vuote disposte a pentagramma rovesciato, con i loti appassiti e un mare morto: l'amore disseccato dal fuoco marziale.",
+  "colori": [
+   "#C8102E",
+   "#1E6FB0"
+  ]
+ },
+ {
+  "id": "coppe-06",
+  "arcano": "minore",
+  "numero": 6,
+  "numero_romano": null,
+  "seme": "coppe",
+  "rango": "sei",
+  "corte": false,
+  "nome_thoth": "Six of Cups",
+  "titolo_thoth": "Pleasure",
+  "nome_it": "Sei di Coppe — Piacere",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Tiphareth",
+  "elemento": "acqua",
+  "sottoelemento": null,
+  "astrologia": "Sole in Scorpione",
+  "parole_chiave": [
+   "piacere",
+   "benessere",
+   "armonia",
+   "gioia",
+   "fecondità"
+  ],
+  "significati": {
+   "essoterico": "Piacere, benessere, armonia emotiva e fisica. Indica un periodo di gioia, di salute ritrovata, di soddisfazione nelle relazioni e di desideri che trovano appagamento naturale.",
+   "psicologico": "È la capacità di godere dell'amore e della vita senza sensi di colpa e senza eccessi; l'equilibrio emotivo che rende il piacere nutriente e non compulsivo.",
+   "iniziatico": "L'Acqua in Tiphareth, il cuore armonioso, con il Sole nello Scorpione nel secondo decano: il fuoco solare riscalda le acque profonde. Il Piacere è l'emozione in equilibrio, la gioia che nasce dalla pienezza vitale.",
+   "ombra": "Mal dignificato indica edonismo, vanità, ricerca di piaceri superficiali."
+  },
+  "dritto": "Periodo di gioia e armonia emotiva: accoglilo con gratitudine e lascia che rinnovi le tue energie.",
+  "rovescio": "Piacere che si esaurisce o diventa abitudine; difficoltà a godere, nostalgia di un benessere passato.",
+  "ambiti": {
+   "amore": "Relazione armoniosa e sensuale, benessere di coppia, riscoperta del piacere condiviso.",
+   "lavoro": "Soddisfazione, clima positivo, successi sereni ottenuti senza forzare.",
+   "spirito": "Il piacere come espressione della grazia: la sensualità santificata dalla consapevolezza."
+  },
+  "nota_crowley": "Nel Thoth sei loti versano acqua in sei coppe senza farle traboccare: il piacere nella sua misura perfetta, fecondità senza eccesso.",
+  "colori": [
+   "#E6B422",
+   "#1E6FB0"
+  ]
+ },
+ {
+  "id": "coppe-07",
+  "arcano": "minore",
+  "numero": 7,
+  "numero_romano": null,
+  "seme": "coppe",
+  "rango": "sette",
+  "corte": false,
+  "nome_thoth": "Seven of Cups",
+  "titolo_thoth": "Debauch",
+  "nome_it": "Sette di Coppe — Dissolutezza",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Netzach",
+  "elemento": "acqua",
+  "sottoelemento": null,
+  "astrologia": "Venere in Scorpione",
+  "parole_chiave": [
+   "dissolutezza",
+   "illusione",
+   "eccesso",
+   "tentazione",
+   "autoinganno"
+  ],
+  "significati": {
+   "essoterico": "Eccesso, fantasie, tentazioni, dispersione nei piaceri. Indica scelte confuse, desideri che intossicano, promesse seducenti che non reggono alla prova dei fatti.",
+   "psicologico": "È la seduzione dell'illusione: si fugge nella fantasia o nella gratificazione immediata per non sentire un vuoto. Chiede di chiedersi che cosa si stia davvero cercando.",
+   "iniziatico": "L'Acqua in Netzach, la Vittoria emotiva ma instabile, con Venere nello Scorpione, suo segno d'esilio, nel terzo decano: l'amore perde misura e si corrompe in brama. La Dissolutezza è il piacere che, privato di Tiphareth, marcisce su se stesso.",
+   "ombra": "Mal dignificato indica dipendenze, autoinganno sistematico, corruzione morale, ambienti tossici."
+  },
+  "dritto": "Attenzione alle illusioni e ai piaceri che promettono troppo: distingui il desiderio autentico dalla fuga.",
+  "rovescio": "Risveglio da un incantesimo e presa di coscienza; oppure caduta più profonda nella dipendenza, se si continua a negarla.",
+  "ambiti": {
+   "amore": "Tentazioni, relazioni ambigue o tossiche, idealizzazioni destinate a infrangersi.",
+   "lavoro": "Progetti fumosi, offerte troppo belle per essere vere, dispersione di energie e di risorse.",
+   "spirito": "Purificare il desiderio: riconoscere l'acqua viva da quella stagnante."
+  },
+  "nota_crowley": "Crowley dipinge sette coppe iridescenti che gocciolano un liquido viscoso, mentre i loti si sono mutati in gigli tigrati velenosi sopra una palude: il piacere corrotto.",
+  "colori": [
+   "#2E8B57",
+   "#1E6FB0"
+  ]
+ },
+ {
+  "id": "coppe-08",
+  "arcano": "minore",
+  "numero": 8,
+  "numero_romano": null,
+  "seme": "coppe",
+  "rango": "otto",
+  "corte": false,
+  "nome_thoth": "Eight of Cups",
+  "titolo_thoth": "Indolence",
+  "nome_it": "Otto di Coppe — Indolenza",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Hod",
+  "elemento": "acqua",
+  "sottoelemento": null,
+  "astrologia": "Saturno in Pesci",
+  "parole_chiave": [
+   "indolenza",
+   "esaurimento",
+   "abbandono",
+   "disinvestimento",
+   "ristagno"
+  ],
+  "significati": {
+   "essoterico": "Stanchezza emotiva, disinteresse, abbandono di ciò che non nutre più. Indica la fine di un ciclo affettivo e la necessità di cercare altrove nuova linfa.",
+   "psicologico": "È lo sfinimento di chi ha dato troppo a qualcosa che non restituisce; l'apatia che segnala un bisogno profondo di cambiamento, più che una colpa.",
+   "iniziatico": "L'Acqua in Hod, lo Splendore intellettuale, con Saturno nei Pesci nel primo decano: le acque perdono corrente sotto il peso di Saturno e il loro calore si spegne. L'Indolenza è l'emozione che non scorre più, il sentimento divenuto palude.",
+   "ombra": "Mal dignificata indica depressione, inerzia, abbandono delle responsabilità, rassegnazione."
+  },
+  "dritto": "Qualcosa si è esaurito: riconoscilo e ritira le tue energie per investirle dove c'è vita.",
+  "rovescio": "Stanchezza negata, ostinazione a restare dove non si è più nutriti; oppure primo ritorno di interesse e vitalità.",
+  "ambiti": {
+   "amore": "Distacco emotivo, rapporto spento; bisogno di chiedersi con onestà cosa resta.",
+   "lavoro": "Demotivazione, progetti arenati, desiderio di cambiare ambito o ritmo.",
+   "spirito": "Il distacco come passaggio necessario verso sorgenti più profonde."
+  },
+  "nota_crowley": "Nel Thoth otto coppe basse e incrinate raccolgono poche gocce da loti avvizziti, sopra un mare torbido e immobile: il ristagno sotto un cielo plumbeo.",
+  "colori": [
+   "#E07B24",
+   "#1E6FB0"
+  ]
+ },
+ {
+  "id": "coppe-09",
+  "arcano": "minore",
+  "numero": 9,
+  "numero_romano": null,
+  "seme": "coppe",
+  "rango": "nove",
+  "corte": false,
+  "nome_thoth": "Nine of Cups",
+  "titolo_thoth": "Happiness",
+  "nome_it": "Nove di Coppe — Felicità",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Yesod",
+  "elemento": "acqua",
+  "sottoelemento": null,
+  "astrologia": "Giove in Pesci",
+  "parole_chiave": [
+   "felicità",
+   "soddisfazione",
+   "desiderio esaudito",
+   "benessere",
+   "gratitudine"
+  ],
+  "significati": {
+   "essoterico": "Felicità, soddisfazione, desideri realizzati. Indica salute, serenità, successo affettivo e materiale: tradizionalmente è la carta del desiderio esaudito.",
+   "psicologico": "È la gioia della realizzazione emotiva vissuta senza sensi di colpa; la capacità di sentirsi appagati e di lasciare che questa pienezza si irradi sugli altri.",
+   "iniziatico": "L'Acqua in Yesod, il Fondamento, con Giove nei Pesci, suo domicilio, nel secondo decano: il grande benefico espande le acque in una base stabile. La Felicità è l'emozione tornata equilibrata dopo le prove di Netzach e Hod.",
+   "ombra": "Mal dignificata indica vanità, compiacimento, soddisfazione egoistica che ignora gli altri."
+  },
+  "dritto": "I tuoi desideri trovano risposta: goditi la felicità con gratitudine e condividila.",
+  "rovescio": "Felicità di facciata o dipendente da condizioni esterne; insoddisfazione nascosta sotto l'apparenza.",
+  "ambiti": {
+   "amore": "Serenità di coppia, desideri condivisi realizzati, affetto generoso.",
+   "lavoro": "Soddisfazione, risultati raggiunti, riconoscimento e stabilità economica.",
+   "spirito": "La gratitudine come atto spirituale che moltiplica la gioia."
+  },
+  "nota_crowley": "Nel Thoth nove coppe disposte in un quadrato perfetto traboccano d'acqua versata dai loti: la felicità piena, ordinata e stabile.",
+  "colori": [
+   "#6A3D9A",
+   "#1E6FB0"
+  ]
+ },
+ {
+  "id": "coppe-10",
+  "arcano": "minore",
+  "numero": 10,
+  "numero_romano": null,
+  "seme": "coppe",
+  "rango": "dieci",
+  "corte": false,
+  "nome_thoth": "Ten of Cups",
+  "titolo_thoth": "Satiety",
+  "nome_it": "Dieci di Coppe — Sazietà",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Malkuth",
+  "elemento": "acqua",
+  "sottoelemento": null,
+  "astrologia": "Marte in Pesci",
+  "parole_chiave": [
+   "sazietà",
+   "compimento",
+   "pienezza",
+   "culmine",
+   "svolta"
+  ],
+  "significati": {
+   "essoterico": "Pienezza emotiva, compimento, successo affettivo. Indica il culmine di una felicità che, proprio perché completa, prepara un cambiamento.",
+   "psicologico": "È la pienezza che rischia di diventare sazietà: avere tutto ciò che si voleva può generare un nuovo vuoto. Chiede di coltivare la gratitudine senza aggrapparsi.",
+   "iniziatico": "L'Acqua in Malkuth, con Marte nei Pesci nel terzo decano: il fuoco marziale turba la perfezione delle acque. La Sazietà è il compimento che contiene il germe della rottura, perché ciò che è pieno può solo traboccare.",
+   "ombra": "Mal dignificata indica noia, eccesso, spreco, dissipazione di ciò che si è ottenuto."
+  },
+  "dritto": "Pienezza e compimento: goditi il risultato, ma preparati con saggezza al ciclo successivo.",
+  "rovescio": "Sazietà, insoddisfazione, desiderio di cambiamento; oppure difficoltà a riconoscere quanto si ha già.",
+  "ambiti": {
+   "amore": "Armonia familiare, affetti realizzati; attenzione alla routine che spegne il desiderio.",
+   "lavoro": "Culmine di un progetto, successo pieno; è il momento di pensare al rinnovamento.",
+   "spirito": "Il compimento come apertura: la coppa piena va offerta per poter essere riempita di nuovo."
+  },
+  "nota_crowley": "Crowley dispone dieci coppe sull'Albero della Vita, dominate da tonalità rosse; la coppa più alta si inclina, a indicare che la pienezza sta per rovesciarsi.",
+  "colori": [
+   "#9C8A3E",
+   "#1E6FB0"
+  ]
+ },
+ {
+  "id": "coppe-cavaliere",
+  "arcano": "minore",
+  "numero": null,
+  "numero_romano": null,
+  "seme": "coppe",
+  "rango": "cavaliere",
+  "corte": true,
+  "nome_thoth": "Knight of Cups",
+  "titolo_thoth": null,
+  "nome_it": "Cavaliere di Coppe",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Chokmah",
+  "elemento": "acqua",
+  "sottoelemento": "fuoco",
+  "astrologia": "21° Acquario – 20° Pesci",
+  "parole_chiave": [
+   "idealismo",
+   "romanticismo",
+   "grazia",
+   "sensibilità",
+   "ispirazione"
+  ],
+  "significati": {
+   "essoterico": "Una persona romantica, gentile e sognatrice, oppure l'arrivo di una proposta affettiva o artistica. Indica inviti, dichiarazioni, entusiasmi idealisti.",
+   "psicologico": "È l'aspetto della personalità mosso dagli ideali e dai sentimenti: entusiasta e generoso, ma poco costante, più innamorato dell'immagine dell'amore che della sua fatica quotidiana.",
+   "iniziatico": "Fuoco dell'Acqua, lo Yod dell'He, riferito a Chokmah: l'impeto che mette in moto le acque, come la pioggia e le sorgenti. Governa da 21° Acquario a 20° Pesci, unendo visione e compassione.",
+   "ombra": "Mal dignificato è pigro, sensuale, poco sincero, incostante."
+  },
+  "dritto": "Accogli l'invito o l'ispirazione: il sentimento chiede di essere espresso.",
+  "rovescio": "Idealismo deluso, promesse non mantenute, emotività instabile.",
+  "ambiti": {
+   "amore": "Un corteggiatore romantico, proposte affettive, dichiarazioni.",
+   "lavoro": "Proposte creative o artistiche, progetti ispirati da ideali.",
+   "spirito": "Il cavaliere del Graal che segue un ideale di bellezza."
+  },
+  "nota_crowley": "Crowley ritrae un cavaliere alato su un cavallo bianco che si slancia in avanti, reggendo una coppa da cui emerge un granchio, con un pavone accanto: la grazia sensibile dell'acqua in movimento.",
+  "colori": [
+   "#FF7F24",
+   "#1E6FB0"
+  ]
+ },
+ {
+  "id": "coppe-regina",
+  "arcano": "minore",
+  "numero": null,
+  "numero_romano": null,
+  "seme": "coppe",
+  "rango": "regina",
+  "corte": true,
+  "nome_thoth": "Queen of Cups",
+  "titolo_thoth": null,
+  "nome_it": "Regina di Coppe",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Binah",
+  "elemento": "acqua",
+  "sottoelemento": "acqua",
+  "astrologia": "21° Gemelli – 20° Cancro",
+  "parole_chiave": [
+   "riflessione",
+   "intuizione",
+   "sensibilità",
+   "sogno",
+   "empatia"
+  ],
+  "significati": {
+   "essoterico": "Una persona sensibile, intuitiva e accogliente, oppure la capacità di rispecchiare e comprendere gli altri. Indica ascolto, empatia, doti artistiche o medianiche.",
+   "psicologico": "È la psiche come specchio: riflette ciò che le si presenta con fedeltà, ma rischia di perdere i propri contorni.",
+   "iniziatico": "Acqua dell'Acqua, lo He dell'He, riferita a Binah: la ricettività pura, l'acqua che riflette senza trattenere. Governa da 21° Gemelli a 20° Cancro, dove la mente si fa sentimento.",
+   "ombra": "Mal dignificata è dipendente, influenzabile, persa nelle fantasie, incapace di distinguere il proprio sentire da quello altrui."
+  },
+  "dritto": "Ascolta la tua sensibilità e usala per comprendere: la risposta è nelle emozioni riflesse.",
+  "rovescio": "Confusione emotiva, confini deboli, eccesso di sensibilità o di fantasia.",
+  "ambiti": {
+   "amore": "Una partner dolce e intuitiva; amore profondo ma che chiede protezione.",
+   "lavoro": "Ruoli di cura, consulenza, arte; capacità di comprendere i bisogni altrui.",
+   "spirito": "La purezza dello specchio che riflette la luce divina senza distorcerla."
+  },
+  "nota_crowley": "La Regina del Thoth è quasi invisibile, avvolta da veli di luce e riflessa in acque immobili, con un ibis e un loto: pura ricettività, specchio perfetto.",
+  "colori": [
+   "#4682B4",
+   "#1E6FB0"
+  ]
+ },
+ {
+  "id": "coppe-principe",
+  "arcano": "minore",
+  "numero": null,
+  "numero_romano": null,
+  "seme": "coppe",
+  "rango": "principe",
+  "corte": true,
+  "nome_thoth": "Prince of Cups",
+  "titolo_thoth": null,
+  "nome_it": "Principe di Coppe",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Tiphareth",
+  "elemento": "acqua",
+  "sottoelemento": "aria",
+  "astrologia": "21° Bilancia – 20° Scorpione",
+  "parole_chiave": [
+   "passione segreta",
+   "intensità",
+   "creatività",
+   "riservatezza",
+   "profondità"
+  ],
+  "significati": {
+   "essoterico": "Una persona appassionata ma riservata, dotata di talento artistico, con emozioni vulcaniche sotto un'apparenza calma e controllata; oppure una situazione affettiva intensa e non dichiarata.",
+   "psicologico": "È l'intelligenza che nasce dall'emozione: capacità di trasformare i sentimenti in arte e strategia, ma anche tendenza a nascondere ciò che si prova e a usarlo come potere.",
+   "iniziatico": "Aria dell'Acqua, il Vau dell'He, riferito a Tiphareth: il vapore che sale dalle acque. Governa da 21° Bilancia a 20° Scorpione, fra armonia venusiana e intensità scorpionica.",
+   "ombra": "Mal dignificato è spietato, manipolatore, calcolatore, capace di ferire senza scrupoli."
+  },
+  "dritto": "Le tue emozioni profonde sono una forza creativa: esprimile con sincerità invece di tenerle sotto controllo.",
+  "rovescio": "Emozioni nascoste che diventano manipolazione; segreti, gelosie, freddezza.",
+  "ambiti": {
+   "amore": "Passione profonda ma poco espressa; un amante intenso e misterioso.",
+   "lavoro": "Creatività, strategia, capacità di leggere le emozioni altrui.",
+   "spirito": "Trasformare la passione in consapevolezza, come l'acqua che diventa vapore e sale."
+  },
+  "nota_crowley": "Il Principe di Coppe guida un carro trainato da un'aquila su acque placide, reggendo un loto e una coppa da cui esce un serpente: il potere nascosto sotto la calma.",
+  "colori": [
+   "#F0E68C",
+   "#1E6FB0"
+  ]
+ },
+ {
+  "id": "coppe-principessa",
+  "arcano": "minore",
+  "numero": null,
+  "numero_romano": null,
+  "seme": "coppe",
+  "rango": "principessa",
+  "corte": true,
+  "nome_thoth": "Princess of Cups",
+  "titolo_thoth": null,
+  "nome_it": "Principessa di Coppe",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Malkuth",
+  "elemento": "acqua",
+  "sottoelemento": "terra",
+  "astrologia": "Quadrante celeste di Bilancia, Scorpione, Sagittario; trono dell'Asso",
+  "parole_chiave": [
+   "dolcezza",
+   "immaginazione",
+   "sensibilità",
+   "sogno",
+   "gentilezza"
+  ],
+  "significati": {
+   "essoterico": "Una giovane persona dolce, sognatrice e gentile, oppure un nuovo inizio emotivo o creativo che nasce in silenzio. Indica messaggi affettuosi, fantasia, sensibilità artistica e talvolta intuizioni medianiche.",
+   "psicologico": "È la parte tenera e immaginativa di sé, capace di sognare e di commuoversi; un mondo interiore ricco che chiede di essere protetto e insieme di esprimersi.",
+   "iniziatico": "Terra dell'Acqua, lo He finale dell'He, riferita a Malkuth: l'acqua che si cristallizza e prende forma. Trono dell'Asso di Coppe, governa il quadrante celeste di Bilancia, Scorpione e Sagittario, dove la ricettività della Madre diventa corpo e immagine.",
+   "ombra": "Mal dignificata è egoista, pigra, capricciosa, rinchiusa in fantasie che la allontanano dagli altri."
+  },
+  "dritto": "Accogli i sogni e i messaggi dell'inconscio: nutri la tua sensibilità e dalle una forma creativa.",
+  "rovescio": "Immaturità emotiva, fantasie fuori luogo, pigrizia; oppure sensibilità soffocata per paura del giudizio.",
+  "ambiti": {
+   "amore": "Tenerezza, affetto sincero, un amore giovane o un modo più delicato di amare.",
+   "lavoro": "Creatività, idee nuove, lavori artistici o di cura; un talento ancora da far crescere.",
+   "spirito": "La dolcezza come porta della grazia e dell'immaginazione sacra."
+  },
+  "nota_crowley": "Nel Thoth la Principessa danza fra le onde, con una corona di cigno, un delfino e una conchiglia da cui emerge una tartaruga: la fantasia e la dolcezza dell'acqua incarnata.",
+  "colori": [
+   "#8B6F47",
+   "#1E6FB0"
+  ]
+ },
+ {
+  "id": "spade-01",
+  "arcano": "minore",
+  "numero": 1,
+  "numero_romano": null,
+  "seme": "spade",
+  "rango": "asso",
+  "corte": false,
+  "nome_thoth": "Ace of Swords",
+  "titolo_thoth": "Root of the Powers of Air",
+  "nome_it": "Asso di Spade",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Kether",
+  "elemento": "aria",
+  "sottoelemento": null,
+  "astrologia": "Radice dell'Aria",
+  "parole_chiave": [
+   "chiarezza",
+   "intelletto",
+   "verità",
+   "decisione",
+   "invocazione"
+  ],
+  "significati": {
+   "essoterico": "Forza mentale allo stato puro: un'idea che taglia la nebbia, una decisione netta, la verità che si impone. Annuncia chiarimenti, vittorie ottenute con la lucidità, nuove prospettive.",
+   "psicologico": "È la mente che distingue: la capacità di vedere le cose come sono e di nominarle. Ogni chiarezza però separa, e chiede il coraggio di accettare ciò che si scopre.",
+   "iniziatico": "Asso in Kether: radice dell'Aria e Vau del Tetragrammaton, il Figlio che nasce dall'unione di Padre e Madre. Il suo trono è il quadrante celeste di Capricorno, Acquario e Pesci, governato dalla Principessa di Spade.",
+   "ombra": "Mal dignificato indica freddezza tagliente, fanatismo delle idee, parole usate come armi."
+  },
+  "dritto": "Una verità si fa chiara: decidi con lucidità e agisci su ciò che hai compreso.",
+  "rovescio": "Pensiero confuso o bloccato, decisioni rimandate; oppure una lucidità che si fa crudeltà e giudizio.",
+  "ambiti": {
+   "amore": "Chiarimento necessario, conversazione franca che scioglie un equivoco.",
+   "lavoro": "Soluzione intelligente a un problema, progetto intellettuale, decisione strategica.",
+   "spirito": "La spada del mago: discriminare il vero dal falso al servizio della Volontà."
+  },
+  "nota_crowley": "Nel Thoth la spada del Mago sale verso una corona di ventidue raggi di luce, con incisa sulla lama la parola Thelema, e disperde le nubi della mente: l'intelletto illuminato dalla Volontà.",
+  "colori": [
+   "#F5F3E7",
+   "#D9C23A"
+  ]
+ },
+ {
+  "id": "spade-02",
+  "arcano": "minore",
+  "numero": 2,
+  "numero_romano": null,
+  "seme": "spade",
+  "rango": "due",
+  "corte": false,
+  "nome_thoth": "Two of Swords",
+  "titolo_thoth": "Peace",
+  "nome_it": "Due di Spade — Pace",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Chokmah",
+  "elemento": "aria",
+  "sottoelemento": null,
+  "astrologia": "Luna in Bilancia",
+  "parole_chiave": [
+   "pace",
+   "equilibrio",
+   "tregua interiore",
+   "armonia",
+   "riconciliazione"
+  ],
+  "significati": {
+   "essoterico": "Pace ritrovata dopo un conflitto, equilibrio fra forze opposte, riconciliazione. Indica una calma temporanea che permette di riflettere prima di agire.",
+   "psicologico": "È la mente che trova quiete sospendendo il giudizio; la capacità di tenere insieme punti di vista contrari senza forzare una scelta.",
+   "iniziatico": "L'Aria in Chokmah, con la Luna nella Bilancia nel primo decano: la dolcezza lunare nel segno dell'equilibrio. La Pace è l'intelletto nella sua forma originaria, prima che la divisione diventi conflitto: una calma fragile, perché l'Aria per natura si muove.",
+   "ombra": "Mal dignificata indica indecisione, stallo, pace apparente che rimanda un problema."
+  },
+  "dritto": "Concediti una tregua: l'equilibrio attuale permette di chiarire le idee senza fretta.",
+  "rovescio": "Pace fragile che si incrina; indecisione protratta, conflitti evitati invece che risolti.",
+  "ambiti": {
+   "amore": "Riconciliazione, calma dopo una discussione; attenzione a non evitare temi importanti.",
+   "lavoro": "Accordi, mediazioni, pausa nei conflitti professionali.",
+   "spirito": "La quiete mentale come porta della meditazione."
+  },
+  "nota_crowley": "Crowley incrocia due spade unite da una rosa azzurra a cinque petali, con un motivo geometrico di sfondo: l'armonia che nasce dalla tensione dei contrari.",
+  "colori": [
+   "#8A8D8F",
+   "#D9C23A"
+  ]
+ },
+ {
+  "id": "spade-03",
+  "arcano": "minore",
+  "numero": 3,
+  "numero_romano": null,
+  "seme": "spade",
+  "rango": "tre",
+  "corte": false,
+  "nome_thoth": "Three of Swords",
+  "titolo_thoth": "Sorrow",
+  "nome_it": "Tre di Spade — Dolore",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Binah",
+  "elemento": "aria",
+  "sottoelemento": null,
+  "astrologia": "Saturno in Bilancia",
+  "parole_chiave": [
+   "dolore",
+   "separazione",
+   "malinconia",
+   "ferita",
+   "comprensione"
+  ],
+  "significati": {
+   "essoterico": "Dolore, delusione, separazione, lacrime. Indica ferite causate da parole, verità amare, tradimenti o rotture, ma anche il momento in cui la sofferenza viene finalmente riconosciuta.",
+   "psicologico": "È la mente che comprende il proprio dolore e non può più ignorarlo; la tristezza che nasce dalla consapevolezza. Chiede di attraversarla invece di anestetizzarla.",
+   "iniziatico": "L'Aria in Binah, la Madre oscura, con Saturno esaltato nella Bilancia nel secondo decano: il peso del tempo e del limite grava sull'intelletto. Il Dolore non è una disgrazia personale ma la malinconia cosmica di Binah, il grembo del Caos in cui la forma nasce soffrendo.",
+   "ombra": "Mal dignificato indica tristezza cronica, rimuginio, crudeltà verbale, sofferenza coltivata come identità."
+  },
+  "dritto": "Accogli il dolore come parte del processo: nominarlo e comprenderlo è il primo passo per guarire.",
+  "rovescio": "Dolore represso o negato che si trasforma in cinismo; oppure lenta, faticosa guarigione di una ferita antica.",
+  "ambiti": {
+   "amore": "Separazione, gelosia, terzo incomodo o parole che feriscono; tempo di elaborare con onestà.",
+   "lavoro": "Delusioni, conflitti, notizie spiacevoli; decisioni dolorose ma chiarificatrici.",
+   "spirito": "Il dolore come maestro della comprensione e della compassione."
+  },
+  "nota_crowley": "Nel Thoth una lunga spada diritta colpisce il punto in cui si incontrano due spade ricurve e la rosa gialla si spezza, su un cielo di tempesta: la tristezza cosmica della Grande Madre.",
+  "colori": [
+   "#1A1A1A",
+   "#D9C23A"
+  ]
+ },
+ {
+  "id": "spade-04",
+  "arcano": "minore",
+  "numero": 4,
+  "numero_romano": null,
+  "seme": "spade",
+  "rango": "quattro",
+  "corte": false,
+  "nome_thoth": "Four of Swords",
+  "titolo_thoth": "Truce",
+  "nome_it": "Quattro di Spade — Tregua",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Chesed",
+  "elemento": "aria",
+  "sottoelemento": null,
+  "astrologia": "Giove in Bilancia",
+  "parole_chiave": [
+   "tregua",
+   "riposo",
+   "ritiro",
+   "convalescenza",
+   "compromesso"
+  ],
+  "significati": {
+   "essoterico": "Tregua, riposo dopo la lotta, convalescenza, sospensione delle ostilità. Indica un periodo per recuperare le forze e riorganizzare le idee, spesso grazie a un compromesso.",
+   "psicologico": "È la mente che si concede una pausa per non spezzarsi; la saggezza di ritirarsi prima di esaurirsi, ma anche la tentazione di scambiare la tregua per una soluzione definitiva.",
+   "iniziatico": "L'Aria in Chesed, la Misericordia ordinatrice, con Giove nella Bilancia nel terzo decano: l'intelletto si stabilizza in accordi e convenzioni. La Tregua è un ordine imposto alla mente, utile ma provvisorio, perché la pace dell'Aria nasce da un compromesso.",
+   "ombra": "Mal dignificata indica isolamento, rinuncia per stanchezza, conformismo, accordi che nascondono tensioni."
+  },
+  "dritto": "Fermati e recupera: una pausa strategica ti rende più lucido. Accetta un compromesso ragionevole.",
+  "rovescio": "Riposo forzato o rifiutato; la tregua si rompe, oppure ci si nasconde troppo a lungo dietro la prudenza.",
+  "ambiti": {
+   "amore": "Periodo di distanza per riflettere; tregua dopo un conflitto che va però chiarito.",
+   "lavoro": "Pausa, ferie, ristrutturazione; accordi sindacali o compromessi temporanei.",
+   "spirito": "Il ritiro meditativo come rigenerazione della mente."
+  },
+  "nota_crowley": "Crowley dispone quattro spade con le punte convergenti al centro di una rosa di quarantanove petali, a formare una croce di Sant'Andrea: l'ordine sociale che contiene il conflitto.",
+  "colori": [
+   "#1F4E9A",
+   "#D9C23A"
+  ]
+ },
+ {
+  "id": "spade-05",
+  "arcano": "minore",
+  "numero": 5,
+  "numero_romano": null,
+  "seme": "spade",
+  "rango": "cinque",
+  "corte": false,
+  "nome_thoth": "Five of Swords",
+  "titolo_thoth": "Defeat",
+  "nome_it": "Cinque di Spade — Sconfitta",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Geburah",
+  "elemento": "aria",
+  "sottoelemento": null,
+  "astrologia": "Venere in Acquario",
+  "parole_chiave": [
+   "sconfitta",
+   "umiliazione",
+   "perdita",
+   "debolezza",
+   "disfatta"
+  ],
+  "significati": {
+   "essoterico": "Sconfitta, perdita, umiliazione, fallimento di un piano. Indica situazioni in cui la forza o l'intelligenza non bastano, e un conflitto si conclude male.",
+   "psicologico": "È la mente indebolita dalla sensibilità: il timore del conflitto, o la tendenza a cedere per quieto vivere, che porta proprio alla sconfitta temuta.",
+   "iniziatico": "L'Aria in Geburah, la Severità, con Venere nell'Acquario nel primo decano: la dolcezza venusiana, in un segno freddo, indebolisce la spada. La Sconfitta è l'intelletto disgregato dalla sua stessa mitezza, la pace comprata a prezzo della verità.",
+   "ombra": "Mal dignificata indica crudeltà, meschinità, vittorie ottenute con l'inganno, amarezza e desiderio di rivalsa."
+  },
+  "dritto": "Riconosci la sconfitta senza farne un'identità: impara la lezione e ritirati con dignità.",
+  "rovescio": "Sconfitta negata o rimuginata; rancore, voglia di vendetta, oppure primo passo verso il riscatto.",
+  "ambiti": {
+   "amore": "Litigi persi, orgoglio ferito, rapporto indebolito dalla sfiducia.",
+   "lavoro": "Progetto fallito, conflitti che si chiudono in perdita; necessità di cambiare strategia.",
+   "spirito": "L'umiltà come frutto della sconfitta dell'ego."
+  },
+  "nota_crowley": "Nel Thoth cinque spade dalle else diverse e piegate formano un pentagramma rovesciato, mentre i petali della rosa cadono a terra: l'ordine mentale disgregato.",
+  "colori": [
+   "#C8102E",
+   "#D9C23A"
+  ]
+ },
+ {
+  "id": "spade-06",
+  "arcano": "minore",
+  "numero": 6,
+  "numero_romano": null,
+  "seme": "spade",
+  "rango": "sei",
+  "corte": false,
+  "nome_thoth": "Six of Swords",
+  "titolo_thoth": "Science",
+  "nome_it": "Sei di Spade — Scienza",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Tiphareth",
+  "elemento": "aria",
+  "sottoelemento": null,
+  "astrologia": "Mercurio in Acquario",
+  "parole_chiave": [
+   "scienza",
+   "intelligenza",
+   "metodo",
+   "comprensione",
+   "obiettività"
+  ],
+  "significati": {
+   "essoterico": "Intelligenza, studio, comprensione obiettiva, soluzione di problemi. Indica un passaggio verso acque più calme grazie alla conoscenza e al metodo.",
+   "psicologico": "È la mente equilibrata che osserva senza pregiudizio; la capacità di applicare il ragionamento con chiarezza e distacco.",
+   "iniziatico": "L'Aria in Tiphareth, il cuore dell'Albero, con Mercurio nell'Acquario nel secondo decano: l'intelletto illuminato dalla coscienza solare. La Scienza è la mente in perfetto equilibrio, la conoscenza integrata al centro dell'essere.",
+   "ombra": "Mal dignificata indica freddezza intellettuale, pedanteria, sapere senza saggezza."
+  },
+  "dritto": "Affronta la situazione con metodo e obiettività: la conoscenza porta la soluzione.",
+  "rovescio": "Pensiero confuso, conoscenze insufficienti o usate male; oppure eccesso di analisi.",
+  "ambiti": {
+   "amore": "Relazione fondata sulla comprensione reciproca e sul dialogo.",
+   "lavoro": "Studio, ricerca, soluzioni tecniche, progressi grazie alla competenza.",
+   "spirito": "La conoscenza come via verso la saggezza: comprendere per liberarsi."
+  },
+  "nota_crowley": "Crowley dispone sei spade le cui else formano un esagramma e le cui punte toccano una croce con la rosa al centro: l'intelletto armonizzato dalla conoscenza.",
+  "colori": [
+   "#E6B422",
+   "#D9C23A"
+  ]
+ },
+ {
+  "id": "spade-07",
+  "arcano": "minore",
+  "numero": 7,
+  "numero_romano": null,
+  "seme": "spade",
+  "rango": "sette",
+  "corte": false,
+  "nome_thoth": "Seven of Swords",
+  "titolo_thoth": "Futility",
+  "nome_it": "Sette di Spade — Futilità",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Netzach",
+  "elemento": "aria",
+  "sottoelemento": null,
+  "astrologia": "Luna in Acquario",
+  "parole_chiave": [
+   "futilità",
+   "instabilità",
+   "sforzo vano",
+   "compromesso",
+   "astuzia"
+  ],
+  "significati": {
+   "essoterico": "Sforzi inutili, piani instabili, tentativi che falliscono per mancanza di forza. Indica compromessi deboli, strategie che non portano frutto e talvolta inganno.",
+   "psicologico": "È la mente che tenta di vincere con astuzia o con compromessi ciò che non osa affrontare direttamente; la stanchezza che porta a cedere proprio quando servirebbe fermezza.",
+   "iniziatico": "L'Aria in Netzach, la Vittoria instabile, con la Luna nell'Acquario nel terzo decano: la volubilità lunare mina la forza della mente. La Futilità è l'intelletto che perde il sostegno della volontà.",
+   "ombra": "Mal dignificata indica inganno, codardia, furti, tradimenti, sforzi dispersi in mille direzioni."
+  },
+  "dritto": "Non disperdere energie: verifica se i tuoi sforzi colpiscono il punto giusto e se la strategia è davvero onesta.",
+  "rovescio": "Sforzi vani che finalmente si interrompono; oppure un'astuzia che viene scoperta, un inganno che emerge.",
+  "ambiti": {
+   "amore": "Rapporto instabile, poca sincerità, tentativi vani di cambiare l'altro.",
+   "lavoro": "Progetti inconcludenti, piani deboli, necessità di strategia più diretta.",
+   "spirito": "Riconoscere la futilità dello sforzo che non nasce dalla Volontà Vera."
+  },
+  "nota_crowley": "Nel Thoth sei spade disposte a mezzaluna puntano contro la lama di una spada centrale più grande: molte piccole volontà che logorano un'unica forza.",
+  "colori": [
+   "#2E8B57",
+   "#D9C23A"
+  ]
+ },
+ {
+  "id": "spade-08",
+  "arcano": "minore",
+  "numero": 8,
+  "numero_romano": null,
+  "seme": "spade",
+  "rango": "otto",
+  "corte": false,
+  "nome_thoth": "Eight of Swords",
+  "titolo_thoth": "Interference",
+  "nome_it": "Otto di Spade — Interferenza",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Hod",
+  "elemento": "aria",
+  "sottoelemento": null,
+  "astrologia": "Giove in Gemelli",
+  "parole_chiave": [
+   "interferenza",
+   "ostacolo",
+   "indecisione",
+   "dispersione",
+   "restrizione"
+  ],
+  "significati": {
+   "essoterico": "Interferenze, ostacoli imprevisti, impedimenti che frenano l'azione. Indica situazioni bloccate da dettagli, da persone esterne o da un eccesso di opzioni e di scrupoli.",
+   "psicologico": "È la mente distratta e sovraccarica, che si perde nelle alternative e nei dubbi fino a non riuscire più a muoversi. Spesso la gabbia è fatta dei propri pensieri.",
+   "iniziatico": "L'Aria in Hod, lo Splendore intellettuale, con Giove nei Gemelli, suo segno d'esilio, nel primo decano: la benevolenza gioviale si frammenta nella molteplicità mercuriale. L'Interferenza è la volontà che si disperde in mille direzioni per mancanza di un centro.",
+   "ombra": "Mal dignificata indica confusione, paralisi, meschinità, incapacità di vedere l'insieme."
+  },
+  "dritto": "Individua l'interferenza reale, separandola da quelle immaginarie, e concentra le forze sull'essenziale.",
+  "rovescio": "Ostacoli che cominciano a sciogliersi; oppure blocchi che si aggravano perché non si ha il coraggio di scegliere.",
+  "ambiti": {
+   "amore": "Interferenze esterne, dubbi, malintesi; troppe parole e poca chiarezza.",
+   "lavoro": "Burocrazia, contrattempi, piccoli errori che rallentano; utile semplificare.",
+   "spirito": "Liberare la mente dal superfluo per ritrovare un unico centro."
+  },
+  "nota_crowley": "Crowley incrocia due lunghe spade verticali con sei spade corte di fogge e culture diverse: una mente disturbata da troppe interferenze eterogenee.",
+  "colori": [
+   "#E07B24",
+   "#D9C23A"
+  ]
+ },
+ {
+  "id": "spade-09",
+  "arcano": "minore",
+  "numero": 9,
+  "numero_romano": null,
+  "seme": "spade",
+  "rango": "nove",
+  "corte": false,
+  "nome_thoth": "Nine of Swords",
+  "titolo_thoth": "Cruelty",
+  "nome_it": "Nove di Spade — Crudeltà",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Yesod",
+  "elemento": "aria",
+  "sottoelemento": null,
+  "astrologia": "Marte in Gemelli",
+  "parole_chiave": [
+   "crudeltà",
+   "angoscia",
+   "ossessione",
+   "paura",
+   "sofferenza mentale"
+  ],
+  "significati": {
+   "essoterico": "Angoscia, preoccupazioni, notti insonni, crudeltà subita o inflitta. Indica sofferenza mentale, sensi di colpa, paure che ingigantiscono i problemi.",
+   "psicologico": "È la mente che si rivolta contro se stessa: pensieri ossessivi, autocritica spietata, ferite che si riaprono a forza di ripensarle.",
+   "iniziatico": "L'Aria in Yesod, il Fondamento, con Marte nei Gemelli nel secondo decano: la violenza marziale investe una mente frammentata. La Crudeltà è l'intelletto sceso nelle regioni istintive, dove la ragione, privata della luce, diventa fanatismo e tormento.",
+   "ombra": "Mal dignificata indica crudeltà deliberata, fanatismo, vendetta, disperazione."
+  },
+  "dritto": "Le paure dominano la mente: riconosci quanto è reale e quanto è prodotto dall'ansia, e chiedi aiuto se serve.",
+  "rovescio": "L'angoscia comincia a sciogliersi; oppure viene soffocata e si trasforma in rancore o crudeltà verso gli altri.",
+  "ambiti": {
+   "amore": "Gelosie, sensi di colpa, parole taglienti; bisogno di dialogo e di gentilezza reciproca.",
+   "lavoro": "Stress, conflitti aspri, clima ostile; importante non portare il lavoro nel sonno.",
+   "spirito": "Attraversare la notte della mente con la disciplina della consapevolezza."
+  },
+  "nota_crowley": "Nel Thoth nove spade di lunghezze diverse, dentellate e arrugginite, gocciolano sangue e veleno verso il basso: l'intelletto degradato in istinto crudele.",
+  "colori": [
+   "#6A3D9A",
+   "#D9C23A"
+  ]
+ },
+ {
+  "id": "spade-10",
+  "arcano": "minore",
+  "numero": 10,
+  "numero_romano": null,
+  "seme": "spade",
+  "rango": "dieci",
+  "corte": false,
+  "nome_thoth": "Ten of Swords",
+  "titolo_thoth": "Ruin",
+  "nome_it": "Dieci di Spade — Rovina",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Malkuth",
+  "elemento": "aria",
+  "sottoelemento": null,
+  "astrologia": "Sole in Gemelli",
+  "parole_chiave": [
+   "rovina",
+   "fine",
+   "disgregazione",
+   "crollo",
+   "liberazione"
+  ],
+  "significati": {
+   "essoterico": "Rovina, fine dolorosa, crollo di un piano o di una situazione. Indica una conclusione netta che, una volta toccato il fondo, lascia spazio solo alla ricostruzione.",
+   "psicologico": "È la mente che, spingendo il ragionamento fino all'estremo, distrugge ciò che aveva costruito; la fine delle illusioni e delle strategie di difesa.",
+   "iniziatico": "L'Aria in Malkuth, con il Sole nei Gemelli nel terzo decano: la luce solare frammentata dalla mente duale. La Rovina è l'intelletto separato dalla sua fonte, la ragione che, lasciata a se stessa, disgrega ogni armonia fino al caos.",
+   "ombra": "Mal dignificata indica disastro, disperazione, distruzione cieca, accanimento."
+  },
+  "dritto": "Qualcosa è finito in modo definitivo: accettalo, perché solo dopo la fine può iniziare la ricostruzione.",
+  "rovescio": "Il peggio è passato e comincia la risalita; oppure resistenza a riconoscere una fine già avvenuta.",
+  "ambiti": {
+   "amore": "Rottura, fine di un legame; necessità di chiudere per poter guarire.",
+   "lavoro": "Fallimento, chiusura di un progetto, perdita; tempo di ripartire su basi nuove.",
+   "spirito": "La rovina dell'ego mentale come preludio a una comprensione più alta."
+  },
+  "nota_crowley": "Crowley dispone dieci spade secondo le sephiroth dell'Albero: le else occupano i posti delle sephiroth, e la spada di Tiphareth, il cuore, è spezzata dalle altre, sotto un cielo rosso.",
+  "colori": [
+   "#9C8A3E",
+   "#D9C23A"
+  ]
+ },
+ {
+  "id": "spade-cavaliere",
+  "arcano": "minore",
+  "numero": null,
+  "numero_romano": null,
+  "seme": "spade",
+  "rango": "cavaliere",
+  "corte": true,
+  "nome_thoth": "Knight of Swords",
+  "titolo_thoth": null,
+  "nome_it": "Cavaliere di Spade",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Chokmah",
+  "elemento": "aria",
+  "sottoelemento": "fuoco",
+  "astrologia": "21° Toro – 20° Gemelli",
+  "parole_chiave": [
+   "attacco",
+   "rapidità",
+   "intelligenza",
+   "determinazione",
+   "impetuosità"
+  ],
+  "significati": {
+   "essoterico": "Una persona intelligente, rapida, combattiva e decisa, oppure un'azione fulminea che cambia le carte in tavola. Indica cambiamenti improvvisi, attacchi, idee che irrompono con forza.",
+   "psicologico": "È l'aspetto mentale che agisce senza esitare: lucidità, coraggio intellettuale e prontezza, ma anche impulsività, intolleranza e scarsa attenzione alle conseguenze emotive.",
+   "iniziatico": "Fuoco dell'Aria, lo Yod del Vau, riferito a Chokmah: il vento impetuoso, la tempesta che spazza il cielo. Governa da 21° Toro a 20° Gemelli, dove la tenacia taurina si fa arma della rapidità mercuriale.",
+   "ombra": "Mal dignificato è prepotente, brutale, incapace di decidere o di ascoltare."
+  },
+  "dritto": "Agisci con decisione e rapidità: la tua intelligenza può fare la differenza.",
+  "rovescio": "Attacchi a vuoto, decisioni affrettate, aggressività verbale.",
+  "ambiti": {
+   "amore": "Un partner deciso ma irrequieto; rischio di litigi e incomprensioni.",
+   "lavoro": "Azioni rapide, strategie audaci, capacità di affrontare le sfide.",
+   "spirito": "La spada della mente al servizio della Volontà, non dell'orgoglio."
+  },
+  "nota_crowley": "Il Cavaliere di Spade del Thoth galoppa sul suo destriero con la spada sguainata e un pugnale, fra rondini che volano in picchiata: l'idea stessa dell'attacco, rapido e diretto.",
+  "colori": [
+   "#FF7F24",
+   "#D9C23A"
+  ]
+ },
+ {
+  "id": "spade-regina",
+  "arcano": "minore",
+  "numero": null,
+  "numero_romano": null,
+  "seme": "spade",
+  "rango": "regina",
+  "corte": true,
+  "nome_thoth": "Queen of Swords",
+  "titolo_thoth": null,
+  "nome_it": "Regina di Spade",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Binah",
+  "elemento": "aria",
+  "sottoelemento": "acqua",
+  "astrologia": "21° Vergine – 20° Bilancia",
+  "parole_chiave": [
+   "lucidità",
+   "osservazione",
+   "indipendenza",
+   "giudizio",
+   "sincerità"
+  ],
+  "significati": {
+   "essoterico": "Una persona acuta, indipendente e lucida, oppure la capacità di vedere oltre le apparenze. Indica verità sgradevoli ma liberatorie, giudizi imparziali, decisioni che tagliano via il superfluo.",
+   "psicologico": "È la mente che smaschera le illusioni e le difese: sincerità, autonomia, capacità di osservare senza farsi coinvolgere; può irrigidirsi in freddezza.",
+   "iniziatico": "Acqua dell'Aria, lo He del Vau, riferita a Binah: le nuvole, l'aria resa visibile. Governa da 21° Vergine a 20° Bilancia, unendo la precisione analitica della Vergine al senso di giustizia della Bilancia.",
+   "ombra": "Mal dignificata è crudele, sarcastica, inaffidabile, capace di ferire con le parole."
+  },
+  "dritto": "Guarda la situazione senza illusioni: la verità ti rende libero.",
+  "rovescio": "Giudizio troppo severo o paura della verità; sarcasmo, freddezza, isolamento.",
+  "ambiti": {
+   "amore": "Una partner indipendente e franca; relazione che chiede sincerità assoluta.",
+   "lavoro": "Analisi, giudizio, gestione obiettiva, capacità di smascherare problemi.",
+   "spirito": "Liberare la mente dalle illusioni."
+  },
+  "nota_crowley": "La Regina del Thoth, seduta fra le nuvole, tiene la spada e la testa recisa di un uomo barbuto, simbolo delle illusioni tagliate dalla mente; sul capo porta la testa di un bambino.",
+  "colori": [
+   "#4682B4",
+   "#D9C23A"
+  ]
+ },
+ {
+  "id": "spade-principe",
+  "arcano": "minore",
+  "numero": null,
+  "numero_romano": null,
+  "seme": "spade",
+  "rango": "principe",
+  "corte": true,
+  "nome_thoth": "Prince of Swords",
+  "titolo_thoth": null,
+  "nome_it": "Principe di Spade",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Tiphareth",
+  "elemento": "aria",
+  "sottoelemento": "aria",
+  "astrologia": "21° Capricorno – 20° Acquario",
+  "parole_chiave": [
+   "intelletto puro",
+   "idee",
+   "analisi",
+   "inquietudine",
+   "progettualità"
+  ],
+  "significati": {
+   "essoterico": "Una persona brillante e piena di idee, ma mutevole e poco incline a concludere; oppure un progetto ancora tutto mentale. Indica ragionamenti complessi, teorie, piani che cambiano di continuo.",
+   "psicologico": "È la mente pura che costruisce e demolisce le proprie architetture: intelligenza vivace che rischia di girare a vuoto, staccata dal sentire e dal corpo.",
+   "iniziatico": "Aria dell'Aria, il Vau del Vau, riferito a Tiphareth: l'intelletto nel suo elemento, pensiero che genera pensiero. Governa da 21° Capricorno a 20° Acquario, dove l'ambizione saturnina incontra la visione acquariana, fertile di idee ma priva di ancoraggio emotivo.",
+   "ombra": "Mal dignificato è indeciso, cinico, calcolatore, capace di distruggere per il gusto di analizzare."
+  },
+  "dritto": "Le tue idee sono valide: scegline una, dalle una direzione e mettila alla prova dei fatti.",
+  "rovescio": "Pensieri confusi e contraddittori, progetti che si moltiplicano senza realizzarsi, distacco freddo.",
+  "ambiti": {
+   "amore": "Un partner stimolante ma distante; tanto dialogo, poca intimità emotiva.",
+   "lavoro": "Progetti innovativi, pensiero strategico, ricerca teorica; serve qualcuno che concretizzi.",
+   "spirito": "Usare la mente come strumento della Volontà, non come padrone."
+  },
+  "nota_crowley": "Il Principe di Spade del Thoth guida un carro trainato da piccoli esseri alati che tirano in direzioni diverse; con la spada crea e con la falce distrugge: la mente che non trova riposo.",
+  "colori": [
+   "#F0E68C",
+   "#D9C23A"
+  ]
+ },
+ {
+  "id": "spade-principessa",
+  "arcano": "minore",
+  "numero": null,
+  "numero_romano": null,
+  "seme": "spade",
+  "rango": "principessa",
+  "corte": true,
+  "nome_thoth": "Princess of Swords",
+  "titolo_thoth": null,
+  "nome_it": "Principessa di Spade",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Malkuth",
+  "elemento": "aria",
+  "sottoelemento": "terra",
+  "astrologia": "Quadrante celeste di Capricorno, Acquario, Pesci; trono dell'Asso",
+  "parole_chiave": [
+   "vigilanza",
+   "fermezza",
+   "saggezza pratica",
+   "difesa",
+   "risolutezza"
+  ],
+  "significati": {
+   "essoterico": "Una persona giovane, sveglia e decisa, capace di difendersi e di intervenire con prontezza. Indica conflitti da gestire con buon senso, verità scomode da affrontare, la necessità di proteggere qualcosa.",
+   "psicologico": "È l'intelletto che scende nella vita concreta: pragmatismo, lucidità nelle crisi, capacità di dire di no. Può irrigidirsi in sospetto o in spirito di rivalsa.",
+   "iniziatico": "Terra dell'Aria, lo He finale del Vau, riferita a Malkuth: il vento che si placa e condensa le nubi in forma concreta. Trono dell'Asso di Spade, governa il quadrante celeste di Capricorno, Acquario e Pesci, custode della vendetta degli dèi che ristabilisce l'ordine.",
+   "ombra": "Mal dignificata è astuta, meschina, frivola, vendicativa, pronta a colpire per paura."
+  },
+  "dritto": "Agisci con fermezza e prudenza: proteggi ciò che conta e taglia ciò che non serve più.",
+  "rovescio": "Difese eccessive, sospetti, ripicche; oppure incapacità di porre confini necessari.",
+  "ambiti": {
+   "amore": "Relazione che chiede chiarezza e confini sani; discussioni franche ma costruttive.",
+   "lavoro": "Risoluzione di problemi pratici, gestione di crisi, controllo qualità e verifiche.",
+   "spirito": "La saggezza che si fa gesto concreto e vigile."
+  },
+  "nota_crowley": "La Principessa di Spade è una figura simile ad Atena, armata ed elmata, che affonda la spada davanti a un altare spoglio sotto un cielo in tempesta: la mente incarnata che difende l'ordine.",
+  "colori": [
+   "#8B6F47",
+   "#D9C23A"
+  ]
+ },
+ {
+  "id": "dischi-01",
+  "arcano": "minore",
+  "numero": 1,
+  "numero_romano": null,
+  "seme": "dischi",
+  "rango": "asso",
+  "corte": false,
+  "nome_thoth": "Ace of Disks",
+  "titolo_thoth": "Root of the Powers of Earth",
+  "nome_it": "Asso di Dischi",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Kether",
+  "elemento": "terra",
+  "sottoelemento": null,
+  "astrologia": "Radice della Terra",
+  "parole_chiave": [
+   "materia",
+   "opportunità concreta",
+   "prosperità",
+   "corpo",
+   "radicamento"
+  ],
+  "significati": {
+   "essoterico": "Il seme della realizzazione materiale: un'occasione concreta, un guadagno, una base solida su cui costruire. Annuncia benessere fisico, stabilità economica, progetti che prendono corpo.",
+   "psicologico": "È il rapporto sano con il corpo, il denaro e il mondo tangibile: la fiducia che lo spirito possa abitare la materia senza esserne prigioniero.",
+   "iniziatico": "Asso in Kether: radice della Terra e He finale del Tetragrammaton, la Figlia che sarà innalzata al trono della Madre. La materia è concepita come vortice di energia in movimento; il trono dell'Asso è il quadrante celeste di Ariete, Toro e Gemelli, governato dalla Principessa di Dischi.",
+   "ombra": "Mal dignificato indica avidità, materialismo, attaccamento al possesso, pigrizia."
+  },
+  "dritto": "Un'opportunità concreta si presenta: radicala con pazienza e cura, e porterà frutto.",
+  "rovescio": "Occasione non colta o mal gestita; preoccupazioni economiche, oppure eccessiva attenzione al guadagno.",
+  "ambiti": {
+   "amore": "Un legame con basi concrete, orientato alla stabilità e alla costruzione comune.",
+   "lavoro": "Nuovo impiego, investimento, avvio di un'attività solida.",
+   "spirito": "Riconoscere la santità della materia: il corpo come tempio."
+  },
+  "nota_crowley": "Crowley pone sull'Asso di Dischi il proprio sigillo personale, con il numero della Bestia e le ali, dentro un disco rotante: la Terra non come peso inerte ma come forza in movimento.",
+  "colori": [
+   "#F5F3E7",
+   "#4A7C3A"
+  ]
+ },
+ {
+  "id": "dischi-02",
+  "arcano": "minore",
+  "numero": 2,
+  "numero_romano": null,
+  "seme": "dischi",
+  "rango": "due",
+  "corte": false,
+  "nome_thoth": "Two of Disks",
+  "titolo_thoth": "Change",
+  "nome_it": "Due di Dischi — Cambiamento",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Chokmah",
+  "elemento": "terra",
+  "sottoelemento": null,
+  "astrologia": "Giove in Capricorno",
+  "parole_chiave": [
+   "cambiamento",
+   "alternanza",
+   "flessibilità",
+   "equilibrio dinamico",
+   "ritmo"
+  ],
+  "significati": {
+   "essoterico": "Cambiamento, alternanza, capacità di destreggiarsi fra situazioni diverse. Indica movimenti economici, trasferimenti, decisioni da prendere con elasticità.",
+   "psicologico": "È la consapevolezza che la stabilità nasce dal movimento, non dall'immobilità; l'arte di adattarsi senza perdere il proprio centro.",
+   "iniziatico": "La Terra in Chokmah, con Giove nel Capricorno, suo segno di caduta, nel primo decano: la benevolenza gioviale si contrae nella disciplina saturnina. Il Cambiamento è la legge della materia, dove ogni forma trapassa nell'altra in un ritmo incessante.",
+   "ombra": "Mal dignificato indica instabilità, incostanza, sprechi, incapacità di scegliere."
+  },
+  "dritto": "Adattati con leggerezza: il cambiamento in corso è una danza, non un pericolo.",
+  "rovescio": "Difficoltà a gestire più fronti, instabilità economica, resistenza al cambiamento.",
+  "ambiti": {
+   "amore": "Relazione in trasformazione, alternanza di momenti; serve flessibilità.",
+   "lavoro": "Gestione di più progetti, trasferimenti, cambi di mansione o di mercato.",
+   "spirito": "Il flusso eterno del Tao: la forma che danza nel mutamento."
+  },
+  "nota_crowley": "Nel Thoth un serpente coronato si avvolge a forma di otto intorno a due dischi con il simbolo del Tao: il cambiamento come ritmo eterno e armonioso.",
+  "colori": [
+   "#8A8D8F",
+   "#4A7C3A"
+  ]
+ },
+ {
+  "id": "dischi-03",
+  "arcano": "minore",
+  "numero": 3,
+  "numero_romano": null,
+  "seme": "dischi",
+  "rango": "tre",
+  "corte": false,
+  "nome_thoth": "Three of Disks",
+  "titolo_thoth": "Works",
+  "nome_it": "Tre di Dischi — Opere",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Binah",
+  "elemento": "terra",
+  "sottoelemento": null,
+  "astrologia": "Marte in Capricorno",
+  "parole_chiave": [
+   "opera",
+   "costruzione",
+   "competenza",
+   "collaborazione",
+   "concretezza"
+  ],
+  "significati": {
+   "essoterico": "Lavoro ben fatto, costruzione, competenza, collaborazione produttiva. Indica progetti che prendono forma, riconoscimento professionale, opere solide.",
+   "psicologico": "È la soddisfazione di costruire con le proprie mani e con gli altri; la pazienza che trasforma un'idea in realtà.",
+   "iniziatico": "La Terra in Binah, la Madre che dà forma, con Marte esaltato nel Capricorno nel secondo decano: l'energia marziale diventa lavoro costruttivo. Le Opere sono la forma che si stabilisce, la piramide che sorge dalle fondamenta.",
+   "ombra": "Mal dignificato indica mediocrità, lavoro senza anima, egoismo, ritardi."
+  },
+  "dritto": "Il tuo lavoro prende forma: impegnati con cura e collabora con chi condivide la visione.",
+  "rovescio": "Lavoro trascurato, collaborazioni difficili, progetti bloccati o mal costruiti.",
+  "ambiti": {
+   "amore": "Costruire insieme: progetti comuni, casa, famiglia.",
+   "lavoro": "Riconoscimento, progetti solidi, lavoro di squadra, apprendistato.",
+   "spirito": "Il lavoro come via di realizzazione spirituale."
+  },
+  "nota_crowley": "Nel Thoth una piramide vista dall'alto poggia su tre ruote che rappresentano Mercurio, Zolfo e Sale, sopra il Grande Mare di Binah: la costruzione che sorge dalla forma primordiale.",
+  "colori": [
+   "#1A1A1A",
+   "#4A7C3A"
+  ]
+ },
+ {
+  "id": "dischi-04",
+  "arcano": "minore",
+  "numero": 4,
+  "numero_romano": null,
+  "seme": "dischi",
+  "rango": "quattro",
+  "corte": false,
+  "nome_thoth": "Four of Disks",
+  "titolo_thoth": "Power",
+  "nome_it": "Quattro di Dischi — Potere",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Chesed",
+  "elemento": "terra",
+  "sottoelemento": null,
+  "astrologia": "Sole in Capricorno",
+  "parole_chiave": [
+   "potere",
+   "stabilità",
+   "sicurezza",
+   "legge",
+   "difesa"
+  ],
+  "significati": {
+   "essoterico": "Potere terreno, stabilità, sicurezza materiale, controllo delle risorse. Indica una posizione consolidata, un patrimonio protetto, regole chiare e un'autorità riconosciuta.",
+   "psicologico": "È la sicurezza che nasce dall'ordine e dai confini; ma anche la paura di perdere ciò che si possiede, che può trasformare la protezione in chiusura.",
+   "iniziatico": "La Terra in Chesed, la Misericordia che organizza, con il Sole nel Capricorno nel terzo decano: la luce solare rischiara e rinsalda la forma saturnina. Il Potere è la legge che stabilisce e difende, un ordine che protegge finché non diventa una prigione.",
+   "ombra": "Mal dignificato indica avarizia, rigidità, paura del cambiamento, bisogno ossessivo di controllo."
+  },
+  "dritto": "La tua posizione è solida: difendila con saggezza, ma non chiuderti dentro le tue sicurezze.",
+  "rovescio": "Controllo eccessivo, attaccamento, timore di perdere; oppure una stabilità che comincia a vacillare.",
+  "ambiti": {
+   "amore": "Relazione stabile e protettiva; attenzione alla possessività e alla routine difensiva.",
+   "lavoro": "Posizione consolidata, sicurezza economica, amministrazione del patrimonio e delle regole.",
+   "spirito": "La stabilità come fondamento su cui elevarsi, non come recinto."
+  },
+  "nota_crowley": "Nel Thoth una fortezza quadrata con quattro torri angolari, circondata da un fossato, si staglia su un paesaggio ordinato: il potere come struttura che protegge e isola.",
+  "colori": [
+   "#1F4E9A",
+   "#4A7C3A"
+  ]
+ },
+ {
+  "id": "dischi-05",
+  "arcano": "minore",
+  "numero": 5,
+  "numero_romano": null,
+  "seme": "dischi",
+  "rango": "cinque",
+  "corte": false,
+  "nome_thoth": "Five of Disks",
+  "titolo_thoth": "Worry",
+  "nome_it": "Cinque di Dischi — Preoccupazione",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Geburah",
+  "elemento": "terra",
+  "sottoelemento": null,
+  "astrologia": "Mercurio in Toro",
+  "parole_chiave": [
+   "preoccupazione",
+   "ansia",
+   "precarietà",
+   "tensione",
+   "difficoltà materiali"
+  ],
+  "significati": {
+   "essoterico": "Preoccupazioni, difficoltà economiche o di salute, ansia per il futuro. Indica un periodo di tensione prolungata legata alla sicurezza materiale, spesso più logorante che drammatico.",
+   "psicologico": "È l'ansia che nasce quando la stabilità vacilla: la mente gira intorno ai problemi concreti senza trovare pace, e l'inquietudine diventa essa stessa un peso.",
+   "iniziatico": "La Terra in Geburah, la Severità, con Mercurio nel Toro nel primo decano: l'intelligenza mercuriale si affanna dentro la lentezza del Toro. La Preoccupazione è la stabilità di Chesed scossa da Geburah, una tensione che, per la natura inerte della Terra, tende a durare.",
+   "ombra": "Mal dignificata indica sfiducia, senso di povertà, blocco, rinuncia a cercare soluzioni."
+  },
+  "dritto": "Affronta le preoccupazioni una alla volta, con pragmatismo e senza catastrofismi; chiedi aiuto concreto.",
+  "rovescio": "L'ansia comincia a calare e si intravedono soluzioni; oppure preoccupazioni ignorate che si accumulano.",
+  "ambiti": {
+   "amore": "Tensioni legate a questioni pratiche, casa o denaro; bisogno di sostegno reciproco.",
+   "lavoro": "Difficoltà economiche, instabilità del lavoro, pressioni; utile rivedere il bilancio.",
+   "spirito": "Coltivare la fiducia anche quando la terra sotto i piedi sembra muoversi."
+  },
+  "nota_crowley": "Nel Thoth cinque dischi disposti a pentagramma rovesciato portano i simboli dei tattwa, gli elementi indiani, in un groviglio di linee tese: la materia inquieta, in attrito con se stessa.",
+  "colori": [
+   "#C8102E",
+   "#4A7C3A"
+  ]
+ },
+ {
+  "id": "dischi-06",
+  "arcano": "minore",
+  "numero": 6,
+  "numero_romano": null,
+  "seme": "dischi",
+  "rango": "sei",
+  "corte": false,
+  "nome_thoth": "Six of Disks",
+  "titolo_thoth": "Success",
+  "nome_it": "Sei di Dischi — Successo",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Tiphareth",
+  "elemento": "terra",
+  "sottoelemento": null,
+  "astrologia": "Luna in Toro",
+  "parole_chiave": [
+   "successo",
+   "armonia materiale",
+   "prosperità",
+   "equilibrio",
+   "generosità"
+  ],
+  "significati": {
+   "essoterico": "Successo materiale, prosperità, equilibrio fra dare e ricevere. Indica un risultato concreto raggiunto, guadagni, salute ristabilita, generosità.",
+   "psicologico": "È la serenità di chi ha trovato un equilibrio sano con il denaro e il corpo; la capacità di condividere senza sentirsi impoverito.",
+   "iniziatico": "La Terra in Tiphareth, il cuore armonioso, con la Luna esaltata nel Toro nel secondo decano: la fertilità lunare fiorisce nella terra più ricca. Il Successo è la materia armonizzata dalla coscienza solare, ma è un successo temporaneo, legato al ciclo lunare.",
+   "ombra": "Mal dignificato indica ostentazione, successo effimero, generosità calcolata o dipendenza dall'aiuto altrui."
+  },
+  "dritto": "I tuoi sforzi portano frutto: goditi il successo e condividilo con equilibrio.",
+  "rovescio": "Successo instabile, squilibrio nel dare e ricevere, dipendenza economica o ostentazione.",
+  "ambiti": {
+   "amore": "Relazione equilibrata, reciprocità, benessere condiviso.",
+   "lavoro": "Promozioni, guadagni, successi professionali; momento propizio per investire con misura.",
+   "spirito": "La materia come espressione dell'armonia divina."
+  },
+  "nota_crowley": "Nel Thoth sei dischi planetari formano un esagramma attorno a un Sole centrale con la Rosa-Croce: i pianeti in armonia intorno al cuore dell'Albero.",
+  "colori": [
+   "#E6B422",
+   "#4A7C3A"
+  ]
+ },
+ {
+  "id": "dischi-07",
+  "arcano": "minore",
+  "numero": 7,
+  "numero_romano": null,
+  "seme": "dischi",
+  "rango": "sette",
+  "corte": false,
+  "nome_thoth": "Seven of Disks",
+  "titolo_thoth": "Failure",
+  "nome_it": "Sette di Dischi — Fallimento",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Netzach",
+  "elemento": "terra",
+  "sottoelemento": null,
+  "astrologia": "Saturno in Toro",
+  "parole_chiave": [
+   "fallimento",
+   "stagnazione",
+   "attesa",
+   "frustrazione",
+   "raccolto mancato"
+  ],
+  "significati": {
+   "essoterico": "Fallimento, lavoro non ricompensato, stagnazione. Indica sforzi che non danno i frutti sperati, investimenti andati male, una pausa forzata nella crescita.",
+   "psicologico": "È la frustrazione di chi ha lavorato senza vedere risultati; lo scoraggiamento che rischia di trasformarsi in inerzia e rassegnazione.",
+   "iniziatico": "La Terra in Netzach, la Vittoria instabile, con Saturno nel Toro nel terzo decano: il peso saturnino soffoca la fertilità taurina. Il Fallimento è la materia che si blocca, il raccolto che marcisce prima di maturare.",
+   "ombra": "Mal dignificato indica pigrizia, rassegnazione, perdita economica, blocco."
+  },
+  "dritto": "Accetta la pausa e rivedi il tuo metodo: non tutto è perduto, ma serve una nuova strategia.",
+  "rovescio": "Fallimento negato o persistente; oppure primo segnale di ripresa dopo una lunga attesa.",
+  "ambiti": {
+   "amore": "Relazione ferma, poca soddisfazione, sforzi non ricambiati.",
+   "lavoro": "Progetti bloccati, investimenti infruttuosi, ritardi nei pagamenti.",
+   "spirito": "Accettare il fallimento come maestro di umiltà e di pazienza."
+  },
+  "nota_crowley": "Crowley dispone sette dischi di piombo nella figura geomantica Rubeus, su una vegetazione avvizzita: il peso di Saturno che soffoca la crescita.",
+  "colori": [
+   "#2E8B57",
+   "#4A7C3A"
+  ]
+ },
+ {
+  "id": "dischi-08",
+  "arcano": "minore",
+  "numero": 8,
+  "numero_romano": null,
+  "seme": "dischi",
+  "rango": "otto",
+  "corte": false,
+  "nome_thoth": "Eight of Disks",
+  "titolo_thoth": "Prudence",
+  "nome_it": "Otto di Dischi — Prudenza",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Hod",
+  "elemento": "terra",
+  "sottoelemento": null,
+  "astrologia": "Sole in Vergine",
+  "parole_chiave": [
+   "prudenza",
+   "pazienza",
+   "cura",
+   "coltivazione",
+   "metodo"
+  ],
+  "significati": {
+   "essoterico": "Prudenza, lavoro paziente, cura dei dettagli, investimenti a lungo termine. Indica una crescita lenta ma sicura, frutto di attenzione, competenza artigianale e costanza.",
+   "psicologico": "È la saggezza di chi sa aspettare; la pazienza di coltivare ciò che crescerà nel tempo, senza forzare i ritmi naturali.",
+   "iniziatico": "La Terra in Hod, lo Splendore intellettuale, con il Sole nella Vergine nel primo decano: la luce solare illumina la terra fertile e metodica. La Prudenza è l'intelligenza applicata alla materia, la cura che fa crescere lentamente.",
+   "ombra": "Mal dignificata indica meschinità, avarizia, pedanteria, eccessiva lentezza."
+  },
+  "dritto": "Lavora con pazienza e metodo: la crescita è lenta ma sicura.",
+  "rovescio": "Impazienza, fretta che guasta; oppure eccessiva prudenza che blocca.",
+  "ambiti": {
+   "amore": "Relazione che cresce lentamente e solidamente, fondata su gesti concreti più che su dichiarazioni.",
+   "lavoro": "Apprendistato, investimenti a lungo termine, lavoro meticoloso.",
+   "spirito": "Coltivare l'anima come si coltiva un giardino, con attenzione quotidiana."
+  },
+  "nota_crowley": "Nel Thoth un grande albero porta otto dischi come frutti o fiori, disposti nella figura geomantica Populus: la crescita lenta e paziente della natura.",
+  "colori": [
+   "#E07B24",
+   "#4A7C3A"
+  ]
+ },
+ {
+  "id": "dischi-09",
+  "arcano": "minore",
+  "numero": 9,
+  "numero_romano": null,
+  "seme": "dischi",
+  "rango": "nove",
+  "corte": false,
+  "nome_thoth": "Nine of Disks",
+  "titolo_thoth": "Gain",
+  "nome_it": "Nove di Dischi — Guadagno",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Yesod",
+  "elemento": "terra",
+  "sottoelemento": null,
+  "astrologia": "Venere in Vergine",
+  "parole_chiave": [
+   "guadagno",
+   "benessere",
+   "fortuna",
+   "prosperità",
+   "eredità"
+  ],
+  "significati": {
+   "essoterico": "Guadagno, fortuna materiale, benessere. Indica eredità, colpi di fortuna, risultati concreti e una stabilità economica ottenuta con merito o con sorte favorevole.",
+   "psicologico": "È la soddisfazione di godere dei frutti del proprio lavoro; la sicurezza interiore che deriva dall'aver raggiunto una certa indipendenza.",
+   "iniziatico": "La Terra in Yesod, il Fondamento, con Venere nella Vergine, suo segno di caduta, nel secondo decano: la bellezza venusiana si fa pratica e concreta. Il Guadagno è la materia che trova il suo fondamento stabile, la fortuna che nasce dall'unione di buona sorte e buona gestione.",
+   "ombra": "Mal dignificato indica avidità, ostentazione, perdita di ciò che si è guadagnato."
+  },
+  "dritto": "Raccogli i frutti del tuo lavoro: la fortuna sostiene chi ha saputo gestire con cura le proprie risorse.",
+  "rovescio": "Guadagni instabili, perdite, dipendenza dal denaro altrui.",
+  "ambiti": {
+   "amore": "Benessere condiviso, relazione stabile, sicurezza affettiva e materiale.",
+   "lavoro": "Guadagni, eredità, successi finanziari, maggiore indipendenza economica.",
+   "spirito": "Riconoscere la grazia che si manifesta anche nel benessere materiale."
+  },
+  "nota_crowley": "Crowley dispone nove dischi: tre al centro, a colonna, circondati dagli altri sei, quasi monete planetarie: la fortuna che si raccoglie intorno a un fondamento stabile.",
+  "colori": [
+   "#6A3D9A",
+   "#4A7C3A"
+  ]
+ },
+ {
+  "id": "dischi-10",
+  "arcano": "minore",
+  "numero": 10,
+  "numero_romano": null,
+  "seme": "dischi",
+  "rango": "dieci",
+  "corte": false,
+  "nome_thoth": "Ten of Disks",
+  "titolo_thoth": "Wealth",
+  "nome_it": "Dieci di Dischi — Ricchezza",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Malkuth",
+  "elemento": "terra",
+  "sottoelemento": null,
+  "astrologia": "Mercurio in Vergine",
+  "parole_chiave": [
+   "ricchezza",
+   "compimento materiale",
+   "eredità",
+   "famiglia",
+   "prosperità duratura"
+  ],
+  "significati": {
+   "essoterico": "Ricchezza, prosperità duratura, patrimonio, famiglia. Indica il compimento materiale, la stabilità che si trasmette nel tempo, le eredità e i beni condivisi.",
+   "psicologico": "È la soddisfazione di chi ha costruito qualcosa di solido e duraturo; ma anche il rischio che la ricchezza diventi fine a se stessa, perdendo il suo scopo.",
+   "iniziatico": "La Terra in Malkuth, con Mercurio nella Vergine, suo domicilio ed esaltazione, nel terzo decano: l'intelligenza mercuriale organizza la materia nella sua forma più completa. La Ricchezza è il compimento dell'Opera materiale, che deve però tornare a circolare per non ristagnare.",
+   "ombra": "Mal dignificata indica avarizia, pesantezza, materialismo, stagnazione dei beni."
+  },
+  "dritto": "Prosperità e stabilità: il frutto di un lungo lavoro è maturo, condividilo.",
+  "rovescio": "Ricchezza che stagna o si disperde; conflitti per eredità o beni familiari.",
+  "ambiti": {
+   "amore": "Famiglia solida, relazione duratura, progetti di lungo periodo.",
+   "lavoro": "Successo pieno, patrimonio, aziende familiari, stabilità.",
+   "spirito": "La ricchezza come responsabilità: far circolare i doni ricevuti."
+  },
+  "nota_crowley": "Nel Thoth dieci dischi disposti sull'Albero della Vita recano i simboli di Mercurio, con il disco più grande in Malkuth: la ricchezza che, per restare viva, deve circolare.",
+  "colori": [
+   "#9C8A3E",
+   "#4A7C3A"
+  ]
+ },
+ {
+  "id": "dischi-cavaliere",
+  "arcano": "minore",
+  "numero": null,
+  "numero_romano": null,
+  "seme": "dischi",
+  "rango": "cavaliere",
+  "corte": true,
+  "nome_thoth": "Knight of Disks",
+  "titolo_thoth": null,
+  "nome_it": "Cavaliere di Dischi",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Chokmah",
+  "elemento": "terra",
+  "sottoelemento": "fuoco",
+  "astrologia": "21° Leone – 20° Vergine",
+  "parole_chiave": [
+   "laboriosità",
+   "pazienza",
+   "raccolto",
+   "concretezza",
+   "perseveranza"
+  ],
+  "significati": {
+   "essoterico": "Una persona pratica, laboriosa e affidabile, legata alla terra e ai risultati tangibili; oppure un lavoro lungo che arriva al raccolto. Indica fatica ben spesa, costanza e prudenza.",
+   "psicologico": "È l'energia messa al servizio della concretezza: la capacità di lavorare con ostinazione per nutrire sé e gli altri, a costo di sembrare lenti o ottusi.",
+   "iniziatico": "Fuoco della Terra, lo Yod dello He finale, riferito a Chokmah: il calore che fa germogliare, la forza delle montagne e dei terremoti. Governa da 21° Leone a 20° Vergine, dove il vigore solare si mette al servizio della mietitura.",
+   "ombra": "Mal dignificato è avaro, ottuso, geloso del proprio, chiuso in una fatica senza orizzonte."
+  },
+  "dritto": "Persevera con pazienza: il lavoro costante porta a un raccolto concreto e sicuro.",
+  "rovescio": "Lentezza che diventa inerzia, testardaggine, materialismo; oppure fatica che non raccoglie per mancanza di visione.",
+  "ambiti": {
+   "amore": "Un partner fedele e concreto, poco romantico ma presente e protettivo.",
+   "lavoro": "Lavoro agricolo, artigianale o gestionale; progetti lunghi che richiedono tenacia.",
+   "spirito": "Il lavoro della terra come preghiera: il ciclo di semina e raccolto come via."
+  },
+  "nota_crowley": "Il Cavaliere del Thoth monta un pesante cavallo da tiro, ha l'elmo abbassato e un correggiato in mano, in un campo di grano maturo: la forza al servizio della mietitura.",
+  "colori": [
+   "#FF7F24",
+   "#4A7C3A"
+  ]
+ },
+ {
+  "id": "dischi-regina",
+  "arcano": "minore",
+  "numero": null,
+  "numero_romano": null,
+  "seme": "dischi",
+  "rango": "regina",
+  "corte": true,
+  "nome_thoth": "Queen of Disks",
+  "titolo_thoth": null,
+  "nome_it": "Regina di Dischi",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Binah",
+  "elemento": "terra",
+  "sottoelemento": "acqua",
+  "astrologia": "21° Sagittario – 20° Capricorno",
+  "parole_chiave": [
+   "fertilità",
+   "cura",
+   "ambizione pratica",
+   "generosità",
+   "pazienza"
+  ],
+  "significati": {
+   "essoterico": "Una persona generosa, pratica, affettuosa e capace di rendere fertile ciò che tocca; oppure una fase di prosperità silenziosa. Indica cura della casa, del corpo e delle risorse.",
+   "psicologico": "È la capacità di nutrire con concretezza: l'affetto che si esprime nel fare e nel provvedere. Chiede di non dimenticare i propri bisogni mentre si cura quelli altrui.",
+   "iniziatico": "Acqua della Terra, lo He dello He finale, riferita a Binah: l'umidità che rende fertile il suolo. Governa da 21° Sagittario a 20° Capricorno, unendo lo slancio sagittariano alla tenacia capricornina, come il deserto che fiorisce dopo le piogge.",
+   "ombra": "Mal dignificata è apatica, servile, dipendente, capace di smarrirsi nella routine o nel materialismo."
+  },
+  "dritto": "Coltiva con pazienza ciò che ami: la tua cura concreta trasforma e fa fiorire.",
+  "rovescio": "Sfinimento nella cura degli altri, trascuratezza di sé; oppure attaccamento eccessivo al comfort.",
+  "ambiti": {
+   "amore": "Una partner calda e protettiva; relazione che crea casa, stabilità e benessere.",
+   "lavoro": "Gestione accorta delle risorse, lavori di cura, agricoltura, economia domestica o aziendale.",
+   "spirito": "Riconoscere il sacro nella fertilità e nella generosità della natura."
+  },
+  "nota_crowley": "La Regina di Dischi del Thoth siede fra una distesa arida e un fiume che la rende fertile, con una capra su una roccia al suo fianco e un globo di cerchi intrecciati: la materia che si lascia fecondare.",
+  "colori": [
+   "#4682B4",
+   "#4A7C3A"
+  ]
+ },
+ {
+  "id": "dischi-principe",
+  "arcano": "minore",
+  "numero": null,
+  "numero_romano": null,
+  "seme": "dischi",
+  "rango": "principe",
+  "corte": true,
+  "nome_thoth": "Prince of Disks",
+  "titolo_thoth": null,
+  "nome_it": "Principe di Dischi",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Tiphareth",
+  "elemento": "terra",
+  "sottoelemento": "aria",
+  "astrologia": "21° Ariete – 20° Toro",
+  "parole_chiave": [
+   "competenza",
+   "perseveranza",
+   "costruzione",
+   "affidabilità",
+   "energia pratica"
+  ],
+  "significati": {
+   "essoterico": "Una persona energica, capace e affidabile, che porta a termine ciò che inizia; oppure un progetto concreto che avanza con costanza. Indica gestione, crescita graduale, senso pratico.",
+   "psicologico": "È l'intelligenza applicata alla materia: la capacità di pianificare e realizzare, con un temperamento calmo ma inesorabile, che può diventare lentezza o ottusità.",
+   "iniziatico": "Aria della Terra, il Vau dello He finale, riferito a Tiphareth: il pensiero che organizza la materia, i campi coltivati e le vie di comunicazione. Governa da 21° Ariete a 20° Toro, dove l'impulso marziale si trasforma in paziente edificazione venusiana.",
+   "ombra": "Mal dignificato è lento, ottuso, pigro, avido, geloso delle proprie cose."
+  },
+  "dritto": "Porta avanti i tuoi progetti con metodo e costanza: la tua affidabilità è la chiave del successo.",
+  "rovescio": "Lentezza che diventa stasi, testardaggine, perdita di motivazione.",
+  "ambiti": {
+   "amore": "Partner affidabile e concreto, poco espansivo ma costante.",
+   "lavoro": "Gestione, costruzione, attività imprenditoriali solide, lavoro metodico.",
+   "spirito": "L'Opera che si compie passo dopo passo, come un campo arato con pazienza."
+  },
+  "nota_crowley": "Il Principe di Dischi del Thoth guida un carro trainato da un bue in un paesaggio fertile, reggendo un globo e uno scettro: l'energia che rende la terra fertile.",
+  "colori": [
+   "#F0E68C",
+   "#4A7C3A"
+  ]
+ },
+ {
+  "id": "dischi-principessa",
+  "arcano": "minore",
+  "numero": null,
+  "numero_romano": null,
+  "seme": "dischi",
+  "rango": "principessa",
+  "corte": true,
+  "nome_thoth": "Princess of Disks",
+  "titolo_thoth": null,
+  "nome_it": "Principessa di Dischi",
+  "lettera_ebraica": null,
+  "percorso": null,
+  "collega": null,
+  "sefira": "Malkuth",
+  "elemento": "terra",
+  "sottoelemento": "terra",
+  "astrologia": "Quadrante celeste di Ariete, Toro, Gemelli; trono dell'Asso",
+  "parole_chiave": [
+   "gestazione",
+   "fertilità",
+   "promessa",
+   "corpo",
+   "trasformazione"
+  ],
+  "significati": {
+   "essoterico": "Una giovane persona gentile, generosa e concreta, oppure una fase di gestazione: qualcosa di prezioso sta crescendo in silenzio. Indica studi, nuove occupazioni, gravidanze in senso letterale o figurato.",
+   "psicologico": "È il potenziale che si prepara a nascere; la pazienza di custodire e nutrire ciò che non è ancora visibile, radicata nel corpo e nei sensi.",
+   "iniziatico": "Terra della Terra, lo He finale dello He finale, riferita a Malkuth: il punto più denso della manifestazione, dove la luce è più nascosta e, per ciò stesso, più vicina a rinascere. Trono dell'Asso di Dischi, governa il quadrante celeste di Ariete, Toro e Gemelli.",
+   "ombra": "Mal dignificata è dispersiva, prodiga, pigra, schiava dei sensi."
+  },
+  "dritto": "Custodisci e nutri ciò che sta crescendo: la promessa si compirà a suo tempo.",
+  "rovescio": "Gestazione interrotta o rimandata, pigrizia, sprechi.",
+  "ambiti": {
+   "amore": "Relazione che si prepara a un passo concreto; possibile desiderio di famiglia.",
+   "lavoro": "Studi, apprendistato, nuovo lavoro, progetti che stanno maturando.",
+   "spirito": "La Figlia che sarà innalzata al trono della Madre: la materia che si fa luce."
+  },
+  "nota_crowley": "La Principessa di Dischi del Thoth è incinta, coronata da corna d'ariete, con uno scettro che affonda nella terra e un disco-rosa: la terra gravida della luce nascosta.",
+  "colori": [
+   "#8B6F47",
+   "#4A7C3A"
+  ]
+ }
+]
