@@ -1,0 +1,175 @@
+.pagina {
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+.testata {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 14px 28px;
+  background: linear-gradient(180deg, rgba(7, 5, 15, 0.92), rgba(7, 5, 15, 0.6));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--bordo);
+}
+
+.marchio {
+  font-family: var(--font-titoli), serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--oro-chiaro);
+  text-decoration: none !important;
+  text-shadow: 0 0 18px rgba(216, 180, 90, 0.45);
+}
+
+.marchio span {
+  color: var(--viola-chiaro);
+}
+
+.voci {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.voce,
+.voceAttiva {
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: var(--testo-tenue);
+  font-size: 0.93rem;
+  text-decoration: none !important;
+  transition: color 0.2s, background 0.2s;
+}
+
+.voce:hover {
+  color: var(--testo);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.voceAttiva {
+  color: var(--oro-chiaro);
+  background: rgba(216, 180, 90, 0.1);
+}
+
+.azioni {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lingua,
+.esci {
+  background: none;
+  border: 1px solid var(--bordo);
+  color: var(--testo-tenue);
+  border-radius: 999px;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.lingua:hover,
+.esci:hover {
+  color: var(--testo);
+  border-color: var(--bordo-forte);
+}
+
+.barraBassa {
+  display: none;
+}
+
+.contenuto {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 36px 20px;
+}
+
+.contenutoLargo {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 20px 20px;
+}
+
+.titolo {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  margin: 8px 0 6px;
+}
+
+.sottotitolo {
+  color: var(--testo-tenue);
+  margin: 0 0 28px;
+  max-width: 62ch;
+  line-height: 1.55;
+}
+
+.attesa {
+  color: var(--testo-tenue);
+  text-align: center;
+  padding: 80px 0;
+}
+
+.soglia {
+  max-width: 520px;
+  margin: 60px auto;
+  padding: 36px;
+  text-align: center;
+}
+
+.sogliaAzioni {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 860px) {
+  .testata {
+    padding: 12px 16px;
+    gap: 12px;
+  }
+  .voci {
+    display: none;
+  }
+  .marchio {
+    flex: 1;
+  }
+  .azioni :global(.bottone) {
+    display: none;
+  }
+  .barraBassa {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    background: rgba(10, 7, 22, 0.94);
+    border-top: 1px solid var(--bordo);
+    backdrop-filter: blur(10px);
+  }
+  .scheda,
+  .schedaAttiva {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 2px 10px;
+    font-size: 0.68rem;
+    color: var(--testo-tenue);
+    text-decoration: none !important;
+  }
+  .schedaAttiva {
+    color: var(--oro-chiaro);
+  }
+  .segno {
+    font-size: 1.1rem;
+  }
+}

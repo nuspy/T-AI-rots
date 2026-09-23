@@ -1,0 +1,109 @@
+/* Il catalogo: una scheda per piano, affiancate. Il confronto fra piani
+ * vicini — quanto costa in più il gradino sopra — è il motivo per cui si
+ * apre questa pagina, e le schede lo rendono immediato. */
+
+.sezione {
+  margin: 0 0 2.25rem;
+}
+
+.sezioneTitolo {
+  font-family: var(--display);
+  font-size: 1.25rem;
+  margin: 0 0 0.3rem;
+}
+
+.piani {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  gap: 1rem;
+}
+
+.piano,
+.pianoSpento {
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+  padding: 1rem 1.1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Un piano fuori vendita resta leggibile — si deve poterlo riattivare — ma
+ * non deve sembrare in offerta. */
+.pianoSpento {
+  border-style: dashed;
+  background: transparent;
+}
+
+.pianoTestata {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.pianoNome {
+  font-family: var(--interfaccia);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  margin: 0;
+}
+
+.descrizione {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--inchiostro-tenue);
+}
+
+.dati {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.3rem 1rem;
+  margin: 0;
+  font-size: 0.875rem;
+  flex: 1;
+}
+
+.dati dt {
+  color: var(--inchiostro-debole);
+}
+
+.dati dd {
+  margin: 0;
+  text-align: right;
+  font-family: var(--apparato);
+  font-variant-numeric: tabular-nums;
+}
+
+.piano > button,
+.pianoSpento > button {
+  align-self: flex-start;
+}
+
+.modulo {
+  display: flex;
+  flex-direction: column;
+}
+
+.spunta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.spunta input {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--rubrica);
+}
+
+.comandi {
+  display: flex;
+  gap: 0.5rem;
+}

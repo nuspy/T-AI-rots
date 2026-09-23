@@ -1,0 +1,44 @@
+.elenco {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.voce {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+  padding: 0.9rem 1.1rem;
+}
+
+.voce > div {
+  flex: 1 1 24rem;
+}
+
+.voceTitolo {
+  font-family: var(--interfaccia);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  margin: 0;
+}
+
+.voceNota {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--inchiostro-tenue);
+  max-width: 70ch;
+}
+
+.vocePeriodo {
+  margin: 0.3rem 0 0;
+  font-family: var(--apparato);
+  font-size: 0.75rem;
+  color: var(--inchiostro-debole);
+}

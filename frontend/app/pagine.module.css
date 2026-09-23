@@ -1,0 +1,273 @@
+/* Gli elementi comuni delle pagine secondarie. */
+
+.sezione {
+  margin: 0 0 32px;
+}
+
+.sezioneTitolo {
+  font-size: 1.2rem;
+  margin: 0 0 14px;
+}
+
+.griglia {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.scheda {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.schedaEvidente {
+  border-color: var(--oro);
+  box-shadow: var(--bagliore);
+}
+
+.nome {
+  font-family: var(--font-titoli), serif;
+  font-size: 1.15rem;
+  color: var(--oro-chiaro);
+}
+
+.prezzo {
+  font-family: var(--font-titoli), serif;
+  font-size: 1.7rem;
+  color: var(--testo);
+}
+
+.nota {
+  color: var(--testo-tenue);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.errore {
+  color: var(--rosso);
+}
+
+.avviso,
+.avvisoBuono {
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--bordo);
+  background: rgba(224, 112, 122, 0.08);
+}
+
+.avvisoBuono {
+  background: rgba(127, 209, 168, 0.1);
+  border-color: rgba(127, 209, 168, 0.4);
+}
+
+.vuoto {
+  padding: 40px;
+  text-align: center;
+  color: var(--testo-tenue);
+}
+
+.elenco {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.riga {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+}
+
+.rigaCorpo {
+  flex: 1;
+  min-width: 0;
+}
+
+.rigaTitolo {
+  margin: 0;
+  font-family: var(--font-oracolo), serif;
+  font-size: 1.2rem;
+  color: var(--testo);
+}
+
+.rigaDettagli {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: var(--testo-tenue);
+}
+
+.positivo {
+  color: var(--verde);
+  font-weight: 600;
+}
+
+.negativo {
+  color: var(--rosso);
+  font-weight: 600;
+}
+
+.saldo {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.saldoNumero {
+  font-family: var(--font-titoli), serif;
+  font-size: 3rem;
+  color: var(--oro-chiaro);
+}
+
+.attuale {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px;
+}
+
+.misura {
+  font-size: 0.9rem;
+  color: var(--testo-tenue);
+}
+
+.barra {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  margin-top: 6px;
+  width: 220px;
+}
+
+.barra span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--viola), var(--oro));
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--testo-tenue);
+}
+
+.campo input {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--bordo);
+  background: rgba(7, 5, 15, 0.6);
+  color: var(--testo);
+  font: inherit;
+}
+
+.linea {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.etichetta {
+  display: inline-block;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--viola-chiaro);
+}
+
+.codice {
+  font-family: var(--font-titoli), serif;
+  font-size: 1.6rem;
+  letter-spacing: 0.2em;
+  color: var(--oro-chiaro);
+}
+
+.cartaGrande {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.livelli dt {
+  font-family: var(--font-titoli), serif;
+  color: var(--oro);
+  margin-top: 14px;
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+}
+
+.livelli dd {
+  margin: 4px 0 0;
+}
+
+.griglaCarte {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 18px;
+}
+
+.cartaLink {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--testo-tenue);
+  text-align: center;
+  text-decoration: none !important;
+  transition: transform 0.2s;
+}
+
+.cartaLink:hover {
+  transform: translateY(-4px);
+  color: var(--oro-chiaro);
+}
+
+.filtri {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.filtro,
+.filtroAttivo {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--bordo);
+  background: none;
+  color: var(--testo-tenue);
+  cursor: pointer;
+}
+
+.filtroAttivo {
+  color: var(--notte);
+  background: var(--oro);
+  border-color: var(--oro);
+}
+
+.carteRiga {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 18px 0;
+  justify-content: center;
+}
+
+@media (max-width: 720px) {
+  .cartaGrande {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+}

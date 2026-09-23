@@ -1,0 +1,13 @@
+.cosmo {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  display: block;
+  /* Il ripiego senza WebGL, e ciò che si vede nei primi istanti. */
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(123, 92, 214, 0.28), transparent 55%),
+    radial-gradient(ellipse at 75% 80%, rgba(216, 180, 90, 0.12), transparent 50%),
+    #07050f;
+}

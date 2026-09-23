@@ -1,0 +1,185 @@
+.soglia {
+  min-height: 100vh;
+  padding-bottom: 90px;
+}
+
+.eroe {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  align-items: center;
+  gap: 20px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 70px 28px 40px;
+  min-height: 78vh;
+}
+
+.sovratitolo {
+  font-family: var(--font-titoli), serif;
+  letter-spacing: 0.3em;
+  font-size: 0.78rem;
+  color: var(--viola-chiaro);
+  text-transform: uppercase;
+}
+
+.titolo {
+  font-size: clamp(3.2rem, 9vw, 6.4rem);
+  margin: 10px 0;
+  line-height: 1;
+  background: linear-gradient(180deg, #fff3c9, #d8b45a 60%, #8f6c24);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 30px rgba(216, 180, 90, 0.35));
+}
+
+.titolo span {
+  color: var(--viola-chiaro);
+  -webkit-text-fill-color: var(--viola-chiaro);
+}
+
+.motto {
+  font-size: 1.55rem;
+  max-width: 30ch;
+  color: var(--testo);
+}
+
+.inviti {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 26px;
+}
+
+.eroeCarte {
+  position: relative;
+  height: 420px;
+}
+
+.cartaVolante {
+  position: absolute;
+  top: 60px;
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.6));
+}
+
+.sezione {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.sezione h2 {
+  text-align: center;
+  font-size: 1.7rem;
+  margin-bottom: 26px;
+}
+
+.passi {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.passo {
+  padding: 24px 20px;
+}
+
+.passo h3 {
+  margin: 8px 0;
+}
+
+.passo p {
+  color: var(--testo-tenue);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.numeroPasso {
+  font-family: var(--font-titoli), serif;
+  color: var(--viola-chiaro);
+  letter-spacing: 0.2em;
+}
+
+.stese {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+}
+
+.stesa {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px;
+  color: var(--testo);
+  text-decoration: none !important;
+  transition: transform 0.25s, border-color 0.25s;
+}
+
+.stesa:hover {
+  transform: translateY(-4px);
+  border-color: var(--bordo-forte);
+}
+
+.stesa strong {
+  font-family: var(--font-titoli), serif;
+  color: var(--oro-chiaro);
+}
+
+.stesa span {
+  font-size: 0.78rem;
+  color: var(--viola-chiaro);
+}
+
+.stesa p {
+  margin: 4px 0 0;
+  font-size: 0.88rem;
+  color: var(--testo-tenue);
+  line-height: 1.5;
+}
+
+.rigore {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+
+.avvertenza {
+  text-align: center;
+  color: var(--testo-debole);
+  font-size: 0.86rem;
+  max-width: 70ch;
+  margin: 26px auto 0;
+  line-height: 1.55;
+}
+
+@media (max-width: 960px) {
+  .eroe {
+    grid-template-columns: 1fr;
+    padding-top: 40px;
+    text-align: center;
+  }
+  .motto {
+    margin: 0 auto;
+  }
+  .inviti {
+    justify-content: center;
+  }
+  .eroeCarte {
+    height: 300px;
+  }
+  .passi,
+  .stese {
+    grid-template-columns: 1fr 1fr;
+  }
+  .rigore {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .passi,
+  .stese {
+    grid-template-columns: 1fr;
+  }
+}

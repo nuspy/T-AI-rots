@@ -1,0 +1,52 @@
+/* La pagina delle statistiche.
+ *
+ * Le ripartizioni vanno a coppie su schermo largo: sono brevi, e una colonna
+ * sola di cinque grafici corti lascerebbe metà schermo vuoto e costringerebbe
+ * a scorrere per confrontarli. Sotto i 60rem tornano una per riga.
+ */
+
+.coppie {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  gap: 0 1.25rem;
+}
+
+/* La sicurezza sta a parte, con un bordo proprio: non è un numero di
+ * crescita, e non deve confondersi con le tessere di sopra. */
+.sicurezza {
+  border: 1px solid var(--filo);
+  border-left: 3px solid var(--allarme);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+  padding: 1rem 1.25rem 0.25rem;
+  margin: 0 0 1.5rem;
+}
+
+.sicurezzaTitolo {
+  font-family: var(--interfaccia);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  margin: 0 0 0.25rem;
+}
+
+.sicurezzaNota {
+  font-size: 0.8125rem;
+  color: var(--inchiostro-tenue);
+  line-height: 1.5;
+  margin: 0 0 0.9rem;
+  max-width: 70ch;
+}
+
+.sicurezza .tessereSicurezza {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.nota {
+  font-size: 0.8125rem;
+  color: var(--inchiostro-tenue);
+  margin: -0.75rem 0 1.5rem;
+}

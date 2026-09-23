@@ -83,6 +83,7 @@ class AdminUserRepository(_ConAudit):
             filtro.append(or_(
                 func.lower(User.email).like(modello),
                 func.lower(User.display_name).like(modello),
+                func.lower(User.referral_code) == testo.lower(),
             ))
         if solo_attivi:
             filtro.append(User.deleted_at.is_(None))
