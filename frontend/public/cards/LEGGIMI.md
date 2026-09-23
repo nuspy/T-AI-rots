@@ -13,3 +13,10 @@ Per le immagini definitive usa lo stesso nome con un'altra estensione:
 
 Proporzioni 3:5 (per esempio 600×1000 px). Poi imposta
 `NEXT_PUBLIC_CARD_EXT=webp` e ricompila il frontend.
+
+## Generare le immagini
+
+`prompts.json` contiene, per ciascuna delle 78 carte, il prompt completo e
+autonomo per un generatore di immagini (stile, simboli spiegati, testo e font
+Cinzel) e il nome del file da produrre (`file`). Si rigenera con
+`python -m tarot_core.tools.prompt_immagini` dal backend.

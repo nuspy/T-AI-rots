@@ -161,8 +161,21 @@ da uno script a partire dal mazzo del backend:
 cd frontend && npm run carte    # scrive public/cards/{id}.svg per le 78 carte
 ```
 
-Per le immagini definitive: copia i file in `frontend/public/cards/` con lo
-stesso nome (`{id}.webp`, vedi `LEGGIMI.md`) e imposta `NEXT_PUBLIC_CARD_EXT=webp`.
+**I prompt per le immagini definitive** sono in
+`frontend/public/cards/prompts.json`: una voce per carta con `file`
+(`{id}.webp`), `name`, `top_text`, `bottom_text`, `font` (Cinzel), `width`,
+`height`, `prompt` e `negative_prompt`, tutto in inglese. Ogni prompt è
+autonomo: ripete per intero lo stile comune, l'identità esoterica della carta,
+la scena con i simboli spiegati e il testo da scrivere col suo font. Le scene
+sono in `backend/tarot_core/knowledge/immagini/scene_*.py`; il file si rigenera
+con:
+
+```bash
+cd backend && python -m tarot_core.tools.prompt_immagini
+```
+
+Salva ogni immagine in `frontend/public/cards/` con il nome indicato in
+`file` e imposta `NEXT_PUBLIC_CARD_EXT=webp`.
 
 ## Funzioni per la viralità, già incluse
 
