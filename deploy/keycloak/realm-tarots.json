@@ -1,0 +1,216 @@
+{
+  "realm": "tarots",
+  "enabled": true,
+  "displayName": "T·AI·rots",
+  "loginWithEmailAllowed": true,
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": true,
+  "verifyEmail": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "editUsernameAllowed": false,
+  "accessTokenLifespan": 900,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "roles": {
+    "realm": [
+      {
+        "name": "user",
+        "description": "Chi consulta le carte: letture, storico, crediti"
+      },
+      {
+        "name": "admin",
+        "description": "Amministratore: utenti, pagamenti, catalogo, statistiche, modelli"
+      },
+      {
+        "name": "default-roles-tarots",
+        "description": "Assegnato automaticamente a ogni nuovo utente",
+        "composite": true,
+        "composites": {
+          "realm": [
+            "user"
+          ],
+          "client": {
+            "account": [
+              "view-profile",
+              "manage-account"
+            ]
+          }
+        },
+        "clientRole": false
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "tarot-frontend",
+      "name": "T·AI·rots",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "https://tarots.example.com/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "https://tarots.example.com"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    },
+    {
+      "clientId": "tarot-admin",
+      "name": "Console di amministrazione",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "http://localhost:3001/*",
+        "https://admin.tarots.example.com/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3001",
+        "https://admin.tarots.example.com"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    },
+    {
+      "clientId": "tarot-api",
+      "name": "API",
+      "enabled": true,
+      "publicClient": false,
+      "bearerOnly": false,
+      "standardFlowEnabled": false,
+      "serviceAccountsEnabled": true,
+      "secret": "sviluppo-non-usare-in-produzione",
+      "attributes": {
+        "access.token.lifespan": "900"
+      }
+    },
+    {
+      "clientId": "tarot-test",
+      "name": "Client per i test automatici (solo sviluppo)",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "protocolMappers": [
+        {
+          "name": "audience-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "tarot-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "username": "test@tarots.local",
+      "email": "test@tarots.local",
+      "firstName": "Utente",
+      "lastName": "Di Prova",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "test",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "user"
+      ]
+    },
+    {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "username": "admin@tarots.local",
+      "email": "admin@tarots.local",
+      "firstName": "Amministratore",
+      "lastName": "Di Prova",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "user",
+        "admin"
+      ]
+    }
+  ],
+  "defaultRole": {
+    "name": "default-roles-tarots",
+    "description": "Ruoli assegnati a ogni nuovo utente",
+    "composite": true,
+    "clientRole": false
+  },
+  "identityProviders": [
+    {
+      "alias": "google",
+      "displayName": "Google",
+      "providerId": "google",
+      "enabled": false,
+      "trustEmail": true,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "sostituire-google",
+        "clientSecret": "sostituire-google",
+        "syncMode": "IMPORT",
+        "defaultScope": "openid profile email"
+      }
+    },
+    {
+      "alias": "facebook",
+      "displayName": "Facebook",
+      "providerId": "facebook",
+      "enabled": false,
+      "trustEmail": true,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "sostituire-facebook",
+        "clientSecret": "sostituire-facebook",
+        "syncMode": "IMPORT",
+        "defaultScope": "email public_profile"
+      }
+    },
+    {
+      "alias": "apple",
+      "displayName": "Apple",
+      "providerId": "oidc",
+      "enabled": false,
+      "trustEmail": true,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "sostituire-apple",
+        "clientSecret": "sostituire-apple",
+        "syncMode": "IMPORT",
+        "issuer": "https://appleid.apple.com",
+        "authorizationUrl": "https://appleid.apple.com/auth/authorize?response_mode=form_post",
+        "tokenUrl": "https://appleid.apple.com/auth/token",
+        "jwksUrl": "https://appleid.apple.com/auth/keys",
+        "useJwksUrl": "true",
+        "defaultScope": "openid name email",
+        "clientAuthMethod": "client_secret_post"
+      }
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+# L'API di T-AI-rots. Dalla ricetta di Personalities, senza il worker: qui
+# non ci sono corpora da digerire né audio da trascrivere.
+#
+#   docker build -f deploy/Dockerfile.backend -t tarot-api .
+
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /app
+
+# Dipendenze prima del codice: cambiano di rado, e così il livello resta in
+# cache fra una build e l'altra.
+COPY backend/requirements.txt ./
+RUN pip install -r requirements.txt
+
+COPY backend/alembic.ini ./
+COPY backend/tarot_core ./tarot_core
+# I guardrail sono dati, letti da `data/guards` all'avvio. La base di
+# conoscenza (mazzo, stese, dottrina) viaggia dentro il pacchetto.
+COPY backend/data/guards ./data/guards
+
+# Utente non privilegiato: un processo che non deve scrivere sul filesystem
+# dell'immagine non deve poterlo fare.
+RUN useradd --create-home --uid 1000 tarot && chown -R tarot:tarot /app
+USER tarot
+
+EXPOSE 8100
+
+# La liveness non tocca i supporti: un database lento non deve far riavviare
+# un'applicazione sana.
+HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8100/healthz', timeout=3)"
+
+# Le migrazioni si applicano prima di servire: un'API che parte su uno schema
+# vecchio fallisce alla prima query, con un errore che non nomina la causa.
+CMD ["sh", "-c", "alembic upgrade head && uvicorn tarot_core.api.app:app --host 0.0.0.0 --port 8100 --proxy-headers --forwarded-allow-ips '*'"]

@@ -1,0 +1,100 @@
+# Stack di sviluppo di T-AI-rots, sul modello di Personalities.
+#
+#   docker compose up -d                  # database, Keycloak, API
+#   docker compose run --rm api python -m tarot_core.tools.seed
+#   docker compose --profile web up -d    # anche sito e console, in container
+#
+# In sviluppo sito e console si avviano di solito con `npm run dev` (porte
+# 3000 e 3001): il ricaricamento a caldo vale più di un container.
+
+name: tarots
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: tarot
+      POSTGRES_PASSWORD: tarot
+      POSTGRES_DB: tarot
+    ports:
+      # 5433 e non 5432: su una macchina di sviluppo capita spesso che un
+      # PostgreSQL di sistema occupi già la porta canonica.
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tarot -d tarot"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+      KC_DB: dev-file
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./deploy/keycloak/realm-tarots.json:/opt/keycloak/data/import/realm.json:ro
+      - keycloak_data:/opt/keycloak/data
+    healthcheck:
+      # L'immagine non ha curl: si usa il file descriptor di rete della shell.
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q 'UP' <&3"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  api:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.backend
+    env_file:
+      - path: backend/.env
+        required: false
+    environment:
+      TAROT_DATABASE_URL: postgresql+psycopg://tarot:tarot@postgres:5432/tarot
+      # Dentro la rete le chiavi si leggono dal servizio; il browser però
+      # vede `localhost:8080`, ed è quello l'emittente scritto nei token.
+      TAROT_KEYCLOAK_URL: http://keycloak:8080
+      TAROT_KEYCLOAK_ISSUER_URL: http://localhost:8080
+      TAROT_TRACING_ENABLED: "false"
+      TAROT_API_PUBLIC_URL: http://localhost:8100
+      TAROT_WEB_PUBLIC_URL: http://localhost:3000
+    ports:
+      - "8100:8100"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+
+  web:
+    profiles: ["web"]
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.next
+      args:
+        APP: frontend
+    ports:
+      - "3000:3000"
+    depends_on: [api]
+
+  admin:
+    profiles: ["web"]
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.next
+      args:
+        APP: admin
+    ports:
+      - "3001:3000"
+    depends_on: [api]
+
+volumes:
+  postgres_data:
+  keycloak_data:
