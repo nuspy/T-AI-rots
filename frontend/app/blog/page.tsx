@@ -35,12 +35,14 @@ export async function generateMetadata({ searchParams }: { searchParams: Paramet
       : BLOG.title(lingua);
   const url = urlPubblico(lingua, "/blog");
   const lingue = alternative(lingua, { en: "/blog", it: "/blog" });
+  /* Un blog senza ancora nessun articolo in questa lingua è una pagina vuota: non si indicizza (finché non ne ha). */
+  const vuoto = !q && ((await leggiDalServer<ElencoArticoli>(`/blog/posts?per_pagina=1&lang=${lingua}`))?.totale ?? 0) === 0;
   return {
     title: titoloPagina(titolo),
     description: descrizione,
     keywords: BLOG.parole(lingua),
     /* Le ricerche non si indicizzano; le pagine successive alla prima hanno il proprio canonical. */
-    robots: q ? { index: false, follow: true } : undefined,
+    robots: q || vuoto ? { index: false, follow: true } : undefined,
     alternates: {
       ...lingue,
       canonical: pagina > 1 && !q ? `${url}?pagina=${pagina}` : url,

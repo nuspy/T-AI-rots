@@ -61,7 +61,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...coppia(stessa("/carta-del-giorno"), 0.8, "daily"),
     ...coppia(stessa("/mazzo"), 0.6, "monthly"),
     ...coppia(stessa("/piano"), 0.6, "monthly"),
-    ...coppia(stessa("/blog"), 0.9, "weekly"),
+    /* Il blog di una lingua senza articoli è una pagina vuota (`noindex`): non sta nella mappa. */
+    ...coppia(
+      conLingue(LINGUE.filter((l) => (blog?.articoli ?? []).some((a) => linguaPubblica(a.lang) === l)), "/blog"),
+      0.9, "weekly",
+    ),
     ...(blog?.sezioni ?? []).flatMap((s) =>
       coppia(conLingue(inLingua(blog?.sezioni_lingue, s), `/blog/sezione/${s}`), 0.7, "weekly")),
     ...(blog?.tags ?? []).flatMap((x) =>
