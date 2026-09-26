@@ -363,6 +363,36 @@ async def test_la_mappa_elenca_solo_cio_che_e_pubblico(admin):
     assert [a["slug"] for a in m["articoli"]] == ["pubblico"] and m["sezioni"] == ["visibile"] and m["tags"] == ["uno"]
 
 
+async def test_la_mappa_dice_in_quali_lingue_una_sezione_o_un_etichetta_ha_articoli(admin):
+    amore = await _sezione(admin, "Amore")
+    figlia = await _sezione(admin, "Coppie", parent_id=amore["id"])
+    await _sezione(admin, "Vuota")
+    await _sezione(admin, "Maggiori", tipo="carte", filtro={"arcano": "maggiore"})
+    await _articolo(admin, "Love", lang="en", sezione_id=figlia["id"], tags=["love"])
+    await _articolo(admin, "Amore in coppia", lang="it", sezione_id=amore["id"], tags=["amore"])
+    await _articolo(admin, "Nascosto", lang="it", noindex=True, sezione_id=figlia["id"], tags=["amore", "nascosto"])
+    m = (await admin.get("/blog/mappa")).json()
+    lingue = m["sezioni_lingue"]
+    assert lingue["amore"] == ["en", "it"]                 # l'inglese sta in una sotto-sezione
+    assert lingue["coppie"] == ["en"]                      # l'articolo italiano nascosto non conta
+    assert lingue["vuota"] == []                           # nessuna pagina da indicare
+    assert lingue["maggiori"] == ["en", "it"]              # un catalogo esiste in ogni lingua
+    assert m["tags_lingue"] == {"love": ["en"], "amore": ["it"]}
+
+
+async def test_una_sezione_di_catalogo_parla_la_lingua_richiesta(admin):
+    await _sezione(admin, "Maggiori", tipo="carte", filtro={"arcano": "maggiore"})
+    await _sezione(admin, "Stese", tipo="stese", filtro={"categoria": "coppia"})
+    inglese = (await admin.get("/blog/sections/maggiori", params={"lang": "en"})).json()["elementi"]
+    italiano = (await admin.get("/blog/sections/maggiori", params={"lang": "it"})).json()["elementi"]
+    stella_en = next(c for c in inglese if c["id"] == "maj-17")
+    stella_it = next(c for c in italiano if c["id"] == "maj-17")
+    assert stella_en["slug"] == "the-star" and stella_it["slug"] == "la-stella"
+    assert stella_en["nome"] != stella_it["nome"]
+    stese = (await admin.get("/blog/sections/stese", params={"lang": "en"})).json()["elementi"]
+    assert {s["slug"] for s in stese} >= {"mirror-spread", "crossroads-spread"} and all(s["slugs"]["it"] for s in stese)
+
+
 # ---- le immagini ----------------------------------------------------------------------------------------------
 
 

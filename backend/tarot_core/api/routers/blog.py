@@ -106,7 +106,7 @@ async def articoli_json(session, posts: List[BlogPost]) -> List[Dict[str, Any]]:
 # ---- elementi del catalogo per le sezioni «carte» e «stese» ------------------------------------------
 
 
-def _elementi_catalogo(sezione: BlogSection) -> List[Dict[str, Any]]:
+def _elementi_catalogo(sezione: BlogSection, lang: Optional[str] = None) -> List[Dict[str, Any]]:
     conoscenza = get_conoscenza()
     filtro = sezione.filtro or {}
     if sezione.tipo == "carte":
@@ -115,13 +115,14 @@ def _elementi_catalogo(sezione: BlogSection) -> List[Dict[str, Any]]:
             carte = [c for c in carte if c["arcano"] == filtro["arcano"]]
         if "seme" in filtro:
             carte = [c for c in carte if c.get("seme") == filtro["seme"]]
-        return [conoscenza.carta_pubblica(c["id"]) for c in carte]
+        return [conoscenza.carta_pubblica(c["id"], lang=lang) for c in carte]
     if sezione.tipo == "stese":
         stese = conoscenza.stese.values()
         if "categoria" in filtro:
             stese = [s for s in stese if conoscenza.categoria_di(s) == filtro["categoria"]]
         return [
-            {k: v for k, v in conoscenza.stesa_pubblica(s).items() if k in ("id", "nome", "nomi", "descrizione", "categoria", "stile", "posizioni")}
+            {k: v for k, v in conoscenza.stesa_pubblica(s, lang).items()
+             if k in ("id", "nome", "nomi", "descrizione", "categoria", "stile", "posizioni", "lang", "slug", "slugs")}
             for s in stese
         ]
     return []
@@ -160,7 +161,11 @@ async def albero(session: DbSession) -> List[Dict[str, Any]]:
 
 
 @router.get("/sections/{slug}")
-async def sezione(slug: str, session: DbSession) -> Dict[str, Any]:
+async def sezione(
+    slug: str, session: DbSession,
+    lang: Optional[str] = Query(default=None, max_length=10, pattern="^[A-Za-z-]*$"),
+) -> Dict[str, Any]:
+    """Una sezione. `lang` sceglie la lingua dei nomi e degli slug di carte e stese del catalogo."""
     repo = BlogRepository(session)
     visibili = await repo.sezioni()
     per_id = {s.id: s for s in visibili}
@@ -176,7 +181,7 @@ async def sezione(slug: str, session: DbSession) -> Dict[str, Any]:
         "seo_titolo": s.seo_titolo,
         "seo_descrizione": s.seo_descrizione,
         "briciole": [{"slug": x.slug, "nome": x.nome} for x in repo.percorso(s, per_id)],
-        "elementi": _elementi_catalogo(s),
+        "elementi": _elementi_catalogo(s, lang),
     }
 
 
@@ -301,6 +306,17 @@ async def articoli_che_citano(
 async def mappa(session: DbSession) -> Dict[str, Any]:
     """Cosa c'è di pubblico, per la mappa del sito."""
     repo = BlogRepository(session)
+    visibili = await repo.sezioni()
+    per_sezione, per_tag = await repo.lingue_per_sezione_e_tag()
+    sezioni_lingue: Dict[str, List[str]] = {}
+    for s in visibili:
+        if s.tipo in ("carte", "stese"):
+            sezioni_lingue[s.slug] = ["en", "it"]
+            continue
+        lingue: set = set()
+        for sid in repo.discendenti(s.id, visibili):
+            lingue |= per_sezione.get(sid, set())
+        sezioni_lingue[s.slug] = sorted(lingue)
     return {
         # Un articolo `noindex` non sta nella mappa: la mappa dice ai motori di ricerca cosa indicizzare.
         "articoli": [
@@ -309,6 +325,10 @@ async def mappa(session: DbSession) -> Dict[str, Any]:
         ],
         "sezioni": [s.slug for s in await repo.sezioni()],
         "tags": [t.slug for t, _ in await repo.tag_con_conteggi()],
+        # Le lingue in cui una sezione (con le sue sotto-sezioni) o un'etichetta ha articoli da indicizzare. Le
+        # sezioni «carte» e «stese» sono cataloghi: esistono in ogni lingua.
+        "sezioni_lingue": sezioni_lingue,
+        "tags_lingue": {slug: sorted(lingue) for slug, lingue in per_tag.items()},
     }
 
 

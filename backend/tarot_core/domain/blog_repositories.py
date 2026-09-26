@@ -259,6 +259,27 @@ class BlogRepository:
         )
         return [(s, d, lingua, bool(n)) for s, d, lingua, n in (await self._session.execute(q)).all()]
 
+    async def lingue_per_sezione_e_tag(self) -> Tuple[Dict[int, set], Dict[str, set]]:
+        """Le lingue degli articoli indicizzabili di ogni sezione (per id) e di ogni etichetta (per slug).
+
+        Serve alla mappa del sito: una pagina di sezione o di etichetta senza articoli in una lingua è vuota in
+        quella lingua, e una pagina vuota non va indicata ai motori di ricerca."""
+        condizione = and_(await self.pubblico(), BlogPost.noindex.is_(False))
+        per_sezione: Dict[int, set] = {}
+        q = select(BlogPost.sezione_id, BlogPost.lang).where(condizione, BlogPost.sezione_id.is_not(None)).distinct()
+        for sid, lingua in (await self._session.execute(q)).all():
+            per_sezione.setdefault(sid, set()).add(lingua)
+        per_tag: Dict[str, set] = {}
+        q = (
+            select(BlogTag.slug, BlogPost.lang)
+            .join(BlogPostTag, BlogPostTag.tag_id == BlogTag.id)
+            .join(BlogPost, BlogPost.id == BlogPostTag.post_id)
+            .where(condizione).distinct()
+        )
+        for slug, lingua in (await self._session.execute(q)).all():
+            per_tag.setdefault(slug, set()).add(lingua)
+        return per_sezione, per_tag
+
     # ---- articoli: scrittura --------------------------------------------------------
 
     async def _tag(self, nomi: Sequence[str]) -> List[BlogTag]:
