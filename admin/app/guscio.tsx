@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AUTENTICAZIONE_SPENTA, useSessione } from "@/lib/sessione";
+import { Emblema } from "./emblema";
 import stili from "./guscio.module.css";
 
 const SEZIONI = [
@@ -10,6 +11,7 @@ const SEZIONI = [
   { href: "/utenti", etichetta: "Utenti" },
   { href: "/pagamenti", etichetta: "Pagamenti" },
   { href: "/catalogo", etichetta: "Catalogo" },
+  { href: "/blog", etichetta: "Blog" },
   { href: "/report", etichetta: "Report" },
   { href: "/registro", etichetta: "Registro" },
   { href: "/modelli", etichetta: "Modelli" },
@@ -41,7 +43,10 @@ export function Guscio({ children }: { children: React.ReactNode }) {
     return (
       <div className={stili.soglia}>
         <div className={stili.sogliaColonna}>
-          <h1 className={stili.sogliaTitolo}>T-AI-rots · Console</h1>
+          <Emblema altezza={64} />
+          <h1 className={stili.sogliaTitolo}>
+            TAROTS <em>chat</em> · Console
+          </h1>
           <p className={stili.sogliaTesto}>
             Amministrazione di utenti, pagamenti, catalogo e modelli. Serve un
             account con ruolo di amministratore.
@@ -60,7 +65,10 @@ export function Guscio({ children }: { children: React.ReactNode }) {
     <div className={stili.telaio}>
       <header className={stili.testata}>
         <Link href="/" className={stili.marchio}>
-          T-AI-rots <small>· Console</small>
+          <Emblema />
+          <span>
+            TAROTS <em>chat</em> <small>· Console</small>
+          </span>
         </Link>
 
         {amministratore && (

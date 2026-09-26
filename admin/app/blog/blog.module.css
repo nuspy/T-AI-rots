@@ -1,0 +1,754 @@
+/* La console del blog. Mobile-first: le colonne dell'editor si dispongono solo dove c'è spazio, e nessun
+ * elenco scorre in orizzontale. I bersagli da toccare stanno sopra i 44 px, come nel resto della console. */
+
+/* ---- navigazione fra le parti del blog ---- */
+
+.schede {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 1.5rem;
+  padding: 0 0 0.75rem;
+  border-bottom: 1px solid var(--filo);
+}
+
+.scheda,
+.schedaAttiva {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.9rem;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  color: var(--inchiostro-tenue);
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+.scheda:hover {
+  color: var(--inchiostro);
+  border-color: var(--inchiostro-debole);
+}
+
+.schedaAttiva {
+  background: var(--superficie-alta);
+  border-color: var(--rubrica);
+  color: var(--inchiostro);
+  font-weight: 500;
+}
+
+.scheda:focus-visible,
+.schedaAttiva:focus-visible {
+  outline: 2px solid var(--rubrica);
+  outline-offset: 2px;
+}
+
+/* Un collegamento che ha l'aspetto di un pulsante (l'azione «Nuovo articolo»). */
+.comandoLink {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 1rem;
+  border: 1px solid var(--rubrica);
+  border-radius: var(--raggio);
+  background: var(--rubrica);
+  color: var(--carta);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.comandoLink:hover {
+  opacity: 0.85;
+}
+
+.comandoLink:focus-visible {
+  outline: 2px solid var(--inchiostro);
+  outline-offset: 2px;
+}
+
+/* ---- elenco degli articoli ---- */
+
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+  margin: 0 0 1rem;
+}
+
+.barra > label {
+  flex: 1 1 12rem;
+  margin: 0;
+}
+
+.elenco {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+}
+
+.voce {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  gap: 0.25rem 0.9rem;
+  align-items: start;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--filo-tenue);
+}
+
+.voce:last-child {
+  border-bottom: none;
+}
+
+.copertina {
+  width: 4.5rem;
+  height: 3.4rem;
+  border-radius: var(--raggio);
+  border: 1px solid var(--filo);
+  object-fit: cover;
+  background: var(--superficie-alta);
+}
+
+.senzaCopertina {
+  display: grid;
+  place-items: center;
+  width: 4.5rem;
+  height: 3.4rem;
+  border: 1px dashed var(--filo);
+  border-radius: var(--raggio);
+  color: var(--inchiostro-debole);
+  font-size: 0.6875rem;
+}
+
+.voceTesto {
+  min-width: 0;
+}
+
+.voceTitolo {
+  display: block;
+  color: var(--inchiostro);
+  font-weight: 600;
+  line-height: 1.3;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.voceTitolo:hover {
+  text-decoration: underline;
+}
+
+.dettagli {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.75rem;
+  margin: 0.3rem 0 0;
+  color: var(--inchiostro-debole);
+  font-size: 0.8125rem;
+}
+
+.azioniVoce {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.azioniVoce > button,
+.azioniVoce > a {
+  min-height: 44px;
+  height: auto;
+}
+
+.stellina {
+  color: var(--rubrica);
+}
+
+/* ---- l'editor ---- */
+
+.editor {
+  display: grid;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (min-width: 1100px) {
+  .editor {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+  }
+}
+
+.colonna {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.titoloGrande {
+  font-family: var(--display);
+  font-size: clamp(1.3rem, 3.5vw, 1.7rem);
+  min-height: 52px;
+}
+
+.commutatore {
+  display: inline-flex;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  overflow: hidden;
+}
+
+.commutatore button {
+  min-height: 44px;
+  padding: 0 1rem;
+  background: transparent;
+  border: none;
+  color: var(--inchiostro-tenue);
+  font-size: 0.875rem;
+}
+
+.commutatore button[aria-pressed="true"] {
+  background: var(--superficie-alta);
+  color: var(--inchiostro);
+  font-weight: 500;
+  box-shadow: inset 0 -2px 0 var(--rubrica);
+}
+
+.commutatore button:focus-visible {
+  outline: 2px solid var(--rubrica);
+  outline-offset: -2px;
+}
+
+.strumenti {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 0.6rem;
+}
+
+.strumento {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 0.7rem;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: transparent;
+  color: var(--inchiostro-tenue);
+  font-size: 0.875rem;
+}
+
+.strumento:hover:not(:disabled) {
+  color: var(--inchiostro);
+  border-color: var(--inchiostro-debole);
+}
+
+.strumento:focus-visible {
+  outline: 2px solid var(--rubrica);
+  outline-offset: 1px;
+}
+
+.testoArea {
+  min-height: 24rem;
+  font-family: var(--apparato);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.contatori {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0.4rem 0 0;
+  color: var(--inchiostro-debole);
+  font-size: 0.75rem;
+  font-family: var(--apparato);
+}
+
+.pannello {
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  padding: 1rem 1.1rem 0.4rem;
+  background: var(--superficie);
+}
+
+.pannelloTitolo {
+  margin: 0 0 0.75rem;
+  font-family: var(--interfaccia);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.interruttore {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  margin: 0 0 0.4rem;
+  font-size: 0.875rem;
+  color: var(--inchiostro-tenue);
+  cursor: pointer;
+}
+
+.interruttore input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--rubrica);
+  flex: none;
+}
+
+.barraAzioni {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0.5rem -0.25rem 0;
+  padding: 0.75rem 0.25rem calc(0.75rem + env(safe-area-inset-bottom));
+  background: var(--carta);
+  border-top: 1px solid var(--filo);
+}
+
+.barraAzioni .stato {
+  margin-right: auto;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0 0.4rem 0 0.7rem;
+  min-height: 36px;
+  border: 1px solid var(--filo);
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  color: var(--inchiostro-tenue);
+}
+
+.chip button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--inchiostro-debole);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.chip button:hover {
+  color: var(--allarme);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 0.6rem;
+}
+
+.suggerimenti {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0 0 0.9rem;
+}
+
+.suggerimento {
+  min-height: 36px;
+  padding: 0 0.6rem;
+  border: 1px dashed var(--filo);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--inchiostro-debole);
+  font-size: 0.75rem;
+}
+
+.suggerimento:hover {
+  color: var(--inchiostro);
+  border-color: var(--inchiostro-debole);
+}
+
+.conta {
+  color: var(--inchiostro-debole);
+  font-size: 0.75rem;
+  font-family: var(--apparato);
+}
+
+.contaTroppo {
+  color: var(--allarme);
+}
+
+.copertinaAnteprima {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  margin: 0 0 0.6rem;
+  background: var(--superficie-alta);
+}
+
+.versioni {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+}
+
+.versione {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--filo-tenue);
+  font-size: 0.8125rem;
+  color: var(--inchiostro-tenue);
+}
+
+.versione:last-child {
+  border-bottom: none;
+}
+
+.versioneTitolo {
+  flex: 1 1 100%;
+  color: var(--inchiostro);
+  overflow-wrap: anywhere;
+}
+
+.conferma {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.875rem;
+  color: var(--allarme);
+}
+
+/* ---- l'anteprima: come si legge un articolo, dentro la console ---- */
+
+.anteprima {
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+  padding: 1.25rem 1.25rem 0.5rem;
+  min-height: 24rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.anteprimaTitolo {
+  font-family: var(--display);
+  font-size: 1.6rem;
+  line-height: 1.2;
+  margin: 0 0 0.3rem;
+}
+
+.anteprimaSotto {
+  color: var(--inchiostro-tenue);
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+}
+
+.anteprima h2,
+.anteprima h3 {
+  font-family: var(--display);
+  margin: 1.6rem 0 0.5rem;
+  line-height: 1.25;
+}
+
+.anteprima p,
+.anteprima ul,
+.anteprima ol,
+.anteprima blockquote {
+  margin: 0 0 1rem;
+}
+
+.anteprima blockquote {
+  padding-left: 1rem;
+  border-left: 3px solid var(--rubrica);
+  color: var(--inchiostro-tenue);
+  font-style: italic;
+}
+
+.anteprima a {
+  color: var(--rubrica);
+}
+
+.anteprima img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--raggio);
+  margin: 0 auto 1rem;
+}
+
+.anteprima code {
+  font-family: var(--apparato);
+  font-size: 0.875em;
+}
+
+.anteprima .riferimento {
+  display: inline-block;
+  padding: 0.05rem 0.5rem;
+  border: 1px solid var(--rubrica-tenue);
+  border-radius: 999px;
+  color: var(--rubrica);
+  font-family: var(--apparato);
+  font-size: 0.8125rem;
+}
+
+.tabellaAnteprima {
+  overflow-x: auto;
+  margin: 0 0 1rem;
+}
+
+.anteprima table {
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.anteprima th,
+.anteprima td {
+  border: 1px solid var(--filo);
+  padding: 0.4rem 0.7rem;
+  text-align: left;
+}
+
+/* ---- sezioni ---- */
+
+.albero {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.albero .albero {
+  margin-left: 1.1rem;
+  padding-left: 0.9rem;
+  border-left: 1px solid var(--filo);
+}
+
+.nodo {
+  margin: 0.5rem 0;
+}
+
+.nodoRiga {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+}
+
+.nodoNascosto {
+  border-style: dashed;
+  background: transparent;
+}
+
+.nodoNome {
+  flex: 1 1 10rem;
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.nodoNome small {
+  display: block;
+  font-weight: 400;
+  font-family: var(--apparato);
+  color: var(--inchiostro-debole);
+  font-size: 0.75rem;
+}
+
+.nodoAzioni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.nodoAzioni button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 0.6rem;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: transparent;
+  color: var(--inchiostro-tenue);
+  font-size: 0.8125rem;
+}
+
+.nodoAzioni button:hover:not(:disabled) {
+  color: var(--inchiostro);
+  border-color: var(--inchiostro-debole);
+}
+
+.nodoAzioni button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.nodoAzioni button:focus-visible {
+  outline: 2px solid var(--rubrica);
+  outline-offset: 1px;
+}
+
+.modulo {
+  border: 1px solid var(--rubrica-tenue);
+  border-radius: var(--raggio);
+  padding: 1rem 1.1rem 0.4rem;
+  margin: 0.5rem 0 1rem;
+  background: var(--superficie);
+}
+
+.azioniModulo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+}
+
+/* ---- libreria delle immagini ---- */
+
+.griglia {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
+  gap: 0.9rem;
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+
+.miniatura {
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.miniatura img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+  background: var(--superficie-alta);
+}
+
+.miniaturaSotto {
+  padding: 0.6rem 0.75rem 0.75rem;
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--inchiostro-debole);
+  font-family: var(--apparato);
+}
+
+.miniaturaSotto div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.miniaturaSotto button {
+  min-height: 44px;
+  padding: 0 0.7rem;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: transparent;
+  color: var(--inchiostro-tenue);
+  font-size: 0.75rem;
+}
+
+.miniaturaSotto button:hover:not(:disabled) {
+  color: var(--inchiostro);
+  border-color: var(--inchiostro-debole);
+}
+
+.miniaturaSotto button:focus-visible {
+  outline: 2px solid var(--rubrica);
+  outline-offset: 1px;
+}
+
+.scegliFile {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 1rem;
+  border: 1px solid var(--rubrica);
+  border-radius: var(--raggio);
+  background: var(--rubrica);
+  color: var(--carta);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.scegliFile input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.scegliFile:focus-within {
+  outline: 2px solid var(--inchiostro);
+  outline-offset: 2px;
+}
+
+.selettore {
+  border: 1px solid var(--rubrica-tenue);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+  padding: 0.9rem 1rem;
+  margin: 0 0 1rem;
+}
+
+.selettore .griglia {
+  margin-top: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 8rem), 1fr));
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.scelta {
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--raggio);
+  background: none;
+  overflow: hidden;
+}
+
+.scelta img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+}
+
+.scelta:hover {
+  border-color: var(--inchiostro-debole);
+}
+
+.scelta:focus-visible {
+  outline: 2px solid var(--rubrica);
+  outline-offset: 1px;
+}
+
+.sceltaAttiva {
+  border-color: var(--rubrica);
+}

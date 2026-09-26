@@ -37,7 +37,7 @@ const apparato = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "T-AI-rots · Console",
+  title: "TAROTS chat · Console",
   description: "Amministrazione di utenti, pagamenti, catalogo e modelli.",
 };
 

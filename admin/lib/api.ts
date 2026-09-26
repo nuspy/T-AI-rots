@@ -12,7 +12,7 @@
  * tutto invece di restare vuota.
  */
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8100";
+export const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8100";
 
 export class ErroreApi extends Error {
   constructor(
@@ -28,7 +28,7 @@ function intestazioni(token: string): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-async function chiamata<T>(
+export async function chiamata<T>(
   token: string,
   percorso: string,
   opzioni: RequestInit = {},
@@ -88,7 +88,7 @@ async function errore(risposta: Response): Promise<never> {
   );
 }
 
-function interrogazione(parametri: Record<string, string | number | undefined>): string {
+export function interrogazione(parametri: Record<string, string | number | undefined>): string {
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(parametri)) {
     if (v !== undefined && v !== "") q.set(k, String(v));

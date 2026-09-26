@@ -26,12 +26,26 @@
 }
 
 .marchio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
   font-family: var(--display);
   font-size: 1.05rem;
   font-weight: 600;
   text-decoration: none;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   white-space: nowrap;
+}
+
+/* «chat» è la voce: corsivo, come nel sito. */
+.marchio em,
+.sogliaTitolo em {
+  font-family: var(--interfaccia);
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--inchiostro-tenue);
 }
 
 .marchio small {
