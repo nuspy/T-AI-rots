@@ -22,13 +22,22 @@
   text-transform: uppercase;
 }
 
-/* Il titolo della soglia è il marchio (`componenti/marchio`): qui solo lo spazio attorno. */
-.titolo {
-  margin: 18px 0 22px;
-  font-size: 1rem;
-  font-weight: 400;
-  letter-spacing: 0;
-  line-height: 1;
+/* Il logo (`componenti/marchio`) e, sotto, il titolo vero della pagina: una riga che dice che cosa si fa qui,
+ * in piccolo e spaziata come l'iscrizione di una carta. */
+.logo {
+  margin: 8px 0 18px;
+}
+
+.h1 {
+  margin: 0 0 14px;
+  max-width: 34ch;
+  font-family: var(--font-titoli), serif;
+  font-size: clamp(0.95rem, 2.4vw, 1.15rem);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: var(--oro-chiaro);
 }
 
 .motto {

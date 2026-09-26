@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AUTENTICAZIONE_SPENTA, useSessione } from "@/lib/sessione";
-import { Emblema } from "./emblema";
+import { Logo } from "./logo";
 import stili from "./guscio.module.css";
 
 const SEZIONI = [
@@ -43,7 +43,7 @@ export function Guscio({ children }: { children: React.ReactNode }) {
     return (
       <div className={stili.soglia}>
         <div className={stili.sogliaColonna}>
-          <Emblema altezza={64} />
+          <Logo altezza={96} decorativo />
           <h1 className={stili.sogliaTitolo}>
             TAROTS <em>chat</em> · Console
           </h1>
@@ -65,7 +65,7 @@ export function Guscio({ children }: { children: React.ReactNode }) {
     <div className={stili.telaio}>
       <header className={stili.testata}>
         <Link href="/" className={stili.marchio}>
-          <Emblema />
+          <Logo altezza={42} decorativo />
           <span>
             TAROTS <em>chat</em> <small>· Console</small>
           </span>

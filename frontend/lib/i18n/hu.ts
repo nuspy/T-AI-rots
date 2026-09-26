@@ -5,6 +5,7 @@ import type { Dizionario } from "./it";
 export const hu: Dizionario = {
   marchio: "TAROTS chat",
   motto: "A Thoth-tarot jósda, amelyet egy mesterséges intelligencia olvas.",
+  home_h1: "Online tarot jóslás a Thoth-tarottal és mesterséges intelligenciával",
   sovratitolo: "Thoth-tarot · Aleister Crowley",
 
   nav_leggi: "Jóslás",

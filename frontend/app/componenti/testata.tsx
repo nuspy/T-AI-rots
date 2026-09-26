@@ -111,7 +111,7 @@ export function Testata() {
     <>
       <header className={stili.testata}>
         <Link href="/" className={stili.marchio}>
-          <Marchio />
+          <Marchio priorita />
         </Link>
         <nav className={stili.voci} aria-label={t.aria_sezioni}>
           {voci.map((v) => (

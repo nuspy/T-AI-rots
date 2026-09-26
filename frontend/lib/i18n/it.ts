@@ -12,6 +12,7 @@
 export const it = {
   marchio: "TAROTS chat",
   motto: "L'oracolo del Tarocco di Thoth, letto da un'intelligenza artificiale.",
+  home_h1: "Lettura dei tarocchi online con il Tarocco di Thoth e l'AI",
   sovratitolo: "Tarocco di Thoth · Aleister Crowley",
 
   /* navigazione e sessione */

@@ -6,6 +6,7 @@ import type { Dizionario } from "./it";
 export const en: Dizionario = {
   marchio: "TAROTS chat",
   motto: "The oracle of the Thoth Tarot, read by an artificial intelligence.",
+  home_h1: "Online tarot reading with the Thoth Tarot and AI",
   sovratitolo: "Thoth Tarot · Aleister Crowley",
 
   nav_leggi: "Consult",

@@ -1,269 +1,55 @@
-/* Il marchio di TAROTS chat.
+/* Il logo di TAROTS chat.
  *
- * Due voci, come il sito: TAROTS è l'iscrizione (Cinzel, oro inciso), *chat* è l'oracolo che risponde (Cormorant
- * corsivo, viola). Il segno è una carta con la coda di un fumetto, e dentro la stella a sette punte di Babalon.
- *
- * Un solo movimento, sulla soglia: la carta e la stella si disegnano, il nome si incide, una luce lo attraversa
- * una volta. Con `prefers-reduced-motion` tutto compare già finito. */
-
-/* ---- il segno ---- */
-
-.emblema {
-  display: block;
-  flex: none;
-  overflow: visible;
-  filter: drop-shadow(0 0 10px rgba(216, 180, 90, 0.28));
-}
-
-/* Sette punte: girata di un settimo di giro la stella è identica a se stessa, quindi il gesto è visibile solo
- * mentre avviene — un piccolo respiro quando ci si passa sopra. */
-.stella {
-  transform-box: fill-box;
-  transform-origin: center;
-  transition: transform 0.9s cubic-bezier(0.3, 0.7, 0.2, 1);
-}
-
-a:hover .stella,
-a:focus-visible .stella {
-  transform: rotate(51.4286deg);
-}
-
-/* ---- il nome ---- */
-
-.nome {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.38em;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.parola,
-.parolaGrande {
-  font-family: var(--font-titoli), serif;
-  font-weight: 700;
-  line-height: 1;
-  /* L'oro è un gradiente e non un colore: a una luce, alla luce si vede il metallo. */
-  background-image: linear-gradient(100deg, #f6e4a8 0%, var(--oro) 52%, #c79a3c 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: var(--oro-chiaro);
-  filter: drop-shadow(0 0 14px rgba(216, 180, 90, 0.32));
-}
-
-.parola {
-  font-size: 1em;
-  letter-spacing: 0.16em;
-}
-
-.voce,
-.voceGrande {
-  font-family: var(--font-oracolo), serif;
-  font-style: italic;
-  font-weight: 500;
-  color: var(--viola-chiaro);
-  letter-spacing: 0.01em;
-}
-
-.voce {
-  font-size: 0.98em;
-  /* Il corsivo ha l'occhio più basso del maiuscolo: si alza un filo perché le due voci si guardino. */
-  transform: translateY(-0.02em);
-}
+ * L'immagine ha le proporzioni dell'originale (1347 × 1168): si fissa l'altezza in testata e la larghezza alla
+ * soglia, e l'altro lato segue (`auto`), così non si deforma. Un solo movimento, sulla soglia: entra piano. */
 
 /* ---- in riga: la testata ---- */
 
 .riga {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.7em;
-  font-size: 1.3rem;
+  display: block;
+  height: 54px;
+  width: auto;
+  max-width: none;
+  /* Una luce dorata che cresce quando ci si passa sopra: il logo è un collegamento. */
+  transition: filter 0.3s ease, transform 0.3s ease;
+  filter: drop-shadow(0 0 0 rgba(216, 180, 90, 0));
 }
 
-/* ---- in verticale: la soglia ---- */
-
-.verticale {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: clamp(10px, 1.6vw, 18px);
-  text-align: center;
+a:hover .riga,
+a:focus-visible .riga {
+  filter: drop-shadow(0 0 14px rgba(216, 180, 90, 0.55));
+  transform: scale(1.03);
 }
 
-.parolaGrande {
-  font-size: clamp(2.6rem, 9.5vw, 5.8rem);
-  letter-spacing: 0.24em;
-  /* Lo spazio dopo l'ultima lettera sposta il centro ottico: lo si rende. */
-  margin-right: -0.24em;
+@media (max-width: 860px) {
+  .riga {
+    height: 46px;
+  }
 }
 
-.voceGrande {
-  display: flex;
-  align-items: center;
-  gap: 0.85em;
-  font-size: clamp(1.5rem, 4.4vw, 2.6rem);
-  line-height: 1;
-}
-
-/* Due filetti: come la cornice interna di una carta. */
-.voceGrande::before,
-.voceGrande::after {
-  content: "";
-  width: clamp(28px, 9vw, 84px);
-  height: 1px;
-}
-
-.voceGrande::before {
-  background: linear-gradient(90deg, transparent, var(--bordo-forte));
-}
-
-.voceGrande::after {
-  background: linear-gradient(270deg, transparent, var(--bordo-forte));
-}
-
-/* ---- a blocco: la soglia, allineata a sinistra ---- */
+/* ---- a blocco: la soglia ---- */
 
 .blocco {
-  display: inline-flex;
-  align-items: center;
-  gap: clamp(14px, 2.6vw, 28px);
+  display: block;
+  width: min(540px, 88vw);
+  height: auto;
+  max-width: 100%;
+  filter: drop-shadow(0 12px 40px rgba(123, 92, 214, 0.3));
 }
 
-.bloccoTesto {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: clamp(6px, 1vw, 12px);
-  min-width: 0;
-}
-
-.blocco .parolaGrande {
-  font-size: clamp(2.3rem, 7.6vw, 5rem);
-  margin-right: 0;
-}
-
-.blocco .voceGrande {
-  /* Il filetto solo a destra: a sinistra c'è il margine della pagina. */
-  padding-left: 0.2em;
-}
-
-.blocco .voceGrande::before {
-  display: none;
-}
-
-.blocco .voceGrande::after {
-  width: clamp(40px, 12vw, 120px);
-  background: linear-gradient(90deg, var(--bordo-forte), transparent);
-}
-
-/* ---- l'unico movimento ---- */
-
-@keyframes disegna {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes appare {
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes appareCornice {
-  to {
-    opacity: 0.5;
-  }
-}
-
-@keyframes incidi {
+@keyframes entra {
   from {
     opacity: 0;
-    letter-spacing: 0.52em;
+    transform: translateY(14px) scale(0.965);
   }
   to {
     opacity: 1;
-    letter-spacing: 0.24em;
-  }
-}
-
-@keyframes sussurra {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes luce {
-  from {
-    background-position: 130% 0, 0 0;
-  }
-  to {
-    background-position: -30% 0, 0 0;
+    transform: translateY(0) scale(1);
   }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .animato .contorno {
-    stroke-dasharray: 1;
-    stroke-dashoffset: 1;
-    animation: disegna 1.5s cubic-bezier(0.5, 0, 0.2, 1) 0.15s forwards;
-  }
-
-  .animato .tracciato {
-    stroke-dasharray: 1;
-    stroke-dashoffset: 1;
-    animation: disegna 1.2s cubic-bezier(0.5, 0, 0.2, 1) 0.8s forwards;
-  }
-
-  .animato .cornice {
-    opacity: 0;
-    animation: appareCornice 0.9s ease-out 1.5s forwards;
-  }
-
-  .animato .rombo,
-  .animato .centro {
-    opacity: 0;
-    animation: appare 0.8s ease-out 1.6s forwards;
-  }
-
-  /* Il nome si incide (le lettere si stringono) e poi una luce attraversa l'oro, una volta. */
-  .animato .parolaGrande {
-    opacity: 0;
-    background-image:
-      linear-gradient(105deg, transparent 42%, rgba(255, 250, 226, 0.95) 50%, transparent 58%),
-      linear-gradient(100deg, #f6e4a8 0%, var(--oro) 52%, #c79a3c 100%);
-    background-size: 250% 100%, 100% 100%;
-    background-repeat: no-repeat;
-    background-position: 130% 0, 0 0;
-    animation:
-      incidi 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) 0.7s forwards,
-      luce 2.2s ease-in-out 2.2s 1 forwards;
-  }
-
-  .animato .voceGrande {
-    opacity: 0;
-    animation: sussurra 1s ease-out 1.6s forwards;
-  }
-}
-
-/* Una lettura a contrasto forzato non ha gradienti né testo trasparente. */
-@media (forced-colors: active) {
-  .parola,
-  .parolaGrande {
-    background: none;
-    -webkit-text-fill-color: currentColor;
-    color: CanvasText;
-    filter: none;
-  }
-
-  .voce,
-  .voceGrande {
-    color: CanvasText;
+  .blocco {
+    animation: entra 1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
   }
 }

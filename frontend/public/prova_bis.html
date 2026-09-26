@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>TAROTS chat: prova_bis, segno e scritta</title>
+<link rel="icon" href="marchio/emblema.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,500;1,500;1,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--notte:#07050f;--notte-2:#0e0a1f;--superficie:rgba(24,18,46,.72);--bordo:rgba(201,162,74,.22);--bordo-forte:rgba(201,162,74,.55);
+--oro:#d8b45a;--oro-chiaro:#f1d68e;--viola:#7b5cd6;--viola-chiaro:#b9a4ff;--testo:#efe6d2;--testo-tenue:#b3a8cf}
+*{box-sizing:border-box}html,body{margin:0;background:var(--notte);color:var(--testo);font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{min-height:100vh;overflow-x:hidden;background:
+ radial-gradient(1200px 700px at 78% 8%,rgba(123,92,214,.18),transparent 60%),radial-gradient(900px 600px at 8% 90%,rgba(216,180,90,.08),transparent 60%),var(--notte)}
+a{color:var(--oro-chiaro);text-decoration:none}
+.testata{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:24px;padding:8px 28px;background:linear-gradient(180deg,rgba(7,5,15,.92),rgba(7,5,15,.6));
+ backdrop-filter:blur(10px);border-bottom:1px solid var(--bordo)}
+.marchio{display:inline-flex;align-items:center;gap:.7rem;min-height:44px;border-radius:10px}
+.marchio:focus-visible{outline:2px solid var(--oro-chiaro);outline-offset:4px}
+.voci{display:flex;gap:4px;flex:1}
+.voce{padding:8px 14px;border-radius:999px;color:var(--testo-tenue);font-size:.93rem}
+.voce:hover{color:var(--testo);background:rgba(255,255,255,.04)}.voce.attiva{color:var(--oro-chiaro);background:rgba(216,180,90,.1)}
+.azioni{display:flex;align-items:center;gap:10px}
+select{background:var(--superficie);color:var(--testo);border:1px solid var(--bordo);border-radius:10px;padding:8px 10px;font:inherit;font-size:.9rem}
+.bottone,.secondario{display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border-radius:999px;font-weight:600;font-size:.95rem;cursor:pointer;border:1px solid transparent}
+.bottone{background:linear-gradient(180deg,#f1d68e,#c9a24a);color:#1a1030;box-shadow:0 0 24px rgba(216,180,90,.35)}
+.secondario{border-color:var(--bordo-forte);color:var(--oro-chiaro);background:transparent}
+.eroe{display:grid;grid-template-columns:1.05fr 1fr;align-items:center;gap:20px;max-width:1280px;margin:0 auto;padding:56px 28px 40px;min-height:78vh}
+.sovratitolo{font-family:'Cinzel',serif;letter-spacing:.3em;font-size:.78rem;color:var(--viola-chiaro);text-transform:uppercase;margin:0 0 8px}
+.h1{margin:0 0 14px;max-width:34ch;font-family:'Cinzel',serif;font-size:clamp(.95rem,2.4vw,1.15rem);font-weight:600;letter-spacing:.14em;line-height:1.5;text-transform:uppercase;color:var(--oro-chiaro)}
+.motto{font-family:'Cormorant Garamond',serif;font-size:1.55rem;max-width:30ch;color:var(--testo);margin:0;line-height:1.3}
+.inviti{display:flex;gap:14px;flex-wrap:wrap;margin-top:26px}
+.carte{position:relative;height:440px}
+.carta{position:absolute;top:30px;width:150px;aspect-ratio:9/16;border-radius:10px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.6),0 0 0 1px rgba(216,180,90,.35)}
+.carta img{width:100%;height:100%;object-fit:cover;display:block}
+.passi{max-width:1080px;margin:0 auto;padding:10px 28px 80px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.passo{background:var(--superficie);border:1px solid var(--bordo);border-radius:14px;padding:22px}
+.passo b{font-family:'Cinzel',serif;color:var(--oro-chiaro);letter-spacing:.1em}
+.passo p{color:var(--testo-tenue);line-height:1.6;margin:.5rem 0 0}
+.confronto{position:fixed;right:14px;bottom:14px;z-index:60;display:flex;gap:6px;align-items:center;padding:8px 10px;border-radius:14px;background:rgba(14,10,31,.94);border:1px solid var(--bordo-forte);font-size:.8rem;color:var(--testo-tenue);box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.confronto a{padding:8px 10px;border-radius:999px;min-height:36px;display:inline-flex;align-items:center}
+.confronto a.qui{background:rgba(216,180,90,.16);color:var(--oro-chiaro);font-weight:600}
+@media (max-width:860px){.voci,.azioni .bottone{display:none}.testata{padding:6px 16px}.eroe{grid-template-columns:1fr;padding-top:28px}.carte{height:360px}.passi{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:no-preference){.carta{animation:su 4.5s ease-in-out infinite}.carta:nth-child(2){animation-delay:.5s}.carta:nth-child(3){animation-delay:1s}}
+@keyframes su{50%{transform:translateY(-12px) rotate(var(--r))}}
+
+.nome{display:inline-flex;align-items:baseline;gap:.38em;line-height:1;white-space:nowrap;font-size:1.3rem}
+.parola,.parola-g{font-family:'Cinzel',serif;font-weight:700;line-height:1;background-image:linear-gradient(100deg,#f6e4a8 0%,#d8b45a 52%,#c79a3c 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#f1d68e;filter:drop-shadow(0 0 14px rgba(216,180,90,.32))}
+.parola{letter-spacing:.16em}
+.voce-i,.voce-g{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;color:var(--viola-chiaro);letter-spacing:.01em}
+.voce-i{font-size:.98em}
+.emblema{display:block;flex:none;overflow:visible;filter:drop-shadow(0 0 10px rgba(216,180,90,.28))}
+.stella{transform-box:fill-box;transform-origin:center;transition:transform .9s cubic-bezier(.3,.7,.2,1)}
+.marchio:hover .stella{transform:rotate(51.4286deg)}
+.blocco{display:inline-flex;align-items:center;gap:clamp(14px,2.6vw,28px);margin:6px 0 18px}
+.blocco-t{display:flex;flex-direction:column;align-items:flex-start;gap:clamp(6px,1vw,12px);min-width:0}
+.parola-g{font-size:clamp(2.3rem,7.6vw,5rem);letter-spacing:.24em}
+.voce-g{display:flex;align-items:center;gap:.85em;font-size:clamp(1.5rem,4.4vw,2.6rem);line-height:1;padding-left:.2em}
+.voce-g::after{content:"";width:clamp(40px,12vw,120px);height:1px;background:linear-gradient(90deg,var(--bordo-forte),transparent)}
+@media (prefers-reduced-motion:no-preference){
+ .anima .contorno{stroke-dasharray:1;stroke-dashoffset:1;animation:disegna 1.5s cubic-bezier(.5,0,.2,1) .15s forwards}
+ .anima .tracciato{stroke-dasharray:1;stroke-dashoffset:1;animation:disegna 1.2s cubic-bezier(.5,0,.2,1) .8s forwards}
+ .anima .cornice{opacity:0;animation:appare .9s ease-out 1.5s forwards}.anima .rombo,.anima .centro{opacity:0;animation:appare .8s ease-out 1.6s forwards}
+ .anima-t .parola-g{opacity:0;background-image:linear-gradient(105deg,transparent 42%,rgba(255,250,226,.95) 50%,transparent 58%),linear-gradient(100deg,#f6e4a8 0%,#d8b45a 52%,#c79a3c 100%);background-size:250% 100%,100% 100%;background-repeat:no-repeat;background-position:130% 0,0 0;animation:incidi 1.4s cubic-bezier(.2,.7,.2,1) .7s forwards,luce 2.2s ease-in-out 2.2s 1 forwards}
+ .anima-t .voce-g{opacity:0;animation:sussurra 1s ease-out 1.6s forwards}}
+@keyframes disegna{to{stroke-dashoffset:0}}@keyframes appare{to{opacity:1}}
+@keyframes incidi{from{opacity:0;letter-spacing:.52em}to{opacity:1;letter-spacing:.24em}}
+@keyframes sussurra{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes luce{from{background-position:130% 0,0 0}to{background-position:-30% 0,0 0}}
+</style>
+</head>
+<body>
+<header class="testata"><a class="marchio" href="#" aria-label="TAROTS chat"><svg class="emblema" viewBox="0 0 68 105" width="27" height="42" aria-hidden="true" focusable="false">
+<defs>
+<linearGradient id="oh" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6e4a8"/><stop offset=".5" stop-color="#d8b45a"/><stop offset="1" stop-color="#8f6c24"/></linearGradient>
+<linearGradient id="nh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#241a48"/><stop offset="1" stop-color="#0b0818"/></linearGradient>
+<radialGradient id="ah" cx=".5" cy=".46" r=".52"><stop offset="0" stop-color="#b9a4ff" stop-opacity=".42"/><stop offset="1" stop-color="#b9a4ff" stop-opacity="0"/></radialGradient>
+</defs>
+<path d="M13 4H55A7 7 0 0 1 62 11V85A7 7 0 0 1 55 92H46V101L36 92H13A7 7 0 0 1 6 85V11A7 7 0 0 1 13 4Z" fill="url(#nh)"/><path d="M13 4H55A7 7 0 0 1 62 11V85A7 7 0 0 1 55 92H46V101L36 92H13A7 7 0 0 1 6 85V11A7 7 0 0 1 13 4Z" fill="url(#ah)"/>
+<path class="contorno" d="M13 4H55A7 7 0 0 1 62 11V85A7 7 0 0 1 55 92H46V101L36 92H13A7 7 0 0 1 6 85V11A7 7 0 0 1 13 4Z" fill="none" stroke="url(#oh)" stroke-width="1.9" stroke-linejoin="round" pathLength="1"/>
+<rect class="cornice" x="11.5" y="9.5" width="45" height="77" rx="3.5" fill="none" stroke="url(#oh)" stroke-width=".6" opacity=".5"/><path class="rombo" d="M34 13.2l1.7 2.3-1.7 2.3-1.7-2.3z" fill="url(#oh)"/><path class="rombo" d="M34 78.2l1.7 2.3-1.7 2.3-1.7-2.3z" fill="url(#oh)"/>
+<g class="stella"><path class="tracciato" d="M34.0 28.0L53.5 52.45L25.32 66.02L18.36 35.53L49.64 35.53L42.68 66.02L14.5 52.45Z" fill="none" stroke="url(#oh)" stroke-width="1.5" stroke-linejoin="round" pathLength="1"/><circle class="centro" cx="34" cy="48" r="2.1" fill="url(#oh)"/></g>
+</svg><span class="nome"><span class="parola">TAROTS</span><span class="voce-i">chat</span></span></a>
+<nav class="voci" aria-label="Sections"><a class="voce" href="#">Read</a><a class="voce" href="#">Cards</a><a class="voce" href="#">Spreads</a><a class="voce" href="#">Blog</a><a class="voce" href="#">More</a></nav>
+<div class="azioni"><select aria-label="Language"><option>English</option><option>Italiano</option></select><a class="voce" href="#">Sign in</a><a class="bottone" href="#">Sign up</a></div></header>
+<main>
+<section class="eroe"><div><p class="sovratitolo">Thoth Tarot · Aleister Crowley</p>
+<span class="blocco anima-t" role="img" aria-label="TAROTS chat"><svg class="emblema anima" viewBox="0 0 68 105" width="97" height="150" aria-hidden="true" focusable="false">
+<defs>
+<linearGradient id="oe" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6e4a8"/><stop offset=".5" stop-color="#d8b45a"/><stop offset="1" stop-color="#8f6c24"/></linearGradient>
+<linearGradient id="ne" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#241a48"/><stop offset="1" stop-color="#0b0818"/></linearGradient>
+<radialGradient id="ae" cx=".5" cy=".46" r=".52"><stop offset="0" stop-color="#b9a4ff" stop-opacity=".42"/><stop offset="1" stop-color="#b9a4ff" stop-opacity="0"/></radialGradient>
+</defs>
+<path d="M13 4H55A7 7 0 0 1 62 11V85A7 7 0 0 1 55 92H46V101L36 92H13A7 7 0 0 1 6 85V11A7 7 0 0 1 13 4Z" fill="url(#ne)"/><path d="M13 4H55A7 7 0 0 1 62 11V85A7 7 0 0 1 55 92H46V101L36 92H13A7 7 0 0 1 6 85V11A7 7 0 0 1 13 4Z" fill="url(#ae)"/>
+<path class="contorno" d="M13 4H55A7 7 0 0 1 62 11V85A7 7 0 0 1 55 92H46V101L36 92H13A7 7 0 0 1 6 85V11A7 7 0 0 1 13 4Z" fill="none" stroke="url(#oe)" stroke-width="1.9" stroke-linejoin="round" pathLength="1"/>
+<rect class="cornice" x="11.5" y="9.5" width="45" height="77" rx="3.5" fill="none" stroke="url(#oe)" stroke-width=".6" opacity=".5"/><path class="rombo" d="M34 13.2l1.7 2.3-1.7 2.3-1.7-2.3z" fill="url(#oe)"/><path class="rombo" d="M34 78.2l1.7 2.3-1.7 2.3-1.7-2.3z" fill="url(#oe)"/>
+<g class="stella"><path class="tracciato" d="M34.0 28.0L53.5 52.45L25.32 66.02L18.36 35.53L49.64 35.53L42.68 66.02L14.5 52.45Z" fill="none" stroke="url(#oe)" stroke-width="1.5" stroke-linejoin="round" pathLength="1"/><circle class="centro" cx="34" cy="48" r="2.1" fill="url(#oe)"/></g>
+</svg><span class="blocco-t" aria-hidden="true"><span class="parola-g">TAROTS</span><span class="voce-g">chat</span></span></span>
+<h1 class="h1">Online tarot reading with the Thoth Tarot and AI</h1>
+<p class="motto">The oracle of the Thoth Tarot, read by an artificial intelligence.</p>
+<div class="inviti"><a class="bottone" href="#">✦ Start a reading</a><a class="secondario" href="#">☉ Card of the day</a></div></div><div class="carte" aria-hidden="true">
+<div class="carta" style="left:6%;--r:-14deg;transform:rotate(-14deg)"><img src="cards/maj-17.webp" alt=""></div>
+<div class="carta" style="left:30%;top:0;--r:-2deg;transform:rotate(-2deg);z-index:2"><img src="cards/maj-19.webp" alt=""></div>
+<div class="carta" style="left:54%;--r:11deg;transform:rotate(11deg)"><img src="cards/maj-02.webp" alt=""></div>
+</div></section>
+<section class="passi" aria-label="How a reading works">
+<div class="passo"><b>ASK</b><p>Write your question in your own words. A short interview makes it precise.</p></div>
+<div class="passo"><b>DRAW</b><p>Shuffle, cut and choose your cards. They are revealed one by one, each in its position.</p></div>
+<div class="passo"><b>READ</b><p>Every card is read with its Hebrew letter, Tree of Life path, element and astrology.</p></div>
+</section>
+</main>
+<div class="confronto" role="navigation" aria-label="Confronta le versioni">Versione: <a href="prova.html" class="">prova (Logo_06)</a><a href="prova_bis.html" class="qui">prova_bis (segno + scritta)</a></div>
+</body>
+</html>

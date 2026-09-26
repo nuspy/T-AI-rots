@@ -45,9 +45,10 @@ export default function Soglia() {
           <motion.p className={stili.sovratitolo} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
             ✦ {t.sovratitolo} ✦
           </motion.p>
-          <h1 className={stili.titolo}>
-            <Marchio variante="blocco" animato />
-          </h1>
+          <div className={stili.logo}>
+            <Marchio variante="blocco" priorita />
+          </div>
+          <h1 className={stili.h1}>{t.home_h1}</h1>
           <motion.p className={`oracolo ${stili.motto}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             transition={{ delay: 0.5, duration: 1 }}>
             {t.motto}

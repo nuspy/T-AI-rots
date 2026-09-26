@@ -21,9 +21,7 @@
 
 import type { LetturaCondivisa, Stesa } from "@/lib/api";
 import { DOMINIO } from "@/lib/condivisione";
-import {
-  CENTRO_STELLA, COLORI, CONTORNO_CARTA, CORNICE, PAROLA, PERCORSO_STELLA, TELA, VOCE,
-} from "@/lib/marchio";
+import { LOGO, NOME_MARCHIO, urlLogo } from "@/lib/marchio";
 import { comeLingua, nomeCarta, nomeStesa, type Lingua } from "@/lib/i18n";
 import { sintesiDelResponso } from "@/lib/sintesi";
 import { LATO_SIMBOLO, PERCORSI_SIMBOLI, simboloDi } from "@/lib/simboli";
@@ -285,56 +283,18 @@ async function disegnaTavolo(
 
 /* ---- il simbolo dell'altra persona ---- */
 
-/* Il marchio sul canvas: la carta col fumetto e la stella di Babalon, poi TAROTS in oro e *chat* in lavanda.
- * Stessa geometria del componente (`lib/marchio.ts`); qui a tratti pieni, perché sull'immagine a 800 px il
- * segno è grande abbastanza. `y` è il bordo alto del segno. */
-function disegnaMarchio(g: G, x: number, y: number, altezza: number, tipo: Caratteri) {
-  const k = altezza / TELA.altezza;
-  g.save();
-  g.translate(x, y);
-  g.scale(k, k);
-  const carta = new Path2D(CONTORNO_CARTA);
-  const notte = g.createLinearGradient(0, 0, 0, TELA.altezza);
-  notte.addColorStop(0, COLORI.notteAlta);
-  notte.addColorStop(1, COLORI.notte);
-  g.fillStyle = notte;
-  g.fill(carta);
-  const oro = g.createLinearGradient(0, 0, TELA.larghezza, TELA.altezza);
-  oro.addColorStop(0, COLORI.oroChiaro);
-  oro.addColorStop(0.5, COLORI.oro);
-  oro.addColorStop(1, COLORI.oroScuro);
-  g.strokeStyle = oro;
-  g.lineJoin = "round";
-  g.lineWidth = 2.2;
-  g.stroke(carta);
-  g.lineWidth = 0.7;
-  g.globalAlpha = 0.5;
-  g.beginPath();
-  g.roundRect(CORNICE.x, CORNICE.y, CORNICE.larghezza, CORNICE.altezza, CORNICE.raggio);
-  g.stroke();
-  g.globalAlpha = 1;
-  g.lineWidth = 1.7;
-  g.stroke(new Path2D(PERCORSO_STELLA));
-  g.fillStyle = oro;
-  g.beginPath();
-  g.arc(CENTRO_STELLA.x, CENTRO_STELLA.y, 2.3, 0, Math.PI * 2);
-  g.fill();
-  g.restore();
-
-  const xTesto = x + TELA.larghezza * k + 16;
-  const base = y + altezza * 0.62;
+/* Il logo sul canvas: la stessa illustrazione del sito (256 px di larghezza bastano: sull'immagine sta a ~80 px di
+ * altezza). Se non si carica, resta il nome scritto: l'immagine si genera comunque. `y` è il bordo alto. */
+async function disegnaMarchio(g: G, x: number, y: number, altezza: number, tipo: Caratteri) {
+  const logo = await caricaImmagine(urlLogo(256));
+  if (logo) {
+    g.drawImage(logo, x, y, (altezza * LOGO.larghezza) / LOGO.altezza, altezza);
+    return;
+  }
   g.textAlign = "left";
   g.fillStyle = ORO_CHIARO;
   g.font = `700 34px ${tipo.titoli}`;
-  const spaziatura = (g as unknown as { letterSpacing?: string });
-  const prima = spaziatura.letterSpacing;
-  spaziatura.letterSpacing = "5px";
-  g.fillText(PAROLA, xTesto, base);
-  const larghezzaParola = g.measureText(PAROLA).width;
-  spaziatura.letterSpacing = prima ?? "0px";
-  g.fillStyle = LAVANDA;
-  g.font = `italic 500 30px ${tipo.oracolo}`;
-  g.fillText(VOCE, xTesto + larghezzaParola + 8, base);
+  g.fillText(NOME_MARCHIO, x, y + altezza * 0.6);
 }
 
 function disegnaSimbolo(g: G, nome: string | null, cx: number, cy: number, lato: number) {
@@ -420,12 +380,12 @@ export async function componiImmagine(l: LetturaCondivisa): Promise<Blob | null>
   await disegnaTavolo(g, l.stesa, l.cards, { x: 36, y: 40, w: 440, h: H - 80 }, 130, tipo, ll);
 
   g.textAlign = "left";
-  disegnaMarchio(g, colX, 34, 62, tipo);
+  await disegnaMarchio(g, colX, 14, 84, tipo);
   g.fillStyle = LAVANDA;
   g.font = `400 15px ${tipo.titoli}`;
-  g.fillText(nomeStesa(l.stesa, ll).toUpperCase(), colX, 108);
+  g.fillText(nomeStesa(l.stesa, ll).toUpperCase(), colX, 122);
 
-  let y = 142;
+  let y = 154;
   if (testo) {
     g.fillStyle = ORO_CHIARO;
     g.font = `italic 600 22px ${tipo.oracolo}`;
