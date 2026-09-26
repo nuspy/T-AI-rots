@@ -244,7 +244,9 @@ async def apri_checkout(
         )
 
     base = get_settings().web_public_url.rstrip('/')
-    ritorno = f"{base}/piano"
+    # Senza un ritorno esplicito si torna ai prezzi in inglese (la lingua canonica del sito); il frontend indica sempre
+    # il proprio, nella lingua di chi ha pagato (`/pricing` o `/it/piano`).
+    ritorno = f"{base}/pricing"
     if payload.ritorno:
         if not payload.ritorno.startswith("/") or payload.ritorno.startswith("//"):
             raise HTTPException(status_code=400, detail="Ritorno non valido")

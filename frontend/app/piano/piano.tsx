@@ -15,6 +15,7 @@ import {
   statoPagamento, type Conto, type Piano,
 } from "@/lib/api";
 import { useLingua } from "@/lib/lingua";
+import { indirizzo } from "@/lib/percorsi";
 import { useAzione, useCarica, useToken } from "@/lib/usa";
 import { Involucro } from "../componenti/testata";
 import stili from "../pagine.module.css";
@@ -138,7 +139,7 @@ function Attuale({ conto, suCambio }: { conto: Conto; suCambio: () => void }) {
 }
 
 function Offerta({ piano, conto, suCambio }: { piano: Piano; conto: Conto | null; suCambio: () => void }) {
-  const { t, locale } = useLingua();
+  const { t, locale, lingua } = useLingua();
   const { esegui, inCorso, errore } = useAzione();
   const parametri = useSearchParams();
   const attuale = conto?.abbonamento?.piano === piano.slug;
@@ -152,9 +153,12 @@ function Offerta({ piano, conto, suCambio }: { piano: Piano; conto: Conto | null
       suCambio();
       return;
     }
+    /* Si torna sempre a questa pagina, nella lingua di chi ha pagato (`/pricing` o `/it/piano`): il vecchio `/piano`
+     * senza prefisso porterebbe all'italiano. */
     const ritorno = parametri.get("ritorno");
+    const qui = indirizzo(lingua, "/piano");
     const r = await esegui((tok) =>
-      apriPagamento(tok, piano.slug, false, ritorno && ritorno.startsWith("/") ? `/piano?dopo=${encodeURIComponent(ritorno)}` : undefined),
+      apriPagamento(tok, piano.slug, false, ritorno && ritorno.startsWith("/") ? `${qui}?dopo=${encodeURIComponent(ritorno)}` : qui),
     );
     if (r?.url) window.location.assign(r.url);
   };

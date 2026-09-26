@@ -486,22 +486,24 @@ async def test_il_seed_scrive_l_albero_una_volta_e_non_disfa_le_modifiche(admin,
     await session.commit()
     assert creati == 17 and await scrivi_sezioni_blog(session) == 0
     albero = (await admin.get("/blog/sections")).json()
-    assert [n["slug"] for n in albero] == ["tarocchi"]
+    assert [n["slug"] for n in albero] == ["tarot"]
     figli = {f["slug"]: f for f in albero[0]["figli"]}
-    assert list(figli) == ["arcani-maggiori", "arcani-minori", "impara-i-tarocchi", "diario-dei-tarocchi", "articoli"]
-    assert figli["arcani-maggiori"]["n_elementi"] == 22 and figli["arcani-maggiori"]["tipo"] == "carte"
-    assert [f["slug"] for f in figli["arcani-minori"]["figli"]] == ["bastoni", "coppe", "spade", "dischi"]
-    assert [f["slug"] for f in figli["impara-i-tarocchi"]["figli"]] == ["le-stese"]
-    assert figli["impara-i-tarocchi"]["figli"][0]["n_elementi"] == 14
-    assert [f["slug"] for f in figli["articoli"]["figli"]] == [
-        "amore", "relazioni", "lavoro", "spiritualita", "simbolismo", "tarocco-di-thoth",
+    assert list(figli) == ["major-arcana", "minor-arcana", "learn-tarot", "tarot-journal", "articles"]
+    assert figli["major-arcana"]["n_elementi"] == 22 and figli["major-arcana"]["tipo"] == "carte"
+    assert [f["slug"] for f in figli["minor-arcana"]["figli"]] == ["wands", "cups", "swords", "disks"]
+    assert [f["slug"] for f in figli["learn-tarot"]["figli"]] == ["tarot-spreads"]
+    assert figli["learn-tarot"]["figli"][0]["n_elementi"] == 14
+    assert [f["slug"] for f in figli["articles"]["figli"]] == [
+        "love", "relationships", "career", "spirituality", "symbolism", "thoth-tarot",
     ]
+    # Il seme si sceglie per il suo nome interno («bastoni»); la sezione si chiama come nel mazzo di Thoth.
+    assert (await admin.get("/blog/sections/wands")).json()["n_elementi"] == 14
     # La console può rinominare e nascondere: un nuovo seed non lo disfa.
-    amore = next(s for s in (await admin.get("/admin/blog/sections")).json() if s["slug"] == "amore")
-    await admin.patch(f"/admin/blog/sections/{amore['id']}", json={"nome": "Cuore", "visibile": False})
+    amore = next(s for s in (await admin.get("/admin/blog/sections")).json() if s["slug"] == "love")
+    await admin.patch(f"/admin/blog/sections/{amore['id']}", json={"nome": "Heart", "visibile": False})
     assert await scrivi_sezioni_blog(session) == 0
     await session.commit()
     dopo = {f["slug"]: f for f in (await admin.get("/blog/sections")).json()[0]["figli"]}
-    assert "amore" not in [f["slug"] for f in dopo["articoli"]["figli"]]
+    assert "love" not in [f["slug"] for f in dopo["articles"]["figli"]]
     piatte = {s["slug"]: s for s in (await admin.get("/admin/blog/sections")).json()}
-    assert piatte["amore"]["nome"] == "Cuore" and piatte["amore"]["visibile"] is False
+    assert piatte["love"]["nome"] == "Heart" and piatte["love"]["visibile"] is False

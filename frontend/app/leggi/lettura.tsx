@@ -44,6 +44,7 @@ import {
   type Lettura,
   type Stesa,
 } from "@/lib/api";
+import Link from "@/app/componenti/link";
 import { comeLingua, dizionario, nomeCarta, nomePosizione, nomeStesa, type Lingua } from "@/lib/i18n";
 import { LinguaNomi, useLingua } from "@/lib/lingua";
 import { useSessione } from "@/lib/sessione";
@@ -554,7 +555,7 @@ export function Lettura() {
         {stese.errore && <p className={stili.errore}>{stese.errore}</p>}
         {senzaCrediti && (
           <p className={`pannello ${stili.bandaCrediti}`}>
-            {t.crediti_finiti}. <a href="/piano?ritorno=/leggi">{t.compra}</a>
+            {t.crediti_finiti}. <Link href="/piano?ritorno=/leggi">{t.compra}</Link>
           </p>
         )}
         {fase === "tipo" && <SceltaTipo onScegli={scegliTipo} />}
