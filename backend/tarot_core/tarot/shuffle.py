@@ -44,14 +44,35 @@ def impegno(slot: List[Dict[str, Any]], sale: str) -> str:
     return hashlib.sha256(sale.encode("utf-8") + b"|" + canonico(slot)).hexdigest()
 
 
-def mescola(carte: List[str], *, rovesci: bool = True) -> MazzoFissato:
-    """Fisher–Yates sul CSPRNG, e un orientamento per ogni carta."""
+def taglia(slot: List[Dict[str, Any]], taglio: float) -> List[Dict[str, Any]]:
+    """Taglia il mazzo: le carte dopo il punto passano davanti, come a mano.
+
+    `taglio` è la posizione del clic, da 0 a 1 lungo il mazzo. Fuori da un
+    intervallo utile (nessuna carta da spostare) il mazzo resta com'è.
+    """
+    n = len(slot)
+    k = round(max(0.0, min(1.0, taglio)) * n)
+    if k <= 0 or k >= n:
+        return list(slot)
+    return slot[k:] + slot[:k]
+
+
+def mescola(
+    carte: List[str], *, rovesci: bool = True, taglio: float | None = None,
+) -> MazzoFissato:
+    """Fisher–Yates sul CSPRNG, un orientamento per ogni carta, e il taglio.
+
+    Il taglio dell'utente si applica **prima** del commitment: il mazzo che si
+    impegna è già quello tagliato, e la verifica a lettura conclusa lo copre.
+    """
     mazzo = list(carte)
     _RNG.shuffle(mazzo)
     slot = [
         {"card": c, "rovescio": rovesci and _RNG.random() < PROBABILITA_ROVESCIO}
         for c in mazzo
     ]
+    if taglio is not None:
+        slot = taglia(slot, taglio)
     sale = secrets.token_hex(16)
     return MazzoFissato(slot=slot, sale=sale, commitment=impegno(slot, sale))
 

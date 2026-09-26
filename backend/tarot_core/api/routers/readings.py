@@ -47,16 +47,22 @@ from ...llm.base import GenerationError
 from ...llm.compiti import Compito
 from ...settings import get_settings
 from ...tarot import cag, interpretazione
-from ...tarot.intervista import prossimo_passo, profilo_da, turni_da
+from ...tarot.intervista import IntervistaNonRiuscita, prossimo_passo, profilo_da, trascrizione, turni_da
 from ...tarot.lettura import (
-    StatoNonValido, dignita_di, doppia_valenza, gia_rivelate, posa,
-    prevalenze_di, prossima_da_rivelare, wirth,
+    StatoNonValido, dignita_di, doppia_valenza, gia_rivelate, note_di_posizione,
+    posa, prevalenze_di, prossima_da_rivelare, wirth,
 )
 from ...tarot.llm import genera_flusso, genera_testo, richiesta
 from ...tarot.numerologia import carta_dell_anima, carta_dell_anno
 from ...tarot.shuffle import mescola
-from ...tarot.testi import AIUTO, DISCLAIMER, RESPONSO_BLOCCATO, lingua
-from ..deps import aggiorna_assegnazioni, get_conoscenza, get_guardrail, provider_per
+from ...tarot.lingue import in_lingua, lingua, rileva_lingua
+from ...tarot.testi import (
+    AIUTO, CREDITI_ESAURITI, DISCLAIMER, INTERPRETAZIONE_NON_DISPONIBILE,
+    MODELLO_NON_DISPONIBILE, RESPONSO_BLOCCATO, RESPONSO_NON_GENERATO,
+)
+from ..deps import (
+    aggiorna_assegnazioni, get_conoscenza, get_guardrail, provider_per, verifica_modello,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +85,12 @@ class RispostaIntervista(BaseModel):
 
 class Scelta(BaseModel):
     slot: int = Field(ge=0, le=77)
+
+
+class TaglioMazzo(BaseModel):
+    #: Dove chi consulta ha tagliato il mazzo: da 0 a 1 lungo il mazzo. Assente
+    #: se non ha tagliato.
+    taglio: Optional[float] = Field(default=None, ge=0.0, le=1.0)
 
 
 class Diario(BaseModel):
@@ -189,7 +201,7 @@ def lettura_json(lettura: Reading, *, dettaglio: bool = True) -> Dict[str, Any]:
         "guard_outcome": lettura.guard_outcome,
         "share_token": lettura.share_token,
         "feedback_note": lettura.feedback_note,
-        "disclaimer": DISCLAIMER[lingua(lettura.lang)],
+        "disclaimer": in_lingua(DISCLAIMER, lettura.lang),
         "dignita": (
             dignita_di(lettura, stesa, conoscenza, solo_rivelate=True) if stesa else {}
         ),
@@ -208,14 +220,19 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
     di cominciare, invece che a metà.
     """
     stesa = _stesa_o_404(payload.spread_id)
-    lang = lingua(payload.lang)
+    # La lingua della lettura è quella del quesito, non quella dell'interfaccia:
+    # si ricava qui, una volta, e si salva. Ogni nuovo quesito la rinnova.
+    lang = rileva_lingua(payload.question, fallback=payload.lang)
 
     if segnale_di_crisi(payload.question):
         await AuditRepository(session).record(
             action="reading.crisis", actor_id=user.id, target_type="user", target_id=str(user.id),
         )
         await session.commit()
-        return {"crisi": True, "messaggio": AIUTO[lang]}
+        return {"crisi": True, "messaggio": in_lingua(AIUTO, lang)}
+
+    # Prima di addebitare qualunque cosa: senza un modello vero non c'è lettura.
+    verifica_modello(lang)
 
     gestore = GestoreAbbonamenti(session)
     if not await gestore.tariffe_in_vigore():
@@ -239,7 +256,7 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
                 status_code=status.HTTP_402_PAYMENT_REQUIRED,
                 detail={
                     "motivo": "crediti",
-                    "messaggio": "Non hai crediti disponibili per una nuova lettura.",
+                    "messaggio": in_lingua(CREDITI_ESAURITI, lang),
                     "saldo": exc.disponibili,
                 },
             ) from exc
@@ -249,7 +266,8 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
         "id": str(lettura.id),
         "status": lettura.status,
         "consumo": consumo,
-        "disclaimer": DISCLAIMER[lang],
+        "lang": lang,
+        "disclaimer": in_lingua(DISCLAIMER, lang),
         "stesa": get_conoscenza().stesa_pubblica(stesa),
         "saldo": await RegistroCrediti(session).saldo(user.id),
     }
@@ -290,18 +308,38 @@ async def intervista(
         return {"completa": False, "domanda": turni[-1].testo, "ordine": turni[-1].ordine}
     await session.commit()
 
+    verifica_modello(lettura.lang)
     await aggiorna_assegnazioni(session)
     stesa = _stesa_o_404(lettura.spread_id)
-    passo = await prossimo_passo(
-        provider_intervista=provider_per(Compito.INTERVISTA),
-        provider_validazione=provider_per(Compito.VALIDAZIONE),
-        quesito=lettura.question,
-        stesa_nome=stesa["nome"],
-        turni=turni_da(lettura.turns),
-        max_domande=get_settings().intervista_max_domande,
-        lang=lettura.lang,
-        profilo=_profilo(user),
-    )
+    impostazioni = get_settings()
+    try:
+        passo = await prossimo_passo(
+            provider_intervista=provider_per(Compito.INTERVISTA),
+            provider_validazione=provider_per(Compito.VALIDAZIONE),
+            quesito=lettura.question,
+            stesa_nome=stesa["nome"],
+            stesa_descrizione=(
+                f"{stesa['descrizione']} Posizioni: "
+                + "; ".join(f"{p['n']}. {p['nome']}" for p in stesa["posizioni"])
+            ),
+            turni=turni_da(lettura.turns),
+            min_domande=impostazioni.intervista_min_domande,
+            max_domande=impostazioni.intervista_max_domande,
+            lang=lettura.lang,
+            profilo=_profilo(user),
+        )
+    except (IntervistaNonRiuscita, RuntimeError) as exc:
+        # Nessuna domanda di riserva: si dice che l'oracolo non ha risposto.
+        # La lettura resta aperta e chi consulta può riprovare senza pagare
+        # un'altra volta.
+        logger.warning("Intervista non riuscita (lettura %s): %s", reading_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "motivo": "modello_non_disponibile",
+                "messaggio": in_lingua(MODELLO_NON_DISPONIBILE, lettura.lang),
+            },
+        ) from exc
 
     lettura = await _lettura_o_404(repo, user, reading_id, lock=True)
     if passo.completo:
@@ -330,23 +368,29 @@ async def _chiudi_per_crisi(session, user: User, lettura: Reading) -> Dict[str, 
         action="reading.crisis", actor_id=user.id, target_type="reading", target_id=str(lettura.id),
     )
     await session.commit()
-    return {"completa": False, "crisi": True, "messaggio": AIUTO[lingua(lettura.lang)]}
+    return {"completa": False, "crisi": True, "messaggio": in_lingua(AIUTO, lettura.lang)}
 
 
 # ---- ventaglio e scelta ---------------------------------------------------------
 
 
 @router.post("/readings/{reading_id}/fan")
-async def ventaglio(reading_id: uuid.UUID, user: CurrentUser, session: DbSession) -> Dict[str, Any]:
-    """Mescola e fissa il mazzo. Al client vanno solo il numero degli slot e
-    il commitment: le carte restano sul server finché non si rivelano."""
+async def ventaglio(
+    reading_id: uuid.UUID, user: CurrentUser, session: DbSession,
+    payload: Optional[TaglioMazzo] = None,
+) -> Dict[str, Any]:
+    """Mescola, taglia dove ha cliccato chi consulta e fissa il mazzo. Al
+    client vanno solo il numero degli slot e il commitment: le carte restano
+    sul server finché non si rivelano."""
     repo = ReadingRepository(session)
     lettura = await _lettura_o_404(repo, user, reading_id, lock=True)
     stesa = _stesa_o_404(lettura.spread_id)
     conoscenza = get_conoscenza()
 
     if lettura.status == "ventaglio":
-        fissato = mescola(conoscenza.mazzo_per(stesa))
+        fissato = mescola(
+            conoscenza.mazzo_per(stesa), taglio=payload.taglio if payload else None,
+        )
         lettura.deck_state = fissato.slot
         lettura.deck_salt = fissato.sale
         lettura.commitment = fissato.commitment
@@ -404,11 +448,16 @@ async def rivela(
     if carta is None or carta.posizione != posizione:
         raise _conflitto("Le carte si rivelano in ordine")
 
+    verifica_modello(lettura.lang)
     conoscenza = get_conoscenza()
     stesa = _stesa_o_404(lettura.spread_id)
     carta.rivelata = True
     dignita = dignita_di(lettura, stesa, conoscenza, solo_rivelate=True).get(posizione)
     doppia = doppia_valenza(lettura, carta)
+    lang = lingua(lettura.lang)
+    note = note_di_posizione(
+        stesa, posizione, [c.posizione for c in lettura.cards if c.rivelata and c.posizione != posizione],
+    )
     domanda = interpretazione.messaggio(
         carta=conoscenza.carta(carta.card_id),
         rovescio=carta.rovescio,
@@ -417,9 +466,12 @@ async def rivela(
         quesito=lettura.question,
         contesto=lettura.context_summary or "",
         dignita=dignita,
-        precedenti=gia_rivelate(lettura, stesa, conoscenza, posizione),
+        precedenti=gia_rivelate(lettura, stesa, conoscenza, posizione, lang),
+        note=note,
         doppia_valenza=doppia,
-        lang=lettura.lang,
+        colloquio=trascrizione(turni_da(lettura.turns)),
+        nomi=(conoscenza.nome_carta(carta.card_id, lang), conoscenza.nome_posizione(stesa, posizione, lang)),
+        lang=lang,
     )
     evento_carta = {
         "posizione": posizione,
@@ -444,7 +496,7 @@ async def rivela(
                 yield _sse("token", {"testo": pezzo})
         except Exception as exc:  # noqa: BLE001 - errori del fornitore e di rete
             logger.warning("Interpretazione non generata: %s", exc)
-            yield _sse("errore", {"messaggio": "L'interpretazione non è disponibile ora: la ritroverai nel responso finale."})
+            yield _sse("errore", {"messaggio": in_lingua(INTERPRETAZIONE_NON_DISPONIBILE, lettura.lang)})
 
         testo = testo.strip()
         if testo and uscita_proibita(testo):
@@ -505,6 +557,7 @@ async def sintesi(
     if lettura.status != "sintesi":
         raise _conflitto("Il responso arriva dopo aver rivelato tutte le carte")
 
+    verifica_modello(lang)
     conoscenza = get_conoscenza()
     stesa = _stesa_o_404(lettura.spread_id)
     registro = get_guardrail()
@@ -526,6 +579,7 @@ async def sintesi(
         dignita=dignita_di(lettura, stesa, conoscenza, solo_rivelate=False),
         prevalenze=prevalenze_di(lettura, conoscenza),
         profilo=_profilo(user), wirth=wirth(lettura, stesa, conoscenza), lang=lang,
+        colloquio=trascrizione(turni_da(lettura.turns)),
     )
 
     # La transazione della richiesta si chiude prima dello streaming: il
@@ -555,7 +609,7 @@ async def sintesi(
                 raise GenerationError("responso vuoto")
         except Exception as exc:  # noqa: BLE001 - errori del fornitore e di rete
             logger.warning("Sintesi non generata: %s", exc)
-            yield _sse("errore", {"messaggio": "Il responso non è stato generato. Puoi riprovare: la lettura resta salvata."})
+            yield _sse("errore", {"messaggio": in_lingua(RESPONSO_NON_GENERATO, lang)})
             return
 
         yield _sse("fase", {"fase": "guardia"})
@@ -572,7 +626,7 @@ async def sintesi(
         elif verdetto.esito == "blocca":
             esito = "bloccato"
         if esito == "bloccato":
-            responso = RESPONSO_BLOCCATO[lang]
+            responso = in_lingua(RESPONSO_BLOCCATO, lang)
         elif not verdetto.verificato:
             logger.warning("Responso della lettura %s non verificato dal giudice", reading_id)
 
@@ -607,7 +661,7 @@ async def sintesi(
 
 def _chiusura(lettura: Reading, saldo: int) -> Dict[str, Any]:
     return {
-        "disclaimer": DISCLAIMER[lingua(lettura.lang)],
+        "disclaimer": in_lingua(DISCLAIMER, lettura.lang),
         "guardia": lettura.guard_outcome,
         "commitment": lettura.commitment,
         "deck_salt": lettura.deck_salt,

@@ -35,6 +35,21 @@ il più possibile.
 
 ## Avvio in sviluppo
 
+**Con un solo comando**, senza Keycloak e col modello finto:
+
+```bash
+python tools/run_local.py    # API su :8100, sito su :3000; Ctrl+C li ferma entrambi
+```
+
+Prepara da solo `backend/.venv` (serve Python 3.11 o più recente) e
+`frontend/node_modules`, applica migrazioni e seed e lancia i due servizi con i
+log affiancati. Serve un PostgreSQL raggiungibile: quello di
+`docker compose up -d postgres` (:5433, lo avvia da solo se Docker è attivo) o
+uno locale sulla 5432 con l'utente `tarot`; altrimenti `--db <url>`. Con
+`--llm-reale` usa il modello di `backend/.env`; `--help` elenca il resto.
+
+Oppure a mano:
+
 ```bash
 # 1. database, Keycloak (realm "tarots" con utenti di prova), API
 docker compose up -d
@@ -70,6 +85,14 @@ export TAROT_AUTH_DISABLED=true TAROT_LLM_FINTO=true   # utente di sviluppo (adm
   (**Modelli**) assegna poi un modello a ciascun compito: `intervista`,
   `validazione`, `interpretazione`, `sintesi`, `giudizio`. È il registro dei
   fornitori di Personalities, dove si innesta llmswitch.
+
+## Deploy
+
+`deploy/k8s/tarots.yaml` porta tutto su k3s (sito, API, Keycloak e un gateway
+nginx) sotto un solo dominio, con il PostgreSQL già presente nel cluster. La
+procedura, le immagini e i segreti sono in `deploy/k8s/LEGGIMI.md`; il realm di
+produzione di Keycloak (`deploy/keycloak/realm-tarots.prod.json`) si rigenera
+come spiegato in `deploy/keycloak/README.md`.
 
 ## Il dominio esoterico
 
@@ -119,16 +142,82 @@ export TAROT_AUTH_DISABLED=true TAROT_LLM_FINTO=true   # utente di sviluppo (adm
      chiedono una previsione;
   3. un modello di validazione separato giudica ogni domanda candidata.
 
-  Una domanda scartata viene rigenerata; se il modello insiste, si usa una
-  domanda di riserva.
-- **CAG.** Il prefisso stabile contiene la dottrina, le stese, il mazzo intero
-  e le regole dei guardrail. È identico a ogni lettura e resta in cache presso
-  il fornitore (`cache_control` di Anthropic, o la KV-cache di un motore
-  locale). Dopo il confine di cache arrivano:
-  - la domanda e il quadro dell'intervista;
+  Una domanda scartata viene rigenerata; se il modello non risponde o insiste
+  con domande vietate, l'intervista fallisce con un errore chiaro (503) e la
+  lettura resta salvata: **non ci sono domande di riserva fisse**. Le domande
+  sono da 2 a 6 (`TAROT_INTERVISTA_MIN_DOMANDE`, `TAROT_INTERVISTA_MAX_DOMANDE`)
+  e quante ne servano lo decide il modello in base al quesito.
+- **Senza modello non c'è lettura.** Domande, letture per posizione e responso
+  li scrive un modello. Senza un modello configurato `POST /readings` risponde
+  503 e non addebita nulla; il modello finto (`TAROT_LLM_FINTO`) è solo per
+  sviluppo e test. La lettura di ogni carta e il responso ricevono il colloquio
+  integrale (domande e risposte), l'orientamento (dritta o rovesciata) e il
+  significato della posizione nella stesa.
+- **Mescolata e taglio.** Chi consulta ferma la mescolata cliccando il mazzo e
+  poi lo taglia cliccando nel punto voluto: `POST /readings/{id}/fan` riceve la
+  frazione `taglio` e il server la applica **prima** del commitment.
+- **CAG.** Il prefisso stabile contiene il ruolo, le regole dei guardrail e la
+  dottrina di lettura: nient'altro. È identico a ogni lettura e resta in cache
+  presso il fornitore (`cache_control` di Anthropic, o la KV-cache di un motore
+  locale). **Non contiene le stese né il mazzo**: una lettura ne usa una e dieci
+  carte, e il resto sarebbe rumore che costa token. Dopo il confine di cache
+  arrivano solo i dati della lettura:
+  - la domanda, il colloquio e il quadro dell'intervista;
   - il profilo (carta dell'anima e dell'anno);
-  - le carte con posizione e orientamento, e le letture immediate;
+  - la stesa scelta, con le sue regole e le sue coppie di posizioni;
+  - le carte estratte, ciascuna con la scheda del suo orientamento;
+  - l'ordine del racconto (vedi sotto);
   - le dignità, le prevalenze e la sintesi di Wirth.
+
+### Cosa si passa al modello: lo sceglie il codice
+
+Per ogni carta il messaggio porta **solo i valori di quella posa esatta**, scelti
+in modo deterministico (`tarot/schede.py`, `tarot/interpretazione.py`,
+`tarot/cag.py`):
+
+- il significato di *quella* posizione nella stesa, non delle altre;
+- la scheda della carta per *l'orientamento uscito*: dritta (significato dritto e
+  tre livelli) **oppure** rovesciata (significato rovesciato, ombra, energia di
+  base), mai entrambi;
+- la dignità rispetto alle vicine già girate, e le regole di coppia che toccano
+  quella posizione **solo se l'altra carta è già visibile**.
+
+Il modello non cerca né sceglie niente: meno token, e nessuna occasione di
+leggere «rovesciata» una carta dritta o di dare a una posizione il significato
+di un'altra. Nella **Croce Celtica la carta 2** (posata di traverso: ciò che si
+oppone o si aggiunge) **si legge sempre dritta** (`senza_rovescio` in
+`spreads.json`): la regola è del codice, non dello slot.
+
+### Il responso è una storia
+
+Ogni stesa dichiara in `spreads.json` il suo `racconto`: l'ordine in cui le
+posizioni si raccontano (nella croce semplice 3-1-2-4-5, nella Croce Celtica
+fondamento, passato, presente, sfida…). Il messaggio del responso contiene
+l'«Ordine del racconto»: una riga per tappa con posizione, carta, orientamento e
+il suo valore in una frase. Il prompt chiede di legare le tappe con nessi
+espliciti, così da avere un filo — per esempio *stasi → rovina → fine di un
+periodo → successo* diventa «hai un momento di stasi che porta a una rovina; ma
+quella fine apre un nuovo inizio in cui puoi avere successo» — e non un elenco di
+significati. Il colloquio si intreccia nel discorso.
+
+### La lingua è quella del quesito
+
+L'interfaccia e la lettura hanno lingue diverse. La **lingua della lettura** è
+quella in cui è scritto il quesito: la ricava il server **una volta**, all'apertura
+(`tarot/lingue.py`, deterministico: script Unicode più parole e lettere
+caratteristiche, senza chiamare un modello), la salva in `Reading.lang` e la
+restituisce nella risposta di `POST /readings`. Da lì la leggono l'intervista, le
+interpretazioni, il responso e i testi fissi (disclaimer, aiuto in caso di crisi).
+Ogni nuovo quesito è una nuova lettura e rinnova la lingua. Senza indizi vale la
+lingua dell'interfaccia. Domande, interpretazioni e responso escono quindi nella
+lingua del quesito anche se il sito è in un'altra.
+
+Sono supportate 15 lingue (it, hu, en, de, ru, uk, fr, es, pt, ro, pl, zh, hi,
+ko, ar). I testi fissi del server e i nomi di carte, stese e posizioni
+(`knowledge/nomi.json`) sono **tradotti davvero solo in italiano, inglese e
+ungherese**; nelle altre lingue ricadono sull'inglese (i nomi di Thoth), mentre
+le risposte del modello sono comunque nella lingua del quesito. Il filtro di
+crisi riconosce le formule di tutte e quindici.
 - **Guardrail.** Le regole sono in `backend/data/guards/*.md`, nel formato di
   Personalities: la sezione istruzioni va nel prompt, la sezione verifica è la
   rubrica del giudice. Coprono crisi e autolesionismo, salute, diritto e
@@ -154,14 +243,18 @@ fornitore vero, come Stripe, si aggiunge implementando `ProviderPagamenti`.
 
 ## Le immagini delle carte
 
-Per ora le facce sono segnaposto col solo valore della carta in testo, generati
-da uno script a partire dal mazzo del backend:
+Le carte sono immagini **WebP 9:16** (per esempio 360×640 px) in
+`frontend/public/cards/`: `{id}.webp` per le 78 facce e `dorso.webp` per il
+dorso. Se il dorso manca il frontend ne disegna uno di ripiego.
+
+Gli originali (1440×2560) stanno in `Cards/`; per il sito si rimpiccioliscono al
+25% in WebP con perdita:
 
 ```bash
-cd frontend && npm run carte    # scrive public/cards/{id}.svg per le 78 carte
+python tools/resize_cards.py    # Cards/*.webp -> Cards/web/*.webp, poi copiali in frontend/public/cards/
 ```
 
-**I prompt per le immagini definitive** sono in
+**I prompt per le immagini** sono in
 `frontend/public/cards/prompts.json`: una voce per carta con `file`
 (`{id}.webp`), `name`, `top_text`, `bottom_text`, `font` (Cinzel), `width`,
 `height`, `prompt` e `negative_prompt`, tutto in inglese. Ogni prompt è
@@ -174,8 +267,8 @@ con:
 cd backend && python -m tarot_core.tools.prompt_immagini
 ```
 
-Salva ogni immagine in `frontend/public/cards/` con il nome indicato in
-`file` e imposta `NEXT_PUBLIC_CARD_EXT=webp`.
+Salva ogni immagine con il nome indicato in `file`. Il prompt del dorso è in
+`frontend/public/cards/prompt-dorso.json`.
 
 ## Funzioni per la viralità, già incluse
 
@@ -192,7 +285,9 @@ Salva ogni immagine in `frontend/public/cards/` con il nome indicato in
 - **Pagine pubbliche** delle 78 carte, porte d'ingresso dalla ricerca.
 - **Verifica crittografica** del mazzo: un argomento di fiducia raro fra le app
   di tarocchi.
-- Interfaccia in **italiano e inglese**.
+- Interfaccia in **quindici lingue** (traduzioni reali: italiano, inglese,
+  ungherese; le altre ricadono sull'inglese), con la lingua del quesito che
+  decide quella della lettura.
 
 ## Test
 
@@ -209,8 +304,13 @@ Coprono:
 - la somma di Wirth e le dignità;
 - il mazzo fissato e verificabile;
 - il validatore dell'intervista («il tuo ragazzo ti ama?» viene scartata);
-- il guardrail;
-- una lettura completa per ogni stesa, con il modello finto;
+- il guardrail, e il segnale di crisi nelle quindici lingue;
+- il rilevamento della lingua del quesito e i testi fissi;
+- i valori passati al modello (solo la posizione e l'orientamento di quella
+  posa), la catena del racconto nell'ordine della stesa, la carta 2 della Croce
+  Celtica sempre dritta;
+- una lettura completa per ogni stesa, con il modello finto, e la lingua che si
+  rinnova a ogni quesito;
 - il consumo di crediti e quote, il 402;
 - l'isolamento fra utenti e la cancellazione;
 - i pacchetti pagati, gli inviti, la carta del giorno, la console.

@@ -127,8 +127,10 @@ class Settings(BaseSettings):
     anthropic_max_tokens: int = 2048
 
     # --- letture -----------------------------------------------------------
-    #: Quante domande di contesto al massimo prima della stesa.
-    intervista_max_domande: int = 5
+    #: Quante domande di contesto prima della stesa: le sceglie il modello in
+    #: base al quesito, ma mai meno del minimo né più del massimo.
+    intervista_min_domande: int = 2
+    intervista_max_domande: int = 6
     #: I crediti con cui nasce un utente di prova creato dal seed.
     crediti_utente_di_prova: int = 1000
     #: Crediti regalati a chi invita e a chi si iscrive con un invito.
@@ -140,6 +142,31 @@ class Settings(BaseSettings):
     cors_origins: List[str] = Field(
         default_factory=lambda: ["http://localhost:3000", "http://localhost:3001"]
     )
+
+    def llm_configurato(self) -> bool:
+        """C'è un modello vero a cui chiedere le letture?
+
+        Le domande dell'intervista, le interpretazioni e il responso li scrive
+        un modello: senza, il servizio non deve fingere di funzionare con testi
+        di ripiego uguali per tutti. Vale `true` se:
+
+        - c'è il modello finto (sviluppo e test);
+        - `TAROT_MODELLI` ne elenca uno utilizzabile;
+        - Anthropic ha una chiave;
+        - l'indirizzo `TAROT_LLM_BASE_URL` è stato impostato **esplicitamente**:
+          il valore predefinito, un LM Studio su localhost, non basta, perché in
+          un container non c'è nulla su quella porta.
+        """
+        if self.llm_finto:
+            return True
+        if self.modelli:
+            return any(
+                bool(m.api_key) if m.provider == "anthropic" else bool(m.base_url)
+                for m in self.modelli
+            )
+        if self.llm_provider == "anthropic":
+            return bool(self.anthropic_api_key)
+        return "llm_base_url" in self.model_fields_set
 
     def validate_production(self) -> List[str]:
         """Impostazioni che in produzione sarebbero un difetto.

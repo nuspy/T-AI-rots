@@ -99,16 +99,22 @@ class ModelloFinto:
                 f"non una sentenza."
             )
         if compito == "sintesi":
-            carte = re.findall(r"«([^»]+)» \([^)]*\): ([^\[]+) \[", utente)
-            elenco = "; ".join(f"{c.strip()} in «{p}»" for p, c in carte) or "le carte"
+            # L'«Ordine del racconto» del messaggio: una tappa per riga.
+            tappe = re.findall(
+                r"^\d+\. (.+?) \(posizione \d+\) — (.+?), (dritta|rovesciata): (.+)$", utente, re.MULTILINE,
+            )
+            elenco = "; ".join(f"{c} in «{p}»" for p, c, _o, _v in tappe) or "le carte"
+            legami = ["Ora", "Poi", "Perciò", "E così", "Fino a"]
+            filo = " ".join(
+                f"{legami[min(i, len(legami) - 1)]}: {v.rstrip('.')} ({c}, {o})."
+                for i, (_p, c, o, v) in enumerate(tappe)
+            ) or "Le carte si parlano."
             return (
                 "## Il quadro\n\n"
                 f"La stesa mostra {elenco}. Insieme descrivono una situazione che chiede "
                 "presenza e chiarezza più che velocità.\n\n"
                 "## Le forze in gioco\n\n"
-                "Le carte si parlano: alcune sostengono il tuo movimento, altre ne mostrano "
-                "il costo. Le dignità elementali indicano dove l'energia scorre e dove si "
-                "inceppa.\n\n"
+                f"{filo}\n\n"
                 "## Il consiglio delle carte\n\n"
                 "Agisci a partire da ciò che senti vero, senza forzare i tempi degli altri.\n\n"
                 "## La tendenza più probabile\n\n"

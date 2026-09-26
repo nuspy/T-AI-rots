@@ -11,7 +11,8 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { Carta as TipoCarta, Dignita, Stesa } from "@/lib/api";
-import { useLingua } from "@/lib/lingua";
+import { nomeCarta, nomePosizione } from "@/lib/i18n";
+import { useLingua, useLinguaNomi } from "@/lib/lingua";
 import { Carta } from "../componenti/carta";
 import stili from "./leggi.module.css";
 
@@ -27,13 +28,22 @@ export interface Posata {
   doppia?: boolean;
 }
 
-const FATTORE: Record<string, number> = {
+/* Larghezza di una carta come frazione della larghezza del tavolo, per stesa:
+ * dieci carte della Croce Celtica devono stare dove ne stanno tre. */
+export const FATTORE: Record<string, number> = {
   "tre-carte": 0.16,
   "croce-semplice": 0.098,
   "ferro-di-cavallo": 0.1,
   "croce-celtica": 0.074,
   "ruota-astrologica": 0.075,
 };
+
+/* Le carte sono il 20% più grandi di com'erano rispetto al tavolo, con i centri
+ * dove stavano: la distanza fra le carte non cambia (è definita dalle
+ * coordinate della stesa), si riduce solo lo spazio vuoto fra i bordi. Il
+ * tavolo è alto un quinto di più (vedi `.tavolo`), così le carte più grandi non
+ * si toccano. */
+export const SCALA_CARTE = 1.2;
 
 function useLarghezza<T extends HTMLElement>() {
   const ref = useRef<T>(null);
@@ -47,8 +57,9 @@ function useLarghezza<T extends HTMLElement>() {
   return [ref, w] as const;
 }
 
-function Pallino({ posata, nomePosizione }: { posata: Posata; nomePosizione: string }) {
+function Pallino({ posata, titolo }: { posata: Posata; titolo: string }) {
   const { t } = useLingua();
+  const lingua = useLinguaNomi();
   const [aperto, setAperto] = useState(false);
   if (!posata.rivelata || !posata.carta) return null;
   return (
@@ -61,7 +72,7 @@ function Pallino({ posata, nomePosizione }: { posata: Posata; nomePosizione: str
     >
       <button
         className={posata.interpretazione ? stili.pallino : stili.pallinoAttesa}
-        aria-label={`${nomePosizione}: ${posata.carta.nome_it}`}
+        aria-label={`${titolo}: ${nomeCarta(posata.carta, lingua)}`}
         aria-expanded={aperto}
         onClick={() => setAperto((a) => !a)}
       />
@@ -75,16 +86,16 @@ function Pallino({ posata, nomePosizione }: { posata: Posata; nomePosizione: str
             transition={{ duration: 0.18 }}
             role="tooltip"
           >
-            <span className={stili.fumettoPosizione}>{nomePosizione}</span>
+            <span className={stili.fumettoPosizione}>{titolo}</span>
             <strong className={stili.fumettoCarta}>
-              {posata.carta.nome_it} · {posata.rovescio ? t.rovesciata : t.dritta}
+              {nomeCarta(posata.carta, lingua)} · {posata.rovescio ? t.rovesciata : t.dritta}
             </strong>
             <span className={stili.fumettoMeta}>
               {posata.carta.astrologia}
               {posata.dignita && posata.dignita.giudizio !== "neutra" && ` · ${t.dignita}: ${posata.dignita.giudizio}`}
               {posata.doppia && ` · ${t.doppia_valenza}`}
             </span>
-            {posata.interpretazione && <p className="oracolo">{posata.interpretazione}</p>}
+            {posata.interpretazione && <p className="oracolo" dir="auto">{posata.interpretazione}</p>}
           </motion.div>
         )}
       </AnimatePresence>
@@ -108,13 +119,16 @@ export function Tavolo({
   rivelazioneInCorso: boolean;
   evidenzia: "scelta" | "rivelazione" | null;
 }) {
-  const { lingua } = useLingua();
+  const lingua = useLinguaNomi();
   const [ref, w] = useLarghezza<HTMLDivElement>();
   const quadrata = stesa.id === "ruota-astrologica";
   /* Sul telefono il tavolo diventa quadrato (vedi il CSS): c'è più altezza,
-   * e le carte possono crescere di un terzo senza toccarsi. */
+   * e le carte possono crescere ancora un po' senza toccarsi. */
   const stretto = w > 0 && w < 600;
-  const larghezzaCarta = Math.max(30, w * (FATTORE[stesa.id] ?? 0.1) * (stretto && !quadrata ? 1.3 : 1));
+  const larghezzaCarta = Math.max(
+    30,
+    w * (FATTORE[stesa.id] ?? 0.1) * SCALA_CARTE * (stretto && !quadrata ? 1.15 : 1),
+  );
   const perPosizione = new Map(posate.map((p) => [p.posizione, p]));
 
   return (
@@ -122,7 +136,7 @@ export function Tavolo({
       <div className={stili.tappeto} aria-hidden="true" />
       {stesa.posizioni.map((pos) => {
         const posata = perPosizione.get(pos.n);
-        const nome = lingua === "en" ? pos.nome_en : pos.nome;
+        const nome = nomePosizione(pos, lingua);
         const attesa = prossima === pos.n;
         return (
           <div
@@ -166,10 +180,13 @@ export function Tavolo({
                 />
               </motion.div>
             )}
-            {posata && !pos.rotazione && <Pallino posata={posata} nomePosizione={`${pos.n}. ${nome}`} />}
+            {posata && !pos.rotazione && <Pallino posata={posata} titolo={`${pos.n}. ${nome}`} />}
             {posata?.rivelata && pos.rotazione !== 0 && (
-              <div className={stili.pallinoTraverso}>
-                <Pallino posata={posata} nomePosizione={`${pos.n}. ${nome}`} />
+              /* Il tavolo di una carta orizzontale è ruotato: il pallino e il suo
+               * fumetto si contro-ruotano, così il testo resta verticale come
+               * quello delle altre carte. L'origine è il punto d'ancoraggio. */
+              <div className={stili.pallinoTraverso} style={{ transform: `rotate(${-pos.rotazione}deg)` }}>
+                <Pallino posata={posata} titolo={`${pos.n}. ${nome}`} />
               </div>
             )}
             <span className={stili.etichettaPosizione} style={{ transform: pos.rotazione ? `rotate(${-pos.rotazione}deg)` : undefined }}>

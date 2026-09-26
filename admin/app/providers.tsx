@@ -37,6 +37,11 @@ import {
  * `TAROT_AUTH_DISABLED=true`, il cui utente di sviluppo è amministratore.
  */
 
+/* Il percorso base con cui la console è stata costruita (`/admin` o vuoto):
+ * l'indirizzo di ritorno del login lo comprende, e deve coincidere con uno dei
+ * redirect del client `tarot-admin` in Keycloak. */
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 const authority = `${
   process.env.NEXT_PUBLIC_KEYCLOAK_URL ?? "http://localhost:8080"
 }/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM ?? "tarots"}`;
@@ -72,8 +77,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
             authority,
             client_id:
               process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID ?? "tarot-admin",
-            redirect_uri: window.location.origin,
-            post_logout_redirect_uri: window.location.origin,
+            redirect_uri: `${window.location.origin}${BASE}/`,
+            post_logout_redirect_uri: `${window.location.origin}${BASE}/`,
             response_type: "code",
             scope: "openid profile email",
             /* Rinnovo silenzioso prima della scadenza: senza, una sessione

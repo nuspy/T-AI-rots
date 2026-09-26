@@ -180,11 +180,15 @@
 
 /* ---- il tavolo ---- */
 
+/* Il tavolo è alto un quinto in più (16:12 invece di 16:10): a parità di
+ * larghezza le carte, ingrandite del 20%, non si toccano, e le distanze fra i
+ * centri restano quelle della stesa. In larghezza cresce con la pagina (vedi
+ * `.contenutoLargo`). */
 .tavolo,
 .tavoloQuadrato {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 16 / 12;
   margin: 10px 0 18px;
 }
 
@@ -225,7 +229,7 @@
 
 .segnaposto {
   width: 100%;
-  aspect-ratio: 3 / 5;
+  aspect-ratio: 9 / 16;
   border-radius: 8px;
   border: 1px dashed rgba(216, 180, 90, 0.35);
   display: grid;
@@ -387,9 +391,9 @@
 
 .mescolamento {
   position: relative;
-  width: 110px;
-  height: 180px;
-  margin: 30px auto 16px;
+  width: 130px;
+  aspect-ratio: 9 / 16;
+  margin: 12px auto;
 }
 
 .mazzettoCarta {
@@ -651,4 +655,121 @@
   .domandaTitolo {
     font-size: 1.15rem;
   }
+}
+
+/* ---- mescolata e taglio ---- */
+
+/* Il mazzo che si mescola è un pulsante: il clic lo ferma. L'area è più larga
+ * delle carte, perché i mazzetti si allargano mentre si muovono. */
+.mazzoCliccabile {
+  display: block;
+  margin: 0 auto;
+  padding: 18px 48px;
+  background: none;
+  border: 0;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+
+.mazzoCliccabile:hover {
+  filter: drop-shadow(0 0 22px rgba(241, 214, 142, 0.7));
+}
+
+.mazzoCliccabile:focus-visible {
+  outline: 2px solid var(--oro-chiaro);
+  outline-offset: 4px;
+}
+
+.suggerimento {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 28px;
+  max-width: min(520px, 92vw);
+  text-align: center;
+}
+
+.suggerimento p {
+  margin: 0;
+}
+
+.suggerimentoSigillo {
+  display: inline-block;
+  color: var(--oro);
+  font-size: 1.5rem;
+  animation: pulsa 2s ease-in-out infinite;
+  text-shadow: 0 0 14px rgba(241, 214, 142, 0.8);
+}
+
+.taglio {
+  width: min(100%, 780px);
+  margin: 6px auto 0;
+  padding: 0 8px;
+}
+
+.tagliaMazzo {
+  position: relative;
+  width: 100%;
+  cursor: pointer;
+  touch-action: pan-y;
+  border-radius: 12px;
+  margin-top: 8px;
+}
+
+.tagliaMazzo:focus-visible {
+  outline: 2px solid var(--oro-chiaro);
+  outline-offset: 8px;
+}
+
+.cartaDelTaglio {
+  position: absolute;
+  top: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: -2px 4px 12px rgba(0, 0, 0, 0.55);
+}
+
+.lineaTaglio {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 2px solid var(--oro-chiaro);
+  box-shadow: 0 0 14px rgba(241, 214, 142, 0.9);
+  pointer-events: none;
+  z-index: 40;
+}
+
+.lineaTaglio span {
+  position: absolute;
+  top: -8px;
+  left: -9px;
+  color: var(--oro-chiaro);
+  font-size: 1rem;
+  text-shadow: 0 0 10px rgba(241, 214, 142, 0.9);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .suggerimentoSigillo {
+    animation: none;
+  }
+}
+
+/* Le lingue da destra a sinistra (l'arabo): il tavolo, il ventaglio e il taglio
+ * sono disposizioni geometriche — le carte stanno dove le mette la stesa, con
+ * `left` e `translate` fisici — e non si specchiano. Il testo dei fumetti sì:
+ * segue la direzione della lingua. */
+.tavolo,
+.tavoloQuadrato,
+.ventaglio,
+.mescolamento,
+.tagliaMazzo {
+  direction: ltr;
+}
+
+:global(html[dir="rtl"]) .fumetto,
+:global(html[dir="rtl"]) .etichettaPosizione {
+  direction: rtl;
 }

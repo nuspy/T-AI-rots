@@ -6,7 +6,8 @@
 import { use, useCallback } from "react";
 import Link from "next/link";
 import { leggiCondivisa } from "@/lib/api";
-import { useLingua } from "@/lib/lingua";
+import { comeLingua, nomeStesa } from "@/lib/i18n";
+import { LinguaNomi, useLingua } from "@/lib/lingua";
 import { useCarica } from "@/lib/usa";
 import { Markdown } from "../../componenti/markdown";
 import { Involucro } from "../../componenti/testata";
@@ -23,16 +24,19 @@ export default function PaginaCondivisa({ params }: { params: Promise<{ token: s
 }
 
 function Condivisa({ token }: { token: string }) {
-  const { t } = useLingua();
+  const { t, lingua } = useLingua();
   const l = useCarica(useCallback(() => leggiCondivisa(token), [token]), [token], { pubblico: true });
   if (l.errore) return <p className={stili.errore}>{l.errore}</p>;
   if (!l.dati || !l.dati.stesa) return null;
   const posate: Posata[] = l.dati.cards.map((c) => ({ ...c, slot: null, dignita: null }));
+  /* Chi riceve il link legge nella lingua del quesito: i nomi la seguono. */
+  const ll = comeLingua(l.dati.lang) ?? lingua;
   return (
+    <LinguaNomi valore={ll}>
     <div>
       <div className={stili.intestazione}>
-        <span className={stili.stesaEtichetta}>{l.dati.stesa.nome}</span>
-        <p className={`oracolo ${stili.domandaTitolo}`}>«{l.dati.question}»</p>
+        <span className={stili.stesaEtichetta}>{nomeStesa(l.dati.stesa, ll)}</span>
+        <p className={`oracolo ${stili.domandaTitolo}`} dir="auto">«{l.dati.question}»</p>
       </div>
       <Tavolo stesa={l.dati.stesa} posate={posate} prossima={null} rivelazioneInCorso={false} evidenzia={null} />
       <div className={stili.zonaResponso}>
@@ -47,5 +51,6 @@ function Condivisa({ token }: { token: string }) {
         </section>
       </div>
     </div>
+    </LinguaNomi>
   );
 }

@@ -1,6 +1,6 @@
-/* Genera le facce segnaposto delle 78 carte: un SVG per carta, con il solo
- * valore della carta in testo. Servono finché non arrivano le immagini
- * definitive, che prenderanno il loro posto con lo stesso nome.
+/* Genera le facce segnaposto delle 78 carte: un SVG 9:16 per carta, con il
+ * solo valore della carta in testo. Le immagini definitive sono `.webp`: questi
+ * si usano solo con NEXT_PUBLIC_CARD_EXT=svg.
  *
  *   npm run carte
  *
@@ -31,12 +31,12 @@ for (const c of mazzo) {
   const valore = maggiore ? c.numero_romano : RANGHI[c.rango] ?? "";
   const nome = maggiore ? c.nome_it : c.nome_it.split(" — ")[0];
   const sotto = maggiore ? c.nome_thoth : (c.titolo_thoth && !c.corte && c.rango !== "asso" ? c.titolo_thoth : c.seme);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 500">
-  <rect width="300" height="500" rx="18" fill="#171129"/>
-  <rect x="12" y="12" width="276" height="476" rx="12" fill="none" stroke="#d8b45a" stroke-width="2"/>
-  <text x="150" y="235" text-anchor="middle" font-family="Georgia, serif" font-size="${valore.length > 4 ? 44 : 84}" fill="#f1d68e">${esc(valore)}</text>
-  <text x="150" y="320" text-anchor="middle" font-family="Georgia, serif" font-size="26" fill="#efe6d2">${esc(nome)}</text>
-  <text x="150" y="360" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-size="20" fill="#b3a8cf">${esc(sotto ?? "")}</text>
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 640">
+  <rect width="360" height="640" rx="20" fill="#171129"/>
+  <rect x="14" y="14" width="332" height="612" rx="14" fill="none" stroke="#d8b45a" stroke-width="2.4"/>
+  <text x="180" y="300" text-anchor="middle" font-family="Georgia, serif" font-size="${valore.length > 4 ? 52 : 100}" fill="#f1d68e">${esc(valore)}</text>
+  <text x="180" y="410" text-anchor="middle" font-family="Georgia, serif" font-size="30" fill="#efe6d2">${esc(nome)}</text>
+  <text x="180" y="458" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-size="23" fill="#b3a8cf">${esc(sotto ?? "")}</text>
 </svg>
 `;
   writeFileSync(join(uscita, `${c.id}.svg`), svg);

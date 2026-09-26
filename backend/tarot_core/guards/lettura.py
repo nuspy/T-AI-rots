@@ -37,12 +37,38 @@ logger = logging.getLogger(__name__)
 #: falso negativo può costare molto di più.
 _CRISI = re.compile(
     r"\b("
+    # italiano
     r"suicid\w*|uccidermi|ammazzarmi|togliermi la vita|farla finita|"
     r"non voglio (piu|più) vivere|voglio morire|farmi del male|tagliarmi|"
     r"autolesion\w*|"
-    r"kill myself|suicide|end my life|want to die|hurt myself|self[- ]harm"
+    # inglese
+    r"kill myself|suicide|end my life|want to die|hurt myself|self[- ]harm|"
+    # ungherese
+    r"öngyilkos\w*|megölöm magam|meg akarok halni|véget vetek az életemnek|bántani magam|"
+    # tedesco
+    r"selbstmord\w*|suizid\w*|mich umbringen|mich töten|nicht mehr leben|sterben will|"
+    # francese
+    r"me tuer|en finir avec la vie|mettre fin à mes jours|envie de mourir|"
+    # spagnolo e portoghese
+    r"quitarme la vida|matarme|quiero morir|acabar con mi vida|suicíd\w*|me matar|quero morrer|tirar a minha vida|"
+    # rumeno
+    r"sinucid\w*|să mă omor|vreau să mor|"
+    # polacco
+    r"samobójstw\w*|zabić się|odebrać sobie życie|chcę umrzeć|"
+    # russo e ucraino
+    r"суицид\w*|самоубийств\w*|покончить с собой|хочу умереть|"
+    r"самогубств\w*|суїцид\w*|покінчити з собою|хочу померти"
     r")\b",
     re.IGNORECASE,
+)
+
+#: Le lingue che non separano le parole con gli spazi (o le cui parole il `\b`
+#: non isola): cinese, coreano, hindi, arabo. Nessun confine di parola.
+_CRISI_SENZA_CONFINI = re.compile(
+    r"自杀|想死|不想活|结束生命|结束自己的生命|"
+    r"자살|죽고\s?싶|"
+    r"आत्महत्या|मरना चाह|"
+    r"انتحار|أريد أن أموت|اقتل نفسي|أقتل نفسي"
 )
 
 #: Nell'uscita: formule che nessun responso deve contenere.
@@ -62,7 +88,10 @@ def _normalizza(testo: str) -> str:
 
 
 def segnale_di_crisi(*testi: str) -> bool:
-    return any(_CRISI.search(_normalizza(t)) for t in testi if t)
+    return any(
+        _CRISI.search(n) or _CRISI_SENZA_CONFINI.search(n)
+        for n in (_normalizza(t) for t in testi if t)
+    )
 
 
 def uscita_proibita(testo: str) -> Optional[str]:

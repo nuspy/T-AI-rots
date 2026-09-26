@@ -5,6 +5,7 @@
 
 import { motion } from "framer-motion";
 import type { Stesa } from "@/lib/api";
+import { nomePosizione, nomeStesa } from "@/lib/i18n";
 import { useLingua } from "@/lib/lingua";
 import stili from "./leggi.module.css";
 
@@ -74,7 +75,7 @@ export function SceltaStesa({
             aria-pressed={s.id === scelta}
           >
             <Miniatura stesa={s} />
-            <span className={stili.stesaNome}>{lingua === "en" ? s.nome_en : s.nome}</span>
+            <span className={stili.stesaNome}>{nomeStesa(s, lingua)}</span>
             <span className={stili.stesaDettagli}>
               {s.posizioni.length} {t.carte} · {s.mazzo === "maggiori" ? t.maggiori : t.completo}
             </span>
@@ -89,7 +90,7 @@ export function SceltaStesa({
           <p className={stili.origine}>{selezionata.origine}</p>
           <ol className={stili.posizioniElenco}>
             {selezionata.posizioni.map((p) => (
-              <li key={p.n}><strong>{p.nome}</strong> — {p.significato}</li>
+              <li key={p.n}><strong>{nomePosizione(p, lingua)}</strong> — {p.significato}</li>
             ))}
           </ol>
         </motion.div>
@@ -101,6 +102,7 @@ export function SceltaStesa({
         value={domanda}
         onChange={(e) => onDomanda(e.target.value)}
         placeholder={t.domanda_segnaposto}
+        dir="auto"
         maxLength={1000}
         rows={3}
         aria-label={t.la_tua_domanda}

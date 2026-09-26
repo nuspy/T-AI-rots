@@ -10,7 +10,7 @@ from tarot_core.tarot.dignita import relazione, valuta, vicini
 from tarot_core.tarot.numerologia import (
     arcano_da_numero, carta_dell_anima, riduci, sintesi_wirth,
 )
-from tarot_core.tarot.shuffle import impegno, mescola, verifica
+from tarot_core.tarot.shuffle import impegno, mescola, taglia, verifica
 
 
 @pytest.fixture(scope="module")
@@ -105,3 +105,19 @@ def test_il_mazzo_e_fissato_e_verificabile(conoscenza):
 def test_i_mescolamenti_differiscono(conoscenza):
     carte = conoscenza.mazzo_per(conoscenza.stesa("tre-carte"))
     assert mescola(carte).slot != mescola(carte).slot
+
+
+def test_il_taglio_porta_davanti_le_carte_dopo_il_punto():
+    slot = [{"card": str(i), "rovescio": False} for i in range(10)]
+    tagliato = taglia(slot, 0.3)
+    assert [s["card"] for s in tagliato] == ["3", "4", "5", "6", "7", "8", "9", "0", "1", "2"]
+    # Nessuna carta si perde o si duplica, e ai bordi il mazzo resta com'è.
+    assert sorted(s["card"] for s in tagliato) == sorted(s["card"] for s in slot)
+    assert taglia(slot, 0.0) == slot and taglia(slot, 1.0) == slot
+
+
+def test_il_mazzo_impegnato_e_gia_tagliato(conoscenza):
+    carte = conoscenza.mazzo_per(conoscenza.stesa("tre-carte"))
+    fissato = mescola(carte, taglio=0.5)
+    assert len(fissato.slot) == len(carte)
+    assert verifica(fissato.slot, fissato.sale, fissato.commitment)

@@ -50,6 +50,23 @@ export default function Modelli() {
       {erroreAzione && <p className={comuni.errore}>{erroreAzione}</p>}
       {inCorso && !dati && <p className={comuni.caricamento}>Caricamento…</p>}
 
+      {dati && !dati.configurato && (
+        <div className={comuni.errore} role="alert">
+          <strong>Nessun modello di intelligenza artificiale è configurato.</strong>{" "}
+          Finché non ne aggiungi uno le letture non partono: il servizio
+          risponde «non pronto» senza addebitare nulla e non usa testi di
+          ripiego. Il modello si aggiunge nella configurazione del servizio
+          (<code>TAROT_ANTHROPIC_API_KEY</code>, oppure <code>TAROT_MODELLI</code>
+          per più modelli), poi da questa pagina si assegna ai compiti.
+        </div>
+      )}
+      {dati?.finto && (
+        <p className={comuni.errore} role="status">
+          Modello finto attivo (<code>TAROT_LLM_FINTO</code>): le letture usano
+          testi fissi, uguali per tutti. Solo per sviluppo e test.
+        </p>
+      )}
+
       {dati && (
         <>
           <div className={stili.compiti}>

@@ -1,72 +1,71 @@
 """L'interpretazione immediata di una carta appena girata.
 
 Si legge **la carta in quella posizione**, non la carta in astratto: lo stesso
-Tre di Spade dice cose diverse come «passato recente» e come «esito». Entrano
-nel prompt la voce del mazzo, il significato della posizione nella stesa,
-l'orientamento, la dignità rispetto alle vicine già rivelate e il quadro
-emerso dall'intervista.
+Tre di Spade dice cose diverse come «passato recente» e come «esito».
 
-Le vicine non ancora rivelate non entrano: la dignità si calcola solo con ciò
-che l'utente ha già visto, altrimenti l'interpretazione anticiperebbe carte
-ancora coperte.
+**Cosa entra nel messaggio, deciso dal codice.** Per ogni carta girata il
+messaggio porta solo i valori di quella posa esatta:
+
+- il significato di *quella* posizione nella stesa (non delle altre);
+- l'orientamento estratto, e la scheda della carta per quell'orientamento
+  (`schede.scheda`: il significato dritto *o* quello rovesciato, non entrambi);
+- la dignità rispetto alle vicine già rivelate;
+- le regole di coppia della stesa che toccano questa posizione, se l'altra
+  carta è già visibile;
+- il quadro emerso dall'intervista e il colloquio.
+
+Il modello non cerca né sceglie niente: i valori gli arrivano già selezionati,
+il che evita gli errori (una carta letta come rovesciata quando è dritta, una
+posizione col significato di un'altra) e costa meno token. Le vicine non ancora
+rivelate non entrano: la dignità si calcola solo con ciò che chi consulta ha già
+visto, altrimenti l'interpretazione anticiperebbe carte ancora coperte.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
-from .testi import lingua
+from .lingue import istruzione_lingua, lingua
+from .schede import scheda
 
 PROMPT_INTERPRETAZIONE = """# Compito: interpretazione
 
 Sei l'oracolo di T-AI-rots, lettore rigoroso del Tarocco di Thoth di Aleister
 Crowley. Interpreti UNA carta appena girata, nella sua posizione della stesa.
 
+I dati sono già scelti dal sistema e stanno nel messaggio: la posizione con il
+suo significato, l'orientamento estratto (dritta o rovesciata) e la scheda della
+carta per quell'orientamento. Usa solo quelli: non aggiungere significati di
+altre carte, di altre posizioni o dell'orientamento che non è uscito.
+
 Come interpretare:
-- Parti dal significato della posizione nella stesa e leggi la carta attraverso
-  di essa.
-- Usa i livelli di significato della carta (essoterico, psicologico,
-  iniziatico) e i suoi riferimenti (lettera ebraica, percorso, sefira,
-  astrologia, elemento) quando illuminano il senso, senza fare lezione.
-- Se la carta è rovesciata, leggila come espressione bloccata, interiorizzata,
-  ritardata o eccessiva della sua energia, mai come il suo contrario banale.
+- Leggi la carta IN QUELLA POSIZIONE, non in astratto: parti dal significato
+  della posizione («il presente è…», «come ostacolo…», «l'esito tende a…») e
+  mostra come la carta lo colora. La stessa carta in un'altra posizione dice
+  un'altra cosa.
+- Se la carta è rovesciata, dillo e spiega come l'orientamento cambia il
+  messaggio: energia bloccata, interiorizzata, ritardata o eccessiva, mai il
+  suo contrario banale. Se è dritta, non parlarne.
 - Se la dignità è indicata, tienine conto: ben dignificata esprime il lato
   luminoso, mal dignificata il lato d'ombra.
-- Collega la carta al quesito e al contesto emerso dall'intervista.
-- 3-5 frasi, in seconda persona, tono serio, caldo, evocativo ma chiaro.
+- Se sono indicate regole di coppia con carte già girate, tienine conto: la
+  carta si legge anche in relazione a quella.
+- Usa i livelli di significato della carta (essoterico, psicologico,
+  iniziatico) e i suoi riferimenti (lettera ebraica, percorso, sefira,
+  astrologia, elemento) solo quando illuminano il senso, senza fare lezione.
+- Collega la lettura al quesito e a un dettaglio concreto che chi consulta ha
+  detto nel colloquio, senza citarlo alla lettera.
+- Deve essere una lettura SPECIFICA di questa carta, in questa posizione, per
+  questa domanda: una frase che andrebbe bene per qualunque carta o posizione è
+  un errore.
+- 2-3 frasi brevi, in seconda persona, tono serio e caldo. Per il registro,
+  questo è un esempio di lettura riuscita (non copiarlo): «Il presente è
+  segnato da irrequietezza e instabilità: la carta, rovesciata, ti invita a
+  guardare con lucidità ciò che stai progettando, invece di decidere in fretta.»
 - Mai fatalismo: parla di tendenze e forze, non di sentenze. Niente diagnosi,
   consigli medici, legali o finanziari. Niente certezze sui sentimenti altrui.
 - Non anticipare il responso finale: questa è la lettura di una sola carta.
 - Scrivi solo il testo dell'interpretazione, senza titoli né elenchi.
 """
-
-
-def _voce(carta: Dict[str, Any]) -> str:
-    righe = [
-        f"Carta: {carta['nome_it']} ({carta['nome_thoth']})",
-    ]
-    if carta.get("lettera_ebraica"):
-        lettera = carta["lettera_ebraica"]
-        collega = " – ".join(carta.get("collega") or [])
-        righe.append(
-            f"Lettera ebraica: {lettera.get('nome')} {lettera.get('glifo')} — "
-            f"percorso {carta.get('percorso')} ({collega})"
-        )
-    if carta.get("sefira"):
-        righe.append(f"Sefira: {carta['sefira']}")
-    righe.append(f"Elemento: {carta.get('elemento')} · Astrologia: {carta.get('astrologia')}")
-    righe.append(f"Parole chiave: {', '.join(carta.get('parole_chiave') or [])}")
-    s = carta.get("significati") or {}
-    for livello in ("essoterico", "psicologico", "iniziatico", "ombra"):
-        if s.get(livello):
-            righe.append(f"Significato {livello}: {s[livello]}")
-    righe.append(f"Dritta: {carta.get('dritto')}")
-    righe.append(f"Rovesciata: {carta.get('rovescio')}")
-    ambiti = carta.get("ambiti") or {}
-    for k, v in ambiti.items():
-        righe.append(f"Ambito {k}: {v}")
-    if carta.get("nota_crowley"):
-        righe.append(f"Nota su Crowley: {carta['nota_crowley']}")
-    return "\n".join(righe)
 
 
 def messaggio(
@@ -79,12 +78,24 @@ def messaggio(
     contesto: str,
     dignita: Optional[Dict[str, Any]] = None,
     precedenti: str = "",
+    note: Optional[List[str]] = None,
     doppia_valenza: bool = False,
+    colloquio: str = "",
+    nomi: Optional[Tuple[str, str]] = None,
     lang: str = "it",
 ) -> str:
+    """Il messaggio utente per una carta: i valori di questa posa, nient'altro.
+
+    `nomi` è (nome della carta, nome della posizione) nella lingua della
+    risposta, se non è l'italiano: il modello li usa così come sono.
+    """
     parti = [
         f"Quesito: {quesito}",
         f"Contesto emerso dall'intervista: {contesto or 'non disponibile'}",
+    ]
+    if colloquio:
+        parti += ["", "Colloquio (domande dell'oracolo e risposte di chi consulta):", colloquio]
+    parti += [
         "",
         f"Stesa: {stesa['nome']} — {stesa['descrizione']}",
         f"Posizione {posizione['n']}: {posizione['nome']} — {posizione['significato']}",
@@ -106,8 +117,12 @@ def messaggio(
             for r in dignita["relazioni"]
         )
         parti.append(f"Dignità elementale rispetto alle carte già rivelate: {dignita['giudizio']} ({rel})")
+    for nota in note or []:
+        parti.append(f"Regola della stesa — {nota}")
     if precedenti:
         parti.append(f"Carte già rivelate:\n{precedenti}")
-    parti += ["", _voce(carta), "",
-              "Scrivi in inglese." if lingua(lang) == "en" else "Scrivi in italiano."]
+    parti += ["", scheda(carta, rovescio), ""]
+    if nomi and lingua(lang) != "it":
+        parti.append(f"Nomi da usare nella risposta: carta «{nomi[0]}», posizione «{nomi[1]}».")
+    parti.append(istruzione_lingua(lang))
     return "\n".join(parti)

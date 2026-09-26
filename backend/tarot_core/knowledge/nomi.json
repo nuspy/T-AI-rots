@@ -1,0 +1,149 @@
+{
+ "hu": {
+  "carte": {
+   "maj-00": "A Bolond",
+   "maj-01": "A Mágus",
+   "maj-02": "A Főpapnő",
+   "maj-03": "A Császárné",
+   "maj-04": "A Császár",
+   "maj-05": "A Főpap",
+   "maj-06": "A Szerelmesek",
+   "maj-07": "A Szekér",
+   "maj-08": "Kiigazítás",
+   "maj-09": "A Remete",
+   "maj-10": "Szerencse",
+   "maj-11": "Vágy",
+   "maj-12": "Az Akasztott",
+   "maj-13": "Halál",
+   "maj-14": "Művészet",
+   "maj-15": "Az Ördög",
+   "maj-16": "A Torony",
+   "maj-17": "A Csillag",
+   "maj-18": "A Hold",
+   "maj-19": "A Nap",
+   "maj-20": "Az Éon",
+   "maj-21": "Az Univerzum",
+   "bastoni-01": "Pálcák Ásza",
+   "bastoni-02": "Pálcák Kettese — Uralom",
+   "bastoni-03": "Pálcák Hármasa — Erény",
+   "bastoni-04": "Pálcák Négyese — Beteljesülés",
+   "bastoni-05": "Pálcák Ötöse — Viszály",
+   "bastoni-06": "Pálcák Hatosa — Győzelem",
+   "bastoni-07": "Pálcák Hetese — Vitézség",
+   "bastoni-08": "Pálcák Nyolcasa — Gyorsaság",
+   "bastoni-09": "Pálcák Kilencese — Erő",
+   "bastoni-10": "Pálcák Tízese — Elnyomás",
+   "bastoni-cavaliere": "Pálcák Lovagja",
+   "bastoni-regina": "Pálcák Királynője",
+   "bastoni-principe": "Pálcák Hercege",
+   "bastoni-principessa": "Pálcák Hercegnője",
+   "coppe-01": "Kelyhek Ásza",
+   "coppe-02": "Kelyhek Kettese — Szerelem",
+   "coppe-03": "Kelyhek Hármasa — Bőség",
+   "coppe-04": "Kelyhek Négyese — Fényűzés",
+   "coppe-05": "Kelyhek Ötöse — Csalódás",
+   "coppe-06": "Kelyhek Hatosa — Öröm",
+   "coppe-07": "Kelyhek Hetese — Kicsapongás",
+   "coppe-08": "Kelyhek Nyolcasa — Tunyaság",
+   "coppe-09": "Kelyhek Kilencese — Boldogság",
+   "coppe-10": "Kelyhek Tízese — Jóllakottság",
+   "coppe-cavaliere": "Kelyhek Lovagja",
+   "coppe-regina": "Kelyhek Királynője",
+   "coppe-principe": "Kelyhek Hercege",
+   "coppe-principessa": "Kelyhek Hercegnője",
+   "spade-01": "Kardok Ásza",
+   "spade-02": "Kardok Kettese — Béke",
+   "spade-03": "Kardok Hármasa — Bánat",
+   "spade-04": "Kardok Négyese — Fegyverszünet",
+   "spade-05": "Kardok Ötöse — Vereség",
+   "spade-06": "Kardok Hatosa — Tudomány",
+   "spade-07": "Kardok Hetese — Hiábavalóság",
+   "spade-08": "Kardok Nyolcasa — Beavatkozás",
+   "spade-09": "Kardok Kilencese — Kegyetlenség",
+   "spade-10": "Kardok Tízese — Romlás",
+   "spade-cavaliere": "Kardok Lovagja",
+   "spade-regina": "Kardok Királynője",
+   "spade-principe": "Kardok Hercege",
+   "spade-principessa": "Kardok Hercegnője",
+   "dischi-01": "Korongok Ásza",
+   "dischi-02": "Korongok Kettese — Változás",
+   "dischi-03": "Korongok Hármasa — Művek",
+   "dischi-04": "Korongok Négyese — Hatalom",
+   "dischi-05": "Korongok Ötöse — Aggodalom",
+   "dischi-06": "Korongok Hatosa — Siker",
+   "dischi-07": "Korongok Hetese — Kudarc",
+   "dischi-08": "Korongok Nyolcasa — Körültekintés",
+   "dischi-09": "Korongok Kilencese — Nyereség",
+   "dischi-10": "Korongok Tízese — Gazdagság",
+   "dischi-cavaliere": "Korongok Lovagja",
+   "dischi-regina": "Korongok Királynője",
+   "dischi-principe": "Korongok Hercege",
+   "dischi-principessa": "Korongok Hercegnője"
+  },
+  "stese": {
+   "tre-carte": {
+    "nome": "Három kártya",
+    "posizioni": {
+     "1": "Múlt",
+     "2": "Jelen",
+     "3": "Jövő"
+    }
+   },
+   "croce-semplice": {
+    "nome": "Egyszerű kereszt",
+    "posizioni": {
+     "1": "Mellette",
+     "2": "Ellene",
+     "3": "Az ok",
+     "4": "A bíró",
+     "5": "Szintézis"
+    }
+   },
+   "ferro-di-cavallo": {
+    "nome": "Patkó",
+    "posizioni": {
+     "1": "Múlt",
+     "2": "Jelen",
+     "3": "Rejtett hatások",
+     "4": "Akadályok",
+     "5": "Környezet",
+     "6": "Tanács",
+     "7": "Kimenet"
+    }
+   },
+   "croce-celtica": {
+    "nome": "Kelta kereszt",
+    "posizioni": {
+     "1": "A jelen",
+     "2": "A kihívás",
+     "3": "Közelmúlt",
+     "4": "Az alap",
+     "5": "A korona",
+     "6": "Közeli jövő",
+     "7": "A hozzáállás",
+     "8": "A környezet",
+     "9": "Remények és félelmek",
+     "10": "A kimenet"
+    }
+   },
+   "ruota-astrologica": {
+    "nome": "Asztrológiai kerék",
+    "posizioni": {
+     "1": "I. ház",
+     "2": "II. ház",
+     "3": "III. ház",
+     "4": "IV. ház",
+     "5": "V. ház",
+     "6": "VI. ház",
+     "7": "VII. ház",
+     "8": "VIII. ház",
+     "9": "IX. ház",
+     "10": "X. ház",
+     "11": "XI. ház",
+     "12": "XII. ház",
+     "13": "A jelölő"
+    }
+   }
+  }
+ }
+}

@@ -13,8 +13,14 @@ La regola è difesa in tre punti, perché un prompt da solo non basta:
    che chiedono una previsione con le formule tipiche;
 3. un modello di validazione, separato, giudica ogni domanda candidata.
 
-Una domanda scartata si rigenera (fino a due volte); se il modello insiste, si
-usa una domanda di contesto di riserva.
+Una domanda scartata si rigenera (fino a due volte). **Non esistono domande di
+riserva**: se il modello non risponde, o insiste con domande vietate prima del
+minimo, l'intervista fallisce con `IntervistaNonRiuscita` e il servizio lo dice,
+invece di porre a tutti le stesse domande fisse.
+
+**Quante domande.** Le decide il modello in base al quesito, fra un minimo (2) e
+un massimo (6) che il codice fa rispettare: prima del minimo una chiusura viene
+respinta, al massimo la chiusura è obbligatoria.
 """
 from __future__ import annotations
 
@@ -26,23 +32,50 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from ..llm.base import GenerationError
 from .llm import genera_json, richiesta
-from .testi import DOMANDE_DI_RISERVA, lingua
+from .lingue import istruzione_lingua
 
 logger = logging.getLogger(__name__)
 
 TENTATIVI_RIGENERAZIONE = 2
 
+
+class IntervistaNonRiuscita(RuntimeError):
+    """Il modello non ha prodotto una domanda utilizzabile.
+
+    Non ha risposto, o ha insistito con domande vietate prima del minimo. Il
+    chiamante lo dice a chi consulta: non c'è una domanda di riserva da porre
+    al suo posto, perché sarebbe la stessa per tutti.
+    """
+
+
 PROMPT_INTERVISTA = """# Compito: intervista
 
 Sei l'oracolo di T-AI-rots, lettore esperto del Tarocco di Thoth. Prima di
 disporre le carte conduci un breve colloquio per capire il contesto della
-domanda di chi consulta.
+domanda di chi consulta. Le tue domande servono a leggere meglio le carte, non
+a compilare un modulo.
+
+Quante domande: da 2 a 6 in totale, e le decidi TU in base al quesito. Un
+quesito circoscritto e chiaro ne richiede poche; uno vago, che coinvolge più
+persone o più ambiti della vita, ne richiede di più. Non chiudere prima della
+seconda domanda, non superare la sesta, e non allungare il colloquio quando il
+quadro è già sufficiente per una lettura sensata.
+
+Come devono essere le domande:
+- ATTINENTI: nascono da ciò che chi consulta ha scritto (il quesito e le
+  risposte già date) e ne riprendono gli elementi concreti — le persone, la
+  situazione, i tempi. Sono vietate le domande generiche, valide per qualunque
+  quesito.
+- UTILI: chiedi solo ciò che cambierebbe davvero la lettura delle carte: la
+  situazione concreta, da quanto dura, chi è coinvolto e che ruolo ha, cosa è
+  già successo o è già stato tentato, i tempi e le decisioni in arrivo, cosa chi
+  consulta desidera o teme. Guarda le posizioni della stesa scelta (per esempio
+  passato, ostacolo, esito) e raccogli il contesto che serve a leggerle.
+- COERENTI col colloquio: ogni domanda si aggancia alle risposte precedenti e
+  le approfondisce; non ricomincia da capo.
+- UNA sola domanda per volta, in una sola frase, breve, calda e rispettosa.
 
 Regole inviolabili:
-- Fai UNA sola domanda per volta, breve, calda e rispettosa.
-- Le domande servono a chiarire il CONTESTO: la situazione concreta, da quanto
-  dura, le persone coinvolte e il loro ruolo, cosa è già successo, i tempi, lo
-  stato d'animo, cosa chi consulta desidera o teme.
 - NON chiedere MAI all'utente la risposta al suo quesito, nemmeno riformulata.
   Esempio: se il quesito è «il mio ragazzo mi ama?», NON chiedere «pensi che ti
   ami?», «senti che ti ama?», «secondo te prova qualcosa?».
@@ -51,12 +84,10 @@ Regole inviolabili:
 - Non ripetere domande già poste e non chiedere ciò che è già stato detto.
 - Non chiedere dati sensibili superflui (indirizzi, nomi completi, dati sanitari
   dettagliati).
-- Quando il quadro è sufficiente per una lettura sensata, oppure hai già fatto
-  il numero massimo di domande, chiudi l'intervista.
 
 Rispondi SOLO con un oggetto JSON:
 {"completo": false, "domanda": "<la prossima domanda>"}
-oppure, quando il quadro è sufficiente:
+oppure, quando il quadro è sufficiente e hai già fatto almeno 2 domande:
 {"completo": true, "riassunto": "<il quadro emerso, 3-6 frasi in terza persona, senza anticipare alcuna previsione>"}
 """
 
@@ -102,7 +133,7 @@ _PAROLE_VUOTE = {
 def _parole(testo: str) -> set:
     testo = unicodedata.normalize("NFKD", testo.lower())
     testo = "".join(c for c in testo if not unicodedata.combining(c))
-    return {p for p in re.findall(r"[a-z]+", testo) if p not in _PAROLE_VUOTE and len(p) > 2}
+    return {p for p in re.findall(r"\w+", testo) if p not in _PAROLE_VUOTE and len(p) > 2}
 
 
 def ricalca_il_quesito(quesito: str, domanda: str, *, soglia: float = 0.6) -> bool:
@@ -143,16 +174,12 @@ class Passo:
     scartate: int = 0
 
 
-def _trascrizione(turni: Sequence[Tuple[str, str]]) -> str:
+def trascrizione(turni: Sequence[Tuple[str, str]]) -> str:
     righe = []
     for ruolo, testo in turni:
         chi = "Oracolo" if ruolo == "oracolo" else "Chi consulta"
         righe.append(f"{chi}: {testo}")
     return "\n".join(righe) or "(nessun turno ancora)"
-
-
-def _istruzione_lingua(lang: str) -> str:
-    return "Scrivi in inglese." if lingua(lang) == "en" else "Scrivi in italiano."
 
 
 async def prossimo_passo(
@@ -163,29 +190,43 @@ async def prossimo_passo(
     stesa_nome: str,
     turni: Sequence[Tuple[str, str]],
     max_domande: int,
+    min_domande: int = 2,
+    stesa_descrizione: str = "",
     lang: str = "it",
     profilo: str = "",
 ) -> Passo:
-    """Decide la prossima domanda, o chiude l'intervista col riassunto."""
+    """Decide la prossima domanda, o chiude l'intervista col riassunto.
+
+    Le domande sono fra `min_domande` e `max_domande`: quante ne servano lo
+    decide il modello. Prima del minimo una chiusura viene respinta; al
+    massimo la chiusura è obbligatoria.
+    """
     poste = sum(1 for r, _ in turni if r == "oracolo")
     obbligo_chiusura = poste >= max_domande
+    prima_del_minimo = poste < min_domande
 
     utente = (
         f"Quesito: {quesito}\n"
         f"Stesa scelta: {stesa_nome}\n"
-        f"{profilo}"
-        f"Domande già poste: {poste} (massimo {max_domande})\n\n"
-        f"Colloquio finora:\n{_trascrizione(turni)}\n\n"
+        + (f"{stesa_descrizione}\n" if stesa_descrizione else "")
+        + f"{profilo}"
+        f"Domande già poste: {poste} (minimo {min_domande}, massimo {max_domande})\n\n"
+        f"Colloquio finora:\n{trascrizione(turni)}\n\n"
         + (
             "Hai raggiunto il numero massimo di domande: chiudi l'intervista con il riassunto.\n"
             if obbligo_chiusura else ""
         )
-        + _istruzione_lingua(lang)
+        + (
+            f"Hai fatto {poste} domande: devi farne ancora almeno {min_domande - poste} "
+            "prima di chiudere. NON chiudere l'intervista.\n"
+            if prima_del_minimo else ""
+        )
+        + istruzione_lingua(lang)
     )
     sistema = [PROMPT_INTERVISTA]
 
     scartate: List[str] = []
-    for tentativo in range(TENTATIVI_RIGENERAZIONE + 1):
+    for _tentativo in range(TENTATIVI_RIGENERAZIONE + 1):
         extra = ""
         if scartate:
             extra = (
@@ -199,9 +240,16 @@ async def prossimo_passo(
             )
         except GenerationError as exc:
             logger.warning("Intervista: il modello non ha risposto (%s)", exc)
-            dati = {}
+            if obbligo_chiusura:
+                # Il colloquio è finito: il riassunto ripiega sulle risposte
+                # di chi consulta, che sono sue e non fisse.
+                return Passo(
+                    completo=True, scartate=len(scartate),
+                    riassunto=await riassumi(provider_intervista, quesito=quesito, turni=turni, lang=lang),
+                )
+            raise IntervistaNonRiuscita(f"il modello non ha risposto: {exc}") from exc
 
-        if dati.get("completo") or obbligo_chiusura:
+        if obbligo_chiusura or (dati.get("completo") and not prima_del_minimo):
             riassunto = str(dati.get("riassunto") or "").strip()
             if not riassunto:
                 riassunto = await riassumi(
@@ -211,7 +259,8 @@ async def prossimo_passo(
 
         domanda = str(dati.get("domanda") or "").strip()
         if not domanda:
-            break
+            # Ha chiuso troppo presto o non ha scritto nulla: si richiede.
+            continue
 
         motivo = viola_le_regole(quesito, domanda)
         if motivo is None:
@@ -222,11 +271,14 @@ async def prossimo_passo(
         logger.info("Domanda scartata (%s): %s", motivo, domanda)
         scartate.append(domanda)
 
-    return Passo(
-        completo=False,
-        domanda=domanda_di_riserva(turni, lang=lang),
-        scartate=len(scartate),
-    )
+    # Nessuna domanda utilizzabile. Dopo il minimo si può chiudere col quadro
+    # che c'è; prima no: servirebbe una domanda fissa, e non ce ne sono.
+    if not prima_del_minimo:
+        return Passo(
+            completo=True, scartate=len(scartate),
+            riassunto=await riassumi(provider_intervista, quesito=quesito, turni=turni, lang=lang),
+        )
+    raise IntervistaNonRiuscita("il modello non ha formulato una domanda valida")
 
 
 async def _giudica(provider, quesito: str, domanda: str) -> Optional[str]:
@@ -246,14 +298,6 @@ async def _giudica(provider, quesito: str, domanda: str) -> Optional[str]:
     return None
 
 
-def domanda_di_riserva(turni: Sequence[Tuple[str, str]], *, lang: str = "it") -> str:
-    gia = {t for r, t in turni if r == "oracolo"}
-    for d in DOMANDE_DI_RISERVA[lingua(lang)]:
-        if d not in gia:
-            return d
-    return DOMANDE_DI_RISERVA[lingua(lang)][-1]
-
-
 async def riassumi(
     provider, *, quesito: str, turni: Sequence[Tuple[str, str]], lang: str = "it",
 ) -> str:
@@ -261,9 +305,9 @@ async def riassumi(
     try:
         dati = await genera_json(provider, richiesta(
             [PROMPT_INTERVISTA],
-            f"Quesito: {quesito}\n\nColloquio:\n{_trascrizione(turni)}\n\n"
+            f"Quesito: {quesito}\n\nColloquio:\n{trascrizione(turni)}\n\n"
             f"L'intervista è conclusa: restituisci solo "
-            f'{{"completo": true, "riassunto": "..."}}. {_istruzione_lingua(lang)}',
+            f'{{"completo": true, "riassunto": "..."}}. {istruzione_lingua(lang)}',
             temperatura=0.3,
         ))
         testo = str(dati.get("riassunto") or "").strip()

@@ -345,7 +345,13 @@ export const registro = (
 /* ---- i modelli e i compiti ---- */
 
 export const modelliECompiti = (t: string) =>
-  chiamata<{ modelli: ModelloConfigurato[]; compiti: CompitoAssegnato[] }>(
+  chiamata<{
+    /* Falso: nessun modello vero — le letture rispondono 503. */
+    configurato: boolean;
+    finto: boolean;
+    modelli: ModelloConfigurato[];
+    compiti: CompitoAssegnato[];
+  }>(
     t, "/admin/models",
   );
 

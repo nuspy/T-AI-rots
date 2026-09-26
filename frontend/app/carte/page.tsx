@@ -6,6 +6,7 @@ import { useCallback, useState } from "react";
 import Link from "next/link";
 import { elencaCarte } from "@/lib/api";
 import { useLingua } from "@/lib/lingua";
+import { nomeCarta } from "@/lib/i18n";
 import { useCarica } from "@/lib/usa";
 import { Faccia } from "../componenti/carta";
 import { Involucro } from "../componenti/testata";
@@ -22,23 +23,21 @@ export default function PaginaCarte() {
   );
   return (
     <Involucro pubblica titolo={t.nav_carte}
-      sottotitolo={lingua === "en"
-        ? "The 78 cards of the Thoth Tarot with their attributions and meanings on several levels."
-        : "Le 78 carte del Tarocco di Thoth con le loro attribuzioni e i significati sui diversi livelli."}>
+      sottotitolo={t.carte_sottotitolo}>
       <div className={stili.filtri}>
         {FILTRI.map((f) => (
           <button key={f} className={f === filtro ? stili.filtroAttivo : stili.filtro} onClick={() => setFiltro(f)}>
-            {f}
+            {t.filtri[f]}
           </button>
         ))}
       </div>
       <div className={stili.griglaCarte}>
         {visibili.map((c) => (
           <Link key={c.id} href={`/carte/${c.id}`} className={stili.cartaLink}>
-            <div style={{ width: "100%", aspectRatio: "3 / 5", borderRadius: 8, overflow: "hidden" }}>
+            <div style={{ width: "100%", aspectRatio: "9 / 16", borderRadius: 8, overflow: "hidden" }}>
               <Faccia carta={c} />
             </div>
-            {c.nome_it}
+            {nomeCarta(c, lingua)}
           </Link>
         ))}
       </div>

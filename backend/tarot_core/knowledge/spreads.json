@@ -60,6 +60,11 @@
    "Si legge da sinistra a destra come un racconto: la carta centrale è il perno e colora le altre due.",
    "Le dignità si calcolano sulla linea: la carta del presente è modulata da passato e futuro.",
    "Tre Arcani maggiori indicano forze che superano la volontà personale: il consiglio verte sull'atteggiamento con cui attraversarle."
+  ],
+  "racconto": [
+   1,
+   2,
+   3
   ]
  },
  {
@@ -156,6 +161,13 @@
    "La quinta carta non si sceglie: è la riduzione teosofica della somma dei numeri delle carte 1–4 (il Matto vale 0; se la somma è 0 vale 22, cioè il Matto).",
    "Se l'Arcano di sintesi è già uscito nella stesa, ha doppia valenza: il suo messaggio è rafforzato e diventa la chiave della lettura.",
    "Il giudice (4) è la risposta; la sintesi (5) ne è il senso profondo e il tono."
+  ],
+  "racconto": [
+   3,
+   1,
+   2,
+   4,
+   5
   ]
  },
  {
@@ -277,6 +289,15 @@
    "La carta 4 è il vertice: ogni lettura del ferro di cavallo gira intorno all'ostacolo.",
    "Una figura di corte in posizione 5 indica di solito una persona concreta dell'ambiente di chi consulta.",
    "Le dignità si leggono lungo l'arco: ogni carta è modulata dalle due vicine."
+  ],
+  "racconto": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
   ]
  },
  {
@@ -308,7 +329,8 @@
     "x": 0.3,
     "y": 0.5,
     "rotazione": 90,
-    "calcolata": false
+    "calcolata": false,
+    "senza_rovescio": true
    },
    {
     "n": 3,
@@ -449,6 +471,18 @@
    "La carta 2 non si legge mai come rovesciata in senso proprio: posata di traverso, è per natura ciò che si oppone o si aggiunge al presente.",
    "Le dignità si leggono lungo le linee: orizzontale (3–1–6), verticale (5–1–4) e il bastone (7–10).",
    "L'esito (10) va letto insieme alla corona (5) e all'atteggiamento (7) prima di concludere."
+  ],
+  "racconto": [
+   4,
+   3,
+   1,
+   2,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10
   ]
  },
  {
@@ -649,6 +683,21 @@
    "Gli assi opposti (I–VII, II–VIII, III–IX, IV–X, V–XI, VI–XII) si leggono in coppia.",
    "Il significatore al centro dà il tono a tutta la ruota: le case che concordano con esso descrivono i campi dove il tema si manifesta.",
    "Le dignità si calcolano sull'anello: ogni casa è modulata dalle due vicine; il significatore resta neutro."
+  ],
+  "racconto": [
+   13,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12
   ]
  }
 ]

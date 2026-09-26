@@ -10,32 +10,17 @@ import { useAzione, useCarica } from "@/lib/usa";
 import { Involucro } from "../componenti/testata";
 import stili from "../pagine.module.css";
 
-const STATI: Record<string, string> = {
-  intervista: "in intervista",
-  ventaglio: "pronta da mescolare",
-  scelta: "carte da scegliere",
-  rivelazione: "carte da rivelare",
-  sintesi: "in attesa del responso",
-  completata: "completata",
-  annullata: "sospesa",
-};
-
 export default function PaginaLetture() {
-  const { t, lingua } = useLingua();
+  const { t } = useLingua();
   return (
-    <Involucro
-      titolo={t.nav_letture}
-      sottotitolo={lingua === "en"
-        ? "Every reading is saved. You can reopen it, note whether it came true, or delete it for good."
-        : "Ogni lettura resta salvata. Puoi riaprirla, annotare se si è avverata, o cancellarla per sempre."}
-    >
+    <Involucro titolo={t.nav_letture} sottotitolo={t.letture_sottotitolo}>
       <Elenco />
     </Involucro>
   );
 }
 
 function Elenco() {
-  const { t } = useLingua();
+  const { t, locale } = useLingua();
   const letture = useCarica(elencaLetture);
   const { esegui } = useAzione();
 
@@ -65,8 +50,8 @@ function Elenco() {
               <p className={stili.rigaTitolo}>«{l.question}»</p>
             </Link>
             <p className={stili.rigaDettagli}>
-              {l.stesa} · {new Date(l.created_at).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}
-              {" · "}{STATI[l.status] ?? l.status}
+              {l.stesa} · {new Date(l.created_at).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })}
+              {" · "}{(t.stati as Record<string, string>)[l.status] ?? l.status}
               {l.carte.length > 0 && ` · ${l.carte.slice(0, 4).join(", ")}${l.carte.length > 4 ? "…" : ""}`}
               {l.feedback && ` · ${t.si_e_avverato} ${t[l.feedback as "si" | "in_parte" | "no"]}`}
             </p>

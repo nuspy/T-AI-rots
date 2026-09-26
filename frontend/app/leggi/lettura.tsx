@@ -4,12 +4,15 @@
  *
  * Le fasi seguono gli stati della lettura sul server:
  *
- *   stesa → intervista → pronto-mescolare → mescolamento → scelta →
+ *   stesa → intervista → pronto-mescolare → mescolamento → taglio → scelta →
  *   rivelazione → pronto-sintesi → sintesi → completata
  *
  * con `crisi` come uscita di sicurezza. L'identificativo della lettura sta
  * nell'indirizzo (`?id=…`): una pagina ricaricata, o il ritorno da un
  * pagamento, riprende la lettura dal punto in cui era.
+ *
+ * Il mescolamento dura finché chi consulta non clicca il mazzo; poi taglia il
+ * mazzo cliccando nel punto voluto, e solo allora il server lo fissa.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -30,7 +33,8 @@ import {
   type Lettura,
   type Stesa,
 } from "@/lib/api";
-import { useLingua } from "@/lib/lingua";
+import { comeLingua, dizionario, nomeCarta, nomePosizione, nomeStesa, type Lingua } from "@/lib/i18n";
+import { LinguaNomi, useLingua } from "@/lib/lingua";
 import { useSessione } from "@/lib/sessione";
 import { useCarica } from "@/lib/usa";
 import { Acquisto, Disclaimer } from "../componenti/modale";
@@ -38,11 +42,11 @@ import { Dialogo, type Battuta } from "./dialogo";
 import { FaseResponso, Responso } from "./responso";
 import { SceltaStesa } from "./scelta-stesa";
 import { Tavolo, type Posata } from "./tavolo";
-import { Mescolamento, Ventaglio } from "./ventaglio";
+import { Mescolamento, Taglio, Ventaglio } from "./ventaglio";
 import stili from "./leggi.module.css";
 
 type Fase =
-  | "stesa" | "intervista" | "pronto-mescolare" | "mescolamento" | "scelta"
+  | "stesa" | "intervista" | "pronto-mescolare" | "mescolamento" | "taglio" | "scelta"
   | "rivelazione" | "pronto-sintesi" | "sintesi" | "completata" | "crisi" | "annullata";
 
 let contatore = 0;
@@ -82,6 +86,11 @@ export function Lettura() {
   const [fine, setFine] = useState<{ disclaimer: string; commitment: string | null; saldo: number | null } | null>(null);
   const [condiviso, setCondiviso] = useState<string | null>(null);
   const [domandaLettura, setDomandaLettura] = useState("");
+  /* La lingua del quesito, ricavata dal server all'apertura e salvata con la
+   * lettura: domande, interpretazioni e responso escono in questa lingua, e i
+   * nomi di carte e stese la seguono. Ogni nuovo quesito la rinnova. */
+  const [linguaLettura, setLinguaLettura] = useState<Lingua | null>(null);
+  const ll: Lingua = linguaLettura ?? lingua;
 
   const stesa: Stesa | undefined = useMemo(
     () => stese.dati?.find((s) => s.id === stesaId),
@@ -95,6 +104,7 @@ export function Lettura() {
   const riprendi = useCallback(
     (l: Lettura) => {
       setStesaId(l.spread_id);
+      setLinguaLettura(comeLingua(l.lang));
       setDomandaLettura(l.question);
       setDisclaimer(l.disclaimer);
       setCondiviso(l.share_token);
@@ -104,13 +114,14 @@ export function Lettura() {
         ...l.interview.map((x) => ({ id: nuovoId(), autore: x.ruolo, testo: x.testo })),
       ];
       if (l.context_summary) storia.push({ id: nuovoId(), autore: "oracolo", titolo: "✦", testo: l.context_summary });
+      const lingueLettura = comeLingua(l.lang) ?? lingua;
       const posizioni = new Map(l.stesa_dati.posizioni.map((p) => [p.n, p]));
       for (const c of l.cards) {
         if (c.rivelata && c.interpretazione && c.carta) {
           storia.push({
             id: nuovoId(),
             autore: "oracolo",
-            titolo: `${c.posizione}. ${posizioni.get(c.posizione)?.nome} — ${c.carta.nome_it}`,
+            titolo: `${c.posizione}. ${nomePosizione(posizioni.get(c.posizione)!, lingueLettura)} — ${nomeCarta(c.carta, lingueLettura)}`,
             testo: c.interpretazione,
           });
         }
@@ -149,7 +160,7 @@ export function Lettura() {
       }
       return l;
     },
-    [],
+    [lingua],
   );
 
   const passoIntervista = useCallback(
@@ -168,12 +179,12 @@ export function Lettura() {
           aggiungi({ autore: "oracolo", testo: passo.domanda, macchina: true });
         }
       } catch (e) {
-        setErrore(e instanceof ErroreApi ? e.message : "L'oracolo non ha risposto.");
+        setErrore(e instanceof ErroreApi ? e.message : t.err_oracolo);
       } finally {
         setAttesa(false);
       }
     },
-    [sessione.token],
+    [sessione.token, t.err_oracolo],
   );
 
   /* All'arrivo con `?id=` la lettura si ricarica una volta sola. */
@@ -227,11 +238,13 @@ export function Lettura() {
     try {
       const a = await apriLettura(sessione.token, stesaId, domanda.trim(), lingua);
       if (a.crisi) {
+        setLinguaLettura(null);
         setBattute([{ id: nuovoId(), autore: "sistema", testo: a.messaggio ?? "" }]);
         setFase("crisi");
         return;
       }
       if (!a.id) return;
+      setLinguaLettura(comeLingua(a.lang) ?? lingua);
       setId(a.id);
       setDomandaLettura(domanda.trim());
       router.replace(`/leggi?id=${a.id}`);
@@ -244,7 +257,7 @@ export function Lettura() {
       await passoIntervista(a.id, null);
     } catch (e) {
       if (e instanceof ErroreApi && e.stato === 402) setMostraAcquisto(true);
-      else setErrore(e instanceof ErroreApi ? e.message : "La lettura non è partita.");
+      else setErrore(e instanceof ErroreApi ? e.message : t.err_lettura);
     } finally {
       setInCorso(false);
     }
@@ -260,20 +273,26 @@ export function Lettura() {
 
   /* ---- 3. mescolamento e scelta ---- */
 
-  const mescola = async () => {
+  const mescola = () => {
     if (!id) return;
-    setFase("mescolamento");
     setErrore(null);
+    setFase("mescolamento");
+  };
+
+  /* Il clic sul mazzo ferma la mescolata e passa al taglio. */
+  const fermaMescolata = () => setFase("taglio");
+
+  /* Il taglio arriva quando le metà si sono già scambiate: il server fissa il
+   * mazzo tagliato dove ha cliccato chi consulta. */
+  const taglia = async (frazione: number) => {
+    if (!id) return;
     try {
-      const [v] = await Promise.all([
-        apriVentaglio(sessione.token, id),
-        new Promise((ok) => setTimeout(ok, 2200)),
-      ]);
+      const v = await apriVentaglio(sessione.token, id, frazione);
       setSlotTotali(v.slot_count);
       setScelte(new Set(v.picked_slots));
       setFase("scelta");
     } catch (e) {
-      setErrore(e instanceof ErroreApi ? e.message : "Il mazzo non si è aperto.");
+      setErrore(e instanceof ErroreApi ? e.message : t.err_mazzo);
       setFase("pronto-mescolare");
     }
   };
@@ -293,7 +312,7 @@ export function Lettura() {
       ]);
       if (r.tutte_scelte) setTimeout(() => setFase("rivelazione"), 700);
     } catch (e) {
-      setErrore(e instanceof ErroreApi ? e.message : "La carta non è stata posata.");
+      setErrore(e instanceof ErroreApi ? e.message : t.err_posa);
     } finally {
       scegliendo.current = false;
     }
@@ -333,7 +352,7 @@ export function Lettura() {
             {
               id: bid,
               autore: "oracolo",
-              titolo: `${posizione}. ${lingua === "en" ? pos?.nome_en : pos?.nome} — ${ev.carta.nome_it}${ev.rovescio ? ` (${t.rovesciata})` : ""}`,
+              titolo: `${posizione}. ${pos ? nomePosizione(pos, ll) : ""} — ${nomeCarta(ev.carta, ll)}${ev.rovescio ? ` (${dizionario(ll).rovesciata})` : ""}`,
               testo: "",
               inCorso: true,
             },
@@ -353,7 +372,7 @@ export function Lettura() {
         }
       }
     } catch (e) {
-      setErrore(e instanceof ErroreApi ? e.message : "La carta non si è girata.");
+      setErrore(e instanceof ErroreApi ? e.message : t.err_giro);
     } finally {
       setRivelazioneInCorso(false);
     }
@@ -382,7 +401,7 @@ export function Lettura() {
         }
       }
     } catch (e) {
-      setErrore(e instanceof ErroreApi ? e.message : "Il responso non è arrivato.");
+      setErrore(e instanceof ErroreApi ? e.message : t.err_responso);
       setFase("pronto-sintesi");
     }
   };
@@ -397,9 +416,20 @@ export function Lettura() {
     setFine(null);
     setDomanda("");
     setCondiviso(null);
+    setLinguaLettura(null);
     caricata.current = true;
     router.replace("/leggi");
   };
+
+  /* Il mazzo, il taglio e il ventaglio stanno sotto il tavolo, che è alto: a
+   * ogni fase si porta in vista la zona, o chi consulta dovrebbe cercarla. */
+  useEffect(() => {
+    if (fase !== "mescolamento" && fase !== "taglio" && fase !== "scelta") return;
+    const attesa = setTimeout(() => {
+      document.getElementById("zona-mazzo")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 350);
+    return () => clearTimeout(attesa);
+  }, [fase]);
 
   /* ---- disegno ---- */
 
@@ -437,12 +467,16 @@ export function Lettura() {
 
   const daScegliere = stesa ? stesa.carte_da_scegliere - posate.filter((p) => !p.calcolata).length : 0;
 
+  /* Il responso sta FUORI dal contenitore delle due colonne: la barra del
+   * dialogo è `sticky`, e uno sticky resta fermo finché il suo contenitore
+   * non finisce. Con il responso dentro, la barra lo attraversava. */
   return (
+    <LinguaNomi valore={linguaLettura}>
     <div className={stili.consulto}>
       <div className={stili.colonnaTavolo}>
         <div className={stili.intestazione}>
-          <span className={stili.stesaEtichetta}>{stesa ? (lingua === "en" ? stesa.nome_en : stesa.nome) : ""}</span>
-          <p className={`oracolo ${stili.domandaTitolo}`}>«{domandaLettura}»</p>
+          <span className={stili.stesaEtichetta}>{stesa ? nomeStesa(stesa, ll) : ""}</span>
+          <p className={`oracolo ${stili.domandaTitolo}`} dir="auto">«{domandaLettura}»</p>
         </div>
 
         <LayoutGroup>
@@ -459,16 +493,31 @@ export function Lettura() {
 
           <AnimatePresence mode="wait">
             {fase === "mescolamento" && (
-              <motion.div key="m" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              <motion.div key="m" id="zona-mazzo" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className={stili.zonaAzione}>
-                <Mescolamento />
-                <p className="oracolo">{t.mescolando}</p>
+                <Mescolamento onFerma={fermaMescolata} />
+                <div className={`pannello ${stili.suggerimento}`} role="status">
+                  <span className={stili.suggerimentoSigillo} aria-hidden="true">✦</span>
+                  <p className="oracolo">{t.mescolando}</p>
+                  <p className={stili.istruzione}>{t.ferma_mescolata}</p>
+                </div>
+              </motion.div>
+            )}
+            {fase === "taglio" && (
+              <motion.div key="t" id="zona-mazzo" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className={stili.zonaAzione}>
+                <div className={`pannello ${stili.suggerimento}`} role="status">
+                  <span className={stili.suggerimentoSigillo} aria-hidden="true">✂</span>
+                  <p className="oracolo">{t.taglia_mazzo}</p>
+                  <p className={stili.istruzione}>{t.taglia_istruzione}</p>
+                </div>
+                <Taglio onTaglia={taglia} />
               </motion.div>
             )}
           </AnimatePresence>
 
           {fase === "scelta" && (
-            <div className={stili.zonaVentaglio}>
+            <div id="zona-mazzo" className={stili.zonaVentaglio}>
               <p className={stili.istruzione}>{t.scegli_n(daScegliere)}</p>
               <Ventaglio quante={slotTotali} scelte={scelte} attivo={daScegliere > 0} onScegli={scegli} />
             </div>
@@ -498,6 +547,9 @@ export function Lettura() {
             </motion.button>
           )}
           {errore && <p className={stili.errore} role="alert">{errore}</p>}
+          {errore && fase === "intervista" && id && !attesa && (
+            <button className="bottone-secondario" onClick={() => passoIntervista(id, null)}>{t.riprova}</button>
+          )}
         </div>
       </div>
 
@@ -509,6 +561,7 @@ export function Lettura() {
           onRispondi={suRisposta}
         />
       </div>
+    </div>
 
       {(fase === "sintesi" || fase === "completata") && stesa && id && (
         <div className={stili.zonaResponso}>
@@ -537,6 +590,6 @@ export function Lettura() {
         </div>
       )}
       <Acquisto aperta={mostraAcquisto} onChiudi={() => setMostraAcquisto(false)} ritorno="/leggi" />
-    </div>
+    </LinguaNomi>
   );
 }

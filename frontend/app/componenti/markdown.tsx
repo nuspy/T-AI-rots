@@ -16,7 +16,7 @@ function inline(testo: string): React.ReactNode[] {
 export function Markdown({ testo, className }: { testo: string; className?: string }) {
   const blocchi = testo.split(/\n{2,}/);
   return (
-    <div className={className}>
+    <div className={className} dir="auto">
       {blocchi.map((b, i) => {
         const righe = b.trim();
         if (!righe) return null;
@@ -24,20 +24,20 @@ export function Markdown({ testo, className }: { testo: string; className?: stri
           const [titolo, ...resto] = righe.split("\n");
           return (
             <Fragment key={i}>
-              <h3>{titolo.slice(3)}</h3>
-              {resto.length > 0 && <p>{inline(resto.join(" "))}</p>}
+              <h3 dir="auto">{titolo.slice(3)}</h3>
+              {resto.length > 0 && <p dir="auto">{inline(resto.join(" "))}</p>}
             </Fragment>
           );
         }
-        if (righe.startsWith("# ")) return <h3 key={i}>{righe.slice(2)}</h3>;
+        if (righe.startsWith("# ")) return <h3 key={i} dir="auto">{righe.slice(2)}</h3>;
         if (/^[-*] /.test(righe)) {
           return (
-            <ul key={i}>
+            <ul key={i} dir="auto">
               {righe.split("\n").map((r, j) => <li key={j}>{inline(r.replace(/^[-*] /, ""))}</li>)}
             </ul>
           );
         }
-        return <p key={i}>{inline(righe.replace(/\n/g, " "))}</p>;
+        return <p key={i} dir="auto">{inline(righe.replace(/\n/g, " "))}</p>;
       })}
     </div>
   );

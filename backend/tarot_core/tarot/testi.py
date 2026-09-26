@@ -3,6 +3,13 @@
 Stanno nel codice e non nel prompt perché non devono dipendere dal modello:
 il disclaimer si mostra identico a ogni lettura, all'inizio e alla fine, e il
 messaggio di crisi non può essere riformulato da nessuno.
+
+Sono gli **unici** testi fissi. Domande, interpretazioni e responso li scrive
+sempre il modello: non ci sono domande o letture di ripiego.
+
+Tradotti davvero in italiano, inglese e ungherese (vedi `lingue.TRADOTTE`);
+nelle altre lingue si mostra l'inglese, finché non li traduciamo. Si leggono con
+`lingue.in_lingua(TESTO, lang)`, che applica il ripiego.
 """
 from __future__ import annotations
 
@@ -22,6 +29,14 @@ DISCLAIMER = {
         "light of the forces the cards show now, and your choices can change it. There "
         "is no scientific evidence that tarot predictions are valid: use it as a mirror "
         "for reflection, not as a verdict."
+    ),
+    "hu": (
+        "Ez egy mesterséges intelligencia által készített tarotjóslás, amelyet a "
+        "Thoth-tarot ezoterikus hagyományának megfelelően, szigorúan és következetesen "
+        "végeztünk. Nem bizonyosság: a legvalószínűbb jövőt írja le azoknak az erőknek a "
+        "fényében, amelyeket a kártyák most mutatnak, és a te döntéseid megváltoztathatják. "
+        "Nincs tudományos bizonyíték arra, hogy a tarotjóslatok érvényesek lennének: "
+        "használd tükörként az elgondolkodáshoz, ne ítéletként."
     ),
 }
 
@@ -45,6 +60,15 @@ AIUTO = {
         "If you can, also reach out to someone you trust or to your doctor. "
         "The reading has been paused and your credit refunded."
     ),
+    "hu": (
+        "Úgy érzem, nagyon fájdalmas időszakon mész keresztül, és nem szeretném, hogy a "
+        "kártyák közéd és a most szükséges segítség közé álljanak. Nem vagy egyedül: "
+        "azonnal beszélhetsz valakivel.\n\n"
+        "- **Segélyhívó:** 112\n"
+        "- **Lelki Elsősegély Telefonszolgálat:** 116-123 (éjjel-nappal)\n\n"
+        "Ha tudsz, keress meg egy megbízható személyt vagy az orvosodat is. "
+        "A jóslást felfüggesztettük, és a kreditedet visszatérítettük."
+    ),
 }
 
 RESPONSO_BLOCCATO = {
@@ -63,25 +87,68 @@ RESPONSO_BLOCCATO = {
         "competent person. You can reread the individual cards above as prompts for "
         "reflection, and if you are going through a hard time, talk to someone you trust."
     ),
+    "hu": (
+        "Ennek a jóslásnak a kártyái olyan témákat érintenek, amelyek több gondosságot "
+        "igényelnek, mint amennyit egy automatikus jóslás garantálni tud. Inkább nem adok "
+        "olyan választ, amely árthatna neked, vagy olyan döntések felé terelhetne, "
+        "amelyekhez hozzáértő ember segítsége kell. A fenti kártyákat külön-külön "
+        "újraolvashatod gondolatébresztőként, és ha nehéz időszakon mész át, beszélj "
+        "valakivel, akiben megbízol."
+    ),
 }
 
-DOMANDE_DI_RISERVA = {
-    "it": [
-        "Da quanto tempo questa situazione è presente nella tua vita, e cosa l'ha messa in moto?",
-        "Chi sono le persone coinvolte, e che ruolo hanno per te?",
-        "Cosa è già successo finora che ti sembra importante per capire il quadro?",
-        "Come ti senti, in questo periodo, quando pensi a questa situazione?",
-        "C'è una decisione o un passaggio che si avvicina, e in quali tempi?",
-    ],
-    "en": [
-        "How long has this situation been part of your life, and what set it in motion?",
-        "Who are the people involved, and what role do they play for you?",
-        "What has already happened that seems important to understand the picture?",
-        "How do you feel, these days, when you think about this situation?",
-        "Is there a decision or a step approaching, and on what timescale?",
-    ],
+#: Quando il modello non è configurato: si dice, senza addebitare nulla.
+MODELLO_NON_CONFIGURATO = {
+    "it": (
+        "Il servizio non è ancora pronto: nessun modello di intelligenza "
+        "artificiale è configurato. Un amministratore deve collegarne uno "
+        "prima che si possano fare letture. Non è stato addebitato nulla."
+    ),
+    "en": (
+        "The service is not ready yet: no AI model is configured. An "
+        "administrator has to connect one before readings can be made. "
+        "You have not been charged."
+    ),
+    "hu": (
+        "A szolgáltatás még nem áll készen: nincs beállítva mesterséges "
+        "intelligencia modell. Egy adminisztrátornak kell csatlakoztatnia egyet, "
+        "mielőtt jóslásokat lehetne végezni. Nem terheltünk meg semmivel."
+    ),
 }
 
+#: Quando il modello non risponde a metà lettura: si può riprovare.
+MODELLO_NON_DISPONIBILE = {
+    "it": (
+        "L'oracolo non è riuscito a rispondere in questo momento. "
+        "Riprova tra poco: la lettura è salvata e non ti sarà addebitata di nuovo."
+    ),
+    "en": (
+        "The oracle could not answer right now. Please try again shortly: "
+        "the reading is saved and you will not be charged again."
+    ),
+    "hu": (
+        "A jós most nem tudott válaszolni. Próbáld újra egy kis idő múlva: "
+        "a jóslás el van mentve, és nem terheljük meg újra."
+    ),
+}
 
-def lingua(lang: str) -> str:
-    return "en" if (lang or "").lower().startswith("en") else "it"
+#: Nessun credito né quota per aprire una lettura.
+CREDITI_ESAURITI = {
+    "it": "Non hai crediti disponibili per una nuova lettura.",
+    "en": "You have no credits left for a new reading.",
+    "hu": "Nincs elég kredited egy új jóslásra.",
+}
+
+#: L'interpretazione di una carta non è arrivata: la ritrovi nel responso.
+INTERPRETAZIONE_NON_DISPONIBILE = {
+    "it": "L'interpretazione non è disponibile ora: la ritroverai nel responso finale.",
+    "en": "The interpretation is not available right now: you will find it in the final answer.",
+    "hu": "Az értelmezés most nem érhető el: a végső válaszban megtalálod majd.",
+}
+
+#: Il responso finale non è stato generato: si può riprovare.
+RESPONSO_NON_GENERATO = {
+    "it": "Il responso non è stato generato. Puoi riprovare: la lettura resta salvata.",
+    "en": "The answer could not be generated. You can try again: the reading stays saved.",
+    "hu": "A választ nem sikerült előállítani. Próbáld újra: a jóslás el van mentve.",
+}

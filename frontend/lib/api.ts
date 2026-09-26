@@ -6,7 +6,16 @@
  * token — e non fa POST.
  */
 
+import { dizionario, type Lingua } from "./i18n";
+
 export const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8100";
+
+/* La lingua dell'interfaccia, per i messaggi d'errore che nascono fuori dai
+ * componenti: la imposta `ProviderLingua` a ogni cambio. */
+let linguaMessaggi: Lingua = "it";
+export const impostaLinguaMessaggi = (l: Lingua) => {
+  linguaMessaggi = l;
+};
 
 /* ---- tipi del dominio ---- */
 
@@ -26,6 +35,8 @@ export interface Carta {
   nome_thoth: string;
   titolo_thoth: string | null;
   nome_it: string;
+  /* Il nome nelle altre lingue: `en` sempre, poi quelle con nomi propri. */
+  nomi?: Record<string, string>;
   lettera_ebraica: LetteraEbraica | null;
   elemento: string;
   astrologia: string;
@@ -46,6 +57,7 @@ export interface Posizione {
   n: number;
   nome: string;
   nome_en: string;
+  nomi?: Record<string, string>;
   significato: string;
   domanda: string;
   x: number;
@@ -58,6 +70,7 @@ export interface Stesa {
   id: string;
   nome: string;
   nome_en: string;
+  nomi?: Record<string, string>;
   mazzo: "maggiori" | "completo";
   carte_da_scegliere: number;
   origine: string;
@@ -186,6 +199,7 @@ export interface CartaDelGiorno {
 
 export interface LetturaCondivisa {
   question: string;
+  lang: string;
   stesa: Stesa | null;
   cards: CartaPosata[];
   synthesis: string | null;
@@ -226,8 +240,9 @@ async function leggi<T>(risposta: Response): Promise<T> {
     } catch {
       /* il corpo non era JSON: restano i codici */
     }
+    const t = dizionario(linguaMessaggi);
     throw new ErroreApi(
-      risposta.status === 401 ? "La sessione è scaduta." : (motivo ?? "Richiesta non riuscita."),
+      risposta.status === 401 ? t.err_sessione : (motivo ?? t.err_richiesta),
       risposta.status,
       dettaglio,
     );
@@ -265,6 +280,8 @@ export const leggiDisclaimer = (lang: string) =>
 export interface Apertura {
   id?: string;
   status?: StatoLettura;
+  /* La lingua del quesito, ricavata dal server: quella di domande e responso. */
+  lang?: string;
   consumo?: string;
   disclaimer?: string;
   stesa?: Stesa;
@@ -291,9 +308,11 @@ export const rispondi = (token: string | null, id: string, risposta: string | nu
     body: risposta ? { risposta } : {},
   });
 
-export const apriVentaglio = (token: string | null, id: string) =>
+/* `taglio`: dove chi consulta ha cliccato per tagliare il mazzo, da 0 a 1. */
+export const apriVentaglio = (token: string | null, id: string, taglio?: number) =>
   chiama<{ slot_count: number; commitment: string; da_scegliere: number; picked_slots: number[] }>(
-    token, `/readings/${id}/fan`, { method: "POST" },
+    token, `/readings/${id}/fan`,
+    { method: "POST", body: taglio === undefined ? undefined : { taglio } },
   );
 
 export const scegliCarta = (token: string | null, id: string, slot: number) =>
@@ -414,6 +433,6 @@ export const riscattaInvito = (token: string | null, codice: string) =>
   chiama<{ crediti: number; saldo: number }>(token, "/me/referral", { method: "POST", body: { codice } });
 export const cartaDelGiorno = (token: string | null) => chiama<CartaDelGiorno>(token, "/me/daily-card");
 
-export function euro(centesimi: number, valuta = "EUR"): string {
-  return new Intl.NumberFormat("it-IT", { style: "currency", currency: valuta }).format(centesimi / 100);
+export function euro(centesimi: number, valuta = "EUR", locale = "it-IT"): string {
+  return new Intl.NumberFormat(locale, { style: "currency", currency: valuta }).format(centesimi / 100);
 }

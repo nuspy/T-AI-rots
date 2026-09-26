@@ -67,7 +67,7 @@ export function Disclaimer({
   const { t } = useLingua();
   return (
     <Modale aperta={aperta} titolo={t.disclaimer_titolo} onChiudi={onChiudi}>
-      <p className={`oracolo ${stili.testo}`}>{testo}</p>
+      <p className={`oracolo ${stili.testo}`} dir="auto">{testo}</p>
       <div className={stili.azioni}>
         <button className="bottone" onClick={onAccetta} autoFocus>{t.accetto}</button>
       </div>

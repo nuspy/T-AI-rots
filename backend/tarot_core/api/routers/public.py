@@ -11,7 +11,8 @@ from fastapi import APIRouter, HTTPException
 
 from ...auth.dependencies import DbSession
 from ...domain.repositories import ReadingRepository
-from ...tarot.testi import DISCLAIMER, lingua
+from ...tarot.lingue import in_lingua
+from ...tarot.testi import DISCLAIMER
 from ..deps import get_conoscenza
 
 router = APIRouter(tags=["pubblico"])
@@ -39,7 +40,7 @@ def carta(card_id: str) -> Dict[str, Any]:
 
 @router.get("/disclaimer")
 def disclaimer(lang: str = "it") -> Dict[str, str]:
-    return {"testo": DISCLAIMER[lingua(lang)]}
+    return {"testo": in_lingua(DISCLAIMER, lang)}
 
 
 @router.get("/shared/{token}")
@@ -53,6 +54,7 @@ async def condivisa(token: str, session: DbSession) -> Dict[str, Any]:
     stesa = conoscenza.stesa(lettura.spread_id)
     return {
         "question": lettura.question,
+        "lang": lettura.lang,
         "stesa": conoscenza.stesa_pubblica(stesa) if stesa else None,
         "cards": [
             {
@@ -67,5 +69,5 @@ async def condivisa(token: str, session: DbSession) -> Dict[str, Any]:
         ],
         "synthesis": lettura.synthesis,
         "created_at": lettura.created_at.isoformat(),
-        "disclaimer": DISCLAIMER[lingua(lettura.lang)],
+        "disclaimer": in_lingua(DISCLAIMER, lettura.lang),
     }

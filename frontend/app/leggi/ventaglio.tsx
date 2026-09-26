@@ -1,6 +1,12 @@
 "use client";
 
-/* Il ventaglio: tutte le carte, coperte, disposte ad arco.
+/* Il mazzo e il ventaglio: mescolata, taglio, scelta.
+ *
+ * - `Mescolamento`: i mazzetti si dividono e si ricompongono finché chi
+ *   consulta non clicca il mazzo per fermarli.
+ * - `Taglio`: il mazzo è disteso in fila; il clic sceglie il punto in cui
+ *   dividerlo, e le due metà si scambiano di posto come a mano.
+ * - `Ventaglio`: tutte le carte, coperte, disposte ad arco.
  *
  * Le carte sono già assegnate agli slot sul server prima che il ventaglio si
  * apra: qui si conoscono solo gli indici. Ogni slot si vede — anche con 78
@@ -10,6 +16,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { useLingua } from "@/lib/lingua";
 import { Dorso } from "../componenti/carta";
 import stili from "./leggi.module.css";
 
@@ -43,7 +50,7 @@ export function Ventaglio({
   const corda = w * 0.92;
   const raggio = corda / 2 / Math.sin(((apertura / 2) * Math.PI) / 180);
   const larghezzaCarta = Math.min(quante > 30 ? 64 : 92, Math.max(30, (corda / quante) * (quante > 30 ? 3.2 : 1.9)));
-  const altezzaCarta = larghezzaCarta * (5 / 3);
+  const altezzaCarta = larghezzaCarta * (16 / 9);
   const freccia = raggio * (1 - Math.cos(((apertura / 2) * Math.PI) / 180));
   const altezza = freccia + altezzaCarta + 40;
 
@@ -88,10 +95,12 @@ export function Ventaglio({
   );
 }
 
-/** Il mescolamento: il mazzo si divide e si ricompone, prima del ventaglio. */
-export function Mescolamento() {
-  return (
-    <div className={stili.mescolamento} aria-hidden="true">
+/** La mescolata: il mazzo si divide e si ricompone finché non si clicca per
+ *  fermarlo. Senza `onFerma` è solo l'animazione. */
+export function Mescolamento({ onFerma }: { onFerma?: () => void }) {
+  const { t } = useLingua();
+  const mazzo = (
+    <div className={stili.mescolamento} aria-hidden={onFerma ? undefined : "true"}>
       {Array.from({ length: 9 }, (_, i) => (
         <motion.div
           key={i}
@@ -107,6 +116,111 @@ export function Mescolamento() {
           <Dorso />
         </motion.div>
       ))}
+    </div>
+  );
+  if (!onFerma) return mazzo;
+  return (
+    <button type="button" className={stili.mazzoCliccabile} onClick={onFerma} aria-label={t.ferma_mescolata}>
+      {mazzo}
+    </button>
+  );
+}
+
+/* Quante carte si mostrano nel taglio: il mazzo disteso, non i 22 o 78 slot
+ * veri. Conta il punto del clic, che si trasmette come frazione del mazzo. */
+const CARTE_DEL_TAGLIO = 22;
+
+/** Il taglio: si clicca il punto in cui dividere il mazzo. `onTaglia` riceve
+ *  la frazione (0–1) dopo che le due metà si sono scambiate di posto. */
+export function Taglio({ onTaglia }: { onTaglia: (frazione: number) => void }) {
+  const { t } = useLingua();
+  const ref = useRef<HTMLDivElement>(null);
+  const [w, setW] = useState(720);
+  /* Il punto scelto: da 1 a N−1, il confine fra la carta i−1 e la carta i. */
+  const [punto, setPunto] = useState<number | null>(null);
+  const [tagliato, setTagliato] = useState<number | null>(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    const o = new ResizeObserver(([e]) => setW(e.contentRect.width));
+    o.observe(ref.current);
+    return () => o.disconnect();
+  }, []);
+
+  const n = CARTE_DEL_TAGLIO;
+  const larghezzaCarta = Math.min(96, w / 6);
+  const passo = (w - larghezzaCarta) / (n - 1);
+  const altezzaCarta = larghezzaCarta * (16 / 9);
+
+  const puntoDa = (clientX: number) => {
+    const r = ref.current?.getBoundingClientRect();
+    if (!r) return null;
+    const x = clientX - r.left - larghezzaCarta / 2 + passo / 2;
+    return Math.min(n - 1, Math.max(1, Math.round(x / passo)));
+  };
+
+  const taglia = (p: number) => {
+    if (tagliato !== null) return;
+    setPunto(p);
+    setTagliato(p);
+    /* Il tempo dell'animazione: poi il server fissa il mazzo tagliato. */
+    setTimeout(() => onTaglia(p / n), 1100);
+  };
+
+  const tasto = (e: React.KeyboardEvent) => {
+    if (tagliato !== null) return;
+    if (e.key === "ArrowLeft") setPunto((p) => Math.max(1, (p ?? n / 2) - 1));
+    else if (e.key === "ArrowRight") setPunto((p) => Math.min(n - 1, (p ?? n / 2) + 1));
+    else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      taglia(punto ?? Math.round(n / 2));
+    }
+  };
+
+  return (
+    <div className={stili.taglio}>
+      <div
+        ref={ref}
+        className={stili.tagliaMazzo}
+        style={{ height: altezzaCarta + 24 }}
+        role="button"
+        tabIndex={0}
+        aria-label={`${t.taglia_mazzo}. ${t.taglia_istruzione}`}
+        onPointerMove={(e) => tagliato === null && setPunto(puntoDa(e.clientX))}
+        onPointerLeave={() => tagliato === null && setPunto(null)}
+        onClick={(e) => {
+          const p = puntoDa(e.clientX);
+          if (p !== null) taglia(p);
+        }}
+        onKeyDown={tasto}
+      >
+        {Array.from({ length: n }, (_, i) => {
+          const dopo = punto !== null && i >= punto;
+          return (
+            <motion.div
+              key={i}
+              className={stili.cartaDelTaglio}
+              style={{ width: larghezzaCarta, height: altezzaCarta, left: i * passo, zIndex: i }}
+              animate={
+                tagliato !== null
+                  ? {
+                      /* Le carte dopo il punto passano davanti, le altre dietro. */
+                      x: i >= tagliato ? -tagliato * passo : (n - tagliato) * passo,
+                      y: [0, i >= tagliato ? -28 : 28, 0],
+                    }
+                  : { x: 0, y: dopo ? -10 : 0 }
+              }
+              transition={{ duration: tagliato !== null ? 1 : 0.18, ease: "easeInOut" }}
+            >
+              <Dorso />
+            </motion.div>
+          );
+        })}
+        {punto !== null && tagliato === null && (
+          <div className={stili.lineaTaglio} style={{ left: punto * passo }} aria-hidden="true">
+            <span>✦</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

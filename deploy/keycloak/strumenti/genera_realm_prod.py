@@ -41,6 +41,16 @@ BROWSER = "browser con 2FA amministratori"
 DOPO_ESTERNO = "2FA amministratori dopo accesso esterno"
 MASCHERA = "**********"
 
+# La REST API di Keycloak non risolve i segnaposto e rifiuta come URI di
+# redirect `${KC_URL_WEB}/*` («A redirect URI is not a valid URI», 500):
+# sull'istanza usa-e-getta i due indirizzi sono finti ma validi, e nel file
+# esportato tornano i segnaposto, che l'import da file (`--import-realm`)
+# risolve dall'ambiente.
+INDIRIZZI_FINTI = {
+    "https://kc-url-web.invalid": "${KC_URL_WEB}",
+    "https://kc-url-admin.invalid": "${KC_URL_ADMIN}",
+}
+
 
 def realm_di_partenza() -> dict:
     """Il realm di sviluppo senza ciò che in produzione non deve esistere."""
@@ -50,11 +60,13 @@ def realm_di_partenza() -> dict:
     # Gli indirizzi delle due interfacce dall'ambiente: lo stesso realm serve
     # la produzione e il cluster di prova locale, che hanno domini diversi.
     # Scritti a mano, il cluster locale non potrebbe accedere dal browser.
-    indirizzi = {"tarot-frontend": "${KC_URL_WEB}", "tarot-admin": "${KC_URL_ADMIN}"}
+    indirizzi = {"tarot-frontend": "https://kc-url-web.invalid", "tarot-admin": "https://kc-url-admin.invalid"}
     for c in prod["clients"]:
         if c["clientId"] in indirizzi:
             c["redirectUris"] = [f"{indirizzi[c['clientId']]}/*"]
-            c["webOrigins"] = [indirizzi[c["clientId"]]]
+            # "+": le origini dei redirect. Un indirizzo con un percorso (come la
+            # console sotto /admin) non è un'origine, e il CORS del login fallirebbe.
+            c["webOrigins"] = ["+"]
     prod.update({
         "verifyEmail": True,
         "sslRequired": "external",
@@ -66,7 +78,7 @@ def realm_di_partenza() -> dict:
         "quickLoginCheckMilliSeconds": 1000,
         "minimumQuickLoginWaitSeconds": 60,
         "maxDeltaTimeSeconds": 43200,
-        "passwordPolicy": "length(12) and notUsername and notEmail and passwordHistory(3)",
+        "passwordPolicy": "length(6) and notUsername and notEmail and passwordHistory(3)",
         "otpPolicyType": "totp",
         "otpPolicyAlgorithm": "HmacSHA1",
         "otpPolicyDigits": 6,
@@ -117,18 +129,40 @@ def _provider(alias: str, nome: str, tipo: str, config: dict) -> dict:
     }
 
 
+class Token(httpx.Auth):
+    """Il token dell'admin, richiesto di nuovo quando Keycloak risponde 401.
+
+    Il token del realm master dura 60 secondi: su una macchina lenta la
+    configurazione dei flussi dura di più, e a metà arriverebbe un 401.
+    """
+
+    def __init__(self, url: str, password: str) -> None:
+        self.url, self.password, self.token = url, password, ""
+
+    def richiedi(self) -> None:
+        risposta = httpx.post(f"{self.url}/realms/master/protocol/openid-connect/token", data={
+            "client_id": "admin-cli", "username": "admin", "password": self.password,
+            "grant_type": "password",
+        }, timeout=60)
+        risposta.raise_for_status()
+        self.token = risposta.json()["access_token"]
+
+    def auth_flow(self, request):
+        if not self.token:
+            self.richiedi()
+        request.headers["Authorization"] = f"Bearer {self.token}"
+        risposta = yield request
+        if risposta.status_code == 401:
+            self.richiedi()
+            request.headers["Authorization"] = f"Bearer {self.token}"
+            yield request
+
+
 class Keycloak:
     def __init__(self, url: str, password: str) -> None:
-        risposta = httpx.post(f"{url}/realms/master/protocol/openid-connect/token", data={
-            "client_id": "admin-cli", "username": "admin", "password": password,
-            "grant_type": "password",
-        })
-        risposta.raise_for_status()
-        self.c = httpx.Client(
-            base_url=f"{url}/admin/realms",
-            headers={"Authorization": f"Bearer {risposta.json()['access_token']}"},
-            timeout=30,
-        )
+        token = Token(url, password)
+        token.richiedi()  # con la password sbagliata si ferma subito
+        self.c = httpx.Client(base_url=f"{url}/admin/realms", auth=token, timeout=30)
 
     def ok(self, r: httpx.Response) -> httpx.Response:
         if r.status_code >= 400:
@@ -228,6 +262,8 @@ def con_segnaposto(esportato: dict) -> str:
     esportato["smtpServer"]["password"] = "${KC_SMTP_PASSWORD}"
 
     testo = json.dumps(esportato, ensure_ascii=False, indent=2)
+    for finto, segnaposto in INDIRIZZI_FINTI.items():
+        testo = testo.replace(finto, segnaposto)
     if MASCHERA in testo:
         raise SystemExit("È rimasto un valore mascherato: importato, diventerebbe il segreto vero.")
     return testo + "\n"

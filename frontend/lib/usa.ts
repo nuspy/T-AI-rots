@@ -4,6 +4,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ErroreApi } from "./api";
+import { useLingua } from "./lingua";
 import { useSessione } from "./sessione";
 
 /** Il token per le chiamate: `null` anche in sviluppo senza autenticazione. */
@@ -32,6 +33,7 @@ export function useCarica<T>(
   { pubblico = false }: { pubblico?: boolean } = {},
 ): Caricamento<T> {
   const sessione = useSessione();
+  const { t } = useLingua();
   const token = sessione.token;
   const pronto = pubblico || sessione.autenticata;
   const [quando, setQuando] = useState(0);
@@ -47,7 +49,7 @@ export function useCarica<T>(
       .then((r) => { if (!annullato) setEsito({ chiave, dati: r, errore: null }); })
       .catch((e: unknown) => {
         if (annullato) return;
-        const messaggio = e instanceof ErroreApi ? e.message : "Qualcosa non ha funzionato.";
+        const messaggio = e instanceof ErroreApi ? e.message : t.err_generico;
         setEsito((prima) => ({ chiave, dati: prima?.dati ?? null, errore: messaggio }));
       });
     return () => { annullato = true; };
@@ -70,6 +72,7 @@ export function useCarica<T>(
 /** Esegue un'azione che modifica, riportando l'esito. */
 export function useAzione() {
   const sessione = useSessione();
+  const { t } = useLingua();
   const [inCorso, setInCorso] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
 
@@ -81,13 +84,13 @@ export function useAzione() {
       try {
         return await azione(sessione.token);
       } catch (e: unknown) {
-        setErrore(e instanceof ErroreApi ? e.message : "L'operazione non è riuscita.");
+        setErrore(e instanceof ErroreApi ? e.message : t.err_operazione);
         return null;
       } finally {
         setInCorso(false);
       }
     },
-    [sessione],
+    [sessione, t],
   );
 
   return { esegui, inCorso, errore };

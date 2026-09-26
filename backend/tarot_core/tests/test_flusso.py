@@ -28,11 +28,16 @@ async def _accredita(session, principal, quanti=1000):
     return utente
 
 
-async def _lettura_completa(client, spread_id: str, da_scegliere: int) -> dict:
-    r = await client.post("/readings", json={"spread_id": spread_id, "question": "Cosa mi riserva il lavoro nei prossimi mesi?"})
+QUESITO = "Cosa mi riserva il lavoro nei prossimi mesi?"
+
+
+async def _lettura_completa(client, spread_id: str, da_scegliere: int, quesito: str = QUESITO) -> dict:
+    r = await client.post("/readings", json={"spread_id": spread_id, "question": quesito})
     assert r.status_code == 201, r.text
     lettura = r.json()
-    assert "scientifica" in lettura["disclaimer"]
+    assert lettura["disclaimer"]
+    if lettura["lang"] == "it":
+        assert "scientifica" in lettura["disclaimer"]
     rid = lettura["id"]
 
     # Intervista: il modello finto chiude dopo due domande.
@@ -100,6 +105,36 @@ async def test_senza_crediti_si_riceve_402(client, catalogo):
     assert r.status_code == 402
     assert r.json()["detail"]["motivo"] == "crediti"
     assert (await client.get("/me/readings")).json()["totale"] == 0
+
+
+async def test_senza_un_modello_configurato_non_si_apre_ne_si_paga(client, session, catalogo, monkeypatch):
+    """Nessuna lettura di ripiego: senza modello vero risponde 503 e non addebita."""
+    from tarot_core.settings import get_settings
+
+    await _accredita(session, client.identita.principal)
+    monkeypatch.setenv("TAROT_LLM_FINTO", "false")
+    for nome in ("TAROT_LLM_PROVIDER", "TAROT_LLM_BASE_URL", "TAROT_ANTHROPIC_API_KEY", "TAROT_MODELLI"):
+        monkeypatch.delenv(nome, raising=False)
+    get_settings.cache_clear()
+
+    r = await client.post("/readings", json={"spread_id": "tre-carte", "question": "Andrà bene?"})
+    assert r.status_code == 503
+    assert r.json()["detail"]["motivo"] == "modello_non_configurato"
+    assert (await client.get("/me/readings")).json()["totale"] == 0
+    assert (await RegistroCrediti(session).saldo((await UserRepository(session).ensure(client.identita.principal)).id)) == 1000
+
+
+def test_llm_configurato(monkeypatch):
+    """Il valore predefinito (LM Studio su localhost) non conta come configurato."""
+    from tarot_core.settings import Settings
+
+    for nome in ("TAROT_LLM_FINTO", "TAROT_LLM_PROVIDER", "TAROT_LLM_BASE_URL", "TAROT_ANTHROPIC_API_KEY", "TAROT_MODELLI"):
+        monkeypatch.delenv(nome, raising=False)
+    assert not Settings(_env_file=None).llm_configurato()
+    assert Settings(_env_file=None, llm_finto=True).llm_configurato()
+    assert Settings(_env_file=None, llm_base_url="http://llm.interno:8000/v1").llm_configurato()
+    assert not Settings(_env_file=None, llm_provider="anthropic").llm_configurato()
+    assert Settings(_env_file=None, llm_provider="anthropic", anthropic_api_key="sk-x").llm_configurato()
 
 
 async def test_la_croce_semplice_calcola_la_sintesi_di_wirth(client, session, catalogo):
@@ -208,6 +243,8 @@ async def test_condivisione_e_diario(client, session, catalogo):
     token = r.json()["share_token"]
     pubblica = (await client.get(f"/shared/{token}")).json()
     assert pubblica["synthesis"] and "interview" not in pubblica
+    # Chi apre il link legge nella lingua del quesito: la lettura la porta con sé.
+    assert pubblica["lang"] == "it"
     await client.post(f"/me/readings/{rid}/share", json={"attiva": False})
     assert (await client.get(f"/shared/{token}")).status_code == 404
     assert (await client.post(f"/me/readings/{rid}/feedback", json={"esito": "in_parte"})).status_code == 200
@@ -236,3 +273,114 @@ async def test_la_console_richiede_il_ruolo_admin(client, catalogo, principal_ad
 
 def test_principal_admin_ha_il_ruolo(principal_admin: Principal):
     assert principal_admin.is_admin
+
+
+# ---- la lingua del quesito e i valori passati al modello -----------------------------
+
+
+@pytest.fixture
+def prompt_visti(monkeypatch):
+    """Registra ogni chiamata al modello finto: compito, sistema e messaggio utente."""
+    from tarot_core.tarot.finto import ModelloFinto, _compito, _utente
+
+    visti: list[dict] = []
+    originale = ModelloFinto._rispondi
+
+    def spia(self, req):
+        visti.append({
+            "compito": _compito(req),
+            "sistema": "\n".join(m.content for m in req.messages if m.role == "system"),
+            "utente": _utente(req),
+        })
+        return originale(self, req)
+
+    monkeypatch.setattr(ModelloFinto, "_rispondi", spia)
+    return visti
+
+
+async def test_la_lingua_e_quella_del_quesito_e_si_rinnova_a_ogni_quesito(
+    client, session, catalogo, prompt_visti,
+):
+    from tarot_core.tarot.lingue import in_lingua
+    from tarot_core.tarot.testi import DISCLAIMER
+
+    from .test_lingue import QUESITI
+
+    await _accredita(session, client.identita.principal)
+
+    # L'interfaccia è in italiano (`lang` del payload), il quesito in ungherese: vale il quesito.
+    r = await client.post("/readings", json={"spread_id": "tre-carte", "question": QUESITI["hu"], "lang": "it"})
+    assert r.status_code == 201, r.text
+    assert r.json()["lang"] == "hu"
+    assert r.json()["disclaimer"] == in_lingua(DISCLAIMER, "hu")
+    rid = r.json()["id"]
+    assert (await client.get(f"/me/readings/{rid}")).json()["lang"] == "hu"
+    await client.delete(f"/me/readings/{rid}")
+    prompt_visti.clear()
+
+    await _lettura_completa(client, "tre-carte", 3, QUESITI["hu"])
+    assert {v["compito"] for v in prompt_visti} >= {"intervista", "interpretazione", "sintesi"}
+    for v in prompt_visti:
+        if v["compito"] in ("intervista", "interpretazione", "sintesi"):
+            assert "ungherese" in v["utente"], v["compito"]
+            assert "Scrivi in italiano" not in v["utente"], v["compito"]
+    # Nell'interpretazione i nomi tradotti da usare accompagnano quelli italiani.
+    assert all("Nomi da usare nella risposta" in v["utente"] for v in prompt_visti if v["compito"] == "interpretazione")
+
+    # Un nuovo quesito, in inglese, rinnova la lingua: la lettura di prima non la trascina.
+    prompt_visti.clear()
+    r = await client.post("/readings", json={"spread_id": "tre-carte", "question": QUESITI["en"], "lang": "hu"})
+    assert r.json()["lang"] == "en"
+    await _lettura_completa(client, "tre-carte", 3, QUESITI["en"])
+    for v in prompt_visti:
+        if v["compito"] in ("intervista", "interpretazione", "sintesi"):
+            assert "inglese" in v["utente"] and "ungherese" not in v["utente"], v["compito"]
+            assert "Nomi da usare nella risposta" not in v["utente"] or v["compito"] == "interpretazione"
+
+
+async def test_senza_indizi_nel_quesito_vale_la_lingua_dell_interfaccia(client, session, catalogo):
+    await _accredita(session, client.identita.principal)
+    r = await client.post("/readings", json={"spread_id": "tre-carte", "question": "???", "lang": "hu"})
+    assert r.json()["lang"] == "hu"
+
+
+async def test_la_crisi_risponde_nella_lingua_del_quesito(client, session, catalogo):
+    await _accredita(session, client.identita.principal, 1)
+    r = await client.post("/readings", json={"spread_id": "tre-carte", "question": "Meg akarok halni", "lang": "it"})
+    assert r.json()["crisi"] and "116-123" in r.json()["messaggio"]
+    assert (await client.get("/me/billing")).json()["saldo"] == 1
+
+
+async def test_l_interpretazione_riceve_solo_la_sua_posizione(client, session, catalogo, prompt_visti):
+    from tarot_core.tarot.conoscenza import Conoscenza
+
+    stesa = Conoscenza.carica().stesa("tre-carte")
+    await _accredita(session, client.identita.principal)
+    await _lettura_completa(client, "tre-carte", 3)
+    letture = [v for v in prompt_visti if v["compito"] == "interpretazione"]
+    assert len(letture) == 3
+    for n, v in enumerate(letture, start=1):
+        assert stesa["posizioni"][n - 1]["significato"] in v["utente"]
+        for altra in stesa["posizioni"]:
+            if altra["n"] != n:
+                assert altra["significato"] not in v["utente"], (n, altra["nome"])
+        # Le sole carte già girate prima di questa, mai le successive.
+        assert v["utente"].count("Orientamento:") == 1
+
+
+async def test_la_sintesi_riceve_le_carte_nell_ordine_del_racconto(client, session, catalogo, prompt_visti):
+    import re
+
+    from tarot_core.tarot.conoscenza import Conoscenza
+
+    conoscenza = Conoscenza.carica()
+    await _accredita(session, client.identita.principal)
+    await _lettura_completa(client, "croce-semplice", 4)
+    sintesi = next(v for v in prompt_visti if v["compito"] == "sintesi")
+    sezione = sintesi["utente"].split("## Ordine del racconto", 1)[1].split("\n## ", 1)[0]
+    posizioni = [int(n) for n in re.findall(r"\(posizione (\d+)\)", sezione)]
+    assert posizioni == conoscenza.stesa("croce-semplice")["racconto"]
+    # Il prefisso stabile non porta le altre stese.
+    for altra in ("tre-carte", "croce-celtica", "ferro-di-cavallo", "ruota-astrologica"):
+        assert conoscenza.stesa(altra)["descrizione"] not in sintesi["sistema"]
+        assert conoscenza.stesa(altra)["descrizione"] not in sintesi["utente"]

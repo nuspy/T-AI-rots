@@ -8,7 +8,8 @@ import { useRouter } from "next/navigation";
 import {
   annotaLettura, cancellaLettura, condividiLettura, leggiLettura,
 } from "@/lib/api";
-import { useLingua } from "@/lib/lingua";
+import { comeLingua, nomeStesa } from "@/lib/i18n";
+import { LinguaNomi, useLingua } from "@/lib/lingua";
 import { useAzione, useCarica } from "@/lib/usa";
 import { Markdown } from "../../componenti/markdown";
 import { Involucro } from "../../componenti/testata";
@@ -26,7 +27,7 @@ export default function PaginaDettaglio({ params }: { params: Promise<{ id: stri
 }
 
 function Dettaglio({ id }: { id: string }) {
-  const { t, lingua } = useLingua();
+  const { t, lingua, locale } = useLingua();
   const router = useRouter();
   const lettura = useCarica(useCallback((tok: string | null) => leggiLettura(tok, id), [id]), [id]);
   const { esegui } = useAzione();
@@ -36,6 +37,8 @@ function Dettaglio({ id }: { id: string }) {
   const l = lettura.dati;
   if (!l) return null;
 
+  /* La lettura si rilegge nella lingua del suo quesito: i nomi seguono quella. */
+  const ll = comeLingua(l.lang) ?? lingua;
   const posate: Posata[] = l.cards.map((c) => ({
     posizione: c.posizione,
     slot: null,
@@ -63,12 +66,13 @@ function Dettaglio({ id }: { id: string }) {
   };
 
   return (
+    <LinguaNomi valore={ll}>
     <div className={stili.consulto}>
       <div className={stili.colonnaTavolo}>
         <div className={stili.intestazione}>
-          <span className={stili.stesaEtichetta}>{lingua === "en" ? l.stesa_dati.nome_en : l.stesa_dati.nome}</span>
-          <p className={`oracolo ${stili.domandaTitolo}`}>«{l.question}»</p>
-          <p className={pag.nota}>{new Date(l.created_at).toLocaleString("it-IT")}</p>
+          <span className={stili.stesaEtichetta}>{nomeStesa(l.stesa_dati, ll)}</span>
+          <p className={`oracolo ${stili.domandaTitolo}`} dir="auto">«{l.question}»</p>
+          <p className={pag.nota}>{new Date(l.created_at).toLocaleString(locale)}</p>
         </div>
         <Tavolo stesa={l.stesa_dati} posate={posate} prossima={null} rivelazioneInCorso={false} evidenzia={null} />
       </div>
@@ -84,7 +88,7 @@ function Dettaglio({ id }: { id: string }) {
           </div>
           <div className={pag.linea}>
             <button className="bottone-secondario" onClick={condividi}>
-              {l.share_token ? (lingua === "en" ? "Stop sharing" : "Ritira la condivisione") : t.condividi}
+              {l.share_token ? t.ritira_condivisione : t.condividi}
             </button>
             <button className="bottone-secondario" onClick={cancella}>{t.cancella}</button>
           </div>
@@ -95,7 +99,7 @@ function Dettaglio({ id }: { id: string }) {
           )}
           {l.context_summary && (
             <>
-              <span className={pag.etichetta}>{lingua === "en" ? "The picture" : "Il quadro"}</span>
+              <span className={pag.etichetta}>{t.il_quadro}</span>
               <p className="oracolo">{l.context_summary}</p>
             </>
           )}
@@ -119,5 +123,6 @@ function Dettaglio({ id }: { id: string }) {
         </div>
       )}
     </div>
+    </LinguaNomi>
   );
 }

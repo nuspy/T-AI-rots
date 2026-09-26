@@ -64,6 +64,18 @@ function ruoliDi(profilo: Record<string, unknown> | undefined): string[] {
   return [...realm, ...Object.values(risorse).flatMap((r) => r?.roles ?? [])];
 }
 
+/* Le claim di un JWT, senza verificarne la firma: la verifica è del backend,
+ * che è chi decide. Qui servono solo a sapere cosa mostrare. */
+function claimDelToken(token: string | undefined): Record<string, unknown> | undefined {
+  if (!token) return undefined;
+  try {
+    const corpo = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(atob(corpo.padEnd(Math.ceil(corpo.length / 4) * 4, "=")));
+  } catch {
+    return undefined;
+  }
+}
+
 /** Traduce `useAuth` nella sessione. Va montato dentro l'`AuthProvider`. */
 export function SessioneOidc({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
@@ -74,7 +86,16 @@ export function SessioneOidc({ children }: { children: React.ReactNode }) {
     autenticato: auth.isAuthenticated,
     token: auth.user?.access_token ?? null,
     chi: (profilo?.email ?? profilo?.name ?? null) as string | null,
-    ruoli: ruoliDi(profilo as Record<string, unknown> | undefined),
+    /* **Anche** dal token d'accesso: i ruoli di realm Keycloak li scrive lì
+     * (`realm_access`) e non nell'ID token da cui viene il profilo. Il backend
+     * legge il token d'accesso, e la console deve concordare con lui — prima
+     * leggeva solo il profilo, e nessun amministratore riusciva a entrare. */
+    ruoli: [
+      ...new Set([
+        ...ruoliDi(profilo as Record<string, unknown> | undefined),
+        ...ruoliDi(claimDelToken(auth.user?.access_token)),
+      ]),
+    ],
     entra: () => {
       auth.signinRedirect().catch(() => undefined);
     },

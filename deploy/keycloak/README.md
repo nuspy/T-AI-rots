@@ -67,7 +67,7 @@ il client `tarot-test` e senza indirizzi `localhost`, con in più:
 | 2FA per gli utenti | facoltativa: chi la attiva dal proprio account la usa, gli altri no |
 | provider social | Google, Facebook, Apple — **spenti** finché non li si accende dall'ambiente |
 | protezione brute force | blocco progressivo dopo 8 tentativi, fino a 15 minuti |
-| password | almeno 12 caratteri, diversa da nome ed email, non una delle ultime 3 |
+| password | almeno 6 caratteri, diversa da nome ed email, non una delle ultime 3 |
 | email verificata | obbligatoria alla registrazione: serve l'SMTP |
 | HTTPS | richiesto per le richieste esterne (`sslRequired: external`) |
 

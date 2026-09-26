@@ -73,7 +73,7 @@ export function Dialogo({
               <span className={stili.autore}>
                 {b.titolo ?? (b.autore === "utente" ? t.tu : b.autore === "oracolo" ? t.oracolo : "✦")}
               </span>
-              <p className={b.autore === "utente" ? undefined : "oracolo"}>
+              <p className={b.autore === "utente" ? undefined : "oracolo"} dir="auto">
                 {b.macchina ? <Macchina testo={b.testo} /> : b.testo}
                 {b.inCorso && <span className={stili.cursore}>▍</span>}
               </p>
@@ -81,7 +81,7 @@ export function Dialogo({
           ))}
         </AnimatePresence>
         {attesa && (
-          <div className={stili.attesaOracolo} aria-label="L'oracolo sta pensando">
+          <div className={stili.attesaOracolo} aria-label={t.oracolo_pensa}>
             <span /><span /><span />
           </div>
         )}
@@ -93,6 +93,7 @@ export function Dialogo({
             value={testo}
             onChange={(e) => setTesto(e.target.value)}
             placeholder={segnaposto ?? t.risposta_segnaposto}
+            dir="auto"
             rows={2}
             maxLength={2000}
             disabled={attesa}

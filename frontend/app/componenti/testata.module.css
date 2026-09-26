@@ -80,6 +80,22 @@
   border-color: var(--bordo-forte);
 }
 
+/* Il selettore delle quindici lingue: un `<select>` vero, così sul telefono
+ * si apre l'elenco nativo. Il nome di ogni lingua è nella lingua stessa. */
+select.lingua {
+  max-width: 9.5rem;
+  text-overflow: ellipsis;
+  background-color: rgba(7, 5, 15, 0.6);
+  color-scheme: dark;
+}
+
+@media (pointer: coarse) {
+  select.lingua,
+  .esci {
+    min-height: 44px;
+  }
+}
+
 .barraBassa {
   display: none;
 }
@@ -90,8 +106,10 @@
   padding: 36px 20px;
 }
 
+/* 1640 e non 1440: il tavolo della lettura può crescere di un quinto sugli
+ * schermi larghi. */
 .contenutoLargo {
-  max-width: 1440px;
+  max-width: 1640px;
   margin: 0 auto;
   padding: 20px 20px;
 }

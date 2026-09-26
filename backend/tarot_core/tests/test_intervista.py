@@ -5,8 +5,8 @@ import json
 
 import pytest
 
-from tarot_core.llm.base import StreamChunk
-from tarot_core.tarot.intervista import prossimo_passo, viola_le_regole
+from tarot_core.llm.base import GenerationError, StreamChunk
+from tarot_core.tarot.intervista import IntervistaNonRiuscita, prossimo_passo, viola_le_regole
 
 
 @pytest.mark.parametrize("domanda", [
@@ -83,14 +83,65 @@ async def test_il_validatore_ha_l_ultima_parola():
     assert passo.scartate == 1
 
 
-async def test_un_modello_ostinato_riceve_una_domanda_di_riserva():
+async def test_un_modello_ostinato_non_riceve_domande_di_riserva():
+    """Non esistono domande fisse: se il modello insiste con domande vietate
+    prima del minimo, l'intervista fallisce invece di porre a tutti lo stesso."""
     intervista = Copione([{"completo": False, "domanda": "Pensi che ti ami?"}] * 3)
+    with pytest.raises(IntervistaNonRiuscita):
+        await prossimo_passo(
+            provider_intervista=intervista, provider_validazione=Copione([]),
+            quesito="Il mio ragazzo mi ama?", stesa_nome="Tre carte", turni=[], max_domande=6,
+        )
+
+
+class ModelloMuto:
+    """Un modello che non risponde."""
+
+    name = "muto"
+
+    async def complete_json(self, req):
+        raise GenerationError("timeout")
+
+    async def complete(self, req):
+        raise GenerationError("timeout")
+
+    async def stream(self, req):
+        raise GenerationError("timeout")
+        yield  # pragma: no cover
+
+
+async def test_un_modello_che_non_risponde_fa_fallire_l_intervista():
+    with pytest.raises(IntervistaNonRiuscita):
+        await prossimo_passo(
+            provider_intervista=ModelloMuto(), provider_validazione=ModelloMuto(),
+            quesito="Cosa mi riserva l'anno?", stesa_nome="Tre carte", turni=[], max_domande=6,
+        )
+
+
+async def test_non_si_chiude_prima_del_minimo():
+    """Un modello che chiude alla prima battuta viene richiamato: servono almeno 2 domande."""
+    intervista = Copione([
+        {"completo": True, "riassunto": "Troppo presto."},
+        {"completo": False, "domanda": "Da quanto tempo lavori in quell'azienda?"},
+    ])
+    passo = await prossimo_passo(
+        provider_intervista=intervista, provider_validazione=Copione([{"valida": True}]),
+        quesito="Devo cambiare lavoro?", stesa_nome="Tre carte", turni=[],
+        min_domande=2, max_domande=6,
+    )
+    assert not passo.completo and passo.domanda
+    assert intervista.chiamate == 2
+
+
+async def test_dopo_il_minimo_il_modello_puo_chiudere():
+    intervista = Copione([{"completo": True, "riassunto": "Il quadro."}])
+    turni = [("oracolo", "a?"), ("utente", "x"), ("oracolo", "b?"), ("utente", "y")]
     passo = await prossimo_passo(
         provider_intervista=intervista, provider_validazione=Copione([]),
-        quesito="Il mio ragazzo mi ama?", stesa_nome="Tre carte", turni=[], max_domande=5,
+        quesito="Devo cambiare lavoro?", stesa_nome="Tre carte", turni=turni,
+        min_domande=2, max_domande=6,
     )
-    assert passo.domanda and viola_le_regole("Il mio ragazzo mi ama?", passo.domanda) is None
-    assert passo.scartate == 3
+    assert passo.completo and passo.riassunto == "Il quadro."
 
 
 async def test_al_massimo_delle_domande_si_chiude():

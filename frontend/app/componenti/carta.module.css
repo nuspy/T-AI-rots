@@ -1,7 +1,7 @@
 .carta {
   --w: 120px;
   width: var(--w);
-  aspect-ratio: 3 / 5;
+  aspect-ratio: 9 / 16;
   perspective: 1200px;
   position: relative;
   user-select: none;
@@ -69,8 +69,8 @@
 
 .firma {
   font-family: var(--font-titoli), serif;
-  font-size: 15px;
-  letter-spacing: 6px;
+  font-size: 18px;
+  letter-spacing: 7px;
   fill: #d8b45a;
   fill-opacity: 0.8;
 }

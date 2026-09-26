@@ -6,12 +6,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LINGUE, comeLingua } from "@/lib/i18n";
 import { useLingua } from "@/lib/lingua";
-import { AUTH_DISATTIVATA, useSessione } from "@/lib/sessione";
+import { ADMIN_URL, AUTH_DISATTIVATA, useSessione } from "@/lib/sessione";
 import stili from "./testata.module.css";
 
 export function Testata() {
-  const { t, cambia } = useLingua();
+  const { t, lingua, imposta } = useLingua();
   const sessione = useSessione();
   const percorso = usePathname();
   const voci = [
@@ -29,7 +30,7 @@ export function Testata() {
         <Link href="/" className={stili.marchio}>
           T<span>·</span>AI<span>·</span>rots
         </Link>
-        <nav className={stili.voci} aria-label="Sezioni">
+        <nav className={stili.voci} aria-label={t.aria_sezioni}>
           {voci.map((v) => (
             <Link key={v.href} href={v.href} className={attiva(v.href) ? stili.voceAttiva : stili.voce}
               aria-current={attiva(v.href) ? "page" : undefined}>
@@ -38,9 +39,25 @@ export function Testata() {
           ))}
         </nav>
         <div className={stili.azioni}>
-          <button className={stili.lingua} onClick={cambia} aria-label="Lingua">{t.lingua}</button>
+          <select
+            className={stili.lingua}
+            value={lingua}
+            onChange={(e) => {
+              const scelta = comeLingua(e.target.value);
+              if (scelta) imposta(scelta);
+            }}
+            aria-label={t.aria_lingua}
+          >
+            {LINGUE.map((l) => (
+              <option key={l.codice} value={l.codice} lang={l.codice}>{l.nome}</option>
+            ))}
+          </select>
           {sessione.autenticata ? (
             <>
+              {sessione.admin && (
+                /* La console è un'altra applicazione: un collegamento vero, non `Link`. */
+                <a href={ADMIN_URL} className={stili.voce}>{t.nav_admin}</a>
+              )}
               <Link href="/profilo" className={stili.voce}>{t.nav_profilo}</Link>
               {!AUTH_DISATTIVATA && (
                 <button className={stili.esci} onClick={sessione.esci}>{t.esci}</button>
@@ -56,7 +73,7 @@ export function Testata() {
           )}
         </div>
       </header>
-      <nav className={stili.barraBassa} aria-label="Sezioni">
+      <nav className={stili.barraBassa} aria-label={t.aria_sezioni}>
         {voci.map((v) => (
           <Link key={v.href} href={v.href} className={attiva(v.href) ? stili.schedaAttiva : stili.scheda}>
             <span aria-hidden="true" className={stili.segno}>{v.segno}</span>

@@ -32,6 +32,30 @@ def _modello_finto():
     return ModelloFinto()
 
 
+def verifica_modello(lang: str = "it") -> None:
+    """503 se non c'è un modello vero a cui chiedere la lettura.
+
+    Le domande, le interpretazioni e il responso li scrive un modello: senza,
+    il servizio non finge con testi di ripiego uguali per tutti, e non addebita
+    nulla. Va chiamata **prima** di aprire (e pagare) una lettura.
+    """
+    from fastapi import HTTPException, status
+
+    from ..settings import get_settings
+    from ..tarot.lingue import in_lingua
+    from ..tarot.testi import MODELLO_NON_CONFIGURATO
+
+    if get_settings().llm_configurato():
+        return
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail={
+            "motivo": "modello_non_configurato",
+            "messaggio": in_lingua(MODELLO_NON_CONFIGURATO, lang),
+        },
+    )
+
+
 def provider_per(compito) -> object:
     """Il fornitore di un compito.
 
