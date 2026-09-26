@@ -270,7 +270,8 @@ def main() -> int:
                 "TAROT_LLM_FINTO": "false" if args.llm_reale else "true",
                 "TAROT_API_PUBLIC_URL": api_url,
                 "TAROT_WEB_PUBLIC_URL": web_url,
-                "TAROT_CORS_ORIGINS": f'["{web_url}", "http://127.0.0.1:{args.web_port}"]',
+                # Anche la console admin (`npm run dev` in admin/, :3001): senza, il browser blocca le sue chiamate.
+                "TAROT_CORS_ORIGINS": f'["{web_url}", "http://127.0.0.1:{args.web_port}", "http://localhost:3001", "http://127.0.0.1:3001"]',
             }
             env["TAROT_DATABASE_URL"] = scegli_database(args.db or os.environ.get("TAROT_DATABASE_URL"), env)
             esegui("avvio", [PY_VENV, "-m", "alembic", "upgrade", "head"], BACKEND, env)
