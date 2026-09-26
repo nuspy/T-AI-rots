@@ -319,8 +319,15 @@ async def test_l_articolo_porta_briciole_collegamenti_correlati_e_vicini(admin):
 
     p = (await admin.get(f"/blog/posts/{primo['slug']}")).json()
     assert [b["slug"] for b in p["briciole"]] == ["articoli", "amore"]
-    assert p["collegamenti"]["carte"] == [{"id": "maj-17", "nome_it": "La Stella"}]
-    assert p["collegamenti"]["stese"] == [{"id": "croce-celtica", "nome": "Croce Celtica"}]
+    # L'articolo è in italiano (`lang` predefinito del modello): nome e slug nella sua lingua, e gli slug in ogni lingua.
+    assert p["collegamenti"]["carte"] == [{
+        "id": "maj-17", "nome_it": "La Stella", "nome": "La Stella", "slug": "la-stella",
+        "slugs": {"it": "la-stella", "en": "the-star"},
+    }]
+    assert p["collegamenti"]["stese"] == [{
+        "id": "croce-celtica", "nome": "Croce Celtica", "slug": "croce-celtica",
+        "slugs": {"it": "croce-celtica", "en": "celtic-cross"},
+    }]
     assert [a["slug"] for a in p["collegamenti"]["articoli"]] == ["altro-articolo"]
     assert p["correlati"][0]["slug"] == "altro-articolo"            # stessa etichetta, sezione e carta
     assert p["precedente"] is None and p["successivo"]["slug"] == "altro-articolo"

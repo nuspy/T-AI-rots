@@ -14,6 +14,7 @@ from ...auth.dependencies import DbSession
 from ...domain.repositories import ReadingRepository
 from ...domain.share_models import ShareImage
 from ...tarot.condivisione import anonimizza, simbolo_partner
+from ...tarot.giorno import carta_universale, oggi_utc
 from ...tarot.lingue import in_lingua
 from ...tarot.testi import DISCLAIMER, QUALCUNO_DI_SPECIALE
 from ..deps import get_conoscenza
@@ -64,6 +65,16 @@ def carta(card_id: str, lang: Optional[str] = Lang) -> Dict[str, Any]:
     if trovata is None:
         raise HTTPException(status_code=404, detail="Carta sconosciuta")
     return conoscenza.carta_pubblica(trovata, completa=True, lang=lang)
+
+
+@router.get("/daily-card/today")
+def carta_di_oggi(lang: Optional[str] = Lang) -> Dict[str, Any]:
+    """La carta del giorno per tutti, senza account: un Arcano maggiore, la stessa per chiunque per tutto il giorno
+    (UTC). Non è la carta personale di `/me/daily-card`, che ha la serie dei giorni di fila."""
+    conoscenza = get_conoscenza()
+    giorno = oggi_utc()
+    carta = conoscenza.carta_pubblica(carta_universale(conoscenza, giorno), completa=True, lang=lang)
+    return {"giorno": giorno.isoformat(), "carta": carta, "testo": carta["dritto"]}
 
 
 @router.get("/disclaimer")

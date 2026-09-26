@@ -18,12 +18,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import delete, func, select
 
+from ...auth.chiavi import SCOPES_VALIDI, genera_chiave
 from ...auth.dependencies import CurrentUser, DbSession, require_role
-from ...domain.blog_models import BlogPost, BlogSection, BlogTag, MediaImage
+from ...domain.base import utcnow
+from ...domain.blog_models import ApiKey, BlogPost, BlogSection, BlogTag, MediaImage
 from ...domain.blog_repositories import BlogRepository, ErroreBlog
 from ...domain.models import User
 from ...domain.repositories import AuditRepository
 from ...tarot import blog as regole
+from ...tarot import blog_seo
 from .blog import url_immagine
 
 router = APIRouter(prefix="/admin/blog", tags=["console-blog"], dependencies=[Depends(require_role("admin"))])
@@ -193,6 +196,13 @@ async def elimina_sezione(
 # ---- articoli -------------------------------------------------------------------------------------
 
 
+class FaqIn(BaseModel):
+    """Una domanda frequente: si vede in pagina e diventa dati strutturati FAQ."""
+
+    domanda: str = Field(min_length=1, max_length=blog_seo.FAQ_DOMANDA_MAX)
+    risposta: str = Field(min_length=1, max_length=blog_seo.FAQ_RISPOSTA_MAX)
+
+
 class ArticoloIn(BaseModel):
     titolo: str = Field(min_length=1, max_length=200)
     sottotitolo: Optional[str] = Field(default=None, max_length=300)
@@ -207,6 +217,11 @@ class ArticoloIn(BaseModel):
     commenti_aperti: bool = True
     seo_titolo: Optional[str] = Field(default=None, max_length=200)
     seo_descrizione: Optional[str] = Field(default=None, max_length=320)
+    seo_parola_chiave: Optional[str] = Field(default=None, max_length=120)
+    seo_parole_chiave: List[str] = Field(default_factory=list, max_length=blog_seo.PAROLE_CHIAVE_MAX)
+    noindex: bool = False
+    canonical_url: Optional[str] = Field(default=None, max_length=500)
+    faq: List[FaqIn] = Field(default_factory=list, max_length=blog_seo.FAQ_MAX)
     stato: StatoArticolo = "bozza"
     pubblicato_il: Optional[datetime] = None
 
@@ -225,6 +240,11 @@ class ArticoloMod(BaseModel):
     commenti_aperti: Optional[bool] = None
     seo_titolo: Optional[str] = Field(default=None, max_length=200)
     seo_descrizione: Optional[str] = Field(default=None, max_length=320)
+    seo_parola_chiave: Optional[str] = Field(default=None, max_length=120)
+    seo_parole_chiave: Optional[List[str]] = Field(default=None, max_length=blog_seo.PAROLE_CHIAVE_MAX)
+    noindex: Optional[bool] = None
+    canonical_url: Optional[str] = Field(default=None, max_length=500)
+    faq: Optional[List[FaqIn]] = Field(default=None, max_length=blog_seo.FAQ_MAX)
     stato: Optional[StatoArticolo] = None
     pubblicato_il: Optional[datetime] = None
 
@@ -243,6 +263,9 @@ async def articolo_admin_json(session, p: BlogPost, *, con_testo: bool = True) -
         "immagine": url_immagine(p.immagine_id), "immagine_alt": p.immagine_alt,
         "tags": [t.nome for t in p.tags], "in_evidenza": p.in_evidenza, "commenti_aperti": p.commenti_aperti,
         "seo_titolo": p.seo_titolo, "seo_descrizione": p.seo_descrizione, "tempo_lettura": p.tempo_lettura,
+        "seo_parola_chiave": p.seo_parola_chiave, "seo_parole_chiave": list(p.seo_parole_chiave or []),
+        "noindex": bool(p.noindex), "canonical_url": p.canonical_url, "faq": list(p.faq or []),
+        "creato_da_chiave_id": p.creato_da_chiave_id,
         "autore": {"id": autore.id, "nome": autore.display_name or autore.email} if autore else None,
         "creato": p.created_at.isoformat() if p.created_at else None,
         "aggiornato": p.updated_at.isoformat() if p.updated_at else None,
@@ -479,4 +502,112 @@ async def elimina_etichetta(tag_id: int, user: CurrentUser, session: DbSession) 
     await session.execute(delete(BlogTag).where(BlogTag.id == tag.id))
     await AuditRepository(session).record(action="blog.tag.delete", actor_id=user.id, target_type="blog_tag", target_id=str(tag_id))
     await session.commit()
+    return Response(status_code=204)
+
+
+# ---- il controllo SEO ---------------------------------------------------------------------------------
+
+
+class ControlloSeoIn(BaseModel):
+    """Un articolo, anche non salvato: il pannello della console lo manda mentre si scrive."""
+
+    titolo: str = Field(default="", max_length=200)
+    sottotitolo: Optional[str] = Field(default=None, max_length=300)
+    testo: str = Field(default="", max_length=200_000)
+    slug: str = Field(default="", max_length=160)
+    seo_titolo: Optional[str] = Field(default=None, max_length=200)
+    seo_descrizione: Optional[str] = Field(default=None, max_length=320)
+    seo_parola_chiave: Optional[str] = Field(default=None, max_length=120)
+    immagine_presente: bool = False
+    immagine_alt: Optional[str] = Field(default=None, max_length=200)
+    tags: List[str] = Field(default_factory=list, max_length=10)
+    faq: List[FaqIn] = Field(default_factory=list, max_length=blog_seo.FAQ_MAX)
+
+
+def rapporto_seo(dati: ControlloSeoIn) -> Dict[str, Any]:
+    from urllib.parse import urlparse
+
+    from ...settings import get_settings
+
+    return blog_seo.analizza(
+        titolo=dati.titolo, testo=dati.testo, slug=dati.slug, sottotitolo=dati.sottotitolo, seo_titolo=dati.seo_titolo,
+        seo_descrizione=dati.seo_descrizione, parola_chiave=dati.seo_parola_chiave, immagine_presente=dati.immagine_presente,
+        immagine_alt=dati.immagine_alt, tags=dati.tags, faq=[f.model_dump() for f in dati.faq],
+        host=urlparse(get_settings().web_public_url or "").netloc or None,
+    )
+
+
+@router.post("/seo-check")
+async def controllo_seo(payload: ControlloSeoIn) -> Dict[str, Any]:
+    """Il rapporto SEO di un articolo (punteggio, controlli, suggerimenti) senza salvarlo."""
+    return rapporto_seo(payload)
+
+
+# ---- le chiavi applicative ----------------------------------------------------------------------------------
+
+
+class ChiaveIn(BaseModel):
+    nome: str = Field(min_length=1, max_length=80)
+    scopes: List[Literal["blog:write", "blog:publish"]] = Field(default_factory=lambda: ["blog:write"], min_length=1)
+    limite_minuto: int = Field(default=30, ge=1, le=600)
+    limite_giorno: int = Field(default=20, ge=1, le=500)
+
+
+def _chiave_json(k: ApiKey) -> Dict[str, Any]:
+    return {
+        "id": k.id, "nome": k.nome, "prefisso": k.prefisso, "scopes": list(k.scopes or []),
+        "limite_minuto": k.limite_minuto, "limite_giorno": k.limite_giorno, "attiva": k.attiva,
+        "ultimo_uso": k.ultimo_uso.isoformat() if k.ultimo_uso else None, "usi": k.usi,
+        "creata": k.created_at.isoformat() if k.created_at else None,
+        "revocata": k.revocata_il.isoformat() if k.revocata_il else None,
+    }
+
+
+@router.get("/api-keys")
+async def chiavi(session: DbSession) -> List[Dict[str, Any]]:
+    """Le chiavi applicative (mai la chiave: solo il prefisso), le più recenti per prime."""
+    q = select(ApiKey).order_by(ApiKey.created_at.desc())
+    return [_chiave_json(k) for k in (await session.execute(q)).scalars()]
+
+
+@router.post("/api-keys", status_code=201)
+async def crea_chiave(payload: ChiaveIn, user: CurrentUser, session: DbSession) -> Dict[str, Any]:
+    """Crea una chiave. **La chiave completa è in questa risposta e non si potrà rivedere**: nel database resta solo
+    l'impronta."""
+    assert set(payload.scopes) <= set(SCOPES_VALIDI)
+    for _ in range(5):  # un prefisso occupato (24 bit: raro) si rifà
+        chiave, prefisso, impronta_ = genera_chiave()
+        if (await session.execute(select(ApiKey.id).where(ApiKey.prefisso == prefisso))).first() is None:
+            break
+    else:  # pragma: no cover
+        raise HTTPException(status_code=500, detail="Non riesco a generare una chiave: riprova.")
+    riga = ApiKey(
+        nome=payload.nome.strip(), prefisso=prefisso, impronta=impronta_, scopes=sorted(set(payload.scopes)),
+        limite_minuto=payload.limite_minuto, limite_giorno=payload.limite_giorno, creata_da=user.id,
+    )
+    session.add(riga)
+    await session.flush()
+    await AuditRepository(session).record(
+        action="blog.apikey.create", actor_id=user.id, target_type="api_key", target_id=str(riga.id),
+        after={"nome": riga.nome, "prefisso": prefisso, "scopes": riga.scopes},
+    )
+    await session.commit()
+    return _chiave_json(riga) | {"chiave": chiave}
+
+
+@router.delete("/api-keys/{chiave_id}", status_code=204)
+async def revoca_chiave(chiave_id: int, user: CurrentUser, session: DbSession) -> Response:
+    """Revoca una chiave: smette di funzionare subito. La riga resta, con la data, perché gli articoli che ha creato
+    e le tracce nel registro sappiano da chi vengono."""
+    riga = await session.get(ApiKey, chiave_id)
+    if riga is None:
+        raise HTTPException(status_code=404, detail="Chiave non trovata")
+    if riga.attiva:
+        riga.attiva = False
+        riga.revocata_il = utcnow()
+        await AuditRepository(session).record(
+            action="blog.apikey.revoke", actor_id=user.id, target_type="api_key", target_id=str(riga.id),
+            before={"nome": riga.nome, "prefisso": riga.prefisso},
+        )
+        await session.commit()
     return Response(status_code=204)

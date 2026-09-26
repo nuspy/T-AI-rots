@@ -9,7 +9,7 @@ from . import base, billing_models, blog_models, config_models, models, share_mo
 from .base import Base, OwnedMixin, TimestampMixin, utcnow
 from .billing_models import CreditEntry, PaymentCheckout, PaymentEvent, Plan, Subscription
 from .blog_models import (
-    BlogPost, BlogPostLink, BlogPostRevision, BlogPostTag, BlogSection, BlogTag, MediaImage,
+    ApiKey, BlogPost, BlogPostLink, BlogPostRevision, BlogPostTag, BlogSection, BlogTag, MediaImage,
 )
 from .config_models import ModelAssignment
 from .models import AuditLog, DailyCard, DrawnCard, InterviewTurn, Reading, User
@@ -18,6 +18,7 @@ from .share_models import ShareEvent, ShareImage, ShareSignup, ShareVisit
 __all__ = [
     "AuditLog",
     "Base",
+    "ApiKey",
     "BlogPost",
     "BlogPostLink",
     "BlogPostRevision",

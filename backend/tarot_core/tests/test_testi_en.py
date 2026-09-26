@@ -125,3 +125,17 @@ def test_una_traduzione_mancante_ferma_l_avvio(k):
     testi["en"]["carte"]["maj-00"]["kw"] = testi["en"]["carte"]["maj-00"]["kw"][:-1]
     with pytest.raises(ConoscenzaNonValida, match="parole chiave"):
         replace(k, testi=testi).valida()
+
+
+def test_la_carta_del_giorno_per_tutti_e_deterministica_e_maggiore(k):
+    from datetime import date, timedelta
+
+    from tarot_core.tarot.giorno import carta_universale
+
+    giorno = date(2026, 9, 26)
+    prima = carta_universale(k, giorno)
+    assert prima == carta_universale(k, giorno)
+    assert k.carte[prima]["arcano"] == "maggiore"
+    # In due settimane esce più di una carta: non è una costante.
+    uscite = {carta_universale(k, giorno + timedelta(days=n)) for n in range(14)}
+    assert len(uscite) > 4

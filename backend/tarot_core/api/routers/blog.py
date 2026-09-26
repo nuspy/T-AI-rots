@@ -54,12 +54,14 @@ def autore_json(utente: Optional[User]) -> Dict[str, Any]:
 
 
 def nome_riferimento(tipo: str, riferimento: str) -> Optional[str]:
-    """Il nome di una carta o di una stesa citata con una scorciatoia, per gli estratti."""
+    """Il nome di una carta o di una stesa citata con una scorciatoia, per gli estratti. Il riferimento è un id o uno
+    slug in qualunque lingua (`maj-17`, `the-star`); il nome esce in italiano, come il resto degli estratti."""
     conoscenza = get_conoscenza()
-    if tipo == "carta" and riferimento in conoscenza.carte:
-        return conoscenza.carta(riferimento)["nome_it"]
+    if tipo == "carta":
+        id_ = conoscenza.risolvi_carta(riferimento)
+        return conoscenza.carta(id_)["nome_it"] if id_ else None
     if tipo == "stesa":
-        stesa = conoscenza.stesa(riferimento)
+        stesa = conoscenza.stesa(conoscenza.risolvi_stesa(riferimento) or "")
         return stesa["nome"] if stesa else None
     return None
 
@@ -227,12 +229,22 @@ async def articolo(slug: str, session: DbSession) -> Dict[str, Any]:
 
     immagine = await session.get(MediaImage, p.immagine_id) if p.immagine_id else None
     collegamenti = await repo.collegamenti(p)
+    # Carte e stese citate: l'id canonico, il nome e l'indirizzo nella lingua dell'articolo, e gli slug in ogni lingua
+    # (il testo può citarle con qualunque forma: `maj-17`, `the-star`, `la-stella`).
     carte = [
-        {"id": c.riferimento, "nome_it": conoscenza.carta(c.riferimento)["nome_it"]}
+        {
+            "id": c.riferimento, "nome_it": conoscenza.carta(c.riferimento)["nome_it"],
+            "nome": conoscenza.nome_carta(c.riferimento, p.lang), "slug": conoscenza.slug_carta(c.riferimento, p.lang),
+            "slugs": {k: conoscenza.slug_carta(c.riferimento, k) for k in ("it", *conoscenza.testi)},
+        }
         for c in collegamenti if c.tipo == "carta" and c.riferimento in conoscenza.carte
     ]
     stese = [
-        {"id": c.riferimento, "nome": conoscenza.stesa(c.riferimento)["nome"]}
+        {
+            "id": c.riferimento, "nome": conoscenza.nome_stesa(conoscenza.stesa(c.riferimento), p.lang),
+            "slug": conoscenza.slug_stesa(c.riferimento, p.lang),
+            "slugs": {k: conoscenza.slug_stesa(c.riferimento, k) for k in ("it", *conoscenza.testi)},
+        }
         for c in collegamenti if c.tipo == "stesa" and conoscenza.stesa(c.riferimento)
     ]
     citati = [c.riferimento for c in collegamenti if c.tipo == "articolo"]
@@ -253,6 +265,11 @@ async def articolo(slug: str, session: DbSession) -> Dict[str, Any]:
         ),
         "seo_titolo": p.seo_titolo,
         "seo_descrizione": p.seo_descrizione or regole.estratto(p.testo, 160, nome_riferimento),
+        "seo_parola_chiave": p.seo_parola_chiave,
+        "parole_chiave": list(p.seo_parole_chiave or []),
+        "noindex": bool(p.noindex),
+        "canonical_url": p.canonical_url,
+        "faq": list(p.faq or []),
         "commenti_aperti": p.commenti_aperti,
         "briciole": [{"slug": x.slug, "nome": x.nome} for x in repo.percorso(sezione_p, per_id)],
         "collegamenti": {
@@ -285,7 +302,11 @@ async def mappa(session: DbSession) -> Dict[str, Any]:
     """Cosa c'è di pubblico, per la mappa del sito."""
     repo = BlogRepository(session)
     return {
-        "articoli": [{"slug": s, "aggiornato": d.isoformat()} for s, d in await repo.slug_pubblici()],
+        # Un articolo `noindex` non sta nella mappa: la mappa dice ai motori di ricerca cosa indicizzare.
+        "articoli": [
+            {"slug": s, "aggiornato": d.isoformat(), "lang": lingua}
+            for s, d, lingua, noindex in await repo.slug_pubblici() if not noindex
+        ],
         "sezioni": [s.slug for s in await repo.sezioni()],
         "tags": [t.slug for t, _ in await repo.tag_con_conteggi()],
     }

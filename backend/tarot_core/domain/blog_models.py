@@ -21,11 +21,11 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy import (
     BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, LargeBinary, String, Text,
-    UniqueConstraint, Uuid, false, func, true,
+    UniqueConstraint, Uuid, false, func, text, true,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -118,6 +118,18 @@ class BlogPost(Base, TimestampMixin):
     commenti_aperti: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true(), nullable=False)
     seo_titolo: Mapped[Optional[str]] = mapped_column(String(200))
     seo_descrizione: Mapped[Optional[str]] = mapped_column(String(320))
+    #: La frase per cui l'articolo deve farsi trovare (una sola), e quelle secondarie: entrano nei dati
+    #: strutturati (`keywords`) e nel controllo SEO (`tarot/blog_seo.py`).
+    seo_parola_chiave: Mapped[Optional[str]] = mapped_column(String(120))
+    seo_parole_chiave: Mapped[List[str]] = mapped_column(JSONB, default=list, server_default=text("'[]'::jsonb"), nullable=False)
+    #: `noindex`: la pagina resta raggiungibile ma i motori di ricerca non la indicizzano (e non sta nella mappa del sito).
+    noindex: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false(), nullable=False)
+    #: L'indirizzo canonico, se l'articolo è una ripubblicazione di un testo che vive altrove (https assoluto).
+    canonical_url: Mapped[Optional[str]] = mapped_column(String(500))
+    #: Domande frequenti: `[{"domanda": …, "risposta": …}]`. Si vedono in pagina e diventano dati strutturati FAQ.
+    faq: Mapped[List[Dict[str, str]]] = mapped_column(JSONB, default=list, server_default=text("'[]'::jsonb"), nullable=False)
+    #: Se l'articolo è arrivato dalla pubblicazione via REST, con quale chiave (una chiave modifica solo i suoi).
+    creato_da_chiave_id: Mapped[Optional[int]] = mapped_column(ForeignKey("api_keys.id", ondelete="SET NULL"), index=True)
     #: Minuti di lettura, calcolati dal testo a ogni salvataggio.
     tempo_lettura: Mapped[int] = mapped_column(Integer, default=1, server_default="1", nullable=False)
 
@@ -127,6 +139,35 @@ class BlogPost(Base, TimestampMixin):
         CheckConstraint("stato in ('bozza', 'pubblicato', 'archiviato')", name="ck_blog_posts_stato"),
         Index("ix_blog_posts_stato_data", "stato", "pubblicato_il"),
     )
+
+
+class ApiKey(Base):
+    """Una chiave applicativa: fa pubblicare sul blog a un agente (Hermes, OpenClaw, uno script) senza passare da
+    Keycloak. Si genera dalla console e si mostra **una volta sola**: nel database resta l'impronta (SHA-256), mai
+    la chiave. Ha dei permessi (`scopes`) e si revoca senza cancellare (le tracce restano nel registro).
+
+    Scopes: `blog:write` crea bozze, modifica **solo i propri** articoli, carica immagini, legge le sezioni e
+    controlla il SEO; `blog:publish` in più pubblica e programma. Senza `blog:publish` uno `stato` diverso da
+    `bozza` viene riportato a `bozza` e l'agente ne è avvisato.
+    """
+
+    __tablename__ = "api_keys"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    nome: Mapped[str] = mapped_column(String(80), nullable=False)
+    #: I primi caratteri della chiave (`tk_live_ab12`): per riconoscerla nell'elenco e per cercarla.
+    prefisso: Mapped[str] = mapped_column(String(16), unique=True, nullable=False)
+    impronta: Mapped[str] = mapped_column(String(64), nullable=False)
+    scopes: Mapped[List[str]] = mapped_column(JSONB, default=list, server_default=text("'[]'::jsonb"), nullable=False)
+    #: Richieste al minuto e articoli creati al giorno: un freno a un agente che si è incantato.
+    limite_minuto: Mapped[int] = mapped_column(Integer, default=30, server_default="30", nullable=False)
+    limite_giorno: Mapped[int] = mapped_column(Integer, default=20, server_default="20", nullable=False)
+    attiva: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true(), nullable=False)
+    creata_da: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    ultimo_uso: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    usi: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    revocata_il: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
 
 
 class BlogPostLink(Base):

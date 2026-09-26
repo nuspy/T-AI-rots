@@ -15,6 +15,7 @@ from sqlalchemy import Select, and_, delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..tarot import blog as regole
+from ..tarot import blog_seo
 from .base import utcnow
 from .blog_models import (
     BlogPost, BlogPostLink, BlogPostRevision, BlogPostTag, BlogSection, BlogTag, MediaImage,
@@ -22,7 +23,7 @@ from .blog_models import (
 
 MAX_REVISIONI = 20
 #: I campi che non ammettono `null`: un `null` inviato dalla console vuol dire «lascia com'è».
-NON_NULLI = {"titolo", "testo", "lang", "in_evidenza", "commenti_aperti"}
+NON_NULLI = {"titolo", "testo", "lang", "in_evidenza", "commenti_aperti", "noindex"}
 
 
 class ErroreBlog(ValueError):
@@ -250,9 +251,13 @@ class BlogRepository:
         )).scalar_one_or_none()
         return prec, succ
 
-    async def slug_pubblici(self) -> List[Tuple[str, datetime]]:
-        q = select(BlogPost.slug, BlogPost.updated_at).where(await self.pubblico()).order_by(BlogPost.pubblicato_il.desc())
-        return [(s, d) for s, d in (await self._session.execute(q)).all()]
+    async def slug_pubblici(self) -> List[Tuple[str, datetime, str, bool]]:
+        """`(slug, aggiornato, lingua, noindex)` di ogni articolo pubblico: per la mappa del sito."""
+        q = (
+            select(BlogPost.slug, BlogPost.updated_at, BlogPost.lang, BlogPost.noindex)
+            .where(await self.pubblico()).order_by(BlogPost.pubblicato_il.desc())
+        )
+        return [(s, d, lingua, bool(n)) for s, d, lingua, n in (await self._session.execute(q)).all()]
 
     # ---- articoli: scrittura --------------------------------------------------------
 
@@ -292,7 +297,7 @@ class BlogRepository:
 
     async def salva(
         self, post: Optional[BlogPost], dati: Dict[str, Any], *, autore_id: Optional[int],
-        tag: Optional[Sequence[str]] = None,
+        tag: Optional[Sequence[str]] = None, chiave_id: Optional[int] = None,
     ) -> BlogPost:
         """Crea o aggiorna un articolo. `dati` contiene solo i campi da scrivere.
 
@@ -306,7 +311,7 @@ class BlogRepository:
             titolo = (dati.get("titolo") or "").strip()
             if not titolo:
                 raise ErroreBlog("serve un titolo")
-            post = BlogPost(titolo=titolo, slug="", testo="", autore_id=autore_id, tags=[])
+            post = BlogPost(titolo=titolo, slug="", testo="", autore_id=autore_id, tags=[], creato_da_chiave_id=chiave_id)
             post.id = uuid.uuid4()
             self._session.add(post)
         else:
@@ -314,17 +319,30 @@ class BlogRepository:
 
         for campo in (
             "titolo", "sottotitolo", "testo", "lang", "immagine_id", "immagine_alt", "sezione_id", "in_evidenza",
-            "commenti_aperti", "seo_titolo", "seo_descrizione",
+            "commenti_aperti", "seo_titolo", "seo_descrizione", "seo_parola_chiave", "noindex", "canonical_url",
         ):
             if campo in dati:
                 valore = dati[campo]
                 if valore is None and campo in NON_NULLI:
                     continue
+                if campo == "canonical_url":
+                    try:
+                        valore = blog_seo.valida_canonical(valore)
+                    except blog_seo.DatoSeoNonValido as exc:
+                        raise ErroreBlog(str(exc)) from exc
                 if isinstance(valore, str):
                     valore = valore.strip()
-                    if campo in ("sottotitolo", "immagine_alt", "seo_titolo", "seo_descrizione") and not valore:
+                    if campo in ("sottotitolo", "immagine_alt", "seo_titolo", "seo_descrizione", "seo_parola_chiave") and not valore:
                         valore = None
                 setattr(post, campo, valore)
+        # Liste: pulite e limitate. `None` vuol dire «lascia com'è».
+        try:
+            if dati.get("faq") is not None:
+                post.faq = blog_seo.pulisci_faq(dati["faq"])
+            if dati.get("seo_parole_chiave") is not None:
+                post.seo_parole_chiave = blog_seo.pulisci_parole_chiave(dati["seo_parole_chiave"])
+        except blog_seo.DatoSeoNonValido as exc:
+            raise ErroreBlog(str(exc)) from exc
         if not (post.titolo or "").strip():
             raise ErroreBlog("serve un titolo")
 
@@ -369,7 +387,8 @@ class BlogRepository:
 
     async def _sincronizza_collegamenti(self, post: BlogPost) -> None:
         voci = [
-            (tipo, rif) for tipo, rif in regole.estrai_collegamenti(post.testo, host=_host_del_sito())
+            (tipo, rif)
+            for tipo, rif in regole.estrai_collegamenti(post.testo, host=_host_del_sito(), risolvi=regole.risolvi_riferimento)
             if not (tipo == "articolo" and rif == post.slug)
         ]
         await self._session.execute(delete(BlogPostLink).where(BlogPostLink.post_id == post.id))

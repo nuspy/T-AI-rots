@@ -21,7 +21,9 @@ from .test_intervista import Copione
 #: L'impronta del prefisso di sintesi della lettura STANDARD prima delle letture
 #: speciali. Se cambia, cambia il prefisso in cache di ogni lettura normale: va
 #: cambiata di proposito, non per effetto collaterale.
-IMPRONTA_PREFISSO_STANDARD = "688f5c679b985898a8b22ba420c9c4a0f4e3658d3073675e668522d123e5ee09"
+# Cambiata una sola volta di proposito, quando il nome del prodotto è diventato «TAROTS chat»: sostituendo di nuovo
+# il nome con «T-AI-rots» l'impronta torna a 688f5c67…, cioè il prefisso non è cambiato in nient'altro.
+IMPRONTA_PREFISSO_STANDARD = "98add712b79a63c68ca510623c011a91e1940b90db73d6ce97feef1dff82c6a3"
 
 
 @pytest.fixture(scope="module")

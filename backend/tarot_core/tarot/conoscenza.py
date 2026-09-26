@@ -19,7 +19,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass, field
-from functools import cached_property
+from functools import cached_property, lru_cache
 from typing import Any, Dict, List, Optional
 
 from ..paths import KNOWLEDGE_DIR
@@ -446,6 +446,13 @@ class Conoscenza:
                 testo = scheda["pos"][str(p["n"])]
                 p["nome"], p["significato"], p["domanda"] = testo["nome"], testo["significato"], testo["domanda"]
         return pubblica
+
+
+@lru_cache(maxsize=1)
+def condivisa() -> Conoscenza:
+    """La base di conoscenza, caricata una volta per processo: per chi non passa dall'API (il blog che risolve le
+    scorciatoie `[[card:the-star]]` quando salva un articolo)."""
+    return Conoscenza.carica()
 
 
 def _carica_testi(cartella) -> Dict[str, Dict[str, Any]]:

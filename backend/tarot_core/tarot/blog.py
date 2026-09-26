@@ -50,8 +50,16 @@ def normalizza_etichetta(nome: str) -> Tuple[str, str]:
 
 # ---- testo ---------------------------------------------------------------------
 
-_SCORCIATOIA = re.compile(r"\[\[(carta|stesa|articolo):([a-z0-9-]{1,160})\]\]")
-_COLLEGAMENTO_MD = re.compile(r"\]\((?:https?://([^/)\s]+))?/(carte|stese|blog)/([a-z0-9-]+)(?:[/?#][^)\s]*)?\)")
+#: Le scorciatoie si scrivono in italiano (`[[carta:maj-17]]`) o in inglese (`[[card:the-star]]`): stessa cosa. Il
+#: riferimento è un id o uno slug, in qualunque lingua (`maj-17`, `the-star`, `la-stella`).
+_SCORCIATOIA = re.compile(r"\[\[(carta|card|stesa|spread|articolo|post):([a-z0-9-]{1,160})\]\]")
+#: Un collegamento Markdown a una pagina del sito: `/carte/…` o `/cards/…`, `/stese/…` o `/spreads/…`, `/blog/…`,
+#: anche sotto `/it`. Solo le prime tre parti contano.
+_COLLEGAMENTO_MD = re.compile(
+    r"\]\((?:https?://([^/)\s]+))?(?:/it)?/(carte|cards|stese|spreads|blog)/([a-z0-9-]+)(?:[/?#][^)\s]*)?\)"
+)
+_TIPO_CANONICO = {"carta": "carta", "card": "carta", "stesa": "stesa", "spread": "stesa", "articolo": "articolo", "post": "articolo"}
+_TIPO_DA_PERCORSO = {"carte": "carta", "cards": "carta", "stese": "stesa", "spreads": "stesa", "blog": "articolo"}
 #: Le pagine `/blog/...` che non sono articoli.
 _NON_ARTICOLI = {"sezione", "tag", "cerca", "feed", "autore", "media"}
 _PAROLE_AL_MINUTO = 200
@@ -68,7 +76,7 @@ def _senza_scorciatoie(testo: str, nomi: Optional[Callable[[str, str], Optional[
     un buco («Vedi  e .») negli estratti."""
     if nomi is None:
         return _SCORCIATOIA.sub(" ", testo or "")
-    return _SCORCIATOIA.sub(lambda m: nomi(m.group(1), m.group(2)) or " ", testo or "")
+    return _SCORCIATOIA.sub(lambda m: nomi(_TIPO_CANONICO[m.group(1)], m.group(2)) or " ", testo or "")
 
 
 def testo_semplice(markdown: str, nomi: Optional[Callable[[str, str], Optional[str]]] = None) -> str:
@@ -94,12 +102,28 @@ def estratto(markdown: str, massimo: int = 200, nomi: Optional[Callable[[str, st
     return f"{taglio[: fine if fine > massimo * 0.6 else massimo].rstrip(' ,;:.-')}…"
 
 
-def estrai_collegamenti(testo: str, host: Optional[str] = None) -> List[Tuple[str, str]]:
+def risolvi_riferimento(tipo: str, riferimento: str) -> str:
+    """L'id canonico di una carta o di una stesa citata per id o per slug (`the-star` → `maj-17`). Un riferimento che
+    non esiste, o di un altro tipo (`articolo`), resta com'è: l'esistenza si controlla altrove."""
+    from .conoscenza import condivisa
+
+    conoscenza = condivisa()
+    if tipo == "carta":
+        return conoscenza.risolvi_carta(riferimento) or riferimento
+    if tipo == "stesa":
+        return conoscenza.risolvi_stesa(riferimento) or riferimento
+    return riferimento
+
+
+def estrai_collegamenti(
+    testo: str, host: Optional[str] = None, risolvi: Optional[Callable[[str, str], str]] = None,
+) -> List[Tuple[str, str]]:
     """Le citazioni interne di un testo, senza doppioni, nell'ordine in cui compaiono.
 
-    Scorciatoie `[[carta:id]]`, e collegamenti Markdown a `/carte/id`, `/stese/id`, `/blog/slug`:
-    relativi, o assoluti verso `host` (il dominio del sito). Un collegamento a un altro sito
-    non è una citazione interna.
+    Scorciatoie `[[carta:id]]` / `[[card:the-star]]`, e collegamenti Markdown a `/carte/id`, `/cards/slug`,
+    `/stese/…`, `/spreads/…`, `/blog/slug` (anche sotto `/it`): relativi, o assoluti verso `host` (il dominio del
+    sito). Un collegamento a un altro sito non è una citazione interna. Il tipo è sempre quello canonico
+    (`carta`, `stesa`, `articolo`); con `risolvi(tipo, riferimento)` il riferimento diventa l'id canonico.
     """
     trovati: List[Tuple[str, str]] = []
     visti: Set[Tuple[str, str]] = set()
@@ -110,17 +134,16 @@ def estrai_collegamenti(testo: str, host: Optional[str] = None) -> List[Tuple[st
             visti.add(voce)
             trovati.append(voce)
 
-    posizioni = [(m.start(), m.group(1), m.group(2)) for m in _SCORCIATOIA.finditer(testo or "")]
+    posizioni = [(m.start(), _TIPO_CANONICO[m.group(1)], m.group(2)) for m in _SCORCIATOIA.finditer(testo or "")]
     for m in _COLLEGAMENTO_MD.finditer(testo or ""):
         dominio, parte, rif = m.group(1), m.group(2), m.group(3)
         if dominio is not None and dominio.lower() != (host or "").lower():
             continue
         if parte == "blog" and rif in _NON_ARTICOLI:
             continue
-        tipo = {"carte": "carta", "stese": "stesa", "blog": "articolo"}[parte]
-        posizioni.append((m.start(), tipo, rif))
+        posizioni.append((m.start(), _TIPO_DA_PERCORSO[parte], rif))
     for _, tipo, rif in sorted(posizioni):
-        aggiungi(tipo, rif)
+        aggiungi(tipo, risolvi(tipo, rif) if risolvi else rif)
     return trovati
 
 
