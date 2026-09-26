@@ -19,18 +19,20 @@ import { useAzione, useCarica, useToken } from "@/lib/usa";
 import { Involucro } from "../componenti/testata";
 import stili from "../pagine.module.css";
 
-export default function PaginaPiano() {
+/* `pianiIniziali`: i piani letti dal server, perché la pagina esca già con i prezzi scritti nell'HTML — chi cerca
+ * «tarot reading price» non aspetta JavaScript. Il client poi li rilegge e li aggiorna. */
+export function PaginaPiano({ pianiIniziali = null }: { pianiIniziali?: Piano[] | null }) {
   const { t } = useLingua();
   return (
     <Involucro titolo={t.piano_titolo} sottotitolo={t.piano_sottotitolo}>
       <Suspense fallback={null}>
-        <Contenuto />
+        <Contenuto iniziali={pianiIniziali} />
       </Suspense>
     </Involucro>
   );
 }
 
-function Contenuto() {
+function Contenuto({ iniziali }: { iniziali: Piano[] | null }) {
   const { t, locale } = useLingua();
   const conto = useCarica(leggiConto);
   const piani = useCarica(useCallback(() => elencaPiani(), []), [], { pubblico: true });
@@ -45,8 +47,9 @@ function Contenuto() {
     movimenti.ricarica();
   };
 
-  const pacchetti = (piani.dati ?? []).filter((p) => p.tipo === "pacchetto");
-  const abbonamenti = (piani.dati ?? []).filter((p) => p.tipo === "abbonamento");
+  const elencoPiani = piani.dati ?? iniziali ?? [];
+  const pacchetti = elencoPiani.filter((p) => p.tipo === "pacchetto");
+  const abbonamenti = elencoPiani.filter((p) => p.tipo === "abbonamento");
 
   return (
     <>

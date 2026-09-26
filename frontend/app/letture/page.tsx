@@ -2,7 +2,7 @@
 
 /* Lo storico: ogni lettura è salvata, e ogni lettura si può cancellare. */
 
-import Link from "next/link";
+import Link from "@/app/componenti/link";
 import { motion } from "framer-motion";
 import { cancellaLettura, elencaLetture } from "@/lib/api";
 import { nomeStesaDaNomi } from "@/lib/i18n";

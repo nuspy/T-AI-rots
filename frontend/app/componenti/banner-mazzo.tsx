@@ -4,7 +4,7 @@
  * originale». Sta in fondo alle pagine pubbliche (carte, stese) e in home. Tutta la
  * targa è il collegamento; le carte in ventaglio sono le immagini vere del mazzo. */
 
-import Link from "next/link";
+import Link from "@/app/componenti/link";
 import { DOMINIO } from "@/lib/condivisione";
 import { useLingua } from "@/lib/lingua";
 import { ESTENSIONE } from "./carta";

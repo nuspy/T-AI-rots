@@ -11,7 +11,7 @@
  * Un riferimento che non esiste nel catalogo resta testo: mai un collegamento rotto. */
 
 import { Fragment } from "react";
-import Link from "next/link";
+import Link from "@/app/componenti/link";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ESTENSIONE } from "../../componenti/carta";
@@ -19,23 +19,31 @@ import { urlMedia } from "@/lib/blog";
 import stili from "../blog.module.css";
 
 export interface Riferimenti {
+  /* Nome di ogni forma con cui il testo può citare una carta o una stesa: l'id (`maj-17`) e gli slug in ogni lingua. */
   carte: Record<string, string>;
   stese: Record<string, string>;
   articoli: Record<string, string>;
+  /* Da ogni forma all'id canonico della carta: serve all'immagine (`/cards/maj-17.webp`). */
+  idCarte?: Record<string, string>;
 }
 
-const BLOCCO = /^[ \t]*\[\[(carta|stesa|articolo):([a-z0-9-]+)\]\][ \t]*$/;
-const IN_LINEA = /\[\[(carta|stesa|articolo):([a-z0-9-]+)\]\]/g;
+/* Le scorciatoie si scrivono in italiano (`[[carta:maj-17]]`) o in inglese (`[[card:the-star]]`): stessa cosa. Il
+ * riferimento è un id o uno slug in qualunque lingua; il server manda i nomi per ogni forma (`Riferimenti`). */
+const BLOCCO = /^[ \t]*\[\[(carta|card|stesa|spread|articolo|post):([a-z0-9-]+)\]\][ \t]*$/;
+const IN_LINEA = /\[\[(carta|card|stesa|spread|articolo|post):([a-z0-9-]+)\]\]/g;
 
+type Tipo = "carta" | "stesa" | "articolo";
+const CANONICO: Record<string, Tipo> = { carta: "carta", card: "carta", stesa: "stesa", spread: "stesa", articolo: "articolo", post: "articolo" };
 const PERCORSO = { carta: "/carte", stesa: "/stese", articolo: "/blog" } as const;
 
-function nomeDi(tipo: "carta" | "stesa" | "articolo", id: string, rif: Riferimenti): string | undefined {
+function nomeDi(tipo: Tipo, id: string, rif: Riferimenti): string | undefined {
   return tipo === "carta" ? rif.carte[id] : tipo === "stesa" ? rif.stese[id] : rif.articoli[id];
 }
 
 /* Le scorciatoie in linea diventano collegamenti Markdown (o si tolgono, se il riferimento non esiste). */
 function inLinea(testo: string, rif: Riferimenti): string {
-  return testo.replace(IN_LINEA, (_m, tipo: "carta" | "stesa" | "articolo", id: string) => {
+  return testo.replace(IN_LINEA, (_m, scritto: string, id: string) => {
+    const tipo = CANONICO[scritto];
     const nome = nomeDi(tipo, id, rif);
     return nome ? `[${nome.replace(/[[\]]/g, "")}](${PERCORSO[tipo]}/${id})` : "";
   });
@@ -48,18 +56,19 @@ export interface EtichetteTipo {
 }
 
 function Scheda({
-  tipo, id, nome, etichette,
+  tipo, id, idCarta, nome, etichette,
 }: {
-  tipo: "carta" | "stesa" | "articolo";
+  tipo: Tipo;
   id: string;
+  idCarta?: string;
   nome: string;
   etichette: EtichetteTipo;
 }) {
   return (
     <Link href={`${PERCORSO[tipo]}/${id}`} className={stili.schedaIncorporata}>
       {tipo === "carta" && (
-        // eslint-disable-next-line @next/next/no-img-element -- la carta vera, piccola
-        <img src={`/cards/${id}.${ESTENSIONE}`} alt="" width={72} height={128} loading="lazy" />
+        // eslint-disable-next-line @next/next/no-img-element -- la carta vera, piccola (`id` può essere uno slug: `idCarta`)
+        <img src={`/cards/${idCarta ?? id}.${ESTENSIONE}`} alt="" width={72} height={128} loading="lazy" />
       )}
       <span>
         <small>{etichette[tipo]}</small>
@@ -99,7 +108,7 @@ export function BlogMarkdown({
 }) {
   /* Si spezza il testo alle scorciatoie «da sole su una riga»: ciò che sta in mezzo è Markdown. */
   const righe = testo.split("\n");
-  const pezzi: ({ md: string } | { tipo: "carta" | "stesa" | "articolo"; id: string; nome: string })[] = [];
+  const pezzi: ({ md: string } | { tipo: Tipo; id: string; idCarta?: string; nome: string })[] = [];
   let corrente: string[] = [];
   const chiudi = () => {
     if (corrente.length) pezzi.push({ md: corrente.join("\n") });
@@ -107,10 +116,11 @@ export function BlogMarkdown({
   };
   for (const riga of righe) {
     const m = BLOCCO.exec(riga);
-    const nome = m ? nomeDi(m[1] as "carta" | "stesa" | "articolo", m[2], riferimenti) : undefined;
-    if (m && nome) {
+    const tipo = m ? CANONICO[m[1]] : undefined;
+    const nome = m && tipo ? nomeDi(tipo, m[2], riferimenti) : undefined;
+    if (m && tipo && nome) {
       chiudi();
-      pezzi.push({ tipo: m[1] as "carta" | "stesa" | "articolo", id: m[2], nome });
+      pezzi.push({ tipo, id: m[2], idCarta: riferimenti.idCarte?.[m[2]], nome });
     } else {
       corrente.push(riga);
     }
@@ -125,7 +135,7 @@ export function BlogMarkdown({
             {inLinea(p.md, riferimenti)}
           </ReactMarkdown>
         ) : (
-          <Fragment key={i}><Scheda tipo={p.tipo} id={p.id} nome={p.nome} etichette={etichette} /></Fragment>
+          <Fragment key={i}><Scheda tipo={p.tipo} id={p.id} idCarta={p.idCarta} nome={p.nome} etichette={etichette} /></Fragment>
         ),
       )}
     </div>

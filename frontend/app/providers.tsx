@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { AuthProvider } from "react-oidc-context";
 import { WebStorageStateStore } from "oidc-client-ts";
 import { SITE_URL } from "@/lib/condivisione";
-import { ProviderLingua } from "@/lib/lingua";
+import { ProviderLingua, type Lingua } from "@/lib/lingua";
 import { AUTH_DISATTIVATA, SessioneDiSviluppo, SessioneKeycloak } from "@/lib/sessione";
 import { AttribuzioneCondivisione } from "./componenti/attribuzione";
 import { Promemoria2fa } from "./componenti/promemoria-2fa";
@@ -41,7 +41,7 @@ function onSigninCallback(user: unknown): void {
 
 const nelBrowser = typeof window !== "undefined";
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children, linguaIniziale }: { children: React.ReactNode; linguaIniziale?: Lingua }) {
   const config = useMemo(
     () =>
       AUTH_DISATTIVATA
@@ -65,7 +65,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   if (!config) {
     return (
-      <ProviderLingua>
+      <ProviderLingua iniziale={linguaIniziale}>
         <SessioneDiSviluppo>{children}</SessioneDiSviluppo>
       </ProviderLingua>
     );
@@ -73,7 +73,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthProvider {...config}>
-      <ProviderLingua>
+      <ProviderLingua iniziale={linguaIniziale}>
         <SessioneKeycloak>
           <AttribuzioneCondivisione />
           <Promemoria2fa />

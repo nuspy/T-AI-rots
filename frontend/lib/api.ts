@@ -37,6 +37,16 @@ export interface Carta {
   nome_it: string;
   /* Il nome nelle altre lingue: `en` sempre, poi quelle con nomi propri. */
   nomi?: Record<string, string>;
+  /* Le pagine pubbliche chiedono i testi in una lingua (`?lang=`): `nome` e `slug` sono in quella lingua, `slugs`
+   * porta l'indirizzo in ciascuna, e le `*_label` sono i termini tradotti (Air, Wands, Major Arcana…). */
+  lang?: "it" | "en";
+  nome?: string;
+  slug?: string;
+  slugs?: Record<string, string>;
+  elemento_label?: string | null;
+  seme_label?: string | null;
+  rango_label?: string | null;
+  arcano_label?: string | null;
   lettera_ebraica: LetteraEbraica | null;
   elemento: string;
   astrologia: string;
@@ -80,6 +90,13 @@ export interface Stesa {
   nome: string;
   nome_en: string;
   nomi?: Record<string, string>;
+  /* Come per le carte: lingua dei testi, indirizzo in ciascuna lingua, termini tradotti. */
+  lang?: "it" | "en";
+  slug?: string;
+  slugs?: Record<string, string>;
+  mazzo_label?: string | null;
+  categoria_label?: string | null;
+  stile_label?: string | null;
   categoria: Categoria;
   /* Solo nelle stese speciali. */
   stile: Stile | null;
@@ -625,6 +642,14 @@ export const togliAvatar = (token: string | null) => chiama<void>(token, "/me/av
 export const cancellaPartner = (token: string | null) => chiama<void>(token, "/me/partner", { method: "DELETE" });
 export const riscattaInvito = (token: string | null, codice: string) =>
   chiama<{ crediti: number; saldo: number }>(token, "/me/referral", { method: "POST", body: { codice } });
+/** La carta del giorno per tutti (`GET /daily-card/today`): senza account, uguale per chiunque nello stesso giorno. */
+export interface CartaOggi {
+  giorno: string;
+  carta: Carta;
+  testo: string;
+}
+
+export const cartaDiOggi = (lingua: string) => chiama<CartaOggi>(null, `/daily-card/today?lang=${lingua}`);
 export const cartaDelGiorno = (token: string | null) => chiama<CartaDelGiorno>(token, "/me/daily-card");
 
 export function euro(centesimi: number, valuta = "EUR", locale = "it-IT"): string {

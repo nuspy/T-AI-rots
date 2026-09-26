@@ -1,0 +1,155 @@
+/* Il testo della soglia per chi cerca (`seo-home.tsx`): sobrio, sotto la parte animata, sugli stessi toni del sito. */
+
+.sezioni {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 10px 28px 130px;
+}
+
+.sezioni section {
+  margin: 0 0 56px;
+}
+
+.sezioni h2 {
+  margin: 0 0 18px;
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+}
+
+.sezioni h3 {
+  margin: 0 0 10px;
+  font-family: var(--font-titoli), serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  color: var(--oro);
+}
+
+.testo {
+  max-width: 68ch;
+  margin: 0 0 14px;
+  font-size: 1.08rem;
+  line-height: 1.75;
+  color: var(--testo);
+}
+
+.passi {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.passo {
+  position: relative;
+  padding: 22px 22px 20px;
+}
+
+.passo strong {
+  font-family: var(--font-titoli), serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--oro-chiaro);
+}
+
+.passo p {
+  margin: 8px 0 0;
+  line-height: 1.65;
+  color: var(--testo-tenue);
+}
+
+.numero {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  font-family: var(--font-titoli), serif;
+  font-size: 1.6rem;
+  color: rgba(216, 180, 90, 0.35);
+}
+
+.colonne {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px 40px;
+}
+
+.elenco {
+  columns: 2;
+  column-gap: 24px;
+  padding: 0;
+  margin: 0 0 12px;
+  list-style: none;
+}
+
+.elenco li {
+  break-inside: avoid;
+}
+
+.elenco a,
+.sezioni p a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.articoli {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 0;
+  margin: 0 0 12px;
+  list-style: none;
+}
+
+.articoli li {
+  padding: 18px 20px;
+}
+
+.articoli p {
+  margin: 8px 0 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--testo-tenue);
+}
+
+.domande details {
+  margin: 10px 0;
+  padding: 0 18px;
+  border: 1px solid var(--bordo);
+  border-radius: 12px;
+  background: var(--superficie);
+}
+
+.domande summary {
+  min-height: 44px;
+  padding: 13px 0;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--oro-chiaro);
+}
+
+.domande summary:focus-visible {
+  outline: 2px solid var(--oro-chiaro);
+  outline-offset: 2px;
+}
+
+.domande details p {
+  margin: 0 0 16px;
+  line-height: 1.7;
+  color: var(--testo-tenue);
+}
+
+@media (max-width: 860px) {
+  .sezioni {
+    padding: 0 16px 140px;
+  }
+
+  .passi,
+  .articoli {
+    grid-template-columns: 1fr;
+  }
+
+  .colonne {
+    grid-template-columns: 1fr;
+  }
+}

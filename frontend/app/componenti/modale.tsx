@@ -4,7 +4,7 @@
  * acquistare crediti. */
 
 import { useEffect } from "react";
-import Link from "next/link";
+import Link from "@/app/componenti/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLingua } from "@/lib/lingua";
 import stili from "./modale.module.css";

@@ -12,7 +12,7 @@
  * (`AttribuzioneCondivisione`). */
 
 import { useCallback, useEffect } from "react";
-import Link from "next/link";
+import Link from "@/app/componenti/link";
 import { leggiCondivisa, registraVisita } from "@/lib/api";
 import { CREDITI_ISCRIZIONE, idVisitatore, ricordaOrigine } from "@/lib/condivisione";
 import { comeLingua, nomeStesa } from "@/lib/i18n";

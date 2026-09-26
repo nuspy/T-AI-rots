@@ -1,29 +1,84 @@
 "use client";
 
-/* La carta del giorno: gratuita, la stessa per tutta la giornata, con la
- * serie dei giorni consecutivi. È il piccolo rito che fa tornare. */
+/* La carta del giorno.
+ *
+ * Due cose sotto lo stesso indirizzo. Per chi non ha un account: **la carta di oggi per tutti**, la stessa per
+ * chiunque fino a mezzanotte (UTC), scritta dal server — è ciò che trova chi cerca «tarot card of the day». Per chi
+ * ha un account: la sua carta personale, gratuita, con la serie dei giorni di fila: il piccolo rito che fa tornare. */
 
 import { useState } from "react";
-import Link from "next/link";
+import Link from "@/app/componenti/link";
 import { motion } from "framer-motion";
-import { cartaDelGiorno } from "@/lib/api";
+import { cartaDelGiorno, type CartaOggi } from "@/lib/api";
 import { nomeCarta } from "@/lib/i18n";
 import { useLingua } from "@/lib/lingua";
+import type { LinguaPubblica } from "@/lib/percorsi";
+import { GIORNO, nomeBreve } from "@/lib/seo-testi";
+import { useSessione } from "@/lib/sessione";
 import { useCarica } from "@/lib/usa";
 import { Carta } from "../componenti/carta";
 import { Involucro } from "../componenti/testata";
 import stili from "../pagine.module.css";
 
-export default function PaginaGiorno() {
-  const { t } = useLingua();
+/** La data del giorno scritta per esteso: in UTC, perché server e browser scrivano lo stesso testo. */
+function dataPerEsteso(giorno: string, lingua: LinguaPubblica): string {
+  return new Intl.DateTimeFormat(lingua === "it" ? "it-IT" : "en-GB", { dateStyle: "full", timeZone: "UTC" }).format(
+    new Date(`${giorno}T12:00:00Z`),
+  );
+}
+
+export function PaginaGiorno({ oggi, lingua }: { oggi: CartaOggi | null; lingua: LinguaPubblica }) {
   return (
-    <Involucro titolo={t.nav_giorno} sottotitolo={t.giorno_sottotitolo}>
-      <Giorno />
+    <Involucro
+      pubblica
+      titolo={GIORNO.h1(lingua)}
+      sottotitolo={oggi ? GIORNO.sottotitolo(lingua, dataPerEsteso(oggi.giorno, lingua), nomeBreve(oggi.carta.nome ?? oggi.carta.nome_it)) : GIORNO.intro(lingua)}
+    >
+      <Giorno oggi={oggi} lingua={lingua} />
     </Involucro>
   );
 }
 
-function Giorno() {
+function Giorno({ oggi, lingua: linguaPagina }: { oggi: CartaOggi | null; lingua: LinguaPubblica }) {
+  const sessione = useSessione();
+  if (sessione.autenticata) return <Personale />;
+  return oggi ? <PerTutti oggi={oggi} lingua={linguaPagina} /> : null;
+}
+
+/* La carta di oggi, uguale per tutti: tutto il testo è già nell'HTML. */
+function PerTutti({ oggi, lingua }: { oggi: CartaOggi; lingua: LinguaPubblica }) {
+  const { t } = useLingua();
+  const sessione = useSessione();
+  const c = oggi.carta;
+  const nome = c.nome ?? c.nome_it;
+  return (
+    <div className={stili.cartaGrande}>
+      <Carta carta={c} rivelata larghezza={250} />
+      <article>
+        <p className={`oracolo ${stili.lead}`}>{GIORNO.intro(lingua)}</p>
+        <h2>{nome}</h2>
+        <p className={stili.etichetta}>{[c.lettera_ebraica?.nome, c.elemento_label ?? c.elemento, c.astrologia].filter(Boolean).join(" · ")}</p>
+        <p className="oracolo">{oggi.testo}</p>
+        {c.ambiti?.spirito && <p className="oracolo">{c.ambiti.spirito}</p>}
+        <p className={stili.nota}>{c.parole_chiave.join(" · ")}</p>
+        <div className={stili.linea} style={{ marginTop: 18 }}>
+          <Link href={`/carte/${c.slug ?? c.id}`} className="bottone-secondario">{GIORNO.pienoSignificato(lingua, nomeBreve(nome))}</Link>
+          <Link href="/leggi" className="bottone">✦ {t.inizia}</Link>
+        </div>
+        <p className={stili.nota} style={{ marginTop: 22 }}>{GIORNO.personale(lingua)}</p>
+        {sessione.pronta && (
+          <div className={stili.linea}>
+            <button className="bottone-secondario" onClick={() => sessione.registrati()}>{t.registrati}</button>
+            <button className="bottone-secondario" onClick={() => sessione.entra("/carta-del-giorno")}>{t.entra}</button>
+          </div>
+        )}
+      </article>
+    </div>
+  );
+}
+
+/* La carta personale di chi ha un account: si gira, con la serie dei giorni di fila. */
+function Personale() {
   const { t, lingua, locale } = useLingua();
   const giorno = useCarica(cartaDelGiorno);
   const [girata, setGirata] = useState(false);

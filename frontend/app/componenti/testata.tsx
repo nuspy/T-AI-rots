@@ -9,11 +9,12 @@
  * telefono si apre sopra la barra e sul computer sotto la testata. */
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LINGUE, comeLingua } from "@/lib/i18n";
 import { useLingua } from "@/lib/lingua";
+import { indirizzo, risolvi } from "@/lib/percorsi";
 import { ADMIN_URL, AUTH_DISATTIVATA, useSessione } from "@/lib/sessione";
+import Link from "./link";
 import { Marchio } from "./marchio";
 import stili from "./testata.module.css";
 
@@ -91,6 +92,7 @@ export function Testata() {
   const { t, lingua, imposta } = useLingua();
   const sessione = useSessione();
   const percorso = usePathname();
+  const router = useRouter();
   const V = {
     leggi: { href: "/leggi", etichetta: t.nav_leggi, segno: "✦" },
     letture: { href: "/letture", etichetta: t.nav_letture, segno: "☰" },
@@ -105,7 +107,23 @@ export function Testata() {
    * dei contenuti. Per chi è registrato il blog sta sotto «Altro». */
   const voci: Voce[] = sessione.autenticata ? [V.leggi, V.letture, V.carte, V.stese] : [V.leggi, V.carte, V.stese, V.blog];
   const altre: Voce[] = sessione.autenticata ? [V.giorno, V.blog, V.mazzo, V.piano] : [V.giorno, V.mazzo, V.piano];
-  const attiva = (href: string) => percorso === href || percorso.startsWith(`${href}/`);
+  /* Le voci si scrivono con i nomi delle cartelle (`/carte`); l'indirizzo che si vede è nella lingua (`/cards`,
+   * `/it/carte`). La pagina attiva si riconosce confrontando quello. */
+  const attiva = (href: string) => {
+    const visibile = indirizzo(lingua, href);
+    return percorso === visibile || percorso.startsWith(`${visibile}/`);
+  };
+
+  /* Nelle pagine pubbliche la lingua è quella dell'indirizzo: scegliere italiano o inglese porta alla stessa pagina
+   * nell'altra lingua (lo slug, se cambia, lo corregge il server con un reindirizzamento). Le altre lingue
+   * cambiano soltanto le etichette. */
+  const cambiaLingua = (scelta: NonNullable<ReturnType<typeof comeLingua>>) => {
+    imposta(scelta);
+    const qui = risolvi(percorso);
+    if (qui.pubblica && (scelta === "it" || scelta === "en") && scelta !== qui.lingua) {
+      router.push(indirizzo(scelta, qui.interno));
+    }
+  };
 
   return (
     <>
@@ -129,7 +147,7 @@ export function Testata() {
             value={lingua}
             onChange={(e) => {
               const scelta = comeLingua(e.target.value);
-              if (scelta) imposta(scelta);
+              if (scelta) cambiaLingua(scelta);
             }}
             aria-label={t.aria_lingua}
           >

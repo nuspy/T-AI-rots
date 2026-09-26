@@ -2,25 +2,26 @@
 
 /* Le viste dell'elenco del blog: ingresso, sezione, etichetta. Ricevono i dati già letti dal server. */
 
-import Link from "next/link";
+import Link from "@/app/componenti/link";
 import type {
   ArticoloBreve, DettaglioSezione, EtichettaConConteggio, NodoSezione,
 } from "@/lib/blog";
 import { nomeStesa } from "@/lib/i18n";
 import { useLingua } from "@/lib/lingua";
+import { indirizzo } from "@/lib/percorsi";
 import type { Carta, Stesa } from "@/lib/api";
 import { Faccia } from "../componenti/carta";
 import { Involucro } from "../componenti/testata";
 import { nomeCarta } from "@/lib/i18n";
-import { AlberoSezioni, Briciole, JsonLd, Paginazione, SchedaArticolo } from "./componenti/elementi";
+import { AlberoSezioni, Briciole, Paginazione, SchedaArticolo } from "./componenti/elementi";
 import stili from "./blog.module.css";
 import stiliPagine from "../pagine.module.css";
 import stiliStese from "../stese/stese.module.css";
 
 function Ricerca({ q }: { q: string }) {
-  const { t } = useLingua();
+  const { t, lingua } = useLingua();
   return (
-    <form className={stili.ricerca} action="/blog" method="get" role="search">
+    <form className={stili.ricerca} action={indirizzo(lingua, "/blog")} method="get" role="search">
       <input type="search" name="q" defaultValue={q} placeholder={t.blog_cerca_segnaposto} aria-label={t.blog_cerca}
         maxLength={100} />
       <button type="submit">{t.blog_cerca_vai}</button>
@@ -29,7 +30,7 @@ function Ricerca({ q }: { q: string }) {
 }
 
 function Laterale({ albero, etichette, corrente }: { albero: NodoSezione[]; etichette: EtichettaConConteggio[]; corrente?: string }) {
-  const { t } = useLingua();
+  const { t, lingua } = useLingua();
   return (
     <aside className={stili.laterale} aria-label={t.blog_sezioni}>
       <div>
@@ -46,7 +47,7 @@ function Laterale({ albero, etichette, corrente }: { albero: NodoSezione[]; etic
           </ul>
         </div>
       )}
-      <p><a href="/blog/feed.xml">{t.blog_rss}</a></p>
+      <p><a href={indirizzo(lingua, "/blog/feed.xml")}>{t.blog_rss}</a></p>
     </aside>
   );
 }
@@ -108,7 +109,7 @@ function ElementiCatalogo({ sezione }: { sezione: DettaglioSezione }) {
       <section aria-label={t.blog_carte_sezione}>
         <div className={stiliPagine.griglaCarte}>
           {carte.map((c) => (
-            <Link key={c.id} href={`/carte/${c.id}`} className={stiliPagine.cartaLink}>
+            <Link key={c.id} href={`/carte/${c.slug ?? c.id}`} className={stiliPagine.cartaLink}>
               <div style={{ width: "100%", aspectRatio: "9 / 16", borderRadius: 8, overflow: "hidden" }}>
                 <Faccia carta={c} />
               </div>
@@ -124,7 +125,7 @@ function ElementiCatalogo({ sezione }: { sezione: DettaglioSezione }) {
     <section aria-label={t.blog_stese_sezione}>
       <div className={stiliStese.griglia}>
         {stese.map((s) => (
-          <Link key={s.id} href={`/stese/${s.id}`} className={`pannello ${stiliStese.tessera}`}>
+          <Link key={s.id} href={`/stese/${s.slug ?? s.id}`} className={`pannello ${stiliStese.tessera}`}>
             <strong className={stiliStese.nome}>{nomeStesa(s, lingua)}</strong>
             <span className={stiliStese.meta}>{t.stesa_n_carte(s.posizioni.length)}</span>
             <p className={stiliStese.descrizione}>{s.descrizione}</p>
@@ -187,10 +188,6 @@ export function VistaSezione({
           </div>
         </div>
       </div>
-      <JsonLd dati={{
-        "@context": "https://schema.org", "@type": "CollectionPage", name: sezione.nome,
-        description: sezione.descrizione ?? undefined,
-      }} />
     </Involucro>
   );
 }

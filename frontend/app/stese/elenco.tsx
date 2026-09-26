@@ -3,10 +3,12 @@
 /* L'elenco pubblico delle stese: le classiche, poi quelle di compatibilità e di
  * coppia, queste per stile (tradizionale, moderna, di tendenza). */
 
-import Link from "next/link";
+import Link from "@/app/componenti/link";
 import type { Categoria, Stesa, Stile } from "@/lib/api";
 import { nomeStesa } from "@/lib/i18n";
 import { useLingua } from "@/lib/lingua";
+import type { LinguaPubblica } from "@/lib/percorsi";
+import { STESE } from "@/lib/seo-testi";
 import { BannerMazzo } from "../componenti/banner-mazzo";
 import { MiniaturaStesa } from "../componenti/miniatura-stesa";
 import { Involucro } from "../componenti/testata";
@@ -17,9 +19,9 @@ const ORDINE_STILI: Stile[] = ["tradizionale", "moderna", "tendenza"];
 export function TesseraStesa({ stesa }: { stesa: Stesa }) {
   const { t, lingua } = useLingua();
   return (
-    <Link href={`/stese/${stesa.id}`} className={`pannello ${stili.tessera}`}>
+    <Link href={`/stese/${stesa.slug ?? stesa.id}`} className={`pannello ${stili.tessera}`}>
       <MiniaturaStesa stesa={stesa} className={stili.miniatura} />
-      <strong className={stili.nome}>{nomeStesa(stesa, lingua)}</strong>
+      <strong className={stili.nome}>{stesa.lang ? stesa.nome : nomeStesa(stesa, lingua)}</strong>
       <span className={stili.meta}>
         {t.stesa_n_carte(stesa.posizioni.length)} · {stesa.mazzo === "maggiori" ? t.maggiori : t.completo}
       </span>
@@ -28,7 +30,7 @@ export function TesseraStesa({ stesa }: { stesa: Stesa }) {
   );
 }
 
-export function ElencoStese({ stese }: { stese: Stesa[] }) {
+export function ElencoStese({ stese, lingua }: { stese: Stesa[]; lingua: LinguaPubblica }) {
   const { t } = useLingua();
   const per = (c: Categoria) => stese.filter((s) => s.categoria === c);
   const perStile = (c: Categoria) =>
@@ -53,7 +55,7 @@ export function ElencoStese({ stese }: { stese: Stesa[] }) {
   );
 
   return (
-    <Involucro pubblica titolo={t.stese_titolo} sottotitolo={t.stese_sottotitolo}>
+    <Involucro pubblica titolo={STESE.h1(lingua)} sottotitolo={STESE.intro(lingua)}>
       <section className={stili.sezione} aria-labelledby="stese-standard">
         <h2 id="stese-standard">{t.stese_standard_titolo}</h2>
         <p className={stili.introSezione}>{t.stese_standard_testo}</p>

@@ -15,11 +15,14 @@
  */
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import { impostaLinguaMessaggi } from "./api";
 import {
   PREDEFINITA, TRADOTTE, comeLingua, datiLingua, dizionario, linguaDelBrowser,
   type Dizionario, type Lingua,
 } from "./i18n";
+
+import { risolvi } from "./percorsi";
 
 export type { Chiave, Lingua } from "./i18n";
 export { LINGUE, TRADOTTE } from "./i18n";
@@ -42,22 +45,46 @@ const ContestoNomi = createContext<Lingua | null>(null);
 
 const CHIAVE = "lingua";
 
-export function ProviderLingua({ children }: { children: React.ReactNode }) {
-  const [lingua, setLingua] = useState<Lingua>(PREDEFINITA);
+/* **Chi decide la lingua.**
+ *
+ * Nelle pagine pubbliche (soglia, carte, stese, mazzo, piano, blog) la decide l'indirizzo: `/it/…` è italiano, il
+ * resto è inglese. È la stessa lingua con cui il server ha scritto la pagina, e quindi quella che un motore di
+ * ricerca legge; il browser del visitatore non la cambia. Fa eccezione una lingua scelta a mano che non sia
+ * italiano né inglese (per esempio l'ungherese): cambia le etichette dell'interfaccia, non il testo della pagina.
+ *
+ * Nelle pagine private (letture, profilo…) vale la scelta salvata, poi la lingua del browser, poi quella con cui
+ * il server ha risposto. Le preferenze si leggono dopo il montaggio: sul server non c'è `localStorage`, e
+ * leggerle durante il rendering darebbe due alberi diversi fra server e client. */
+export function ProviderLingua({
+  children, iniziale = PREDEFINITA,
+}: {
+  children: React.ReactNode;
+  /** La lingua dell'indirizzo, letta sul server (`x-lang`): da qui parte il primo rendering. */
+  iniziale?: Lingua;
+}) {
+  const percorso = usePathname() ?? "/";
+  const url = useMemo(() => risolvi(percorso), [percorso]);
+  const [salvata, setSalvata] = useState<Lingua | null>(null);
+  const [rilevata, setRilevata] = useState<Lingua | null>(null);
 
   useEffect(() => {
-    /* Letta dopo il montaggio: sul server non c'è `localStorage`, e leggerla
-     * durante il rendering darebbe due alberi diversi fra server e client. */
     let scelta: Lingua | null = null;
     try {
       scelta = comeLingua(window.localStorage.getItem(CHIAVE));
     } catch {
       /* archiviazione non disponibile: si va sulle preferenze del browser */
     }
-    if (!scelta) scelta = linguaDelBrowser(navigator.languages?.length ? navigator.languages : [navigator.language]);
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (scelta !== PREDEFINITA) setLingua(scelta);
+    setSalvata(scelta);
+    setRilevata(linguaDelBrowser(navigator.languages?.length ? navigator.languages : [navigator.language]));
   }, []);
+
+  const lingua: Lingua = useMemo(() => {
+    if (url.pubblica) {
+      return salvata && salvata !== "it" && salvata !== "en" ? salvata : url.lingua;
+    }
+    return salvata ?? rilevata ?? iniziale;
+  }, [url, salvata, rilevata, iniziale]);
 
   const dati = datiLingua(lingua);
   /* Il verso della pagina segue la lingua SOLO se l'interfaccia è tradotta in
@@ -75,7 +102,7 @@ export function ProviderLingua({ children }: { children: React.ReactNode }) {
   }, [lingua, rtl]);
 
   const imposta = useCallback((l: Lingua) => {
-    setLingua(l);
+    setSalvata(l);
     try {
       window.localStorage.setItem(CHIAVE, l);
     } catch {

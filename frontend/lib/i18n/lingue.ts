@@ -37,7 +37,7 @@ export type Lingua = (typeof LINGUE)[number]["codice"];
 /** Le lingue con l'interfaccia tradotta davvero. */
 export const TRADOTTE: readonly Lingua[] = ["it", "en", "hu"];
 
-export const PREDEFINITA: Lingua = "it";
+export const PREDEFINITA: Lingua = "en";
 
 const CODICI: readonly string[] = LINGUE.map((l) => l.codice);
 

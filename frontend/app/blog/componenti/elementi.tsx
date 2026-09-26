@@ -3,7 +3,7 @@
 /* I pezzi che il blog ripete ovunque: avatar, scheda di un articolo, briciole di pane,
  * albero delle sezioni, paginazione, dati strutturati. */
 
-import Link from "next/link";
+import Link from "@/app/componenti/link";
 import { dataLeggibile, urlMedia, type ArticoloBreve, type AutoreBlog, type NodoSezione } from "@/lib/blog";
 import { useLingua } from "@/lib/lingua";
 import stili from "../blog.module.css";

@@ -3,10 +3,14 @@
 /* La pagina di un articolo: percorso, titolo, firma, immagine, testo, argomenti citati, condivisione,
  * articoli affini, precedente e successivo. Tutto già scritto dal server. */
 
-import Link from "next/link";
+import Link from "@/app/componenti/link";
 import { SITE_URL } from "@/lib/condivisione";
 import { dataLeggibile, urlMedia, type ArticoloBlog } from "@/lib/blog";
 import { useLingua } from "@/lib/lingua";
+import { NOME_MARCHIO } from "@/lib/marchio";
+import type { LinguaPubblica } from "@/lib/percorsi";
+import { briciole, domande, grafo, urlPubblico } from "@/lib/seo";
+import { CARTA } from "@/lib/seo-testi";
 import { ESTENSIONE } from "../../componenti/carta";
 import { Involucro } from "../../componenti/testata";
 import { BlogMarkdown, type Riferimenti } from "../componenti/blog-markdown";
@@ -14,9 +18,11 @@ import { CondividiArticolo } from "../componenti/condividi-articolo";
 import { Briciole, JsonLd, RigaMeta, SchedaArticolo } from "../componenti/elementi";
 import stili from "../blog.module.css";
 
-export function VistaArticolo({ articolo: a, riferimenti }: { articolo: ArticoloBlog; riferimenti: Riferimenti }) {
+export function VistaArticolo({
+  articolo: a, riferimenti, lingua,
+}: { articolo: ArticoloBlog; riferimenti: Riferimenti; lingua: LinguaPubblica }) {
   const { t, locale } = useLingua();
-  const url = `${SITE_URL}/blog/${a.slug}`;
+  const url = urlPubblico(lingua, `/blog/${a.slug}`);
   const immagine = urlMedia(a.immagine?.url);
   const voci = [
     { href: "/blog", nome: t.blog_blog },
@@ -26,27 +32,32 @@ export function VistaArticolo({ articolo: a, riferimenti }: { articolo: Articolo
   const { carte, stese } = a.collegamenti;
   const cita = carte.length + stese.length > 0;
 
-  const dati = {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: a.titolo,
-    description: a.seo_descrizione,
-    image: immagine ? [immagine] : undefined,
-    datePublished: a.pubblicato_il ?? undefined,
-    dateModified: a.aggiornato_il ?? a.pubblicato_il ?? undefined,
-    author: { "@type": "Person", name: a.autore.nome },
-    publisher: { "@type": "Organization", name: "TAROTS chat", url: SITE_URL },
-    mainEntityOfPage: url,
-    inLanguage: a.lang,
-    keywords: a.tags.map((x) => x.nome).join(", ") || undefined,
-  };
-  const briciole = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: voci.map((v, i) => ({
-      "@type": "ListItem", position: i + 1, name: v.nome, item: `${SITE_URL}${v.href}`,
-    })),
-  };
+  /* Le parole chiave dei dati strutturati: quella principale, le secondarie e le etichette, senza doppioni. */
+  const parole = Array.from(new Set([a.seo_parola_chiave, ...a.parole_chiave, ...a.tags.map((x) => x.nome)].filter((k): k is string => !!k)));
+  const dati = grafo(
+    {
+      "@type": "BlogPosting",
+      headline: a.titolo,
+      alternativeHeadline: a.sottotitolo ?? undefined,
+      description: a.seo_descrizione,
+      image: immagine ? [immagine] : undefined,
+      datePublished: a.pubblicato_il ?? undefined,
+      dateModified: a.aggiornato_il ?? a.pubblicato_il ?? undefined,
+      author: a.autore.id === null
+        ? { "@type": "Organization", name: NOME_MARCHIO, url: SITE_URL }
+        : { "@type": "Person", name: a.autore.nome },
+      publisher: { "@type": "Organization", name: NOME_MARCHIO, url: SITE_URL },
+      mainEntityOfPage: a.canonical_url ?? url,
+      inLanguage: a.lang,
+      keywords: parole.join(", ") || undefined,
+      articleSection: a.sezione?.nome,
+      wordCount: a.testo.split(/\s+/).filter(Boolean).length,
+      timeRequired: `PT${a.tempo_lettura}M`,
+      isAccessibleForFree: true,
+    },
+    briciole(voci.map((v) => ({ nome: v.nome, url: urlPubblico(lingua, v.href) }))),
+    ...(a.faq.length ? [domande(a.faq.map((f) => ({ d: f.domanda, r: f.risposta })))] : []),
+  );
 
   return (
     <Involucro pubblica larga>
@@ -81,6 +92,20 @@ export function VistaArticolo({ articolo: a, riferimenti }: { articolo: Articolo
           etichette={{ carta: t.blog_tipo_carta, stesa: t.blog_tipo_stesa, articolo: t.blog_tipo_articolo }}
         />
 
+        {a.faq.length > 0 && (
+          <section className={stili.blocco} aria-labelledby="articolo-faq">
+            <h2 id="articolo-faq">{CARTA.h2Domande(lingua)}</h2>
+            <div className={stili.domande}>
+              {a.faq.map((f) => (
+                <details key={f.domanda}>
+                  <summary>{f.domanda}</summary>
+                  <p>{f.risposta}</p>
+                </details>
+              ))}
+            </div>
+          </section>
+        )}
+
         {a.tags.length > 0 && (
           <ul className={stili.etichette} aria-label={t.blog_etichette}>
             {a.tags.map((e) => (
@@ -95,16 +120,16 @@ export function VistaArticolo({ articolo: a, riferimenti }: { articolo: Articolo
             <ul className={stili.etichette}>
               {carte.map((c) => (
                 <li key={c.id}>
-                  <Link href={`/carte/${c.id}`} className={stili.chip}>
+                  <Link href={`/carte/${c.slug}`} className={stili.chip}>
                     {/* eslint-disable-next-line @next/next/no-img-element -- la carta, piccola */}
                     <img src={`/cards/${c.id}.${ESTENSIONE}`} alt="" width={30} height={53} loading="lazy" />
-                    {c.nome_it}
+                    {c.nome}
                   </Link>
                 </li>
               ))}
               {stese.map((s) => (
                 <li key={s.id}>
-                  <Link href={`/stese/${s.id}`} className={`${stili.chip} ${stili.chipSenzaImmagine}`}>▦ {s.nome}</Link>
+                  <Link href={`/stese/${s.slug}`} className={`${stili.chip} ${stili.chipSenzaImmagine}`}>▦ {s.nome}</Link>
                 </li>
               ))}
             </ul>
@@ -138,7 +163,6 @@ export function VistaArticolo({ articolo: a, riferimenti }: { articolo: Articolo
         )}
       </article>
       <JsonLd dati={dati} />
-      <JsonLd dati={briciole} />
     </Involucro>
   );
 }

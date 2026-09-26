@@ -7,7 +7,7 @@
  * (o generata), la sostituisce. */
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import Link from "@/app/componenti/link";
 import type { Carta as TipoCarta } from "@/lib/api";
 import { nomeCarta } from "@/lib/i18n";
 import { useLingua } from "@/lib/lingua";
@@ -101,11 +101,11 @@ export function PaginaMazzo({ carte }: { carte: TipoCarta[] }) {
         <ul className={stili.vetrina}>
           {carte.map((c) => (
             <li key={c.id}>
-              <Link href={`/carte/${c.id}`} className={stili.cartaVetrina}>
+              <Link href={`/carte/${c.slug ?? c.id}`} className={stili.cartaVetrina}>
                 {/* eslint-disable-next-line @next/next/no-img-element -- la carta vera */}
-                <img src={`/cards/${c.id}.${ESTENSIONE}`} alt={nomeCarta(c, lingua)} width={360} height={640}
+                <img src={`/cards/${c.id}.${ESTENSIONE}`} alt={c.nome ?? nomeCarta(c, lingua)} width={360} height={640}
                   loading="lazy" />
-                <span>{nomeCarta(c, lingua)}</span>
+                <span>{c.nome ?? nomeCarta(c, lingua)}</span>
               </Link>
             </li>
           ))}

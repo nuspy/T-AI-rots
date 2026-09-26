@@ -4,7 +4,7 @@
  * in una lettura, prima ancora di registrarsi. */
 
 import { useCallback, useEffect } from "react";
-import Link from "next/link";
+import Link from "@/app/componenti/link";
 import { motion } from "framer-motion";
 import { elencaCarte, elencaStese } from "@/lib/api";
 import { useLingua } from "@/lib/lingua";
@@ -16,7 +16,7 @@ import { Marchio } from "./componenti/marchio";
 import { Testata } from "./componenti/testata";
 import stili from "./soglia.module.css";
 
-export default function Soglia() {
+export function Soglia() {
   const { t, lingua } = useLingua();
   const carte = useCarica(useCallback(() => elencaCarte(), []), [], { pubblico: true });
   const stese = useCarica(useCallback(() => elencaStese("standard"), []), [], { pubblico: true });

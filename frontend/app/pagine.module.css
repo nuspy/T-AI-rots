@@ -414,3 +414,71 @@
   outline: 2px solid var(--oro);
   outline-offset: 3px;
 }
+
+/* ---- la scheda di una carta: sezioni, domande, carta precedente e successiva ---- */
+
+.lead {
+  font-size: 1.25rem;
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+
+.articoloCarta h2 {
+  margin: 30px 0 8px;
+  font-size: 1.25rem;
+}
+
+.articoloCarta h3 {
+  margin: 16px 0 4px;
+  font-family: var(--font-titoli), serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--oro);
+}
+
+.sezioneCarta p {
+  margin: 0 0 10px;
+  line-height: 1.7;
+}
+
+.domande details {
+  margin: 10px 0;
+  padding: 0 16px;
+  border: 1px solid var(--bordo);
+  border-radius: 12px;
+  background: var(--superficie);
+}
+
+.domande summary {
+  min-height: 44px;
+  padding: 12px 0;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--oro-chiaro);
+}
+
+.domande summary:focus-visible {
+  outline: 2px solid var(--oro-chiaro);
+  outline-offset: 2px;
+}
+
+.domande details p {
+  margin: 0 0 14px;
+  line-height: 1.7;
+  color: var(--testo-tenue);
+}
+
+.vicine {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-top: 28px;
+}
+
+.vicine a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}

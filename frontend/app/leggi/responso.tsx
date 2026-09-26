@@ -4,7 +4,7 @@
  * (il pannello compone l'immagine e dà il link) o cominciare una nuova lettura. */
 
 import { useCallback, useState } from "react";
-import Link from "next/link";
+import Link from "@/app/componenti/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLingua } from "@/lib/lingua";
 import { Markdown } from "../componenti/markdown";

@@ -2,11 +2,13 @@
 
 /* La pagina di una stesa: schema, posizioni, regole, coppie da leggere insieme. */
 
-import Link from "next/link";
+import Link from "@/app/componenti/link";
 import type { Stesa } from "@/lib/api";
 import type { ArticoloBreve } from "@/lib/blog";
 import { nomePosizione, nomeStesa } from "@/lib/i18n";
 import { useLingua } from "@/lib/lingua";
+import type { LinguaPubblica } from "@/lib/percorsi";
+import { STESA, seoStesa } from "@/lib/seo-testi";
 import { SchedaArticolo } from "../../blog/componenti/elementi";
 import stiliBlog from "../../blog/blog.module.css";
 import { BannerMazzo } from "../../componenti/banner-mazzo";
@@ -15,17 +17,23 @@ import { COLORE_SOGGETTO, Tavolo } from "../../leggi/tavolo";
 import { TesseraStesa } from "../elenco";
 import stili from "../stese.module.css";
 
-export function SchedaStesa({ stesa, altre, articoli = [] }: { stesa: Stesa; altre: Stesa[]; articoli?: ArticoloBreve[] }) {
+export function SchedaStesa({
+  stesa, altre, articoli = [], lingua: linguaPagina,
+}: { stesa: Stesa; altre: Stesa[]; articoli?: ArticoloBreve[]; lingua: LinguaPubblica }) {
   const { t, lingua } = useLingua();
+  const nomeSt = stesa.lang ? stesa.nome : nomeStesa(stesa, lingua);
+  const nomePos = (p: Stesa["posizioni"][number]) => (stesa.lang ? p.nome : nomePosizione(p, lingua));
+  const seo = seoStesa(stesa, nomeSt);
+  const domande = STESA.domande(linguaPagina, seo);
   const tipo =
     stesa.categoria === "compatibilita" ? t.tipo_compat : stesa.categoria === "coppia" ? t.tipo_coppia : t.stese_standard_titolo;
   const nomeDi = (n: number) => {
     const p = stesa.posizioni.find((x) => x.n === n);
-    return p ? nomePosizione(p, lingua) : String(n);
+    return p ? nomePos(p) : String(n);
   };
 
   return (
-    <Involucro pubblica larga titolo={nomeStesa(stesa, lingua)} sottotitolo={undefined}>
+    <Involucro pubblica larga titolo={STESA.h1(linguaPagina, seo)} sottotitolo={undefined}>
       <div className={stili.testata}>
         <span className={stili.pillola}>{tipo}</span>
         {stesa.stile && <span className={stili.pillola}>{t[`stile_${stesa.stile}` as const]}</span>}
@@ -40,13 +48,13 @@ export function SchedaStesa({ stesa, altre, articoli = [] }: { stesa: Stesa; alt
           nomePartner={undefined} />
       </div>
 
-      <h2 className={stili.sottotitolo}>{t.stesa_posizioni}</h2>
+      <h2 className={stili.sottotitolo}>{STESA.h2Posizioni(linguaPagina, seo)}</h2>
       <ol className={stili.posizioni}>
         {stesa.posizioni.map((p) => (
           <li key={p.n} className={`pannello ${stili.posizione}`}
             style={p.soggetto ? ({ "--soggetto": COLORE_SOGGETTO[p.soggetto] } as React.CSSProperties) : undefined}>
             <span className={stili.numero} aria-label={t.stesa_posizione_n(p.n)}>{p.n}</span>
-            <span className={stili.posizioneNome}>{nomePosizione(p, lingua)}</span>
+            <span className={stili.posizioneNome}>{nomePos(p)}</span>
             <p>{p.significato}</p>
             <p className={stili.guida}>{p.domanda}</p>
           </li>
@@ -55,7 +63,7 @@ export function SchedaStesa({ stesa, altre, articoli = [] }: { stesa: Stesa; alt
 
       {stesa.regole.length > 0 && (
         <>
-          <h2 className={stili.sottotitolo}>{t.stesa_regole}</h2>
+          <h2 className={stili.sottotitolo}>{STESA.h2Come(linguaPagina, seo)}</h2>
           <ul className={stili.regole}>
             {stesa.regole.map((r, i) => <li key={i}>{r}</li>)}
           </ul>
@@ -80,8 +88,22 @@ export function SchedaStesa({ stesa, altre, articoli = [] }: { stesa: Stesa; alt
         </>
       )}
 
+      {domande.length > 0 && (
+        <section aria-labelledby="stesa-domande">
+          <h2 id="stesa-domande" className={stili.sottotitolo}>{STESA.h2Domande(linguaPagina)}</h2>
+          <div className={stili.domande}>
+            {domande.map((d) => (
+              <details key={d.d}>
+                <summary>{d.d}</summary>
+                <p>{d.r}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+      )}
+
       <div className={stili.azioni}>
-        <Link href={`/leggi?stesa=${stesa.id}`} className="bottone">✦ {t.stesa_fai}</Link>
+        <Link href={`/leggi?stesa=${stesa.id}`} className="bottone">✦ {STESA.cta(linguaPagina, seo)}</Link>
         <Link href="/stese" className="bottone-secondario">{t.stesa_tutte}</Link>
       </div>
 

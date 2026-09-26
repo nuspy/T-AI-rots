@@ -47,11 +47,19 @@ export interface ArticoloBlog extends Omit<ArticoloBreve, "immagine"> {
   immagine: ImmagineArticolo | null;
   seo_titolo: string | null;
   seo_descrizione: string;
+  /* I campi SEO scritti da chi pubblica: la parola chiave principale, le secondarie, `noindex`, l'indirizzo canonico
+   * (se il testo vive altrove) e le domande frequenti (diventano dati strutturati FAQ). */
+  seo_parola_chiave: string | null;
+  parole_chiave: string[];
+  noindex: boolean;
+  canonical_url: string | null;
+  faq: { domanda: string; risposta: string }[];
   commenti_aperti: boolean;
   briciole: { slug: string; nome: string }[];
+  /* Carte e stese citate: l'id canonico, il nome e lo slug nella lingua dell'articolo, gli slug in ogni lingua. */
   collegamenti: {
-    carte: { id: string; nome_it: string }[];
-    stese: { id: string; nome: string }[];
+    carte: { id: string; nome_it: string; nome: string; slug: string; slugs: Record<string, string> }[];
+    stese: { id: string; nome: string; slug: string; slugs: Record<string, string> }[];
     articoli: ArticoloBreve[];
   };
   correlati: ArticoloBreve[];
