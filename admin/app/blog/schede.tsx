@@ -9,6 +9,7 @@ const PARTI = [
   { href: "/blog/sezioni", etichetta: "Sezioni" },
   { href: "/blog/immagini", etichetta: "Immagini" },
   { href: "/blog/etichette", etichetta: "Etichette" },
+  { href: "/blog/chiavi", etichetta: "Chiavi" },
 ];
 
 /* Le parti del blog, una sotto l'altra nella navigazione principale ma qui affiancate: la console ha una voce

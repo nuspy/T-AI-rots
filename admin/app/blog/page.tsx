@@ -189,6 +189,9 @@ export default function Articoli() {
                     </Link>
                     <p className={stili.dettagli}>
                       <span className={`${comuni.stato} ${s.classe}`}>{s.testo}</span>
+                      <span className={comuni.mono}>{a.lang.toUpperCase()}</span>
+                      {a.noindex && <span title="Fuori dai motori di ricerca">non indicizzato</span>}
+                      {a.creato_da_chiave_id !== null && <span title="Pubblicato da un agente con una chiave">via REST</span>}
                       <span>{a.sezione_id ? (nomeSezione.get(a.sezione_id) ?? "—") : "senza sezione"}</span>
                       <span>{a.pubblicato_il ? quandoCompleto(a.pubblicato_il) : `modificato ${quandoCompleto(a.aggiornato)}`}</span>
                       {a.autore && <span>{a.autore.nome}</span>}

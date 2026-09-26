@@ -41,6 +41,18 @@ export interface CampiSezione {
   seo_descrizione?: string | null;
 }
 
+/** Una domanda frequente: si vede in pagina e diventa dati strutturati FAQ. */
+export interface DomandaFrequente {
+  domanda: string;
+  risposta: string;
+}
+
+/* I tetti che il server applica ai campi SEO (`blog_seo.py`): qui per dirlo mentre si scrive. */
+export const FAQ_MAX = 10;
+export const FAQ_DOMANDA_MAX = 200;
+export const FAQ_RISPOSTA_MAX = 1200;
+export const PAROLE_CHIAVE_MAX = 10;
+
 export interface Articolo {
   id: string;
   slug: string;
@@ -60,6 +72,16 @@ export interface Articolo {
   commenti_aperti: boolean;
   seo_titolo: string | null;
   seo_descrizione: string | null;
+  /** La parola chiave principale (quella per cui si vuole essere trovati) e le secondarie. */
+  seo_parola_chiave: string | null;
+  seo_parole_chiave: string[];
+  /** Vero: l'articolo resta leggibile ma i motori di ricerca non lo indicizzano né lo mettono nella mappa. */
+  noindex: boolean;
+  /** Se il testo vive altrove, l'indirizzo `https` della versione originale. */
+  canonical_url: string | null;
+  faq: DomandaFrequente[];
+  /** Vale `null` per un articolo scritto in console; altrimenti la chiave applicativa che l'ha pubblicato. */
+  creato_da_chiave_id: number | null;
   tempo_lettura: number;
   autore: { id: number; nome: string } | null;
   creato: string | null;
@@ -82,6 +104,11 @@ export interface CampiArticolo {
   commenti_aperti?: boolean;
   seo_titolo?: string | null;
   seo_descrizione?: string | null;
+  seo_parola_chiave?: string | null;
+  seo_parole_chiave?: string[];
+  noindex?: boolean;
+  canonical_url?: string | null;
+  faq?: DomandaFrequente[];
   stato?: StatoArticolo;
   pubblicato_il?: string | null;
 }
@@ -223,3 +250,83 @@ export async function carteEStese(t: string): Promise<{ carte: Riferimento[]; st
     stese: stese.map((s) => ({ id: s.id, nome: s.nome })),
   };
 }
+
+/* ---- il controllo SEO ---- */
+
+export type EsitoControllo = "ok" | "avviso" | "errore";
+
+export interface ControlloSeo {
+  id: string;
+  esito: EsitoControllo;
+  peso: number;
+  messaggio: string;
+  messaggio_it: string;
+}
+
+export interface RapportoSeo {
+  /** Da 0 a 100: la somma pesata dei controlli. Non promette un posizionamento, dice dove migliorare. */
+  punteggio: number;
+  giudizio: "ottimo" | "buono" | "da_migliorare";
+  controlli: ControlloSeo[];
+  statistiche: {
+    parole: number;
+    titoli_h2: number;
+    collegamenti_interni: number;
+    collegamenti_esterni: number;
+    faq: number;
+    tempo_lettura: number;
+  };
+}
+
+/** L'articolo com'è adesso, anche non salvato: il rapporto si calcola sul server, con le stesse regole della REST. */
+export interface DatiControlloSeo {
+  titolo: string;
+  sottotitolo: string | null;
+  testo: string;
+  slug: string;
+  seo_titolo: string | null;
+  seo_descrizione: string | null;
+  seo_parola_chiave: string | null;
+  immagine_presente: boolean;
+  immagine_alt: string | null;
+  tags: string[];
+  faq: DomandaFrequente[];
+}
+
+export const controlloSeo = (t: string, corpo: DatiControlloSeo) =>
+  chiamata<RapportoSeo>(t, "/admin/blog/seo-check", { method: "POST", body: JSON.stringify(corpo) });
+
+/* ---- le chiavi applicative (per gli agenti che pubblicano via REST) ---- */
+
+export type PermessoChiave = "blog:write" | "blog:publish";
+
+export interface ChiaveApi {
+  id: number;
+  nome: string;
+  /** I primi caratteri: per riconoscerla nell'elenco. La chiave intera non si rivede. */
+  prefisso: string;
+  scopes: PermessoChiave[];
+  limite_minuto: number;
+  limite_giorno: number;
+  attiva: boolean;
+  ultimo_uso: string | null;
+  usi: number;
+  creata: string | null;
+  revocata: string | null;
+}
+
+export interface CampiChiave {
+  nome: string;
+  scopes: PermessoChiave[];
+  limite_minuto: number;
+  limite_giorno: number;
+}
+
+export const chiaviApi = (t: string) => chiamata<ChiaveApi[]>(t, "/admin/blog/api-keys");
+
+/** La risposta porta la chiave completa, **una volta sola**. */
+export const creaChiaveApi = (t: string, corpo: CampiChiave) =>
+  chiamata<ChiaveApi & { chiave: string }>(t, "/admin/blog/api-keys", { method: "POST", body: JSON.stringify(corpo) });
+
+export const revocaChiaveApi = (t: string, id: number) =>
+  chiamata<void>(t, `/admin/blog/api-keys/${id}`, { method: "DELETE" });

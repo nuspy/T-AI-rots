@@ -752,3 +752,183 @@
 .sceltaAttiva {
   border-color: var(--rubrica);
 }
+
+/* ---- il controllo SEO ---- */
+
+.punteggio {
+  margin: 0 0 0.75rem;
+}
+
+.punteggioBarra {
+  height: 10px;
+  border: 1px solid var(--filo);
+  border-radius: 999px;
+  background: var(--superficie-alta);
+  overflow: hidden;
+}
+
+.punteggioBarra > span {
+  display: block;
+  height: 100%;
+  background: var(--inchiostro-debole);
+  transition: width 0.25s ease;
+}
+
+.punteggioBarra > span[data-giudizio="ottimo"] {
+  background: var(--quiete);
+}
+
+.punteggioBarra > span[data-giudizio="buono"] {
+  background: var(--rubrica);
+}
+
+.punteggioBarra > span[data-giudizio="da_migliorare"] {
+  background: var(--allarme);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .punteggioBarra > span {
+    transition: none;
+  }
+}
+
+.punteggioNumero {
+  margin: 0.4rem 0 0;
+  font-size: 0.875rem;
+  color: var(--inchiostro-tenue);
+}
+
+.punteggioNumero strong {
+  font-size: 1.5rem;
+  color: var(--inchiostro);
+}
+
+.statistiche {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.9rem;
+  margin: 0 0 0.75rem;
+  font-family: var(--apparato);
+  font-size: 0.75rem;
+  color: var(--inchiostro-debole);
+}
+
+.controlli {
+  list-style: none;
+  margin: 0 0 0.6rem;
+  padding: 0;
+}
+
+.controllo {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  border-top: 1px solid var(--filo-tenue);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--inchiostro-tenue);
+}
+
+.controllo:first-child {
+  border-top: 0;
+}
+
+.controlloSegno {
+  font-family: var(--apparato);
+  font-weight: 700;
+  text-align: center;
+}
+
+.controllo[data-esito="ok"] .controlloSegno {
+  color: var(--quiete);
+}
+
+.controllo[data-esito="avviso"] .controlloSegno {
+  color: var(--rubrica);
+}
+
+.controllo[data-esito="errore"] .controlloSegno {
+  color: var(--allarme);
+}
+
+.controllo[data-esito="errore"] {
+  color: var(--inchiostro);
+}
+
+.riusciti {
+  margin: 0 0 0.6rem;
+  font-size: 0.8125rem;
+}
+
+.riusciti summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+  color: var(--inchiostro-tenue);
+}
+
+.riusciti summary:focus-visible {
+  outline: 2px solid var(--rubrica);
+  outline-offset: 2px;
+}
+
+.soloLettori {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---- domande frequenti (FAQ) di un articolo ---- */
+
+.domandeFaq {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.domandaFaq {
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  padding: 0.75rem 0.85rem 0.25rem;
+  background: var(--carta-alta);
+}
+
+/* ---- chiavi applicative ---- */
+
+.chiaveNuova {
+  border: 1px solid var(--rubrica);
+  border-radius: var(--raggio);
+  padding: 1rem 1.1rem;
+  margin: 0 0 1.25rem;
+  background: var(--superficie);
+}
+
+.chiaveNuova code {
+  display: block;
+  margin: 0.6rem 0;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: var(--carta);
+  font-family: var(--apparato);
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.permessi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin: 0 0 0.9rem;
+}

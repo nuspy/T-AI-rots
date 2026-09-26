@@ -11,14 +11,20 @@ import {
   creaArticolo,
   eliminaArticolo,
   etichette,
+  FAQ_DOMANDA_MAX,
+  FAQ_MAX,
+  FAQ_RISPOSTA_MAX,
   markdownImmagine,
   modificaArticolo,
+  PAROLE_CHIAVE_MAX,
   revisioni,
   ripristina,
   sezioni,
   urlMedia,
   type Articolo,
   type CampiArticolo,
+  type DatiControlloSeo,
+  type DomandaFrequente,
   type Immagine,
   type StatoArticolo,
 } from "@/lib/blog";
@@ -28,6 +34,7 @@ import comuni from "../comuni.module.css";
 import { etichettaStato, sezioniInOrdine } from "./aiuti";
 import { Anteprima } from "./anteprima";
 import stili from "./blog.module.css";
+import { PannelloSeo } from "./pannello-seo";
 import { SelettoreImmagine } from "./selettore-immagine";
 
 /* L'editor di un articolo, nuovo o esistente.
@@ -42,8 +49,10 @@ import { SelettoreImmagine } from "./selettore-immagine";
  * versioni, collegamenti interni e tempo di lettura sono quelli, non una copia.
  */
 
+/* Il sito pubblica in inglese (canonico) e in italiano: gli elenchi del blog mostrano gli articoli di queste due.
+ * Le altre lingue restano raggiungibili dall'indirizzo dell'articolo ma non compaiono negli elenchi. */
 const LINGUE = [
-  ["it", "Italiano"], ["en", "English"], ["hu", "Magyar"], ["de", "Deutsch"], ["fr", "Français"],
+  ["en", "English"], ["it", "Italiano"], ["hu", "Magyar"], ["de", "Deutsch"], ["fr", "Français"],
   ["es", "Español"], ["pt", "Português"], ["ru", "Русский"], ["uk", "Українська"], ["ro", "Română"],
   ["pl", "Polski"], ["zh", "中文"], ["hi", "हिन्दी"], ["ko", "한국어"], ["ar", "العربية"],
 ] as const;
@@ -69,15 +78,22 @@ interface Forma {
   commentiAperti: boolean;
   seoTitolo: string;
   seoDescrizione: string;
+  /** La parola chiave principale e le secondarie (separate da virgole: si dividono al salvataggio). */
+  parolaChiave: string;
+  paroleSecondarie: string;
+  noindex: boolean;
+  canonical: string;
+  faq: DomandaFrequente[];
   stato: StatoArticolo;
   /** Il valore di un `<input type="datetime-local">`: ora locale, senza fuso. */
   pubblicatoIl: string;
 }
 
 const VUOTA: Forma = {
-  titolo: "", sottotitolo: "", testo: "", slug: "", lang: "it", sezioneId: "", immagineId: null,
+  titolo: "", sottotitolo: "", testo: "", slug: "", lang: "en", sezioneId: "", immagineId: null,
   immagineUrl: null, immagineAlt: "", tags: [], inEvidenza: false, commentiAperti: true, seoTitolo: "",
-  seoDescrizione: "", stato: "bozza", pubblicatoIl: "",
+  seoDescrizione: "", parolaChiave: "", paroleSecondarie: "", noindex: false, canonical: "", faq: [],
+  stato: "bozza", pubblicatoIl: "",
 };
 
 const due = (n: number) => String(n).padStart(2, "0");
@@ -96,9 +112,27 @@ function daArticolo(a: Articolo): Forma {
     sezioneId: a.sezione_id === null ? "" : String(a.sezione_id), immagineId: a.immagine_id,
     immagineUrl: a.immagine, immagineAlt: a.immagine_alt ?? "", tags: a.tags, inEvidenza: a.in_evidenza,
     commentiAperti: a.commenti_aperti, seoTitolo: a.seo_titolo ?? "", seoDescrizione: a.seo_descrizione ?? "",
+    parolaChiave: a.seo_parola_chiave ?? "", paroleSecondarie: a.seo_parole_chiave.join(", "), noindex: a.noindex,
+    canonical: a.canonical_url ?? "", faq: a.faq.map((f) => ({ domanda: f.domanda, risposta: f.risposta })),
     stato: a.stato, pubblicatoIl: inCampo(a.pubblicato_il),
   };
 }
+
+/* «amore, tarocchi di Thoth» → ["amore", "tarocchi di Thoth"], senza vuoti né doppioni. */
+function paroleDa(testo: string): string[] {
+  const viste = new Set<string>();
+  return testo
+    .split(",")
+    .map((v) => v.replace(/\s+/g, " ").trim())
+    .filter((v) => v && !viste.has(v.toLowerCase()) && viste.add(v.toLowerCase()))
+    .slice(0, PAROLE_CHIAVE_MAX);
+}
+
+/* Una domanda senza risposta (o viceversa) non si salva: il server la scarterebbe. */
+const faqCompleta = (faq: DomandaFrequente[]): DomandaFrequente[] =>
+  faq
+    .map((f) => ({ domanda: f.domanda.trim(), risposta: f.risposta.trim() }))
+    .filter((f) => f.domanda && f.risposta);
 
 function inCorpo(f: Forma): CampiArticolo {
   return {
@@ -116,6 +150,11 @@ function inCorpo(f: Forma): CampiArticolo {
     commenti_aperti: f.commentiAperti,
     seo_titolo: f.seoTitolo.trim() || null,
     seo_descrizione: f.seoDescrizione.trim() || null,
+    seo_parola_chiave: f.parolaChiave.trim() || null,
+    seo_parole_chiave: paroleDa(f.paroleSecondarie),
+    noindex: f.noindex,
+    canonical_url: f.canonical.trim() || null,
+    faq: faqCompleta(f.faq),
     stato: f.stato,
     pubblicato_il: f.pubblicatoIl ? new Date(f.pubblicatoIl).toISOString() : null,
   };
@@ -366,6 +405,20 @@ function Modulo({ iniziale }: { iniziale: Articolo | null }) {
   const stato = articoloSalvato ? etichettaStato(articoloSalvato) : null;
   const dataFutura = forma.pubblicatoIl !== "" && new Date(forma.pubblicatoIl).getTime() > adesso;
   const senzaTitolo = !forma.titolo.trim();
+  /* Ciò che il server controlla: l'articolo com'è adesso, anche non salvato. */
+  const datiSeo: DatiControlloSeo = {
+    titolo: forma.titolo.trim(),
+    sottotitolo: forma.sottotitolo.trim() || null,
+    testo: forma.testo,
+    slug: forma.slug.trim(),
+    seo_titolo: forma.seoTitolo.trim() || null,
+    seo_descrizione: forma.seoDescrizione.trim() || null,
+    seo_parola_chiave: forma.parolaChiave.trim() || null,
+    immagine_presente: forma.immagineId !== null,
+    immagine_alt: forma.immagineAlt.trim() || null,
+    tags: forma.tags,
+    faq: faqCompleta(forma.faq),
+  };
 
   return (
     <>
@@ -625,6 +678,10 @@ function Modulo({ iniziale }: { iniziale: Articolo | null }) {
                   </option>
                 ))}
               </select>
+              <span className={comuni.campoAiuto}>
+                Il sito è in inglese (lingua principale per i motori di ricerca) e in italiano: l&apos;articolo sta
+                nell&apos;indirizzo della sua lingua.
+              </span>
             </label>
           </section>
 
@@ -730,10 +787,35 @@ function Modulo({ iniziale }: { iniziale: Articolo | null }) {
             )}
           </section>
 
+          <PannelloSeo dati={datiSeo} />
+
           <section className={stili.pannello} aria-labelledby="seo">
             <h2 id="seo" className={stili.pannelloTitolo}>
               Motori di ricerca
             </h2>
+            <label className={comuni.campo}>
+              <span className={comuni.campoEtichetta}>Parola chiave principale</span>
+              <input
+                className={comuni.ingresso}
+                value={forma.parolaChiave}
+                maxLength={120}
+                onChange={(e) => imposta("parolaChiave", e.target.value)}
+                placeholder="La frase con cui vuoi essere trovato, per esempio «the tower tarot meaning»"
+              />
+              <span className={comuni.campoAiuto}>
+                Una sola, nella lingua dell&apos;articolo. Il controllo verifica che stia nel titolo, nella descrizione, nel
+                primo paragrafo e in un titolo di sezione — senza ripeterla a sproposito.
+              </span>
+            </label>
+            <label className={comuni.campo}>
+              <span className={comuni.campoEtichetta}>Parole chiave secondarie</span>
+              <input
+                className={comuni.ingresso}
+                value={forma.paroleSecondarie}
+                onChange={(e) => imposta("paroleSecondarie", e.target.value)}
+                placeholder="Separate da virgole (al massimo dieci)"
+              />
+            </label>
             <label className={comuni.campo}>
               <span className={comuni.campoEtichetta}>Indirizzo (slug)</span>
               <input
@@ -782,9 +864,85 @@ function Modulo({ iniziale }: { iniziale: Articolo | null }) {
               <div style={{ color: "var(--rubrica)", fontSize: "1rem" }}>
                 {(titoloSeo || "Titolo dell'articolo").slice(0, 70)}
               </div>
-              <div className={comuni.mono}>/blog/{forma.slug || "…"}</div>
+              <div className={comuni.mono}>
+                {forma.lang === "it" ? "/it" : ""}/blog/{forma.slug || "…"}
+              </div>
               <div>{descrizioneSeo || "La descrizione comparirà qui."}</div>
             </div>
+            <label className={comuni.campo}>
+              <span className={comuni.campoEtichetta}>Indirizzo canonico</span>
+              <input
+                className={comuni.ingresso}
+                type="url"
+                inputMode="url"
+                value={forma.canonical}
+                maxLength={500}
+                onChange={(e) => imposta("canonical", e.target.value)}
+                placeholder="Vuoto: la pagina è l'originale"
+              />
+              <span className={comuni.campoAiuto}>
+                Solo se questo testo è già pubblicato altrove: l&apos;indirizzo https della versione originale. Un motore di
+                ricerca la preferirà a questa.
+              </span>
+            </label>
+            <label className={stili.interruttore}>
+              <input type="checkbox" checked={forma.noindex} onChange={(e) => imposta("noindex", e.target.checked)} />
+              Non indicizzare (resta leggibile, ma fuori dai motori di ricerca e dalla mappa del sito)
+            </label>
+          </section>
+
+          <section className={stili.pannello} aria-labelledby="faq">
+            <h2 id="faq" className={stili.pannelloTitolo}>
+              Domande frequenti
+            </h2>
+            <p className={comuni.riquadroNota}>
+              Compaiono in fondo all&apos;articolo e diventano dati strutturati FAQ: possono uscire come risposte
+              espandibili nei risultati di ricerca. Scrivi domande vere, con risposte brevi.
+            </p>
+            {forma.faq.length > 0 && (
+              <ul className={stili.domandeFaq} aria-label="Domande frequenti dell'articolo">
+                {forma.faq.map((f, i) => (
+                  <li key={i} className={stili.domandaFaq}>
+                    <label className={comuni.campo}>
+                      <span className={comuni.campoEtichetta}>Domanda {i + 1}</span>
+                      <input
+                        className={comuni.ingresso}
+                        value={f.domanda}
+                        maxLength={FAQ_DOMANDA_MAX}
+                        onChange={(e) => imposta("faq", forma.faq.map((x, k) => (k === i ? { ...x, domanda: e.target.value } : x)))}
+                      />
+                    </label>
+                    <label className={comuni.campo}>
+                      <span className={comuni.campoEtichetta}>Risposta</span>
+                      <textarea
+                        className={comuni.area}
+                        style={{ minHeight: "5rem", fontFamily: "inherit", fontSize: "1rem" }}
+                        value={f.risposta}
+                        maxLength={FAQ_RISPOSTA_MAX}
+                        onChange={(e) => imposta("faq", forma.faq.map((x, k) => (k === i ? { ...x, risposta: e.target.value } : x)))}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className={comuni.secondaria}
+                      style={{ height: 44, marginBottom: "0.9rem" }}
+                      onClick={() => imposta("faq", forma.faq.filter((_, k) => k !== i))}
+                    >
+                      Togli la domanda {i + 1}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <button
+              type="button"
+              className={comuni.secondaria}
+              style={{ height: 44, marginBottom: "0.9rem" }}
+              disabled={forma.faq.length >= FAQ_MAX}
+              onClick={() => imposta("faq", [...forma.faq, { domanda: "", risposta: "" }])}
+            >
+              {forma.faq.length >= FAQ_MAX ? `Al massimo ${FAQ_MAX}` : "Aggiungi una domanda"}
+            </button>
           </section>
 
           {!nuovo && (
