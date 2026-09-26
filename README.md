@@ -312,6 +312,36 @@ luogo di nascita, la traduzione nelle altre 12 lingue dei nuovi testi.
 database a parte (upgrade, uguaglianza con i modelli, downgrade). Backend e
 frontend vanno rilasciati insieme.
 
+## Pagine pubbliche (senza account)
+
+Carte, stese e la pagina del mazzo si vedono senza registrarsi, e **escono dal server già scritte**:
+chi le cerca (un motore di ricerca, l'anteprima di un social) non aspetta il JavaScript.
+
+| percorso | cosa mostra |
+|---|---|
+| `/carte`, `/carte/{id}` | le 78 carte, attribuzioni e significati |
+| `/stese`, `/stese/{id}` | le 14 stese (5 classiche, 4 di compatibilità, 5 di coppia): schema con le posizioni numerate, significato e domanda guida di ciascuna, regole, coppie da leggere insieme, origine |
+| `/mazzo` | anteprima del prodotto «mazzo con la grafica originale» (in preparazione: niente prezzo né acquisto) |
+| `/sitemap.xml`, `/robots.txt` | mappa del sito e regole per i crawler (le pagine personali e `/s/` sono escluse) |
+
+Come è fatto:
+
+- **`Providers` gira anche sul server** (`app/providers.tsx`): `react-oidc-context` non crea il gestore dell'accesso
+  sul server e dice «sessione in caricamento», come nel primo rendering del browser, quindi i due alberi
+  coincidono. Prima restituiva `null` fino all'idratazione: il corpo di ogni pagina era vuoto per i crawler.
+- **I dati arrivano dal server di Next** (`lib/server-api.ts`, `API_INTERNAL_URL`), con `no-store` e una
+  memoria di 30 secondi: la cache dei dati di Next li cuocerebbe nella build, quando l'API non c'è, in un elenco
+  vuoto. Le pagine sono dinamiche (`ƒ` nell'elenco della build). `generateMetadata` scrive titolo, descrizione,
+  canonical e Open Graph di ogni pagina.
+- **Navigazione**: quattro voci sempre in vista (Consulta, Le mie letture, Le carte, Le stese) e «Altro» con
+  le altre (Carta del giorno, Il mazzo, Crediti): la barra in basso del telefono non regge più di cinque voci.
+  Il collegamento grafico al mazzo (`BannerMazzo`) è in fondo alle pagine pubbliche e in home.
+- **Il mazzo**: la scena in testa è composta in CSS con le carte vere. Se esiste `public/mazzo/foto-mazzo.webp`
+  (una fotografia vera o generata) la copre. Una prova di generazione con LitMedia non è andata a buon fine: la
+  richiesta HTTPS della skill fallisce per la catena di certificati del server (`requests` non la verifica; curl
+  sì) e il 2026-09-24 i suoi task per «Nano Banana» venivano chiusi dal server senza motivo. Non si aggira la
+  verifica dei certificati.
+
 ## Verifica in due passaggi (facoltativa)
 
 Gli amministratori hanno l'OTP obbligatorio (`deploy/keycloak/README.md`). Gli utenti possono attivarlo dal

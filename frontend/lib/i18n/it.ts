@@ -370,6 +370,50 @@ export const it = {
   sic_attiva_2fa: "Attiva la verifica in due passaggi",
   sic_gestisci: "Gestisci nell'account",
   sic_promemoria: "Ricordami di attivarla ad ogni accesso",
+
+  /* Navigazione: altre sezioni */
+  nav_stese: "Le stese",
+  nav_mazzo: "Il mazzo",
+  nav_altro: "Altro",
+  nav_altro_titolo: "Altre sezioni",
+
+  /* Le stese, pubbliche */
+  stese_titolo: "Le stese",
+  stese_sottotitolo: "Gli schemi con cui si dispongono le carte: la posizione dà a ciascuna il suo significato. Qui trovi quelli della tradizione e quelli pensati per le relazioni.",
+  stese_standard_titolo: "Le stese classiche",
+  stese_standard_testo: "Cinque schemi da manuale, dal più semplice alla Croce Celtica e alla Ruota astrologica.",
+  stese_speciali_testo: "Stese per capire un legame: cosa unisce due persone, cosa le mette alla prova, dove sta andando la relazione.",
+  stesa_posizioni: "Le posizioni",
+  stesa_posizione_n: (n: number) => `Posizione ${n}`,
+  stesa_domanda_guida: "La domanda che guida la lettura",
+  stesa_regole: "Come si legge",
+  stesa_origine: "Origine",
+  stesa_fai: "Fai questa lettura",
+  stesa_tutte: "Tutte le stese",
+  stesa_diagramma: "Lo schema della stesa: le posizioni numerate sul tavolo.",
+  stesa_n_carte: (n: number) => (n === 1 ? "1 carta" : `${n} carte`),
+  stesa_altre_categoria: "Altre stese dello stesso tipo",
+
+  /* Il mazzo (pagina di anteprima) */
+  mazzo_banner_titolo: (dominio: string) => `Compra il mazzo con la grafica originale di ${dominio}`,
+  mazzo_banner_testo: "78 carte illustrate, un dorso dorato, il cofanetto da collezione.",
+  mazzo_banner_cta: "Scopri il mazzo",
+  mazzo_titolo: "Il mazzo di T·AI·rots",
+  mazzo_sottotitolo: "Il Tarocco di Thoth con la grafica originale del sito: 78 carte illustrate e un dorso che le riconosce fra mille.",
+  mazzo_anteprima: "Anteprima · in preparazione",
+  mazzo_carte_titolo: "Alcune carte del mazzo",
+  mazzo_dorso_titolo: "Il dorso",
+  mazzo_dorso_testo: "L'esagramma unicursale e la rosa a cinque petali, in oro su notte: lo stesso dorso che vedi quando peschi le carte in una lettura.",
+  mazzo_punti_titolo: "Cosa avrai fra le mani",
+  mazzo_punti: [
+    ["78 carte illustrate", "Arcani maggiori e minori, ciascuno con l'immagine originale che compare nelle letture."],
+    ["Dorso dorato", "Un disegno unico, riconoscibile, pensato per farsi guardare anche da chiuso."],
+    ["Cofanetto da collezione", "Rigido, con finiture in oro: un oggetto da tenere in vista o da regalare."],
+    ["Il libretto delle carte", "Attribuzioni, significati e le stese del sito, per leggere anche lontano dallo schermo."],
+  ] as [string, string][],
+  mazzo_cta: "Presto disponibile",
+  mazzo_cta_testo: "Il mazzo è in preparazione. Intanto puoi conoscere le carte una a una, o provarle in una lettura.",
+  mazzo_prova: "Prova le carte in una lettura",
 };
 
 /** La forma di un dizionario completo. */

@@ -343,4 +343,48 @@ export const hu: Dizionario = {
   sic_attiva_2fa: "Kétlépcsős azonosítás bekapcsolása",
   sic_gestisci: "Kezelés a fiókban",
   sic_promemoria: "Emlékeztess minden belépéskor, hogy kapcsoljam be",
+
+  /* Navigáció: további részek */
+  nav_stese: "Kirakások",
+  nav_mazzo: "A pakli",
+  nav_altro: "Több",
+  nav_altro_titolo: "További részek",
+
+  /* A kirakások, nyilvánosan */
+  stese_titolo: "A kirakások",
+  stese_sottotitolo: "A minták, amelyekben a kártyákat lerakjuk: a pozíció adja meg mindegyik jelentését. Itt a hagyományosakat és a kapcsolatokra szabottakat találod.",
+  stese_standard_titolo: "A klasszikus kirakások",
+  stese_standard_testo: "Öt tankönyvi minta, a legegyszerűbbtől a Kelta keresztig és a Csillagászati kerékig.",
+  stese_speciali_testo: "Kirakások egy kapcsolat megértéséhez: mi köt össze két embert, mi teszi próbára őket, merre tart a kapcsolat.",
+  stesa_posizioni: "A pozíciók",
+  stesa_posizione_n: (n: number) => `${n}. pozíció`,
+  stesa_domanda_guida: "A jóslást vezető kérdés",
+  stesa_regole: "Hogyan kell olvasni",
+  stesa_origine: "Eredet",
+  stesa_fai: "Ezt a jóslást kérem",
+  stesa_tutte: "Minden kirakás",
+  stesa_diagramma: "A kirakás mintája: a számozott pozíciók az asztalon.",
+  stesa_n_carte: (n: number) => `${n} kártya`,
+  stesa_altre_categoria: "További ilyen kirakások",
+
+  /* A pakli (bemutató oldal) */
+  mazzo_banner_titolo: (dominio: string) => `Vedd meg a paklit a(z) ${dominio} eredeti grafikájával`,
+  mazzo_banner_testo: "78 illusztrált kártya, aranyozott hátoldal, gyűjtői doboz.",
+  mazzo_banner_cta: "Ismerd meg a paklit",
+  mazzo_titolo: "A T·AI·rots pakli",
+  mazzo_sottotitolo: "A Thoth-tarot az oldal eredeti grafikájával: 78 illusztrált kártya és egy hátoldal, amelyet ezer közül is felismersz.",
+  mazzo_anteprima: "Bemutató · előkészületben",
+  mazzo_carte_titolo: "Néhány kártya a pakliból",
+  mazzo_dorso_titolo: "A hátoldal",
+  mazzo_dorso_testo: "Az egyvonalas hexagram és az ötszirmú rózsa, arany az éjszakán: ugyanaz a hátoldal, amelyet a jóslás közbeni húzáskor látsz.",
+  mazzo_punti_titolo: "Mit tarthatsz a kezedben",
+  mazzo_punti: [
+    ["78 illusztrált kártya", "Nagy és kis arkánumok, mindegyik a jóslásokban látott eredeti képpel."],
+    ["Aranyozott hátoldal", "Egyedi, felismerhető minta, amely lefordítva is szemet gyönyörködtet."],
+    ["Gyűjtői doboz", "Merev, arany díszítéssel: kiállításra vagy ajándéknak való tárgy."],
+    ["A kártyák füzete", "Megfeleltetések, jelentések és az oldal kirakásai, hogy a képernyőtől távol is olvashass."],
+  ] as [string, string][],
+  mazzo_cta: "Hamarosan kapható",
+  mazzo_cta_testo: "A pakli előkészületben van. Addig megismerheted a kártyákat egyenként, vagy kipróbálhatod őket egy jóslásban.",
+  mazzo_prova: "Próbáld ki a kártyákat egy jóslásban",
 };

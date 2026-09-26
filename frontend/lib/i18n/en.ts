@@ -344,4 +344,48 @@ export const en: Dizionario = {
   sic_attiva_2fa: "Turn on two-step verification",
   sic_gestisci: "Manage in your account",
   sic_promemoria: "Remind me to turn it on every time I sign in",
+
+  /* Navigation: other sections */
+  nav_stese: "Spreads",
+  nav_mazzo: "The deck",
+  nav_altro: "More",
+  nav_altro_titolo: "More sections",
+
+  /* The spreads, public */
+  stese_titolo: "The spreads",
+  stese_sottotitolo: "The layouts the cards are placed in: the position gives each card its meaning. Here are the traditional ones and those made for relationships.",
+  stese_standard_titolo: "The classic spreads",
+  stese_standard_testo: "Five textbook layouts, from the simplest to the Celtic Cross and the Astrological Wheel.",
+  stese_speciali_testo: "Spreads to understand a bond: what unites two people, what tests them, where the relationship is heading.",
+  stesa_posizioni: "The positions",
+  stesa_posizione_n: (n: number) => `Position ${n}`,
+  stesa_domanda_guida: "The question that guides the reading",
+  stesa_regole: "How to read it",
+  stesa_origine: "Origin",
+  stesa_fai: "Do this reading",
+  stesa_tutte: "All spreads",
+  stesa_diagramma: "The layout of the spread: the numbered positions on the table.",
+  stesa_n_carte: (n: number) => (n === 1 ? "1 card" : `${n} cards`),
+  stesa_altre_categoria: "More spreads of the same kind",
+
+  /* The deck (preview page) */
+  mazzo_banner_titolo: (dominio: string) => `Buy the deck with the original artwork of ${dominio}`,
+  mazzo_banner_testo: "78 illustrated cards, a gilded back, the collector's box.",
+  mazzo_banner_cta: "Discover the deck",
+  mazzo_titolo: "The T·AI·rots deck",
+  mazzo_sottotitolo: "The Thoth Tarot with the site's original artwork: 78 illustrated cards and a back you would recognise among a thousand.",
+  mazzo_anteprima: "Preview · in preparation",
+  mazzo_carte_titolo: "Some cards from the deck",
+  mazzo_dorso_titolo: "The back",
+  mazzo_dorso_testo: "The unicursal hexagram and the five-petalled rose, gold on night: the same back you see when you draw cards in a reading.",
+  mazzo_punti_titolo: "What you will hold in your hands",
+  mazzo_punti: [
+    ["78 illustrated cards", "Major and minor arcana, each with the original image that appears in the readings."],
+    ["Gilded back", "A unique, recognisable design, made to be looked at even face down."],
+    ["Collector's box", "Rigid, with gold finishes: an object to keep on display or to give as a gift."],
+    ["The booklet of the cards", "Attributions, meanings and the site's spreads, to read away from the screen too."],
+  ] as [string, string][],
+  mazzo_cta: "Coming soon",
+  mazzo_cta_testo: "The deck is in preparation. Meanwhile you can get to know the cards one by one, or try them in a reading.",
+  mazzo_prova: "Try the cards in a reading",
 };

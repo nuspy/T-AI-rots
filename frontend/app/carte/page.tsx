@@ -1,46 +1,19 @@
-"use client";
+/* Le 78 carte, pubbliche. Il server scrive già l'elenco. */
 
-/* Le 78 carte del Thoth, pubbliche: ciò che si cerca prima di consultare. */
+import type { Metadata } from "next";
+import type { Carta } from "@/lib/api";
+import { SITE_URL } from "@/lib/condivisione";
+import { leggiDalServer } from "@/lib/server-api";
+import { ElencoCarte } from "./elenco";
 
-import { useCallback, useState } from "react";
-import Link from "next/link";
-import { elencaCarte } from "@/lib/api";
-import { useLingua } from "@/lib/lingua";
-import { nomeCarta } from "@/lib/i18n";
-import { useCarica } from "@/lib/usa";
-import { Faccia } from "../componenti/carta";
-import { Involucro } from "../componenti/testata";
-import stili from "../pagine.module.css";
+export const metadata: Metadata = {
+  title: "Le 78 carte del Tarocco di Thoth: significati e attribuzioni",
+  description:
+    "Arcani maggiori e minori del Tarocco di Thoth di Aleister Crowley, con le attribuzioni (lettera ebraica, elemento, astrologia) e i significati dritti e rovesciati.",
+  alternates: { canonical: `${SITE_URL}/carte` },
+};
 
-const FILTRI = ["tutte", "maggiori", "bastoni", "coppe", "spade", "dischi"] as const;
-
-export default function PaginaCarte() {
-  const { t, lingua } = useLingua();
-  const carte = useCarica(useCallback(() => elencaCarte(), []), [], { pubblico: true });
-  const [filtro, setFiltro] = useState<(typeof FILTRI)[number]>("tutte");
-  const visibili = (carte.dati ?? []).filter((c) =>
-    filtro === "tutte" ? true : filtro === "maggiori" ? c.arcano === "maggiore" : c.seme === filtro,
-  );
-  return (
-    <Involucro pubblica titolo={t.nav_carte}
-      sottotitolo={t.carte_sottotitolo}>
-      <div className={stili.filtri}>
-        {FILTRI.map((f) => (
-          <button key={f} className={f === filtro ? stili.filtroAttivo : stili.filtro} onClick={() => setFiltro(f)}>
-            {t.filtri[f]}
-          </button>
-        ))}
-      </div>
-      <div className={stili.griglaCarte}>
-        {visibili.map((c) => (
-          <Link key={c.id} href={`/carte/${c.id}`} className={stili.cartaLink}>
-            <div style={{ width: "100%", aspectRatio: "9 / 16", borderRadius: 8, overflow: "hidden" }}>
-              <Faccia carta={c} />
-            </div>
-            {nomeCarta(c, lingua)}
-          </Link>
-        ))}
-      </div>
-    </Involucro>
-  );
+export default async function PaginaCarte() {
+  const carte = (await leggiDalServer<Carta[]>("/cards")) ?? [];
+  return <ElencoCarte carte={carte} />;
 }

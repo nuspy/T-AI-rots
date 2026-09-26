@@ -1,51 +1,46 @@
-"use client";
+/* Una carta, pubblica: attribuzioni e significati. Il server scrive titolo, descrizione e
+ * contenuto: è la porta d'ingresso di chi cerca «significato del Tre di Spade». */
 
-import { use, useCallback } from "react";
-import Link from "next/link";
-import { leggiCarta } from "@/lib/api";
-import { nomeCarta } from "@/lib/i18n";
-import { useLingua } from "@/lib/lingua";
-import { useCarica } from "@/lib/usa";
-import { Carta } from "../../componenti/carta";
-import { Involucro } from "../../componenti/testata";
-import stili from "../../pagine.module.css";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import type { Carta } from "@/lib/api";
+import { SITE_URL } from "@/lib/condivisione";
+import { leggiDalServer } from "@/lib/server-api";
+import { SchedaCarta } from "./scheda";
 
-export default function PaginaCarta({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
-  const { t, lingua } = useLingua();
-  const carta = useCarica(useCallback(() => leggiCarta(id), [id]), [id], { pubblico: true });
-  const c = carta.dati;
-  return (
-    <Involucro pubblica titolo={c ? nomeCarta(c, lingua) : undefined} sottotitolo={c ? `${c.nome_thoth}${c.titolo_thoth ? ` — ${c.titolo_thoth}` : ""}` : undefined}>
-      {carta.errore && <p className={stili.errore}>{carta.errore}</p>}
-      {c && (
-        <div className={stili.cartaGrande}>
-          <Carta carta={c} rivelata larghezza={250} />
-          <div>
-            <p className={stili.etichetta}>
-              {[c.lettera_ebraica && `${c.lettera_ebraica.nome} ${c.lettera_ebraica.glifo} (${c.lettera_ebraica.valore})`,
-                c.percorso && `${t.sentiero} ${c.percorso}${c.collega ? `: ${c.collega.join(" – ")}` : ""}`,
-                c.sefira, c.elemento, c.astrologia].filter(Boolean).join(" · ")}
-            </p>
-            <p className={stili.nota}>{c.parole_chiave.join(" · ")}</p>
-            <dl className={stili.livelli}>
-              {Object.entries(c.significati ?? {}).map(([k, v]) => (
-                <div key={k}><dt>{(t.livelli as Record<string, string>)[k] ?? k}</dt><dd className="oracolo">{v}</dd></div>
-              ))}
-              <dt>{t.dritta}</dt><dd className="oracolo">{c.dritto}</dd>
-              <dt>{t.rovesciata}</dt><dd className="oracolo">{c.rovescio}</dd>
-              {Object.entries(c.ambiti ?? {}).map(([k, v]) => (
-                <div key={k}><dt>{(t.ambiti as Record<string, string>)[k] ?? k}</dt><dd className="oracolo">{v}</dd></div>
-              ))}
-              {c.nota_crowley && <><dt>Crowley</dt><dd className="oracolo">{c.nota_crowley}</dd></>}
-            </dl>
-            <div className={stili.linea} style={{ marginTop: 20 }}>
-              <Link href="/leggi" className="bottone">✦ {t.inizia}</Link>
-              <Link href="/carte" className="bottone-secondario">{t.nav_carte}</Link>
-            </div>
-          </div>
-        </div>
-      )}
-    </Involucro>
-  );
+async function leggiCarta(id: string) {
+  return leggiDalServer<Carta>(`/cards/${encodeURIComponent(id)}`);
+}
+
+/* Una descrizione di 160 caratteri circa, tagliata a fine parola. */
+function breve(testo: string, massimo = 160): string {
+  if (testo.length <= massimo) return testo;
+  const taglio = testo.slice(0, massimo);
+  return `${taglio.slice(0, Math.max(taglio.lastIndexOf(" "), massimo * 0.6)).trimEnd()}…`;
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const c = await leggiCarta(id);
+  if (!c) return { title: "Carta non trovata", robots: { index: false, follow: false } };
+  const titolo = `${c.nome_it}: significato nel Tarocco di Thoth`;
+  const descrizione = breve(`${c.nome_thoth}${c.titolo_thoth ? ` — ${c.titolo_thoth}` : ""}. ${c.parole_chiave.join(", ")}. ${c.dritto ?? ""}`);
+  const url = `${SITE_URL}/carte/${c.id}`;
+  return {
+    title: titolo,
+    description: descrizione,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article", siteName: "T·AI·rots", title: titolo, description: descrizione, url,
+      images: [{ url: `${SITE_URL}/cards/${c.id}.webp`, width: 360, height: 640, alt: c.nome_it }],
+    },
+    twitter: { card: "summary", title: titolo, description: descrizione },
+  };
+}
+
+export default async function PaginaCarta({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const c = await leggiCarta(id);
+  if (!c) notFound();
+  return <SchedaCarta carta={c} />;
 }

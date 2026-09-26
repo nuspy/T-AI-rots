@@ -370,6 +370,17 @@ async def test_le_stese_si_filtrano_per_categoria(client, catalogo):
     assert (await client.get("/spreads", params={"categoria": "amicizia"})).status_code == 422
 
 
+async def test_una_stesa_si_legge_senza_account_con_i_suoi_significati(client, catalogo):
+    r = await client.get("/spreads/coppia-specchio")
+    assert r.status_code == 200
+    d = r.json()
+    assert d["id"] == "coppia-specchio" and d["categoria"] == "coppia" and d["stile"] == "moderna"
+    assert len(d["posizioni"]) == 8 and all(p["significato"] and p["domanda"] for p in d["posizioni"])
+    assert d["descrizione"] and d["regole"] and d["nomi"]["hu"] == "Tükör"
+    assert (await client.get("/spreads/croce-celtica")).status_code == 200
+    assert (await client.get("/spreads/non-esiste")).status_code == 404
+
+
 # ---- il flusso completo, per ciascuna delle nove stese --------------------------------------------------------------
 
 

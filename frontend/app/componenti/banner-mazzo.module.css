@@ -1,0 +1,124 @@
+/* La targa del mazzo: notte, oro e le carte vere in ventaglio. Prima il telefono
+ * (ventaglio sopra, testo sotto, pulsante a tutta larghezza), poi lo schermo largo. */
+
+.banner {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  margin: 40px 0 8px;
+  padding: 22px 18px 20px;
+  overflow: hidden;
+  text-align: center;
+  color: var(--testo);
+  text-decoration: none !important;
+  border: 1px solid var(--bordo-forte);
+  border-radius: 18px;
+  background:
+    radial-gradient(120% 140% at 15% 0%, rgba(123, 92, 214, 0.35), transparent 60%),
+    radial-gradient(90% 120% at 95% 100%, rgba(216, 180, 90, 0.22), transparent 60%),
+    linear-gradient(160deg, #1a1236, #0b0818);
+  box-shadow: var(--ombra), inset 0 0 0 1px rgba(241, 214, 142, 0.08);
+  transition: transform 0.25s, border-color 0.25s;
+}
+
+.banner:hover {
+  transform: translateY(-2px);
+  border-color: var(--oro);
+}
+
+.ventaglio {
+  position: relative;
+  display: block;
+  width: 190px;
+  height: 130px;
+  flex: none;
+}
+
+.ventaglio img {
+  position: absolute;
+  top: 4px;
+  width: 72px;
+  height: auto;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid rgba(241, 214, 142, 0.75);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.6), 0 0 18px rgba(216, 180, 90, 0.25);
+  transform-origin: 50% 110%;
+}
+
+.ventaglio img:nth-child(1) { left: 0; }
+.ventaglio img:nth-child(2) { left: 40px; }
+.ventaglio img:nth-child(3) { left: 78px; }
+.ventaglio img:nth-child(4) { left: 116px; }
+
+.testo {
+  display: grid;
+  gap: 6px;
+  max-width: 46ch;
+}
+
+.testo strong {
+  font-family: var(--font-titoli), serif;
+  font-size: 1.15rem;
+  letter-spacing: 0.03em;
+  line-height: 1.35;
+  color: var(--oro-chiaro);
+}
+
+.testo > span:last-child {
+  color: var(--testo-tenue);
+  line-height: 1.5;
+}
+
+.sigillo {
+  color: var(--oro);
+  letter-spacing: 0.4em;
+  font-size: 0.8rem;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  width: 100%;
+  max-width: 320px;
+  padding: 0 24px;
+  border-radius: 999px;
+  font-weight: 600;
+  color: #1a1030;
+  background: linear-gradient(180deg, var(--oro-chiaro), var(--oro));
+  box-shadow: var(--bagliore);
+}
+
+@media (min-width: 720px) {
+  .banner {
+    grid-template-columns: auto 1fr auto;
+    gap: 28px;
+    justify-items: start;
+    padding: 24px 32px;
+    text-align: left;
+  }
+
+  .ventaglio {
+    width: 200px;
+    height: 140px;
+  }
+
+  .cta {
+    width: auto;
+    white-space: nowrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner {
+    transition: none;
+  }
+
+  .banner:hover {
+    transform: none;
+  }
+}

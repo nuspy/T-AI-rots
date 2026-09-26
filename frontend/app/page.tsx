@@ -10,6 +10,7 @@ import { elencaCarte, elencaStese } from "@/lib/api";
 import { useLingua } from "@/lib/lingua";
 import { nomeStesa } from "@/lib/i18n";
 import { useCarica } from "@/lib/usa";
+import { BannerMazzo } from "./componenti/banner-mazzo";
 import { Carta } from "./componenti/carta";
 import { Testata } from "./componenti/testata";
 import stili from "./soglia.module.css";
@@ -102,6 +103,9 @@ export default function Soglia() {
             </Link>
           ))}
         </div>
+        <p className={stili.introSezione}>
+          <Link href="/stese">{t.stesa_tutte} →</Link>
+        </p>
       </section>
 
       <section className={stili.sezione}>
@@ -117,6 +121,10 @@ export default function Soglia() {
             ),
           )}
         </div>
+      </section>
+
+      <section className={stili.sezione}>
+        <BannerMazzo />
       </section>
 
       <section className={stili.sezione}>

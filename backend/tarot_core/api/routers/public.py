@@ -33,6 +33,16 @@ def stese(
     return [conoscenza.stesa_pubblica(s) for s in scelte]
 
 
+@router.get("/spreads/{spread_id}")
+def stesa(spread_id: str) -> Dict[str, Any]:
+    """Una stesa, per la sua pagina pubblica: posizioni, significati, regole."""
+    conoscenza = get_conoscenza()
+    trovata = conoscenza.stesa(spread_id)
+    if trovata is None:
+        raise HTTPException(status_code=404, detail="Stesa sconosciuta")
+    return conoscenza.stesa_pubblica(trovata)
+
+
 @router.get("/cards")
 def carte() -> List[Dict[str, Any]]:
     conoscenza = get_conoscenza()

@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo } from "react";
 import { AuthProvider } from "react-oidc-context";
 import { WebStorageStateStore } from "oidc-client-ts";
+import { SITE_URL } from "@/lib/condivisione";
 import { ProviderLingua } from "@/lib/lingua";
 import { AUTH_DISATTIVATA, SessioneDiSviluppo, SessioneKeycloak } from "@/lib/sessione";
 import { AttribuzioneCondivisione } from "./componenti/attribuzione";
@@ -17,8 +18,13 @@ import { Promemoria2fa } from "./componenti/promemoria-2fa";
  *
  * I token stanno in `sessionStorage`: durano quanto la scheda.
  *
- * **Il provider si monta solo dopo l'idratazione.** `redirect_uri` si ricava
- * da `window.location.origin`, che sul server non esiste.
+ * **Il provider gira anche sul server.** Le pagine pubbliche (carte, stese, blog) devono
+ * uscire dal server già scritte: chi le cerca — un motore di ricerca, un'anteprima
+ * dei social — non aspetta JavaScript. `react-oidc-context` sul server non crea il
+ * gestore dell'accesso e dice «sessione in caricamento», come nel primo rendering del
+ * browser: i due alberi coincidono e l'idratazione non ha da correggere niente.
+ * Ciò che dipende dal browser (`redirect_uri` da `window.location.origin`, i token in
+ * `sessionStorage`) si calcola solo dove `window` esiste.
  */
 
 const authority = `${
@@ -33,38 +39,31 @@ function onSigninCallback(user: unknown): void {
   window.history.replaceState({}, document.title, ritorno);
 }
 
-const nessunaIscrizione = () => () => {};
-
-function useSulClient(): boolean {
-  return useSyncExternalStore(nessunaIscrizione, () => true, () => false);
-}
+const nelBrowser = typeof window !== "undefined";
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const montato = useSulClient();
-
   const config = useMemo(
     () =>
-      montato && !AUTH_DISATTIVATA
-        ? {
+      AUTH_DISATTIVATA
+        ? null
+        : {
             authority,
             client_id: process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID ?? "tarot-frontend",
-            redirect_uri: window.location.origin,
-            post_logout_redirect_uri: window.location.origin,
+            /* Sul server non serve a niente (il gestore non esiste): un valore qualunque. */
+            redirect_uri: nelBrowser ? window.location.origin : SITE_URL,
+            post_logout_redirect_uri: nelBrowser ? window.location.origin : SITE_URL,
             response_type: "code",
             scope: "openid profile email",
             /* Rinnovo silenzioso prima della scadenza: senza, una lettura
              * lunga si interrompe con un 401 a metà del responso. */
             automaticSilentRenew: true,
-            userStore: new WebStorageStateStore({ store: window.sessionStorage }),
+            userStore: nelBrowser ? new WebStorageStateStore({ store: window.sessionStorage }) : undefined,
             onSigninCallback,
-          }
-        : null,
-    [montato],
+          },
+    [],
   );
 
-  if (!montato) return null;
-
-  if (AUTH_DISATTIVATA || !config) {
+  if (!config) {
     return (
       <ProviderLingua>
         <SessioneDiSviluppo>{children}</SessioneDiSviluppo>

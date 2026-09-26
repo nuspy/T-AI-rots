@@ -1,0 +1,47 @@
+"use client";
+
+/* La scheda di una carta: l'immagine, le attribuzioni, i significati. */
+
+import Link from "next/link";
+import type { Carta as TipoCarta } from "@/lib/api";
+import { nomeCarta } from "@/lib/i18n";
+import { useLingua } from "@/lib/lingua";
+import { BannerMazzo } from "../../componenti/banner-mazzo";
+import { Carta } from "../../componenti/carta";
+import { Involucro } from "../../componenti/testata";
+import stili from "../../pagine.module.css";
+
+export function SchedaCarta({ carta: c }: { carta: TipoCarta }) {
+  const { t, lingua } = useLingua();
+  return (
+    <Involucro pubblica titolo={nomeCarta(c, lingua)} sottotitolo={`${c.nome_thoth}${c.titolo_thoth ? ` — ${c.titolo_thoth}` : ""}`}>
+      <div className={stili.cartaGrande}>
+        <Carta carta={c} rivelata larghezza={250} />
+        <div>
+          <p className={stili.etichetta}>
+            {[c.lettera_ebraica && `${c.lettera_ebraica.nome} ${c.lettera_ebraica.glifo} (${c.lettera_ebraica.valore})`,
+              c.percorso && `${t.sentiero} ${c.percorso}${c.collega ? `: ${c.collega.join(" – ")}` : ""}`,
+              c.sefira, c.elemento, c.astrologia].filter(Boolean).join(" · ")}
+          </p>
+          <p className={stili.nota}>{c.parole_chiave.join(" · ")}</p>
+          <dl className={stili.livelli}>
+            {Object.entries(c.significati ?? {}).map(([k, v]) => (
+              <div key={k}><dt>{(t.livelli as Record<string, string>)[k] ?? k}</dt><dd className="oracolo">{v}</dd></div>
+            ))}
+            <dt>{t.dritta}</dt><dd className="oracolo">{c.dritto}</dd>
+            <dt>{t.rovesciata}</dt><dd className="oracolo">{c.rovescio}</dd>
+            {Object.entries(c.ambiti ?? {}).map(([k, v]) => (
+              <div key={k}><dt>{(t.ambiti as Record<string, string>)[k] ?? k}</dt><dd className="oracolo">{v}</dd></div>
+            ))}
+            {c.nota_crowley && <><dt>Crowley</dt><dd className="oracolo">{c.nota_crowley}</dd></>}
+          </dl>
+          <div className={stili.linea} style={{ marginTop: 20 }}>
+            <Link href="/leggi" className="bottone">✦ {t.inizia}</Link>
+            <Link href="/carte" className="bottone-secondario">{t.nav_carte}</Link>
+          </div>
+        </div>
+      </div>
+      <BannerMazzo />
+    </Involucro>
+  );
+}
