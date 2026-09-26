@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     description: descrizione,
     alternates: { canonical: url },
     openGraph: {
-      type: "article", siteName: "T·AI·rots", title: titolo, description: descrizione, url,
+      type: "article", siteName: "TAROTS chat", title: titolo, description: descrizione, url,
       images: [{ url: `${SITE_URL}/cards/${c.id}.webp`, width: 360, height: 640, alt: c.nome_it }],
     },
     twitter: { card: "summary", title: titolo, description: descrizione },

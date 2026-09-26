@@ -1,4 +1,4 @@
-/* Il mazzo di T·AI·rots: la pagina di anteprima del prodotto (in preparazione).
+/* Il mazzo di TAROTS chat: la pagina di anteprima del prodotto (in preparazione).
  * Il server scrive titolo, descrizione e le carte in vetrina. */
 
 import type { Metadata } from "next";
@@ -8,14 +8,14 @@ import { leggiDalServer } from "@/lib/server-api";
 import { PaginaMazzo } from "./mazzo";
 
 export const metadata: Metadata = {
-  title: "Il mazzo di T·AI·rots: 78 carte con la grafica originale",
+  title: "Il mazzo di TAROTS chat: 78 carte con la grafica originale",
   description:
-    "Il Tarocco di Thoth con la grafica originale di T·AI·rots: 78 carte illustrate, un dorso dorato e il cofanetto da collezione. In preparazione.",
+    "Il Tarocco di Thoth con la grafica originale di TAROTS chat: 78 carte illustrate, un dorso dorato e il cofanetto da collezione. In preparazione.",
   alternates: { canonical: `${SITE_URL}/mazzo` },
   openGraph: {
     type: "website",
-    siteName: "T·AI·rots",
-    title: "Il mazzo di T·AI·rots",
+    siteName: "TAROTS chat",
+    title: "Il mazzo di TAROTS chat",
     description: "78 carte illustrate, un dorso dorato, il cofanetto da collezione.",
     url: `${SITE_URL}/mazzo`,
     images: [{ url: `${SITE_URL}/cards/maj-17.webp`, width: 360, height: 640, alt: "La Stella" }],

@@ -21,7 +21,7 @@ import { PaginaCondivisa } from "./condivisa";
 const PUBBLICA = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8100";
 const INTERNA = process.env.API_INTERNAL_URL ?? PUBBLICA;
 
-const SENZA_ANTEPRIMA: Metadata = { title: "T·AI·rots", robots: { index: false, follow: false } };
+const SENZA_ANTEPRIMA: Metadata = { title: "TAROTS chat", robots: { index: false, follow: false } };
 
 async function leggi(token: string): Promise<LetturaCondivisa | null> {
   try {
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: { params: Promise<{ token: st
   if (!l) return SENZA_ANTEPRIMA;
 
   const titolo = `«${l.question}»`;
-  const descrizione = l.share_text || sintesiDelResponso(l.synthesis, 200) || "T·AI·rots";
+  const descrizione = l.share_text || sintesiDelResponso(l.synthesis, 200) || "TAROTS chat";
   const url = `${SITE_URL}/s/${token}`;
   const immagine = l.immagine
     ? [{ url: `${PUBBLICA}/shared/${encodeURIComponent(token)}/image.webp`, width: 400, height: 300, alt: titolo }]
@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: { params: Promise<{ token: st
     description: descrizione,
     robots: { index: false, follow: false },
     alternates: { canonical: url },
-    openGraph: { type: "article", siteName: "T·AI·rots", title: titolo, description: descrizione, url, images: immagine },
+    openGraph: { type: "article", siteName: "TAROTS chat", title: titolo, description: descrizione, url, images: immagine },
     twitter: {
       card: immagine ? "summary_large_image" : "summary",
       title: titolo,

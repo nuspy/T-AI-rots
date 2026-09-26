@@ -23,7 +23,7 @@ export async function generateMetadata({ params, searchParams }: Parametri): Pro
     title: titolo,
     description: descrizione,
     alternates: { canonical: `${SITE_URL}/blog/sezione/${s.slug}${pagina > 1 ? `?pagina=${pagina}` : ""}` },
-    openGraph: { type: "website", siteName: "T·AI·rots", title: titolo, description: descrizione, url: `${SITE_URL}/blog/sezione/${s.slug}` },
+    openGraph: { type: "website", siteName: "TAROTS chat", title: titolo, description: descrizione, url: `${SITE_URL}/blog/sezione/${s.slug}` },
   };
 }
 

@@ -1,4 +1,4 @@
-# T·AI·rots
+# TAROTS chat
 
 Letture dei **Tarocchi di Thoth** (Aleister Crowley) guidate da un'intelligenza
 artificiale. Il flusso di una lettura:

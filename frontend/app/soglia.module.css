@@ -22,20 +22,13 @@
   text-transform: uppercase;
 }
 
+/* Il titolo della soglia è il marchio (`componenti/marchio`): qui solo lo spazio attorno. */
 .titolo {
-  font-size: clamp(3.2rem, 9vw, 6.4rem);
-  margin: 10px 0;
+  margin: 18px 0 22px;
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0;
   line-height: 1;
-  background: linear-gradient(180deg, #fff3c9, #d8b45a 60%, #8f6c24);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 0 30px rgba(216, 180, 90, 0.35));
-}
-
-.titolo span {
-  color: var(--viola-chiaro);
-  -webkit-text-fill-color: var(--viola-chiaro);
 }
 
 .motto {

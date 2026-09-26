@@ -1,4 +1,4 @@
-"""Applicazione FastAPI di T-AI-rots.
+"""Applicazione FastAPI di TAROTS chat.
 
 Lo scheletro — CORS, correlazione, tracce, verifica della configurazione di
 produzione, gestore degli errori — viene da Personalities. Le rotte sono
@@ -92,7 +92,7 @@ def create_app() -> FastAPI:
     settings = get_settings()
 
     app = FastAPI(
-        title="T-AI-rots",
+        title="TAROTS chat",
         version="0.1.0",
         lifespan=lifespan,
     )

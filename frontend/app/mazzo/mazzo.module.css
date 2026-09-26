@@ -141,6 +141,14 @@
   color: var(--oro-chiaro);
 }
 
+/* «chat» è la voce dell'oracolo: corsivo e viola, come nel marchio. */
+.titoloScatola em {
+  font-family: var(--font-oracolo), serif;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--viola-chiaro);
+}
+
 .sottoScatola {
   font-size: clamp(0.45rem, 1.5vw, 0.7rem);
   letter-spacing: 0.28em;

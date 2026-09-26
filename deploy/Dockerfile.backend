@@ -1,4 +1,4 @@
-# L'API di T-AI-rots. Dalla ricetta di Personalities, senza il worker: qui
+# L'API di TAROTS chat. Dalla ricetta di Personalities, senza il worker: qui
 # non ci sono corpora da digerire né audio da trascrivere.
 #
 #   docker build -f deploy/Dockerfile.backend -t tarot-api .

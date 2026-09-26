@@ -34,7 +34,7 @@ export async function GET() {
   const xml = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel>',
-    "<title>T·AI·rots — il blog dei tarocchi</title>",
+    "<title>TAROTS chat — il blog dei tarocchi</title>",
     `<link>${SITE_URL}/blog</link>`,
     `<atom:link href="${SITE_URL}/blog/feed.xml" rel="self" type="application/rss+xml"/>`,
     "<description>Guide, approfondimenti e riflessioni sui tarocchi.</description>",

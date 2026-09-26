@@ -3,7 +3,7 @@
 import type { Dizionario } from "./it";
 
 export const hu: Dizionario = {
-  marchio: "T·AI·rots",
+  marchio: "TAROTS chat",
   motto: "A Thoth-tarot jósda, amelyet egy mesterséges intelligencia olvas.",
   sovratitolo: "Thoth-tarot · Aleister Crowley",
 
@@ -371,7 +371,7 @@ export const hu: Dizionario = {
   mazzo_banner_titolo: (dominio: string) => `Vedd meg a paklit a(z) ${dominio} eredeti grafikájával`,
   mazzo_banner_testo: "78 illusztrált kártya, aranyozott hátoldal, gyűjtői doboz.",
   mazzo_banner_cta: "Ismerd meg a paklit",
-  mazzo_titolo: "A T·AI·rots pakli",
+  mazzo_titolo: "A TAROTS chat pakli",
   mazzo_sottotitolo: "A Thoth-tarot az oldal eredeti grafikájával: 78 illusztrált kártya és egy hátoldal, amelyet ezer közül is felismersz.",
   mazzo_anteprima: "Bemutató · előkészületben",
   mazzo_carte_titolo: "Néhány kártya a pakliból",

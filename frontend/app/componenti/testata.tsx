@@ -14,6 +14,7 @@ import { usePathname } from "next/navigation";
 import { LINGUE, comeLingua } from "@/lib/i18n";
 import { useLingua } from "@/lib/lingua";
 import { ADMIN_URL, AUTH_DISATTIVATA, useSessione } from "@/lib/sessione";
+import { Marchio } from "./marchio";
 import stili from "./testata.module.css";
 
 interface Voce {
@@ -110,7 +111,7 @@ export function Testata() {
     <>
       <header className={stili.testata}>
         <Link href="/" className={stili.marchio}>
-          T<span>·</span>AI<span>·</span>rots
+          <Marchio />
         </Link>
         <nav className={stili.voci} aria-label={t.aria_sezioni}>
           {voci.map((v) => (

@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     alternates: { canonical: url },
     authors: [{ name: a.autore.nome }],
     openGraph: {
-      type: "article", siteName: "T·AI·rots", title: titolo, description: a.seo_descrizione, url,
+      type: "article", siteName: "TAROTS chat", title: titolo, description: a.seo_descrizione, url,
       publishedTime: a.pubblicato_il ?? undefined, modifiedTime: a.aggiornato_il ?? undefined,
       images: immagine ? [{ url: immagine, width: a.immagine?.larghezza ?? undefined, height: a.immagine?.altezza ?? undefined, alt: a.immagine?.alt }] : undefined,
     },

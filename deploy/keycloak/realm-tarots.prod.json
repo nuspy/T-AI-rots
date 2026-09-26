@@ -1,7 +1,7 @@
 {
   "id": "0a1e10c5-7426-4395-bc7b-4f3a9bdfb18d",
   "realm": "tarots",
-  "displayName": "T·AI·rots",
+  "displayName": "TAROTS chat",
   "notBefore": 0,
   "defaultSignatureAlgorithm": "RS256",
   "revokeRefreshToken": false,
@@ -963,7 +963,7 @@
     {
       "id": "6a902f4a-ee2e-4478-bdb0-069a8f66cd88",
       "clientId": "tarot-frontend",
-      "name": "T·AI·rots",
+      "name": "TAROTS chat",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,

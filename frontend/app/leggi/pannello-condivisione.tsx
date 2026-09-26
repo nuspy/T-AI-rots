@@ -219,7 +219,7 @@ function Contenuto({ id, onChiudi, onLink }: Props) {
       const post = file.current;
       if (post && puoCondividereFile(post)) {
         try {
-          await navigator.share({ files: [post], text: didascalia, title: "T·AI·rots" });
+          await navigator.share({ files: [post], text: didascalia, title: "TAROTS chat" });
           registra(canale);
         } catch {
           /* annullato: nessun clic da registrare */
@@ -313,7 +313,7 @@ function Contenuto({ id, onChiudi, onLink }: Props) {
                 const rete = NOMI_RETE[canale];
                 const nome = canale === "email" ? t.cond_email : canale === "link" ? t.cond_solo_link : rete;
                 const intento = pronto
-                  ? urlIntento(canale, { url, testo: testoPost, oggetto: "T·AI·rots" })
+                  ? urlIntento(canale, { url, testo: testoPost, oggetto: "TAROTS chat" })
                   : null;
                 const contenuto = (
                   <>

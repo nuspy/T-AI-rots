@@ -27,7 +27,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Paramet
       canonical: `${SITE_URL}/blog${pagina > 1 && !q ? `?pagina=${pagina}` : ""}`,
       types: { "application/rss+xml": `${SITE_URL}/blog/feed.xml` },
     },
-    openGraph: { type: "website", siteName: "T·AI·rots", title: "Il blog dei tarocchi", description: descrizione, url: `${SITE_URL}/blog` },
+    openGraph: { type: "website", siteName: "TAROTS chat", title: "Il blog dei tarocchi", description: descrizione, url: `${SITE_URL}/blog` },
   };
 }
 

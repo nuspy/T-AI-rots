@@ -291,7 +291,7 @@ function Profilo() {
         <div className={stili.linea}>
           <button className="bottone-secondario" onClick={async () => {
             if (navigator.share) {
-              try { await navigator.share({ title: "T·AI·rots", text: t.invito_testo_condivisione(p.referral_code ?? ""), url: invito }); return; } catch { /* annullato */ }
+              try { await navigator.share({ title: "TAROTS chat", text: t.invito_testo_condivisione(p.referral_code ?? ""), url: invito }); return; } catch { /* annullato */ }
             }
             await navigator.clipboard?.writeText(`${p.referral_code} — ${invito}`);
             setCopiato(true);

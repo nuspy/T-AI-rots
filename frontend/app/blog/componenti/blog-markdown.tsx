@@ -15,6 +15,7 @@ import Link from "next/link";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ESTENSIONE } from "../../componenti/carta";
+import { urlMedia } from "@/lib/blog";
 import stili from "../blog.module.css";
 
 export interface Riferimenti {
@@ -79,8 +80,11 @@ const componenti: Components = {
   img: ({ src, alt }) => {
     const s = typeof src === "string" ? src : "";
     if (!(s.startsWith("/") || s.startsWith("https://"))) return null;
+    /* Le immagini della libreria si scrivono con il percorso relativo dell'API (`/blog/media/…`), così il testo
+     * non dipende dall'host: qui diventano l'indirizzo vero. */
+    const indirizzo = s.startsWith("/blog/media/") ? (urlMedia(s) ?? s) : s;
     // eslint-disable-next-line @next/next/no-img-element -- immagini di un articolo, di misure sconosciute
-    return <img src={s} alt={alt ?? ""} loading="lazy" />;
+    return <img src={indirizzo} alt={alt ?? ""} loading="lazy" />;
   },
   /* Le tabelle larghe scorrono dentro il loro riquadro, non allargano la pagina. */
   table: ({ children }) => <div className={stili.tabella}><table>{children}</table></div>,

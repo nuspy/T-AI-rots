@@ -1,4 +1,4 @@
-# T-AI-rots su k3s: namespace `tarots`, sotto un solo dominio (tarots.tadamoo.com).
+# TAROTS chat su k3s: namespace `tarots`, sotto un solo dominio (tarots.tadamoo.com).
 #
 #   /        -> sito Next.js          (tarots-web:3000)
 #   /api/    -> API FastAPI           (tarots-api:8100, il prefisso /api si toglie)

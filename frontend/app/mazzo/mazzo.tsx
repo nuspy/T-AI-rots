@@ -31,12 +31,12 @@ function Scena() {
   }, []);
   const ventaglio = ["maj-17", "maj-19", "maj-21", "maj-02", "maj-11"];
   return (
-    <div className={stili.scena} role="img" aria-label="Il mazzo di T·AI·rots: scatola, mazzo e carte aperte a ventaglio">
+    <div className={stili.scena} role="img" aria-label="Il mazzo di TAROTS chat: scatola, mazzo e carte aperte a ventaglio">
       <div className={stili.luce} aria-hidden="true" />
       <div className={stili.scatola} aria-hidden="true">
         <div className={stili.coperchio}>
           <span className={stili.filo} />
-          <span className={stili.titoloScatola}>T·AI·rots</span>
+          <span className={stili.titoloScatola}>TAROTS <em>chat</em></span>
           {/* eslint-disable-next-line @next/next/no-img-element -- il dorso vero, sul coperchio */}
           <img src={`/cards/dorso.${ESTENSIONE}`} alt="" width={180} height={320} />
           <span className={stili.sottoScatola}>Tarocco di Thoth</span>

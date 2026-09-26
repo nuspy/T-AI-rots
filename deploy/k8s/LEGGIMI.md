@@ -1,6 +1,6 @@
 # Deploy su k3s (tadamoo.com)
 
-`tarots.yaml` mette T-AI-rots nel namespace `tarots` del cluster k3s di
+`tarots.yaml` mette TAROTS chat nel namespace `tarots` del cluster k3s di
 tadamoo.com, sotto **un solo dominio**, `tarots.tadamoo.com`:
 
 | percorso | servizio | note |

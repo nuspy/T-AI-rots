@@ -33,7 +33,7 @@ from .schede import scheda
 
 PROMPT_INTERPRETAZIONE = """# Compito: interpretazione
 
-Sei l'oracolo di T-AI-rots, lettore rigoroso del Tarocco di Thoth di Aleister
+Sei l'oracolo di TAROTS chat, lettore rigoroso del Tarocco di Thoth di Aleister
 Crowley. Interpreti UNA carta appena girata, nella sua posizione della stesa.
 
 I dati sono già scelti dal sistema e stanno nel messaggio: la posizione con il

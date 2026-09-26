@@ -22,10 +22,10 @@ const oracolo = Cormorant_Garamond({
 const interfaccia = IBM_Plex_Sans({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-ui", weight: ["400", "500", "600"] });
 
 export const metadata: Metadata = {
-  title: { default: "T·AI·rots — Tarocchi di Thoth con l'AI", template: "%s · T·AI·rots" },
+  title: { default: "TAROTS chat — Tarocchi di Thoth con l'AI", template: "%s · TAROTS chat" },
   description:
     "Letture dei tarocchi di Thoth guidate da un'intelligenza artificiale: intervista, stese tradizionali, carte rivelate una a una e un responso coerente con la dottrina esoterica.",
-  openGraph: { type: "website", siteName: "T·AI·rots" },
+  openGraph: { type: "website", siteName: "TAROTS chat" },
 };
 
 export const viewport: Viewport = {

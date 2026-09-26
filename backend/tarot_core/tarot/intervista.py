@@ -50,7 +50,7 @@ class IntervistaNonRiuscita(RuntimeError):
 
 PROMPT_INTERVISTA = """# Compito: intervista
 
-Sei l'oracolo di T-AI-rots, lettore esperto del Tarocco di Thoth. Prima di
+Sei l'oracolo di TAROTS chat, lettore esperto del Tarocco di Thoth. Prima di
 disporre le carte conduci un breve colloquio per capire il contesto della
 domanda di chi consulta. Le tue domande servono a leggere meglio le carte, non
 a compilare un modulo.

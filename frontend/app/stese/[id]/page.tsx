@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     title: titolo,
     description: descrizione,
     alternates: { canonical: url },
-    openGraph: { type: "article", siteName: "T·AI·rots", title: titolo, description: descrizione, url },
+    openGraph: { type: "article", siteName: "TAROTS chat", title: titolo, description: descrizione, url },
     twitter: { card: "summary", title: titolo, description: descrizione },
   };
 }

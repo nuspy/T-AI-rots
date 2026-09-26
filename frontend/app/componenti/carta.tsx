@@ -61,7 +61,7 @@ function DorsoDisegnato() {
           transform={`rotate(${i * 72} ${cx} ${cy})`} />
       ))}
       <circle cx={cx} cy={cy} r="6" fill="#f1d68e" />
-      <text x={cx} y="582" textAnchor="middle" className={stili.firma}>T·AI·ROTS</text>
+      <text x={cx} y="582" textAnchor="middle" className={stili.firma}>TAROTS</text>
       <text x={cx} y="78" textAnchor="middle" className={stili.firma}>✦ ✦ ✦</text>
     </svg>
   );

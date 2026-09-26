@@ -4,7 +4,7 @@
 import type { Dizionario } from "./it";
 
 export const en: Dizionario = {
-  marchio: "T·AI·rots",
+  marchio: "TAROTS chat",
   motto: "The oracle of the Thoth Tarot, read by an artificial intelligence.",
   sovratitolo: "Thoth Tarot · Aleister Crowley",
 
@@ -372,7 +372,7 @@ export const en: Dizionario = {
   mazzo_banner_titolo: (dominio: string) => `Buy the deck with the original artwork of ${dominio}`,
   mazzo_banner_testo: "78 illustrated cards, a gilded back, the collector's box.",
   mazzo_banner_cta: "Discover the deck",
-  mazzo_titolo: "The T·AI·rots deck",
+  mazzo_titolo: "The TAROTS chat deck",
   mazzo_sottotitolo: "The Thoth Tarot with the site's original artwork: 78 illustrated cards and a back you would recognise among a thousand.",
   mazzo_anteprima: "Preview · in preparation",
   mazzo_carte_titolo: "Some cards from the deck",

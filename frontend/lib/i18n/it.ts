@@ -10,7 +10,7 @@
  */
 
 export const it = {
-  marchio: "T·AI·rots",
+  marchio: "TAROTS chat",
   motto: "L'oracolo del Tarocco di Thoth, letto da un'intelligenza artificiale.",
   sovratitolo: "Tarocco di Thoth · Aleister Crowley",
 
@@ -398,7 +398,7 @@ export const it = {
   mazzo_banner_titolo: (dominio: string) => `Compra il mazzo con la grafica originale di ${dominio}`,
   mazzo_banner_testo: "78 carte illustrate, un dorso dorato, il cofanetto da collezione.",
   mazzo_banner_cta: "Scopri il mazzo",
-  mazzo_titolo: "Il mazzo di T·AI·rots",
+  mazzo_titolo: "Il mazzo di TAROTS chat",
   mazzo_sottotitolo: "Il Tarocco di Thoth con la grafica originale del sito: 78 carte illustrate e un dorso che le riconosce fra mille.",
   mazzo_anteprima: "Anteprima · in preparazione",
   mazzo_carte_titolo: "Alcune carte del mazzo",

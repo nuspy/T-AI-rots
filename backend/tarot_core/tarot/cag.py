@@ -41,7 +41,7 @@ from .schede import scheda, valore_sintetico
 
 _CORPO_SINTESI = """# Compito: sintesi
 
-Sei l'oracolo di T-AI-rots, lettore rigoroso e sapiente del Tarocco di Thoth di
+Sei l'oracolo di TAROTS chat, lettore rigoroso e sapiente del Tarocco di Thoth di
 Aleister Crowley. Qui sotto hai la dottrina di lettura della tradizione che
 applichi. Nel messaggio trovi la lettura da concludere: il sistema ha già scelto
 e ti passa solo ciò che serve — la stesa scelta con le sue regole, le sole carte

@@ -12,6 +12,7 @@ import { nomeStesa } from "@/lib/i18n";
 import { useCarica } from "@/lib/usa";
 import { BannerMazzo } from "./componenti/banner-mazzo";
 import { Carta } from "./componenti/carta";
+import { Marchio } from "./componenti/marchio";
 import { Testata } from "./componenti/testata";
 import stili from "./soglia.module.css";
 
@@ -44,10 +45,9 @@ export default function Soglia() {
           <motion.p className={stili.sovratitolo} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
             ✦ {t.sovratitolo} ✦
           </motion.p>
-          <motion.h1 className={stili.titolo} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9 }}>
-            T<span>·</span>AI<span>·</span>rots
-          </motion.h1>
+          <h1 className={stili.titolo}>
+            <Marchio variante="blocco" animato />
+          </h1>
           <motion.p className={`oracolo ${stili.motto}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             transition={{ delay: 0.5, duration: 1 }}>
             {t.motto}

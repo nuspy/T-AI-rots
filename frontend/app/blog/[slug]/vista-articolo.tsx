@@ -35,7 +35,7 @@ export function VistaArticolo({ articolo: a, riferimenti }: { articolo: Articolo
     datePublished: a.pubblicato_il ?? undefined,
     dateModified: a.aggiornato_il ?? a.pubblicato_il ?? undefined,
     author: { "@type": "Person", name: a.autore.nome },
-    publisher: { "@type": "Organization", name: "T·AI·rots", url: SITE_URL },
+    publisher: { "@type": "Organization", name: "TAROTS chat", url: SITE_URL },
     mainEntityOfPage: url,
     inLanguage: a.lang,
     keywords: a.tags.map((x) => x.nome).join(", ") || undefined,

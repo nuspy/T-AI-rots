@@ -1,7 +1,7 @@
 [project]
 name = "tarot-core"
 version = "0.1.0"
-description = "T-AI-rots: letture dei tarocchi di Thoth con AI — backend"
+description = "TAROTS chat: letture dei tarocchi di Thoth con AI — backend"
 requires-python = ">=3.10"
 
 [tool.pytest.ini_options]

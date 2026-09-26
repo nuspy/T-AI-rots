@@ -1,7 +1,7 @@
 {
   "realm": "tarots",
   "enabled": true,
-  "displayName": "T·AI·rots",
+  "displayName": "TAROTS chat",
   "loginWithEmailAllowed": true,
   "registrationAllowed": true,
   "registrationEmailAsUsername": true,
@@ -44,7 +44,7 @@
   "clients": [
     {
       "clientId": "tarot-frontend",
-      "name": "T·AI·rots",
+      "name": "TAROTS chat",
       "enabled": true,
       "publicClient": true,
       "standardFlowEnabled": true,
