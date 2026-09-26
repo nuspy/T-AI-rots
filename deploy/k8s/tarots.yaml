@@ -269,6 +269,11 @@ spec:
             - {name: TAROT_CORS_ORIGINS, value: '["https://tarots.tadamoo.com"]'}
             # Letto dal seed: i crediti degli utenti di prova.
             - {name: TAROT_CREDITI_UTENTE_DI_PROVA, value: "100000"}
+            # Il sale delle impronte anonime di chi visita un link condiviso: senza,
+            # in produzione l'API rifiuta di partire. Chiave da aggiungere al Secret
+            # (vedi LEGGIMI.md, passo 3).
+            - name: TAROT_CONDIVISIONE_SALE
+              valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale}}
           # Il modello, dal Secret `tarots-llm` (facoltativo: se manca il
           # servizio parte e dice «non pronto»). Le chiavi sono le variabili
           # TAROT_*, per esempio:
@@ -330,6 +335,10 @@ spec:
           # vedi le --build-arg in deploy/k8s/LEGGIMI.md.
           image: tarots-web:v2
           imagePullPolicy: IfNotPresent
+          env:
+            # Il server di Next legge le anteprime delle letture condivise
+            # dall'interno del cluster, senza uscire dal gateway.
+            - {name: API_INTERNAL_URL, value: "http://tarots-api:8100"}
           ports:
             - {name: http, containerPort: 3000}
           readinessProbe:

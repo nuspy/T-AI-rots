@@ -152,3 +152,44 @@ RESPONSO_NON_GENERATO = {
     "en": "The answer could not be generated. You can try again: the reading stays saved.",
     "hu": "A választ nem sikerült előállítani. Próbáld újra: a jóslás el van mentve.",
 }
+
+#: Le letture speciali: errori di apertura e di condivisione.
+PARTNER_MANCANTE = {
+    "it": "Per questa lettura servono i dati dell'altra persona: nome, sesso e data di nascita.",
+    "en": "This reading needs the other person's details: name, gender and date of birth.",
+    "hu": "Ehhez a jósláshoz a másik személy adataira van szükség: név, nem és születési dátum.",
+}
+
+PARTNER_NON_AMMESSO = {
+    "it": "I dati di un partner si danno solo per le letture di compatibilità e di coppia.",
+    "en": "A partner's details are only for compatibility and couple readings.",
+    "hu": "A partner adatait csak a kompatibilitási és a párkapcsolati jóslásokhoz adhatod meg.",
+}
+
+PROFILO_INCOMPLETO = {
+    "it": "Per questa lettura completa la tua scheda personale: mancano sesso o data di nascita.",
+    "en": "To do this reading, complete your profile: your gender or date of birth is missing.",
+    "hu": "Ehhez a jósláshoz egészítsd ki a profilodat: hiányzik a nemed vagy a születési dátumod.",
+}
+
+#: Al posto del nome dell'altra persona nelle letture speciali condivise. Tradotta
+#: in tutte e quindici le lingue: è una frase di due parole che compare dentro il
+#: responso, nella lingua della lettura, e in inglese in mezzo a un testo tedesco
+#: sarebbe un errore visibile.
+QUALCUNO_DI_SPECIALE = {
+    "it": "qualcuno di speciale",
+    "en": "someone special",
+    "hu": "valaki különleges",
+    "de": "jemand Besonderes",
+    "ru": "кто-то особенный",
+    "uk": "хтось особливий",
+    "fr": "quelqu'un de spécial",
+    "es": "alguien especial",
+    "pt": "alguém especial",
+    "ro": "cineva special",
+    "pl": "ktoś wyjątkowy",
+    "zh": "某位特别的人",
+    "hi": "कोई खास",
+    "ko": "특별한 누군가",
+    "ar": "شخص مميز",
+}

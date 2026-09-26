@@ -135,6 +135,10 @@ class Settings(BaseSettings):
     crediti_utente_di_prova: int = 1000
     #: Crediti regalati a chi invita e a chi si iscrive con un invito.
     crediti_invito: int = 3
+    #: Il sale delle impronte anonime di chi visita un link condiviso (indirizzo e
+    #: identificativo del browser). In produzione va cambiato: con quello di
+    #: sviluppo le impronte sarebbero calcolabili da chiunque conosca il codice.
+    condivisione_sale: str = "sale-di-sviluppo"
     #: Con `true` le letture usano il modello finto di `tarot/finto.py`:
     #: serve a provare il flusso intero senza un modello vero.
     llm_finto: bool = False
@@ -188,6 +192,8 @@ class Settings(BaseSettings):
                 )
             if "*" in self.cors_origins:
                 problems.append("CORS aperto a qualunque origine in produzione")
+            if self.condivisione_sale == "sale-di-sviluppo":
+                problems.append("TAROT_CONDIVISIONE_SALE e' quello di sviluppo in produzione")
             if "localhost" in self.database_url:
                 problems.append("il database punta a localhost in produzione")
             if self.billing_provider == "mock":

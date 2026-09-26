@@ -227,6 +227,178 @@ crisi riconosce le formule di tutte e quindici.
   - Il responso passa dal giudice. L'esito può essere: ok, riscrivi (una
     volta, con i vincoli), oppure blocca (messaggio sicuro).
 
+## Letture speciali: compatibilità e coppia
+
+Due letture **separate dalla standard** con lo stesso motore (`apri → interview →
+fan → pick → reveal → synthesis`): una stesa è una voce di `spreads.json` e ogni
+passo rilegge la stesa da `Reading.spread_id`. Costano **un credito o una lettura
+giornaliera** come le altre e stanno nello stesso storico.
+
+**Il percorso.** Tipo di lettura → dati delle persone (i dati di chi consulta che
+mancano nella scheda — genere e data di nascita, che restano nel profilo — e
+quelli dell'altra persona: nome, cognome facoltativo, genere, data di nascita,
+casella «ricorda») → stile di stesa (tradizionale, moderna, di tendenza) →
+intervista di 2–6 domande → mescolata, taglio, scelta → rivelazione → responso.
+Il quesito è facoltativo: se resta vuoto il frontend usa «Compatibilità con
+{nome}» o «Relazione di coppia con {nome}», nella lingua dell'interfaccia.
+
+**Le nove stese** (`categoria`, `stile` e, per ogni posizione, `soggetto` in
+`spreads.json`):
+
+| compatibilità | coppia |
+|---|---|
+| `compat-tre` (tradizionale) | `coppia-croce` (tradizionale) |
+| `compat-sette` (tradizionale) | `coppia-stazione` «Stazione per due» (tradizionale italiana) |
+| `compat-nove` (moderna, 3×3, «triangolo della verità») | `coppia-sette` (moderna) |
+| `compat-anime` (di tendenza, «soulmate») | `coppia-specchio` (moderna) · `coppia-bivio` (di tendenza) |
+
+`GET /spreads?categoria=` filtra per tipo: la soglia e la lettura standard
+chiedono `standard`, così le speciali non vi compaiono. La larghezza delle carte
+(`larghezza`, `larghezza_stretto`) e la forma del tavolo (`forma`) stanno nei dati
+della stesa, non più nel codice del tavolo. I nomi delle posizioni sono neutri
+(«l'altra persona»): Re, Regina, Cavaliere e Fante sono energie, non il genere di
+nessuno.
+
+**Genere.** Donna · Uomo · Non binario · Altro (testo libero) · Preferisco non
+dirlo, più una casella facoltativa e separata «persona trans» (è un aggettivo, non
+un genere). **Non esiste un campo sull'orientamento**: non serve alla lettura ed è
+un dato sensibile. Il genere serve solo a pronomi e concordanze; ai prompt si
+vieta di dare per scontati il tipo di relazione o l'orientamento e di usare
+stereotipi di genere.
+
+**La compatibilità zodiacale è calcolata, non generata** (`tarot/zodiaco.py`): il
+segno solare dalla data (confini tropici, con l'avviso di cuspide a ±1 giorno: ora
+e luogo non si conoscono, quindi niente ascendente né luna), l'aspetto per distanza
+fra i segni, la relazione fra gli elementi (le dignità di Crowley) e un'armonia
+**solo qualitativa** — alta, buona, mista, impegnativa —, mai un punteggio. In più
+la «carta della coppia», somma teosofica delle due carte dell'anima. Il modello la
+riceve già fatta (`tarot/persone.py`) e la usa come sfondo.
+
+**Cosa entra nei prompt** (`tarot/persone.py`, `interpretazione.py`, `cag.py`): per
+ogni carta il codice dice **di chi parla la posizione** (`Questa posizione
+riguarda: …`, dal `soggetto`), poi il blocco «Le persone» e, nel responso, la
+compatibilità zodiacale. Il formato del responso ha una sezione dedicata per
+categoria; il prefisso in cache è uno per categoria e quello della lettura standard
+è rimasto **identico byte per byte** (lo prova un test con l'impronta). Il
+guardrail `relazioni` (niente verdetti, niente certezze sull'altra persona, niente
+stereotipi) vale solo per le due categorie.
+
+**Privacy: l'altra persona è un terzo.**
+
+- Il **cognome** sta solo in `Reading.persone` e in `User.partner_ricordato`: la
+  struttura dei dati per i prompt (`Persona`) non ha il campo, quindi non può
+  arrivare al modello. Il nome e il genere libero si riducono a lettere, cifre,
+  spazio, trattino, apostrofo e punto prima di entrare in un prompt.
+- `Reading.persone` è una **copia** al momento dell'apertura: lo storico non
+  cambia se poi l'utente corregge la scheda, e si cancella con la lettura.
+- «Ricorda» salva **un solo** partner nel profilo, nella stessa transazione della
+  lettura (con il 402 non salva niente); si cancella da `Profilo → Partner
+  ricordato` o con `DELETE /me/partner`. Nell'audit finisce il fatto, mai i dati.
+- **Le letture speciali si condividono senza l'altra persona**: nel link, nella
+  pagina pubblica e nell'immagine il nome (e il cognome) diventano «qualcuno di
+  speciale» nella lingua della lettura, e al suo posto c'è il simbolo del suo
+  genere; date, intervista e compatibilità zodiacale non escono mai. Vedi
+  «Condivisione» qui sotto.
+
+**Non ancora fatto** (rimandato di proposito): il rilevamento automatico di
+violenza o controllo coercitivo con un testo fisso di aiuto (i numeri vanno
+verificati uno per lingua prima di pubblicarli: per ora solo la regola del
+guardrail e le istruzioni ai prompt), un'età minima, più partner ricordati, ora e
+luogo di nascita, la traduzione nelle altre 12 lingue dei nuovi testi.
+
+**Migrazione.** `20260926_1100_letture_speciali`: tre colonne su `users`
+(`gender`, `gender_custom`, `is_trans`, più `partner_ricordato`) e una su
+`readings` (`persone`). È additiva; `tests/test_migrazione.py` la prova su un
+database a parte (upgrade, uguaglianza con i modelli, downgrade). Backend e
+frontend vanno rilasciati insieme.
+
+## Verifica in due passaggi (facoltativa)
+
+Gli amministratori hanno l'OTP obbligatorio (`deploy/keycloak/README.md`). Gli utenti possono attivarlo dal
+profilo, sezione «Sicurezza dell'account», con un'app di autenticazione (Google/Microsoft Authenticator,
+FreeOTP): il pulsante lancia l'azione *Configure OTP* di Keycloak e torna al sito. A ogni ingresso, a chi
+non l'ha attivata compare **un promemoria** (una volta per sessione) con «Attiva ora», «Più tardi» e la
+casella **«Non mostrare più»**, che salva `users.promemoria_2fa = false` e si riaccende dal profilo. Il
+sito non conserva né vede niente della 2FA: lo stato lo legge dall'API dell'account di Keycloak.
+
+## Condivisione
+
+Ogni lettura conclusa si condivide con un **link** (`/s/{token}`) e un'**immagine**,
+da Instagram, Facebook, TikTok, X, email o come solo link. Il pannello
+(`frontend/app/leggi/pannello-condivisione.tsx`) mostra l'anteprima del post e
+dell'anteprima del link, lascia scrivere un testo personalizzato (sull'immagine e nel
+post) e ha i pulsanti coi marchi. Il sito che compare nei link e sulle immagini è
+`NEXT_PUBLIC_SITE_URL` (predefinito `https://tarots.chat`).
+
+**L'immagine** si compone nel browser (`app/leggi/immagine-condivisione.ts`), l'unico
+posto che scrive in tutte le lingue: a sinistra la stessa stesa della lettura con le
+carte uscite nelle loro posizioni, ritagliata e ingrandita sulle carte; a destra il
+marchio, il testo personalizzato, il quesito, una sintesi del responso e l'indirizzo
+del sito. È **una sola immagine 4:3**, per il post e per l'anteprima del link. Il
+browser la disegna a 800×600 e la manda in PNG (l'unico formato che ogni canvas sa
+produrre, Safari compreso, che non sa fare WebP); il server (`prepara_immagine`, con
+**Pillow**) ne legge l'intestazione e controlla formato (PNG, WebP o JPEG) e misure
+(800×600 o 400×300) *prima* di decodificarla, poi la riscrive da zero come **WebP
+400×300 molto compresso** (qualità 55, circa 8 KB), quindi senza metadati né dati
+accodati. `PUT /me/readings/{id}/share-image` risponde con quel WebP: è ciò che il
+pannello mostra in anteprima e allega ai fogli di condivisione. Il disegno parte da ciò
+che il server mostra a chiunque (`GET /shared/{token}`), quindi non può dire più della
+pagina pubblica.
+
+**Come si condivide** (nessun sito può pubblicare al posto dell'utente):
+
+| canale | cosa succede |
+|---|---|
+| Facebook, X, email | si apre la finestra di condivisione del canale col link (l'anteprima la leggono da `og:image`) |
+| Instagram, TikTok | sul telefono il foglio di condivisione con l'immagine (Web Share API, livello 2); sul computer si scarica l'immagine, si copia il testo e si propone di aprire il sito |
+| solo link | copia negli appunti |
+
+**Le anteprime** stanno nell'`<head>` scritto dal server (`app/s/[token]/page.tsx`,
+`generateMetadata`), perché i social non eseguono JavaScript. Le letture condivise
+sono `noindex`. Il server di Next legge l'API da `API_INTERNAL_URL` (nel cluster,
+`http://tarots-api:8100`); l'immagine è servita da `GET /shared/{token}/image.webp`.
+
+**Il premio.** Ogni 5 condivisioni *verificate* una lettura in omaggio, senza tetto;
+chi si iscrive dal link di un altro fa guadagnare **5 letture** a chi l'ha condiviso,
+anche con l'iscrizione gratuita. Il pannello lo annuncia accanto ai pulsanti e la
+scheda utente ha il contatore.
+
+**Come si verifica una condivisione.** Le piattaforme non dicono se un utente ha
+pubblicato, quindi si verifica l'**effetto**: dopo che il proprietario ha usato un
+pulsante (`POST /me/readings/{id}/share-click`), entro 7 giorni, il link deve essere
+aperto da un visitatore vero (`POST /shared/{token}/visit`, inviato dalla pagina dopo
+4 secondi a schermo) che
+
+- non è il proprietario (né lo stesso browser, né la stessa rete del clic);
+- non è un crawler (`User-Agent` di bot e anteprime non contano);
+- conta una volta sola per lettura.
+
+Non prova che il post esista (chi apre il link potrebbe averlo avuto in privato), ma
+che il link è uscito dal dispositivo e ha raggiunto qualcuno. Il browser ha un
+identificativo casuale (`localStorage`); il server conserva solo **impronte con sale**
+(`TAROT_CONDIVISIONE_SALE`, obbligatorio in produzione) di identificativo e indirizzo,
+mai i valori. L'indirizzo è `X-Real-IP` (scritto da NPM) o l'ultimo di
+`X-Forwarded-For`.
+
+**Iscrizioni dal link.** La pagina pubblica ricorda il link aperto; al primo accesso
+dopo l'iscrizione (`AttribuzioneCondivisione`) il frontend lo dice al server
+(`POST /me/share-signup`), che accredita solo se l'account è **nuovo** (meno di 48
+ore), ha l'**email verificata**, è diverso dal proprietario e da chi ha condiviso per
+browser e rete, e non ha già fatto guadagnare a nessuno. Ogni accredito passa dal
+registro dei crediti (motivo «omaggio») e dall'audit (`share.reward`, `share.signup`).
+
+**Tabelle** (migrazione `20260926_1500_condivisione`): `share_events`, `share_visits`,
+`share_images` (un WebP per lettura), `share_signups`; colonne `users.share_rewards`,
+`readings.share_text`, `share_clicked_at`, `share_verified_at`. Ritirare il link
+cancella le immagini.
+
+**Limiti noti.** Senza tetto ai premi resta l'esposizione a iscrizioni fasulle
+(mitigata da email verificata, account nuovo e impronte, non eliminata); l'immagine
+è composta dal client e il server non può verificare che corrisponda alla lettura
+(controlla solo che sia un'immagine delle misure giuste, la ricomprime, e solo il
+proprietario la carica). A 400×300 i testi sono piccoli: il titolo e il sito si leggono,
+la sintesi è quasi solo una texture.
+
 ## Crediti e abbonamenti
 
 Una lettura usa **la quota giornaliera dell'abbonamento**, se ce n'è ancora,
@@ -273,8 +445,9 @@ Salva ogni immagine con il nome indicato in `file`. Il prompt del dorso è in
 ## Funzioni per la viralità, già incluse
 
 - **Condivisione.** Un link pubblico anonimo alla lettura, senza intervista e
-  senza nome, più un'**immagine 1080×1350** generata nel browser per le storie
-  di Instagram e TikTok (Web Share API).
+  senza nome, con un'immagine composta nel browser e i pulsanti per Instagram,
+  Facebook, TikTok, X, email; ogni 5 condivisioni verificate una lettura in omaggio
+  (vedi «Condivisione»).
 - **Carta del giorno** gratuita, con la **serie** dei giorni consecutivi.
 - **Inviti.** Chi invita e chi si iscrive con il codice ricevono 3 letture a
   testa.
@@ -311,6 +484,12 @@ Coprono:
   Celtica sempre dritta;
 - una lettura completa per ogni stesa, con il modello finto, e la lingua che si
   rinnova a ogni quesito;
+- le letture speciali: il calcolo zodiacale, le nove stese (struttura, nomi
+  ungheresi, geometria del tavolo su telefono e desktop), le persone e la
+  sanificazione dei nomi, il cognome che non arriva mai ai prompt, il profilo
+  incompleto (422), «ricorda» e la sua cancellazione, lo storico, il blocco della
+  condivisione, la migrazione Alembic e il prefisso della lettura standard
+  invariato;
 - il consumo di crediti e quote, il 402;
 - l'isolamento fra utenti e la cancellazione;
 - i pacchetti pagati, gli inviti, la carta del giorno, la console.

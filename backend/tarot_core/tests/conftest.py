@@ -226,6 +226,26 @@ def avvisi_di(modulo, livello: int = logging.WARNING):
         logger.disabled = spento_prima
 
 
+@pytest.fixture
+def prompt_visti(monkeypatch):
+    """Registra ogni chiamata al modello finto: compito, sistema e messaggio utente."""
+    from tarot_core.tarot.finto import ModelloFinto, _compito, _utente
+
+    visti: list[dict] = []
+    originale = ModelloFinto._rispondi
+
+    def spia(self, req):
+        visti.append({
+            "compito": _compito(req),
+            "sistema": "\n".join(m.content for m in req.messages if m.role == "system"),
+            "utente": _utente(req),
+        })
+        return originale(self, req)
+
+    monkeypatch.setattr(ModelloFinto, "_rispondi", spia)
+    return visti
+
+
 # ---- il client HTTP sull'app ---------------------------------------------------
 
 

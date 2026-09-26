@@ -17,7 +17,7 @@ import stili from "./soglia.module.css";
 export default function Soglia() {
   const { t, lingua } = useLingua();
   const carte = useCarica(useCallback(() => elencaCarte(), []), [], { pubblico: true });
-  const stese = useCarica(useCallback(() => elencaStese(), []), [], { pubblico: true });
+  const stese = useCarica(useCallback(() => elencaStese("standard"), []), [], { pubblico: true });
   const maggiori = (carte.dati ?? []).filter((c) => c.arcano === "maggiore");
   const scelte = [0, 1, 2, 17, 19, 21].map((n) => maggiori.find((c) => c.numero === n)).filter(Boolean);
   const passi = t.home_passi;
@@ -101,6 +101,21 @@ export default function Soglia() {
               <p>{s.descrizione}</p>
             </Link>
           ))}
+        </div>
+      </section>
+
+      <section className={stili.sezione}>
+        <h2>{t.home_speciali}</h2>
+        <p className={stili.introSezione}>{t.home_speciali_testo}</p>
+        <div className={stili.speciali}>
+          {([["compatibilita", t.tipo_compat, t.tipo_compat_desc], ["coppia", t.tipo_coppia, t.tipo_coppia_desc]] as const).map(
+            ([tipo, nome, descrizione]) => (
+              <Link key={tipo} href={`/leggi?tipo=${tipo}`} className={`pannello ${stili.stesa}`}>
+                <strong>{nome}</strong>
+                <p>{descrizione}</p>
+              </Link>
+            ),
+          )}
         </div>
       </section>
 

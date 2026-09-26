@@ -1,12 +1,16 @@
 "use client";
 
-/* Il profilo: la data di nascita per le carte personali, il codice invito. */
+/* Il profilo: la data di nascita per le carte personali, il genere e il partner
+ * ricordato per le letture di compatibilità e di coppia, il codice invito. */
 
 import { useState } from "react";
-import { aggiornaProfilo, leggiProfilo, riscattaInvito } from "@/lib/api";
+import { aggiornaProfilo, cancellaPartner, leggiProfilo, riscattaInvito, type Genere } from "@/lib/api";
 import { useLingua } from "@/lib/lingua";
+import { useSessione, AUTH_DISATTIVATA } from "@/lib/sessione";
+import { URL_ACCOUNT, leggiStato2fa } from "@/lib/sicurezza";
 import { useAzione, useCarica } from "@/lib/usa";
 import { Carta } from "../componenti/carta";
+import { CampiGenere } from "../componenti/campi-genere";
 import { Involucro } from "../componenti/testata";
 import stili from "../pagine.module.css";
 
@@ -20,10 +24,19 @@ export default function PaginaProfilo() {
 }
 
 function Profilo() {
-  const { t } = useLingua();
+  const { t, locale } = useLingua();
   const profilo = useCarica(leggiProfilo);
   const { esegui, inCorso, errore } = useAzione();
+  const sessione = useSessione();
+  const stato2fa = useCarica(leggiStato2fa);
+  /* La casella del promemoria risponde subito al tocco: `null` finché non la si tocca,
+   * così vale quello del profilo. */
+  const [promemoria, setPromemoria] = useState<boolean | null>(null);
   const [nascita, setNascita] = useState<string | null>(null);
+  /* Il genere: `null` finché non si tocca, così vale quello del profilo. */
+  const [genere, setGenere] = useState<Genere | "" | null>(null);
+  const [genereAltro, setGenereAltro] = useState<string | null>(null);
+  const [trans, setTrans] = useState<boolean | null>(null);
   const [codice, setCodice] = useState(() => {
     try {
       return typeof window !== "undefined" ? (window.localStorage.getItem("invito") ?? "") : "";
@@ -66,6 +79,137 @@ function Profilo() {
             ))}
           </div>
         )}
+      </section>
+
+      <section className={`pannello ${stili.scheda} ${stili.sezione}`}>
+        <h2 className={stili.sezioneTitolo}>{t.profilo_genere_titolo}</h2>
+        <p className={stili.nota}>{t.profilo_genere_testo}</p>
+        <CampiGenere
+          genere={genere ?? p.gender ?? ""}
+          altro={genereAltro ?? p.gender_custom ?? ""}
+          trans={trans ?? p.is_trans}
+          onGenere={setGenere}
+          onAltro={setGenereAltro}
+          onTrans={setTrans}
+        />
+        <div className={stili.linea}>
+          <button
+            className="bottone"
+            disabled={inCorso || (genere ?? p.gender ?? "") === "" || (genere === null && genereAltro === null && trans === null)}
+            onClick={async () => {
+              const g = (genere ?? p.gender) as Genere;
+              await esegui((tok) => aggiornaProfilo(tok, {
+                gender: g,
+                gender_custom: g === "altro" ? (genereAltro ?? p.gender_custom ?? "") : null,
+                is_trans: trans ?? p.is_trans,
+              }));
+              setGenere(null);
+              setGenereAltro(null);
+              setTrans(null);
+              profilo.ricarica();
+            }}
+          >
+            {t.salva}
+          </button>
+        </div>
+      </section>
+
+      <section className={`pannello ${stili.scheda} ${stili.sezione}`}>
+        <h2 className={stili.sezioneTitolo}>{t.profilo_partner_titolo}</h2>
+        {p.partner_ricordato ? (
+          <>
+            <p className={stili.nota}>
+              {[p.partner_ricordato.nome, p.partner_ricordato.cognome].filter(Boolean).join(" ")}
+              {" · "}
+              {new Date(p.partner_ricordato.nascita).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })}
+            </p>
+            <div className={stili.linea}>
+              <button
+                className="bottone-secondario"
+                disabled={inCorso}
+                onClick={async () => {
+                  if (!window.confirm(t.profilo_partner_conferma)) return;
+                  await esegui((tok) => cancellaPartner(tok));
+                  profilo.ricarica();
+                }}
+              >
+                {t.profilo_partner_cancella}
+              </button>
+            </div>
+          </>
+        ) : (
+          <p className={stili.nota}>{t.profilo_partner_vuoto}</p>
+        )}
+      </section>
+
+      {!AUTH_DISATTIVATA && (
+        <section className={`pannello ${stili.scheda} ${stili.sezione}`} aria-labelledby="profilo-sicurezza">
+          <h2 id="profilo-sicurezza" className={stili.sezioneTitolo}>{t.sic_profilo_titolo}</h2>
+          <p className={stili.nota}>{t.sic_testo}</p>
+          <p className={stili.stato2fa} role="status">
+            <strong>{t.sic_stato}: </strong>
+            {stato2fa.dati === "attiva"
+              ? `✓ ${t.sic_stato_attiva}`
+              : stato2fa.dati === "spenta"
+                ? t.sic_stato_spenta
+                : stato2fa.dati === "ignota"
+                  ? t.sic_stato_ignota
+                  : "…"}
+          </p>
+          <div className={stili.linea}>
+            {stato2fa.dati !== "attiva" && (
+              <button className={`bottone ${stili.tocco}`} onClick={sessione.attiva2fa}>{t.sic_attiva_2fa}</button>
+            )}
+            <a className={`bottone-secondario ${stili.tocco}`} href={URL_ACCOUNT} target="_blank" rel="noopener noreferrer">
+              {t.sic_gestisci}
+            </a>
+          </div>
+          {stato2fa.dati !== "attiva" && (
+            <label className={stili.casellaProfilo}>
+              <input
+                type="checkbox"
+                checked={promemoria ?? p.promemoria_2fa}
+                onChange={async (e) => {
+                  const valore = e.target.checked;
+                  setPromemoria(valore);
+                  await esegui((tok) => aggiornaProfilo(tok, { promemoria_2fa: valore }));
+                  profilo.ricarica();
+                }}
+              />
+              <span>{t.sic_promemoria}</span>
+            </label>
+          )}
+        </section>
+      )}
+
+      <section className={`pannello ${stili.scheda} ${stili.sezione}`} aria-labelledby="profilo-condivisioni">
+        <h2 id="profilo-condivisioni" className={stili.sezioneTitolo}>{t.prof_cond_titolo}</h2>
+        <p className={stili.nota}>{t.prof_cond_testo(p.condivisioni.soglia, p.condivisioni.crediti_iscrizione)}</p>
+        <div
+          className={stili.barra}
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={p.condivisioni.soglia}
+          aria-valuenow={p.condivisioni.soglia - p.condivisioni.prossimo_tra}
+          aria-label={t.prof_cond_titolo}
+        >
+          <span style={{ width: `${((p.condivisioni.soglia - p.condivisioni.prossimo_tra) / p.condivisioni.soglia) * 100}%` }} />
+        </div>
+        <p className={stili.nota}>{t.prof_cond_prossimo(p.condivisioni.prossimo_tra)}</p>
+        <dl className={stili.contatori}>
+          <div>
+            <dt>{t.prof_cond_verificate}</dt>
+            <dd>{p.condivisioni.verificate}</dd>
+          </div>
+          <div>
+            <dt>{t.prof_cond_premi}</dt>
+            <dd>{p.condivisioni.premi}</dd>
+          </div>
+          <div>
+            <dt>{t.prof_cond_iscritti}</dt>
+            <dd>{p.condivisioni.iscrizioni}</dd>
+          </div>
+        </dl>
       </section>
 
       <section className={`pannello ${stili.scheda} ${stili.sezione}`}>

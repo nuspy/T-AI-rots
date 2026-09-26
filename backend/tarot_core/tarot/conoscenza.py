@@ -20,6 +20,15 @@ from .lingue import lingua
 
 logger = logging.getLogger(__name__)
 
+#: Le categorie di stesa: la lettura standard e le due letture speciali.
+CATEGORIE = ("standard", "compatibilita", "coppia")
+
+#: Lo stile di una stesa speciale: come la si trova nella tradizione.
+STILI = ("tradizionale", "moderna", "tendenza")
+
+#: Di chi è il vissuto che una posizione descrive (solo nelle stese speciali).
+SOGGETTI = ("tu", "partner", "coppia", "strada-a", "strada-b")
+
 CAMPI_CARTA = (
     "id", "arcano", "numero", "seme", "rango", "nome_thoth", "nome_it",
     "elemento", "parole_chiave", "significati", "dritto", "rovescio", "ambiti",
@@ -93,6 +102,9 @@ class Conoscenza:
             racconto = stesa.get("racconto")
             if racconto is None or sorted(racconto) != numeri:
                 raise ConoscenzaNonValida(f"{stesa['id']}: `racconto` non è una permutazione delle posizioni")
+            self._valida_geometria(stesa)
+            self._valida_categoria(stesa)
+        self._valida_copertura_stili()
         for codice, per_lingua in self.nomi.items():
             senza_carte = [i for i in self.carte if i not in per_lingua.get("carte", {})]
             if senza_carte:
@@ -105,6 +117,47 @@ class Conoscenza:
                 if manca:
                     raise ConoscenzaNonValida(f"nomi {codice}: {stesa['id']} senza le posizioni {manca}")
 
+    def _valida_geometria(self, stesa: Dict[str, Any]) -> None:
+        """Le coordinate stanno sul tavolo e la larghezza delle carte è sensata."""
+        for p in stesa["posizioni"]:
+            if not (0 <= p["x"] <= 1 and 0 <= p["y"] <= 1):
+                raise ConoscenzaNonValida(f"{stesa['id']}: la posizione {p['n']} è fuori dal tavolo")
+        for campo in ("larghezza", "larghezza_stretto"):
+            valore = stesa.get(campo)
+            if valore is not None and not 0.05 <= valore <= 0.2:
+                raise ConoscenzaNonValida(f"{stesa['id']}: `{campo}` fuori da 0.05–0.2")
+        if stesa.get("forma", "standard") not in ("standard", "quadrata"):
+            raise ConoscenzaNonValida(f"{stesa['id']}: `forma` sconosciuta")
+
+    def _valida_categoria(self, stesa: Dict[str, Any]) -> None:
+        """Le stese speciali hanno stile e soggetto; le standard non ne hanno."""
+        categoria = stesa.get("categoria", "standard")
+        if categoria not in CATEGORIE:
+            raise ConoscenzaNonValida(f"{stesa['id']}: categoria sconosciuta «{categoria}»")
+        if categoria == "standard":
+            if stesa.get("stile"):
+                raise ConoscenzaNonValida(f"{stesa['id']}: una stesa standard non ha `stile`")
+            return
+        if stesa.get("stile") not in STILI:
+            raise ConoscenzaNonValida(f"{stesa['id']}: `stile` mancante o sconosciuto")
+        if stesa.get("sintesi_wirth"):
+            raise ConoscenzaNonValida(f"{stesa['id']}: la sintesi di Wirth è solo della croce semplice")
+        for p in stesa["posizioni"]:
+            if p.get("calcolata"):
+                raise ConoscenzaNonValida(f"{stesa['id']}: una stesa speciale non ha carte calcolate")
+            if p.get("soggetto") not in SOGGETTI:
+                raise ConoscenzaNonValida(f"{stesa['id']}: la posizione {p['n']} non ha un `soggetto` valido")
+            if p["soggetto"].startswith("strada-") and categoria != "coppia":
+                raise ConoscenzaNonValida(f"{stesa['id']}: le strade sono solo della coppia")
+
+    def _valida_copertura_stili(self) -> None:
+        """Ogni lettura speciale offre almeno una stesa per ciascuno stile."""
+        for categoria in ("compatibilita", "coppia"):
+            stili = {s.get("stile") for s in self.stese_per(categoria)}
+            mancanti = [x for x in STILI if x not in stili]
+            if mancanti:
+                raise ConoscenzaNonValida(f"{categoria}: nessuna stesa di stile {mancanti}")
+
     # -- lettura ---------------------------------------------------------
 
     def carta(self, card_id: str) -> Dict[str, Any]:
@@ -112,6 +165,15 @@ class Conoscenza:
 
     def stesa(self, spread_id: str) -> Optional[Dict[str, Any]]:
         return self.stese.get(spread_id)
+
+    @staticmethod
+    def categoria_di(stesa: Dict[str, Any]) -> str:
+        """`standard`, `compatibilita` o `coppia`: l'assenza del campo è standard."""
+        return stesa.get("categoria", "standard")
+
+    def stese_per(self, categoria: str) -> List[Dict[str, Any]]:
+        """Le stese di una categoria, nell'ordine del catalogo."""
+        return [s for s in self.stese.values() if self.categoria_di(s) == categoria]
 
     def mazzo_per(self, stesa: Dict[str, Any]) -> List[str]:
         """Le carte in gioco per una stesa: i 22 maggiori o tutte e 78."""
@@ -208,9 +270,11 @@ class Conoscenza:
         return {
             k: stesa.get(k) for k in (
                 "id", "nome", "nome_en", "mazzo", "carte_da_scegliere", "origine",
-                "descrizione", "regole", "coppie",
+                "descrizione", "regole", "coppie", "stile", "larghezza", "larghezza_stretto",
             )
         } | {
+            "categoria": self.categoria_di(stesa),
+            "forma": stesa.get("forma", "standard"),
             "posizioni": posizioni,
             "nomi": nomi_di(stesa.get("nome_en"), lambda t: t.get("nome")),
             "sintesi_wirth": bool(stesa.get("sintesi_wirth")),

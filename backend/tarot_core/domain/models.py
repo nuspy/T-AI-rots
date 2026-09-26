@@ -22,12 +22,16 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy import (
     BigInteger, Boolean, CheckConstraint, Date, DateTime, ForeignKey, Index,
-    Integer, String, Text, UniqueConstraint, Uuid,
+    Integer, String, Text, UniqueConstraint, Uuid, false, true,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, OwnedMixin, TimestampMixin, owner_index
+
+#: Il genere dichiarato da chi consulta e dal partner nelle letture speciali.
+#: «non_dice» è una risposta valida. Non esiste un campo per l'orientamento.
+GENERI = ("donna", "uomo", "non_binario", "altro", "non_dice")
 
 #: Gli stati di una lettura, nell'ordine in cui si attraversano.
 STATI_LETTURA = (
@@ -64,6 +68,31 @@ class User(Base, TimestampMixin):
     #: nel contesto della lettura.
     birth_date: Mapped[Optional[date]] = mapped_column(Date)
 
+    #: Il genere dichiarato: serve solo a pronomi e concordanze nelle letture di
+    #: compatibilità e di coppia. `altro` porta un testo libero in `gender_custom`.
+    gender: Mapped[Optional[str]] = mapped_column(String(20))
+    gender_custom: Mapped[Optional[str]] = mapped_column(String(40))
+    #: Casella facoltativa, separata dal genere: «trans» descrive una persona, non
+    #: è un genere.
+    is_trans: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false(), nullable=False)
+
+    #: Quanti premi «5 condivisioni accertate = 1 lettura» sono già stati
+    #: accreditati. Le condivisioni accertate si contano dalle letture; i premi
+    #: dovuti sono `accertate // 5`, e ciò che manca ancora si accredita.
+    share_rewards: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
+
+    #: Se all'accesso si ricorda di attivare la verifica in due passaggi (app di
+    #: autenticazione). È solo la preferenza sul promemoria («non mostrare più»): la
+    #: verifica stessa la gestisce Keycloak, e il sito non sa né conserva altro.
+    promemoria_2fa: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default=true(), nullable=False,
+    )
+
+    #: Il partner che l'utente ha chiesto di ricordare («ricorda» nel modulo):
+    #: uno solo, con il cognome. `{"nome", "cognome", "genere", "genere_altro",
+    #: "trans", "nascita"}`. Si cancella dal profilo.
+    partner_ricordato: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB)
+
     #: Il codice che l'utente condivide per invitare altri. Nasce con l'utente.
     referral_code: Mapped[Optional[str]] = mapped_column(String(16), unique=True)
     #: Chi l'ha invitato. Scritto una volta sola, al primo riscatto.
@@ -81,6 +110,13 @@ class User(Base, TimestampMixin):
     readings: Mapped[List["Reading"]] = relationship(
         back_populates="owner", cascade="all, delete-orphan",
         foreign_keys="Reading.owner_id",
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "gender is null or gender in ('donna', 'uomo', 'non_binario', 'altro', 'non_dice')",
+            name="ck_users_gender",
+        ),
     )
 
     @property
@@ -121,6 +157,13 @@ class Reading(Base, TimestampMixin, OwnedMixin):
     #: Il quadro emerso dall'intervista, riassunto dal modello.
     context_summary: Mapped[Optional[str]] = mapped_column(Text)
 
+    #: Nelle letture speciali, l'**istantanea** delle due persone al momento
+    #: dell'apertura: `{"v": 1, "tu": {...}, "partner": {...}}`. È una copia, non
+    #: un riferimento: la lettura resta coerente col responso anche se poi
+    #: l'utente corregge la scheda. Ha anche il cognome del partner, che ai
+    #: prompt non arriva mai (vedi `tarot/persone.py`). Si cancella con la lettura.
+    persone: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB)
+
     #: `[{"card": "maj-00", "rovescio": false}, ...]`, uno per slot del
     #: ventaglio. Mai inviato al client prima della rivelazione.
     deck_state: Mapped[Optional[List[Dict[str, Any]]]] = mapped_column(JSONB)
@@ -134,6 +177,13 @@ class Reading(Base, TimestampMixin, OwnedMixin):
 
     #: La condivisione pubblica, per scelta esplicita dell'utente.
     share_token: Mapped[Optional[str]] = mapped_column(String(32), unique=True)
+    #: Il testo personalizzato del post (una riga). Sta anche sull'immagine.
+    share_text: Mapped[Optional[str]] = mapped_column(String(200))
+    #: L'ultima volta che il proprietario ha premuto un pulsante di condivisione.
+    share_clicked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    #: Quando il link, dopo un clic, è stato aperto da un visitatore vero: da
+    #: qui la lettura conta come «condivisione accertata». Una volta sola.
+    share_verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
 
     #: Il diario: «si è avverato?». `si`, `in_parte`, `no`.
     feedback: Mapped[Optional[str]] = mapped_column(String(10))

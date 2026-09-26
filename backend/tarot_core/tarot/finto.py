@@ -38,6 +38,15 @@ def _utente(req: GenerationRequest) -> str:
     return next((m.content for m in reversed(req.messages) if m.role == "user"), "")
 
 
+def _sistema(req: GenerationRequest) -> str:
+    return "\n".join(m.content for m in req.messages if m.role == "system")
+
+
+def _senza_soggetto(valore: str) -> str:
+    """Toglie la coda « [riguarda: …]» che le letture speciali aggiungono alla catena."""
+    return re.sub(r"\s*\[riguarda:.*$", "", valore).rstrip(".")
+
+
 class ModelloFinto:
     name = "finto"
 
@@ -105,14 +114,25 @@ class ModelloFinto:
             )
             elenco = "; ".join(f"{c} in «{p}»" for p, c, _o, _v in tappe) or "le carte"
             legami = ["Ora", "Poi", "Perciò", "E così", "Fino a"]
+            # In coda alla riga può esserci « [riguarda: …]»: nelle letture speciali.
             filo = " ".join(
-                f"{legami[min(i, len(legami) - 1)]}: {v.rstrip('.')} ({c}, {o})."
+                f"{legami[min(i, len(legami) - 1)]}: {_senza_soggetto(v)} ({c}, {o})."
                 for i, (_p, c, o, v) in enumerate(tappe)
             ) or "Le carte si parlano."
+            # Le letture speciali hanno una sezione dedicata: la categoria si
+            # riconosce dal formato che il prompt di sistema chiede.
+            sistema = _sistema(req)
+            if "## L'incontro dei segni" in sistema:
+                seconda = "## L'incontro dei segni\n\nI segni solari sono uno sfondo, non un verdetto.\n\n"
+            elif "## Ciò che vi lega" in sistema:
+                seconda = "## Ciò che vi lega e ciò che vi mette alla prova\n\nIl legame ha forze e attriti.\n\n"
+            else:
+                seconda = ""
             return (
                 "## Il quadro\n\n"
                 f"La stesa mostra {elenco}. Insieme descrivono una situazione che chiede "
                 "presenza e chiarezza più che velocità.\n\n"
+                f"{seconda}"
                 "## Le forze in gioco\n\n"
                 f"{filo}\n\n"
                 "## Il consiglio delle carte\n\n"

@@ -60,3 +60,18 @@ def test_i_testi_fissi_ricadono_sull_inglese():
     testi = {"it": "ciao", "en": "hello", "hu": "szia"}
     assert in_lingua(testi, "hu") == "szia" and in_lingua(testi, "it") == "ciao"
     assert in_lingua(testi, "de") == "hello" and in_lingua(testi, "zh") == "hello"
+
+
+@pytest.mark.parametrize("quesito, atteso", [
+    ("Compatibilità con Marco", "it"),
+    ("Relazione di coppia con Marco", "it"),
+    ("Compatibility with Marco", "en"),
+    ("Couple relationship with Marco", "en"),
+    ("Kompatibilitás vele: Marco", "hu"),
+    ("Párkapcsolat vele: Marco", "hu"),
+])
+def test_i_quesiti_generati_per_le_letture_speciali_hanno_la_lingua_giusta(quesito, atteso):
+    # Il quesito di ripiego è breve e decide la lingua di tutta la lettura: il nome del
+    # partner non deve spostarla, qualunque sia la lingua dell'interfaccia.
+    for interfaccia in ("it", "en", "hu"):
+        assert rileva_lingua(quesito, fallback=interfaccia) == atteso

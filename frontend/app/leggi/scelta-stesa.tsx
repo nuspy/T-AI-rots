@@ -1,10 +1,16 @@
 "use client";
 
-/* La scelta della stesa: cinque tavole in miniatura, ognuna con la sua
- * disposizione disegnata, e la domanda. */
+/* La scelta della stesa: le tavole in miniatura, ognuna con la sua
+ * disposizione disegnata, e la domanda.
+ *
+ * Serve alla lettura standard e alle due speciali. Per le speciali le stese si
+ * scelgono per STILE (tradizionale, moderna, di tendenza) e la domanda è
+ * facoltativa: se resta vuota parte con quella di ripiego («Compatibilità con
+ * Marco»).
+ */
 
 import { motion } from "framer-motion";
-import type { Stesa } from "@/lib/api";
+import type { Stesa, Stile } from "@/lib/api";
 import { nomePosizione, nomeStesa } from "@/lib/i18n";
 import { useLingua } from "@/lib/lingua";
 import stili from "./leggi.module.css";
@@ -38,6 +44,8 @@ function Miniatura({ stesa }: { stesa: Stesa }) {
   );
 }
 
+const ORDINE_STILI: Stile[] = ["tradizionale", "moderna", "tendenza"];
+
 export function SceltaStesa({
   stese,
   scelta,
@@ -47,6 +55,11 @@ export function SceltaStesa({
   onInizia,
   inCorso,
   errore,
+  conStili = false,
+  domandaFacoltativa = false,
+  domandaPredefinita = "",
+  onIndietro,
+  testoInizia,
 }: {
   stese: Stesa[];
   scelta: string | null;
@@ -56,16 +69,61 @@ export function SceltaStesa({
   onInizia: () => void;
   inCorso: boolean;
   errore: string | null;
+  /* Le letture speciali: si sceglie prima lo stile, poi la stesa. */
+  conStili?: boolean;
+  /* La domanda si può lasciare vuota: parte quella di ripiego. */
+  domandaFacoltativa?: boolean;
+  domandaPredefinita?: string;
+  onIndietro?: () => void;
+  testoInizia?: string;
 }) {
   const { t, lingua } = useLingua();
   const selezionata = stese.find((s) => s.id === scelta);
+  const stiliOfferti = ORDINE_STILI.filter((s) => stese.some((x) => x.stile === s));
+  const stileAttivo: Stile | null = conStili ? (selezionata?.stile ?? stiliOfferti[0] ?? null) : null;
+  const visibili = conStili ? stese.filter((s) => s.stile === stileAttivo) : stese;
+  const etichettaStile: Record<Stile, string> = {
+    tradizionale: t.stile_tradizionale,
+    moderna: t.stile_moderna,
+    tendenza: t.stile_tendenza,
+  };
+  const descrizioneStile: Record<Stile, string> = {
+    tradizionale: t.stile_tradizionale_desc,
+    moderna: t.stile_moderna_desc,
+    tendenza: t.stile_tendenza_desc,
+  };
+  const puoIniziare = !!scelta && !inCorso && (domandaFacoltativa || domanda.trim().length >= 3);
+
   return (
     <div className={stili.scelta}>
-      <h2 className={stili.passo}><span>I</span> {t.scegli_stesa}</h2>
-      <div className={stili.stese}>
-        {stese.map((s, i) => (
+      <h2 className={stili.passo}><span>I</span> {conStili ? t.stile_titolo : t.scegli_stesa}</h2>
+
+      {conStili && (
+        <div className={stili.stiliRiga} role="group" aria-label={t.stile_titolo}>
+          {stiliOfferti.map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={s === stileAttivo ? stili.stilePillolaAttiva : stili.stilePillola}
+              aria-pressed={s === stileAttivo}
+              onClick={() => {
+                const prima = stese.find((x) => x.stile === s);
+                if (prima) onScegli(prima.id);
+              }}
+            >
+              {etichettaStile[s]}
+              <span className={stili.stileConteggio}>{stese.filter((x) => x.stile === s).length}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {stileAttivo && <p className={stili.guida}>{descrizioneStile[stileAttivo]}</p>}
+
+      <div className={visibili.length <= 2 ? stili.steseCentrate : stili.stese}>
+        {visibili.map((s, i) => (
           <motion.button
             key={s.id}
+            type="button"
             className={s.id === scelta ? stili.stesaScelta : stili.stesa}
             onClick={() => onScegli(s.id)}
             initial={{ opacity: 0, y: 24 }}
@@ -97,11 +155,12 @@ export function SceltaStesa({
       )}
 
       <h2 className={stili.passo}><span>II</span> {t.la_tua_domanda}</h2>
+      {domandaFacoltativa && <p className={stili.guida}>{t.domanda_facoltativa}</p>}
       <textarea
         className={stili.domanda}
         value={domanda}
         onChange={(e) => onDomanda(e.target.value)}
-        placeholder={t.domanda_segnaposto}
+        placeholder={domandaFacoltativa && domandaPredefinita ? domandaPredefinita : t.domanda_segnaposto}
         dir="auto"
         maxLength={1000}
         rows={3}
@@ -109,8 +168,11 @@ export function SceltaStesa({
       />
       {errore && <p className={stili.errore} role="alert">{errore}</p>}
       <div className={stili.azioniCentro}>
-        <button className="bottone" disabled={!scelta || domanda.trim().length < 3 || inCorso} onClick={onInizia}>
-          ✦ {t.inizia}
+        {onIndietro && (
+          <button type="button" className="bottone-secondario" onClick={onIndietro}>{t.indietro}</button>
+        )}
+        <button className="bottone" disabled={!puoIniziare} onClick={onInizia}>
+          ✦ {testoInizia ?? t.inizia}
         </button>
       </div>
     </div>

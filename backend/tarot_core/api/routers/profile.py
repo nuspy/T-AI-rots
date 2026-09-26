@@ -1,5 +1,5 @@
-"""Il profilo di chi consulta: data di nascita, carte personali, inviti,
-carta del giorno."""
+"""Il profilo di chi consulta: data di nascita, genere, carte personali, il
+partner ricordato, inviti, carta del giorno."""
 from __future__ import annotations
 
 import hashlib
@@ -7,7 +7,7 @@ from datetime import date, datetime, timedelta
 from typing import Any, Dict, Optional
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
@@ -18,7 +18,9 @@ from ...domain.models import DailyCard, User
 from ...domain.repositories import AuditRepository, nuovo_codice_invito
 from ...settings import get_settings
 from ...tarot.numerologia import carta_dell_anima, carta_dell_anno
+from ...tarot.persone import LUNGHEZZA_GENERE_ALTRO, mancanti, pulisci
 from ..deps import get_conoscenza
+from .condivisione import contatore
 
 router = APIRouter(prefix="/me", tags=["profilo"])
 
@@ -30,6 +32,14 @@ FUSO = ZoneInfo("Europe/Rome")
 class ModificaProfilo(BaseModel):
     birth_date: Optional[date] = None
     locale: Optional[str] = Field(default=None, pattern="^(it|en)$")
+    #: Il genere dichiarato. «non_dice» (preferisco non dirlo) è una risposta valida.
+    gender: Optional[str] = Field(default=None, pattern="^(donna|uomo|non_binario|altro|non_dice)$")
+    #: Il testo libero di «altro»: si azzera se il genere non è «altro».
+    gender_custom: Optional[str] = Field(default=None, max_length=40)
+    #: La casella facoltativa «persona trans», separata dal genere.
+    is_trans: Optional[bool] = None
+    #: Il promemoria della verifica in due passaggi all'accesso: `false` = «non mostrare più».
+    promemoria_2fa: Optional[bool] = None
 
 
 class Invito(BaseModel):
@@ -40,7 +50,7 @@ def _oggi() -> date:
     return datetime.now(FUSO).date()
 
 
-def _profilo_json(user: User) -> Dict[str, Any]:
+async def _profilo_json(user: User, session) -> Dict[str, Any]:
     conoscenza = get_conoscenza()
     dati: Dict[str, Any] = {
         "id": user.id,
@@ -48,8 +58,18 @@ def _profilo_json(user: User) -> Dict[str, Any]:
         "display_name": user.display_name,
         "locale": user.locale,
         "birth_date": user.birth_date.isoformat() if user.birth_date else None,
+        "gender": user.gender,
+        "gender_custom": user.gender_custom,
+        "is_trans": user.is_trans,
+        "promemoria_2fa": user.promemoria_2fa,
+        # Il partner ricordato ha il cognome: si mostra solo al proprietario.
+        "partner_ricordato": user.partner_ricordato,
+        # Cosa manca nella scheda per le letture di compatibilità e di coppia.
+        "relazioni": {"completo": not mancanti(user), "mancanti": mancanti(user)},
         "referral_code": user.referral_code,
         "invitato": user.referred_by is not None,
+        # Il contatore delle condivisioni accertate e dei premi (vedi condivisione.py).
+        "condivisioni": await contatore(session, user),
         "carta_anima": None,
         "carta_anno": None,
     }
@@ -68,7 +88,7 @@ async def profilo(user: CurrentUser, session: DbSession) -> Dict[str, Any]:
     if not user.referral_code:
         user.referral_code = nuovo_codice_invito()
         await session.commit()
-    return _profilo_json(user)
+    return await _profilo_json(user, session)
 
 
 @router.patch("/profile")
@@ -79,8 +99,36 @@ async def modifica(payload: ModificaProfilo, user: CurrentUser, session: DbSessi
         user.birth_date = payload.birth_date
     if payload.locale:
         user.locale = payload.locale
+    if payload.gender is not None:
+        if payload.gender == "altro":
+            testo = pulisci(payload.gender_custom, LUNGHEZZA_GENERE_ALTRO)
+            if not testo:
+                raise HTTPException(status_code=400, detail="Con «altro» scrivi come ti definisci")
+            user.gender_custom = testo
+        else:
+            user.gender_custom = None
+        user.gender = payload.gender
+    if payload.is_trans is not None:
+        user.is_trans = payload.is_trans
+    if payload.promemoria_2fa is not None:
+        user.promemoria_2fa = payload.promemoria_2fa
     await session.commit()
-    return _profilo_json(user)
+    return await _profilo_json(user, session)
+
+
+@router.delete("/partner", status_code=status.HTTP_204_NO_CONTENT)
+async def dimentica_partner(user: CurrentUser, session: DbSession) -> Response:
+    """Cancella il partner ricordato. Idempotente: senza partner non fa nulla.
+
+    Nel registro entra il fatto, mai i dati del partner: sono di un terzo.
+    """
+    if user.partner_ricordato is not None:
+        user.partner_ricordato = None
+        await AuditRepository(session).record(
+            action="partner.forget", actor_id=user.id, target_type="user", target_id=str(user.id),
+        )
+        await session.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/referral")

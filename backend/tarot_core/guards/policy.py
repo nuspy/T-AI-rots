@@ -69,6 +69,12 @@ class Guardrail:
     #: Vuoto: a tutte.
     applica_a: Sequence[str] = field(default_factory=tuple)
 
+    #: A quali categorie di lettura si applica (`compatibilita`, `coppia`;
+    #: `standard` per la lettura normale). Vuoto: a tutte. Un guardrail con
+    #: `categorie` non tocca la lettura standard, quindi il suo prefisso resta
+    #: identico a com'era prima che esistesse.
+    categorie: Sequence[str] = field(default_factory=tuple)
+
     @property
     def previene(self) -> bool:
         return bool(self.istruzioni.strip())
@@ -77,10 +83,12 @@ class Guardrail:
     def rileva(self) -> bool:
         return bool(self.verifica.strip())
 
-    def vale_per(self, fase: Optional[str]) -> bool:
-        if not self.applica_a:
-            return True
-        return fase in self.applica_a
+    def vale_per(self, fase: Optional[str], categoria: str = "standard") -> bool:
+        if self.applica_a and fase not in self.applica_a:
+            return False
+        if self.categorie and categoria not in self.categorie:
+            return False
+        return True
 
 
 class GuardrailMalformato(ValueError):
@@ -129,6 +137,9 @@ def interpreta(testo: str, *, origine: str = "<memoria>") -> Guardrail:
     applica_a = testata.get("applica_a") or ()
     if isinstance(applica_a, str):
         applica_a = (applica_a,)
+    categorie = testata.get("categorie") or ()
+    if isinstance(categorie, str):
+        categorie = (categorie,)
 
     return Guardrail(
         slug=slug,
@@ -138,6 +149,7 @@ def interpreta(testo: str, *, origine: str = "<memoria>") -> Guardrail:
         verifica=verifica,
         severita=severita,
         applica_a=tuple(applica_a),
+        categorie=tuple(categorie),
     )
 
 
@@ -195,21 +207,27 @@ class RegistroGuardrail:
     def __len__(self) -> int:
         return len(self._tutti)
 
-    def per(self, fase: Optional[str] = None) -> List[Guardrail]:
-        return [g for g in self._tutti if g.vale_per(fase)]
+    def per(self, fase: Optional[str] = None, categoria: str = "standard") -> List[Guardrail]:
+        return [g for g in self._tutti if g.vale_per(fase, categoria)]
 
-    def istruzioni_per(self, fase: Optional[str] = None) -> List[str]:
+    def istruzioni_per(
+        self, fase: Optional[str] = None, categoria: str = "standard", *, solo_categoria: bool = False,
+    ) -> List[str]:
         """Le istruzioni da mettere nello strato 0.
 
         Ordinate per slug: lo strato 0 dev'essere byte-identico fra richieste,
         e un ordine che dipende da come i file sono stati letti dal disco non
         lo è — su un altro sistema, o dopo un rinomino, cambierebbe.
+
+        Con `solo_categoria` solo i guardrail che dichiarano `categorie`: le
+        interpretazioni delle carte sono brevi e hanno già le loro regole, e
+        ricevono soltanto ciò che è specifico del tipo di lettura.
         """
         return [
             g.istruzioni.strip()
-            for g in sorted(self.per(fase), key=lambda g: g.slug)
-            if g.previene
+            for g in sorted(self.per(fase, categoria), key=lambda g: g.slug)
+            if g.previene and (g.categorie or not solo_categoria)
         ]
 
-    def rubriche_per(self, fase: Optional[str] = None) -> List[Guardrail]:
-        return [g for g in self.per(fase) if g.rileva]
+    def rubriche_per(self, fase: Optional[str] = None, categoria: str = "standard") -> List[Guardrail]:
+        return [g for g in self.per(fase, categoria) if g.rileva]

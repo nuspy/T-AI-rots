@@ -103,6 +103,30 @@ predefinito con due modifiche:
    primo accesso, con il QR code da leggere con un'app (Google Authenticator,
    Microsoft Authenticator, FreeOTP).
 
+### La 2FA facoltativa degli utenti, dal sito
+
+Il realm non cambia: chi ha configurato l'OTP lo usa (sottoflusso *Conditional OTP*), gli altri
+no. Il sito la **propone** (`frontend/lib/sicurezza.ts`, `app/componenti/promemoria-2fa.tsx`, sezione
+«Sicurezza dell'account» del profilo):
+
+- **Attivarla**: `Sessione.attiva2fa()` rifà la richiesta di accesso con `kc_action=CONFIGURE_TOTP`
+  (*application initiated action* di Keycloak): compare il QR code, si inserisce il primo codice e si
+  torna al profilo. Richiede che l'azione richiesta *Configure OTP* sia abilitata nel realm (lo è).
+- **Sapere se è attiva**: `GET {realm}/account/credentials` col token dell'utente (API dell'account:
+  il token ha l'audience `account` perché i ruoli predefiniti del realm includono `account`). Se non
+  risponde lo stato è «non disponibile» e il sito lo dice, senza indovinare. Il client `tarot-frontend`
+  ha già i `webOrigins` necessari per la richiesta dal browser.
+- **Il promemoria**: una volta per sessione del browser, a chi non l'ha attivata; «Più tardi» lo
+  chiude fino al prossimo ingresso, la casella «Non mostrare più» salva `users.promemoria_2fa = false`
+  (vale su ogni dispositivo) e si riaccende dal profilo. Non compare sulle pagine condivise.
+- **Gestirla** (togliere un dispositivo, aggiungerne un altro): la console dell'account di Keycloak,
+  `{realm}/account/`.
+
+Non è provata contro un Keycloak vero (niente Docker in locale): il sito è stato provato con un realm
+finto che risponde a discovery, accesso, token e `/account/credentials`. Da verificare sul server: (1) dal
+profilo, «Attiva» porta alla configurazione dell'OTP e torna a `/profilo`; (2) dopo, lo stato diventa
+«Attiva» e il promemoria non compare più; (3) con l'OTP attivo l'accesso chiede il codice.
+
 Il flusso `2FA amministratori dopo accesso esterno` è il *post login* dei tre
 provider: senza, un amministratore che entra con Google salterebbe il secondo
 fattore, perché il flusso del browser finisce al reindirizzamento.

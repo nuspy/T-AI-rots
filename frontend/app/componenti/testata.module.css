@@ -150,7 +150,7 @@ select.lingua {
 @media (max-width: 860px) {
   .testata {
     padding: 12px 16px;
-    gap: 12px;
+    gap: 8px;
   }
   .voci {
     display: none;
@@ -160,6 +160,19 @@ select.lingua {
   }
   .azioni :global(.bottone) {
     display: none;
+  }
+  /* Sul telefono le azioni (lingua, profilo, console per chi è admin) devono stare
+   * nella riga: senza, a 390 px la testata sporge e il collegamento a destra si taglia. */
+  .azioni {
+    min-width: 0;
+    gap: 4px;
+  }
+  .azioni .voce,
+  .azioni .voceAttiva {
+    padding: 8px 8px;
+  }
+  select.lingua {
+    max-width: 7rem;
   }
   .barraBassa {
     display: flex;

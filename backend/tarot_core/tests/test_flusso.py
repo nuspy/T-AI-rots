@@ -31,8 +31,12 @@ async def _accredita(session, principal, quanti=1000):
 QUESITO = "Cosa mi riserva il lavoro nei prossimi mesi?"
 
 
-async def _lettura_completa(client, spread_id: str, da_scegliere: int, quesito: str = QUESITO) -> dict:
-    r = await client.post("/readings", json={"spread_id": spread_id, "question": quesito})
+async def _lettura_completa(
+    client, spread_id: str, da_scegliere: int, quesito: str = QUESITO, extra: dict | None = None,
+) -> dict:
+    """Una lettura dall'apertura al responso. `extra` si aggiunge al corpo di
+    `POST /readings` (per le speciali: il partner)."""
+    r = await client.post("/readings", json={"spread_id": spread_id, "question": quesito, **(extra or {})})
     assert r.status_code == 201, r.text
     lettura = r.json()
     assert lettura["disclaimer"]
@@ -51,7 +55,10 @@ async def _lettura_completa(client, spread_id: str, da_scegliere: int, quesito: 
 
     r = await client.post(f"/readings/{rid}/fan")
     ventaglio = r.json()
-    assert ventaglio["slot_count"] == (22 if spread_id in ("tre-carte", "croce-semplice") else 78)
+    from tarot_core.tarot.conoscenza import Conoscenza
+
+    conoscenza = Conoscenza.carica()
+    assert ventaglio["slot_count"] == len(conoscenza.mazzo_per(conoscenza.stesa(spread_id)))
     assert ventaglio["da_scegliere"] == da_scegliere
 
     # Prima della rivelazione nessuna carta è visibile.
@@ -276,26 +283,6 @@ def test_principal_admin_ha_il_ruolo(principal_admin: Principal):
 
 
 # ---- la lingua del quesito e i valori passati al modello -----------------------------
-
-
-@pytest.fixture
-def prompt_visti(monkeypatch):
-    """Registra ogni chiamata al modello finto: compito, sistema e messaggio utente."""
-    from tarot_core.tarot.finto import ModelloFinto, _compito, _utente
-
-    visti: list[dict] = []
-    originale = ModelloFinto._rispondi
-
-    def spia(self, req):
-        visti.append({
-            "compito": _compito(req),
-            "sistema": "\n".join(m.content for m in req.messages if m.role == "system"),
-            "utente": _utente(req),
-        })
-        return originale(self, req)
-
-    monkeypatch.setattr(ModelloFinto, "_rispondi", spia)
-    return visti
 
 
 async def test_la_lingua_e_quella_del_quesito_e_si_rinnova_a_ogni_quesito(

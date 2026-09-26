@@ -10,7 +10,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import type { Carta as TipoCarta, Dignita, Stesa } from "@/lib/api";
+import type { Carta as TipoCarta, Dignita, Soggetto, Stesa } from "@/lib/api";
 import { nomeCarta, nomePosizione } from "@/lib/i18n";
 import { useLingua, useLinguaNomi } from "@/lib/lingua";
 import { Carta } from "../componenti/carta";
@@ -28,14 +28,20 @@ export interface Posata {
   doppia?: boolean;
 }
 
-/* Larghezza di una carta come frazione della larghezza del tavolo, per stesa:
- * dieci carte della Croce Celtica devono stare dove ne stanno tre. */
-export const FATTORE: Record<string, number> = {
-  "tre-carte": 0.16,
-  "croce-semplice": 0.098,
-  "ferro-di-cavallo": 0.1,
-  "croce-celtica": 0.074,
-  "ruota-astrologica": 0.075,
+/* La larghezza di una carta come frazione della larghezza del tavolo sta nei
+ * dati della stesa (`larghezza`): dieci carte della Croce Celtica devono stare
+ * dove ne stanno tre, e ogni stesa dichiara la sua. Senza, vale 0.1. */
+export const larghezzaBase = (stesa: Stesa): number => stesa.larghezza ?? 0.1;
+
+/* Il colore di chi parla una posizione, nelle letture di compatibilità e di
+ * coppia. Non è mai l'unico segnale: i nomi delle posizioni dicono già il
+ * soggetto, e la legenda sotto il tavolo lo scrive. */
+export const COLORE_SOGGETTO: Record<Soggetto, string> = {
+  tu: "#d8b45a",
+  partner: "#b9a4ff",
+  coppia: "#7fd6c2",
+  "strada-a": "#f0a37a",
+  "strada-b": "#8ec5ff",
 };
 
 /* Le carte sono il 20% più grandi di com'erano rispetto al tavolo, con i centri
@@ -45,16 +51,41 @@ export const FATTORE: Record<string, number> = {
  * si toccano. */
 export const SCALA_CARTE = 1.2;
 
-function useLarghezza<T extends HTMLElement>() {
+function useMisura<T extends HTMLElement>() {
   const ref = useRef<T>(null);
-  const [w, setW] = useState(0);
+  const [misura, setMisura] = useState({ w: 0, h: 0 });
   useEffect(() => {
     if (!ref.current) return;
-    const o = new ResizeObserver(([e]) => setW(e.contentRect.width));
+    const o = new ResizeObserver(([e]) => setMisura({ w: e.contentRect.width, h: e.contentRect.height }));
     o.observe(ref.current);
     return () => o.disconnect();
   }, []);
-  return [ref, w] as const;
+  return [ref, misura] as const;
+}
+
+/* Sotto il tavolo delle letture speciali: chi è chi. Solo i soggetti che la
+ * stesa usa; visibile anche sul telefono, dove le etichette delle posizioni
+ * sono nascoste. */
+function Legenda({ stesa, nomePartner }: { stesa: Stesa; nomePartner?: string | null }) {
+  const { t } = useLingua();
+  const usati = new Set((stesa.posizioni.map((p) => p.soggetto).filter(Boolean)) as Soggetto[]);
+  const voci: { chiave: Soggetto; testo: string }[] = [
+    { chiave: "tu", testo: t.soggetto_tu },
+    { chiave: "partner", testo: nomePartner || t.soggetto_partner },
+    { chiave: "coppia", testo: t.soggetto_coppia },
+    { chiave: "strada-a", testo: `${t.soggetto_strada} · A` },
+    { chiave: "strada-b", testo: `${t.soggetto_strada} · B` },
+  ];
+  return (
+    <ul className={stili.legenda} aria-label={t.legenda}>
+      {voci.filter((v) => usati.has(v.chiave)).map((v) => (
+        <li key={v.chiave} style={{ "--soggetto": COLORE_SOGGETTO[v.chiave] } as React.CSSProperties}>
+          <span className={stili.legendaPunto} aria-hidden="true" />
+          {v.testo}
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 function Pallino({ posata, titolo }: { posata: Posata; titolo: string }) {
@@ -110,6 +141,7 @@ export function Tavolo({
   onRivela,
   rivelazioneInCorso,
   evidenzia,
+  nomePartner,
 }: {
   stesa: Stesa;
   posate: Posata[];
@@ -118,20 +150,26 @@ export function Tavolo({
   onRivela?: (posizione: number) => void;
   rivelazioneInCorso: boolean;
   evidenzia: "scelta" | "rivelazione" | null;
+  /* Il nome dell'altra persona, per la legenda delle letture speciali. */
+  nomePartner?: string | null;
 }) {
   const lingua = useLinguaNomi();
-  const [ref, w] = useLarghezza<HTMLDivElement>();
-  const quadrata = stesa.id === "ruota-astrologica";
-  /* Sul telefono il tavolo diventa quadrato (vedi il CSS): c'è più altezza,
-   * e le carte possono crescere ancora un po' senza toccarsi. */
-  const stretto = w > 0 && w < 600;
+  const [ref, { w, h }] = useMisura<HTMLDivElement>();
+  const quadrata = stesa.forma === "quadrata";
+  /* Sul telefono il tavolo diventa quadrato (vedi il CSS): c'è più altezza, e le
+   * carte possono crescere ancora un po' senza toccarsi. Lo si riconosce dalle
+   * PROPORZIONI misurate e non dalla larghezza: fra 641 e ~700 px il tavolo è
+   * ancora 16:12, e ingrandire lì le carte le farebbe sovrapporre. */
+  const stretto = w > 0 && h / w > 0.9;
+  const base = larghezzaBase(stesa);
   const larghezzaCarta = Math.max(
     30,
-    w * (FATTORE[stesa.id] ?? 0.1) * SCALA_CARTE * (stretto && !quadrata ? 1.15 : 1),
+    w * (stretto && !quadrata ? (stesa.larghezza_stretto ?? base * 1.15) : base) * SCALA_CARTE,
   );
   const perPosizione = new Map(posate.map((p) => [p.posizione, p]));
 
   return (
+    <>
     <div ref={ref} className={quadrata ? stili.tavoloQuadrato : stili.tavolo}>
       <div className={stili.tappeto} aria-hidden="true" />
       {stesa.posizioni.map((pos) => {
@@ -148,11 +186,12 @@ export function Tavolo({
               width: larghezzaCarta,
               zIndex: pos.rotazione ? 3 : 2,
               transform: `translate(-50%, -50%) rotate(${pos.rotazione}deg)`,
+              ...(pos.soggetto ? ({ "--soggetto": COLORE_SOGGETTO[pos.soggetto] } as React.CSSProperties) : {}),
             }}
           >
             {!posata && (
               <div
-                className={`${stili.segnaposto} ${attesa && evidenzia === "scelta" ? stili.segnapostoAttivo : ""}`}
+                className={`${stili.segnaposto} ${pos.soggetto ? stili.segnapostoSoggetto : ""} ${attesa && evidenzia === "scelta" ? stili.segnapostoAttivo : ""}`}
                 title={`${pos.n}. ${nome}`}
               >
                 <span>{pos.n}</span>
@@ -160,6 +199,7 @@ export function Tavolo({
             )}
             {posata && (
               <motion.div
+                className={pos.soggetto ? stili.cartaSoggetto : undefined}
                 layoutId={posata.slot !== null ? `slot-${posata.slot}` : `calcolata-${pos.n}`}
                 initial={posata.calcolata ? { opacity: 0, scale: 0.4, rotate: -20 } : false}
                 animate={{ opacity: 1, scale: 1, rotate: 0 }}
@@ -196,5 +236,7 @@ export function Tavolo({
         );
       })}
     </div>
+    {stesa.categoria !== "standard" && <Legenda stesa={stesa} nomePartner={nomePartner} />}
+    </>
   );
 }

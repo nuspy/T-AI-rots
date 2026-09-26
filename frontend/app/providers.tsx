@@ -5,6 +5,8 @@ import { AuthProvider } from "react-oidc-context";
 import { WebStorageStateStore } from "oidc-client-ts";
 import { ProviderLingua } from "@/lib/lingua";
 import { AUTH_DISATTIVATA, SessioneDiSviluppo, SessioneKeycloak } from "@/lib/sessione";
+import { AttribuzioneCondivisione } from "./componenti/attribuzione";
+import { Promemoria2fa } from "./componenti/promemoria-2fa";
 
 /* Autenticazione: il codice di autorizzazione con PKCE, come in Personalities.
  *
@@ -73,7 +75,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider {...config}>
       <ProviderLingua>
-        <SessioneKeycloak>{children}</SessioneKeycloak>
+        <SessioneKeycloak>
+          <AttribuzioneCondivisione />
+          <Promemoria2fa />
+          {children}
+        </SessioneKeycloak>
       </ProviderLingua>
     </AuthProvider>
   );

@@ -65,7 +65,8 @@
    1,
    2,
    3
-  ]
+  ],
+  "larghezza": 0.16
  },
  {
   "id": "croce-semplice",
@@ -168,7 +169,8 @@
    2,
    4,
    5
-  ]
+  ],
+  "larghezza": 0.098
  },
  {
   "id": "ferro-di-cavallo",
@@ -298,7 +300,8 @@
    5,
    6,
    7
-  ]
+  ],
+  "larghezza": 0.1
  },
  {
   "id": "croce-celtica",
@@ -483,7 +486,8 @@
    8,
    9,
    10
-  ]
+  ],
+  "larghezza": 0.074
  },
  {
   "id": "ruota-astrologica",
@@ -698,6 +702,1388 @@
    10,
    11,
    12
+  ],
+  "larghezza": 0.075,
+  "forma": "quadrata"
+ },
+ {
+  "id": "compat-tre",
+  "nome": "Compatibilità a tre carte",
+  "nome_en": "Three-card compatibility",
+  "categoria": "compatibilita",
+  "stile": "tradizionale",
+  "mazzo": "maggiori",
+  "carte_da_scegliere": 3,
+  "larghezza": 0.14,
+  "larghezza_stretto": 0.16,
+  "origine": "La stesa base delle letture di relazione: una carta per ciascuna persona e una per la dinamica che nasce fra loro.",
+  "descrizione": "Tu, l'altra persona e la dinamica fra voi: la fotografia essenziale di un legame, letta con i 22 Arcani maggiori.",
+  "posizioni": [
+   {
+    "n": 1,
+    "nome": "Tu",
+    "nome_en": "You",
+    "significato": "Il tuo ruolo nel legame: come ti poni, che energia porti e come ti percepisci.",
+    "domanda": "Che energia porto in questo legame?",
+    "x": 0.27,
+    "y": 0.28,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "tu"
+   },
+   {
+    "n": 2,
+    "nome": "L'altra persona",
+    "nome_en": "The other person",
+    "significato": "Il ruolo dell'altra persona: che energia porta e come la percepisci, senza leggerle il pensiero.",
+    "domanda": "Che energia porta l'altra persona?",
+    "x": 0.73,
+    "y": 0.28,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "partner"
+   },
+   {
+    "n": 3,
+    "nome": "La dinamica",
+    "nome_en": "The dynamic",
+    "significato": "Ciò che nasce fra voi: le caratteristiche generali del legame, oltre la somma delle due persone.",
+    "domanda": "Che cosa succede fra noi?",
+    "x": 0.5,
+    "y": 0.72,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   }
+  ],
+  "linee": [
+   [
+    1,
+    2,
+    3,
+    1
+   ]
+  ],
+  "coppie": [
+   [
+    1,
+    2,
+    "Le due persone si leggono affiancate: somiglianza e differenza di energie sono il primo dato della compatibilità."
+   ],
+   [
+    1,
+    3,
+    "Il tuo ruolo e la dinamica mostrano quanto di te è in gioco nel legame."
+   ],
+   [
+    2,
+    3,
+    "Il ruolo dell'altra persona e la dinamica mostrano come il legame risponde a ciò che l'altra persona porta."
+   ]
+  ],
+  "regole": [
+   "Re, Regina, Cavaliere e Fante indicano energie e atteggiamenti, non il genere delle persone.",
+   "Le carte parlano di chi consulta e della relazione: ciò che riguarda l'altra persona è una tendenza, non la lettura del suo pensiero.",
+   "La dinamica (3) è la sintesi: si legge per ultima, alla luce delle due persone."
+  ],
+  "racconto": [
+   1,
+   2,
+   3
   ]
+ },
+ {
+  "id": "compat-sette",
+  "nome": "Compatibilità a sette carte",
+  "nome_en": "Seven-card compatibility",
+  "categoria": "compatibilita",
+  "stile": "tradizionale",
+  "mazzo": "completo",
+  "carte_da_scegliere": 7,
+  "larghezza": 0.1,
+  "larghezza_stretto": 0.13,
+  "origine": "La stesa di compatibilità più diffusa: cosa cerca ciascuno, dove vi somigliate e dove no, e le tre dimensioni dell'affinità.",
+  "descrizione": "Cosa cerchi, cosa cerca l'altra persona, somiglianze e differenze, e poi la compatibilità emotiva, fisica e mentale.",
+  "posizioni": [
+   {
+    "n": 1,
+    "nome": "Cosa cerchi",
+    "nome_en": "What you seek",
+    "significato": "Ciò che cerchi in un legame: bisogni, desideri e aspettative con cui ti presenti.",
+    "domanda": "Che cosa cerco in questo legame?",
+    "x": 0.2,
+    "y": 0.17,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "tu"
+   },
+   {
+    "n": 2,
+    "nome": "Cosa cerca l'altra persona",
+    "nome_en": "What the other person seeks",
+    "significato": "Ciò che l'altra persona cerca in un legame, come si mostra nei suoi atteggiamenti.",
+    "domanda": "Che cosa cerca l'altra persona?",
+    "x": 0.8,
+    "y": 0.17,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "partner"
+   },
+   {
+    "n": 3,
+    "nome": "Somiglianze",
+    "nome_en": "Similarities",
+    "significato": "Il terreno comune: ciò che condividete e che rende facile capirvi.",
+    "domanda": "Dove ci somigliamo?",
+    "x": 0.36,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 4,
+    "nome": "Differenze",
+    "nome_en": "Differences",
+    "significato": "Dove divergete: i punti in cui serve incontrarsi a metà strada.",
+    "domanda": "Dove siamo diversi?",
+    "x": 0.64,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 5,
+    "nome": "Compatibilità emotiva",
+    "nome_en": "Emotional compatibility",
+    "significato": "Quanto i vostri sentimenti e bisogni affettivi si accordano.",
+    "domanda": "Come si accordano i nostri sentimenti?",
+    "x": 0.2,
+    "y": 0.83,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 6,
+    "nome": "Compatibilità fisica",
+    "nome_en": "Physical compatibility",
+    "significato": "L'intesa del corpo: attrazione, presenza, il modo di stare vicini.",
+    "domanda": "Com'è l'intesa fra i nostri corpi?",
+    "x": 0.5,
+    "y": 0.83,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 7,
+    "nome": "Compatibilità mentale",
+    "nome_en": "Mental compatibility",
+    "significato": "L'intesa delle menti: dialogo, valori, stimoli reciproci.",
+    "domanda": "Come si accordano le nostre menti?",
+    "x": 0.8,
+    "y": 0.83,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   }
+  ],
+  "linee": [
+   [
+    1,
+    3,
+    2
+   ],
+   [
+    1,
+    4,
+    2
+   ],
+   [
+    3,
+    4
+   ],
+   [
+    5,
+    6,
+    7
+   ]
+  ],
+  "coppie": [
+   [
+    1,
+    2,
+    "Ciò che cerca ciascuno si legge in confronto: la distanza fra i due desideri è il primo dato."
+   ],
+   [
+    3,
+    4,
+    "Somiglianze e differenze si leggono insieme: le une sostengono il legame, le altre lo mettono alla prova."
+   ],
+   [
+    5,
+    6,
+    "Emozione e corpo: quanto sentimento e attrazione vanno nella stessa direzione."
+   ],
+   [
+    6,
+    7,
+    "Corpo e mente: quanto l'intesa fisica è sostenuta da quella del dialogo."
+   ],
+   [
+    5,
+    7,
+    "Cuore e mente: se ciò che sentite e ciò che pensate si accordano."
+   ]
+  ],
+  "regole": [
+   "Re, Regina, Cavaliere e Fante indicano energie e atteggiamenti, non il genere delle persone.",
+   "Le carte parlano di chi consulta e della relazione: ciò che riguarda l'altra persona è una tendenza, non la lettura del suo pensiero.",
+   "Le tre compatibilità (5, 6, 7) corrispondono ai tre piani — cuore, corpo, mente — e si leggono come un insieme."
+  ],
+  "racconto": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ]
+ },
+ {
+  "id": "compat-nove",
+  "nome": "Compatibilità a nove carte",
+  "nome_en": "Nine-card compatibility",
+  "categoria": "compatibilita",
+  "stile": "moderna",
+  "mazzo": "completo",
+  "carte_da_scegliere": 9,
+  "larghezza": 0.1,
+  "larghezza_stretto": 0.13,
+  "origine": "Stesa moderna a griglia 3x3: al centro l'energia del legame, ai lati gli apporti delle due persone (in alto) e i loro influssi nascosti (a metà), in basso forze, sfide e potenziale. Le carte 1, 5 e 7 formano il «triangolo della verità».",
+  "descrizione": "Una griglia di nove carte: energia centrale, compatibilità emotiva, l'apporto di ciascuno, punti di forza, sfide, potenziale a lungo termine e gli influssi nascosti.",
+  "posizioni": [
+   {
+    "n": 1,
+    "nome": "Energia centrale",
+    "nome_en": "Core energy",
+    "significato": "Il cuore del legame e il tipo di relazione che state vivendo.",
+    "domanda": "Qual è il cuore di questo legame?",
+    "x": 0.5,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 2,
+    "nome": "Compatibilità emotiva",
+    "nome_en": "Emotional compatibility",
+    "significato": "Come si allineano i vostri sentimenti e i vostri bisogni affettivi.",
+    "domanda": "Come si allineano i nostri sentimenti?",
+    "x": 0.5,
+    "y": 0.17,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 3,
+    "nome": "Il tuo apporto",
+    "nome_en": "Your input",
+    "significato": "Il tuo atteggiamento, le tue intenzioni e l'energia che metti nel legame.",
+    "domanda": "Che cosa porto io?",
+    "x": 0.2,
+    "y": 0.17,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "tu"
+   },
+   {
+    "n": 4,
+    "nome": "L'apporto dell'altra persona",
+    "nome_en": "The other person's input",
+    "significato": "L'investimento emotivo e il ruolo dell'altra persona nel legame, come si mostrano.",
+    "domanda": "Che cosa porta l'altra persona?",
+    "x": 0.8,
+    "y": 0.17,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "partner"
+   },
+   {
+    "n": 5,
+    "nome": "Punti di forza",
+    "nome_en": "Strengths",
+    "significato": "Il collante del legame: ciò che lo fa funzionare e crescere.",
+    "domanda": "Che cosa ci tiene uniti?",
+    "x": 0.2,
+    "y": 0.83,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 6,
+    "nome": "Sfide",
+    "nome_en": "Challenges",
+    "significato": "I principali punti di attrito e le aree di conflitto.",
+    "domanda": "Dove sono le nostre difficoltà?",
+    "x": 0.5,
+    "y": 0.83,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 7,
+    "nome": "Potenziale a lungo termine",
+    "nome_en": "Long-term potential",
+    "significato": "Dove il legame può arrivare nel tempo, se le forze restano quelle attuali.",
+    "domanda": "Dove può arrivare questo legame?",
+    "x": 0.8,
+    "y": 0.83,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 8,
+    "nome": "Influsso nascosto: tu",
+    "nome_en": "Hidden influence: you",
+    "significato": "Ciò che in te agisce sotto la superficie: schemi, abitudini, bagagli che pesano sul legame.",
+    "domanda": "Che cosa agisce in me senza che me ne accorga?",
+    "x": 0.2,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "tu"
+   },
+   {
+    "n": 9,
+    "nome": "Influsso nascosto: l'altra persona",
+    "nome_en": "Hidden influence: the other person",
+    "significato": "Ciò che, nell'altra persona, agisce sotto la superficie, come tendenza: mai una lettura del suo pensiero.",
+    "domanda": "Che cosa agisce sotto la superficie nell'altra persona?",
+    "x": 0.8,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "partner"
+   }
+  ],
+  "linee": [
+   [
+    3,
+    2,
+    4
+   ],
+   [
+    8,
+    1,
+    9
+   ],
+   [
+    5,
+    6,
+    7
+   ],
+   [
+    2,
+    1,
+    6
+   ],
+   [
+    3,
+    8,
+    5
+   ],
+   [
+    4,
+    9,
+    7
+   ]
+  ],
+  "coppie": [
+   [
+    1,
+    5,
+    "Dal presente del legame alla sua forza: ciò che lo sostiene oggi."
+   ],
+   [
+    5,
+    7,
+    "Dalla forza al potenziale: come ciò che vi sostiene può portarvi lontano."
+   ],
+   [
+    1,
+    7,
+    "Il presente e la destinazione: se il legame va verso ciò che già mostra."
+   ],
+   [
+    3,
+    4,
+    "I due apporti a confronto: quanto ciascuno mette e come si incastrano."
+   ],
+   [
+    8,
+    9,
+    "Gli influssi nascosti a confronto: i due bagagli invisibili che il legame deve portare."
+   ]
+  ],
+  "regole": [
+   "Re, Regina, Cavaliere e Fante indicano energie e atteggiamenti, non il genere delle persone.",
+   "Le carte parlano di chi consulta e della relazione: ciò che riguarda l'altra persona è una tendenza, non la lettura del suo pensiero.",
+   "Le posizioni 1, 5 e 7 formano il triangolo della verità: leggile insieme, come un arco — il presente (1), la forza da coltivare (5), la destinazione (7)."
+  ],
+  "racconto": [
+   1,
+   2,
+   3,
+   4,
+   8,
+   9,
+   5,
+   6,
+   7
+  ]
+ },
+ {
+  "id": "compat-anime",
+  "nome": "Anime affini",
+  "nome_en": "Soulmates",
+  "categoria": "compatibilita",
+  "stile": "tendenza",
+  "mazzo": "maggiori",
+  "carte_da_scegliere": 7,
+  "larghezza": 0.095,
+  "larghezza_stretto": 0.13,
+  "origine": "La stesa «soulmate», molto diffusa online: legge un incontro come un incrocio di lezioni, con i soli Arcani maggiori.",
+  "descrizione": "Le lezioni di ciascuno, perché vi siete incontrati, cosa vi rispecchiate, il tema karmico, la fase che vivete e il potenziale nel tempo.",
+  "posizioni": [
+   {
+    "n": 1,
+    "nome": "La tua lezione",
+    "nome_en": "Your lesson",
+    "significato": "Ciò che questo incontro ti chiede di imparare.",
+    "domanda": "Che cosa devo imparare da questo incontro?",
+    "x": 0.2,
+    "y": 0.31,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "tu"
+   },
+   {
+    "n": 2,
+    "nome": "La lezione dell'altra persona",
+    "nome_en": "The other person's lesson",
+    "significato": "Ciò che questo incontro sembra chiedere all'altra persona di imparare, come tendenza.",
+    "domanda": "Che cosa può imparare l'altra persona?",
+    "x": 0.8,
+    "y": 0.31,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "partner"
+   },
+   {
+    "n": 3,
+    "nome": "Perché vi siete incontrati",
+    "nome_en": "Why you met",
+    "significato": "Il senso dell'incontro: che cosa vi ha avvicinati.",
+    "domanda": "Perché ci siamo incontrati?",
+    "x": 0.5,
+    "y": 0.16,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 4,
+    "nome": "Cosa rispecchiate",
+    "nome_en": "What you mirror",
+    "significato": "Ciò che l'uno riflette dell'altro: ciò che vi mostrate a vicenda.",
+    "domanda": "Che cosa ci rispecchiamo?",
+    "x": 0.5,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 5,
+    "nome": "Il tema karmico",
+    "nome_en": "The karmic theme",
+    "significato": "Il tema di fondo che il legame porta, come un filo che si ripete.",
+    "domanda": "Qual è il tema di fondo di questo legame?",
+    "x": 0.2,
+    "y": 0.69,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 6,
+    "nome": "La fase attuale",
+    "nome_en": "The current stage",
+    "significato": "A che punto del percorso vi trovate ora.",
+    "domanda": "A che punto siamo?",
+    "x": 0.8,
+    "y": 0.69,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 7,
+    "nome": "Potenziale a lungo termine",
+    "nome_en": "Long-term potential",
+    "significato": "Dove il legame può portarvi nel tempo se le forze restano quelle attuali.",
+    "domanda": "Dove può portarci nel tempo?",
+    "x": 0.5,
+    "y": 0.84,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   }
+  ],
+  "linee": [
+   [
+    3,
+    2,
+    6,
+    7,
+    5,
+    1,
+    3
+   ],
+   [
+    1,
+    4,
+    2
+   ],
+   [
+    3,
+    4,
+    7
+   ],
+   [
+    5,
+    4,
+    6
+   ]
+  ],
+  "coppie": [
+   [
+    1,
+    2,
+    "Le due lezioni si completano: leggile come due facce dello stesso incontro."
+   ],
+   [
+    3,
+    4,
+    "Il motivo dell'incontro e lo specchio: perché vi siete trovati e che cosa vi mostrate."
+   ],
+   [
+    5,
+    6,
+    "Il tema di fondo e la fase attuale: a che punto del filo vi trovate."
+   ]
+  ],
+  "regole": [
+   "Re, Regina, Cavaliere e Fante indicano energie e atteggiamenti, non il genere delle persone.",
+   "Le carte parlano di chi consulta e della relazione: ciò che riguarda l'altra persona è una tendenza, non la lettura del suo pensiero.",
+   "È una lettura simbolica: temi e lezioni sono spunti di riflessione, non un destino."
+  ],
+  "racconto": [
+   3,
+   1,
+   2,
+   4,
+   5,
+   6,
+   7
+  ]
+ },
+ {
+  "id": "coppia-croce",
+  "nome": "Croce della coppia",
+  "nome_en": "Couple's cross",
+  "categoria": "coppia",
+  "stile": "tradizionale",
+  "mazzo": "maggiori",
+  "carte_da_scegliere": 5,
+  "larghezza": 0.1,
+  "larghezza_stretto": 0.13,
+  "origine": "Croce a cinque carte, di uso comune nelle letture di relazione: le due persone ai lati, radici, presente e futuro sull'asse verticale.",
+  "descrizione": "Tu e l'altra persona ai lati; sull'asse verticale le radici del legame, il presente e il futuro. Cinque Arcani maggiori, tutti scelti.",
+  "posizioni": [
+   {
+    "n": 1,
+    "nome": "Tu",
+    "nome_en": "You",
+    "significato": "Il tuo ruolo nella coppia: come stai nella relazione e che parte porti.",
+    "domanda": "Come sto in questa relazione?",
+    "x": 0.2,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "tu"
+   },
+   {
+    "n": 2,
+    "nome": "L'altra persona",
+    "nome_en": "The other person",
+    "significato": "Il ruolo dell'altra persona nella coppia, come si mostra e come lo percepisci.",
+    "domanda": "Qual è il ruolo dell'altra persona?",
+    "x": 0.8,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "partner"
+   },
+   {
+    "n": 3,
+    "nome": "Le radici",
+    "nome_en": "The roots",
+    "significato": "Le fondamenta: come vi siete incontrati e ciò su cui il legame poggia.",
+    "domanda": "Su che cosa poggia il nostro legame?",
+    "x": 0.5,
+    "y": 0.17,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 4,
+    "nome": "Il presente",
+    "nome_en": "The present",
+    "significato": "Lo stato attuale della relazione e le sue dinamiche.",
+    "domanda": "Com'è oggi la nostra relazione?",
+    "x": 0.5,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 5,
+    "nome": "Il futuro",
+    "nome_en": "The future",
+    "significato": "La direzione che la relazione sta prendendo, se le forze restano quelle attuali.",
+    "domanda": "Dove sta andando la relazione?",
+    "x": 0.5,
+    "y": 0.83,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   }
+  ],
+  "linee": [
+   [
+    1,
+    4,
+    2
+   ],
+   [
+    3,
+    4,
+    5
+   ]
+  ],
+  "coppie": [
+   [
+    1,
+    2,
+    "Le due persone ai lati dell'asse: la relazione nasce dal loro incontro e si legge in confronto."
+   ],
+   [
+    3,
+    5,
+    "Radici e futuro: se il legame sta crescendo dalle sue fondamenta o si sta staccando da esse."
+   ]
+  ],
+  "regole": [
+   "Re, Regina, Cavaliere e Fante indicano energie e atteggiamenti, non il genere delle persone.",
+   "Le carte parlano di chi consulta e della relazione: ciò che riguarda l'altra persona è una tendenza, non la lettura del suo pensiero.",
+   "L'asse verticale (3-4-5) è la storia della coppia; l'asse orizzontale (1-4-2) è chi la vive."
+  ],
+  "racconto": [
+   3,
+   1,
+   2,
+   4,
+   5
+  ]
+ },
+ {
+  "id": "coppia-stazione",
+  "nome": "Stazione per due",
+  "nome_en": "Station for two",
+  "categoria": "coppia",
+  "stile": "tradizionale",
+  "mazzo": "completo",
+  "carte_da_scegliere": 7,
+  "larghezza": 0.1,
+  "larghezza_stretto": 0.13,
+  "origine": "Stesa simmetrica della tradizione italiana per le relazioni: le carte si leggono a coppie speculari, e quella centrale per ultima.",
+  "descrizione": "Pensieri, sentimenti e azioni di ciascuno, letti a coppie speculari; al centro la situazione attuale, che si scopre per ultima.",
+  "posizioni": [
+   {
+    "n": 1,
+    "nome": "Cosa pensi dell'altra persona",
+    "nome_en": "What you think of the other person",
+    "significato": "I tuoi pensieri sull'altra persona: come la vedi e che idea ti sei fatto della relazione.",
+    "domanda": "Che cosa penso dell'altra persona?",
+    "x": 0.2,
+    "y": 0.17,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "tu"
+   },
+   {
+    "n": 2,
+    "nome": "Cosa pensa di te",
+    "nome_en": "What the other person thinks of you",
+    "significato": "Come l'altra persona sembra vederti, come tendenza: mai una lettura del pensiero.",
+    "domanda": "Che cosa sembra pensare di me?",
+    "x": 0.8,
+    "y": 0.17,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "partner"
+   },
+   {
+    "n": 3,
+    "nome": "Cosa senti tu",
+    "nome_en": "What you feel",
+    "significato": "I tuoi sentimenti verso l'altra persona e verso la relazione.",
+    "domanda": "Che cosa sento?",
+    "x": 0.2,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "tu"
+   },
+   {
+    "n": 4,
+    "nome": "Cosa sente l'altra persona",
+    "nome_en": "What the other person feels",
+    "significato": "I sentimenti che l'altra persona sembra vivere, come tendenza.",
+    "domanda": "Che cosa sembra sentire l'altra persona?",
+    "x": 0.8,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "partner"
+   },
+   {
+    "n": 5,
+    "nome": "Cosa fai tu",
+    "nome_en": "What you do",
+    "significato": "I tuoi comportamenti e le tue azioni nella relazione.",
+    "domanda": "Che cosa faccio io?",
+    "x": 0.2,
+    "y": 0.83,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "tu"
+   },
+   {
+    "n": 6,
+    "nome": "Cosa fa l'altra persona",
+    "nome_en": "What the other person does",
+    "significato": "I comportamenti e le azioni dell'altra persona, come si mostrano.",
+    "domanda": "Che cosa fa l'altra persona?",
+    "x": 0.8,
+    "y": 0.83,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "partner"
+   },
+   {
+    "n": 7,
+    "nome": "La situazione attuale",
+    "nome_en": "The current situation",
+    "significato": "Che cosa sta succedendo davvero fra voi, alla luce di tutto il resto: si legge per ultima. Mostra la natura del legame e gli ostacoli.",
+    "domanda": "Che cosa sta succedendo fra noi?",
+    "x": 0.5,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   }
+  ],
+  "linee": [
+   [
+    1,
+    2
+   ],
+   [
+    3,
+    7,
+    4
+   ],
+   [
+    5,
+    6
+   ],
+   [
+    1,
+    3,
+    5
+   ],
+   [
+    2,
+    4,
+    6
+   ]
+  ],
+  "coppie": [
+   [
+    1,
+    2,
+    "I pensieri a confronto: ciò che pensi e ciò che sembra pensare l'altra persona."
+   ],
+   [
+    3,
+    4,
+    "I sentimenti a confronto: dove coincidono e dove divergono."
+   ],
+   [
+    5,
+    6,
+    "Le azioni a confronto: se ciò che fate va nella stessa direzione."
+   ],
+   [
+    3,
+    5,
+    "Il tuo sentire e il tuo fare: se sei coerente con ciò che provi."
+   ],
+   [
+    4,
+    6,
+    "Il sentire e il fare dell'altra persona, come tendenza."
+   ]
+  ],
+  "regole": [
+   "Re, Regina, Cavaliere e Fante indicano energie e atteggiamenti, non il genere delle persone.",
+   "Le carte parlano di chi consulta e della relazione: ciò che riguarda l'altra persona è una tendenza, non la lettura del suo pensiero.",
+   "Le carte si leggono a coppie speculari (pensieri, sentimenti, azioni) e si confrontano fra loro.",
+   "La situazione attuale (7) è al centro, si scopre per ultima e riassume: mostra la natura del legame e gli ostacoli fra le persone."
+  ],
+  "racconto": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ]
+ },
+ {
+  "id": "coppia-sette",
+  "nome": "Relazione a sette carte",
+  "nome_en": "Seven-card relationship spread",
+  "categoria": "coppia",
+  "stile": "moderna",
+  "mazzo": "completo",
+  "carte_da_scegliere": 7,
+  "larghezza": 0.1,
+  "larghezza_stretto": 0.13,
+  "origine": "La «relationship spread» canonica della cartomanzia moderna: le due persone, il legame, ciò che funziona, ciò che attrita, il consiglio e l'esito.",
+  "descrizione": "Tu, l'altra persona, il legame; poi punto di forza e attrito, il consiglio e l'esito se lo si segue.",
+  "posizioni": [
+   {
+    "n": 1,
+    "nome": "Tu",
+    "nome_en": "You",
+    "significato": "La tua posizione attuale nella relazione e l'energia che porti.",
+    "domanda": "Qual è la mia posizione nella relazione?",
+    "x": 0.2,
+    "y": 0.17,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "tu"
+   },
+   {
+    "n": 2,
+    "nome": "L'altra persona",
+    "nome_en": "The other person",
+    "significato": "La posizione dell'altra persona nella relazione e ciò che porta, come si mostra.",
+    "domanda": "Qual è la posizione dell'altra persona?",
+    "x": 0.8,
+    "y": 0.17,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "partner"
+   },
+   {
+    "n": 3,
+    "nome": "Il legame",
+    "nome_en": "The bond",
+    "significato": "Il campo condiviso: la qualità del legame fra voi, oltre le due persone.",
+    "domanda": "Com'è il nostro legame?",
+    "x": 0.5,
+    "y": 0.17,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 4,
+    "nome": "Punto di forza",
+    "nome_en": "Strength",
+    "significato": "Ciò che funziona e vale la pena di preservare.",
+    "domanda": "Che cosa funziona fra noi?",
+    "x": 0.36,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 5,
+    "nome": "Attrito",
+    "nome_en": "Friction",
+    "significato": "La difficoltà o lo schema che si ripete e mette alla prova la relazione.",
+    "domanda": "Che cosa ci mette alla prova?",
+    "x": 0.64,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 6,
+    "nome": "Consiglio",
+    "nome_en": "Advice",
+    "significato": "La mossa suggerita a chi consulta per la fase attuale della relazione.",
+    "domanda": "Che cosa mi consigliano le carte?",
+    "x": 0.36,
+    "y": 0.83,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 7,
+    "nome": "Esito",
+    "nome_en": "Outcome",
+    "significato": "La traiettoria della relazione se il consiglio viene seguito: una tendenza, non una sentenza.",
+    "domanda": "Dove porta la relazione se seguo il consiglio?",
+    "x": 0.64,
+    "y": 0.83,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   }
+  ],
+  "linee": [
+   [
+    1,
+    3,
+    2
+   ],
+   [
+    4,
+    5
+   ],
+   [
+    6,
+    7
+   ],
+   [
+    3,
+    4
+   ],
+   [
+    3,
+    5
+   ],
+   [
+    4,
+    6
+   ],
+   [
+    5,
+    7
+   ]
+  ],
+  "coppie": [
+   [
+    1,
+    2,
+    "Le due persone a confronto: come ciascuno sta nella relazione."
+   ],
+   [
+    4,
+    5,
+    "Forza e attrito: ciò che sostiene e ciò che mette alla prova si leggono insieme."
+   ],
+   [
+    6,
+    7,
+    "Il consiglio e l'esito: la mossa e il suo probabile effetto."
+   ],
+   [
+    3,
+    7,
+    "Il legame e l'esito: se la traiettoria segue la natura del legame."
+   ]
+  ],
+  "regole": [
+   "Re, Regina, Cavaliere e Fante indicano energie e atteggiamenti, non il genere delle persone.",
+   "Le carte parlano di chi consulta e della relazione: ciò che riguarda l'altra persona è una tendenza, non la lettura del suo pensiero.",
+   "Forza (4) e attrito (5) non appartengono a nessuna delle due persone: sono del legame."
+  ],
+  "racconto": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ]
+ },
+ {
+  "id": "coppia-specchio",
+  "nome": "Specchio",
+  "nome_en": "Mirror",
+  "categoria": "coppia",
+  "stile": "moderna",
+  "mazzo": "completo",
+  "carte_da_scegliere": 8,
+  "larghezza": 0.1,
+  "larghezza_stretto": 0.13,
+  "origine": "Lo «specchio»: una stesa moderna per relazioni già in corso, che mette a confronto come vi vedete e cosa rappresentate l'uno per l'altra.",
+  "descrizione": "Come vedi l'altra persona e come l'altra persona si vede, cosa rappresenta per te e cosa rappresenti per l'altra persona; in mezzo gli ostacoli, poi forze e risultato probabile.",
+  "posizioni": [
+   {
+    "n": 1,
+    "nome": "Tu",
+    "nome_en": "You",
+    "significato": "Chi sei oggi in questa relazione: la tua posizione di partenza.",
+    "domanda": "Chi sono in questa relazione?",
+    "x": 0.5,
+    "y": 0.17,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "tu"
+   },
+   {
+    "n": 2,
+    "nome": "Come vedi l'altra persona",
+    "nome_en": "How you see the other person",
+    "significato": "La tua percezione dell'altra persona: come la vedi, con i tuoi filtri.",
+    "domanda": "Come vedo l'altra persona?",
+    "x": 0.2,
+    "y": 0.17,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "tu"
+   },
+   {
+    "n": 3,
+    "nome": "Come si vede l'altra persona",
+    "nome_en": "How the other person sees themself",
+    "significato": "L'immagine che l'altra persona sembra avere di sé, come tendenza.",
+    "domanda": "Come sembra vedersi l'altra persona?",
+    "x": 0.8,
+    "y": 0.17,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "partner"
+   },
+   {
+    "n": 4,
+    "nome": "Cosa rappresenta per te",
+    "nome_en": "What the other person means to you",
+    "significato": "Il posto e il significato che l'altra persona ha nella tua vita.",
+    "domanda": "Che cosa rappresenta per me?",
+    "x": 0.2,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "tu"
+   },
+   {
+    "n": 5,
+    "nome": "Cosa rappresenti per l'altra persona",
+    "nome_en": "What you mean to the other person",
+    "significato": "Il posto e il significato che sembri avere per l'altra persona, come tendenza.",
+    "domanda": "Che cosa rappresento per l'altra persona?",
+    "x": 0.8,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "partner"
+   },
+   {
+    "n": 6,
+    "nome": "Ostacoli",
+    "nome_en": "Obstacles",
+    "significato": "Le difficoltà che stanno fra i due punti di vista: ciò che crea distanza.",
+    "domanda": "Che cosa ci separa?",
+    "x": 0.5,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 7,
+    "nome": "Punti di forza",
+    "nome_en": "Strengths",
+    "significato": "Gli aspetti positivi del legame su cui contare.",
+    "domanda": "Su che cosa possiamo contare?",
+    "x": 0.36,
+    "y": 0.83,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 8,
+    "nome": "Risultato probabile",
+    "nome_en": "Probable outcome",
+    "significato": "Dove porta la relazione se le forze restano quelle attuali: una tendenza.",
+    "domanda": "Dove porta la relazione?",
+    "x": 0.64,
+    "y": 0.83,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   }
+  ],
+  "linee": [
+   [
+    2,
+    1,
+    3
+   ],
+   [
+    4,
+    6,
+    5
+   ],
+   [
+    2,
+    4
+   ],
+   [
+    3,
+    5
+   ],
+   [
+    6,
+    7,
+    8
+   ]
+  ],
+  "coppie": [
+   [
+    2,
+    3,
+    "Come vedi l'altra persona e come l'altra persona si vede: se le due immagini coincidono, o quanto distano."
+   ],
+   [
+    4,
+    5,
+    "Ciò che ciascuno rappresenta per l'altro: la reciprocità del legame."
+   ],
+   [
+    6,
+    7,
+    "Ostacoli e forze: cosa separa e cosa unisce."
+   ],
+   [
+    7,
+    8,
+    "Le forze e l'esito: se ciò che vi sostiene porta dove le carte indicano."
+   ]
+  ],
+  "regole": [
+   "Re, Regina, Cavaliere e Fante indicano energie e atteggiamenti, non il genere delle persone.",
+   "Le carte parlano di chi consulta e della relazione: ciò che riguarda l'altra persona è una tendenza, non la lettura del suo pensiero.",
+   "Gli ostacoli (6) sono al centro, fra i due significati reciproci: sono ciò che sta nel mezzo."
+  ],
+  "racconto": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8
+  ]
+ },
+ {
+  "id": "coppia-bivio",
+  "nome": "Bivio",
+  "nome_en": "Crossroads",
+  "categoria": "coppia",
+  "stile": "tendenza",
+  "mazzo": "completo",
+  "carte_da_scegliere": 8,
+  "larghezza": 0.11,
+  "larghezza_stretto": 0.135,
+  "origine": "Il «crossroads»: una stesa a forcella, molto usata per i momenti di decisione, con due strade che partono da uno stesso punto.",
+  "descrizione": "Dove siete e cosa vi ha portato qui, poi due strade: per ciascuna l'energia, la sfida e l'esito. Serve per capire, non per far scegliere alle carte.",
+  "posizioni": [
+   {
+    "n": 1,
+    "nome": "Dove siete",
+    "nome_en": "Where you are",
+    "significato": "Il punto in cui la coppia si trova ora, davanti alla scelta.",
+    "domanda": "Dove siamo adesso?",
+    "x": 0.3,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 2,
+    "nome": "Cosa vi ha portato qui",
+    "nome_en": "What brought you here",
+    "significato": "Le vicende e le scelte che hanno portato la coppia a questo bivio.",
+    "domanda": "Che cosa ci ha portati qui?",
+    "x": 0.1,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "coppia"
+   },
+   {
+    "n": 3,
+    "nome": "Strada A: energia",
+    "nome_en": "Path A: energy",
+    "significato": "L'energia che si muove subito, se la coppia imbocca la strada A.",
+    "domanda": "Che energia ha la strada A?",
+    "x": 0.5,
+    "y": 0.2,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "strada-a"
+   },
+   {
+    "n": 4,
+    "nome": "Strada A: sfida",
+    "nome_en": "Path A: challenge",
+    "significato": "La difficoltà principale che la strada A porterebbe.",
+    "domanda": "Che sfida porta la strada A?",
+    "x": 0.7,
+    "y": 0.2,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "strada-a"
+   },
+   {
+    "n": 5,
+    "nome": "Strada A: esito",
+    "nome_en": "Path A: outcome",
+    "significato": "Dove porta la strada A, come tendenza.",
+    "domanda": "Dove porta la strada A?",
+    "x": 0.9,
+    "y": 0.2,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "strada-a"
+   },
+   {
+    "n": 6,
+    "nome": "Strada B: energia",
+    "nome_en": "Path B: energy",
+    "significato": "L'energia che si muove subito, se la coppia imbocca la strada B.",
+    "domanda": "Che energia ha la strada B?",
+    "x": 0.5,
+    "y": 0.8,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "strada-b"
+   },
+   {
+    "n": 7,
+    "nome": "Strada B: sfida",
+    "nome_en": "Path B: challenge",
+    "significato": "La difficoltà principale che la strada B porterebbe.",
+    "domanda": "Che sfida porta la strada B?",
+    "x": 0.7,
+    "y": 0.8,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "strada-b"
+   },
+   {
+    "n": 8,
+    "nome": "Strada B: esito",
+    "nome_en": "Path B: outcome",
+    "significato": "Dove porta la strada B, come tendenza.",
+    "domanda": "Dove porta la strada B?",
+    "x": 0.9,
+    "y": 0.8,
+    "rotazione": 0,
+    "calcolata": false,
+    "soggetto": "strada-b"
+   }
+  ],
+  "linee": [
+   [
+    2,
+    1
+   ],
+   [
+    1,
+    3,
+    4,
+    5
+   ],
+   [
+    1,
+    6,
+    7,
+    8
+   ]
+  ],
+  "coppie": [
+   [
+    3,
+    6,
+    "Le due energie iniziali a confronto: come si presentano subito le due strade."
+   ],
+   [
+    4,
+    7,
+    "Le due sfide a confronto: quale costo porta ciascuna strada."
+   ],
+   [
+    5,
+    8,
+    "I due esiti a confronto: dove condurrebbero, come tendenze."
+   ]
+  ],
+  "regole": [
+   "Re, Regina, Cavaliere e Fante indicano energie e atteggiamenti, non il genere delle persone.",
+   "Le carte parlano di chi consulta e della relazione: ciò che riguarda l'altra persona è una tendenza, non la lettura del suo pensiero.",
+   "Le carte descrivono le due strade e non scelgono fra esse: la decisione resta alla coppia.",
+   "Si legge a partire dal passato (2), poi il presente (1); poi ciascuna strada per intero, dall'energia all'esito."
+  ],
+  "racconto": [
+   2,
+   1,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8
+  ],
+  "nota_intervista": "Chiarisci quali sono le due strade fra cui la coppia si trova, senza suggerirne una."
  }
 ]

@@ -1,0 +1,300 @@
+/* Il pannello di condivisione: prima il telefono (una colonna, si scorre dentro la
+ * finestra), poi il computer (anteprima a sinistra, comandi a destra). */
+
+.sfondo {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: rgba(4, 2, 10, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+}
+
+.finestra {
+  width: 100%;
+  max-width: 560px;
+  margin: auto;
+  padding: 16px 16px 24px;
+  background: linear-gradient(180deg, rgba(33, 26, 61, 0.98), rgba(16, 11, 32, 0.99));
+  outline: none;
+}
+
+.testata {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.titolo {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.chiudi {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--bordo);
+  background: transparent;
+  color: var(--oro-chiaro);
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.chiudi:hover {
+  border-color: var(--bordo-forte);
+}
+
+.corpo {
+  display: grid;
+  gap: 20px;
+}
+
+/* ---- l'anteprima ---- */
+
+.anteprima {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  align-content: start;
+}
+
+.cornice {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--notte-2);
+  border: 1px solid var(--bordo);
+  transition: opacity 0.25s;
+}
+
+.cornice img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.aggiorno {
+  opacity: 0.55;
+}
+
+/* ---- i comandi ---- */
+
+.comandi {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  min-width: 0;
+}
+
+.campoTesto {
+  display: grid;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.campoTesto textarea {
+  width: 100%;
+  min-height: 72px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--bordo-forte);
+  background: var(--superficie-piena);
+  color: var(--testo);
+  font: inherit;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.aiuto {
+  margin: 0;
+  color: var(--testo-tenue);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.stato {
+  margin: 0;
+  color: var(--oro-chiaro);
+  min-height: 1.5em;
+}
+
+.riprova {
+  margin-left: 10px;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--bordo-forte);
+  background: transparent;
+  color: var(--oro-chiaro);
+  cursor: pointer;
+}
+
+.etichettaCanali {
+  margin: 0;
+  color: var(--testo-tenue);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.canali {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.canale {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  min-height: 92px;
+  padding: 10px 6px 8px;
+  border-radius: 14px;
+  border: 1px solid var(--bordo);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--testo);
+  font-size: 0.875rem;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.canale:hover:not(:disabled) {
+  border-color: var(--bordo-forte);
+  text-decoration: none;
+  background: rgba(216, 180, 90, 0.08);
+}
+
+.canale:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.marchio {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.avviso {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--bordo);
+  background: rgba(127, 209, 168, 0.1);
+  color: var(--testo);
+  line-height: 1.5;
+}
+
+/* ---- l'avviso del premio ---- */
+
+.premio {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--bordo-forte);
+  background: linear-gradient(160deg, rgba(216, 180, 90, 0.14), rgba(123, 92, 214, 0.1));
+}
+
+.premio h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.premio ul {
+  margin: 0 0 12px;
+  padding-left: 1.2em;
+}
+
+.premio li {
+  margin: 6px 0;
+  line-height: 1.5;
+}
+
+.premio li::marker {
+  color: var(--oro);
+}
+
+.barra {
+  height: 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.barra span {
+  display: block;
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--oro-scuro), var(--oro-chiaro));
+  transition: width 0.4s;
+}
+
+.contatore {
+  margin: 8px 0 6px;
+  color: var(--oro-chiaro);
+  font-weight: 500;
+}
+
+/* Il pulsante secondario del sito è alto 42 px: qui deve toccare i 48 dei tocchi. */
+.scarica {
+  min-height: 48px;
+}
+
+.disattiva {
+  justify-self: start;
+  min-height: 48px;
+  padding: 0 4px;
+  border: none;
+  background: none;
+  color: var(--rosso);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cornice,
+  .barra span {
+    transition: none;
+  }
+}
+
+@media (min-width: 420px) {
+  .finestra {
+    padding: 20px 22px 28px;
+  }
+}
+
+@media (min-width: 960px) {
+  .finestra {
+    max-width: 1000px;
+    padding: 24px 32px 32px;
+  }
+
+  .corpo {
+    grid-template-columns: minmax(300px, 420px) 1fr;
+    gap: 32px;
+  }
+
+  .anteprima {
+    position: sticky;
+    top: 8px;
+  }
+}

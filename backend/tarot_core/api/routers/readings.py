@@ -32,7 +32,8 @@ from typing import Any, AsyncIterator, Dict, Optional
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
+from sqlalchemy import delete
 
 from ...auth.dependencies import CurrentUser, DbSession
 from ...billing.credits import CreditiInsufficienti, RegistroCrediti
@@ -41,12 +42,14 @@ from ...billing.quote import COSTO_LETTURA, ContatoreQuote
 from ...domain.base import utcnow
 from ...domain.models import InterviewTurn, Reading, User
 from ...domain.repositories import AuditRepository, ReadingRepository
+from ...domain.share_models import ShareImage
 from ...domain.session import SessionFactory
 from ...guards.lettura import giudica, segnale_di_crisi, uscita_proibita
 from ...llm.base import GenerationError
 from ...llm.compiti import Compito
 from ...settings import get_settings
 from ...tarot import cag, interpretazione
+from ...tarot.condivisione import pulisci_testo
 from ...tarot.intervista import IntervistaNonRiuscita, prossimo_passo, profilo_da, trascrizione, turni_da
 from ...tarot.lettura import (
     StatoNonValido, dignita_di, doppia_valenza, gia_rivelate, note_di_posizione,
@@ -54,11 +57,16 @@ from ...tarot.lettura import (
 )
 from ...tarot.llm import genera_flusso, genera_testo, richiesta
 from ...tarot.numerologia import carta_dell_anima, carta_dell_anno
+from ...tarot.persone import (
+    LUNGHEZZA_COGNOME, LUNGHEZZA_GENERE_ALTRO, LUNGHEZZA_NOME, Persone, blocco_compatibilita,
+    blocco_persone, compatibilita_json, da_json, mancanti, parole_neutre, pulisci, soggetto_testo,
+)
 from ...tarot.shuffle import mescola
 from ...tarot.lingue import in_lingua, lingua, rileva_lingua
 from ...tarot.testi import (
     AIUTO, CREDITI_ESAURITI, DISCLAIMER, INTERPRETAZIONE_NON_DISPONIBILE,
-    MODELLO_NON_DISPONIBILE, RESPONSO_BLOCCATO, RESPONSO_NON_GENERATO,
+    MODELLO_NON_DISPONIBILE, PARTNER_MANCANTE, PARTNER_NON_AMMESSO,
+    PROFILO_INCOMPLETO, RESPONSO_BLOCCATO, RESPONSO_NON_GENERATO,
 )
 from ..deps import (
     aggiorna_assegnazioni, get_conoscenza, get_guardrail, provider_per, verifica_modello,
@@ -72,10 +80,45 @@ router = APIRouter(tags=["letture"])
 # ---- modelli di richiesta ---------------------------------------------------
 
 
+class PersonaIn(BaseModel):
+    """L'altra persona di una lettura di compatibilità o di coppia.
+
+    Il cognome è facoltativo e resta nella scheda e nello storico: non arriva
+    mai ai prompt. Nome e genere libero sono testi che finiscono in un prompt,
+    quindi si riducono a ciò che può stare in un nome (`persone.pulisci`).
+    """
+
+    nome: str = Field(min_length=1, max_length=LUNGHEZZA_NOME * 2)
+    cognome: Optional[str] = Field(default=None, max_length=LUNGHEZZA_COGNOME * 2)
+    genere: str = Field(pattern="^(donna|uomo|non_binario|altro|non_dice)$")
+    genere_altro: Optional[str] = Field(default=None, max_length=LUNGHEZZA_GENERE_ALTRO * 2)
+    trans: bool = False
+    nascita: date
+
+    @field_validator("nascita")
+    @classmethod
+    def _nascita_sensata(cls, valore: date) -> date:
+        if valore > date.today() or valore.year < 1900:
+            raise ValueError("data di nascita non valida")
+        return valore
+
+    @model_validator(mode="after")
+    def _testi_utilizzabili(self) -> "PersonaIn":
+        if not pulisci(self.nome, LUNGHEZZA_NOME):
+            raise ValueError("il nome non è utilizzabile")
+        if self.genere == "altro" and not pulisci(self.genere_altro, LUNGHEZZA_GENERE_ALTRO):
+            raise ValueError("con «altro» serve un testo")
+        return self
+
+
 class NuovaLettura(BaseModel):
     spread_id: str = Field(min_length=1, max_length=40)
     question: str = Field(min_length=3, max_length=1000)
     lang: str = Field(default="it", max_length=5)
+    #: Solo per le letture di compatibilità e di coppia.
+    partner: Optional[PersonaIn] = None
+    #: «Ricorda»: si salva il partner nel profilo per precompilare il modulo.
+    ricorda_partner: bool = False
 
 
 class RispostaIntervista(BaseModel):
@@ -100,6 +143,9 @@ class Diario(BaseModel):
 
 class Condivisione(BaseModel):
     attiva: bool = True
+    #: Il testo personalizzato del post. Assente = non toccare quello già scritto;
+    #: stringa vuota = toglierlo.
+    testo: Optional[str] = Field(default=None, max_length=400)
 
 
 # ---- utilità ----------------------------------------------------------------
@@ -149,6 +195,58 @@ def _profilo(user: User) -> str:
     })
 
 
+def _errore_422(motivo: str, testo: Dict[str, str], lang: str, **extra: Any) -> HTTPException:
+    return HTTPException(
+        status_code=422,
+        detail={"motivo": motivo, "messaggio": in_lingua(testo, lang), **extra},
+    )
+
+
+def _istantanea_persone(user: User, partner: PersonaIn) -> Dict[str, Any]:
+    """Le due persone come stanno adesso: si salvano con la lettura.
+
+    È una copia: se poi l'utente corregge la scheda, la lettura resta coerente
+    con il responso. Il cognome sta qui e non va oltre lo storico.
+    """
+    assert user.birth_date is not None
+    return {
+        "v": 1,
+        "tu": {
+            "genere": user.gender, "genere_altro": user.gender_custom,
+            "trans": bool(user.is_trans), "nascita": user.birth_date.isoformat(),
+        },
+        "partner": {
+            "nome": pulisci(partner.nome, LUNGHEZZA_NOME),
+            "cognome": pulisci(partner.cognome, LUNGHEZZA_COGNOME) or None,
+            "genere": partner.genere,
+            "genere_altro": pulisci(partner.genere_altro, LUNGHEZZA_GENERE_ALTRO) or None,
+            "trans": partner.trans,
+            "nascita": partner.nascita.isoformat(),
+        },
+    }
+
+
+def _persone_dell_apertura(
+    user: User, payload: "NuovaLettura", categoria: str, lang: str,
+) -> Optional[Dict[str, Any]]:
+    """Valida partner e scheda per il tipo di lettura e ne fa l'istantanea.
+
+    `None` per la lettura standard. Per le speciali: 422 `partner_mancante`,
+    `partner_non_ammesso` o `profilo_incompleto` (con l'elenco di ciò che manca
+    nella scheda: il frontend lo chiede e riprova).
+    """
+    if categoria == "standard":
+        if payload.partner is not None:
+            raise _errore_422("partner_non_ammesso", PARTNER_NON_AMMESSO, lang)
+        return None
+    if payload.partner is None:
+        raise _errore_422("partner_mancante", PARTNER_MANCANTE, lang)
+    da_completare = mancanti(user)
+    if da_completare:
+        raise _errore_422("profilo_incompleto", PROFILO_INCOMPLETO, lang, mancanti=da_completare)
+    return _istantanea_persone(user, payload.partner)
+
+
 def carta_json(conoscenza, c, *, completa: bool = False) -> Dict[str, Any]:
     dati: Dict[str, Any] = {
         "posizione": c.posizione,
@@ -164,13 +262,26 @@ def carta_json(conoscenza, c, *, completa: bool = False) -> Dict[str, Any]:
     return dati
 
 
+def _soggetti(stesa: Dict[str, Any], persone: Optional[Persone]) -> Optional[Dict[int, str]]:
+    """Di chi parla ogni posizione, in testo: lo decide il codice dai dati della stesa."""
+    if persone is None:
+        return None
+    return {p["n"]: soggetto_testo(p.get("soggetto"), persone) for p in stesa["posizioni"]}
+
+
 def lettura_json(lettura: Reading, *, dettaglio: bool = True) -> Dict[str, Any]:
     conoscenza = get_conoscenza()
     stesa = conoscenza.stesa(lettura.spread_id) or {}
+    categoria = conoscenza.categoria_di(stesa) if stesa else "standard"
     dati: Dict[str, Any] = {
         "id": str(lettura.id),
         "spread_id": lettura.spread_id,
         "stesa": stesa.get("nome"),
+        # Il nome della stesa in inglese e nelle lingue con nomi propri: lo storico
+        # lo mostra nella lingua dell'interfaccia (`nomeStesa` sul frontend).
+        "stesa_nomi": conoscenza.stesa_pubblica(stesa)["nomi"] if stesa else {},
+        "categoria": categoria,
+        "stile": stesa.get("stile"),
         "question": lettura.question,
         "status": lettura.status,
         "lang": lettura.lang,
@@ -183,7 +294,12 @@ def lettura_json(lettura: Reading, *, dettaglio: bool = True) -> Dict[str, Any]:
     if not dettaglio:
         rivelate = [c for c in lettura.cards if c.rivelata]
         dati["carte"] = [conoscenza.carta(c.card_id)["nome_it"] for c in rivelate]
+        # Nell'elenco basta il nome del partner: il resto è nel dettaglio.
+        dati["partner_nome"] = ((lettura.persone or {}).get("partner") or {}).get("nome")
         return dati
+    persone = da_json(lettura.persone)
+    dati["persone"] = lettura.persone  # col cognome: solo al proprietario
+    dati["compatibilita"] = compatibilita_json(persone, conoscenza) if persone else None
     dati.update({
         "context_summary": lettura.context_summary,
         "interview": [
@@ -200,6 +316,7 @@ def lettura_json(lettura: Reading, *, dettaglio: bool = True) -> Dict[str, Any]:
         "synthesis": lettura.synthesis,
         "guard_outcome": lettura.guard_outcome,
         "share_token": lettura.share_token,
+        "share_text": lettura.share_text,
         "feedback_note": lettura.feedback_note,
         "disclaimer": in_lingua(DISCLAIMER, lettura.lang),
         "dignita": (
@@ -223,6 +340,8 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
     # La lingua della lettura è quella del quesito, non quella dell'interfaccia:
     # si ricava qui, una volta, e si salva. Ogni nuovo quesito la rinnova.
     lang = rileva_lingua(payload.question, fallback=payload.lang)
+    categoria = get_conoscenza().categoria_di(stesa)
+    persone = _persone_dell_apertura(user, payload, categoria, lang)
 
     if segnale_di_crisi(payload.question):
         await AuditRepository(session).record(
@@ -243,7 +362,7 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
 
     lettura = await ReadingRepository(session).create(
         user, spread_id=stesa["id"], question=payload.question.strip(),
-        consumo=consumo, lang=lang, status="intervista",
+        consumo=consumo, lang=lang, status="intervista", persone=persone,
     )
     if consumo == "credito":
         try:
@@ -260,6 +379,10 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
                     "saldo": exc.disponibili,
                 },
             ) from exc
+    # «Ricorda»: nella stessa transazione della lettura. Se il pagamento fallisce
+    # (402, rollback qui sopra) non si ricorda niente; in ramo crisi si è già usciti.
+    if persone is not None and payload.ricorda_partner:
+        user.partner_ricordato = dict(persone["partner"])
     await session.commit()
 
     return {
@@ -267,6 +390,7 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
         "status": lettura.status,
         "consumo": consumo,
         "lang": lang,
+        "categoria": categoria,
         "disclaimer": in_lingua(DISCLAIMER, lang),
         "stesa": get_conoscenza().stesa_pubblica(stesa),
         "saldo": await RegistroCrediti(session).saldo(user.id),
@@ -312,6 +436,12 @@ async def intervista(
     await aggiorna_assegnazioni(session)
     stesa = _stesa_o_404(lettura.spread_id)
     impostazioni = get_settings()
+    conoscenza = get_conoscenza()
+    categoria = conoscenza.categoria_di(stesa)
+    persone = da_json(lettura.persone)
+    # Nelle letture speciali il profilo del prompt sono le due persone (col
+    # partner senza cognome); nella standard, la carta dell'anima e dell'anno.
+    profilo = _profilo(user) if persone is None else blocco_persone(persone, conoscenza) + "\n"
     try:
         passo = await prossimo_passo(
             provider_intervista=provider_per(Compito.INTERVISTA),
@@ -326,7 +456,10 @@ async def intervista(
             min_domande=impostazioni.intervista_min_domande,
             max_domande=impostazioni.intervista_max_domande,
             lang=lettura.lang,
-            profilo=_profilo(user),
+            profilo=profilo,
+            categoria=categoria,
+            nota=stesa.get("nota_intervista", ""),
+            parole_neutre=parole_neutre(persone),
         )
     except (IntervistaNonRiuscita, RuntimeError) as exc:
         # Nessuna domanda di riserva: si dice che l'oracolo non ha risposto.
@@ -455,6 +588,17 @@ async def rivela(
     dignita = dignita_di(lettura, stesa, conoscenza, solo_rivelate=True).get(posizione)
     doppia = doppia_valenza(lettura, carta)
     lang = lingua(lettura.lang)
+    categoria = conoscenza.categoria_di(stesa)
+    persone_lettura = da_json(lettura.persone)
+    soggetti = _soggetti(stesa, persone_lettura)
+    # Le interpretazioni delle carte sono brevi e hanno le loro regole: nelle
+    # letture speciali ricevono in più solo ciò che è specifico del tipo di lettura.
+    sistema_interpretazione = [interpretazione.PROMPT_INTERPRETAZIONE]
+    if categoria != "standard":
+        sistema_interpretazione.append(interpretazione.PROMPT_INTERPRETAZIONE_RELAZIONE)
+        specifiche = get_guardrail().istruzioni_per("interpretazione", categoria, solo_categoria=True)
+        if specifiche:
+            sistema_interpretazione.append("# Regole di sicurezza della relazione\n\n" + "\n\n".join(specifiche))
     note = note_di_posizione(
         stesa, posizione, [c.posizione for c in lettura.cards if c.rivelata and c.posizione != posizione],
     )
@@ -472,6 +616,8 @@ async def rivela(
         colloquio=trascrizione(turni_da(lettura.turns)),
         nomi=(conoscenza.nome_carta(carta.card_id, lang), conoscenza.nome_posizione(stesa, posizione, lang)),
         lang=lang,
+        persone=blocco_persone(persone_lettura, conoscenza) if persone_lettura else "",
+        soggetto=(soggetti or {}).get(posizione, ""),
     )
     evento_carta = {
         "posizione": posizione,
@@ -490,7 +636,7 @@ async def rivela(
         testo = ""
         try:
             async for pezzo in genera_flusso(provider, richiesta(
-                [interpretazione.PROMPT_INTERPRETAZIONE], domanda, temperatura=0.7, max_tokens=500,
+                sistema_interpretazione, domanda, temperatura=0.7, max_tokens=500,
             )):
                 testo += pezzo
                 yield _sse("token", {"testo": pezzo})
@@ -565,7 +711,9 @@ async def sintesi(
     autore = provider_per(Compito.SINTESI)
     giudice = provider_per(Compito.GIUDIZIO)
 
-    prefisso = cag.prefisso(conoscenza, registro.istruzioni_per("sintesi"))
+    categoria = conoscenza.categoria_di(stesa)
+    persone_lettura = da_json(lettura.persone)
+    prefisso = cag.prefisso(conoscenza, registro.istruzioni_per("sintesi", categoria), categoria)
     carte = [
         {
             "card_id": c.card_id, "rovescio": c.rovescio, "posizione": c.posizione,
@@ -578,8 +726,12 @@ async def sintesi(
         contesto=lettura.context_summary or "", carte=carte,
         dignita=dignita_di(lettura, stesa, conoscenza, solo_rivelate=False),
         prevalenze=prevalenze_di(lettura, conoscenza),
-        profilo=_profilo(user), wirth=wirth(lettura, stesa, conoscenza), lang=lang,
+        profilo=_profilo(user) if persone_lettura is None else "",
+        wirth=wirth(lettura, stesa, conoscenza), lang=lang,
         colloquio=trascrizione(turni_da(lettura.turns)),
+        persone=blocco_persone(persone_lettura, conoscenza) if persone_lettura else "",
+        compatibilita=blocco_compatibilita(persone_lettura, conoscenza) if persone_lettura else "",
+        soggetti=_soggetti(stesa, persone_lettura),
     )
 
     # La transazione della richiesta si chiude prima dello streaming: il
@@ -590,7 +742,8 @@ async def sintesi(
     async def scrivi(vincoli: str = "") -> str:
         return await genera_testo(autore, richiesta(
             [prefisso], cag.parte_variabile(**argomenti, vincoli=vincoli),
-            temperatura=0.75, max_tokens=1800, cache_dopo=0,
+            # Le letture speciali hanno una sezione in più e i nomi dei due.
+            temperatura=0.75, max_tokens=1800 if categoria == "standard" else 2200, cache_dopo=0,
         ))
 
     async def genera() -> AsyncIterator[bytes]:
@@ -613,13 +766,17 @@ async def sintesi(
             return
 
         yield _sse("fase", {"fase": "guardia"})
-        verdetto = await giudica(giudice, registro, quesito=lettura.question, responso=responso)
+        verdetto = await giudica(
+            giudice, registro, quesito=lettura.question, responso=responso, categoria=categoria,
+        )
         esito = "ok"
         if verdetto.esito == "riscrivi":
             yield _sse("fase", {"fase": "revisione"})
             try:
                 responso = await scrivi(verdetto.vincoli())
-                verdetto = await giudica(giudice, registro, quesito=lettura.question, responso=responso)
+                verdetto = await giudica(
+                    giudice, registro, quesito=lettura.question, responso=responso, categoria=categoria,
+                )
                 esito = "riscritto" if verdetto.ok else "bloccato"
             except Exception:  # noqa: BLE001
                 esito = "bloccato"
@@ -726,18 +883,24 @@ async def diario(
 async def condividi(
     reading_id: uuid.UUID, payload: Condivisione, user: CurrentUser, session: DbSession,
 ) -> Dict[str, Any]:
-    """Pubblica (o ritira) un link anonimo alla lettura.
+    """Pubblica (o ritira) un link anonimo alla lettura, con un testo personalizzato.
 
     Il link mostra domanda, carte e responso, mai il colloquio né il nome:
     l'intervista contiene dettagli che chi consulta ha dato all'oracolo, non
-    al mondo.
+    al mondo. Nelle letture speciali il nome dell'altra persona non esce (vedi
+    `public.condivisa`). Il ritiro cancella anche le immagini caricate: un link
+    ritirato non deve lasciare un'anteprima raggiungibile.
     """
     lettura = await _lettura_o_404(ReadingRepository(session), user, reading_id)
     if lettura.status != "completata":
         raise _conflitto("Si condivide solo una lettura conclusa")
-    if payload.attiva and not lettura.share_token:
-        lettura.share_token = secrets.token_urlsafe(16)[:22]
-    elif not payload.attiva:
+    if payload.attiva:
+        if not lettura.share_token:
+            lettura.share_token = secrets.token_urlsafe(16)[:22]
+        if payload.testo is not None:
+            lettura.share_text = pulisci_testo(payload.testo) or None
+    else:
         lettura.share_token = None
+        await session.execute(delete(ShareImage).where(ShareImage.reading_id == lettura.id))
     await session.commit()
-    return {"share_token": lettura.share_token}
+    return {"share_token": lettura.share_token, "share_text": lettura.share_text}

@@ -12,7 +12,11 @@ messaggio porta solo i valori di quella posa esatta:
 - la dignità rispetto alle vicine già rivelate;
 - le regole di coppia della stesa che toccano questa posizione, se l'altra
   carta è già visibile;
-- il quadro emerso dall'intervista e il colloquio.
+- il quadro emerso dall'intervista e il colloquio;
+- nelle letture di compatibilità e di coppia, di chi parla la posizione (chi
+  consulta, l'altra persona, la relazione, una delle due strade) e le due persone
+  (`persone.py`): il soggetto lo decide il codice dai dati della stesa, non il
+  modello.
 
 Il modello non cerca né sceglie niente: i valori gli arrivano già selezionati,
 il che evita gli errori (una carta letta come rovesciata quando è dritta, una
@@ -68,6 +72,30 @@ Come interpretare:
 """
 
 
+PROMPT_INTERPRETAZIONE_RELAZIONE = """# Regole aggiuntive: compatibilità e coppia
+
+Stai interpretando una carta di una lettura che riguarda chi consulta e un'altra
+persona. Nel messaggio trovi «Le persone» e la riga «Questa posizione riguarda:
+…»: leggi la carta per QUEL soggetto (chi consulta, l'altra persona, la relazione
+fra voi, una delle due strade).
+
+- Le carte parlano di chi consulta e della relazione. Ciò che riguarda l'altra
+  persona è una tendenza o un'energia che si mostra nei suoi atteggiamenti, mai
+  una certezza su ciò che pensa, prova, vuole o nasconde («sembra», «tende a»,
+  «può indicare»).
+- Nessun verdetto sulla relazione e nessuna previsione certa sulla sua durata.
+- Nessuno stereotipo di genere: Re, Regina, Cavaliere, Fante, Imperatore e
+  Imperatrice sono energie, non «l'uomo» o «la donna». Non dare per scontati il
+  tipo di relazione né l'orientamento. Usa il genere dichiarato solo per pronomi
+  e concordanze, con forme neutre se non è noto o non è binario; una persona
+  trans si tratta col suo genere dichiarato, senza commentarlo.
+- Chiama l'altra persona per nome, se c'è; non usare il cognome né dati che non ti
+  sono stati dati.
+- Se conosci il segno solare, usalo solo se illumina la carta: non inventare
+  ascendente, luna o pianeti.
+"""
+
+
 def messaggio(
     *,
     carta: Dict[str, Any],
@@ -83,11 +111,15 @@ def messaggio(
     colloquio: str = "",
     nomi: Optional[Tuple[str, str]] = None,
     lang: str = "it",
+    persone: str = "",
+    soggetto: str = "",
 ) -> str:
     """Il messaggio utente per una carta: i valori di questa posa, nient'altro.
 
     `nomi` è (nome della carta, nome della posizione) nella lingua della
-    risposta, se non è l'italiano: il modello li usa così come sono.
+    risposta, se non è l'italiano: il modello li usa così come sono. `persone` è
+    il blocco «Le persone» e `soggetto` il testo di chi parla la posizione: solo
+    nelle letture di compatibilità e di coppia.
     """
     parti = [
         f"Quesito: {quesito}",
@@ -95,12 +127,16 @@ def messaggio(
     ]
     if colloquio:
         parti += ["", "Colloquio (domande dell'oracolo e risposte di chi consulta):", colloquio]
+    if persone:
+        parti += ["", persone]
     parti += [
         "",
         f"Stesa: {stesa['nome']} — {stesa['descrizione']}",
         f"Posizione {posizione['n']}: {posizione['nome']} — {posizione['significato']}",
-        f"Orientamento: {'rovesciata' if rovescio else 'dritta'}",
     ]
+    if soggetto:
+        parti.append(f"Questa posizione riguarda: {soggetto}")
+    parti.append(f"Orientamento: {'rovesciata' if rovescio else 'dritta'}")
     if posizione.get("calcolata"):
         parti.append(
             "Questa carta non è stata scelta: è la sintesi calcolata (somma "

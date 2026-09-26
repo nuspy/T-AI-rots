@@ -21,6 +21,9 @@ export interface Sessione {
   admin: boolean;
   entra: (ritorno?: string) => void;
   registrati: () => void;
+  /* Lancia l'attivazione della verifica in due passaggi (Keycloak: «Configure OTP»)
+   * e torna al profilo. Non fa niente senza Keycloak (sviluppo senza autenticazione). */
+  attiva2fa: () => void;
   esci: () => void;
 }
 
@@ -60,6 +63,10 @@ export function SessioneKeycloak({ children }: { children: React.ReactNode }) {
       /* La registrazione è la pagina di Keycloak, social compresi:
        * `prompt=create` apre direttamente il modulo invece del login. */
       registrati: () => auth.signinRedirect({ prompt: "create" }),
+      /* «Application initiated action» di Keycloak: dopo l'accesso (o subito, se la
+       * sessione è fresca) mostra la configurazione dell'OTP e poi torna qui. */
+      attiva2fa: () =>
+        auth.signinRedirect({ extraQueryParams: { kc_action: "CONFIGURE_TOTP" }, state: { ritorno: "/profilo" } }),
       esci: () => auth.signoutRedirect(),
     }),
     [auth],
@@ -77,6 +84,7 @@ export function SessioneDiSviluppo({ children }: { children: React.ReactNode }) 
       admin: true,
       entra: () => {},
       registrati: () => {},
+      attiva2fa: () => {},
       esci: () => {},
     }),
     [],

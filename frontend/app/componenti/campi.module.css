@@ -1,0 +1,76 @@
+/* I controlli dei moduli: campo, menu, casella. Bersagli da almeno 48 px sul
+ * telefono e sul desktop, focus visibile, errore sempre scritto (mai il solo colore). */
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--testo-tenue);
+  text-align: start;
+}
+
+.campo input,
+.campo select {
+  min-height: 48px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--bordo);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--testo);
+  font: inherit;
+  font-size: 1rem;
+  color-scheme: dark;
+}
+
+.campo input:focus-visible,
+.campo select:focus-visible {
+  outline: 2px solid var(--oro-chiaro);
+  outline-offset: 2px;
+}
+
+.campoErrore input,
+.campoErrore select {
+  border-color: #ff9a9a;
+}
+
+.errore {
+  color: #ff9a9a;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.casella {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: var(--testo);
+}
+
+.casella input {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  accent-color: var(--oro-chiaro);
+}
+
+.riga {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 640px) {
+  .riga {
+    grid-template-columns: 1fr;
+  }
+}
+
+.gruppo {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}

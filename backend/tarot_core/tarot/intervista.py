@@ -111,12 +111,64 @@ già successo.
 Rispondi SOLO con JSON: {"valida": true|false, "motivo": "<breve>"}
 """
 
+PROMPT_INTERVISTA_RELAZIONE = """# Regole aggiuntive: compatibilità e coppia
+
+Questa lettura riguarda chi consulta e un'altra persona (il suo nome, se c'è, sta
+nel profilo). I dati delle due persone — nomi, generi, date di nascita, segni —
+sono già noti: non chiederli.
+
+Le domande servono a capire la relazione e chiedono ciò che chi consulta sa con
+certezza:
+- FATTI OSSERVABILI: come vi siete conosciuti, da quanto tempo, come e quanto vi
+  vedete, cosa è successo di recente, cosa è già stato detto o tentato, quali
+  decisioni sono in arrivo;
+- IL VISSUTO DI CHI CONSULTA: cosa desidera, cosa teme, come sta nella relazione,
+  cosa gli piace e cosa gli manca.
+
+Non chiedere MAI:
+- cosa pensa, prova, vuole o nasconde l'altra persona, né se «ti ama» o «tiene a
+  te»: chi consulta può raccontare ciò che l'altra persona fa o dice, non il suo
+  mondo interiore. Le carte danno la tendenza;
+- di valutare la compatibilità o il futuro della coppia;
+- dati sensibili superflui: orientamento sessuale, salute, dettagli intimi,
+  cognomi o dati di altre persone;
+- niente presupposti: non dare per scontati il tipo di relazione, il genere o
+  l'orientamento di nessuno.
+
+Se chi consulta accenna a violenza, paura o controllo da parte dell'altra
+persona, non indagare i dettagli: rispondi con ascolto e chiedi solo, con
+delicatezza, come sta e se si sente al sicuro. Non suggerire di «lavorare sulla
+coppia».
+"""
+
+PROMPT_VALIDAZIONE_RELAZIONE = """# Regole aggiuntive: compatibilità e coppia
+
+Per una lettura di compatibilità o di coppia la domanda NON è valida anche se:
+4. chiede all'utente cosa pensa, prova, vuole o nasconde l'altra persona, o se
+   «lo/la ama», come risposta o come previsione (chi consulta può raccontare ciò
+   che l'altra persona fa o dice, non il suo mondo interiore);
+5. chiede dati sensibili superflui: orientamento sessuale, salute, dettagli
+   intimi, cognomi o dati di altre persone.
+"""
+
 #: Le formule con cui si chiede a qualcuno di prevedere o di rispondersi da sé.
 _FORMULE_PREVISIONE = re.compile(
     r"\b(pensi|credi|ritieni|senti|immagini|secondo te|a tuo parere|a tuo avviso|"
     r"do you think|do you believe|do you feel|in your opinion)\b"
     r".{0,60}\b(succeder|accadr|andr[aà]|finir|funzioner|torner|arriver|otterr|"
     r"ti am|ama\b|amer|vorr[aà]|lascer|cambier|riuscir|avverr|will|going to|loves? you)",
+    re.IGNORECASE,
+)
+
+#: Nelle letture di relazione: le domande che chiedono all'utente cosa pensa o prova
+#: l'altra persona. Descrivere ciò che fa («come si comporta?») va bene; il suo
+#: mondo interiore («cosa pensa?», «cosa prova?») no: lo dicono le carte, come tendenza.
+_TERZO = r"(lui|lei|l'altra persona|il tuo partner|la tua partner|il partner|la partner|partner|him|her|them)"
+_FORMULE_TERZO = re.compile(
+    r"\b(cosa|che cosa|quanto|come)\b.{0,25}\b(pensa|prova|sente|vuole|desidera|nasconde|crede|considera|ama|tiene)\b.{0,40}\b" + _TERZO
+    + r"|\b(secondo te|a tuo avviso|pensi|credi|ritieni|senti)\b.{0,60}\b" + _TERZO + r"\b.{0,50}\b(ti ama|ti vuole|prov|senta|pens|voglia|tenga|innamorat|desider)"
+    + r"|\b(what|how much)\b.{0,20}\b(does|do|is)\b.{0,25}\b(he|she|they|your partner|the other person)\b.{0,25}\b(think|feel|want|hide|believe)"
+    + r"|\bdo you think\b.{0,60}\b(he|she|they|your partner|the other person)\b",
     re.IGNORECASE,
 )
 
@@ -136,21 +188,30 @@ def _parole(testo: str) -> set:
     return {p for p in re.findall(r"\w+", testo) if p not in _PAROLE_VUOTE and len(p) > 2}
 
 
-def ricalca_il_quesito(quesito: str, domanda: str, *, soglia: float = 0.6) -> bool:
+def ricalca_il_quesito(
+    quesito: str, domanda: str, *, soglia: float = 0.6, neutre: Sequence[str] = (),
+) -> bool:
     """Vero se la domanda ripete il quesito con altre parole.
 
     Misura quanta parte delle parole di contenuto del quesito ricompare nella
     domanda. Grezzo, ma cattura il caso peggiore — il quesito rigirato
     all'utente — senza chiamare nessun modello.
+
+    `neutre` sono parole che non contano come ripetizione: nelle letture di
+    relazione il quesito è spesso «Compatibilità con Marco», e una domanda
+    naturale come «Da quanto conoscete Marco?» ne riprenderebbe più della soglia
+    solo per il nome e il tipo di lettura.
     """
-    q = _parole(quesito)
+    q = _parole(quesito) - _parole(" ".join(neutre))
     d = _parole(domanda)
     if not q or not d:
         return False
     return len(q & d) / len(q) >= soglia
 
 
-def viola_le_regole(quesito: str, domanda: str) -> Optional[str]:
+def viola_le_regole(
+    quesito: str, domanda: str, *, categoria: str = "standard", neutre: Sequence[str] = (),
+) -> Optional[str]:
     """Il controllo deterministico. Restituisce il motivo, o `None`."""
     if not domanda.strip():
         return "domanda vuota"
@@ -158,7 +219,9 @@ def viola_le_regole(quesito: str, domanda: str) -> Optional[str]:
         return "più domande insieme"
     if _FORMULE_PREVISIONE.search(domanda):
         return "chiede una previsione o la risposta al quesito"
-    if ricalca_il_quesito(quesito, domanda):
+    if categoria != "standard" and _FORMULE_TERZO.search(domanda):
+        return "chiede cosa pensa o prova l'altra persona"
+    if ricalca_il_quesito(quesito, domanda, neutre=neutre):
         return "ricalca il quesito"
     return None
 
@@ -194,8 +257,16 @@ async def prossimo_passo(
     stesa_descrizione: str = "",
     lang: str = "it",
     profilo: str = "",
+    categoria: str = "standard",
+    nota: str = "",
+    parole_neutre: Sequence[str] = (),
 ) -> Passo:
     """Decide la prossima domanda, o chiude l'intervista col riassunto.
+
+    Per le letture di compatibilità e di coppia (`categoria`) il modello riceve
+    anche le regole sulle relazioni; `nota` è l'avvertenza della stesa scelta, e
+    `parole_neutre` le parole (il nome del partner) che non contano come
+    ripetizione del quesito.
 
     Le domande sono fra `min_domande` e `max_domande`: quante ne servano lo
     decide il modello. Prima del minimo una chiusura viene respinta; al
@@ -210,7 +281,8 @@ async def prossimo_passo(
         f"Stesa scelta: {stesa_nome}\n"
         + (f"{stesa_descrizione}\n" if stesa_descrizione else "")
         + f"{profilo}"
-        f"Domande già poste: {poste} (minimo {min_domande}, massimo {max_domande})\n\n"
+        + (f"Nota sulla stesa: {nota}\n" if nota else "")
+        + f"Domande già poste: {poste} (minimo {min_domande}, massimo {max_domande})\n\n"
         f"Colloquio finora:\n{trascrizione(turni)}\n\n"
         + (
             "Hai raggiunto il numero massimo di domande: chiudi l'intervista con il riassunto.\n"
@@ -224,6 +296,8 @@ async def prossimo_passo(
         + istruzione_lingua(lang)
     )
     sistema = [PROMPT_INTERVISTA]
+    if categoria != "standard":
+        sistema.append(PROMPT_INTERVISTA_RELAZIONE)
 
     scartate: List[str] = []
     for _tentativo in range(TENTATIVI_RIGENERAZIONE + 1):
@@ -245,7 +319,9 @@ async def prossimo_passo(
                 # di chi consulta, che sono sue e non fisse.
                 return Passo(
                     completo=True, scartate=len(scartate),
-                    riassunto=await riassumi(provider_intervista, quesito=quesito, turni=turni, lang=lang),
+                    riassunto=await riassumi(
+                        provider_intervista, quesito=quesito, turni=turni, lang=lang, categoria=categoria,
+                    ),
                 )
             raise IntervistaNonRiuscita(f"il modello non ha risposto: {exc}") from exc
 
@@ -253,7 +329,7 @@ async def prossimo_passo(
             riassunto = str(dati.get("riassunto") or "").strip()
             if not riassunto:
                 riassunto = await riassumi(
-                    provider_intervista, quesito=quesito, turni=turni, lang=lang,
+                    provider_intervista, quesito=quesito, turni=turni, lang=lang, categoria=categoria,
                 )
             return Passo(completo=True, riassunto=riassunto, scartate=len(scartate))
 
@@ -262,9 +338,9 @@ async def prossimo_passo(
             # Ha chiuso troppo presto o non ha scritto nulla: si richiede.
             continue
 
-        motivo = viola_le_regole(quesito, domanda)
+        motivo = viola_le_regole(quesito, domanda, categoria=categoria, neutre=parole_neutre)
         if motivo is None:
-            motivo = await _giudica(provider_validazione, quesito, domanda)
+            motivo = await _giudica(provider_validazione, quesito, domanda, categoria)
         if motivo is None:
             return Passo(completo=False, domanda=domanda, scartate=len(scartate))
 
@@ -276,17 +352,22 @@ async def prossimo_passo(
     if not prima_del_minimo:
         return Passo(
             completo=True, scartate=len(scartate),
-            riassunto=await riassumi(provider_intervista, quesito=quesito, turni=turni, lang=lang),
+            riassunto=await riassumi(
+                provider_intervista, quesito=quesito, turni=turni, lang=lang, categoria=categoria,
+            ),
         )
     raise IntervistaNonRiuscita("il modello non ha formulato una domanda valida")
 
 
-async def _giudica(provider, quesito: str, domanda: str) -> Optional[str]:
+async def _giudica(provider, quesito: str, domanda: str, categoria: str = "standard") -> Optional[str]:
     """Il validatore LLM. Un validatore che non risponde non blocca: il
     controllo deterministico è già passato."""
+    sistema = [PROMPT_VALIDAZIONE]
+    if categoria != "standard":
+        sistema.append(PROMPT_VALIDAZIONE_RELAZIONE)
     try:
         dati = await genera_json(provider, richiesta(
-            [PROMPT_VALIDAZIONE],
+            sistema,
             f"Quesito: {quesito}\nDomanda candidata: {domanda}",
             temperatura=0.0, max_tokens=200,
         ))
@@ -300,11 +381,12 @@ async def _giudica(provider, quesito: str, domanda: str) -> Optional[str]:
 
 async def riassumi(
     provider, *, quesito: str, turni: Sequence[Tuple[str, str]], lang: str = "it",
+    categoria: str = "standard",
 ) -> str:
     """Il quadro emerso, quando il modello ha chiuso senza riassumere."""
     try:
         dati = await genera_json(provider, richiesta(
-            [PROMPT_INTERVISTA],
+            [PROMPT_INTERVISTA] + ([PROMPT_INTERVISTA_RELAZIONE] if categoria != "standard" else []),
             f"Quesito: {quesito}\n\nColloquio:\n{trascrizione(turni)}\n\n"
             f"L'intervista è conclusa: restituisci solo "
             f'{{"completo": true, "riassunto": "..."}}. {istruzione_lingua(lang)}',

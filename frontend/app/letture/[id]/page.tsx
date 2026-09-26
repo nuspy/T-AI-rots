@@ -5,15 +5,16 @@
 
 import { use, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  annotaLettura, cancellaLettura, condividiLettura, leggiLettura,
-} from "@/lib/api";
+import { annotaLettura, cancellaLettura, leggiLettura } from "@/lib/api";
+import { urlCondivisione } from "@/lib/condivisione";
 import { comeLingua, nomeStesa } from "@/lib/i18n";
 import { LinguaNomi, useLingua } from "@/lib/lingua";
 import { useAzione, useCarica } from "@/lib/usa";
 import { Markdown } from "../../componenti/markdown";
 import { Involucro } from "../../componenti/testata";
+import { PannelloCondivisione } from "../../leggi/pannello-condivisione";
 import { Tavolo, type Posata } from "../../leggi/tavolo";
+import { PersoneLettura } from "../persone";
 import pag from "../../pagine.module.css";
 import stili from "../../leggi/leggi.module.css";
 
@@ -31,7 +32,10 @@ function Dettaglio({ id }: { id: string }) {
   const router = useRouter();
   const lettura = useCarica(useCallback((tok: string | null) => leggiLettura(tok, id), [id]), [id]);
   const { esegui } = useAzione();
-  const [link, setLink] = useState<string | null>(null);
+  /* Il link dopo aver usato il pannello: `undefined` finché non lo si apre, `null` se lo si disattiva. */
+  const [link, setLink] = useState<string | null | undefined>(undefined);
+  const [condividendo, setCondividendo] = useState(false);
+  const chiudi = useCallback(() => setCondividendo(false), []);
 
   if (lettura.errore) return <p className={pag.errore}>{lettura.errore}</p>;
   const l = lettura.dati;
@@ -50,13 +54,10 @@ function Dettaglio({ id }: { id: string }) {
     dignita: l.dignita?.[String(c.posizione)] ?? null,
   }));
 
+  const linkAttivo = link === undefined ? l.share_token : link;
+
   const annota = async (esito: string) => {
     await esegui((tok) => annotaLettura(tok, id, esito));
-    lettura.ricarica();
-  };
-  const condividi = async () => {
-    const r = await esegui((tok) => condividiLettura(tok, id, !l.share_token));
-    setLink(r?.share_token ? `${window.location.origin}/s/${r.share_token}` : null);
     lettura.ricarica();
   };
   const cancella = async () => {
@@ -74,7 +75,14 @@ function Dettaglio({ id }: { id: string }) {
           <p className={`oracolo ${stili.domandaTitolo}`} dir="auto">«{l.question}»</p>
           <p className={pag.nota}>{new Date(l.created_at).toLocaleString(locale)}</p>
         </div>
-        <Tavolo stesa={l.stesa_dati} posate={posate} prossima={null} rivelazioneInCorso={false} evidenzia={null} />
+        <Tavolo
+          stesa={l.stesa_dati}
+          posate={posate}
+          prossima={null}
+          rivelazioneInCorso={false}
+          evidenzia={null}
+          nomePartner={l.persone?.partner.nome}
+        />
       </div>
       <div className={stili.colonnaDialogo}>
         <div className={`pannello ${pag.scheda}`}>
@@ -87,16 +95,18 @@ function Dettaglio({ id }: { id: string }) {
             ))}
           </div>
           <div className={pag.linea}>
-            <button className="bottone-secondario" onClick={condividi}>
-              {l.share_token ? t.ritira_condivisione : t.condividi}
-            </button>
+            {l.status === "completata" && (
+              <button className="bottone-secondario" onClick={() => setCondividendo(true)}>{t.condividi}</button>
+            )}
             <button className="bottone-secondario" onClick={cancella}>{t.cancella}</button>
           </div>
-          {(link || l.share_token) && (
-            <p className={pag.nota}>
-              <a href={link ?? `/s/${l.share_token}`}>{link ?? `/s/${l.share_token}`}</a>
+          {linkAttivo && (
+            <p className={`${pag.nota} ${pag.indirizzo}`}>
+              <a href={`/s/${linkAttivo}`}>{urlCondivisione(linkAttivo)}</a>
             </p>
           )}
+          <PannelloCondivisione id={id} aperta={condividendo} onChiudi={chiudi} onLink={setLink} />
+          {l.persone && <PersoneLettura persone={l.persone} compatibilita={l.compatibilita} />}
           {l.context_summary && (
             <>
               <span className={pag.etichetta}>{t.il_quadro}</span>

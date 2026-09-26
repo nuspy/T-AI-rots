@@ -5,6 +5,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cancellaLettura, elencaLetture } from "@/lib/api";
+import { nomeStesaDaNomi } from "@/lib/i18n";
 import { useLingua } from "@/lib/lingua";
 import { useAzione, useCarica } from "@/lib/usa";
 import { Involucro } from "../componenti/testata";
@@ -20,7 +21,7 @@ export default function PaginaLetture() {
 }
 
 function Elenco() {
-  const { t, locale } = useLingua();
+  const { t, lingua, locale } = useLingua();
   const letture = useCarica(elencaLetture);
   const { esegui } = useAzione();
 
@@ -50,7 +51,11 @@ function Elenco() {
               <p className={stili.rigaTitolo}>«{l.question}»</p>
             </Link>
             <p className={stili.rigaDettagli}>
-              {l.stesa} · {new Date(l.created_at).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })}
+              {l.categoria !== "standard" && (
+                <span className={stili.badge}>{l.categoria === "coppia" ? t.badge_coppia : t.badge_compat}</span>
+              )}
+              {nomeStesaDaNomi(l.stesa, l.stesa_nomi, lingua)}
+              {l.partner_nome ? ` · ${t.tu_e(l.partner_nome)}` : ""} · {new Date(l.created_at).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })}
               {" · "}{(t.stati as Record<string, string>)[l.status] ?? l.status}
               {l.carte.length > 0 && ` · ${l.carte.slice(0, 4).join(", ")}${l.carte.length > 4 ? "…" : ""}`}
               {l.feedback && ` · ${t.si_e_avverato} ${t[l.feedback as "si" | "in_parte" | "no"]}`}

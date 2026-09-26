@@ -39,7 +39,7 @@ from .conoscenza import Conoscenza
 from .lingue import istruzione_lingua, lingua
 from .schede import scheda, valore_sintetico
 
-PROMPT_SINTESI = """# Compito: sintesi
+_CORPO_SINTESI = """# Compito: sintesi
 
 Sei l'oracolo di T-AI-rots, lettore rigoroso e sapiente del Tarocco di Thoth di
 Aleister Crowley. Qui sotto hai la dottrina di lettura della tradizione che
@@ -84,7 +84,9 @@ Come costruire il responso:
   persona.
 - Il futuro è la tendenza più probabile delle forze attuali, che le scelte di
   chi consulta possono cambiare: niente fatalismo, niente certezze assolute.
+"""
 
+_FORMATO_STANDARD = """
 Formato (Markdown, 350-650 parole): esattamente queste quattro sezioni, in
 questo ordine, con i titoli tradotti nella lingua della risposta:
 ## Il quadro
@@ -95,21 +97,87 @@ questo ordine, con i titoli tradotti nella lingua della risposta:
 Non aggiungere disclaimer: li aggiunge la piattaforma.
 """
 
+#: La lettura standard: identica, lettera per lettera, a com'era prima delle
+#: letture speciali (lo prova un test con l'impronta del prefisso).
+PROMPT_SINTESI = _CORPO_SINTESI + _FORMATO_STANDARD
 
-@lru_cache(maxsize=4)
-def _prefisso_cache(dottrina: str, guardie: str) -> str:
+_REGOLE_RELAZIONE = """
+Regole per le letture di compatibilità e di coppia:
+- Il messaggio contiene «Le persone», la «Compatibilità zodiacale» calcolata dal
+  sistema e, per ogni carta, di chi parla la posizione («Riguarda:»). Nomina i
+  partecipanti per nome (l'altra persona col suo nome, chi consulta con «tu»);
+  non usare cognomi né dati che non ti sono stati dati.
+- Le carte parlano di chi consulta e della relazione. Ciò che riguarda l'altra
+  persona è una tendenza, mai una certezza su ciò che pensa, prova, vuole o
+  nasconde. Nessun verdetto («siete compatibili» o «incompatibili», «lascialo»,
+  «è la persona giusta»): parla di affinità, punti d'incontro e aree di lavoro, e
+  lascia la scelta a chi consulta. Nessuna previsione certa sulla durata.
+- La compatibilità zodiacale è calcolata dal sistema sui soli segni solari: usala
+  come sfondo, non contraddirla e non inventare ascendente, luna o pianeti. Se una
+  data è sulla cuspide, dillo in una frase.
+- Nessuno stereotipo di genere: Re, Regina, Cavaliere, Fante, Imperatore e
+  Imperatrice sono energie, non «l'uomo» o «la donna»; non dare per scontati il
+  tipo di relazione né l'orientamento. Il genere serve solo a pronomi e
+  concordanze (forme neutre se non binario, «altro» o non dichiarato); una persona
+  trans si tratta col genere dichiarato, senza commentarlo.
+- Se chi consulta ha descritto violenza, paura o controllo, non minimizzare e non
+  consigliare di «lavorare sulla coppia»: riconosci ciò che vive e indica in modo
+  generico i servizi di aiuto del suo paese.
+"""
+
+_FORMATO_COMPATIBILITA = """
+Formato (Markdown, 450-750 parole): esattamente queste cinque sezioni, in questo
+ordine, con i titoli tradotti nella lingua della risposta:
+## Il quadro
+## L'incontro dei segni   (la compatibilità zodiacale calcolata, letta insieme alle carte: sfondo, non verdetto)
+## Le forze in gioco   (qui il filo del racconto, tappa dopo tappa, con i nomi)
+## Il consiglio delle carte
+## La tendenza più probabile
+
+Non aggiungere disclaimer: li aggiunge la piattaforma.
+"""
+
+_FORMATO_COPPIA = """
+Formato (Markdown, 450-750 parole): esattamente queste cinque sezioni, in questo
+ordine, con i titoli tradotti nella lingua della risposta:
+## Il quadro
+## Ciò che vi lega e ciò che vi mette alla prova   (qui anche la compatibilità zodiacale, come sfondo)
+## Le forze in gioco   (qui il filo del racconto, tappa dopo tappa, con i nomi)
+## Il consiglio delle carte   (rivolto a chi consulta: cosa può fare chi consulta, non l'altra persona)
+## La tendenza più probabile   (con «cosa dipende da voi»)
+
+Non aggiungere disclaimer: li aggiunge la piattaforma.
+"""
+
+#: Il prompt di sintesi per categoria di lettura. Il prefisso in cache è uno
+#: per categoria, e ciascuno è stabile fra letture della stessa categoria.
+PROMPT_PER_CATEGORIA = {
+    "standard": PROMPT_SINTESI,
+    "compatibilita": _CORPO_SINTESI + _REGOLE_RELAZIONE + _FORMATO_COMPATIBILITA,
+    "coppia": _CORPO_SINTESI + _REGOLE_RELAZIONE + _FORMATO_COPPIA,
+}
+
+
+@lru_cache(maxsize=8)
+def _prefisso_cache(dottrina: str, guardie: str, categoria: str) -> str:
     return (
-        f"{PROMPT_SINTESI}\n\n"
+        f"{PROMPT_PER_CATEGORIA[categoria]}\n\n"
         f"# Regole di sicurezza del responso\n\n{guardie}\n\n"
         f"# Dottrina di lettura\n\n{dottrina}\n"
     )
 
 
-def prefisso(conoscenza: Conoscenza, istruzioni_guardrail: List[str]) -> str:
+def prefisso(
+    conoscenza: Conoscenza, istruzioni_guardrail: List[str], categoria: str = "standard",
+) -> str:
     """Il prefisso stabile. Deve restare byte-identico fra letture: nessun
     dato della lettura, nessuna data, nessun ordine che dipenda dal caso.
-    Solo ruolo, sicurezza e dottrina: le stese e le carte le sceglie il codice."""
-    return _prefisso_cache(conoscenza.dottrina, "\n\n".join(istruzioni_guardrail))
+    Solo ruolo, sicurezza e dottrina: le stese e le carte le sceglie il codice.
+
+    Ce n'è uno per categoria di lettura (standard, compatibilità, coppia): il
+    formato del responso e le regole sulle relazioni cambiano, la dottrina no.
+    Quello della lettura standard non è cambiato."""
+    return _prefisso_cache(conoscenza.dottrina, "\n\n".join(istruzioni_guardrail), categoria)
 
 
 def _con_nome(italiano: str, conoscenza: Conoscenza, nome_lingua: str, lang: str) -> str:
@@ -133,9 +201,12 @@ def blocco_stesa(conoscenza: Conoscenza, stesa: Dict[str, Any], lang: str) -> st
 
 def blocco_carte(
     conoscenza: Conoscenza, stesa: Dict[str, Any], carte: List[Dict[str, Any]],
-    dignita: Dict[int, Dict[str, Any]], lang: str,
+    dignita: Dict[int, Dict[str, Any]], lang: str, soggetti: Optional[Dict[int, str]] = None,
 ) -> str:
-    """Le schede delle sole carte estratte, nell'ordine delle posizioni."""
+    """Le schede delle sole carte estratte, nell'ordine delle posizioni.
+
+    Nelle letture speciali `soggetti` dice, per ogni posizione, di chi parla
+    (chi consulta, l'altra persona, la relazione): lo decide il codice."""
     righe = [
         "## Le carte estratte",
         "Per ogni posizione: il suo significato, la carta nell'orientamento estratto e la sua scheda.",
@@ -152,6 +223,8 @@ def blocco_carte(
             f"Carta estratta: {nome_carta}, {'rovesciata' if c['rovescio'] else 'dritta'}"
             + (" — carta di sintesi calcolata" if c.get("calcolata") else ""),
         ]
+        if soggetti and soggetti.get(n):
+            righe.append(f"Riguarda: {soggetti[n]}")
         if pos.get("senza_rovescio"):
             righe.append("Posizione di traverso: si legge sempre come dritta.")
         righe.append(scheda(carta, c["rovescio"]))
@@ -166,6 +239,7 @@ def blocco_carte(
 
 def catena(
     conoscenza: Conoscenza, stesa: Dict[str, Any], carte: List[Dict[str, Any]], lang: str,
+    soggetti: Optional[Dict[int, str]] = None,
 ) -> str:
     """L'ordine del racconto: le tappe nella sequenza in cui la stesa si legge.
 
@@ -182,11 +256,16 @@ def catena(
         if c is None:
             continue
         carta = conoscenza.carta(c["card_id"])
-        righe.append(
+        riga = (
             f"{k}. {conoscenza.nome_posizione(stesa, n, lang)} (posizione {n}) — "
             f"{conoscenza.nome_carta(c['card_id'], lang)}, {'rovesciata' if c['rovescio'] else 'dritta'}: "
             f"{valore_sintetico(carta, c['rovescio'])}"
         )
+        # In coda alla riga e dopo «(posizione n)»: chi legge la catena col
+        # numero di posizione non deve accorgersi del soggetto.
+        if soggetti and soggetti.get(n):
+            riga += f" [riguarda: {soggetti[n]}]"
+        righe.append(riga)
     return "\n".join(righe)
 
 
@@ -204,8 +283,15 @@ def parte_variabile(
     vincoli: str = "",
     colloquio: str = "",
     lang: str = "it",
+    persone: str = "",
+    compatibilita: str = "",
+    soggetti: Optional[Dict[int, str]] = None,
 ) -> str:
     """La lettura concreta: tutto ciò che cambia da una consultazione all'altra.
+
+    Nelle letture di compatibilità e di coppia: `persone` (il blocco «Le
+    persone»), `compatibilita` (il blocco della compatibilità zodiacale
+    calcolata) e `soggetti` (di chi parla ogni posizione).
 
     `carte` è l'elenco con `card_id`, `rovescio`, `posizione`, `calcolata` e
     l'`interpretazione` immediata già data. `colloquio` è la trascrizione
@@ -220,10 +306,14 @@ def parte_variabile(
         righe += ["", "Colloquio (domande dell'oracolo e risposte di chi consulta):", colloquio]
     if profilo:
         righe.append(f"Profilo di chi consulta:\n{profilo}")
+    if persone:
+        righe += ["", persone]
+    if compatibilita:
+        righe += ["", compatibilita]
     righe += [
         "", blocco_stesa(conoscenza, stesa, lang),
-        "", blocco_carte(conoscenza, stesa, carte, dignita, lang),
-        "", catena(conoscenza, stesa, carte, lang),
+        "", blocco_carte(conoscenza, stesa, carte, dignita, lang, soggetti),
+        "", catena(conoscenza, stesa, carte, lang, soggetti),
         "", "## Prevalenze",
         json.dumps(prevalenze, ensure_ascii=False),
     ]

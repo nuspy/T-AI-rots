@@ -97,6 +97,18 @@
   color: var(--testo);
 }
 
+/* Il tipo di una lettura speciale, nello storico: mai il solo colore, c'è la parola. */
+.badge {
+  display: inline-block;
+  margin-inline-end: 8px;
+  padding: 1px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--bordo-forte);
+  color: var(--oro-chiaro);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+
 .rigaDettagli {
   margin: 4px 0 0;
   font-size: 0.82rem;
@@ -270,4 +282,90 @@
     grid-template-columns: 1fr;
     justify-items: center;
   }
+}
+
+/* ---- il contatore delle condivisioni ---- */
+
+.barra {
+  height: 10px;
+  margin: 14px 0 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.barra span {
+  display: block;
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--oro-scuro), var(--oro-chiaro));
+  transition: width 0.4s;
+}
+
+.contatori {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 14px 0 0;
+}
+
+.contatori > div {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--bordo);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.contatori dt {
+  color: var(--testo-tenue);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.contatori dd {
+  margin: 4px 0 0;
+  font-family: var(--font-titoli), serif;
+  font-size: 1.8rem;
+  color: var(--oro-chiaro);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barra span {
+    transition: none;
+  }
+}
+
+/* Un indirizzo lungo va a capo dove serve: senza, allarga la colonna sul telefono. */
+.indirizzo {
+  overflow-wrap: anywhere;
+}
+
+/* ---- la sicurezza dell'account ---- */
+
+.stato2fa {
+  margin: 8px 0 12px;
+  color: var(--oro-chiaro);
+}
+
+.casellaProfilo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+
+.casellaProfilo input {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  accent-color: var(--oro);
+}
+
+/* Il bottone del tema è alto 42 px: dove serve il tocco da 48, con più specificità. */
+.linea .tocco {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
 }

@@ -37,6 +37,7 @@ docker build --provenance=false -f deploy/Dockerfile.next --build-arg APP=fronte
   --build-arg NEXT_PUBLIC_KEYCLOAK_REALM=tarots \
   --build-arg NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=tarot-frontend \
   --build-arg NEXT_PUBLIC_AUTH_DISABLED=false \
+  --build-arg NEXT_PUBLIC_SITE_URL=https://tarots.chat \
   --build-arg NEXT_PUBLIC_CARD_EXT=webp -t tarots-web:v2 .
 docker build --provenance=false -f deploy/Dockerfile.next --build-arg APP=admin \
   --build-arg NEXT_PUBLIC_API_URL=https://tarots.tadamoo.com/api \
@@ -54,7 +55,11 @@ kubectl -n tarots create secret generic tarots-secrets \
   --from-literal=db-password=... \
   --from-literal=database-url='postgresql+psycopg://tarots:...@postgresql.tadamoo.svc.cluster.local:5432/tarots' \
   --from-literal=keycloak-admin-password=... \
-  --from-literal=api-client-secret=...
+  --from-literal=api-client-secret=... \
+  --from-literal=condivisione-sale="$(openssl rand -hex 24)"
+# Su un Secret che esiste già, la sola chiave nuova (senza, l'API non parte):
+#   kubectl -n tarots patch secret tarots-secrets --type merge \
+#     -p "{\"stringData\":{\"condivisione-sale\":\"$(openssl rand -hex 24)\"}}"
 kubectl -n tarots create configmap tarots-realm --from-file=realm.json=deploy/keycloak/realm-tarots.prod.json
 
 # 4. tutto il resto

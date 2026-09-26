@@ -4,8 +4,14 @@
  *
  * Le fasi seguono gli stati della lettura sul server:
  *
- *   stesa → intervista → pronto-mescolare → mescolamento → taglio → scelta →
- *   rivelazione → pronto-sintesi → sintesi → completata
+ *   tipo → [persone → stile | stesa] → intervista → pronto-mescolare →
+ *   mescolamento → taglio → scelta → rivelazione → pronto-sintesi → sintesi →
+ *   completata
+ *
+ * Le prime fasi sono solo del client. La lettura standard passa da `stesa`; le
+ * letture di compatibilità e di coppia da `persone` (i dati di chi consulta che
+ * mancano e quelli dell'altra persona) e da `stile` (la stesa, per stile). Dopo
+ * l'apertura il percorso è lo stesso per tutte.
  *
  * con `crisi` come uscita di sicurezza. L'identificativo della lettura sta
  * nell'indirizzo (`?id=…`): una pagina ricaricata, o il ritorno da un
@@ -20,16 +26,21 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import {
   ErroreApi,
+  aggiornaProfilo,
   apriLettura,
   apriVentaglio,
+  cancellaPartner,
   elencaStese,
   leggiConto,
   leggiDisclaimer,
   leggiLettura,
+  leggiProfilo,
   rispondi,
   rivela,
   scegliCarta,
   sintesi,
+  type Categoria,
+  type Genere,
   type Lettura,
   type Stesa,
 } from "@/lib/api";
@@ -39,15 +50,20 @@ import { useSessione } from "@/lib/sessione";
 import { useCarica } from "@/lib/usa";
 import { Acquisto, Disclaimer } from "../componenti/modale";
 import { Dialogo, type Battuta } from "./dialogo";
+import { FormPersone, partnerDa, personeDaProfilo, personeVuote, type DatiPersone } from "./form-persone";
 import { FaseResponso, Responso } from "./responso";
 import { SceltaStesa } from "./scelta-stesa";
+import { SceltaTipo } from "./scelta-tipo";
 import { Tavolo, type Posata } from "./tavolo";
 import { Mescolamento, Taglio, Ventaglio } from "./ventaglio";
 import stili from "./leggi.module.css";
 
 type Fase =
-  | "stesa" | "intervista" | "pronto-mescolare" | "mescolamento" | "taglio" | "scelta"
+  | "tipo" | "persone" | "stile" | "stesa" | "intervista" | "pronto-mescolare" | "mescolamento" | "taglio" | "scelta"
   | "rivelazione" | "pronto-sintesi" | "sintesi" | "completata" | "crisi" | "annullata";
+
+const comeCategoria = (v: string | null): Categoria | null =>
+  v === "standard" || v === "compatibilita" || v === "coppia" ? v : null;
 
 let contatore = 0;
 const nuovoId = () => `b${++contatore}`;
@@ -61,10 +77,23 @@ export function Lettura() {
 
   const stese = useCarica(useCallback(() => elencaStese(), []), [], { pubblico: true });
   const conto = useCarica(leggiConto);
+  const profilo = useCarica(leggiProfilo);
 
-  const [fase, setFase] = useState<Fase>(idIniziale ? "intervista" : "stesa");
+  /* Dall'indirizzo: `?id=` riprende una lettura; `?tipo=` salta la scelta del tipo;
+   * `?stesa=` (i link della soglia) porta alla stesa, o ai dati delle persone se
+   * la stesa è di compatibilità o di coppia (lo si sa quando le stese arrivano). */
+  const tipoIniziale = comeCategoria(parametri.get("tipo"));
+  const stesaIniziale = parametri.get("stesa");
+  const [fase, setFase] = useState<Fase>(
+    idIniziale ? "intervista"
+      : tipoIniziale === "standard" || (!tipoIniziale && stesaIniziale) ? "stesa"
+        : tipoIniziale ? "persone" : "tipo",
+  );
+  const [categoria, setCategoria] = useState<Categoria>(tipoIniziale ?? "standard");
+  const [persone, setPersone] = useState<DatiPersone>(personeVuote);
+  const [nomePartner, setNomePartner] = useState<string | null>(null);
   const [id, setId] = useState<string | null>(idIniziale);
-  const [stesaId, setStesaId] = useState<string | null>(parametri.get("stesa"));
+  const [stesaId, setStesaId] = useState<string | null>(stesaIniziale);
   const [domanda, setDomanda] = useState("");
   const [disclaimer, setDisclaimer] = useState<string | null>(null);
   const [mostraDisclaimer, setMostraDisclaimer] = useState(false);
@@ -84,7 +113,6 @@ export function Lettura() {
   const [faseResponso, setFaseResponso] = useState("unione");
   const [testoResponso, setTestoResponso] = useState("");
   const [fine, setFine] = useState<{ disclaimer: string; commitment: string | null; saldo: number | null } | null>(null);
-  const [condiviso, setCondiviso] = useState<string | null>(null);
   const [domandaLettura, setDomandaLettura] = useState("");
   /* La lingua del quesito, ricavata dal server all'apertura e salvata con la
    * lettura: domande, interpretazioni e responso escono in questa lingua, e i
@@ -96,6 +124,30 @@ export function Lettura() {
     () => stese.dati?.find((s) => s.id === stesaId),
     [stese.dati, stesaId],
   );
+  const stesePerCategoria = useMemo(
+    () => (stese.dati ?? []).filter((s) => s.categoria === categoria),
+    [stese.dati, categoria],
+  );
+  const speciale = categoria !== "standard";
+
+  /* Il modulo si precompila una volta dal partner ricordato nel profilo. */
+  const precompilato = useRef(false);
+  useEffect(() => {
+    if (precompilato.current || !profilo.dati) return;
+    precompilato.current = true;
+    setPersone((prima) => personeDaProfilo(profilo.dati!, prima));
+  }, [profilo.dati]);
+
+  /* `?stesa=<speciale>`: appena si sa di che categoria è, si passa ai dati delle persone. */
+  useEffect(() => {
+    if (fase !== "stesa" || !stese.dati || !stesaId) return;
+    const s = stese.dati.find((x) => x.id === stesaId);
+    if (s && s.categoria !== "standard") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCategoria(s.categoria);
+      setFase("persone");
+    }
+  }, [fase, stese.dati, stesaId]);
 
   const aggiungi = (b: Omit<Battuta, "id">) => setBattute((prima) => [...prima, { ...b, id: nuovoId() }]);
 
@@ -104,10 +156,11 @@ export function Lettura() {
   const riprendi = useCallback(
     (l: Lettura) => {
       setStesaId(l.spread_id);
+      setCategoria(l.categoria);
+      setNomePartner(l.persone?.partner.nome ?? null);
       setLinguaLettura(comeLingua(l.lang));
       setDomandaLettura(l.question);
       setDisclaimer(l.disclaimer);
-      setCondiviso(l.share_token);
       const storia: Battuta[] = [
         { id: nuovoId(), autore: "sistema", testo: l.disclaimer },
         { id: nuovoId(), autore: "utente", testo: l.question },
@@ -201,7 +254,7 @@ export function Lettura() {
         }
       })
       .catch(() => {
-        setFase("stesa");
+        setFase("tipo");
         setId(null);
         router.replace("/leggi");
       });
@@ -230,13 +283,64 @@ export function Lettura() {
     setMostraDisclaimer(true);
   };
 
+  /* La domanda di ripiego delle letture speciali, nella lingua dell'interfaccia:
+   * il quesito è breve e decide la lingua della lettura, che così è quella del sito. */
+  const nomeAltra = persone.nome.trim();
+  const domandaPredefinita = speciale
+    ? (categoria === "coppia" ? t.domanda_default_coppia(nomeAltra) : t.domanda_default_compat(nomeAltra))
+    : "";
+
+  const scegliTipo = (c: Categoria) => {
+    setCategoria(c);
+    setStesaId(null);
+    setErrore(null);
+    setFase(c === "standard" ? "stesa" : "persone");
+  };
+
+  /* «Dimentica»: si cancella il partner ricordato e si svuota il modulo, non i dati di chi consulta. */
+  const dimenticaPartner = async () => {
+    try {
+      await cancellaPartner(sessione.token);
+      setPersone((p) => ({
+        ...personeVuote(), tuGenere: p.tuGenere, tuGenereAltro: p.tuGenereAltro, tuTrans: p.tuTrans, tuNascita: p.tuNascita,
+      }));
+      profilo.ricarica();
+    } catch (e) {
+      setErrore(e instanceof ErroreApi ? e.message : t.err_operazione);
+    }
+  };
+
   const inizia = async () => {
     setMostraDisclaimer(false);
     if (!stesaId) return;
     setInCorso(true);
     setErrore(null);
+    const testoDomanda = domanda.trim() || domandaPredefinita;
     try {
-      const a = await apriLettura(sessione.token, stesaId, domanda.trim(), lingua);
+      if (speciale) {
+        /* La scheda si completa prima: sesso e data di nascita restano nel profilo
+         * anche se poi il pagamento fallisce, e non si chiedono più. */
+        const mancanti = profilo.dati?.relazioni.mancanti ?? [];
+        if (mancanti.length > 0) {
+          await aggiornaProfilo(sessione.token, {
+            ...(mancanti.includes("genere")
+              ? {
+                  gender: persone.tuGenere as Genere,
+                  gender_custom: persone.tuGenere === "altro" ? persone.tuGenereAltro.trim() : null,
+                  is_trans: persone.tuTrans,
+                }
+              : {}),
+            ...(mancanti.includes("nascita") ? { birth_date: persone.tuNascita } : {}),
+          });
+          profilo.ricarica();
+        }
+      }
+      const a = await apriLettura(sessione.token, {
+        spreadId: stesaId,
+        domanda: testoDomanda,
+        lang: lingua,
+        ...(speciale ? { partner: partnerDa(persone), ricordaPartner: persone.ricorda } : {}),
+      });
       if (a.crisi) {
         setLinguaLettura(null);
         setBattute([{ id: nuovoId(), autore: "sistema", testo: a.messaggio ?? "" }]);
@@ -246,18 +350,26 @@ export function Lettura() {
       if (!a.id) return;
       setLinguaLettura(comeLingua(a.lang) ?? lingua);
       setId(a.id);
-      setDomandaLettura(domanda.trim());
+      setNomePartner(speciale ? nomeAltra : null);
+      setDomandaLettura(testoDomanda);
       router.replace(`/leggi?id=${a.id}`);
       setBattute([
         { id: nuovoId(), autore: "sistema", testo: a.disclaimer ?? "" },
-        { id: nuovoId(), autore: "utente", testo: domanda.trim() },
+        { id: nuovoId(), autore: "utente", testo: testoDomanda },
       ]);
       setFase("intervista");
       conto.ricarica();
+      profilo.ricarica();
       await passoIntervista(a.id, null);
     } catch (e) {
+      const dettaglio = e instanceof ErroreApi ? (e.dettaglio as { motivo?: string } | undefined) : undefined;
       if (e instanceof ErroreApi && e.stato === 402) setMostraAcquisto(true);
-      else setErrore(e instanceof ErroreApi ? e.message : t.err_lettura);
+      else if (e instanceof ErroreApi && e.stato === 422 && dettaglio?.motivo === "profilo_incompleto") {
+        /* La scheda è ancora incompleta: si torna ai dati, che ora si vedono. */
+        profilo.ricarica();
+        setErrore(e.message);
+        setFase("persone");
+      } else setErrore(e instanceof ErroreApi ? e.message : t.err_lettura);
     } finally {
       setInCorso(false);
     }
@@ -407,7 +519,11 @@ export function Lettura() {
   };
 
   const nuova = () => {
-    setFase("stesa");
+    setFase("tipo");
+    setCategoria("standard");
+    setStesaId(null);
+    setNomePartner(null);
+    profilo.ricarica();
     setId(null);
     setBattute([]);
     setPosate([]);
@@ -415,7 +531,6 @@ export function Lettura() {
     setTestoResponso("");
     setFine(null);
     setDomanda("");
-    setCondiviso(null);
     setLinguaLettura(null);
     caricata.current = true;
     router.replace("/leggi");
@@ -433,7 +548,7 @@ export function Lettura() {
 
   /* ---- disegno ---- */
 
-  if (fase === "stesa") {
+  if (fase === "tipo" || fase === "persone" || fase === "stile" || fase === "stesa") {
     return (
       <>
         {stese.errore && <p className={stili.errore}>{stese.errore}</p>}
@@ -442,17 +557,47 @@ export function Lettura() {
             {t.crediti_finiti}. <a href="/piano?ritorno=/leggi">{t.compra}</a>
           </p>
         )}
-        {stese.dati && (
-          <SceltaStesa
-            stese={stese.dati}
-            scelta={stesaId}
-            onScegli={setStesaId}
-            domanda={domanda}
-            onDomanda={setDomanda}
-            onInizia={chiediInizio}
-            inCorso={inCorso}
+        {fase === "tipo" && <SceltaTipo onScegli={scegliTipo} />}
+        {fase === "persone" && (
+          <FormPersone
+            dati={persone}
+            onCambia={setPersone}
+            profilo={profilo.dati}
+            onAvanti={() => {
+              setErrore(null);
+              setStesaId((s) => (stesePerCategoria.some((x) => x.id === s) ? s : (stesePerCategoria[0]?.id ?? null)));
+              setFase("stile");
+            }}
+            onIndietro={() => setFase("tipo")}
+            onDimentica={dimenticaPartner}
             errore={errore}
           />
+        )}
+        {(fase === "stile" || fase === "stesa") && stese.dati && (
+          <>
+            {fase === "stesa" && (
+              <div className={stili.azioniCentro}>
+                <button type="button" className="bottone-secondario" onClick={() => setFase("tipo")}>
+                  {t.cambia_tipo}
+                </button>
+              </div>
+            )}
+            <SceltaStesa
+              stese={stesePerCategoria}
+              scelta={stesaId}
+              onScegli={setStesaId}
+              domanda={domanda}
+              onDomanda={setDomanda}
+              onInizia={chiediInizio}
+              inCorso={inCorso}
+              errore={errore}
+              conStili={speciale}
+              domandaFacoltativa={speciale}
+              domandaPredefinita={domandaPredefinita}
+              onIndietro={speciale ? () => setFase("persone") : undefined}
+              testoInizia={speciale ? t.inizia_speciale : undefined}
+            />
+          </>
         )}
         <Disclaimer
           aperta={mostraDisclaimer}
@@ -475,7 +620,10 @@ export function Lettura() {
     <div className={stili.consulto}>
       <div className={stili.colonnaTavolo}>
         <div className={stili.intestazione}>
-          <span className={stili.stesaEtichetta}>{stesa ? nomeStesa(stesa, ll) : ""}</span>
+          <span className={stili.stesaEtichetta}>
+            {stesa ? nomeStesa(stesa, ll) : ""}
+            {nomePartner ? ` · ${dizionario(ll).tu_e(nomePartner)}` : ""}
+          </span>
           <p className={`oracolo ${stili.domandaTitolo}`} dir="auto">«{domandaLettura}»</p>
         </div>
 
@@ -488,6 +636,7 @@ export function Lettura() {
               onRivela={rivelaCarta}
               rivelazioneInCorso={rivelazioneInCorso}
               evidenzia={fase === "scelta" ? "scelta" : fase === "rivelazione" ? "rivelazione" : null}
+              nomePartner={nomePartner}
             />
           )}
 
@@ -569,14 +718,10 @@ export function Lettura() {
           {testoResponso && (
             <Responso
               id={id}
-              domanda={domandaLettura}
-              stesa={stesa}
-              posate={posate}
               testo={testoResponso}
               finito={fase === "completata"}
               disclaimer={fine?.disclaimer ?? disclaimer ?? ""}
               commitment={fine?.commitment ?? null}
-              condivisoIniziale={condiviso}
               saldo={fine?.saldo ?? null}
               onNuova={nuova}
             />

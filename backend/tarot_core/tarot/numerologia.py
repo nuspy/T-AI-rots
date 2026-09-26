@@ -42,3 +42,13 @@ def carta_dell_anima(nascita: date) -> int:
 
 def carta_dell_anno(nascita: date, anno: int) -> int:
     return arcano_da_numero(_cifre(nascita.day, nascita.month, anno))
+
+
+def carta_della_coppia(nascita_a: date, nascita_b: date) -> int:
+    """La carta della coppia: la somma teosofica delle due carte dell'anima.
+
+    Si sommano i numeri degli Arcani dell'anima di ciascuno (il Matto vale 0) e
+    si riduce come nella croce semplice. È un dato di sfondo per la lettura di
+    compatibilità e di coppia, non una carta che si pesca.
+    """
+    return arcano_da_numero(carta_dell_anima(nascita_a) + carta_dell_anima(nascita_b))

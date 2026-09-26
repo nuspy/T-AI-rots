@@ -178,6 +178,36 @@
   max-width: 60ch;
 }
 
+/* Il testo personalizzato di chi ha condiviso, sopra il quesito. */
+.testoCondiviso {
+  margin: 10px auto 0;
+  max-width: 52ch;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--oro-chiaro);
+  overflow-wrap: anywhere;
+}
+
+/* L'altra persona nelle letture di coppia condivise: il simbolo e «qualcuno di
+ * speciale», al posto del nome. */
+.altraPersona {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 0;
+  color: var(--viola-chiaro);
+  font-style: italic;
+  font-size: 1.1rem;
+}
+
+.simboloPartner {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  color: var(--oro-chiaro);
+  filter: drop-shadow(0 0 8px rgba(216, 180, 90, 0.6));
+}
+
 /* ---- il tavolo ---- */
 
 /* Il tavolo è alto un quinto in più (16:12 invece di 16:10): a parità di
@@ -757,6 +787,47 @@
   }
 }
 
+/* ---- le letture di compatibilità e di coppia ---- */
+
+/* Il colore di chi parla una posizione, mai da solo: c'è anche la legenda e il
+ * nome della posizione. */
+.cartaSoggetto {
+  outline: 2px solid var(--soggetto, transparent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.segnapostoSoggetto {
+  border-color: var(--soggetto) !important;
+}
+
+.legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  justify-content: center;
+  list-style: none;
+  padding: 0;
+  margin: -4px 0 18px;
+  font-size: 0.85rem;
+  color: var(--testo-tenue);
+}
+
+.legenda li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 24px;
+}
+
+.legendaPunto {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--soggetto);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
 /* Le lingue da destra a sinistra (l'arabo): il tavolo, il ventaglio e il taglio
  * sono disposizioni geometriche — le carte stanno dove le mette la stesa, con
  * `left` e `translate` fisici — e non si specchiano. Il testo dei fumetti sì:
@@ -772,4 +843,150 @@
 :global(html[dir="rtl"]) .fumetto,
 :global(html[dir="rtl"]) .etichettaPosizione {
   direction: rtl;
+}
+
+/* ---- il tipo di lettura, lo stile di stesa, il modulo delle persone ---- */
+
+.tipi {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.tipo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 26px 20px 28px;
+  border-radius: var(--raggio);
+  border: 1px solid var(--bordo);
+  background: var(--superficie);
+  color: var(--testo);
+  text-align: center;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.tipo:hover,
+.tipo:focus-visible {
+  border-color: var(--oro);
+  box-shadow: var(--bagliore);
+}
+
+.tipoSegno {
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--oro-chiaro);
+}
+
+.tipoNome {
+  font-family: var(--font-titoli), serif;
+  font-size: 1.1rem;
+  color: var(--oro-chiaro);
+}
+
+.tipoTesto {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--testo-tenue);
+}
+
+.stiliRiga {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.stilePillola,
+.stilePillolaAttiva {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--bordo);
+  background: var(--superficie);
+  color: var(--testo-tenue);
+  font: inherit;
+  cursor: pointer;
+}
+
+.stilePillolaAttiva {
+  border-color: var(--oro);
+  color: var(--oro-chiaro);
+  background: rgba(216, 180, 90, 0.12);
+}
+
+.stileConteggio {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--bordo-forte);
+  font-size: 0.75rem;
+}
+
+/* Con una o due stese la griglia a cinque colonne le lascerebbe strette e a sinistra. */
+.steseCentrate {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 260px));
+  justify-content: center;
+  gap: 14px;
+}
+
+.sezioneForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 24px 24px;
+  margin-bottom: 16px;
+}
+
+.bannerRicordato {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--bordo-forte);
+  background: rgba(216, 180, 90, 0.08);
+  font-size: 0.92rem;
+}
+
+.avvisoPrivacy {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--testo-tenue);
+}
+
+@media (max-width: 860px) {
+  .tipi {
+    grid-template-columns: 1fr;
+  }
+  .steseCentrate {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .sezioneForm {
+    padding: 4px 16px 18px;
+  }
+}
+
+/* Un testo di aiuto più lungo di una riga: normale, non in maiuscoletto come `.istruzione`. */
+.guida {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--testo-tenue);
 }

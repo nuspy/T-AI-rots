@@ -15,7 +15,7 @@ export type { Chiave, Dizionario, Parziale } from "./it";
 export {
   LINGUE, PREDEFINITA, TRADOTTE, comeLingua, datiLingua, linguaDelBrowser, type Lingua,
 } from "./lingue";
-export { nomeCarta, nomePosizione, nomeStesa } from "./nomi";
+export { nomeCarta, nomePosizione, nomeStesa, nomeStesaDaNomi } from "./nomi";
 
 const TRADUZIONI: Partial<Record<Lingua, Parziale>> = { it, en, hu };
 

@@ -143,6 +143,112 @@
      "12": "XII. ház",
      "13": "A jelölő"
     }
+   },
+   "compat-tre": {
+    "nome": "Háromkártyás kompatibilitás",
+    "posizioni": {
+     "1": "Te",
+     "2": "A másik személy",
+     "3": "A dinamika"
+    }
+   },
+   "compat-sette": {
+    "nome": "Hétkártyás kompatibilitás",
+    "posizioni": {
+     "1": "Amit keresel",
+     "2": "Amit a másik személy keres",
+     "3": "Hasonlóságok",
+     "4": "Különbségek",
+     "5": "Érzelmi összhang",
+     "6": "Testi összhang",
+     "7": "Szellemi összhang"
+    }
+   },
+   "compat-nove": {
+    "nome": "Kilenckártyás kompatibilitás (az igazság háromszöge)",
+    "posizioni": {
+     "1": "Központi energia",
+     "2": "Érzelmi összhang",
+     "3": "A te hozzájárulásod",
+     "4": "A másik személy hozzájárulása",
+     "5": "Erősségek",
+     "6": "Kihívások",
+     "7": "Hosszú távú lehetőség",
+     "8": "Rejtett hatás: te",
+     "9": "Rejtett hatás: a másik személy"
+    }
+   },
+   "compat-anime": {
+    "nome": "Lelki társak",
+    "posizioni": {
+     "1": "A te leckéd",
+     "2": "A másik személy leckéje",
+     "3": "Miért találkoztatok",
+     "4": "Amit tükröztök",
+     "5": "A karmikus téma",
+     "6": "A jelenlegi szakasz",
+     "7": "Hosszú távú lehetőség"
+    }
+   },
+   "coppia-croce": {
+    "nome": "A pár keresztje",
+    "posizioni": {
+     "1": "Te",
+     "2": "A másik személy",
+     "3": "A gyökerek",
+     "4": "A jelen",
+     "5": "A jövő"
+    }
+   },
+   "coppia-stazione": {
+    "nome": "Állomás kettőnek",
+    "posizioni": {
+     "1": "Amit gondolsz a másikról",
+     "2": "Amit a másik rólad gondol",
+     "3": "Amit te érzel",
+     "4": "Amit a másik érez",
+     "5": "Amit te teszel",
+     "6": "Amit a másik tesz",
+     "7": "A jelenlegi helyzet"
+    }
+   },
+   "coppia-sette": {
+    "nome": "Hétkártyás kapcsolati kirakás",
+    "posizioni": {
+     "1": "Te",
+     "2": "A másik személy",
+     "3": "A kötelék",
+     "4": "Erősség",
+     "5": "Súrlódás",
+     "6": "Tanács",
+     "7": "Kimenet"
+    }
+   },
+   "coppia-specchio": {
+    "nome": "Tükör",
+    "posizioni": {
+     "1": "Te",
+     "2": "Ahogy a másikat látod",
+     "3": "Ahogy a másik magát látja",
+     "4": "Amit a másik neked jelent",
+     "5": "Amit te a másiknak jelentesz",
+     "6": "Akadályok",
+     "7": "Erősségek",
+     "8": "Valószínű eredmény"
+    }
+   },
+   "coppia-bivio": {
+    "nome": "Válaszút",
+    "posizioni": {
+     "1": "Hol tartotok",
+     "2": "Mi vezetett idáig",
+     "3": "A. út: energia",
+     "4": "A. út: kihívás",
+     "5": "A. út: kimenet",
+     "6": "B. út: energia",
+     "7": "B. út: kihívás",
+     "8": "B. út: kimenet"
+    }
    }
   }
  }

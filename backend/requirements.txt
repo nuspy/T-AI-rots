@@ -13,6 +13,9 @@ python-multipart>=0.0.9
 # I guardrail sono Markdown con frontmatter YAML, letti all'avvio.
 pyyaml>=6.0
 python-jose[cryptography]>=3.3
+# L'immagine delle letture condivise: il browser la manda in PNG, il server la
+# riduce e la salva in WebP molto compresso (Safari non sa produrre WebP).
+Pillow>=10.4
 opentelemetry-api>=1.28
 opentelemetry-sdk>=1.28
 opentelemetry-instrumentation-fastapi>=0.49b0

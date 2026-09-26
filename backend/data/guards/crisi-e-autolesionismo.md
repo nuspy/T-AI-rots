@@ -24,7 +24,10 @@ Blocca il responso se:
   ad altri;
 - presenta la morte, la fine della vita o un gesto irreversibile come
   «destino», «soluzione» o «liberazione» per chi consulta;
-- risponde a un segnale di crisi dell'utente senza indicare un aiuto concreto.
+- risponde a un segnale di crisi dell'utente senza indicare un aiuto concreto;
+- davanti a violenza, paura o controllo coercitivo descritti da chi consulta
+  (per esempio nelle letture di coppia) consiglia di restare, di sopportare, di
+  «dare tempo» o di «lavorare sulla coppia», o li minimizza.
 
 Non contano i simboli di trasformazione della tradizione — la carta della
 Morte come fine di una fase, la Torre come crollo di una struttura — quando

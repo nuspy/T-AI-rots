@@ -137,14 +137,18 @@ class Verdetto:
 
 
 async def giudica(
-    provider, registro: RegistroGuardrail, *, quesito: str, responso: str,
+    provider, registro: RegistroGuardrail, *, quesito: str, responso: str, categoria: str = "standard",
 ) -> Verdetto:
-    """Misura il responso contro le rubriche dei guardrail."""
+    """Misura il responso contro le rubriche dei guardrail.
+
+    `categoria` sceglie le rubriche: quelle di una lettura speciale includono le
+    regole sulle relazioni. Per la lettura standard non cambia nulla.
+    """
     proibita = uscita_proibita(responso)
 
     rubriche = "\n\n".join(
         f"## [{g.slug}] {g.nome} (severità: {g.severita})\n{g.verifica.strip()}"
-        for g in registro.rubriche_per("sintesi")
+        for g in registro.rubriche_per("sintesi", categoria)
     )
     try:
         dati = await genera_json(provider, richiesta(
@@ -169,7 +173,7 @@ async def giudica(
         violazioni.append({"regola": "fatalismo", "motivo": "formula proibita", "estratto": proibita})
     # Una regola a severità «blocca» violata blocca, qualunque cosa dica il
     # giudice sull'esito complessivo.
-    bloccanti = {g.slug for g in registro.per("sintesi") if g.severita == "blocca"}
+    bloccanti = {g.slug for g in registro.per("sintesi", categoria) if g.severita == "blocca"}
     if any(v.get("regola") in bloccanti for v in violazioni):
         esito = "blocca"
     return Verdetto(esito, violazioni)
