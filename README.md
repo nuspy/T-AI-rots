@@ -314,15 +314,43 @@ frontend vanno rilasciati insieme.
 
 ## Pagine pubbliche (senza account)
 
-Carte, stese e la pagina del mazzo si vedono senza registrarsi, e **escono dal server già scritte**:
-chi le cerca (un motore di ricerca, l'anteprima di un social) non aspetta il JavaScript.
+Carte, stese, il mazzo, i prezzi e il blog si vedono senza registrarsi, e **escono dal server già scritte**: chi le
+cerca (un motore di ricerca, l'anteprima di un social) non aspetta il JavaScript.
 
-| percorso | cosa mostra |
-|---|---|
-| `/carte`, `/carte/{id}` | le 78 carte, attribuzioni e significati |
-| `/stese`, `/stese/{id}` | le 14 stese (5 classiche, 4 di compatibilità, 5 di coppia): schema con le posizioni numerate, significato e domanda guida di ciascuna, regole, coppie da leggere insieme, origine |
-| `/mazzo` | anteprima del prodotto «mazzo con la grafica originale» (in preparazione: niente prezzo né acquisto) |
-| `/sitemap.xml`, `/robots.txt` | mappa del sito e regole per i crawler (le pagine personali e `/s/` sono escluse) |
+**Il sito è pensato per un pubblico internazionale: la lingua canonica è l'inglese**, alla radice; l'italiano sta
+sotto `/it` e le due versioni si dichiarano l'una all'altra con `hreflang` (`en`, `it`, `x-default` = inglese).
+
+| inglese (canonico) | italiano | cosa mostra |
+|---|---|---|
+| `/` | `/it` | la soglia: cosa è, come funziona, domande frequenti |
+| `/cards`, `/cards/{slug}` | `/it/carte`, `/it/carte/{slug}` | le 78 carte, attribuzioni e significati (`/cards/the-star`, `/it/carte/la-stella`) |
+| `/spreads`, `/spreads/{slug}` | `/it/stese`, `/it/stese/{slug}` | le 14 stese (5 classiche, 4 di compatibilità, 5 di coppia): schema con le posizioni, significato di ciascuna, regole, origine |
+| `/deck` | `/it/mazzo` | anteprima del prodotto «mazzo con la grafica originale» (in preparazione: niente prezzo né acquisto) |
+| `/pricing` | `/it/piano` | piani e pacchetti di crediti |
+| `/card-of-the-day` | `/it/carta-del-giorno` | una carta per tutti, uguale per l'intero giorno (UTC) |
+| `/blog…` | `/it/blog…` | il blog (sotto) |
+| `/sitemap.xml`, `/robots.txt`, `/llms.txt` | | mappa del sito con le due lingue, regole per i crawler (le pagine personali, `/s/` e le ricerche sono escluse), presentazione per gli assistenti |
+
+### SEO
+
+- **Indirizzi per lingua senza spostare cartelle** (`lib/percorsi.ts`, `proxy.ts`): le cartelle di `app/` restano
+  italiane (`app/carte`, `app/stese`, …) e il proxy riscrive l'indirizzo visibile (`/cards/the-star`) in quello della
+  cartella; scrive in un'intestazione la lingua, che il layout usa per `<html lang>` e per far partire l'interfaccia
+  già nella lingua giusta. I vecchi indirizzi italiani senza prefisso (`/carte/…`) rispondono con un **308** a `/it/…`. Il
+  wrapper `app/componenti/link.tsx` traduce ogni collegamento interno nella lingua della pagina.
+- **Uno slug per lingua** (`the-star`, `la-stella`; `celtic-cross`, `croce-celtica`): la pagina risponde all'id, allo slug
+  in qualunque lingua e reindirizza (308) a quello canonico. I testi inglesi di carte e stese stanno in
+  `backend/tarot_core/knowledge/en/` (78 carte, 14 stese, termini), si validano all'avvio e l'API li serve con
+  `?lang=en|it`.
+- **Ogni pagina** ha titolo (≤ 65 caratteri con il marchio), descrizione, parole chiave, canonical, Open Graph e
+  Twitter con immagine 1200×630, `hreflang`, e dati strutturati in JSON-LD: `Organization`, `WebSite`, `WebApplication`,
+  `ItemList`, `BreadcrumbList`, `HowTo` (le stese), `FAQPage`, `BlogPosting`, `Product`/`Offer` (i prezzi). Le pagine di
+  ritorno dal pagamento, le ricerche e le sezioni o etichette senza articoli nella lingua sono `noindex` e non stanno
+  nella mappa. La carta del giorno di oggi si legge senza account (`GET /daily-card/today`).
+- **Testi e parole chiave**: `frontend/lib/seo-testi.ts` (ogni titolo, descrizione, FAQ e passo, in inglese e in
+  italiano). La ricerca delle parole chiave (concorrenti, gruppi per pagina, calendario dei temi) è in
+  `skills/tarots-blog-publisher/references/keywords.md`, **senza volumi di ricerca**: non c'era un'API di dati. Le
+  priorità sono stime editoriali da verificare con Search Console dopo il lancio.
 
 Come è fatto:
 
@@ -349,12 +377,12 @@ WordPress avrebbe voluto altre immagini Docker e un secondo database, e non avre
 moderazione. **Carte, stese e articoli stanno in un unico albero**, così ogni articolo può collegarsi alle carte e alle
 stese di cui parla:
 
-    Tarocchi
-    ├── Arcani maggiori         (sezione «carte»: elenca da sola le 22 carte → /carte/{id})
-    ├── Arcani minori           (Bastoni · Coppe · Spade · Dischi, sezioni «carte»)
-    ├── Impara i tarocchi       (articoli) └── Le stese (sezione «stese»: le 14 stese → /stese/{id})
-    ├── Diario dei tarocchi     (articoli)
-    └── Articoli                Amore · Relazioni · Lavoro · Spiritualità · Simbolismo · Tarocco di Thoth
+    Tarot
+    ├── Major Arcana            (sezione «carte»: elenca da sola le 22 carte → /cards/{slug})
+    ├── Minor Arcana            (Wands · Cups · Swords · Disks, sezioni «carte»)
+    ├── Learn Tarot             (articoli) └── Tarot Spreads (sezione «stese»: le 14 stese → /spreads/{slug})
+    ├── Tarot Journal           (articoli)
+    └── Articles                Love · Relationships · Career · Spirituality · Symbolism · Thoth Tarot
 
 L'albero è configurabile dalla console (`tools/seed` scrive quello iniziale, senza disfare le modifiche). Una sezione
 ha un `tipo`: `articoli`, `carte` o `stese` (elencano da sole il catalogo secondo un `filtro`), `contenitore`.
@@ -369,12 +397,41 @@ ha un `tipo`: `articoli`, `carte` o `stese` (elencano da sole il catalogo second
 - **Collegamenti interni**: nel testo `[[carta:maj-17]]`, `[[stesa:croce-celtica]]`, `[[articolo:slug]]` (da soli su una
   riga diventano una scheda, dentro una frase un collegamento) e i link Markdown a `/carte/…`, `/stese/…`, `/blog/…`
   si leggono al salvataggio in `blog_post_links`. La pagina di una carta o di una stesa elenca gli articoli che la citano.
-- **Pubblico** (`/blog`, `/blog/sezione/{slug}`, `/blog/tag/{slug}`, `/blog/{slug}`, `/blog/feed.xml`, `sitemap.xml`): scritto
-  dal server, con metadati, canonical, Open Graph e dati strutturati (BlogPosting, BreadcrumbList). Il testo è Markdown reso
-  con `react-markdown` **senza eseguire HTML**; le immagini si accettano solo relative o `https`.
+- **Pubblico** (`/blog`, `/blog/sezione/{slug}`, `/blog/tag/{slug}`, `/blog/{slug}`, `/blog/feed.xml`, e gli stessi sotto
+  `/it`): scritto dal server, con metadati, canonical, Open Graph e dati strutturati. **Un articolo ha una lingua e vive
+  nell'indirizzo di quella lingua** (`/blog/x` inglese, `/it/blog/x` italiano; l'altro indirizzo reindirizza): l'elenco,
+  le sezioni, le etichette e il feed di ciascuna lingua mostrano solo i suoi articoli. Il testo è Markdown reso con
+  `react-markdown` **senza eseguire HTML**; le immagini si accettano solo relative o `https`.
+- **Campi SEO di un articolo** (`domain/blog_models.py`, migrazione `a41c7e92d3b6`): `seo_titolo` (30–60 caratteri),
+  `seo_descrizione` (120–160), `seo_parola_chiave` e `seo_parole_chiave`, `slug`, `immagine_alt`, `canonical_url`
+  (https, se il testo vive altrove), `noindex` (fuori da motori e mappa) e `faq` (visibili in pagina e in dati
+  strutturati `FAQPage`). Il modulo `tarot/blog_seo.py` calcola un **rapporto** (punteggio 0–100, controlli con messaggio in
+  inglese e italiano, statistiche): titolo, descrizione, parola chiave nei posti giusti e non forzata, lunghezza, `##`,
+  frasi, collegamenti interni ed esterni, immagine e alt, etichette, FAQ. Non misura il posizionamento: dice se
+  l'articolo segue le buone pratiche. La console lo mostra mentre si scrive (`POST /admin/blog/seo-check`).
 - **Immagini**: PNG, JPEG o WebP fino a 8 MB, orientate, portate a 1600 px al massimo e riscritte in WebP senza
   metadati; servite con cache immutabile. L'avatar è un quadrato di 256 px ritagliato al centro (`PUT /me/avatar`, dal
   profilo insieme al *nome pubblico*: mai l'email).
+
+### Pubblicare con un agente (REST e chiavi)
+
+Un agente (Hermes, OpenClaw, uno script) scrive e pubblica articoli senza passare dalla console, con una **chiave
+applicativa** `tk_live_…`, creata dalla console (**Blog → Chiavi**): si vede una volta sola, nel database resta
+un'impronta SHA-256. Ogni chiave ha permessi (`blog:write` crea bozze; `blog:publish` pubblica, programma e mette in
+evidenza) e limiti (richieste al minuto, articoli al giorno), e si revoca subito. Le rotte sono sotto `/v1/blog`
+(`auth/chiavi.py`, `api/routers/rest_blog.py`): `guide`, `sections`, `tags`, `catalog` (carte e stese con la
+scorciatoia pronta), `seo-check`, `media`, `posts` (crea, elenca, leggi, modifica, elimina una bozza).
+
+- L'articolo ha titolo, sottotitolo, immagine, testo e **tutti i campi SEO**; ogni salvataggio risponde con il rapporto
+  SEO (`seo`) e con `avvisi`; `dry_run: true` dà solo il rapporto. La lingua predefinita è `en`.
+- Regole che nessun parametro aggira: senza `blog:publish` l'articolo resta bozza (con un avviso); una chiave
+  modifica e cancella **solo ciò che ha creato**, e cancella solo bozze; le immagini **non si scaricano da un
+  indirizzo** (arrivano come corpo o in base64); un tetto giornaliero per chiave.
+- La skill `skills/tarots-blog-publisher/` insegna il flusso a un agente: scegliere un tema esoterico attuale (o quello
+  del prompt), la parola chiave, scrivere ≥ 800 parole con `##`, FAQ e collegamenti interni, **generare la copertina
+  con LitMedia** (con stima dei costi e consenso; non si aggira mai la verifica TLS), caricarla, controllare la SEO fino
+  a ≥ 85 e pubblicare (o salvare la bozza). Lo script `scripts/tarots_blog.py` usa solo la libreria standard, non
+  stampa mai la chiave e non segue i redirect; `tests/test_skill_blog_publisher.py` lo prova contro un finto server.
 
 ## Verifica in due passaggi (facoltativa)
 
