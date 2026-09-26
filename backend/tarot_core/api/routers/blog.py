@@ -53,6 +53,17 @@ def autore_json(utente: Optional[User]) -> Dict[str, Any]:
     }
 
 
+def nome_riferimento(tipo: str, riferimento: str) -> Optional[str]:
+    """Il nome di una carta o di una stesa citata con una scorciatoia, per gli estratti."""
+    conoscenza = get_conoscenza()
+    if tipo == "carta" and riferimento in conoscenza.carte:
+        return conoscenza.carta(riferimento)["nome_it"]
+    if tipo == "stesa":
+        stesa = conoscenza.stesa(riferimento)
+        return stesa["nome"] if stesa else None
+    return None
+
+
 def sezione_breve_json(s: BlogSection) -> Dict[str, Any]:
     return {"slug": s.slug, "nome": s.nome}
 
@@ -70,7 +81,7 @@ def post_breve_json(p: BlogPost, autori: Dict[int, User], sezioni: Dict[int, Blo
         "slug": p.slug,
         "titolo": p.titolo,
         "sottotitolo": p.sottotitolo,
-        "estratto": regole.estratto(p.testo, 220),
+        "estratto": regole.estratto(p.testo, 220, nome_riferimento),
         "immagine": {"url": url_immagine(p.immagine_id), "alt": p.immagine_alt or p.titolo} if p.immagine_id else None,
         "sezione": sezione_breve_json(sezione) if sezione else None,
         "autore": autore_json(autori.get(p.autore_id) if p.autore_id is not None else None),
@@ -241,7 +252,7 @@ async def articolo(slug: str, session: DbSession) -> Dict[str, Any]:
             if p.immagine_id else None
         ),
         "seo_titolo": p.seo_titolo,
-        "seo_descrizione": p.seo_descrizione or regole.estratto(p.testo, 160),
+        "seo_descrizione": p.seo_descrizione or regole.estratto(p.testo, 160, nome_riferimento),
         "commenti_aperti": p.commenti_aperti,
         "briciole": [{"slug": x.slug, "nome": x.nome} for x in repo.percorso(sezione_p, per_id)],
         "collegamenti": {

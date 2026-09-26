@@ -4,6 +4,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { Carta } from "@/lib/api";
+import type { ArticoloBreve } from "@/lib/blog";
 import { SITE_URL } from "@/lib/condivisione";
 import { leggiDalServer } from "@/lib/server-api";
 import { SchedaCarta } from "./scheda";
@@ -42,5 +43,6 @@ export default async function PaginaCarta({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const c = await leggiCarta(id);
   if (!c) notFound();
-  return <SchedaCarta carta={c} />;
+  const articoli = (await leggiDalServer<ArticoloBreve[]>(`/blog/links/carta/${encodeURIComponent(c.id)}`)) ?? [];
+  return <SchedaCarta carta={c} articoli={articoli} />;
 }

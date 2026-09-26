@@ -97,10 +97,13 @@ export function Testata() {
     stese: { href: "/stese", etichetta: t.nav_stese, segno: "▦" },
     giorno: { href: "/carta-del-giorno", etichetta: t.nav_giorno, segno: "☉" },
     mazzo: { href: "/mazzo", etichetta: t.nav_mazzo, segno: "❖" },
+    blog: { href: "/blog", etichetta: t.nav_blog, segno: "✎" },
     piano: { href: "/piano", etichetta: t.nav_piano, segno: "◇" },
   };
-  const voci: Voce[] = [V.leggi, V.letture, V.carte, V.stese];
-  const altre: Voce[] = [V.giorno, V.mazzo, V.piano];
+  /* Chi non ha un account non ha «Le mie letture»: al suo posto il blog, che è la porta d'ingresso
+   * dei contenuti. Per chi è registrato il blog sta sotto «Altro». */
+  const voci: Voce[] = sessione.autenticata ? [V.leggi, V.letture, V.carte, V.stese] : [V.leggi, V.carte, V.stese, V.blog];
+  const altre: Voce[] = sessione.autenticata ? [V.giorno, V.blog, V.mazzo, V.piano] : [V.giorno, V.mazzo, V.piano];
   const attiva = (href: string) => percorso === href || percorso.startsWith(`${href}/`);
 
   return (

@@ -59,6 +59,13 @@ def test_il_testo_semplice_toglie_markdown_e_scorciatoie():
     assert b.testo_semplice(md) == "Titolo Un testo con un link e codice. voce uno voce due"
 
 
+def test_l_estratto_mette_il_nome_al_posto_delle_scorciatoie():
+    testo = "Determinazione e direzione: [[carta:maj-07]]. Guida: [[stesa:croce-celtica]] e [[articolo:x]]."
+    nomi = {("carta", "maj-07"): "Il Carro", ("stesa", "croce-celtica"): "Croce Celtica"}
+    assert b.estratto(testo, 200, lambda t, i: nomi.get((t, i))) == "Determinazione e direzione: Il Carro. Guida: Croce Celtica e ."
+    assert b.estratto(testo, 200) == "Determinazione e direzione: . Guida: e ."
+
+
 def test_l_estratto_taglia_a_fine_parola():
     testo = "Una frase abbastanza lunga da dover essere tagliata prima della fine, senza spezzare le parole a metà."
     e = b.estratto(testo, 40)

@@ -8,9 +8,10 @@ import { SITE_URL } from "@/lib/condivisione";
 import { leggiDalServer } from "@/lib/server-api";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [carte, stese] = await Promise.all([
+  const [carte, stese, blog] = await Promise.all([
     leggiDalServer<Carta[]>("/cards", { secondi: 300 }),
     leggiDalServer<Stesa[]>("/spreads", { secondi: 300 }),
+    leggiDalServer<{ articoli: { slug: string; aggiornato: string }[]; sezioni: string[]; tags: string[] }>("/blog/mappa", { secondi: 300 }),
   ]);
   const pagina = (percorso: string, priorita: number, frequenza: "weekly" | "monthly" | "yearly") => ({
     url: `${SITE_URL}${percorso}`,
@@ -22,6 +23,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     pagina("/carte", 0.9, "monthly"),
     pagina("/stese", 0.9, "monthly"),
     pagina("/mazzo", 0.6, "monthly"),
+    pagina("/blog", 0.9, "weekly"),
+    ...(blog?.sezioni ?? []).map((s) => pagina(`/blog/sezione/${s}`, 0.7, "weekly")),
+    ...(blog?.tags ?? []).map((x) => pagina(`/blog/tag/${x}`, 0.4, "weekly")),
+    ...(blog?.articoli ?? []).map((a) => ({
+      url: `${SITE_URL}/blog/${a.slug}`, lastModified: new Date(a.aggiornato), changeFrequency: "monthly" as const, priority: 0.8,
+    })),
     ...(carte ?? []).map((c) => pagina(`/carte/${c.id}`, 0.7, "yearly")),
     ...(stese ?? []).map((s) => pagina(`/stese/${s.id}`, 0.8, "yearly")),
   ];

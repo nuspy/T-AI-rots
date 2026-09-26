@@ -5,6 +5,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { Stesa } from "@/lib/api";
+import type { ArticoloBreve } from "@/lib/blog";
 import { SITE_URL } from "@/lib/condivisione";
 import { leggiDalServer } from "@/lib/server-api";
 import { SchedaStesa } from "./scheda";
@@ -34,5 +35,6 @@ export default async function PaginaStesa({ params }: { params: Promise<{ id: st
   const s = await leggiStesa(id);
   if (!s) notFound();
   const stessaCategoria = (await leggiDalServer<Stesa[]>(`/spreads?categoria=${s.categoria}`)) ?? [];
-  return <SchedaStesa stesa={s} altre={stessaCategoria.filter((x) => x.id !== s.id)} />;
+  const articoli = (await leggiDalServer<ArticoloBreve[]>(`/blog/links/stesa/${encodeURIComponent(s.id)}`)) ?? [];
+  return <SchedaStesa stesa={s} altre={stessaCategoria.filter((x) => x.id !== s.id)} articoli={articoli} />;
 }

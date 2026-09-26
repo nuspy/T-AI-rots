@@ -342,6 +342,40 @@ Come è fatto:
   sì) e il 2026-09-24 i suoi task per «Nano Banana» venivano chiusi dal server senza motivo. Non si aggira la
   verifica dei certificati.
 
+## Il blog
+
+Un blog nello stesso sito (stessi accessi, lingue e grafica), non un software a parte: integrare Ghost o
+WordPress avrebbe voluto altre immagini Docker e un secondo database, e non avrebbe condiviso il login né la
+moderazione. **Carte, stese e articoli stanno in un unico albero**, così ogni articolo può collegarsi alle carte e alle
+stese di cui parla:
+
+    Tarocchi
+    ├── Arcani maggiori         (sezione «carte»: elenca da sola le 22 carte → /carte/{id})
+    ├── Arcani minori           (Bastoni · Coppe · Spade · Dischi, sezioni «carte»)
+    ├── Impara i tarocchi       (articoli) └── Le stese (sezione «stese»: le 14 stese → /stese/{id})
+    ├── Diario dei tarocchi     (articoli)
+    └── Articoli                Amore · Relazioni · Lavoro · Spiritualità · Simbolismo · Tarocco di Thoth
+
+L'albero è configurabile dalla console (`tools/seed` scrive quello iniziale, senza disfare le modifiche). Una sezione
+ha un `tipo`: `articoli`, `carte` o `stese` (elencano da sole il catalogo secondo un `filtro`), `contenitore`.
+
+- **Modello** (`domain/blog_models.py`, migrazione `6f2b8d4a1c73`): `blog_sections`, `blog_posts` (bozza, pubblicato,
+  archiviato; un articolo `pubblicato` con la data nel futuro è *programmato*), `blog_tags`, `blog_post_links`,
+  `blog_post_revisions` (le ultime venti versioni), `media_images` (immagini in WebP nel database, come quelle di
+  condivisione), e su `users` il nome pubblico e l'avatar.
+- **Un solo punto di scrittura** (`BlogRepository.salva`): slug, versioni, collegamenti interni e tempo di lettura sono
+  gli stessi per la console e per la pubblicazione via REST. Una sola regola decide cosa vede il pubblico
+  (`BlogRepository.pubblico`): pubblicato, data arrivata, sezione visibile *e* con antenati visibili.
+- **Collegamenti interni**: nel testo `[[carta:maj-17]]`, `[[stesa:croce-celtica]]`, `[[articolo:slug]]` (da soli su una
+  riga diventano una scheda, dentro una frase un collegamento) e i link Markdown a `/carte/…`, `/stese/…`, `/blog/…`
+  si leggono al salvataggio in `blog_post_links`. La pagina di una carta o di una stesa elenca gli articoli che la citano.
+- **Pubblico** (`/blog`, `/blog/sezione/{slug}`, `/blog/tag/{slug}`, `/blog/{slug}`, `/blog/feed.xml`, `sitemap.xml`): scritto
+  dal server, con metadati, canonical, Open Graph e dati strutturati (BlogPosting, BreadcrumbList). Il testo è Markdown reso
+  con `react-markdown` **senza eseguire HTML**; le immagini si accettano solo relative o `https`.
+- **Immagini**: PNG, JPEG o WebP fino a 8 MB, orientate, portate a 1600 px al massimo e riscritte in WebP senza
+  metadati; servite con cache immutabile. L'avatar è un quadrato di 256 px ritagliato al centro (`PUT /me/avatar`, dal
+  profilo insieme al *nome pubblico*: mai l'email).
+
 ## Verifica in due passaggi (facoltativa)
 
 Gli amministratori hanno l'OTP obbligatorio (`deploy/keycloak/README.md`). Gli utenti possono attivarlo dal

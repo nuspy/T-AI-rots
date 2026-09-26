@@ -4,7 +4,10 @@
  * ricordato per le letture di compatibilità e di coppia, il codice invito. */
 
 import { useState } from "react";
-import { aggiornaProfilo, cancellaPartner, leggiProfilo, riscattaInvito, type Genere } from "@/lib/api";
+import {
+  aggiornaProfilo, cancellaPartner, caricaAvatar, leggiProfilo, riscattaInvito, togliAvatar, type Genere,
+} from "@/lib/api";
+import { urlMedia } from "@/lib/blog";
 import { useLingua } from "@/lib/lingua";
 import { useSessione, AUTH_DISATTIVATA } from "@/lib/sessione";
 import { URL_ACCOUNT, leggiStato2fa } from "@/lib/sicurezza";
@@ -32,6 +35,9 @@ function Profilo() {
   /* La casella del promemoria risponde subito al tocco: `null` finché non la si tocca,
    * così vale quello del profilo. */
   const [promemoria, setPromemoria] = useState<boolean | null>(null);
+  const [nomePubblico, setNomePubblico] = useState<string | null>(null);
+  const [erroreAvatar, setErroreAvatar] = useState<string | null>(null);
+  const [nomeSalvato, setNomeSalvato] = useState(false);
   const [nascita, setNascita] = useState<string | null>(null);
   /* Il genere: `null` finché non si tocca, così vale quello del profilo. */
   const [genere, setGenere] = useState<Genere | "" | null>(null);
@@ -140,6 +146,72 @@ function Profilo() {
         ) : (
           <p className={stili.nota}>{t.profilo_partner_vuoto}</p>
         )}
+      </section>
+
+      <section className={`pannello ${stili.scheda} ${stili.sezione}`} aria-labelledby="profilo-immagine">
+        <h2 id="profilo-immagine" className={stili.sezioneTitolo}>{t.prof_avatar_titolo}</h2>
+        <p className={stili.nota}>{t.prof_avatar_testo}</p>
+        <div className={stili.avatarRiga}>
+          {p.avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element -- l'avatar, già ridotto a 256 px dal server
+            <img className={stili.avatarGrande} src={urlMedia(p.avatar) ?? ""} alt="" width={96} height={96} />
+          ) : (
+            <span className={stili.avatarGrande} aria-hidden="true">{(p.nome_mostrato[0] ?? "?").toUpperCase()}</span>
+          )}
+          <div className={stili.linea}>
+            <label className={`bottone-secondario ${stili.tocco} ${stili.caricaFile}`}>
+              {t.prof_avatar_carica}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                disabled={inCorso}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (!file) return;
+                  setErroreAvatar(null);
+                  const r = await esegui((tok) => caricaAvatar(tok, file));
+                  if (r) profilo.ricarica();
+                  else setErroreAvatar(t.prof_avatar_errore);
+                }}
+              />
+            </label>
+            {p.avatar && (
+              <button
+                className={`bottone-secondario ${stili.tocco}`}
+                disabled={inCorso}
+                onClick={async () => { await esegui((tok) => togliAvatar(tok)); profilo.ricarica(); }}
+              >
+                {t.prof_avatar_togli}
+              </button>
+            )}
+          </div>
+        </div>
+        {erroreAvatar && <p className={stili.errore} role="alert">{erroreAvatar}</p>}
+        <div className={stili.linea} style={{ marginTop: 18 }}>
+          <label className={stili.campo}>
+            {t.prof_nome_pubblico}
+            <input
+              type="text"
+              maxLength={60}
+              value={nomePubblico ?? p.nome_pubblico ?? ""}
+              placeholder={p.nome_mostrato}
+              onChange={(e) => { setNomePubblico(e.target.value); setNomeSalvato(false); }}
+            />
+          </label>
+          <button
+            className={`bottone ${stili.tocco}`}
+            disabled={inCorso || nomePubblico === null}
+            onClick={async () => {
+              const r = await esegui((tok) => aggiornaProfilo(tok, { nome_pubblico: nomePubblico ?? "" }));
+              if (r) { setNomeSalvato(true); setNomePubblico(null); profilo.ricarica(); }
+            }}
+          >
+            {t.salva}
+          </button>
+        </div>
+        <p className={stili.nota}>{t.prof_nome_pubblico_testo}</p>
+        {nomeSalvato && <p className={stili.avvisoBuono} role="status">{t.prof_nome_salvato}</p>}
       </section>
 
       {!AUTH_DISATTIVATA && (

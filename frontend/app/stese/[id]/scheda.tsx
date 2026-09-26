@@ -4,15 +4,18 @@
 
 import Link from "next/link";
 import type { Stesa } from "@/lib/api";
+import type { ArticoloBreve } from "@/lib/blog";
 import { nomePosizione, nomeStesa } from "@/lib/i18n";
 import { useLingua } from "@/lib/lingua";
+import { SchedaArticolo } from "../../blog/componenti/elementi";
+import stiliBlog from "../../blog/blog.module.css";
 import { BannerMazzo } from "../../componenti/banner-mazzo";
 import { Involucro } from "../../componenti/testata";
 import { COLORE_SOGGETTO, Tavolo } from "../../leggi/tavolo";
 import { TesseraStesa } from "../elenco";
 import stili from "../stese.module.css";
 
-export function SchedaStesa({ stesa, altre }: { stesa: Stesa; altre: Stesa[] }) {
+export function SchedaStesa({ stesa, altre, articoli = [] }: { stesa: Stesa; altre: Stesa[]; articoli?: ArticoloBreve[] }) {
   const { t, lingua } = useLingua();
   const tipo =
     stesa.categoria === "compatibilita" ? t.tipo_compat : stesa.categoria === "coppia" ? t.tipo_coppia : t.stese_standard_titolo;
@@ -81,6 +84,15 @@ export function SchedaStesa({ stesa, altre }: { stesa: Stesa; altre: Stesa[] }) 
         <Link href={`/leggi?stesa=${stesa.id}`} className="bottone">✦ {t.stesa_fai}</Link>
         <Link href="/stese" className="bottone-secondario">{t.stesa_tutte}</Link>
       </div>
+
+      {articoli.length > 0 && (
+        <section className={stiliBlog.blocco} style={{ marginTop: 36 }} aria-label={t.blog_articoli_su_stesa}>
+          <h2>{t.blog_articoli_su_stesa}</h2>
+          <div className={stiliBlog.griglia}>
+            {articoli.map((a) => <SchedaArticolo key={a.slug} articolo={a} />)}
+          </div>
+        </section>
+      )}
 
       {altre.length > 0 && (
         <>

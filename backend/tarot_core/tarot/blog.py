@@ -16,7 +16,7 @@ import io
 import math
 import re
 import unicodedata
-from typing import Iterable, List, Optional, Set, Tuple
+from typing import Callable, Iterable, List, Optional, Set, Tuple
 
 # ---- slug ----------------------------------------------------------------------
 
@@ -63,13 +63,17 @@ def tempo_lettura(testo: str) -> int:
     return max(1, math.ceil(parole / _PAROLE_AL_MINUTO))
 
 
-def _senza_scorciatoie(testo: str) -> str:
-    return _SCORCIATOIA.sub(" ", testo or "")
+def _senza_scorciatoie(testo: str, nomi: Optional[Callable[[str, str], Optional[str]]] = None) -> str:
+    """Toglie le scorciatoie; con `nomi(tipo, id)` le sostituisce con il nome («La Stella») invece di lasciare
+    un buco («Vedi  e .») negli estratti."""
+    if nomi is None:
+        return _SCORCIATOIA.sub(" ", testo or "")
+    return _SCORCIATOIA.sub(lambda m: nomi(m.group(1), m.group(2)) or " ", testo or "")
 
 
-def testo_semplice(markdown: str) -> str:
+def testo_semplice(markdown: str, nomi: Optional[Callable[[str, str], Optional[str]]] = None) -> str:
     """Il testo senza Markdown né scorciatoie: per gli estratti e le descrizioni."""
-    t = _senza_scorciatoie(markdown or "")
+    t = _senza_scorciatoie(markdown or "", nomi)
     t = re.sub(r"```.*?```", " ", t, flags=re.S)
     t = re.sub(r"`([^`]*)`", r"\1", t)
     t = re.sub(r"!\[[^\]]*\]\([^)]*\)", " ", t)
@@ -80,9 +84,9 @@ def testo_semplice(markdown: str) -> str:
     return " ".join(t.split())
 
 
-def estratto(markdown: str, massimo: int = 200) -> str:
+def estratto(markdown: str, massimo: int = 200, nomi: Optional[Callable[[str, str], Optional[str]]] = None) -> str:
     """Le prime parole del testo, tagliate a fine parola, con i puntini se resta altro."""
-    semplice = testo_semplice(markdown)
+    semplice = testo_semplice(markdown, nomi)
     if len(semplice) <= massimo:
         return semplice
     taglio = semplice[:massimo]

@@ -268,6 +268,11 @@ export interface Profilo {
   is_trans: boolean;
   /* Il promemoria della verifica in due passaggi all'accesso; `false` = «non mostrare più». */
   promemoria_2fa: boolean;
+  /* Come ti presenti nei commenti del blog (`null` = il primo nome) e il nome che si vede davvero. */
+  nome_pubblico: string | null;
+  nome_mostrato: string;
+  /* L'immagine personale: percorso relativo dell'API (vedi `urlMedia`). */
+  avatar: string | null;
   /* Con il cognome: si mostra solo al proprietario. */
   partner_ricordato: PersonaSalvata | null;
   relazioni: { completo: boolean; mancanti: ("genere" | "nascita")[] };
@@ -607,8 +612,16 @@ export const aggiornaProfilo = (
     gender_custom?: string | null;
     is_trans?: boolean;
     promemoria_2fa?: boolean;
+    nome_pubblico?: string;
   },
 ) => chiama<Profilo>(token, "/me/profile", { method: "PATCH", body: dati });
+/* L'avatar: l'immagine come corpo della richiesta; il server la ritaglia e la riscrive in WebP. */
+export async function caricaAvatar(token: string | null, file: File): Promise<{ avatar: string }> {
+  const h: Record<string, string> = { "Content-Type": file.type || "image/png" };
+  if (token) h.Authorization = `Bearer ${token}`;
+  return leggi<{ avatar: string }>(await fetch(`${API}/me/avatar`, { method: "PUT", headers: h, body: file }));
+}
+export const togliAvatar = (token: string | null) => chiama<void>(token, "/me/avatar", { method: "DELETE" });
 export const cancellaPartner = (token: string | null) => chiama<void>(token, "/me/partner", { method: "DELETE" });
 export const riscattaInvito = (token: string | null, codice: string) =>
   chiama<{ crediti: number; saldo: number }>(token, "/me/referral", { method: "POST", body: { codice } });

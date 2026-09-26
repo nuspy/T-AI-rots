@@ -4,14 +4,17 @@
 
 import Link from "next/link";
 import type { Carta as TipoCarta } from "@/lib/api";
+import type { ArticoloBreve } from "@/lib/blog";
 import { nomeCarta } from "@/lib/i18n";
 import { useLingua } from "@/lib/lingua";
+import { SchedaArticolo } from "../../blog/componenti/elementi";
+import stiliBlog from "../../blog/blog.module.css";
 import { BannerMazzo } from "../../componenti/banner-mazzo";
 import { Carta } from "../../componenti/carta";
 import { Involucro } from "../../componenti/testata";
 import stili from "../../pagine.module.css";
 
-export function SchedaCarta({ carta: c }: { carta: TipoCarta }) {
+export function SchedaCarta({ carta: c, articoli = [] }: { carta: TipoCarta; articoli?: ArticoloBreve[] }) {
   const { t, lingua } = useLingua();
   return (
     <Involucro pubblica titolo={nomeCarta(c, lingua)} sottotitolo={`${c.nome_thoth}${c.titolo_thoth ? ` — ${c.titolo_thoth}` : ""}`}>
@@ -41,6 +44,14 @@ export function SchedaCarta({ carta: c }: { carta: TipoCarta }) {
           </div>
         </div>
       </div>
+      {articoli.length > 0 && (
+        <section className={stiliBlog.blocco} style={{ marginTop: 36 }} aria-label={t.blog_articoli_su_carta}>
+          <h2>{t.blog_articoli_su_carta}</h2>
+          <div className={stiliBlog.griglia}>
+            {articoli.map((a) => <SchedaArticolo key={a.slug} articolo={a} />)}
+          </div>
+        </section>
+      )}
       <BannerMazzo />
     </Involucro>
   );
