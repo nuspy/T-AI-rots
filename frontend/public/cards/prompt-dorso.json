@@ -1,5 +1,5 @@
 {
-  "deck": "T-AI-rots — Thoth-inspired tarot",
+  "deck": "TAROTS chat — Thoth-inspired tarot",
   "count": 1,
   "note": "Card back. Generate at 9:16 (for example 1440x2560 px), save as dorso.webp next to the faces; the frontend loads it from /cards/dorso.webp. Same format as prompts.json, so it can be used with tools/download_cards.py --prompts.",
   "cards": [

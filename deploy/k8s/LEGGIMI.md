@@ -1,7 +1,7 @@
 # Deploy su k3s (tadamoo.com)
 
 `tarots.yaml` mette TAROTS chat nel namespace `tarots` del cluster k3s di
-tadamoo.com, sotto **un solo dominio**, `tarots.tadamoo.com`:
+tadamoo.com, sotto **un solo dominio**, `tarots.chat`:
 
 | percorso | servizio | note |
 |---|---|---|
@@ -32,16 +32,16 @@ SQL
 #    in containerd, niente registry. Sorgenti: tar di backend, frontend, admin, deploy.
 docker build --provenance=false -f deploy/Dockerfile.backend -t tarots-api:v2 .
 docker build --provenance=false -f deploy/Dockerfile.next --build-arg APP=frontend \
-  --build-arg NEXT_PUBLIC_API_URL=https://tarots.tadamoo.com/api \
-  --build-arg NEXT_PUBLIC_KEYCLOAK_URL=https://tarots.tadamoo.com/auth \
+  --build-arg NEXT_PUBLIC_API_URL=https://tarots.chat/api \
+  --build-arg NEXT_PUBLIC_KEYCLOAK_URL=https://tarots.chat/auth \
   --build-arg NEXT_PUBLIC_KEYCLOAK_REALM=tarots \
   --build-arg NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=tarot-frontend \
   --build-arg NEXT_PUBLIC_AUTH_DISABLED=false \
   --build-arg NEXT_PUBLIC_SITE_URL=https://tarots.chat \
   --build-arg NEXT_PUBLIC_CARD_EXT=webp -t tarots-web:v2 .
 docker build --provenance=false -f deploy/Dockerfile.next --build-arg APP=admin \
-  --build-arg NEXT_PUBLIC_API_URL=https://tarots.tadamoo.com/api \
-  --build-arg NEXT_PUBLIC_KEYCLOAK_URL=https://tarots.tadamoo.com/auth \
+  --build-arg NEXT_PUBLIC_API_URL=https://tarots.chat/api \
+  --build-arg NEXT_PUBLIC_KEYCLOAK_URL=https://tarots.chat/auth \
   --build-arg NEXT_PUBLIC_KEYCLOAK_REALM=tarots \
   --build-arg NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=tarot-admin \
   --build-arg NEXT_PUBLIC_AUTH_DISABLED=false \
@@ -68,6 +68,52 @@ kubectl apply -f deploy/k8s/tarots.yaml
 # 5. il seed: piani e utenti di prova, con TAROT_CREDITI_UTENTE_DI_PROVA crediti a testa
 kubectl -n tarots exec deploy/tarots-api -- python -m tarot_core.tools.seed
 ```
+
+## Il dominio `tarots.chat`
+
+Il sito vive su **`tarots.chat`** (l'inglese alla radice, l'italiano sotto `/it`). `www.tarots.chat` e il vecchio
+`tarots.tadamoo.com` non servono contenuti: reindirizzano con un **301** allo stesso percorso su `https://tarots.chat`.
+Il cambio si fa in quest'ordine, e **solo dopo che il DNS risponde** (senza, Let's Encrypt non emette il certificato):
+
+1. **DNS** (dal registrar del dominio): un record `A` per `@` (`tarots.chat`) e uno per `www`, entrambi verso l'IP del
+   server (lo stesso di `tarots.tadamoo.com`). Verifica: `nslookup tarots.chat 8.8.8.8`.
+2. **NPM**: il proxy host di `tarots.chat` verso `tarots-gateway` con un certificato Let's Encrypt che copre **anche**
+   `www.tarots.chat` (passo sopra), Force SSL e HTTP/2. Poi un host di **reindirizzamento** (`POST /nginx/redirection-hosts`,
+   `forward_http_code: 301`, `forward_scheme: https`, `forward_domain_name: tarots.chat`, `preserve_path: true`) per
+   `www.tarots.chat`, e — solo a cose fatte — lo stesso per `tarots.tadamoo.com` (con il suo certificato già emesso, o
+   `ssl_forced: false`). Il vecchio proxy host verso il gateway si sostituisce con il reindirizzamento: non restano due siti.
+3. **Immagini**: l'indirizzo è cotto nella build (`NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_KEYCLOAK_URL`,
+   `NEXT_PUBLIC_SITE_URL`), quindi `tarots-web` e `tarots-admin` **si ricostruiscono sul server** (mai in locale) con i
+   `--build-arg` di sopra e un tag nuovo (`v3`), e si importano in containerd, una alla volta. Anche `tarots-api` (nuovo
+   codice: SEO, REST del blog, immagini con Pillow) e il tema di Keycloak se cambia.
+4. **Realm Keycloak esistente** (l'import parte solo a realm assente, quindi il file non basta): sui due client
+   `tarot-frontend` e `tarot-admin` gli indirizzi diventano quelli nuovi. Dal pod di Keycloak:
+
+   ```bash
+   KCADM=/opt/keycloak/bin/kcadm.sh
+   kubectl -n tarots exec deploy/tarots-keycloak -- $KCADM config credentials --server http://localhost:8080/auth --realm master --user admin
+   # per ciascun client (id da: get clients -r tarots -q clientId=<client> --fields id)
+   kubectl -n tarots exec deploy/tarots-keycloak -- $KCADM update clients/<id-frontend> -r tarots \
+     -s 'redirectUris=["https://tarots.chat/*"]' -s 'webOrigins=["+"]' -s rootUrl=https://tarots.chat
+   kubectl -n tarots exec deploy/tarots-keycloak -- $KCADM update clients/<id-admin> -r tarots \
+     -s 'redirectUris=["https://tarots.chat/admin/*"]' -s 'webOrigins=["+"]' -s rootUrl=https://tarots.chat/admin
+   ```
+
+   Mittente e nome delle email (`smtpServer.from`, `fromDisplayName`) si scrivono all'import del realm: in un realm già
+   esistente si aggiornano dalla console (Realm settings → Email) con `noreply@tarots.chat` e «TAROTS chat».
+5. **Manifest**: `kubectl apply -f deploy/k8s/tarots.yaml` (tag nuovi, `KC_HOSTNAME`, `TAROT_KEYCLOAK_ISSUER_URL`,
+   `TAROT_API_PUBLIC_URL`, `TAROT_WEB_PUBLIC_URL`, `TAROT_CORS_ORIGINS`). L'emittente dei token cambia con il dominio: chi
+   era connesso deve accedere di nuovo. Il pod dell'API applica le migrazioni (`a41c7e92d3b6`, campi SEO e chiavi).
+6. **Prova**: `curl -sI https://tarots.chat/` (200), `https://www.tarots.chat/` e `https://tarots.tadamoo.com/cards`
+   (301 verso `https://tarots.chat/cards`), il login dal sito e dalla console, `https://tarots.chat/sitemap.xml`,
+   `https://tarots.chat/robots.txt`, `https://tarots.chat/it`.
+7. **Dopo il lancio**: registrare il sito in Google Search Console e Bing Webmaster Tools (proprietà di dominio,
+   verifica DNS), inviare `https://tarots.chat/sitemap.xml`, e controllare dopo qualche giorno copertura, `hreflang` e
+   dati strutturati. Prima del rilascio, `NEXT_PUBLIC_SITE_URL` deve essere `https://tarots.chat` (è nel `Dockerfile.next`):
+   canonical, sitemap e Open Graph si scrivono con quello.
+
+**Ritorno indietro**: finché `tarots.tadamoo.com` non è diventato un reindirizzamento si può riportare
+`KC_HOSTNAME` e le altre variabili al vecchio indirizzo e ricostruire; dopo, i motori di ricerca hanno già letto i 301.
 
 ## Il modello (LLM)
 
@@ -99,21 +145,21 @@ serve intervista, validazione, interpretazione, sintesi e giudizio.
 
 ## Console di amministrazione
 
-`https://tarots.tadamoo.com/admin`, con il login Keycloak del client
+`https://tarots.chat/admin`, con il login Keycloak del client
 `tarot-admin` (PKCE). Il collegamento «Admin» compare nella testata del sito
 solo a chi ha il ruolo `admin`. Nel realm il client deve avere il redirect
-`https://tarots.tadamoo.com/admin/*` e `webOrigins` `["+"]` (o l'origine
-`https://tarots.tadamoo.com`): un `webOrigins` con il percorso `/admin` non è
+`https://tarots.chat/admin/*` e `webOrigins` `["+"]` (o l'origine
+`https://tarots.chat`): un `webOrigins` con il percorso `/admin` non è
 un'origine e il CORS del login fallisce. Il generatore del realm ora scrive `+`.
 
 ## Instradamento (nginx-proxy-manager)
 
-Serve un proxy host per `tarots.tadamoo.com` verso il ClusterIP di
+Serve un proxy host per `tarots.chat` verso il ClusterIP di
 `tarots-gateway` (`kubectl -n tarots get svc tarots-gateway`), porta 8080, con
 certificato Let's Encrypt e Force SSL. Dall'API di NPM (2.15, sul server:
 `http://127.0.0.1:81/api`, login con `POST /tokens`):
 
-1. `POST /nginx/certificates` con `{"provider":"letsencrypt","domain_names":["tarots.tadamoo.com"],"meta":{"dns_challenge":false}}`
+1. `POST /nginx/certificates` con `{"provider":"letsencrypt","domain_names":["tarots.chat","www.tarots.chat"],"meta":{"dns_challenge":false}}`
    (in 2.15 l'email non sta nel payload: la prende dall'utente loggato).
 2. `POST /nginx/proxy-hosts` con `forward_scheme: http`, `forward_host: <ClusterIP>`,
    `forward_port: 8080`, `certificate_id`, `ssl_forced`, `http2_support`,

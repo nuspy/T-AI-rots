@@ -1,11 +1,12 @@
-# TAROTS chat su k3s: namespace `tarots`, sotto un solo dominio (tarots.tadamoo.com).
+# TAROTS chat su k3s: namespace `tarots`, sotto un solo dominio (tarots.chat).
 #
 #   /        -> sito Next.js          (tarots-web:3000)
 #   /api/    -> API FastAPI           (tarots-api:8100, il prefisso /api si toglie)
 #   /admin   -> console admin         (tarots-admin:3000, Next.js con basePath /admin)
 #   /auth/   -> Keycloak              (tarots-keycloak:8080, KC_HTTP_RELATIVE_PATH=/auth)
 #
-# Il dominio è uno solo perché il DNS ha solo `tarots.tadamoo.com`. Davanti a
+# Il dominio è uno solo (`tarots.chat`; `www.tarots.chat` e il vecchio
+# `tarots.tadamoo.com` sono reindirizzamenti permanenti, vedi LEGGIMI.md). Davanti a
 # tutto sta nginx-proxy-manager (TLS Let's Encrypt), che inoltra l'intero host
 # al servizio `tarots-gateway:8080`: le regole di percorso vivono qui, in un
 # posto solo, e non nella console di NPM.
@@ -156,7 +157,7 @@ spec:
             - {name: KC_DB_USERNAME, value: tarots}
             - name: KC_DB_PASSWORD
               valueFrom: {secretKeyRef: {name: tarots-secrets, key: db-password}}
-            - {name: KC_HOSTNAME, value: "https://tarots.tadamoo.com/auth"}
+            - {name: KC_HOSTNAME, value: "https://tarots.chat/auth"}
             - {name: KC_HTTP_ENABLED, value: "true"}
             - {name: KC_HTTP_RELATIVE_PATH, value: /auth}
             - {name: KC_PROXY_HEADERS, value: xforwarded}
@@ -170,8 +171,8 @@ spec:
             - {name: QUARKUS_TRANSACTION_MANAGER_DEFAULT_TRANSACTION_TIMEOUT, value: "3600"}
             - {name: QUARKUS_DATASOURCE_JDBC_ACQUISITION_TIMEOUT, value: "120"}
             # Segnaposto del realm di produzione (deploy/keycloak/README.md).
-            - {name: KC_URL_WEB, value: "https://tarots.tadamoo.com"}
-            - {name: KC_URL_ADMIN, value: "https://tarots.tadamoo.com/admin"}
+            - {name: KC_URL_WEB, value: "https://tarots.chat"}
+            - {name: KC_URL_ADMIN, value: "https://tarots.chat/admin"}
             - name: KC_API_CLIENT_SECRET
               valueFrom: {secretKeyRef: {name: tarots-secrets, key: api-client-secret}}
             # Provider social spenti (KC_<P>_ENABLED vale false se manca): i
@@ -189,7 +190,7 @@ spec:
             # Nessun SMTP: gli utenti si creano già con l'email verificata.
             - {name: KC_SMTP_HOST, value: localhost}
             - {name: KC_SMTP_PORT, value: "25"}
-            - {name: KC_SMTP_FROM, value: "noreply@tarots.tadamoo.com"}
+            - {name: KC_SMTP_FROM, value: "noreply@tarots.chat"}
             - {name: KC_SMTP_USER, value: ""}
             - {name: KC_SMTP_PASSWORD, value: ""}
           ports:
@@ -262,11 +263,11 @@ spec:
             - {name: TAROT_BILLING_PROVIDER, value: disattivato}
             - {name: TAROT_TRACING_ENABLED, value: "false"}
             - {name: TAROT_KEYCLOAK_URL, value: "http://tarots-keycloak:8080/auth"}
-            - {name: TAROT_KEYCLOAK_ISSUER_URL, value: "https://tarots.tadamoo.com/auth"}
+            - {name: TAROT_KEYCLOAK_ISSUER_URL, value: "https://tarots.chat/auth"}
             - {name: TAROT_KEYCLOAK_REALM, value: tarots}
-            - {name: TAROT_API_PUBLIC_URL, value: "https://tarots.tadamoo.com/api"}
-            - {name: TAROT_WEB_PUBLIC_URL, value: "https://tarots.tadamoo.com"}
-            - {name: TAROT_CORS_ORIGINS, value: '["https://tarots.tadamoo.com"]'}
+            - {name: TAROT_API_PUBLIC_URL, value: "https://tarots.chat/api"}
+            - {name: TAROT_WEB_PUBLIC_URL, value: "https://tarots.chat"}
+            - {name: TAROT_CORS_ORIGINS, value: '["https://tarots.chat"]'}
             # Letto dal seed: i crediti degli utenti di prova.
             - {name: TAROT_CREDITI_UTENTE_DI_PROVA, value: "100000"}
             # Il sale delle impronte anonime di chi visita un link condiviso: senza,

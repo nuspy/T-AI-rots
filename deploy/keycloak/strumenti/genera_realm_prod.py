@@ -89,7 +89,7 @@ def realm_di_partenza() -> dict:
         ],
         "smtpServer": {
             "host": "${KC_SMTP_HOST}", "port": "${KC_SMTP_PORT}", "from": "${KC_SMTP_FROM}",
-            "fromDisplayName": "AI Personality Platform", "auth": "true",
+            "fromDisplayName": "TAROTS chat", "auth": "true",
             "user": "${KC_SMTP_USER}", "password": "${KC_SMTP_PASSWORD}",
             "starttls": "true", "ssl": "false",
         },

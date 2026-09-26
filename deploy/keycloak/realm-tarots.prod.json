@@ -1666,7 +1666,7 @@
     "auth": "true",
     "host": "${KC_SMTP_HOST}",
     "from": "${KC_SMTP_FROM}",
-    "fromDisplayName": "AI Personality Platform",
+    "fromDisplayName": "TAROTS chat",
     "user": "${KC_SMTP_USER}",
     "ssl": "false"
   },

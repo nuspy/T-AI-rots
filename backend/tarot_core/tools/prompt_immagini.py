@@ -196,7 +196,7 @@ def costruisci() -> Dict[str, Any]:
             "negative_prompt": NEGATIVO,
         })
     return {
-        "deck": "T-AI-rots — Thoth-inspired tarot",
+        "deck": "TAROTS chat — Thoth-inspired tarot",
         "count": len(carte),
         "note": (
             "Each prompt is self-contained: style, card identity, scene and text rules are repeated in full. "
