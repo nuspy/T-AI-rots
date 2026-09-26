@@ -2,24 +2,28 @@
 partner ricordato, inviti, carta del giorno."""
 from __future__ import annotations
 
+import asyncio
 import hashlib
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, Optional
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from ...auth.dependencies import CurrentUser, DbSession
 from ...billing.credits import RegistroCrediti
 from ...domain.base import utcnow
+from ...domain.blog_models import MediaImage
 from ...domain.models import DailyCard, User
 from ...domain.repositories import AuditRepository, nuovo_codice_invito
 from ...settings import get_settings
+from ...tarot import blog as regole_blog
 from ...tarot.numerologia import carta_dell_anima, carta_dell_anno
 from ...tarot.persone import LUNGHEZZA_GENERE_ALTRO, mancanti, pulisci
 from ..deps import get_conoscenza
+from .blog import nome_pubblico, url_immagine
 from .condivisione import contatore
 
 router = APIRouter(prefix="/me", tags=["profilo"])
@@ -40,6 +44,8 @@ class ModificaProfilo(BaseModel):
     is_trans: Optional[bool] = None
     #: Il promemoria della verifica in due passaggi all'accesso: `false` = «non mostrare più».
     promemoria_2fa: Optional[bool] = None
+    #: Come ti presenti nei commenti del blog. Vuoto = si usa il primo nome.
+    nome_pubblico: Optional[str] = Field(default=None, max_length=60)
 
 
 class Invito(BaseModel):
@@ -62,6 +68,9 @@ async def _profilo_json(user: User, session) -> Dict[str, Any]:
         "gender_custom": user.gender_custom,
         "is_trans": user.is_trans,
         "promemoria_2fa": user.promemoria_2fa,
+        "nome_pubblico": user.nome_pubblico,
+        "nome_mostrato": nome_pubblico(user),
+        "avatar": url_immagine(user.avatar_id),
         # Il partner ricordato ha il cognome: si mostra solo al proprietario.
         "partner_ricordato": user.partner_ricordato,
         # Cosa manca nella scheda per le letture di compatibilità e di coppia.
@@ -112,6 +121,8 @@ async def modifica(payload: ModificaProfilo, user: CurrentUser, session: DbSessi
         user.is_trans = payload.is_trans
     if payload.promemoria_2fa is not None:
         user.promemoria_2fa = payload.promemoria_2fa
+    if payload.nome_pubblico is not None:
+        user.nome_pubblico = pulisci(payload.nome_pubblico, 60) or None
     await session.commit()
     return await _profilo_json(user, session)
 
@@ -213,3 +224,41 @@ async def carta_del_giorno(user: CurrentUser, session: DbSession) -> Dict[str, A
         "testo": riga.testo,
         "serie": serie,
     }
+
+
+@router.put("/avatar")
+async def carica_avatar(request: Request, user: CurrentUser, session: DbSession) -> Dict[str, Any]:
+    """La tua immagine personale (avatar): compare accanto ai tuoi commenti. Si ritaglia al centro
+    in un quadrato di 256 px e si riscrive in WebP; quella precedente si cancella."""
+    if not request.headers.get("content-type", "").startswith("image/"):
+        raise HTTPException(status_code=415, detail="Serve un'immagine")
+    if int(request.headers.get("content-length") or 0) > regole_blog.MAX_CARICO_IMMAGINE:
+        raise HTTPException(status_code=413, detail="Immagine troppo grande")
+    try:
+        webp, larghezza, altezza = await asyncio.to_thread(regole_blog.prepara_avatar, await request.body())
+    except regole_blog.ImmagineNonValida as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    precedente = user.avatar_id
+    nuova = MediaImage(uso="avatar", webp=webp, larghezza=larghezza, altezza=altezza, owner_id=user.id)
+    session.add(nuova)
+    await session.flush()
+    user.avatar_id = nuova.id
+    await session.flush()
+    if precedente is not None:
+        vecchia = await session.get(MediaImage, precedente)
+        if vecchia is not None and vecchia.uso == "avatar" and vecchia.owner_id == user.id:
+            await session.delete(vecchia)
+    await session.commit()
+    return {"avatar": url_immagine(nuova.id)}
+
+
+@router.delete("/avatar", status_code=status.HTTP_204_NO_CONTENT)
+async def togli_avatar(user: CurrentUser, session: DbSession) -> Response:
+    if user.avatar_id is not None:
+        immagine = await session.get(MediaImage, user.avatar_id)
+        user.avatar_id = None
+        await session.flush()
+        if immagine is not None and immagine.uso == "avatar" and immagine.owner_id == user.id:
+            await session.delete(immagine)
+        await session.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

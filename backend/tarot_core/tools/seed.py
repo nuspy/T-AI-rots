@@ -36,6 +36,7 @@ from ..auth.dependencies import PRINCIPAL_DI_SVILUPPO
 from ..billing.credits import RegistroCrediti
 from ..billing.plans import GestoreAbbonamenti
 from ..domain.billing_models import CreditEntry, Plan
+from ..domain.blog_models import BlogSection
 from ..domain.models import User
 from ..domain.repositories import nuovo_codice_invito
 from ..domain.session import dispose_engine, get_session_factory
@@ -102,6 +103,73 @@ async def scrivi_catalogo(session, *, forza: bool = False) -> int:
     return scritti
 
 
+#: L'albero delle sezioni del blog: le carte, le stese e gli articoli in un'unica struttura, così ogni
+#: articolo può collegare le carte e le stese di cui parla. `(slug, nome, tipo, filtro, descrizione, figli)`.
+SEZIONI_BLOG: List[Dict[str, Any]] = [
+    {"slug": "tarocchi", "nome": "Tarocchi", "tipo": "contenitore",
+     "descrizione": "Le carte, le stese e gli articoli: tutto ciò che serve per capire e leggere i tarocchi.",
+     "figli": [
+         {"slug": "arcani-maggiori", "nome": "Arcani maggiori", "tipo": "carte", "filtro": {"arcano": "maggiore"},
+          "descrizione": "Le ventidue carte dei grandi temi: dal Matto all'Universo."},
+         {"slug": "arcani-minori", "nome": "Arcani minori", "tipo": "contenitore",
+          "descrizione": "Le cinquantasei carte della vita quotidiana, divise nei quattro semi.",
+          "figli": [
+              {"slug": "bastoni", "nome": "Bastoni", "tipo": "carte", "filtro": {"seme": "bastoni"},
+               "descrizione": "Il fuoco: volontà, energia, iniziativa."},
+              {"slug": "coppe", "nome": "Coppe", "tipo": "carte", "filtro": {"seme": "coppe"},
+               "descrizione": "L'acqua: emozioni, relazioni, intuito."},
+              {"slug": "spade", "nome": "Spade", "tipo": "carte", "filtro": {"seme": "spade"},
+               "descrizione": "L'aria: pensiero, parola, conflitto."},
+              {"slug": "dischi", "nome": "Dischi", "tipo": "carte", "filtro": {"seme": "dischi"},
+               "descrizione": "La terra: lavoro, denaro, corpo."},
+          ]},
+         {"slug": "impara-i-tarocchi", "nome": "Impara i tarocchi", "tipo": "articoli",
+          "descrizione": "Come funzionano i tarocchi e come si leggono: guide per cominciare.",
+          "figli": [
+              {"slug": "le-stese", "nome": "Le stese", "tipo": "stese",
+               "descrizione": "Gli schemi con cui si dispongono le carte, con il significato di ogni posizione."},
+          ]},
+         {"slug": "diario-dei-tarocchi", "nome": "Diario dei tarocchi", "tipo": "articoli",
+          "descrizione": "Tenere un diario delle letture: pratica, esempi, spunti."},
+         {"slug": "articoli", "nome": "Articoli", "tipo": "contenitore",
+          "descrizione": "Approfondimenti per tema.",
+          "figli": [
+              {"slug": "amore", "nome": "Amore", "tipo": "articoli", "descrizione": "L'amore letto attraverso le carte."},
+              {"slug": "relazioni", "nome": "Relazioni", "tipo": "articoli", "descrizione": "Coppia, famiglia, amicizie."},
+              {"slug": "lavoro", "nome": "Lavoro", "tipo": "articoli", "descrizione": "Carriera, scelte, denaro."},
+              {"slug": "spiritualita", "nome": "Spiritualità", "tipo": "articoli", "descrizione": "Ricerca interiore e pratica."},
+              {"slug": "simbolismo", "nome": "Simbolismo", "tipo": "articoli", "descrizione": "Il linguaggio delle immagini."},
+              {"slug": "tarocco-di-thoth", "nome": "Tarocco di Thoth", "tipo": "articoli",
+               "descrizione": "Il mazzo di Crowley e Harris: dottrina, attribuzioni, storia."},
+          ]},
+     ]},
+]
+
+
+async def scrivi_sezioni_blog(session) -> int:
+    """Le sezioni che mancano, senza toccare quelle che ci sono: la console può averle rinominate,
+    spostate o nascoste, e un nuovo seed non deve disfare il lavoro."""
+    creati = 0
+
+    async def scrivi_nodo(nodo: Dict[str, Any], padre: BlogSection | None, ordine: int) -> None:
+        nonlocal creati
+        sezione = (await session.execute(select(BlogSection).where(BlogSection.slug == nodo["slug"]))).scalar_one_or_none()
+        if sezione is None:
+            sezione = BlogSection(
+                slug=nodo["slug"], nome=nodo["nome"], tipo=nodo["tipo"], filtro=nodo.get("filtro"),
+                descrizione=nodo.get("descrizione"), parent_id=padre.id if padre else None, ordine=ordine,
+            )
+            session.add(sezione)
+            await session.flush()
+            creati += 1
+        for i, figlio in enumerate(nodo.get("figli", [])):
+            await scrivi_nodo(figlio, sezione, i)
+
+    for i, radice in enumerate(SEZIONI_BLOG):
+        await scrivi_nodo(radice, None, i)
+    return creati
+
+
 async def scrivi_utenti(session) -> int:
     crediti = get_settings().crediti_utente_di_prova
     gestore = GestoreAbbonamenti(session)
@@ -133,9 +201,10 @@ async def scrivi(*, forza: bool = False, utenti: bool = True) -> None:
     async with factory() as session:
         piani = await scrivi_catalogo(session, forza=forza)
         creati = await scrivi_utenti(session) if utenti else 0
+        sezioni = await scrivi_sezioni_blog(session)
         await session.commit()
     await dispose_engine()
-    logger.info("Seed: %d piani scritti, %d utenti di prova creati", piani, creati)
+    logger.info("Seed: %d piani scritti, %d utenti di prova creati, %d sezioni del blog", piani, creati, sezioni)
 
 
 def main() -> int:

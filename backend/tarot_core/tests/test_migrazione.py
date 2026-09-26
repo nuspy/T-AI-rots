@@ -103,7 +103,16 @@ def test_ogni_migrazione_e_reversibile(database_scratch):
         tabelle = set(inspect(motore).get_table_names())
         assert {"share_events", "share_visits", "share_images", "share_signups"} <= tabelle
 
-        # Prima il promemoria della 2FA...
+        blog = {"media_images", "blog_sections", "blog_tags", "blog_posts", "blog_post_tags", "blog_post_links", "blog_post_revisions"}
+        assert blog <= tabelle and {"nome_pubblico", "avatar_id"} <= _colonne(motore, "users")
+
+        # Prima il blog...
+        command.downgrade(cfg, "3d7a9c1e5b28")
+        assert not (blog & set(inspect(motore).get_table_names()))
+        assert not ({"nome_pubblico", "avatar_id"} & _colonne(motore, "users"))
+        assert "promemoria_2fa" in _colonne(motore, "users")
+
+        # ...poi il promemoria della 2FA...
         command.downgrade(cfg, "8c4f2a7d1e93")
         assert "promemoria_2fa" not in _colonne(motore, "users") and "share_rewards" in _colonne(motore, "users")
 

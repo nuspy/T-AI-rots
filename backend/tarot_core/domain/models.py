@@ -88,6 +88,14 @@ class User(Base, TimestampMixin):
         Boolean, default=True, server_default=true(), nullable=False,
     )
 
+    #: Come si presenta pubblicamente (commenti al blog): scelto dall'utente, mai l'email.
+    #: Senza, si usa la prima parola di `display_name`.
+    nome_pubblico: Mapped[Optional[str]] = mapped_column(String(60))
+    #: L'immagine personale (avatar), in `media_images`.
+    avatar_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("media_images.id", ondelete="SET NULL", use_alter=True, name="fk_users_avatar_id"),
+    )
+
     #: Il partner che l'utente ha chiesto di ricordare («ricorda» nel modulo):
     #: uno solo, con il cognome. `{"nome", "cognome", "genere", "genere_altro",
     #: "trans", "nascita"}`. Si cancella dal profilo.
