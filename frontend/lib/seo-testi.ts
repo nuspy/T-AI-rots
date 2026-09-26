@@ -41,7 +41,7 @@ export const HOME = {
     scegli(
       l,
       "Online tarot reading with the Thoth Tarot and AI: a short interview, cards revealed one by one, and an interpretation rooted in Golden Dawn tradition.",
-      "Lettura dei tarocchi online con il Tarocco di Thoth e l'AI: una breve intervista, le carte rivelate una a una e un'interpretazione radicata nella tradizione della Golden Dawn.",
+      "Lettura dei tarocchi online con il Tarocco di Thoth e l'AI: una breve intervista, le carte rivelate una a una e un'interpretazione fedele alla Golden Dawn.",
     ),
   h2Come: (l: L) => scegli(l, "How a tarot reading works here", "Come funziona una lettura"),
   passi: (l: L) =>
@@ -130,8 +130,8 @@ export const CARTE = {
   description: (l: L) =>
     scegli(
       l,
-      "The meaning of all 78 cards of the Thoth Tarot: Major and Minor Arcana with Hebrew letter, Tree of Life path, element and astrology, and upright, reversed, love and career readings.",
-      "Il significato di tutte le 78 carte del Tarocco di Thoth: Arcani maggiori e minori con lettera ebraica, sentiero dell'Albero della Vita, elemento e astrologia, e letture dritte, rovesciate, per amore e lavoro.",
+      "The meaning of all 78 Thoth Tarot cards: Major and Minor Arcana with Hebrew letter, Tree of Life path, element, astrology, and love and career readings.",
+      "Il significato delle 78 carte del Tarocco di Thoth: Arcani maggiori e minori con lettera ebraica, sentiero, elemento, astrologia e letture per amore e lavoro.",
     ),
   h1: (l: L) => scegli(l, "Thoth Tarot card meanings", "Significato delle carte dei tarocchi di Thoth"),
   intro: (l: L) =>
@@ -278,7 +278,7 @@ export const STESE = {
   description: (l: L) =>
     scegli(
       l,
-      "Tarot spreads with the meaning of every position: the Celtic Cross, the horseshoe, the three-card spread, the astrological wheel, plus compatibility and relationship spreads.",
+      "Tarot spreads with the meaning of every position: Celtic Cross, horseshoe, three-card, astrological wheel, plus compatibility and relationship spreads.",
       "Le stese dei tarocchi con il significato di ogni posizione: croce celtica, ferro di cavallo, tre carte, ruota astrologica, e stese per la compatibilità e per la coppia.",
     ),
   h1: (l: L) => scegli(l, "Tarot spreads and how to read them", "Le stese dei tarocchi e come si leggono"),
@@ -375,7 +375,7 @@ export const MAZZO = {
   description: (l: L) =>
     scegli(
       l,
-      "A Thoth Tarot deck with original artwork: 78 illustrated cards, a gold card back and a collector's box. In preparation: see the cards and join the waiting list.",
+      "A Thoth Tarot deck with original artwork: 78 illustrated cards, a gold card back and a collector's box. In preparation: see the cards.",
       "Un mazzo di tarocchi di Thoth con grafica originale: 78 carte illustrate, un dorso dorato e un cofanetto da collezione. In preparazione: guarda le carte.",
     ),
 };
