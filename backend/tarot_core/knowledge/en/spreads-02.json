@@ -1,0 +1,98 @@
+{
+  "compat-tre": {
+    "slug": "compatibility-three-card",
+    "nome": "Three-Card Compatibility Spread",
+    "origine": "The basic relationship spread: one card for each person and one for the dynamic that arises between them.",
+    "descrizione": "You, the other person and the dynamic between you: the essential snapshot of a bond, read with the 22 Major Arcana.",
+    "regole": [
+      "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
+      "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
+      "The dynamic (3) is the synthesis: it is read last, in the light of the two people."
+    ],
+    "pos": {
+      "1": {"nome": "You", "significato": "Your role in the bond: how you present yourself, what energy you bring and how you see yourself.", "domanda": "What energy do I bring to this bond?"},
+      "2": {"nome": "The other person", "significato": "The other person's role: what energy they bring and how you perceive them, without reading their mind.", "domanda": "What energy does the other person bring?"},
+      "3": {"nome": "The dynamic", "significato": "What is born between you: the general character of the bond, beyond the sum of the two people.", "domanda": "What is happening between us?"}
+    }
+  },
+  "compat-sette": {
+    "slug": "compatibility-seven-card",
+    "nome": "Seven-Card Compatibility Spread",
+    "origine": "The most widespread compatibility spread: what each person is looking for, where you are alike and where you are not, and the three dimensions of affinity.",
+    "descrizione": "What you seek, what the other person seeks, similarities and differences, and then emotional, physical and mental compatibility.",
+    "regole": [
+      "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
+      "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
+      "The three compatibilities (5, 6, 7) correspond to the three planes, heart, body and mind, and are read as a whole."
+    ],
+    "pos": {
+      "1": {"nome": "What you seek", "significato": "What you look for in a bond: the needs, wishes and expectations with which you present yourself.", "domanda": "What am I looking for in this bond?"},
+      "2": {"nome": "What the other person seeks", "significato": "What the other person looks for in a bond, as it shows in their attitudes.", "domanda": "What is the other person looking for?"},
+      "3": {"nome": "Similarities", "significato": "The common ground: what you share and what makes it easy to understand each other.", "domanda": "Where are we alike?"},
+      "4": {"nome": "Differences", "significato": "Where you diverge: the points where you need to meet halfway.", "domanda": "Where are we different?"},
+      "5": {"nome": "Emotional compatibility", "significato": "How far your feelings and emotional needs are in tune.", "domanda": "How do our feelings fit together?"},
+      "6": {"nome": "Physical compatibility", "significato": "The understanding of the bodies: attraction, presence, the way of being close.", "domanda": "How is the understanding between our bodies?"},
+      "7": {"nome": "Mental compatibility", "significato": "The understanding of the minds: dialogue, values, mutual stimulation.", "domanda": "How do our minds fit together?"}
+    }
+  },
+  "compat-nove": {
+    "slug": "compatibility-nine-card",
+    "nome": "Nine-Card Compatibility Spread",
+    "origine": "A modern 3x3 grid spread: at the centre the energy of the bond, at the sides the contributions of the two people (top) and their hidden influences (middle), and below strengths, challenges and potential. Cards 1, 5 and 7 form the 'triangle of truth'.",
+    "descrizione": "A grid of nine cards: central energy, emotional compatibility, each person's contribution, strengths, challenges, long-term potential and the hidden influences.",
+    "regole": [
+      "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
+      "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
+      "Positions 1, 5 and 7 form the triangle of truth: read them together, like an arc: the present (1), the strength to cultivate (5), the destination (7)."
+    ],
+    "pos": {
+      "1": {"nome": "Central energy", "significato": "The heart of the bond and the kind of relationship you are living.", "domanda": "What is the heart of this bond?"},
+      "2": {"nome": "Emotional compatibility", "significato": "How your feelings and emotional needs line up.", "domanda": "How do our feelings line up?"},
+      "3": {"nome": "Your contribution", "significato": "Your attitude, your intentions and the energy you put into the bond.", "domanda": "What do I bring?"},
+      "4": {"nome": "The other person's contribution", "significato": "The other person's emotional investment and role in the bond, as they show themselves.", "domanda": "What does the other person bring?"},
+      "5": {"nome": "Strengths", "significato": "The glue of the bond: what makes it work and grow.", "domanda": "What holds us together?"},
+      "6": {"nome": "Challenges", "significato": "The main points of friction and areas of conflict.", "domanda": "Where are our difficulties?"},
+      "7": {"nome": "Long-term potential", "significato": "Where the bond can get to over time, if the forces stay as they are.", "domanda": "Where can this bond get to?"},
+      "8": {"nome": "Hidden influence: you", "significato": "What acts in you beneath the surface: patterns, habits, baggage that weigh on the bond.", "domanda": "What is acting in me without my noticing?"},
+      "9": {"nome": "Hidden influence: the other person", "significato": "What acts in the other person beneath the surface, as a tendency: never a reading of their mind.", "domanda": "What is acting beneath the surface in the other person?"}
+    }
+  },
+  "compat-anime": {
+    "slug": "soulmate-spread",
+    "nome": "Soulmate Spread (Kindred Souls)",
+    "origine": "The 'soulmate' spread, very popular online: it reads an encounter as a crossing of lessons, using the Major Arcana only.",
+    "descrizione": "Each person's lessons, why you met, what you mirror in each other, the karmic theme, the phase you are in and the potential over time.",
+    "regole": [
+      "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
+      "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
+      "It is a symbolic reading: themes and lessons are food for reflection, not a destiny."
+    ],
+    "pos": {
+      "1": {"nome": "Your lesson", "significato": "What this encounter asks you to learn.", "domanda": "What do I need to learn from this encounter?"},
+      "2": {"nome": "The other person's lesson", "significato": "What this encounter seems to ask the other person to learn, as a tendency.", "domanda": "What can the other person learn?"},
+      "3": {"nome": "Why you met", "significato": "The meaning of the encounter: what drew you together.", "domanda": "Why did we meet?"},
+      "4": {"nome": "What you mirror", "significato": "What each reflects of the other: what you show one another.", "domanda": "What do we mirror in each other?"},
+      "5": {"nome": "The karmic theme", "significato": "The underlying theme the bond carries, like a thread that repeats.", "domanda": "What is the underlying theme of this bond?"},
+      "6": {"nome": "The current phase", "significato": "Where on the path you are now.", "domanda": "Where are we now?"},
+      "7": {"nome": "Long-term potential", "significato": "Where the bond can take you over time if the forces stay as they are.", "domanda": "Where can it take us over time?"}
+    }
+  },
+  "coppia-croce": {
+    "slug": "couple-cross",
+    "nome": "Couple's Cross",
+    "origine": "A five-card cross in common use for relationship readings: the two people at the sides, roots, present and future on the vertical axis.",
+    "descrizione": "You and the other person at the sides; on the vertical axis the roots of the bond, the present and the future. Five Major Arcana, all chosen.",
+    "regole": [
+      "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
+      "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
+      "The vertical axis (3-4-5) is the story of the couple; the horizontal axis (1-4-2) is who lives it."
+    ],
+    "pos": {
+      "1": {"nome": "You", "significato": "Your role in the couple: how you are in the relationship and what part you bring.", "domanda": "How am I in this relationship?"},
+      "2": {"nome": "The other person", "significato": "The other person's role in the couple, how they show themselves and how you perceive it.", "domanda": "What is the other person's role?"},
+      "3": {"nome": "The roots", "significato": "The foundations: how you met and what the bond rests on.", "domanda": "What does our bond rest on?"},
+      "4": {"nome": "The present", "significato": "The current state of the relationship and its dynamics.", "domanda": "What is our relationship like today?"},
+      "5": {"nome": "The future", "significato": "The direction the relationship is taking, if the forces stay as they are.", "domanda": "Where is the relationship going?"}
+    }
+  }
+}

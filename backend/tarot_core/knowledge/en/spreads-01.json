@@ -1,0 +1,108 @@
+{
+  "tre-carte": {
+    "slug": "three-card",
+    "nome": "Three-Card Spread",
+    "origine": "The most widespread spread in the world: a timeline of three Major Arcana.",
+    "descrizione": "Past, present and future: the trajectory of the matter read through the archetypal forces of the 22 Major Arcana alone.",
+    "regole": [
+      "Read it from left to right like a story: the central card is the pivot and colours the other two.",
+      "Dignities are calculated along the line: the present card is modulated by the past and the future.",
+      "Three Major Arcana point to forces that exceed personal will: the advice concerns the attitude with which to go through them."
+    ],
+    "pos": {
+      "1": {"nome": "Past", "significato": "The forces that produced the situation and that still act as its root.", "domanda": "Where does this situation come from?"},
+      "2": {"nome": "Present", "significato": "The current knot: the dominant energy at this moment, what the querent is dealing with now.", "domanda": "What is the heart of the matter right now?"},
+      "3": {"nome": "Future", "significato": "The most probable tendency if the forces in play continue without a change of course.", "domanda": "Where is the situation heading?"}
+    }
+  },
+  "croce-semplice": {
+    "slug": "simple-cross",
+    "nome": "Simple Cross (Wirth)",
+    "origine": "A method popularised by Oswald Wirth and a cornerstone of the Italian tradition: four Major Arcana and a calculated synthesis.",
+    "descrizione": "For, against, the why and the judge; at the centre the synthesis, which is not drawn but calculated by adding up the Arcana.",
+    "regole": [
+      "The fifth card is not chosen: it is the theosophical reduction of the sum of the numbers of cards 1–4 (the Fool counts as 0; if the sum is 0 it counts as 22, that is, the Fool).",
+      "If the synthesis Arcanum has already appeared in the spread, it carries a double weight: its message is reinforced and becomes the key to the reading.",
+      "The judge (4) is the answer; the synthesis (5) is its deeper meaning and tone."
+    ],
+    "pos": {
+      "1": {"nome": "For", "significato": "What supports the querent: resources, allied forces, affirmation.", "domanda": "What is working in your favour?"},
+      "2": {"nome": "Against", "significato": "What opposes: obstacles, fears, negation.", "domanda": "What stands in the way?"},
+      "3": {"nome": "The why", "significato": "The discussion: the deep cause of the question and the way the matter is developing.", "domanda": "Why does the question arise now?"},
+      "4": {"nome": "The judge", "significato": "The verdict: the cards' answer to the question, the indication that resolves the tension between for and against.", "domanda": "What is the answer?"},
+      "5": {"nome": "Synthesis", "significato": "The synthesis: the Arcanum that sums up the whole spread. It is obtained by adding the numbers of the first four cards; if the total exceeds 22, its digits are added.", "domanda": "What is the overall meaning?"}
+    }
+  },
+  "ferro-di-cavallo": {
+    "slug": "horseshoe",
+    "nome": "Horseshoe Spread",
+    "origine": "A traditional seven-card spread laid out in a V, widespread in European cartomancy for practical questions.",
+    "descrizione": "Seven cards in a horseshoe: from the past to the outcome, by way of what is hidden, the obstacles, the surroundings and the advice.",
+    "regole": [
+      "Card 4 is the apex: every reading of the horseshoe revolves around the obstacle.",
+      "A court card in position 5 usually points to a real person in the querent's surroundings.",
+      "Dignities are read along the arc: each card is modulated by its two neighbours."
+    ],
+    "pos": {
+      "1": {"nome": "Past", "significato": "The events and choices that led up to this point.", "domanda": "What prepared the situation?"},
+      "2": {"nome": "Present", "significato": "The current situation as it is lived.", "domanda": "What is the situation like now?"},
+      "3": {"nome": "Hidden influences", "significato": "What acts without being seen: unconscious factors, missing information.", "domanda": "What can't be seen?"},
+      "4": {"nome": "Obstacles", "significato": "The point of resistance: what holds back or must be crossed. It is the apex of the spread.", "domanda": "What is the main obstacle?"},
+      "5": {"nome": "Surroundings", "significato": "The people and outside circumstances: how others influence things.", "domanda": "How do the surroundings affect it?"},
+      "6": {"nome": "Advice", "significato": "The attitude or action the cards suggest.", "domanda": "What is best to do?"},
+      "7": {"nome": "Outcome", "significato": "The most probable tendency if the advice is followed and the forces stay as they are.", "domanda": "Where does it lead?"}
+    }
+  },
+  "croce-celtica": {
+    "slug": "celtic-cross",
+    "nome": "Celtic Cross",
+    "origine": "Published by A. E. Waite in 1910 and become the most famous spread of the modern tarot.",
+    "descrizione": "Ten cards: the cross describes the situation and its timing, the staff on the right describes the querent, the surroundings and the outcome.",
+    "regole": [
+      "The cross (1–6) describes the situation; the staff (7–10) describes the querent and the evolution.",
+      "Card 2 is never read as reversed in the strict sense: laid across the first, it is by nature what opposes or adds to the present.",
+      "Dignities are read along the lines: horizontal (3–1–6), vertical (5–1–4) and the staff (7–10).",
+      "The outcome (10) should be read together with the crown (5) and the attitude (7) before concluding."
+    ],
+    "pos": {
+      "1": {"nome": "The present", "significato": "The heart of the situation: what covers the querent.", "domanda": "What is happening?"},
+      "2": {"nome": "The challenge", "significato": "What crosses the present: the obstacle or the force to be integrated. It is laid across the first card.", "domanda": "What crosses your path?"},
+      "3": {"nome": "Recent past", "significato": "What is ending and receding, but still has an effect.", "domanda": "What is passing?"},
+      "4": {"nome": "The foundation", "significato": "What lies beneath: the unconscious root, the base on which everything rests.", "domanda": "What does the situation rest on?"},
+      "5": {"nome": "The crown", "significato": "What lies above: the conscious goal, the best that can be obtained.", "domanda": "What do you aspire to?"},
+      "6": {"nome": "Near future", "significato": "What is arriving in the coming weeks.", "domanda": "What is approaching?"},
+      "7": {"nome": "Your attitude", "significato": "How the querent stands in relation to the matter.", "domanda": "How do you stand toward it?"},
+      "8": {"nome": "The surroundings", "significato": "The people, the outside circumstances, the way others see the matter.", "domanda": "What comes from outside?"},
+      "9": {"nome": "Hopes and fears", "significato": "What is wished for and what is feared: often the same thing.", "domanda": "What do you hope for, what do you fear?"},
+      "10": {"nome": "The outcome", "significato": "The most probable tendency, a synthesis of all the forces in the field.", "domanda": "Where does all this lead?"}
+    }
+  },
+  "ruota-astrologica": {
+    "slug": "astrological-wheel",
+    "nome": "Astrological Wheel",
+    "origine": "A twelve-house spread modelled on the birth chart, traditionally used for the year ahead; here with a significator at the centre.",
+    "descrizione": "One card for each of the twelve astrological houses and one at the centre as the dominant theme: a complete panorama of life.",
+    "regole": [
+      "The houses are read counter-clockwise starting from the Ascendant (House I, on the left).",
+      "A strong card in an angular house (I, IV, VII, X) weighs more than the others.",
+      "Opposite axes (I–VII, II–VIII, III–IX, IV–X, V–XI, VI–XII) are read as pairs.",
+      "The significator at the centre sets the tone for the whole wheel: the houses that agree with it describe the fields where the theme manifests.",
+      "Dignities are calculated around the ring: each house is modulated by its two neighbours; the significator stays neutral."
+    ],
+    "pos": {
+      "1": {"nome": "House I", "significato": "The self, the personality, appearance and the beginning of everything.", "domanda": "What is happening in the field of House I?"},
+      "2": {"nome": "House II", "significato": "Money, possessions, values and personal resources.", "domanda": "What is happening in the field of House II?"},
+      "3": {"nome": "House III", "significato": "Communication, siblings, short journeys, the nearby environment.", "domanda": "What is happening in the field of House III?"},
+      "4": {"nome": "House IV", "significato": "Home, the family of origin, roots and the end of things.", "domanda": "What is happening in the field of House IV?"},
+      "5": {"nome": "House V", "significato": "Love, pleasure, creativity, children, play.", "domanda": "What is happening in the field of House V?"},
+      "6": {"nome": "House VI", "significato": "Daily work, health as a habit, service.", "domanda": "What is happening in the field of House VI?"},
+      "7": {"nome": "House VII", "significato": "The partner, marriage, business partners and declared opponents.", "domanda": "What is happening in the field of House VII?"},
+      "8": {"nome": "House VIII", "significato": "Transformations, crises, sexuality, inheritances and other people's assets.", "domanda": "What is happening in the field of House VIII?"},
+      "9": {"nome": "House IX", "significato": "Distant travel, spirituality, study, worldview.", "domanda": "What is happening in the field of House IX?"},
+      "10": {"nome": "House X", "significato": "Career, reputation, vocation and goals.", "domanda": "What is happening in the field of House X?"},
+      "11": {"nome": "House XI", "significato": "Friends, groups, projects and hopes.", "domanda": "What is happening in the field of House XI?"},
+      "12": {"nome": "House XII", "significato": "The unconscious, hidden trials, retreats, what needs to be dissolved.", "domanda": "What is happening in the field of House XII?"},
+      "13": {"nome": "The significator", "significato": "The centre of the wheel: the dominant theme of the year or the phase, the thread joining the twelve houses.", "domanda": "What is the theme that unites everything?"}
+    }
+  }
+}

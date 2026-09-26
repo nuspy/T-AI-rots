@@ -1,0 +1,13 @@
+{
+  "elemento": {"aria": "Air", "fuoco": "Fire", "acqua": "Water", "terra": "Earth", "spirito": "Spirit"},
+  "seme": {"bastoni": "Wands", "coppe": "Cups", "spade": "Swords", "dischi": "Disks"},
+  "rango": {
+    "asso": "Ace", "due": "Two", "tre": "Three", "quattro": "Four", "cinque": "Five", "sei": "Six",
+    "sette": "Seven", "otto": "Eight", "nove": "Nine", "dieci": "Ten",
+    "cavaliere": "Knight", "regina": "Queen", "principe": "Prince", "principessa": "Princess"
+  },
+  "arcano": {"maggiore": "Major Arcana", "minore": "Minor Arcana"},
+  "mazzo": {"maggiori": "The 22 Major Arcana", "completo": "The full 78-card deck"},
+  "categoria": {"standard": "Classic spread", "compatibilita": "Compatibility spread", "coppia": "Relationship spread"},
+  "stile": {"tradizionale": "Traditional", "moderna": "Modern", "tendenza": "Trending"}
+}

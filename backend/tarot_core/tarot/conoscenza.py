@@ -7,15 +7,23 @@ fermare l'avvio, non comparire alla prima lettura di un utente.
 I **nomi** in altre lingue stanno in `nomi.json` (oggi l'ungherese): sono
 dati, non testo dell'interfaccia, e vengono validati come il mazzo — una carta
 o una posizione senza traduzione ferma l'avvio.
+
+I **testi lunghi** (significati, attribuzioni, regole delle stese) esistono in italiano
+e in inglese: quelli inglesi stanno in `knowledge/en/` (`cards-*.json`, `spreads-*.json`,
+`termini.json`) e sono la lingua **canonica delle pagine pubbliche**: l'SEO internazionale
+si fa in inglese. Anch'essi si validano all'avvio: una carta senza la sua scheda inglese, o
+due slug uguali, sono errori di rilascio.
 """
 from __future__ import annotations
 
 import json
 import logging
 from dataclasses import dataclass, field
+from functools import cached_property
 from typing import Any, Dict, List, Optional
 
 from ..paths import KNOWLEDGE_DIR
+from .blog import slugify
 from .lingue import lingua
 
 logger = logging.getLogger(__name__)
@@ -28,6 +36,14 @@ STILI = ("tradizionale", "moderna", "tendenza")
 
 #: Di chi è il vissuto che una posizione descrive (solo nelle stese speciali).
 SOGGETTI = ("tu", "partner", "coppia", "strada-a", "strada-b")
+
+#: Le lingue dei testi lunghi. L'italiano sta nei dati originali, le altre in `knowledge/<codice>/`.
+LINGUE_CONTENUTO = ("it", "en")
+
+#: Cosa deve avere la scheda di una carta e di una stesa in un'altra lingua.
+CAMPI_TESTO_CARTA = ("astro", "kw", "exo", "psy", "ini", "sha", "up", "rev", "love", "work", "spirit", "crowley")
+CAMPI_TESTO_STESA = ("slug", "nome", "origine", "descrizione", "regole", "pos")
+CAMPI_TESTO_POSIZIONE = ("nome", "significato", "domanda")
 
 CAMPI_CARTA = (
     "id", "arcano", "numero", "seme", "rango", "nome_thoth", "nome_it",
@@ -53,6 +69,8 @@ class Conoscenza:
     dottrina: str
     #: lingua → {"carte": {id: nome}, "stese": {id: {"nome", "posizioni": {n: nome}}}}
     nomi: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    #: lingua → {"carte": {id: scheda}, "stese": {id: scheda}, "termini": {...}}: i testi lunghi tradotti.
+    testi: Dict[str, Dict[str, Any]] = field(default_factory=dict)
 
     @classmethod
     def carica(cls, cartella=KNOWLEDGE_DIR) -> "Conoscenza":
@@ -62,17 +80,20 @@ class Conoscenza:
         dottrina = dottrina_path.read_text(encoding="utf-8") if dottrina_path.exists() else ""
         nomi_path = cartella / "nomi.json"
         nomi = json.loads(nomi_path.read_text(encoding="utf-8")) if nomi_path.exists() else {}
+        testi = _carica_testi(cartella)
         conoscenza = cls(
             carte={c["id"]: c for c in mazzo},
             ordine=[c["id"] for c in mazzo],
             stese={s["id"]: s for s in stese},
             dottrina=dottrina,
             nomi=nomi,
+            testi=testi,
         )
         conoscenza.valida()
         logger.info(
-            "Base di conoscenza: %d carte, %d stese, dottrina di %d caratteri, nomi in %s",
+            "Base di conoscenza: %d carte, %d stese, dottrina di %d caratteri, nomi in %s, testi in %s",
             len(conoscenza.carte), len(conoscenza.stese), len(dottrina), ", ".join(nomi) or "nessuna lingua",
+            ", ".join(testi) or "solo italiano",
         )
         return conoscenza
 
@@ -116,6 +137,50 @@ class Conoscenza:
                 manca = [p["n"] for p in stesa["posizioni"] if str(p["n"]) not in tradotta.get("posizioni", {})]
                 if manca:
                     raise ConoscenzaNonValida(f"nomi {codice}: {stesa['id']} senza le posizioni {manca}")
+
+        self._valida_testi()
+
+    def _valida_testi(self) -> None:
+        """I testi lunghi tradotti coprono tutto il catalogo, con gli stessi campi e slug distinti."""
+        for codice, per_lingua in self.testi.items():
+            carte = per_lingua.get("carte", {})
+            senza = [i for i in self.carte if i not in carte]
+            if senza:
+                raise ConoscenzaNonValida(f"testi {codice}: mancano le carte {senza[:3]}…")
+            extra = [i for i in carte if i not in self.carte]
+            if extra:
+                raise ConoscenzaNonValida(f"testi {codice}: carte inesistenti {extra[:3]}")
+            for card_id, scheda in carte.items():
+                mancanti = [k for k in CAMPI_TESTO_CARTA if not scheda.get(k)]
+                if mancanti:
+                    raise ConoscenzaNonValida(f"testi {codice}: {card_id} senza {mancanti}")
+                if len(scheda["kw"]) != len(self.carte[card_id]["parole_chiave"]):
+                    raise ConoscenzaNonValida(f"testi {codice}: {card_id} ha un numero diverso di parole chiave")
+            termini = per_lingua.get("termini", {})
+            for campo in ("elemento", "seme", "rango", "arcano"):
+                valori = {c.get(campo) for c in self.carte.values() if c.get(campo)}
+                senza_termine = sorted(v for v in valori if v not in termini.get(campo, {}))
+                if senza_termine:
+                    raise ConoscenzaNonValida(f"testi {codice}: termini «{campo}» mancanti {senza_termine}")
+            stese = per_lingua.get("stese", {})
+            for stesa in self.stese.values():
+                scheda = stese.get(stesa["id"])
+                if not scheda:
+                    raise ConoscenzaNonValida(f"testi {codice}: manca la stesa {stesa['id']}")
+                mancanti = [k for k in CAMPI_TESTO_STESA if not scheda.get(k)]
+                if mancanti:
+                    raise ConoscenzaNonValida(f"testi {codice}: {stesa['id']} senza {mancanti}")
+                if len(scheda["regole"]) != len(stesa["regole"]):
+                    raise ConoscenzaNonValida(f"testi {codice}: {stesa['id']} ha un numero diverso di regole")
+                for p in stesa["posizioni"]:
+                    tradotta = scheda["pos"].get(str(p["n"]))
+                    if not tradotta or any(not tradotta.get(k) for k in CAMPI_TESTO_POSIZIONE):
+                        raise ConoscenzaNonValida(f"testi {codice}: {stesa['id']} posizione {p['n']} incompleta")
+            slug_carte = [self._slug_carta_in(codice, i) for i in self.carte]
+            slug_stese = [scheda["slug"] for scheda in stese.values()]
+            for tipo, slug in (("carte", slug_carte), ("stese", slug_stese)):
+                if len(set(slug)) != len(slug):
+                    raise ConoscenzaNonValida(f"testi {codice}: slug duplicati fra le {tipo}")
 
     def _valida_geometria(self, stesa: Dict[str, Any]) -> None:
         """Le coordinate stanno sul tavolo e la larghezza delle carte è sensata."""
@@ -227,16 +292,76 @@ class Conoscenza:
                 nomi[codice] = nome
         return nomi
 
+    # -- la lingua dei testi lunghi e gli indirizzi delle pagine ---------------
+
+    def lingua_contenuto(self, lang: Optional[str]) -> str:
+        """`it` o `en`: la lingua dei testi lunghi di una carta o di una stesa.
+
+        Senza lingua (o con `it`) l'italiano, com'è sempre stato: chi non la chiede non vede
+        cambiare niente. Ogni altra lingua ricade sull'inglese, la lingua internazionale delle
+        pagine pubbliche.
+        """
+        if not lang:
+            return "it"
+        if lingua(lang) == "it":
+            return "it"
+        return "en" if "en" in self.testi else "it"
+
+    def _slug_carta_in(self, codice: str, card_id: str) -> str:
+        carta = self.carte[card_id]
+        return slugify(carta["nome_it"] if codice == "it" else carta["nome_thoth"])
+
+    def slug_carta(self, card_id: str, lang: Optional[str] = None) -> str:
+        """L'indirizzo della carta: `la-stella` in italiano, `the-star` in inglese."""
+        return self._slug_carta_in(self.lingua_contenuto(lang), card_id)
+
+    def slug_stesa(self, spread_id: str, lang: Optional[str] = None) -> str:
+        """`croce-celtica` in italiano (l'id stesso), `celtic-cross` in inglese."""
+        codice = self.lingua_contenuto(lang)
+        return spread_id if codice == "it" else self.testi[codice]["stese"][spread_id]["slug"]
+
+    @cached_property
+    def _indice_carte(self) -> Dict[str, str]:
+        indice: Dict[str, str] = {}
+        for card_id in self.carte:
+            indice[card_id] = card_id
+        for card_id in self.carte:
+            for codice in ("it", *self.testi):
+                indice.setdefault(self._slug_carta_in(codice, card_id), card_id)
+        return indice
+
+    @cached_property
+    def _indice_stese(self) -> Dict[str, str]:
+        indice: Dict[str, str] = {spread_id: spread_id for spread_id in self.stese}
+        for per_lingua in self.testi.values():
+            for spread_id, scheda in per_lingua.get("stese", {}).items():
+                indice.setdefault(scheda["slug"], spread_id)
+        return indice
+
+    def risolvi_carta(self, chiave: str) -> Optional[str]:
+        """L'id di una carta da un id o da uno slug in qualunque lingua (`maj-17`, `la-stella`, `the-star`)."""
+        return self._indice_carte.get((chiave or "").strip().lower())
+
+    def risolvi_stesa(self, chiave: str) -> Optional[str]:
+        """L'id di una stesa da un id o da uno slug (`croce-celtica`, `celtic-cross`)."""
+        return self._indice_stese.get((chiave or "").strip().lower())
+
     # -- ciò che esce verso il frontend --------------------------------------
 
-    def carta_pubblica(self, card_id: str, *, completa: bool = False) -> Dict[str, Any]:
+    def carta_pubblica(self, card_id: str, *, completa: bool = False, lang: Optional[str] = None) -> Dict[str, Any]:
         """Ciò che il frontend riceve di una carta rivelata.
 
         Senza `completa` si tolgono i testi lunghi: il pallino sopra la carta
         mostra l'interpretazione della lettura, non l'enciclopedia. `nomi` porta
         il nome nelle altre lingue (`en` sempre, e quelle di `nomi.json`).
+
+        Con `lang="en"` i testi (parole chiave, attribuzioni, significati) sono quelli inglesi
+        e le etichette dei termini (`elemento_label`…) sono tradotte; `nome` e `slug` sono
+        sempre nella lingua dei testi, e `slugs` porta l'indirizzo in ciascuna lingua (per
+        `hreflang`). I campi grezzi (`elemento`, `seme`, `arcano`) non cambiano mai.
         """
         c = self.carte[card_id]
+        codice = self.lingua_contenuto(lang)
         base = {
             k: c.get(k) for k in (
                 "id", "arcano", "numero", "numero_romano", "seme", "rango",
@@ -245,6 +370,18 @@ class Conoscenza:
             )
         }
         base["nomi"] = self._nomi_carta(c)
+        base["lang"] = codice
+        base["nome"] = self.nome_carta(card_id, codice)
+        base["slug"] = self.slug_carta(card_id, codice)
+        base["slugs"] = {k: self.slug_carta(card_id, k) for k in ("it", *self.testi)}
+        scheda = self.testi[codice]["carte"][card_id] if codice != "it" else None
+        if scheda is not None:
+            termini = self.testi[codice]["termini"]
+            base["parole_chiave"] = scheda["kw"]
+            base["astrologia"] = scheda["astro"]
+            for campo in ("elemento", "seme", "rango", "arcano"):
+                valore = c.get(campo)
+                base[f"{campo}_label"] = termini[campo].get(valore) if valore else None
         if completa:
             base.update({
                 k: c.get(k) for k in (
@@ -252,9 +389,20 @@ class Conoscenza:
                     "rovescio", "ambiti", "nota_crowley",
                 )
             })
+            if scheda is not None:
+                base.update({
+                    "significati": {
+                        "essoterico": scheda["exo"], "psicologico": scheda["psy"],
+                        "iniziatico": scheda["ini"], "ombra": scheda["sha"],
+                    },
+                    "dritto": scheda["up"],
+                    "rovescio": scheda["rev"],
+                    "ambiti": {"amore": scheda["love"], "lavoro": scheda["work"], "spirito": scheda["spirit"]},
+                    "nota_crowley": scheda["crowley"],
+                })
         return base
 
-    def stesa_pubblica(self, stesa: Dict[str, Any]) -> Dict[str, Any]:
+    def stesa_pubblica(self, stesa: Dict[str, Any], lang: Optional[str] = None) -> Dict[str, Any]:
         def nomi_di(nome_en: Optional[str], estrai) -> Dict[str, str]:
             nomi = {"en": nome_en} if nome_en else {}
             for codice, per_lingua in self.nomi.items():
@@ -267,7 +415,8 @@ class Conoscenza:
             p | {"nomi": nomi_di(p.get("nome_en"), lambda t, n=p["n"]: t.get("posizioni", {}).get(str(n)))}
             for p in stesa["posizioni"]
         ]
-        return {
+        codice = self.lingua_contenuto(lang)
+        pubblica = {
             k: stesa.get(k) for k in (
                 "id", "nome", "nome_en", "mazzo", "carte_da_scegliere", "origine",
                 "descrizione", "regole", "coppie", "stile", "larghezza", "larghezza_stretto",
@@ -278,4 +427,46 @@ class Conoscenza:
             "posizioni": posizioni,
             "nomi": nomi_di(stesa.get("nome_en"), lambda t: t.get("nome")),
             "sintesi_wirth": bool(stesa.get("sintesi_wirth")),
+            "lang": codice,
+            "slug": self.slug_stesa(stesa["id"], codice),
+            "slugs": {k: self.slug_stesa(stesa["id"], k) for k in ("it", *self.testi)},
         }
+        if codice != "it":
+            per_lingua = self.testi[codice]
+            scheda = per_lingua["stese"][stesa["id"]]
+            termini = per_lingua["termini"]
+            pubblica |= {
+                "nome": scheda["nome"], "origine": scheda["origine"], "descrizione": scheda["descrizione"],
+                "regole": scheda["regole"],
+                "mazzo_label": termini.get("mazzo", {}).get(stesa["mazzo"]),
+                "categoria_label": termini.get("categoria", {}).get(pubblica["categoria"]),
+                "stile_label": termini.get("stile", {}).get(stesa.get("stile") or ""),
+            }
+            for p in pubblica["posizioni"]:
+                testo = scheda["pos"][str(p["n"])]
+                p["nome"], p["significato"], p["domanda"] = testo["nome"], testo["significato"], testo["domanda"]
+        return pubblica
+
+
+def _carica_testi(cartella) -> Dict[str, Dict[str, Any]]:
+    """`knowledge/<lingua>/` → carte, stese e termini nella lingua. Senza cartella, solo l'italiano."""
+    testi: Dict[str, Dict[str, Any]] = {}
+    for codice in LINGUE_CONTENUTO:
+        if codice == "it":
+            continue
+        sotto = cartella / codice
+        if not sotto.is_dir():
+            continue
+        per_lingua: Dict[str, Any] = {"carte": {}, "stese": {}, "termini": {}}
+        for chiave, modello in (("carte", "cards-*.json"), ("stese", "spreads-*.json")):
+            for file in sorted(sotto.glob(modello)):
+                parte = json.loads(file.read_text(encoding="utf-8"))
+                doppie = set(parte) & set(per_lingua[chiave])
+                if doppie:
+                    raise ConoscenzaNonValida(f"testi {codice}: {file.name} ripete {sorted(doppie)[:3]}")
+                per_lingua[chiave].update(parte)
+        termini = sotto / "termini.json"
+        if termini.exists():
+            per_lingua["termini"] = json.loads(termini.read_text(encoding="utf-8"))
+        testi[codice] = per_lingua
+    return testi

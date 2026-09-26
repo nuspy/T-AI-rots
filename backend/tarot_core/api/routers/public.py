@@ -21,40 +21,49 @@ from ..deps import get_conoscenza
 router = APIRouter(tags=["pubblico"])
 
 
+#: `?lang=` sceglie la lingua dei testi lunghi: `en` (la lingua delle pagine pubbliche) o `it`. Senza,
+#: l'italiano di sempre: chi non lo chiede non vede cambiare niente.
+Lang = Query(default=None, max_length=10, description="it o en: la lingua dei testi")
+
+
 @router.get("/spreads")
 def stese(
     categoria: Optional[str] = Query(default=None, pattern="^(standard|compatibilita|coppia)$"),
+    lang: Optional[str] = Lang,
 ) -> List[Dict[str, Any]]:
     """Le stese. Con `?categoria=` solo quelle della lettura standard, di
     compatibilità o di coppia; senza, tutte. La home e la scelta della stesa
     standard chiedono `standard`, così le letture speciali non vi compaiono."""
     conoscenza = get_conoscenza()
     scelte = conoscenza.stese_per(categoria) if categoria else conoscenza.stese.values()
-    return [conoscenza.stesa_pubblica(s) for s in scelte]
+    return [conoscenza.stesa_pubblica(s, lang) for s in scelte]
 
 
 @router.get("/spreads/{spread_id}")
-def stesa(spread_id: str) -> Dict[str, Any]:
-    """Una stesa, per la sua pagina pubblica: posizioni, significati, regole."""
+def stesa(spread_id: str, lang: Optional[str] = Lang) -> Dict[str, Any]:
+    """Una stesa, per la sua pagina pubblica: posizioni, significati, regole. Si trova per id
+    (`croce-celtica`) o per slug (`celtic-cross`)."""
     conoscenza = get_conoscenza()
-    trovata = conoscenza.stesa(spread_id)
+    trovata = conoscenza.stesa(conoscenza.risolvi_stesa(spread_id) or "")
     if trovata is None:
         raise HTTPException(status_code=404, detail="Stesa sconosciuta")
-    return conoscenza.stesa_pubblica(trovata)
+    return conoscenza.stesa_pubblica(trovata, lang)
 
 
 @router.get("/cards")
-def carte() -> List[Dict[str, Any]]:
+def carte(lang: Optional[str] = Lang) -> List[Dict[str, Any]]:
     conoscenza = get_conoscenza()
-    return [conoscenza.carta_pubblica(i) for i in conoscenza.ordine]
+    return [conoscenza.carta_pubblica(i, lang=lang) for i in conoscenza.ordine]
 
 
 @router.get("/cards/{card_id}")
-def carta(card_id: str) -> Dict[str, Any]:
+def carta(card_id: str, lang: Optional[str] = Lang) -> Dict[str, Any]:
+    """Una carta, per id (`maj-17`) o per slug in qualunque lingua (`the-star`, `la-stella`)."""
     conoscenza = get_conoscenza()
-    if card_id not in conoscenza.carte:
+    trovata = conoscenza.risolvi_carta(card_id)
+    if trovata is None:
         raise HTTPException(status_code=404, detail="Carta sconosciuta")
-    return conoscenza.carta_pubblica(card_id, completa=True)
+    return conoscenza.carta_pubblica(trovata, completa=True, lang=lang)
 
 
 @router.get("/disclaimer")

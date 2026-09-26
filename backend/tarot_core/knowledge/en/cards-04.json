@@ -1,0 +1,58 @@
+{
+  "maj-18": {
+    "astro": "Pisces",
+    "kw": ["illusion", "the unconscious", "fear", "threshold", "passage"],
+    "exo": "Illusions, deceptions, fears and uncertainties. It points to a phase of passage in which things are not what they seem.",
+    "psy": "The unconscious with its dreams and fears; the territory in which unacknowledged emotions take shape.",
+    "ini": "Path 29 from Netzach to Malkuth, the letter Qoph (the back of the head, 100) and Pisces, the mutable water of Jupiter in which Venus is exalted: the dark threshold before dawn. The scarab Khephra pushes the sun through the waters of the night.",
+    "sha": "Ill-dignified, it signals deception, confusion, irrational fears, escapes and dependences.",
+    "up": "Cross the uncertainty without letting fear rule you; what is hidden will come to light in its own time.",
+    "rev": "Illusions beginning to dissolve and truths surfacing; or fears that take root because they are avoided.",
+    "love": "Doubts, jealousy, projections; clarity and a check of the facts are needed.",
+    "work": "Unclear situations, misleading information; be careful with decisions and paperwork.",
+    "spirit": "Crossing the dark night of the soul, with the certainty that the sun is already rising.",
+    "crowley": "Crowley's Moon is an unsettling threshold: two black towers and two figures of Anubis with jackals guard the path, while the scarab beneath the waters carries the sun toward morning."
+  },
+  "maj-19": {
+    "astro": "Sun",
+    "kw": ["joy", "vitality", "success", "clarity", "freedom"],
+    "exo": "Success, joy, vitality, clarity. It points to a bright period, recognition, health and good relationships.",
+    "psy": "Fully self-aware consciousness, the joy of existing without shame; innocence regained after maturity.",
+    "ini": "Path 30 from Hod to Yesod, the letter Resh (the head, 200) and the Sun: the light that illuminates the intellect and the foundation. It is the Lord of the new Aeon, solar consciousness restored to humanity.",
+    "sha": "Ill-dignified, it signals vanity, arrogance, blind optimism, exhibitionism.",
+    "up": "Everything becomes clearer: success, joy and transparency. A favourable moment in almost every field.",
+    "rev": "Joy that is clouded or inflated; the success is there but goes unrecognised, or turns into self-satisfaction.",
+    "love": "Happiness, warmth, a sunny and sincere relationship; a bright period for the couple and for new acquaintances.",
+    "work": "Success, visibility, creative energy and recognition of merit.",
+    "spirit": "The light of the Self illuminating everything without distinction.",
+    "crowley": "Crowley's Sun announces the freedom of the new Aeon: two winged children dance on a green hill ringed by a wall, a limit humanity is called to overcome, beneath a sun surrounded by the twelve signs."
+  },
+  "maj-20": {
+    "astro": "Fire/Spirit",
+    "kw": ["renewal", "awakening", "turning point", "new era", "decision"],
+    "exo": "Renewal, final decisions, awakening. It points to a turning point that closes one chapter and opens another, often with sudden clarity.",
+    "psy": "The call to a new consciousness of yourself; the ability to take leave of the past and be reborn with a different outlook.",
+    "ini": "Path 31 from Hod to Malkuth, the letter Shin (the tooth, 300) and Fire together with Spirit: the fire that descends to transform matter. It is the advent of the Aeon of Horus, the Crowned and Conquering Child.",
+    "sha": "Ill-dignified, it signals postponed decisions, hasty judgements, fear of the new, or fanaticism.",
+    "up": "A new phase begins: answer the call and make the decision you have been putting off.",
+    "rev": "An awakening postponed, or a fear of being judged; the change remains inevitable all the same.",
+    "love": "A deep renewal of the relationship, or a final decision about the bond.",
+    "work": "A professional turning point, a new course, the need to update yourself to the times.",
+    "spirit": "The Aeon of Horus: the consciousness of the divine child, freedom and True Will.",
+    "crowley": "Crowley replaces Judgement with the Aeon, inspired by the Stele of Revelation: Nuit arched across the background, the winged globe of Hadit, and Horus in the double form of a child and a seated god."
+  },
+  "maj-21": {
+    "astro": "Saturn/Earth",
+    "kw": ["completion", "wholeness", "synthesis", "fulfilment", "the dance"],
+    "exo": "Completion, fulfilment, final success. It points to the end of a cycle, the reaching of a goal and sometimes to journeys or a widening of horizons.",
+    "psy": "The integrated wholeness of the person; the peace of someone who has given form to their potential and can recognise themselves as whole.",
+    "ini": "Path 32 from Yesod to Malkuth, the letter Tau (the cross, the seal, 400) and at once Saturn and Earth: the last path, where manifestation is completed and from which the return begins. The seal of the Great Work is also the door of the ascent.",
+    "sha": "Ill-dignified, it signals stagnation, inertia, works left unfinished, Saturnine rigidity.",
+    "up": "Completion and integration: the cycle closes successfully and the next one is prepared.",
+    "rev": "Something remains unfinished or too heavy; it needs to be completed before you begin anything else.",
+    "love": "A full, mature union, a sense of shared completeness; sometimes a bond that opens out to the world or to a journey together.",
+    "work": "Goals reached, projects concluded, recognition of a long path.",
+    "spirit": "The Great Work accomplished: matter revealed as the dance of spirit.",
+    "crowley": "Crowley's Universe is a maiden dancing with the serpent, turning the spiral of energy inside an ellipse of seventy-two sections; the Kerubim stand at the four corners, and at the centre the pattern of the elements."
+  }
+}

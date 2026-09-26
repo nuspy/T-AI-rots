@@ -1,0 +1,86 @@
+{
+  "coppia-stazione": {
+    "slug": "station-for-two",
+    "nome": "Station for Two (Thoughts, Feelings, Actions)",
+    "origine": "A symmetrical spread from the Italian tradition for relationships: the cards are read in mirrored pairs, and the central one last.",
+    "descrizione": "Each person's thoughts, feelings and actions, read in mirrored pairs; at the centre the current situation, which is uncovered last.",
+    "regole": [
+      "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
+      "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
+      "The cards are read in mirrored pairs (thoughts, feelings, actions) and compared with each other.",
+      "The current situation (7) sits at the centre, is uncovered last and sums up: it shows the nature of the bond and the obstacles between the people."
+    ],
+    "pos": {
+      "1": {"nome": "What you think of the other person", "significato": "Your thoughts about the other person: how you see them and what idea you have formed of the relationship.", "domanda": "What do I think of the other person?"},
+      "2": {"nome": "What they think of you", "significato": "How the other person seems to see you, as a tendency: never a reading of their mind.", "domanda": "What do they seem to think of me?"},
+      "3": {"nome": "What you feel", "significato": "Your feelings toward the other person and toward the relationship.", "domanda": "What do I feel?"},
+      "4": {"nome": "What the other person feels", "significato": "The feelings the other person seems to experience, as a tendency.", "domanda": "What does the other person seem to feel?"},
+      "5": {"nome": "What you do", "significato": "Your behaviour and actions in the relationship.", "domanda": "What do I do?"},
+      "6": {"nome": "What the other person does", "significato": "The other person's behaviour and actions, as they show themselves.", "domanda": "What does the other person do?"},
+      "7": {"nome": "The current situation", "significato": "What is really going on between you, in the light of everything else: read last. It shows the nature of the bond and the obstacles.", "domanda": "What is going on between us?"}
+    }
+  },
+  "coppia-sette": {
+    "slug": "relationship-seven-card",
+    "nome": "Seven-Card Relationship Spread",
+    "origine": "The canonical 'relationship spread' of modern cartomancy: the two people, the bond, what works, what chafes, the advice and the outcome.",
+    "descrizione": "You, the other person, the bond; then a strength and a friction, the advice and the outcome if it is followed.",
+    "regole": [
+      "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
+      "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
+      "Strength (4) and friction (5) belong to neither of the two people: they belong to the bond."
+    ],
+    "pos": {
+      "1": {"nome": "You", "significato": "Your current position in the relationship and the energy you bring.", "domanda": "What is my position in the relationship?"},
+      "2": {"nome": "The other person", "significato": "The other person's position in the relationship and what they bring, as they show themselves.", "domanda": "What is the other person's position?"},
+      "3": {"nome": "The bond", "significato": "The shared field: the quality of the bond between you, beyond the two people.", "domanda": "What is our bond like?"},
+      "4": {"nome": "Strength", "significato": "What works and is worth preserving.", "domanda": "What works between us?"},
+      "5": {"nome": "Friction", "significato": "The difficulty or repeating pattern that tests the relationship.", "domanda": "What tests us?"},
+      "6": {"nome": "Advice", "significato": "The move suggested to the querent for the current phase of the relationship.", "domanda": "What do the cards advise me?"},
+      "7": {"nome": "Outcome", "significato": "The trajectory of the relationship if the advice is followed: a tendency, not a verdict.", "domanda": "Where does the relationship lead if I follow the advice?"}
+    }
+  },
+  "coppia-specchio": {
+    "slug": "mirror-spread",
+    "nome": "Relationship Mirror Spread",
+    "origine": "The 'mirror': a modern spread for relationships already under way, which compares how you see each other and what you represent to one another.",
+    "descrizione": "How you see the other person and how they see themselves, what they represent to you and what you represent to them; in the middle the obstacles, then strengths and the probable result.",
+    "regole": [
+      "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
+      "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
+      "The obstacles (6) are at the centre, between the two mutual meanings: they are what stands in the middle."
+    ],
+    "pos": {
+      "1": {"nome": "You", "significato": "Who you are today in this relationship: your starting position.", "domanda": "Who am I in this relationship?"},
+      "2": {"nome": "How you see the other person", "significato": "Your perception of the other person: how you see them, through your own filters.", "domanda": "How do I see the other person?"},
+      "3": {"nome": "How the other person sees themselves", "significato": "The image the other person seems to have of themselves, as a tendency.", "domanda": "How does the other person seem to see themselves?"},
+      "4": {"nome": "What they represent to you", "significato": "The place and meaning the other person has in your life.", "domanda": "What do they represent to me?"},
+      "5": {"nome": "What you represent to them", "significato": "The place and meaning you seem to have for the other person, as a tendency.", "domanda": "What do I represent to the other person?"},
+      "6": {"nome": "Obstacles", "significato": "The difficulties standing between the two points of view: what creates distance.", "domanda": "What separates us?"},
+      "7": {"nome": "Strengths", "significato": "The positive aspects of the bond that you can count on.", "domanda": "What can we count on?"},
+      "8": {"nome": "Probable result", "significato": "Where the relationship leads if the forces stay as they are: a tendency.", "domanda": "Where does the relationship lead?"}
+    }
+  },
+  "coppia-bivio": {
+    "slug": "crossroads-spread",
+    "nome": "Crossroads Spread",
+    "origine": "The 'crossroads': a forked spread, widely used for moments of decision, with two roads starting from one point.",
+    "descrizione": "Where you are and what brought you here, then two roads: for each the energy, the challenge and the outcome. It is for understanding, not for making the cards choose.",
+    "regole": [
+      "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
+      "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
+      "The cards describe the two roads and do not choose between them: the decision stays with the couple.",
+      "Read starting from the past (2), then the present (1); then each road in full, from the energy to the outcome."
+    ],
+    "pos": {
+      "1": {"nome": "Where you are", "significato": "The point where the couple stands now, facing the choice.", "domanda": "Where are we right now?"},
+      "2": {"nome": "What brought you here", "significato": "The events and choices that brought the couple to this crossroads.", "domanda": "What brought us here?"},
+      "3": {"nome": "Road A: energy", "significato": "The energy that moves at once if the couple takes road A.", "domanda": "What energy does road A have?"},
+      "4": {"nome": "Road A: challenge", "significato": "The main difficulty road A would bring.", "domanda": "What challenge does road A bring?"},
+      "5": {"nome": "Road A: outcome", "significato": "Where road A leads, as a tendency.", "domanda": "Where does road A lead?"},
+      "6": {"nome": "Road B: energy", "significato": "The energy that moves at once if the couple takes road B.", "domanda": "What energy does road B have?"},
+      "7": {"nome": "Road B: challenge", "significato": "The main difficulty road B would bring.", "domanda": "What challenge does road B bring?"},
+      "8": {"nome": "Road B: outcome", "significato": "Where road B leads, as a tendency.", "domanda": "Where does road B lead?"}
+    }
+  }
+}
