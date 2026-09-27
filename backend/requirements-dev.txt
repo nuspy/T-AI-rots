@@ -2,3 +2,6 @@
 pytest>=8.3
 pytest-asyncio>=0.24
 ruff>=0.7
+# Solo per i test del PDF "Stampa i tuoi Tarocchi" (v5, Fase B4): verificare che il marchio ci sia
+# o non ci sia richiede di leggere il testo di un PDF vero, non solo cercare bytes nel file compresso.
+pypdf>=5.0

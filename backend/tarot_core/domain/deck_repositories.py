@@ -27,6 +27,10 @@ async def per_slug(session: AsyncSession, slug: str) -> Optional[Deck]:
     return (await session.execute(select(Deck).where(Deck.slug == slug))).scalar_one_or_none()
 
 
+async def per_id(session: AsyncSession, deck_id: int) -> Optional[Deck]:
+    return await session.get(Deck, deck_id)
+
+
 async def predefinito(session: AsyncSession) -> Optional[Deck]:
     return (await session.execute(select(Deck).where(Deck.predefinito.is_(True)))).scalar_one_or_none()
 

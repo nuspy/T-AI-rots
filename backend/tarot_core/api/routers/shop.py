@@ -9,6 +9,7 @@ import uuid
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, HTTPException, status
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from ...auth.dependencies import CurrentUser, DbSession
@@ -17,6 +18,8 @@ from ...billing.pagamenti import PagamentiNonDisponibili
 from ...domain import deck_repositories
 from ...domain.ordini_models import Ordine
 from ...settings import get_settings
+from ...tarot.stampa_mazzo import pdf_per_mazzo
+from ..deps import get_conoscenza
 
 router = APIRouter(tags=["negozio"])
 
@@ -96,3 +99,29 @@ async def un_mio_ordine(ordine_id: uuid.UUID, user: CurrentUser, session: DbSess
     if ordine is None or ordine.user_id != user.id:
         raise HTTPException(status_code=404, detail="Ordine non trovato")
     return _ordine_json(ordine)
+
+
+@router.get("/me/orders/{ordine_id}/pdf/{deck_id}")
+async def pdf_ordine(ordine_id: uuid.UUID, deck_id: int, user: CurrentUser, session: DbSession) -> Response:
+    """Il PDF di un mazzo comprato (Fase B4): serve un ordine pagato, proprio, con una riga «pdf» per
+    questo mazzo — nessuno sblocco persistente, il download riparte da qui ogni volta che serve."""
+    ordine = await session.get(Ordine, ordine_id)
+    if ordine is None or ordine.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Ordine non trovato")
+    if ordine.status != "pagato":
+        raise HTTPException(status_code=403, detail="L'ordine non risulta pagato")
+    if not any(r.tipo == "pdf" and r.deck_id == deck_id for r in ordine.righe):
+        raise HTTPException(status_code=404, detail="Questo ordine non contiene il PDF di questo mazzo")
+
+    mazzo = await deck_repositories.per_id(session, deck_id)
+    if mazzo is None:
+        raise HTTPException(status_code=404, detail="Mazzo non trovato")
+
+    conoscenza = get_conoscenza()
+    corpo = await pdf_per_mazzo(
+        mazzo.slug, list(conoscenza.ordine), gratuito=False, web_public_url=get_settings().web_public_url,
+    )
+    return Response(
+        content=corpo, media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{mazzo.slug}-tarots-chat.pdf"'},
+    )

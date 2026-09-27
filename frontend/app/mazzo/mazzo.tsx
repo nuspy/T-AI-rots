@@ -10,8 +10,8 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "@/app/componenti/link";
 import {
-  apriOrdine, elencaMazzi, euro, leggiOrdine, mieiMazzi,
-  type Carta as TipoCarta, type Mazzo, type TipoVoceOrdine,
+  apriOrdine, elencaMazzi, euro, leggiOrdine, mieiMazzi, scaricaPdfOrdine, urlPdfGratuito,
+  type Carta as TipoCarta, type Mazzo, type RigaOrdine, type TipoVoceOrdine,
 } from "@/lib/api";
 import { nomeCarta } from "@/lib/i18n";
 import { useLingua } from "@/lib/lingua";
@@ -172,6 +172,7 @@ function Negozio({ inizialiMazzi }: { inizialiMazzi: Mazzo[] | null }) {
 
   const [carrello, setCarrello] = useState<Map<string, VoceLocale>>(new Map());
   const [esito, setEsito] = useState<{ buono: boolean; messaggio: string } | null>(null);
+  const [ordinePagato, setOrdinePagato] = useState<{ id: string; righePdf: RigaOrdine[] } | null>(null);
 
   /* Il ritorno dal pagamento (`?ordine=…`): come per i piani, lo stato vero si chiede al server. */
   useEffect(() => {
@@ -184,6 +185,7 @@ function Negozio({ inizialiMazzi }: { inizialiMazzi: Mazzo[] | null }) {
         if (o.status === "pagato") {
           setEsito({ buono: true, messaggio: t.negozio_ordine_pagato });
           setCarrello(new Map());
+          setOrdinePagato({ id: ordineId, righePdf: o.righe.filter((r) => r.tipo === "pdf") });
           posseduti.ricarica();
         } else if (o.status !== "aperto") {
           setEsito({ buono: false, messaggio: t.negozio_ordine_annullato });
@@ -228,7 +230,17 @@ function Negozio({ inizialiMazzi }: { inizialiMazzi: Mazzo[] | null }) {
 
   return (
     <>
-      {esito && <p className={esito.buono ? stili.avvisoBuono : stili.avviso} role="status">{esito.messaggio}</p>}
+      {esito && (
+        <div className={esito.buono ? stili.avvisoBuono : stili.avviso} role="status">
+          <p style={{ margin: 0 }}>{esito.messaggio}</p>
+          {ordinePagato?.righePdf.map((r) => (
+            <BottonePdf
+              key={r.deck_id} ordineId={ordinePagato.id} deckId={r.deck_id}
+              nome={elenco.find((m) => m.id === r.deck_id)?.nome ?? ""}
+            />
+          ))}
+        </div>
+      )}
       {mazzi.errore && <p className={stili.erroreNegozio}>{mazzi.errore}</p>}
       {elenco.length === 0 && !mazzi.inCorso && <p className={stili.avviso}>{t.negozio_vuoto}</p>}
 
@@ -319,7 +331,15 @@ function SchedaMazzo({
             {scontato && mazzo.offerta_valido_fino && (
               <p className={stili.nota}>{t.negozio_offerta_fino(new Date(mazzo.offerta_valido_fino).toLocaleDateString(locale))}</p>
             )}
-            {mazzo.prezzo_stampa != null && (
+            {mazzo.prezzo_stampa === 0 && (
+              <div className={stili.rigaPrezzo}>
+                <span>{t.negozio_pdf}</span>
+                <a href={urlPdfGratuito(mazzo.slug)} download className="bottone-secondario">
+                  {t.negozio_scarica_pdf_gratis}
+                </a>
+              </div>
+            )}
+            {mazzo.prezzo_stampa != null && mazzo.prezzo_stampa > 0 && (
               <div className={stili.rigaPrezzo}>
                 <span>{t.negozio_pdf}</span>
                 <span>{euro(mazzo.prezzo_stampa, mazzo.valuta, locale)}</span>
@@ -336,5 +356,43 @@ function SchedaMazzo({
         )}
       </div>
     </li>
+  );
+}
+
+/** Il download del PDF di una riga già pagata: richiede il token, quindi un blob invece di un
+ * semplice `<a href>` (che non può portare l'intestazione Authorization). */
+function BottonePdf({ ordineId, deckId, nome }: { ordineId: string; deckId: number; nome: string }) {
+  const { t } = useLingua();
+  const token = useToken();
+  const [inCorso, setInCorso] = useState(false);
+  const [errore, setErrore] = useState<string | null>(null);
+
+  const scarica = async () => {
+    setInCorso(true);
+    setErrore(null);
+    try {
+      const blob = await scaricaPdfOrdine(token, ordineId, deckId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${nome || "mazzo"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setErrore(t.negozio_pdf_errore);
+    } finally {
+      setInCorso(false);
+    }
+  };
+
+  return (
+    <div style={{ marginTop: 8 }}>
+      <button type="button" className="bottone-secondario" disabled={inCorso} onClick={scarica}>
+        {inCorso ? t.negozio_pdf_in_corso : `${t.negozio_scarica_pdf}${nome ? ` — ${nome}` : ""}`}
+      </button>
+      {errore && <p className={stili.erroreNegozio}>{errore}</p>}
+    </div>
   );
 }

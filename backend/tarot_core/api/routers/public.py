@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import Response
 from sqlalchemy import select
 
 from ...auth.dependencies import DbSession
@@ -15,9 +16,11 @@ from ...billing import mazzi as mazzi_billing
 from ...domain import deck_repositories
 from ...domain.repositories import ReadingRepository
 from ...domain.share_models import ShareImage
+from ...settings import get_settings
 from ...tarot.condivisione import anonimizza, simbolo_partner
 from ...tarot.giorno import carta_universale, oggi_utc
 from ...tarot.lingue import in_lingua
+from ...tarot.stampa_mazzo import pdf_per_mazzo
 from ...tarot.testi import DISCLAIMER, QUALCUNO_DI_SPECIALE
 from ..deps import get_conoscenza
 
@@ -172,3 +175,20 @@ async def mazzo(slug: str, session: DbSession) -> Dict[str, Any]:
         raise HTTPException(status_code=404, detail="Mazzo non trovato")
     offerta = await deck_repositories.offerta_per(session, d.id)
     return mazzi_billing.mazzo_con_prezzo_json(d, offerta)
+
+
+@router.get("/decks/{slug}/pdf")
+async def mazzo_pdf_gratuito(slug: str, session: DbSession) -> Response:
+    """Il PDF da stampare, gratis: solo se il mazzo lo offre a prezzo zero — un prezzo assente
+    (non offerto) o positivo (a pagamento, si compra in `POST /orders`) restano un 404."""
+    d = await deck_repositories.per_slug(session, slug)
+    if d is None or not d.attivo_ora or d.prezzo_stampa != 0:
+        raise HTTPException(status_code=404, detail="PDF non disponibile per questo mazzo")
+    conoscenza = get_conoscenza()
+    corpo = await pdf_per_mazzo(
+        d.slug, list(conoscenza.ordine), gratuito=True, web_public_url=get_settings().web_public_url,
+    )
+    return Response(
+        content=corpo, media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{d.slug}-tarots-chat.pdf"'},
+    )

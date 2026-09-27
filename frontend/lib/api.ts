@@ -731,6 +731,18 @@ export const elencaOrdini = (token: string | null) =>
 export const leggiOrdine = (token: string | null, id: string) =>
   chiama<Ordine>(token, `/me/orders/${id}`);
 
+/** Il PDF "Stampa i tuoi Tarocchi" gratuito di un mazzo (solo se il suo `prezzo_stampa` è zero): un
+ * indirizzo diretto, per un semplice `<a href>` — nessuna autenticazione richiesta. */
+export const urlPdfGratuito = (slug: string) => `${API}/decks/${slug}/pdf`;
+
+/** Lo stesso PDF, ma per una riga "pdf" di un ordine già pagato: richiede il token, quindi un
+ * `<a href>` non basta — il chiamante crea un object URL dal Blob per avviare il download. */
+export async function scaricaPdfOrdine(token: string | null, ordineId: string, deckId: number): Promise<Blob> {
+  const risposta = await fetch(`${API}/me/orders/${ordineId}/pdf/${deckId}`, { headers: intestazioni(token) });
+  if (!risposta.ok) return leggi<Blob>(risposta);
+  return risposta.blob();
+}
+
 export const leggiProfilo = (token: string | null) => chiama<Profilo>(token, "/me/profile");
 export const aggiornaProfilo = (
   token: string | null,

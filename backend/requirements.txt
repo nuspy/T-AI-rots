@@ -22,6 +22,9 @@ cryptography>=42
 # L'immagine delle letture condivise: il browser la manda in PNG, il server la
 # riduce e la salva in WebP molto compresso (Safari non sa produrre WebP).
 Pillow>=10.4
+# Il PDF "Stampa i tuoi Tarocchi" (v5, Fase B4): compositing programmatico, coerente con l'uso
+# già presente di Pillow — non serve un motore HTML/CSS come weasyprint per questo.
+reportlab>=4.2
 opentelemetry-api>=1.28
 opentelemetry-sdk>=1.28
 opentelemetry-instrumentation-fastapi>=0.49b0
