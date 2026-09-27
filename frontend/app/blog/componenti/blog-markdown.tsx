@@ -8,7 +8,14 @@
  * Le scorciatoie `[[carta:maj-17]]`, `[[stesa:croce-celtica]]`, `[[articolo:slug]]`:
  *  - da sole su una riga diventano una scheda (con l'immagine, se è una carta);
  *  - dentro una frase diventano un collegamento con il nome della carta, della stesa o dell'articolo.
- * Un riferimento che non esiste nel catalogo resta testo: mai un collegamento rotto. */
+ * Un riferimento che non esiste nel catalogo resta testo: mai un collegamento rotto.
+ *
+ * `[[video:youtube:ID]]`, da solo su una riga, diventa un video incorporato (YouTube, dominio
+ * "-nocookie" per non piazzare cookie prima di un'interazione). Non si ospita video propri: niente
+ * infrastruttura di archiviazione video nel progetto, un link a un video già pubblicato basta ed è
+ * molto più leggero. Solo YouTube per ora, l'id è validato dal formato (lettere/cifre/`-`/`_`) prima di
+ * finire nell'`iframe`, che resta comunque `sandbox`-ato: mai HTML scritto dall'autore, sempre generato
+ * da qui. */
 
 import { Fragment } from "react";
 import Link from "@/app/componenti/link";
@@ -31,6 +38,7 @@ export interface Riferimenti {
  * riferimento è un id o uno slug in qualunque lingua; il server manda i nomi per ogni forma (`Riferimenti`). */
 const BLOCCO = /^[ \t]*\[\[(carta|card|stesa|spread|articolo|post):([a-z0-9-]+)\]\][ \t]*$/;
 const IN_LINEA = /\[\[(carta|card|stesa|spread|articolo|post):([a-z0-9-]+)\]\]/g;
+const BLOCCO_VIDEO = /^[ \t]*\[\[video:youtube:([A-Za-z0-9_-]{6,20})\]\][ \t]*$/;
 
 type Tipo = "carta" | "stesa" | "articolo";
 const CANONICO: Record<string, Tipo> = { carta: "carta", card: "carta", stesa: "stesa", spread: "stesa", articolo: "articolo", post: "articolo" };
@@ -78,6 +86,22 @@ function Scheda({
   );
 }
 
+function VideoIncorporato({ id }: { id: string }) {
+  return (
+    <div className={stili.videoIncorporato}>
+      <iframe
+        src={`https://www.youtube-nocookie.com/embed/${id}`}
+        title="Video"
+        loading="lazy"
+        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        referrerPolicy="strict-origin-when-cross-origin"
+        sandbox="allow-scripts allow-same-origin allow-presentation"
+        allowFullScreen
+      />
+    </div>
+  );
+}
+
 const componenti: Components = {
   h1: ({ children }) => <h2>{children}</h2>,
   a: ({ href, children }) => {
@@ -108,13 +132,19 @@ export function BlogMarkdown({
 }) {
   /* Si spezza il testo alle scorciatoie «da sole su una riga»: ciò che sta in mezzo è Markdown. */
   const righe = testo.split("\n");
-  const pezzi: ({ md: string } | { tipo: Tipo; id: string; idCarta?: string; nome: string })[] = [];
+  const pezzi: ({ md: string } | { tipo: Tipo; id: string; idCarta?: string; nome: string } | { video: string })[] = [];
   let corrente: string[] = [];
   const chiudi = () => {
     if (corrente.length) pezzi.push({ md: corrente.join("\n") });
     corrente = [];
   };
   for (const riga of righe) {
+    const mVideo = BLOCCO_VIDEO.exec(riga);
+    if (mVideo) {
+      chiudi();
+      pezzi.push({ video: mVideo[1] });
+      continue;
+    }
     const m = BLOCCO.exec(riga);
     const tipo = m ? CANONICO[m[1]] : undefined;
     const nome = m && tipo ? nomeDi(tipo, m[2], riferimenti) : undefined;
@@ -134,6 +164,8 @@ export function BlogMarkdown({
           <ReactMarkdown key={i} remarkPlugins={[remarkGfm]} components={componenti}>
             {inLinea(p.md, riferimenti)}
           </ReactMarkdown>
+        ) : "video" in p ? (
+          <VideoIncorporato key={i} id={p.video} />
         ) : (
           <Fragment key={i}><Scheda tipo={p.tipo} id={p.id} idCarta={p.idCarta} nome={p.nome} etichette={etichette} /></Fragment>
         ),

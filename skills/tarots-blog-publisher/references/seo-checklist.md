@@ -34,8 +34,10 @@ with tricks (repeated keywords, padding, hidden text): the density check exists 
 
 The article page renders the title as H1, the cover with `width`/`height`, a visible FAQ section, breadcrumbs, and
 structured data (`BlogPosting`, `BreadcrumbList`, `FAQPage`) with your keywords, word count and reading time; it
-sets the canonical URL, Open Graph and Twitter cards, `hreflang` between languages, and lists the page in the
-sitemap and RSS feed (unless `noindex`). You do not need to do any of that in the text.
+sets the canonical URL, Open Graph and Twitter cards, and lists the page in the sitemap and RSS feed (unless
+`noindex`). You do not need to do any of that in the text. (`hreflang` between an it/en pair of the *same* article
+is not wired up yet — publishing an Italian and an English version of one topic does not currently cross-link them
+for search engines; this is tracked separately, not something the skill or its SEO score can fix.)
 
 ## Quality beyond the score
 

@@ -58,3 +58,11 @@ Examples:
 Write `cover_alt` yourself, describing what is really in the image, 8+ characters, ideally ≤ 125:
 `"A stone tower on a cliff struck by golden lightning under a violet night sky"`. Include the keyword only if it
 fits without sounding forced. PNG, JPEG or WebP up to 8 MB.
+
+## Images inside the body, not just the cover
+
+The same LitMedia flow works for an extra image placed inside the article (a diagram, a close-up of a symbol
+discussed in the text) — generate it the same way, then `python scripts/tarots_blog.py upload picture.png` on its
+own (no `post`/`--cover`) to get back a URL, and write `![alt text](url)` at the right point in the Markdown body.
+Same cost-and-consent rule as the cover: each inline image is a separate generation, counted and consented to like
+any other. Use it only where it genuinely helps the reader — a wall of decorative images hurts more than it helps.

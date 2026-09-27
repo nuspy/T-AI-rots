@@ -20,7 +20,7 @@ Commands (run `tarots_blog.py <command> -h` for the options):
     catalog [--grep TEXT]  cards and spreads with the ready-made internal-link shortcut
     mine                   articles this key created (avoid duplicates, pick an unused keyword)
     check ARTICLE.json     SEO report without saving anything
-    upload IMAGE           upload a cover image, print its id
+    upload IMAGE           upload a cover OR an inline image, print its id and reusable url
     post ARTICLE.json      check, then create the article (draft unless the JSON says "published")
     update ID PATCH.json   change fields of an article this key created
     delete-draft ID        delete a draft this key created
@@ -486,7 +486,7 @@ def parser() -> argparse.ArgumentParser:
     k.add_argument("article")
     k.add_argument("--min-score", type=int, default=85)
     k.set_defaults(run=cmd_check)
-    u = sub.add_parser("upload", help="upload a cover image")
+    u = sub.add_parser("upload", help="upload a cover or inline image, print its id/url")
     u.add_argument("image")
     u.set_defaults(run=cmd_upload)
     r = sub.add_parser("post", help="check, then create the article")

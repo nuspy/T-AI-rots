@@ -31,7 +31,7 @@ page is for calling the API directly.
 |---|---|---|
 | `titolo` | string ≤ 200 | required. The page H1 |
 | `sottotitolo` | string ≤ 300 | one-line subtitle |
-| `testo` | Markdown ≤ 200 000 | no HTML. Start sections at `##`. Shortcuts `[[card:slug]]`, `[[spread:slug]]`, `[[post:slug]]` |
+| `testo` | Markdown ≤ 200 000 | no HTML. Start sections at `##`. Shortcuts `[[card:slug]]`, `[[spread:slug]]`, `[[post:slug]]`, `[[video:youtube:ID]]` (own line, YouTube only). Inline images: ordinary `![alt](url)`, the url from `POST /media` |
 | `lang` | `^[a-z]{2}(-[A-Za-z]{2})?$` | default `en`; `it` for Italian |
 | `sezione` | slug or id | a section of type "articoli" from `GET /sections` |
 | `tags` | ≤ 10 strings | reuse existing |

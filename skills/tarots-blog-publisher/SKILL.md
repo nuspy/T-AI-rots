@@ -78,6 +78,14 @@ python scripts/tarots_blog.py catalog --grep tower   # link shortcuts for cards 
 - Internal links inside sentences with shortcuts: `[[card:the-tower]]`, `[[spread:celtic-cross]]`,
   `[[post:some-existing-slug]]` (a card or spread on its own line becomes a card with its picture). Take the exact
   shortcut from `catalog`. An unknown reference disappears silently, so copy, don't guess.
+- **Inline images**: upload any extra image with `python scripts/tarots_blog.py upload picture.png` (the same
+  command used for the cover — nothing else to build, it already returns a reusable URL) and paste it into the body
+  as ordinary Markdown: `![alt text](url)`. Use it sparingly, only where an image genuinely helps (a diagram, a
+  spread layout, a symbol close-up) — not one per paragraph.
+- **Inline video**: a line on its own with `[[video:youtube:VIDEO_ID]]` embeds that YouTube video (11-character id
+  from its URL, e.g. `dQw4w9WgXcQ`). No other video host is supported — the site doesn't run its own video
+  hosting, and embedding an existing upload is lighter than building one. Use only a real, relevant, existing video
+  (a tradition's own explainer, a museum/library recording) — never invent one.
 - Voice: warm and precise, reflective rather than prophetic. Tarot is a tool for reflection here: no promises about
   the future, no health, legal, money or "he will/won't love you" verdicts, no fear-mongering. For relationship
   topics offer questions and perspectives, never a verdict on a person or a couple.
