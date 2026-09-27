@@ -607,11 +607,36 @@ export const elencaPiani = () => chiama<Piano[]>(null, "/plans");
 export const leggiConto = (token: string | null) => chiama<Conto>(token, "/me/billing");
 export const leggiMovimenti = (token: string | null) =>
   chiama<{ saldo: number; movimenti: Movimento[] }>(token, "/me/credits");
-export const apriPagamento = (token: string | null, piano: string, annuale: boolean, ritorno?: string) =>
-  chiama<{ checkout_id: string; url: string; importo: number; valuta: string }>(token, "/me/checkout", {
-    method: "POST",
-    body: { piano, annuale, ritorno },
-  });
+export const apriPagamento = (token: string | null, piano: string, annuale: boolean, ritorno?: string, coupon?: string) =>
+  chiama<{ checkout_id: string; url: string; importo: number; sconto?: number; valuta: string; gratis?: boolean }>(
+    token, "/me/checkout", { method: "POST", body: { piano, annuale, ritorno, coupon } },
+  );
+
+/** Quanto costa un'offerta con un codice sconto. Un codice che non vale risponde 422 con `dettaglio.motivo`. */
+export interface AnteprimaCoupon {
+  codice: string;
+  tipo: string;
+  listino: number;
+  sconto: number;
+  importo: number;
+  valuta: string;
+  gratis: boolean;
+}
+export const anteprimaCoupon = (token: string | null, codice: string, piano: string, annuale = false) =>
+  chiama<AnteprimaCoupon>(token, "/me/coupon/anteprima", { method: "POST", body: { codice, piano, annuale } });
+
+/** Un codice regalo: i crediti arrivano subito. */
+export const riscattaCodice = (token: string | null, codice: string) =>
+  chiama<{ crediti: number; saldo: number }>(token, "/me/coupon/riscatta", { method: "POST", body: { codice } });
+
+/** Il motivo stabile per cui un codice non vale (`coupon_scaduto`, …), se l'errore ne porta uno. */
+export function motivoCodice(e: unknown): string | null {
+  if (e instanceof ErroreApi) {
+    const d = e.dettaglio as { motivo?: unknown } | undefined;
+    if (d && typeof d.motivo === "string") return d.motivo;
+  }
+  return null;
+}
 export const statoPagamento = (token: string | null, id: string) =>
   chiama<{ checkout_id: string; stato: string; piano: string; nome: string; tipo: string }>(token, `/me/checkout/${id}`);
 export const abbonaGratis = (token: string | null, piano: string) =>

@@ -186,6 +186,34 @@ export const it = {
   pagamento_non_completato: "Il pagamento non è stato completato.",
   pagamento_non_verificato: "Non è stato possibile verificare il pagamento.",
 
+  /* codici sconto e codici regalo */
+  codici_titolo: "Hai un codice?",
+  codice_sconto: "Codice sconto",
+  codice_regalo: "Codice regalo",
+  codice_applica: "Applica",
+  codice_riscatta: "Riscatta",
+  codice_togli: "Togli il codice",
+  codice_applicato: (c: string) => `Codice ${c} applicato: i prezzi qui sotto sono già scontati.`,
+  codice_sconto_aiuto: "Lo sconto vale sul primo pagamento.",
+  codice_regalo_aiuto: "Un codice regalo dà crediti subito, senza pagare.",
+  codice_prezzo_scontato: "scontato",
+  codice_gratis: "Gratis con questo codice",
+  codice_riscattato: (n: number) => `Hai ricevuto ${n} ${n === 1 ? "credito" : "crediti"}.`,
+  codice_non_per_questa: "Il codice non vale per questa offerta.",
+  errori_codice: {
+    coupon_sconosciuto: "Il codice non esiste.",
+    coupon_non_attivo: "Il codice non è più attivo.",
+    coupon_non_ancora_valido: "Il codice non è ancora valido.",
+    coupon_scaduto: "Il codice è scaduto.",
+    coupon_esaurito: "Il codice ha esaurito i suoi usi.",
+    coupon_gia_usato: "Hai già usato questo codice.",
+    coupon_non_per_questo_piano: "Il codice non vale per questa offerta.",
+    coupon_solo_primo_acquisto: "Il codice vale solo sul primo acquisto.",
+    coupon_azzera_abbonamento: "Il codice non si può applicare a questo abbonamento.",
+    coupon_sconto: "Questo è un codice sconto: si usa nell'acquisto, non si riscatta.",
+    coupon_regalo: "Questo è un codice regalo: si riscatta qui sotto.",
+  } as Record<string, string>,
+
   /* profilo */
   profilo_carte: "Le tue carte personali",
   profilo_carte_testo:

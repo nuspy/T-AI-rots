@@ -272,7 +272,7 @@ async def apri_checkout(
         try:
             sconto = await offerte.valuta(session, user.id, payload.coupon, piano, annuale=annuale)
         except offerte.CouponNonValido as exc:
-            _tentativo_fallito(user.id)
+            _conta_tentativo(user.id, exc)
             raise _errore_coupon(exc) from exc
 
     if sconto is not None and sconto.finale == 0:
@@ -325,10 +325,13 @@ def _limita_tentativi(user_id: int) -> None:
         raise HTTPException(status_code=429, detail="Troppi codici sbagliati: riprova fra qualche minuto.")
 
 
-def _tentativo_fallito(user_id: int) -> None:
+def _conta_tentativo(user_id: int, exc: "offerte.CouponNonValido") -> None:
+    """Conta solo i codici che **non esistono**: sono i tentativi a caso. Un codice che esiste ma non vale (scaduto, non
+    per questa offerta…) non è un tentativo, e una pagina che lo prova su ogni offerta non deve bloccare chi lo ha."""
     import time
 
-    _TENTATIVI.setdefault(user_id, []).append(time.monotonic())
+    if exc.motivo == "coupon_sconosciuto":
+        _TENTATIVI.setdefault(user_id, []).append(time.monotonic())
 
 
 def _errore_coupon(exc: "offerte.CouponNonValido") -> HTTPException:
@@ -345,7 +348,7 @@ async def anteprima_coupon(payload: AnteprimaCoupon, user: CurrentUser, session:
     try:
         s = await offerte.valuta(session, user.id, payload.codice, piano, annuale=payload.annuale and not piano.pacchetto)
     except offerte.CouponNonValido as exc:
-        _tentativo_fallito(user.id)
+        _conta_tentativo(user.id, exc)
         raise _errore_coupon(exc) from exc
     return {
         "codice": s.coupon.code, "tipo": s.coupon.tipo, "listino": s.listino, "sconto": s.sconto,
@@ -361,7 +364,7 @@ async def riscatta_codice(payload: RiscattoCodice, user: CurrentUser, session: D
         coupon, crediti = await offerte.riscatta_regalo(session, user.id, payload.codice)
     except offerte.CouponNonValido as exc:
         # Niente da annullare: le regole si controllano prima di scrivere (e la riga bloccata si libera a fine richiesta).
-        _tentativo_fallito(user.id)
+        _conta_tentativo(user.id, exc)
         raise _errore_coupon(exc) from exc
     await AuditRepository(session).record(
         actor_id=user.id, action="coupon.redeem", target_type="coupon", target_id=coupon.code, after={"crediti": crediti},

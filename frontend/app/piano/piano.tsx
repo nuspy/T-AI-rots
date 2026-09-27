@@ -11,14 +11,15 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  abbonaGratis, apriPagamento, disdici, elencaPiani, euro, leggiConto, leggiMovimenti,
-  statoPagamento, type Conto, type Piano,
+  abbonaGratis, anteprimaCoupon, apriPagamento, disdici, elencaPiani, euro, leggiConto, leggiMovimenti,
+  motivoCodice, statoPagamento, type AnteprimaCoupon, type Conto, type Piano,
 } from "@/lib/api";
 import { useLingua } from "@/lib/lingua";
 import { indirizzo } from "@/lib/percorsi";
 import { useAzione, useCarica, useToken } from "@/lib/usa";
 import { Involucro } from "../componenti/testata";
 import stili from "../pagine.module.css";
+import { SezioneCodici } from "./codici";
 
 /* `pianiIniziali`: i piani letti dal server, perché la pagina esca già con i prezzi scritti nell'HTML — chi cerca
  * «tarot reading price» non aspetta JavaScript. Il client poi li rilegge e li aggiorna. */
@@ -51,6 +52,9 @@ function Contenuto({ iniziali }: { iniziali: Piano[] | null }) {
   const elencoPiani = piani.dati ?? iniziali ?? [];
   const pacchetti = elencoPiani.filter((p) => p.tipo === "pacchetto");
   const abbonamenti = elencoPiani.filter((p) => p.tipo === "abbonamento");
+  /* Il codice sconto applicato ai prezzi (dopo averlo provato), e l'offerta a pagamento su cui provarlo. */
+  const [codice, setCodice] = useState<string | null>(null);
+  const provaSu = elencoPiani.find((p) => p.prezzo_mensile > 0)?.slug ?? null;
 
   return (
     <>
@@ -58,17 +62,19 @@ function Contenuto({ iniziali }: { iniziali: Piano[] | null }) {
       {conto.errore && <p className={stili.errore}>{conto.errore}</p>}
       {conto.dati && <Attuale conto={conto.dati} suCambio={ricarica} />}
 
+      <SezioneCodici applicato={codice} applica={setCodice} provaSu={provaSu} suRiscatto={ricarica} />
+
       <section className={stili.sezione}>
         <h2 className={stili.sezioneTitolo}>{t.pacchetti}</h2>
         <div className={stili.griglia}>
-          {pacchetti.map((p) => <Offerta key={p.slug} piano={p} conto={conto.dati} suCambio={ricarica} />)}
+          {pacchetti.map((p) => <Offerta key={p.slug} piano={p} conto={conto.dati} suCambio={ricarica} codice={codice} />)}
         </div>
       </section>
 
       <section className={stili.sezione}>
         <h2 className={stili.sezioneTitolo}>{t.abbonamenti}</h2>
         <div className={stili.griglia}>
-          {abbonamenti.map((p) => <Offerta key={p.slug} piano={p} conto={conto.dati} suCambio={ricarica} />)}
+          {abbonamenti.map((p) => <Offerta key={p.slug} piano={p} conto={conto.dati} suCambio={ricarica} codice={codice} />)}
         </div>
       </section>
 
@@ -138,7 +144,11 @@ function Attuale({ conto, suCambio }: { conto: Conto; suCambio: () => void }) {
   );
 }
 
-function Offerta({ piano, conto, suCambio }: { piano: Piano; conto: Conto | null; suCambio: () => void }) {
+type EsitoAnteprima = { ok: AnteprimaCoupon } | { motivo: string } | null;
+
+function Offerta({
+  piano, conto, suCambio, codice,
+}: { piano: Piano; conto: Conto | null; suCambio: () => void; codice: string | null }) {
   const { t, locale, lingua } = useLingua();
   const { esegui, inCorso, errore } = useAzione();
   const parametri = useSearchParams();
@@ -146,6 +156,21 @@ function Offerta({ piano, conto, suCambio }: { piano: Piano; conto: Conto | null
   const pacchetto = piano.tipo === "pacchetto";
   const gratuito = piano.prezzo_mensile === 0;
   const evidente = piano.slug === "pacchetto-15" || piano.slug === "mensile-base";
+
+  /* Quanto costa con il codice applicato: lo dice il server (le regole sono sue), offerta per offerta. */
+  const anteprima = useCarica<EsitoAnteprima>(
+    useCallback(async (tok) => {
+      if (!codice || gratuito) return null;
+      try {
+        return { ok: await anteprimaCoupon(tok, codice, piano.slug) };
+      } catch (e) {
+        return { motivo: motivoCodice(e) ?? "coupon_sconosciuto" };
+      }
+    }, [codice, piano.slug, gratuito]),
+    [codice, piano.slug],
+  );
+  const scontato = anteprima.dati && "ok" in anteprima.dati ? anteprima.dati.ok : null;
+  const nonValeQui = anteprima.dati && "motivo" in anteprima.dati && codice !== null;
 
   const compra = async () => {
     if (gratuito) {
@@ -158,7 +183,10 @@ function Offerta({ piano, conto, suCambio }: { piano: Piano; conto: Conto | null
     const ritorno = parametri.get("ritorno");
     const qui = indirizzo(lingua, "/piano");
     const r = await esegui((tok) =>
-      apriPagamento(tok, piano.slug, false, ritorno && ritorno.startsWith("/") ? `${qui}?dopo=${encodeURIComponent(ritorno)}` : qui),
+      apriPagamento(
+        tok, piano.slug, false, ritorno && ritorno.startsWith("/") ? `${qui}?dopo=${encodeURIComponent(ritorno)}` : qui,
+        scontato ? codice ?? undefined : undefined,
+      ),
     );
     if (r?.url) window.location.assign(r.url);
   };
@@ -167,9 +195,16 @@ function Offerta({ piano, conto, suCambio }: { piano: Piano; conto: Conto | null
     <div className={`pannello ${stili.scheda} ${evidente ? stili.schedaEvidente : ""}`}>
       <span className={stili.nome}>{piano.nome}</span>
       <span className={stili.prezzo}>
-        {gratuito ? t.gratis : euro(piano.prezzo_mensile, piano.valuta, locale)}
+        {gratuito ? t.gratis : scontato ? (
+          <>
+            <s className={stili.nota}>{euro(piano.prezzo_mensile, piano.valuta, locale)}</s>{" "}
+            {scontato.gratis ? t.gratis : euro(scontato.importo, piano.valuta, locale)}
+          </>
+        ) : euro(piano.prezzo_mensile, piano.valuta, locale)}
         {!pacchetto && !gratuito && <span className={stili.nota}> {t.al_mese}</span>}
       </span>
+      {scontato && <p className={stili.nota} role="status">{scontato.gratis ? t.codice_gratis : t.codice_prezzo_scontato}</p>}
+      {nonValeQui && <p className={stili.nota}>{t.codice_non_per_questa}</p>}
       <p className={stili.nota}>{piano.descrizione}</p>
       {pacchetto ? (
         <p className={stili.nota}>{t.crediti_a_lettura(piano.crediti_per_periodo, euro(Math.round(piano.prezzo_mensile / piano.crediti_per_periodo), piano.valuta, locale))}</p>
