@@ -10,6 +10,7 @@ import logging
 import uuid
 from contextlib import asynccontextmanager
 
+import truststore
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -23,6 +24,16 @@ from .routers import (
     admin, admin_blog, admin_impostazioni, admin_llm, admin_offerte, billing, blog, condivisione, profile, public,
     readings, rest_blog,
 )
+
+# Le chiamate ai fornitori LLM (e a qualunque altro servizio HTTPS esterno) verificano il certificato con
+# l'archivio del sistema operativo, non solo con quello di `certifi`: su Windows, dietro un antivirus o un proxy
+# aziendale che aggiunge le proprie radici, `certifi` da solo produce `CERTIFICATE_VERIFY_FAILED` per un servizio
+# che è raggiungibile e valido (già capitato con il download del vocabolario di tiktoken, aggirato allora con
+# `curl`; qui non si può, perché la chiamata è dentro il processo a ogni lettura). Non è un aggiramento della
+# verifica: verifica ancora, solo contro un insieme di radici più completo — lo stesso che già usa `curl` su
+# questa macchina. Va fatto prima che qualunque client HTTPS costruisca il suo contesto SSL: qui, all'importazione
+# del modulo che crea l'applicazione, è il punto più presto disponibile.
+truststore.inject_into_ssl()
 
 logger = logging.getLogger(__name__)
 

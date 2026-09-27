@@ -8,6 +8,9 @@ sqlalchemy[asyncio]>=2.0
 alembic>=1.14
 psycopg[binary]>=3.2
 httpx>=0.27
+# Le chiamate HTTPS verificano i certificati con l'archivio del sistema operativo (vedi api/app.py): senza,
+# `certifi` da solo produce falsi CERTIFICATE_VERIFY_FAILED dietro un proxy o un antivirus con radici proprie.
+truststore>=0.9
 # Il checkout simulato risponde a un modulo HTML.
 python-multipart>=0.0.9
 # I guardrail sono Markdown con frontmatter YAML, letti all'avvio.
