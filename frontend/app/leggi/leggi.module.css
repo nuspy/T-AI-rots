@@ -379,6 +379,14 @@
   margin-top: 10px;
 }
 
+/* Più archi impilati (78 carte, tre da 26): un margine fra l'uno e l'altro, che sennò le braccia più alte del
+   ventaglio sopra si accavallerebbero con quello sotto. */
+.ventaglioGruppi {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
 .ventaglio {
   position: relative;
   width: 100%;
@@ -835,6 +843,7 @@
 .tavolo,
 .tavoloQuadrato,
 .ventaglio,
+.ventaglioGruppi,
 .mescolamento,
 .tagliaMazzo {
   direction: ltr;
