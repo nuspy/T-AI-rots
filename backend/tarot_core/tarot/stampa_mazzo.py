@@ -119,7 +119,10 @@ def _per_stampa(dati: bytes) -> ImageReader:
     return ImageReader(buffer)
 
 
-def _disegna_carta(c: canvas.Canvas, x: float, y: float, immagine: Optional[ImageReader], *, marchio: bool) -> None:
+def _disegna_carta(
+    c: canvas.Canvas, x: float, y: float, immagine: Optional[ImageReader], *, marchio: bool,
+    marchio_testo: Optional[str] = None,
+) -> None:
     if immagine is not None:
         c.drawImage(
             immagine, x, y, width=LARGHEZZA_CARTA, height=ALTEZZA_CARTA,
@@ -132,13 +135,20 @@ def _disegna_carta(c: canvas.Canvas, x: float, y: float, immagine: Optional[Imag
         c.saveState()
         c.setFillColorRGB(1, 1, 1)
         c.setFont("Helvetica", 6)
-        c.drawCentredString(x + LARGHEZZA_CARTA / 2, y + 2 * mm, "tarots.chat")
+        c.drawCentredString(x + LARGHEZZA_CARTA / 2, y + 2 * mm, marchio_testo or "tarots.chat")
         c.restoreState()
 
 
-def genera_pdf(ordine_carte: List[str], immagini: Dict[str, bytes], *, gratuito: bool) -> bytes:
+def genera_pdf(
+    ordine_carte: List[str], immagini: Dict[str, bytes], *, gratuito: bool,
+    marchio_testo: Optional[str] = None,
+) -> bytes:
     """Pura rispetto all'IO: `immagini` è già in memoria (da `carica_immagini`), chiavi = nome file
-    (`f"{card_id}.{ESTENSIONE}"`, più `f"dorso.{ESTENSIONE}"`)."""
+    (`f"{card_id}.{ESTENSIONE}"`, più `f"dorso.{ESTENSIONE}"`).
+
+    `marchio_testo` sostituisce la scritta "tarots.chat" quando `gratuito` è vero — usato da chi
+    genera un PDF fuori dal prodotto di produzione (lo strumento di bozza di un mazzo nuovo, che vuole
+    un marchio di copyright completo). Senza indicazione il comportamento di produzione non cambia."""
     colonne, righe = _griglia()
     per_pagina = colonne * righe
     # Un solo `ImageReader` per immagine, riusato su tutte le pagine che la mostrano: reportlab lo
@@ -156,13 +166,13 @@ def genera_pdf(ordine_carte: List[str], immagini: Dict[str, bytes], *, gratuito:
         for indice, card_id in enumerate(gruppo):
             riga, colonna = divmod(indice, colonne)
             x, y = _posizione(colonna, riga, colonne, righe)
-            _disegna_carta(c, x, y, letture.get(f"{card_id}.{ESTENSIONE}"), marchio=gratuito)
+            _disegna_carta(c, x, y, letture.get(f"{card_id}.{ESTENSIONE}"), marchio=gratuito, marchio_testo=marchio_testo)
         c.showPage()
 
         for indice in range(len(gruppo)):
             riga, colonna = divmod(indice, colonne)
             x, y = _posizione(colonne - 1 - colonna, riga, colonne, righe)  # colonne specchiate: v. sopra
-            _disegna_carta(c, x, y, dorso, marchio=gratuito)
+            _disegna_carta(c, x, y, dorso, marchio=gratuito, marchio_testo=marchio_testo)
         c.showPage()
 
     c.save()
@@ -171,8 +181,9 @@ def genera_pdf(ordine_carte: List[str], immagini: Dict[str, bytes], *, gratuito:
 
 async def pdf_per_mazzo(
     slug_mazzo: str, ordine_carte: List[str], *, gratuito: bool, web_public_url: str,
+    marchio_testo: Optional[str] = None,
 ) -> bytes:
     """Scarica (o legge) le immagini e genera il PDF: il punto d'ingresso usato dagli endpoint."""
     nomi_file = [f"{card_id}.{ESTENSIONE}" for card_id in ordine_carte] + [f"dorso.{ESTENSIONE}"]
     immagini = await carica_immagini(slug_mazzo, nomi_file, web_public_url=web_public_url)
-    return genera_pdf(ordine_carte, immagini, gratuito=gratuito)
+    return genera_pdf(ordine_carte, immagini, gratuito=gratuito, marchio_testo=marchio_testo)

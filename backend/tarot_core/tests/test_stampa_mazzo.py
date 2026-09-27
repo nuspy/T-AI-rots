@@ -50,6 +50,22 @@ def test_marchio_presente_solo_se_gratuito():
     assert "tarots.chat" not in testo_senza
 
 
+def test_marchio_testo_personalizzato_sostituisce_tarots_chat():
+    # Uno strumento fuori dalla produzione (la bozza di un mazzo nuovo) vuole un marchio di copyright
+    # completo invece del semplice nome del sito, sempre presente: `marchio_testo` lo permette senza
+    # toccare il comportamento di produzione (nessuna chiamata esistente lo passa).
+    corpo = genera_pdf(["maj-00"], {}, gratuito=True, marchio_testo="© 2026 Copyright https://tarots.chat")
+    testo = PdfReader(io.BytesIO(corpo)).pages[0].extract_text()
+    assert "Copyright" in testo
+    assert "tarots.chat" in testo  # è contenuto nel marchio personalizzato stesso
+
+
+def test_marchio_testo_ignorato_se_non_gratuito():
+    corpo = genera_pdf(["maj-00"], {}, gratuito=False, marchio_testo="© 2026 Copyright https://tarots.chat")
+    testo = PdfReader(io.BytesIO(corpo)).pages[0].extract_text()
+    assert "Copyright" not in testo
+
+
 def test_una_carta_senza_immagine_disegna_un_segnaposto_invece_di_fallire():
     # Nessuna immagine passata: non deve sollevare, il segnaposto (un rettangolo) prende il posto.
     corpo = genera_pdf(["maj-00", "maj-01", "maj-02"], {}, gratuito=False)

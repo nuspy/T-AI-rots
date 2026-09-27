@@ -62,6 +62,10 @@ class Compito(str, Enum):
     #: offline (`tools/traduci_conoscenza.py`), mai in produzione — la bozza richiede sempre una
     #: revisione umana prima di entrare in `LINGUE_CONTENUTO`.
     TRADUZIONE_CONOSCENZA = "traduzione_conoscenza"
+    #: Scrittura delle scene per le immagini di un mazzo nuovo (v5, "mazzi multipli"): uno strumento
+    #: offline (`tools/crea_mazzo.py`), mai in produzione — la scena scritta è sempre una bozza da
+    #: approvare a mano prima di generare l'immagine vera.
+    CREAZIONE_MAZZO = "creazione_mazzo"
 
     @property
     def label(self) -> str:
@@ -80,6 +84,7 @@ _ETICHETTE: Dict[Compito, str] = {
     Compito.GIUDIZIO: "Guardrail del responso",
     Compito.TRADUZIONE_ARTICOLO: "Traduzione articoli del blog",
     Compito.TRADUZIONE_CONOSCENZA: "Traduzione di carte e stese (offline)",
+    Compito.CREAZIONE_MAZZO: "Scene di un mazzo nuovo (offline)",
 }
 
 _DESCRIZIONI: Dict[Compito, str] = {
@@ -114,6 +119,12 @@ _DESCRIZIONI: Dict[Compito, str] = {
         "Traduce le schede di carte e stese in una nuova lingua, una alla volta, per uno script "
         "offline lanciato a mano — mai durante una lettura vera. Il risultato è sempre una bozza da "
         "far rivedere a una persona."
+    ),
+    Compito.CREAZIONE_MAZZO: (
+        "Scrive la scena da dipingere per una carta di un mazzo nuovo, data la sua identità esoterica "
+        "e lo stile/ambientazione scelti dall'utente, per uno script offline lanciato a mano — mai "
+        "durante una lettura vera. Il risultato è sempre una bozza da approvare prima di generare "
+        "l'immagine."
     ),
 }
 
