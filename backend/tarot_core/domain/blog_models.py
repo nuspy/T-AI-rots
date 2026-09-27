@@ -132,6 +132,13 @@ class BlogPost(Base, TimestampMixin):
     creato_da_chiave_id: Mapped[Optional[int]] = mapped_column(ForeignKey("api_keys.id", ondelete="SET NULL"), index=True)
     #: Minuti di lettura, calcolati dal testo a ogni salvataggio.
     tempo_lettura: Mapped[int] = mapped_column(Integer, default=1, server_default="1", nullable=False)
+    #: Se questo articolo è la traduzione (automatica, v5) di un altro: l'originale da cui è nato. Una
+    #: catena radicata sull'originale basta a sapere quali lingue esistono per un articolo — non serve
+    #: una tabella di gruppo-traduzione a parte. `SET NULL` se l'originale viene cancellato: la
+    #: traduzione resta un articolo a sé, non sparisce con lui.
+    tradotto_da_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("blog_posts.id", ondelete="SET NULL"), index=True,
+    )
 
     tags: Mapped[list[BlogTag]] = relationship(secondary="blog_post_tags", lazy="selectin", order_by="BlogTag.nome")
 

@@ -88,6 +88,10 @@ export interface Articolo {
   aggiornato: string | null;
   /** Solo nel dettaglio: l'elenco non porta il testo. */
   testo?: string;
+  /** Se questo articolo è una traduzione generata (v5): l'originale da cui è nato. */
+  tradotto_da_id: string | null;
+  /** Le sue traduzioni già generate (v5), qualunque sia il loro stato. */
+  traduzioni: { id: string; lang: string; slug: string; stato: StatoArticolo }[];
 }
 
 export interface CampiArticolo {
@@ -192,6 +196,14 @@ export const modificaArticolo = (t: string, id: string, corpo: CampiArticolo) =>
 
 export const cambiaStato = (t: string, id: string, azione: "pubblica" | "archivia" | "bozza") =>
   chiamata<Articolo>(t, `/admin/blog/posts/${encodeURIComponent(id)}/${azione}`, { method: "POST" });
+
+/** Genera la traduzione di un articolo in un'altra lingua (v5): sempre una nuova bozza, mai pubblicata
+ *  da sola — per la revisione editoriale prima che vada online. */
+export const traduciArticolo = (t: string, id: string, lang: string) =>
+  chiamata<Articolo>(t, `/admin/blog/posts/${encodeURIComponent(id)}/traduci`, {
+    method: "POST",
+    body: JSON.stringify({ lang }),
+  });
 
 export const eliminaArticolo = (t: string, id: string) =>
   chiamata<void>(t, `/admin/blog/posts/${encodeURIComponent(id)}`, { method: "DELETE" });

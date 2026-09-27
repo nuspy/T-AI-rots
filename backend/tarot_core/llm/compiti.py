@@ -55,6 +55,9 @@ class Compito(str, Enum):
     SINTESI = "sintesi"
     #: Il guardrail: il giudice che verifica la sicurezza del responso.
     GIUDIZIO = "giudizio"
+    #: Traduzione di un articolo del blog in un'altra lingua (v5, fase E): non durante una lettura, ma
+    #: su richiesta esplicita dalla console, sempre in bozza per la revisione editoriale.
+    TRADUZIONE_ARTICOLO = "traduzione_articolo"
 
     @property
     def label(self) -> str:
@@ -71,6 +74,7 @@ _ETICHETTE: Dict[Compito, str] = {
     Compito.INTERPRETAZIONE: "Interpretazione delle carte",
     Compito.SINTESI: "Sintesi finale (CAG)",
     Compito.GIUDIZIO: "Guardrail del responso",
+    Compito.TRADUZIONE_ARTICOLO: "Traduzione articoli del blog",
 }
 
 _DESCRIZIONI: Dict[Compito, str] = {
@@ -95,6 +99,11 @@ _DESCRIZIONI: Dict[Compito, str] = {
         "Verifica che il responso non sia pericoloso. **Conviene che sia un "
         "modello diverso** da quello che ha scritto: un giudice che è anche "
         "l'autore assolve sé stesso."
+    ),
+    Compito.TRADUZIONE_ARTICOLO: (
+        "Traduce titolo, sottotitolo, corpo e campi SEO di un articolo del blog già pubblicato in "
+        "un'altra lingua. Non gira durante una lettura: solo su richiesta dalla console, e il "
+        "risultato è sempre salvato come bozza, mai pubblicato da solo."
     ),
 }
 

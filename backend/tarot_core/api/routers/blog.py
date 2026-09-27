@@ -218,6 +218,26 @@ async def elenco(
     }
 
 
+async def _gemella_lingua(repo: BlogRepository, session, p: BlogPost) -> Optional[BlogPost]:
+    """L'altra metà della coppia it/en di questo articolo, **se collegata** (una traduzione generata
+    dalla console, v5 fase E — non un'euristica su slug o titolo): serve solo a scrivere l'hreflang.
+    Un articolo scritto a mano in entrambe le lingue, senza passare da 'Genera traduzione', non ha
+    questo collegamento e non ottiene l'hreflang finché qualcuno non lo crea così."""
+    altra_lingua = {"it": "en", "en": "it"}.get(p.lang)
+    if altra_lingua is None:
+        return None
+    if p.tradotto_da_id:
+        originale = await repo.per_id(p.tradotto_da_id)
+        return originale if originale and originale.lang == altra_lingua and originale.stato == "pubblicato" else None
+    return (
+        await session.execute(
+            select(BlogPost).where(
+                BlogPost.tradotto_da_id == p.id, BlogPost.lang == altra_lingua, BlogPost.stato == "pubblicato",
+            ),
+        )
+    ).scalars().first()
+
+
 @router.get("/posts/{slug}")
 async def articolo(slug: str, session: DbSession) -> Dict[str, Any]:
     if not _SOLO_MINUSCOLE.match(slug):
@@ -261,7 +281,9 @@ async def articolo(slug: str, session: DbSession) -> Dict[str, Any]:
     correlati = await repo.correlati(p)
     precedente, successivo = await repo.vicini(p)
     sezione_p = per_id.get(p.sezione_id) if p.sezione_id is not None else None
+    gemella = await _gemella_lingua(repo, session, p)
     return base | {
+        "gemella_lingua": {"lang": gemella.lang, "slug": gemella.slug} if gemella else None,
         "testo": p.testo,
         "immagine": (
             {"url": url_immagine(p.immagine_id), "alt": p.immagine_alt or p.titolo,

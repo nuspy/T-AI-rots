@@ -25,8 +25,11 @@ from ...domain.blog_models import ApiKey, BlogPost, BlogSection, BlogTag, MediaI
 from ...domain.blog_repositories import BlogRepository, ErroreBlog
 from ...domain.models import User
 from ...domain.repositories import AuditRepository
+from ...llm.compiti import Compito
+from ..deps import provider_per, verifica_modello
 from ...tarot import blog as regole
 from ...tarot import blog_seo
+from ...tarot import traduzione_blog
 from .blog import url_immagine
 
 router = APIRouter(prefix="/admin/blog", tags=["console-blog"], dependencies=[Depends(require_role("admin"))])
@@ -266,12 +269,19 @@ async def articolo_admin_json(session, p: BlogPost, *, con_testo: bool = True) -
         "seo_parola_chiave": p.seo_parola_chiave, "seo_parole_chiave": list(p.seo_parole_chiave or []),
         "noindex": bool(p.noindex), "canonical_url": p.canonical_url, "faq": list(p.faq or []),
         "creato_da_chiave_id": p.creato_da_chiave_id,
+        "tradotto_da_id": str(p.tradotto_da_id) if p.tradotto_da_id else None,
         "autore": {"id": autore.id, "nome": autore.display_name or autore.email} if autore else None,
         "creato": p.created_at.isoformat() if p.created_at else None,
         "aggiornato": p.updated_at.isoformat() if p.updated_at else None,
     }
     if con_testo:
         dati["testo"] = p.testo
+    figlie = (
+        await session.execute(
+            select(BlogPost.id, BlogPost.lang, BlogPost.slug, BlogPost.stato).where(BlogPost.tradotto_da_id == p.id),
+        )
+    ).all()
+    dati["traduzioni"] = [{"id": str(f.id), "lang": f.lang, "slug": f.slug, "stato": f.stato} for f in figlie]
     return dati
 
 
@@ -359,6 +369,42 @@ async def cambia_stato(post_id: uuid.UUID, azione: Literal["pubblica", "archivia
     )
     await session.commit()
     return await articolo_admin_json(session, p)
+
+
+@router.post("/posts/{post_id}/traduci", status_code=201)
+async def traduci_articolo(post_id: uuid.UUID, payload: TraduciIn, user: CurrentUser, session: DbSession) -> Dict[str, Any]:
+    """Genera la traduzione di un articolo in un'altra lingua, sempre come **bozza** nuova — mai
+    pubblicata da sola, per revisione editoriale (v5, Fase E). Sezione e tag dell'originale si copiano
+    (non sono legati alla lingua); cover e collegamenti interni restano quelli di sempre."""
+    repo = BlogRepository(session)
+    originale = await repo.per_id(post_id)
+    if originale is None:
+        raise HTTPException(status_code=404, detail="Articolo non trovato")
+    await verifica_modello(session, payload.lang)
+    provider = provider_per(Compito.TRADUZIONE_ARTICOLO)
+    try:
+        tradotto = await traduzione_blog.traduci_articolo(provider, originale, payload.lang)
+    except traduzione_blog.TraduzioneNonRiuscita as exc:
+        raise HTTPException(status_code=502, detail=f"Traduzione non riuscita: {exc}") from exc
+    dati = {
+        **tradotto,
+        "lang": payload.lang,
+        "sezione_id": originale.sezione_id,
+        "immagine_id": originale.immagine_id,
+        "immagine_alt": tradotto.get("immagine_alt") or originale.immagine_alt,
+        "tradotto_da_id": originale.id,
+        "stato": "bozza",
+    }
+    try:
+        nuovo = await repo.salva(None, dati, autore_id=user.id, tag=[t.nome for t in originale.tags])
+    except ErroreBlog as exc:
+        raise _errore(exc) from exc
+    await AuditRepository(session).record(
+        action="blog.post.traduci", actor_id=user.id, target_type="blog_post", target_id=str(nuovo.id),
+        after={"tradotto_da_id": str(originale.id), "lang": payload.lang, "slug": nuovo.slug},
+    )
+    await session.commit()
+    return await articolo_admin_json(session, nuovo)
 
 
 @router.delete("/posts/{post_id}", status_code=204)
@@ -506,6 +552,10 @@ async def elimina_etichetta(tag_id: int, user: CurrentUser, session: DbSession) 
 
 
 # ---- il controllo SEO ---------------------------------------------------------------------------------
+
+
+class TraduciIn(BaseModel):
+    lang: str = Field(pattern="^[a-z]{2}(-[A-Za-z]{2})?$", description="La lingua di arrivo, es. 'hu'.")
 
 
 class ControlloSeoIn(BaseModel):

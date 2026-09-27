@@ -65,6 +65,9 @@ export interface ArticoloBlog extends Omit<ArticoloBreve, "immagine"> {
   correlati: ArticoloBreve[];
   precedente: ArticoloBreve | null;
   successivo: ArticoloBreve | null;
+  /* La sua metà nell'altra lingua (it/en), solo se collegata da una traduzione generata in console
+   * (v5): un articolo scritto a mano in entrambe le lingue non ce l'ha finché non si collega così. */
+  gemella_lingua: { lang: string; slug: string } | null;
 }
 
 export type TipoSezione = "articoli" | "carte" | "stese" | "contenitore";

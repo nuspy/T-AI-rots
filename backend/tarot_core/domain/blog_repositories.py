@@ -341,6 +341,7 @@ class BlogRepository:
         for campo in (
             "titolo", "sottotitolo", "testo", "lang", "immagine_id", "immagine_alt", "sezione_id", "in_evidenza",
             "commenti_aperti", "seo_titolo", "seo_descrizione", "seo_parola_chiave", "noindex", "canonical_url",
+            "tradotto_da_id",
         ):
             if campo in dati:
                 valore = dati[campo]

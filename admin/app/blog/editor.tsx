@@ -20,6 +20,7 @@ import {
   revisioni,
   ripristina,
   sezioni,
+  traduciArticolo,
   urlMedia,
   type Articolo,
   type CampiArticolo,
@@ -306,6 +307,23 @@ function Modulo({ iniziale }: { iniziale: Articolo | null }) {
     if ((await esegui((t) => eliminaArticolo(t, articoloSalvato.id))) !== null) {
       setSalvata(forma);
       router.push("/blog");
+    }
+  };
+
+  const [linguaTraduzione, setLinguaTraduzione] = useState("");
+
+  const generaTraduzione = async () => {
+    if (!articoloSalvato) return;
+    const lang = linguaTraduzione.trim().toLowerCase();
+    if (!lang) return;
+    const r = await esegui((t) => traduciArticolo(t, articoloSalvato.id, lang));
+    if (r) {
+      setArticoloSalvato({
+        ...articoloSalvato,
+        traduzioni: [...articoloSalvato.traduzioni, { id: r.id, lang: r.lang, slug: r.slug, stato: r.stato }],
+      });
+      setLinguaTraduzione("");
+      setEsito(`Bozza tradotta creata (${r.lang}): da rivedere prima di pubblicarla.`);
     }
   };
 
@@ -944,6 +962,55 @@ function Modulo({ iniziale }: { iniziale: Articolo | null }) {
               {forma.faq.length >= FAQ_MAX ? `Al massimo ${FAQ_MAX}` : "Aggiungi una domanda"}
             </button>
           </section>
+
+          {!nuovo && articoloSalvato && (
+            <section className={stili.pannello} aria-labelledby="traduzioni">
+              <h2 id="traduzioni" className={stili.pannelloTitolo}>
+                Traduzioni (v5)
+              </h2>
+              <p className={comuni.riquadroNota}>
+                Generata dal modello, sempre come bozza nuova da rivedere prima di pubblicare — non tocca
+                questo articolo. Richiede un modello LLM configurato e funzionante.
+              </p>
+              {articoloSalvato.tradotto_da_id && (
+                <p className={comuni.riquadroNota}>Questo articolo è a sua volta una traduzione generata.</p>
+              )}
+              {articoloSalvato.traduzioni.length > 0 && (
+                <ul className={stili.versioni}>
+                  {articoloSalvato.traduzioni.map((t) => (
+                    <li key={t.id} className={stili.versione}>
+                      <span className={stili.versioneTitolo}>{t.lang}</span>
+                      <span>{t.stato}</span>
+                      <Link href={`/blog/${t.id}`} className={comuni.secondaria} style={{ height: 44, display: "inline-flex", alignItems: "center", padding: "0 1rem" }}>
+                        Apri
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className={stili.azioniModulo}>
+                <input
+                  type="text"
+                  value={linguaTraduzione}
+                  onChange={(e) => setLinguaTraduzione(e.target.value)}
+                  placeholder="es. hu"
+                  maxLength={5}
+                  style={{ width: 100 }}
+                  aria-label="Codice della lingua di arrivo"
+                />
+                <button
+                  type="button"
+                  className={comuni.secondaria}
+                  style={{ height: 44 }}
+                  disabled={inCorso || !linguaTraduzione.trim() || modificato}
+                  title={modificato ? "Salva prima le modifiche" : undefined}
+                  onClick={generaTraduzione}
+                >
+                  Genera traduzione
+                </button>
+              </div>
+            </section>
+          )}
 
           {!nuovo && (
             <section className={stili.pannello} aria-labelledby="versioni">

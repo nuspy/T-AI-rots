@@ -21,6 +21,17 @@ pytestmark = pytest.mark.skipif(not SCRIPT.exists(), reason="la cartella skills/
 CHIAVE = "tk_live_abcdef123456_segreto-da-non-stampare"
 
 
+@pytest.fixture(autouse=True)
+def _cache_isolata(monkeypatch, tmp_path, cli):
+    """La cache locale della chiave (`CACHE_PATH` in tarots_blog.py) è per macchina, non per test: senza
+    questo isolamento una chiave già salva su questa macchina (da un uso reale della skill, o da un test
+    precedente nello stesso lancio) apparirebbe «diversa» dalla `CHIAVE` finta dei test, bloccandoli col
+    controllo appena aggiunto. `CACHE_PATH` è una costante di modulo, fissata all'importazione — la sola
+    variabile d'ambiente non basta a cambiarla test per test: si riassegna direttamente l'attributo,
+    a un percorso nuovo (e quindi inesistente) per ciascun test."""
+    monkeypatch.setattr(cli, "CACHE_PATH", tmp_path / "cache-di-prova.json")
+
+
 @pytest.fixture(scope="module")
 def cli():
     spec = importlib.util.spec_from_file_location("tarots_blog", SCRIPT)
