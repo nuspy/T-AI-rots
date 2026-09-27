@@ -204,7 +204,13 @@ export const hu: Dizionario = {
   carta_anima: "Lélekkártya",
   carta_anno: "Évkártya",
   invita_titolo: "Hívd meg, akit szeretsz",
-  invita_testo: "Minden személy után, aki a te kódoddal regisztrál, te és ő is 3 ingyenes jóslást kaptok.",
+  invita_testo: (iscrizione: number, invito: number) =>
+    `Minden új fiók ${iscrizione} ingyenes jóslást kap. A kóddal aki regisztrál, ${invito}-at kap — és te is ugyanannyit.`,
+  invita_commissione: (percentuale: number) =>
+    `És ez még nem minden: aki téged hívott meg, minden jövőbeli vásárlása után ${percentuale}% jóváírást kapsz, örökre — nem csak egyszer.`,
+  bigliettino_scarica: "Meghívókártya letöltése",
+  bigliettino_claim: "Fedezd fel a tarot-ot, mesterséges intelligencia vezetésével",
+  bigliettino_omaggio: (n: number) => `${n} ingyenes jóslás`,
   invito_testo_condivisione: (codice: string) => `A meghívókódom: ${codice}`,
   condividi_codice: "A kód megosztása",
   copiato: "Kimásolva",

@@ -11,7 +11,7 @@ from .billing_models import Coupon, CouponRedemption, CreditEntry, PaymentChecko
 from .blog_models import (
     ApiKey, BlogPost, BlogPostLink, BlogPostRevision, BlogPostTag, BlogSection, BlogTag, MediaImage,
 )
-from .config_models import LlmProvider, ModelAssignment
+from .config_models import ImpostazioniCrediti, LlmProvider, ModelAssignment
 from .models import AuditLog, DailyCard, DrawnCard, InterviewTurn, Reading, User
 from .share_models import ShareEvent, ShareImage, ShareSignup, ShareVisit
 
@@ -31,6 +31,7 @@ __all__ = [
     "CreditEntry",
     "DailyCard",
     "DrawnCard",
+    "ImpostazioniCrediti",
     "InterviewTurn",
     "LlmProvider",
     "ModelAssignment",

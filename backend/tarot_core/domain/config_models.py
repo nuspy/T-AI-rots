@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from sqlalchemy import BigInteger, Boolean, ForeignKey, LargeBinary, String
+from sqlalchemy import BigInteger, Boolean, CheckConstraint, ForeignKey, Integer, LargeBinary, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -37,6 +37,30 @@ class ModelAssignment(Base, TimestampMixin):
     #: l'avvio.
     model_name: Mapped[str] = mapped_column(String(60), nullable=False)
     #: Chi l'ha deciso. Nullo se l'ha fatto un processo automatico.
+    updated_by: Mapped[Optional[int]] = mapped_column(
+        BigInteger, ForeignKey("users.id", ondelete="SET NULL"),
+    )
+
+
+class ImpostazioniCrediti(Base, TimestampMixin):
+    """I numeri del regalo d'iscrizione e del referral: una riga sola, configurata dalla console.
+
+    `crediti_invito` è il **totale** che l'invitato deve avere in saldo dopo il riscatto, non un extra rispetto al
+    regalo d'iscrizione: chi riscatta un codice non deve sommare i due, deve arrivare esattamente a questo numero
+    (vedi `billing/referral.py`). `commissione_referral_percentuale` è la quota (0-100) di ogni acquisto futuro di
+    un invitato che finisce a chi lo ha invitato, per sempre — non solo alla prima volta.
+
+    Una riga sola (`id` fisso a 1, come `ModelAssignment` per lo stile ma qui un solo record invece di uno per
+    chiave): non serve un elenco, e un singleton evita la domanda «quale riga vale» che una tabella libera
+    porrebbe."""
+
+    __tablename__ = "impostazioni_crediti"
+    __table_args__ = (CheckConstraint("id = 1", name="ck_impostazioni_crediti_singleton"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
+    crediti_iscrizione: Mapped[int] = mapped_column(Integer, nullable=False, default=3)
+    crediti_invito: Mapped[int] = mapped_column(Integer, nullable=False, default=5)
+    commissione_referral_percentuale: Mapped[int] = mapped_column(Integer, nullable=False, default=20)
     updated_by: Mapped[Optional[int]] = mapped_column(
         BigInteger, ForeignKey("users.id", ondelete="SET NULL"),
     )

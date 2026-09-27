@@ -136,8 +136,6 @@ class Settings(BaseSettings):
     intervista_max_domande: int = 6
     #: I crediti con cui nasce un utente di prova creato dal seed.
     crediti_utente_di_prova: int = 1000
-    #: Crediti regalati a chi invita e a chi si iscrive con un invito.
-    crediti_invito: int = 3
     #: Il sale delle impronte anonime di chi visita un link condiviso (indirizzo e
     #: identificativo del browser). In produzione va cambiato: con quello di
     #: sviluppo le impronte sarebbero calcolabili da chiunque conosca il codice.

@@ -102,10 +102,20 @@ async def current_user(
         if getattr(utente, "appena_creato", False):
             # Il piano gratuito si apre qui e non dentro `ensure`: il dominio
             # degli utenti non deve sapere che esiste una tariffa, o le due
-            # cose non si possono più cambiare separatamente.
+            # cose non si possono più cambiare separatamente. Lo stesso vale
+            # per il regalo d'iscrizione: quanti crediti dare è una scelta di
+            # console (`ImpostazioniCrediti`), non qualcosa che il dominio
+            # utenti decide da sé.
+            from ..billing.credits import RegistroCrediti
             from ..billing.plans import GestoreAbbonamenti
+            from ..domain.impostazioni_repositories import correnti as impostazioni_correnti
 
             await GestoreAbbonamenti(session).apri_piano_base(utente.id)
+            impostazioni = await impostazioni_correnti(session)
+            if impostazioni.crediti_iscrizione > 0:
+                await RegistroCrediti(session).accredita(
+                    utente.id, impostazioni.crediti_iscrizione, reason="omaggio", note="iscrizione",
+                )
             await session.commit()
         return utente
     except PermissionError as exc:

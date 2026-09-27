@@ -8,6 +8,7 @@ import { ProviderLingua, type Lingua } from "@/lib/lingua";
 import { AUTH_DISATTIVATA, SessioneDiSviluppo, SessioneKeycloak } from "@/lib/sessione";
 import { AttribuzioneCondivisione } from "./componenti/attribuzione";
 import { Promemoria2fa } from "./componenti/promemoria-2fa";
+import { RiscattoInvitoAutomatico } from "./componenti/riscatto-invito";
 
 /* Autenticazione: il codice di autorizzazione con PKCE, come in Personalities.
  *
@@ -76,6 +77,7 @@ export function Providers({ children, linguaIniziale }: { children: React.ReactN
       <ProviderLingua iniziale={linguaIniziale}>
         <SessioneKeycloak>
           <AttribuzioneCondivisione />
+          <RiscattoInvitoAutomatico />
           <Promemoria2fa />
           {children}
         </SessioneKeycloak>

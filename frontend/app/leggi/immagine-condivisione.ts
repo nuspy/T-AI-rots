@@ -40,15 +40,15 @@ const NOTTE = "#07050f";
 
 /* ---- strumenti di disegno ---- */
 
-type G = CanvasRenderingContext2D;
+export type G = CanvasRenderingContext2D;
 
-interface Caratteri {
+export interface Caratteri {
   titoli: string;
   oracolo: string;
   interfaccia: string;
 }
 
-function caratteri(): Caratteri {
+export function caratteri(): Caratteri {
   const stile = getComputedStyle(document.documentElement);
   return {
     titoli: stile.getPropertyValue("--font-titoli").trim() || "serif",
@@ -148,7 +148,7 @@ function aCapo(g: G, testo: string, larghezza: number, lingua: string, massimo: 
 
 /* Scrive un testo a capo centrato in `x` (o a sinistra di `x`); restituisce la
  * quota sotto l'ultima riga. */
-function paragrafo(
+export function paragrafo(
   g: G, testo: string, x: number, y: number, larghezza: number, riga: number, massimo: number,
   lingua: string, allinea: "center" | "left" = "center",
 ): number {
@@ -285,7 +285,7 @@ async function disegnaTavolo(
 
 /* Il logo sul canvas: la stessa illustrazione del sito (256 px di larghezza bastano: sull'immagine sta a ~80 px di
  * altezza). Se non si carica, resta il nome scritto: l'immagine si genera comunque. `y` è il bordo alto. */
-async function disegnaMarchio(g: G, x: number, y: number, altezza: number, tipo: Caratteri) {
+export async function disegnaMarchio(g: G, x: number, y: number, altezza: number, tipo: Caratteri) {
   const logo = await caricaImmagine(urlLogo(256));
   if (logo) {
     g.drawImage(logo, x, y, (altezza * LOGO.larghezza) / LOGO.altezza, altezza);
@@ -318,7 +318,7 @@ function disegnaSimbolo(g: G, nome: string | null, cx: number, cy: number, lato:
 
 /* ---- il disegno ---- */
 
-function sfondo(g: G, w: number, h: number, seme: string) {
+export function sfondo(g: G, w: number, h: number, seme: string) {
   const fondo = g.createRadialGradient(w / 2, h * 0.38, 40, w / 2, h * 0.5, Math.max(w, h) * 0.8);
   fondo.addColorStop(0, "#2c1f5c");
   fondo.addColorStop(1, NOTTE);
@@ -332,7 +332,7 @@ function sfondo(g: G, w: number, h: number, seme: string) {
   }
 }
 
-function cornice(g: G, w: number, h: number) {
+export function cornice(g: G, w: number, h: number) {
   const m = Math.round(Math.min(w, h) * 0.027);
   g.strokeStyle = "rgba(216,180,90,0.85)";
   g.lineWidth = Math.max(2, m / 9);

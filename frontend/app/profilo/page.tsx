@@ -5,9 +5,11 @@
 
 import { useState } from "react";
 import {
-  aggiornaProfilo, cancellaPartner, caricaAvatar, leggiProfilo, riscattaInvito, togliAvatar, type Genere,
+  aggiornaProfilo, cancellaPartner, caricaAvatar, impostazioniPubbliche, leggiProfilo, riscattaInvito, togliAvatar,
+  type Genere,
 } from "@/lib/api";
 import { urlMedia } from "@/lib/blog";
+import { dimenticaInvito, leggiInvito } from "@/lib/inviti";
 import { useLingua } from "@/lib/lingua";
 import { useSessione, AUTH_DISATTIVATA } from "@/lib/sessione";
 import { URL_ACCOUNT, leggiStato2fa } from "@/lib/sicurezza";
@@ -15,6 +17,7 @@ import { useAzione, useCarica } from "@/lib/usa";
 import { Carta } from "../componenti/carta";
 import { CampiGenere } from "../componenti/campi-genere";
 import { Involucro } from "../componenti/testata";
+import { componiBigliettino, scaricaBlob } from "./bigliettino-invito";
 import stili from "../pagine.module.css";
 
 export default function PaginaProfilo() {
@@ -43,15 +46,11 @@ function Profilo() {
   const [genere, setGenere] = useState<Genere | "" | null>(null);
   const [genereAltro, setGenereAltro] = useState<string | null>(null);
   const [trans, setTrans] = useState<boolean | null>(null);
-  const [codice, setCodice] = useState(() => {
-    try {
-      return typeof window !== "undefined" ? (window.localStorage.getItem("invito") ?? "") : "";
-    } catch {
-      return "";
-    }
-  });
+  const [codice, setCodice] = useState(() => leggiInvito() ?? "");
   const [esito, setEsito] = useState<string | null>(null);
   const [copiato, setCopiato] = useState(false);
+  const [scaricando, setScaricando] = useState(false);
+  const impostazioni = useCarica(impostazioniPubbliche, [], { pubblico: true });
   const p = profilo.dati;
   if (profilo.errore) return <p className={stili.errore}>{profilo.errore}</p>;
   if (!p) return null;
@@ -286,7 +285,14 @@ function Profilo() {
 
       <section className={`pannello ${stili.scheda} ${stili.sezione}`}>
         <h2 className={stili.sezioneTitolo}>{t.invita_titolo}</h2>
-        <p className={stili.nota}>{t.invita_testo}</p>
+        {impostazioni.dati && (
+          <>
+            <p className={stili.nota}>
+              {t.invita_testo(impostazioni.dati.crediti_iscrizione, impostazioni.dati.crediti_invito)}
+            </p>
+            <p className={stili.nota}>{t.invita_commissione(impostazioni.dati.commissione_referral_percentuale)}</p>
+          </>
+        )}
         <span className={stili.codice}>{p.referral_code}</span>
         <div className={stili.linea}>
           <button className="bottone-secondario" onClick={async () => {
@@ -297,6 +303,19 @@ function Profilo() {
             setCopiato(true);
           }}>
             {copiato ? t.copiato : t.condividi_codice}
+          </button>
+          <button className="bottone-secondario" disabled={scaricando || !p.referral_code} onClick={async () => {
+            if (!p.referral_code) return;
+            setScaricando(true);
+            try {
+              const omaggio = impostazioni.dati ? t.bigliettino_omaggio(impostazioni.dati.crediti_invito) : "";
+              const blob = await componiBigliettino(p.referral_code, t.bigliettino_claim, omaggio, locale);
+              if (blob) scaricaBlob(blob, `tarots-chat-invito-${p.referral_code}.png`);
+            } finally {
+              setScaricando(false);
+            }
+          }}>
+            {t.bigliettino_scarica}
           </button>
         </div>
         {!p.invitato && (
@@ -309,7 +328,7 @@ function Profilo() {
               const r = await esegui((tok) => riscattaInvito(tok, codice));
               if (r) {
                 setEsito(t.letture_regalo(r.crediti));
-                try { window.localStorage.removeItem("invito"); } catch { /* pazienza */ }
+                dimenticaInvito();
                 profilo.ricarica();
               }
             }}>

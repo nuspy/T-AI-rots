@@ -677,6 +677,16 @@ export interface CartaOggi {
 export const cartaDiOggi = (lingua: string) => chiama<CartaOggi>(null, `/daily-card/today?lang=${lingua}`);
 export const cartaDelGiorno = (token: string | null) => chiama<CartaDelGiorno>(token, "/me/daily-card");
 
+/** I numeri del regalo d'iscrizione e del referral: pubblici, nessun dato sensibile — servono a mostrare cifre
+ * vere nella home e nel profilo, invece di un testo fisso che l'amministrazione potrebbe aver cambiato. */
+export interface ImpostazioniPubbliche {
+  crediti_iscrizione: number;
+  crediti_invito: number;
+  commissione_referral_percentuale: number;
+}
+
+export const impostazioniPubbliche = () => chiama<ImpostazioniPubbliche>(null, "/impostazioni-pubbliche");
+
 export function euro(centesimi: number, valuta = "EUR", locale = "it-IT"): string {
   return new Intl.NumberFormat(locale, { style: "currency", currency: valuta }).format(centesimi / 100);
 }

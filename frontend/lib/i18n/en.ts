@@ -205,7 +205,13 @@ export const en: Dizionario = {
   carta_anima: "Soul card",
   carta_anno: "Year card",
   invita_titolo: "Invite those you love",
-  invita_testo: "For each person who signs up with your code, you and they each receive 3 free readings.",
+  invita_testo: (iscrizione: number, invito: number) =>
+    `Every new account gets ${iscrizione} free readings. With your code, whoever signs up gets ${invito} instead — and you receive the same ${invito}.`,
+  invita_commissione: (percentuale: number) =>
+    `And it doesn't stop there: for every future purchase your invitee makes, you get ${percentuale}% back in credits, forever — not just the first time.`,
+  bigliettino_scarica: "Download the invite card",
+  bigliettino_claim: "Discover tarot, guided by artificial intelligence",
+  bigliettino_omaggio: (n: number) => `${n} free readings`,
   invito_testo_condivisione: (codice: string) => `My invite code: ${codice}`,
   condividi_codice: "Share the code",
   copiato: "Copied",

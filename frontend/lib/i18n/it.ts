@@ -223,7 +223,13 @@ export const it = {
   carta_anima: "Carta dell'anima",
   carta_anno: "Carta dell'anno",
   invita_titolo: "Invita chi ami",
-  invita_testo: "Per ogni persona che si iscrive con il tuo codice, tu e lei ricevete 3 letture in regalo.",
+  invita_testo: (iscrizione: number, invito: number) =>
+    `Ogni nuovo account riceve ${iscrizione} letture in regalo. Con il tuo codice, chi si iscrive arriva a ${invito} — e tu ricevi le stesse ${invito}.`,
+  invita_commissione: (percentuale: number) =>
+    `E non finisce lì: per ogni acquisto futuro di chi hai invitato, ricevi il ${percentuale}% in crediti, per sempre — non solo alla prima volta.`,
+  bigliettino_scarica: "Scarica il bigliettino d'invito",
+  bigliettino_claim: "Scopri i tarocchi guidato dall'intelligenza artificiale",
+  bigliettino_omaggio: (n: number) => `${n} letture in regalo`,
   invito_testo_condivisione: (codice: string) => `Il mio codice invito: ${codice}`,
   condividi_codice: "Condividi il codice",
   copiato: "Copiato",

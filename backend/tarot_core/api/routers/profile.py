@@ -18,7 +18,6 @@ from ...domain.base import utcnow
 from ...domain.blog_models import MediaImage
 from ...domain.models import DailyCard, User
 from ...domain.repositories import AuditRepository, nuovo_codice_invito
-from ...settings import get_settings
 from ...tarot import blog as regole_blog
 from ...tarot.numerologia import carta_dell_anima, carta_dell_anno
 from ...tarot.persone import LUNGHEZZA_GENERE_ALTRO, mancanti, pulisci
@@ -146,7 +145,10 @@ async def dimentica_partner(user: CurrentUser, session: DbSession) -> Response:
 async def riscatta(payload: Invito, user: CurrentUser, session: DbSession) -> Dict[str, Any]:
     """Riscatta un invito: crediti a chi invita e a chi è invitato.
 
-    Una volta sola per account, e mai col proprio codice.
+    Una volta sola per account, e mai col proprio codice. `crediti_invito` è il **totale** che l'invitato deve
+    avere dopo il riscatto: chi si iscrive ha già preso il regalo d'iscrizione (`crediti_iscrizione`, accreditato
+    al primo accesso), quindi qui gli si dà solo il complemento — «diventano 5», non «diventano 3+5». Chi invita
+    non ha preso nessun regalo base, e riceve l'intero `crediti_invito`.
     """
     if user.referred_by is not None:
         raise HTTPException(status_code=409, detail="Hai già usato un invito")
@@ -159,16 +161,23 @@ async def riscatta(payload: Invito, user: CurrentUser, session: DbSession) -> Di
     if invitante is None:
         raise HTTPException(status_code=404, detail="Codice invito sconosciuto")
 
-    quanti = get_settings().crediti_invito
+    from ...domain.impostazioni_repositories import correnti as impostazioni_correnti
+
+    impostazioni = await impostazioni_correnti(session)
+    totale_invitato = impostazioni.crediti_invito
+    complemento = max(0, totale_invitato - impostazioni.crediti_iscrizione)
+
     registro = RegistroCrediti(session)
     user.referred_by = invitante.id
-    await registro.accredita(user.id, quanti, reason="omaggio", note=f"invito {codice}")
-    await registro.accredita(invitante.id, quanti, reason="omaggio", note=f"invito riscattato da {user.id}")
+    if complemento > 0:
+        await registro.accredita(user.id, complemento, reason="omaggio", note=f"invito {codice}")
+    if totale_invitato > 0:
+        await registro.accredita(invitante.id, totale_invitato, reason="omaggio", note=f"invito riscattato da {user.id}")
     await AuditRepository(session).record(
         action="referral.redeem", actor_id=user.id, target_type="user", target_id=str(invitante.id),
     )
     await session.commit()
-    return {"crediti": quanti, "saldo": await registro.saldo(user.id)}
+    return {"crediti": totale_invitato, "saldo": await registro.saldo(user.id)}
 
 
 @router.get("/daily-card")

@@ -82,6 +82,15 @@ def disclaimer(lang: str = "it") -> Dict[str, str]:
     return {"testo": in_lingua(DISCLAIMER, lang)}
 
 
+@router.get("/impostazioni-pubbliche")
+async def impostazioni_pubbliche(session: DbSession) -> Dict[str, int]:
+    """I numeri del regalo d'iscrizione e del referral: niente di sensibile, servono alla home e al profilo per
+    mostrare cifre vere invece di un testo fisso che l'amministrazione potrebbe aver cambiato."""
+    from ...domain.impostazioni_repositories import correnti, pubblico
+
+    return pubblico(await correnti(session))
+
+
 @router.get("/shared/{token}")
 async def condivisa(token: str, session: DbSession) -> Dict[str, Any]:
     """Una lettura condivisa: domanda, carte, responso. Niente intervista,

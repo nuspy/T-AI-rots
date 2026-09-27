@@ -28,6 +28,16 @@ async def _accredita(session, principal, quanti=1000):
     return utente
 
 
+async def _azzera_regalo_iscrizione(session):
+    """Spegne il regalo automatico dell'iscrizione: serve ai test che vogliono un utente **davvero** senza
+    crediti al primo accesso, indipendente dal valore predefinito di `ImpostazioniCrediti`."""
+    from tarot_core.domain.impostazioni_repositories import correnti
+
+    riga = await correnti(session)
+    riga.crediti_iscrizione = 0
+    await session.commit()
+
+
 QUESITO = "Cosa mi riserva il lavoro nei prossimi mesi?"
 
 
@@ -107,7 +117,8 @@ async def test_cinque_letture_consumano_cinque_crediti(client, session, catalogo
     assert fine["saldo"] == 995
 
 
-async def test_senza_crediti_si_riceve_402(client, catalogo):
+async def test_senza_crediti_si_riceve_402(client, session, catalogo):
+    await _azzera_regalo_iscrizione(session)
     r = await client.post("/readings", json={"spread_id": "tre-carte", "question": "Andrà bene?"})
     assert r.status_code == 402
     assert r.json()["detail"]["motivo"] == "crediti"
@@ -226,7 +237,8 @@ async def test_l_abbonamento_usa_la_quota_prima_dei_crediti(client, session, cat
     assert (await client.get("/me/billing")).json()["saldo"] == 4
 
 
-async def test_un_pacchetto_pagato_accredita_i_crediti(client, catalogo):
+async def test_un_pacchetto_pagato_accredita_i_crediti(client, session, catalogo):
+    await _azzera_regalo_iscrizione(session)
     r = await client.post("/me/checkout", json={"piano": "pacchetto-15", "ritorno": "/leggi"})
     assert r.status_code == 201, r.text
     checkout = r.json()["checkout_id"]
@@ -261,7 +273,8 @@ async def test_inviti_e_carta_del_giorno(client, session, catalogo, principal_al
     codice = (await client.get("/me/profile")).json()["referral_code"]
     client.identita.principal = principal_altro
     r = await client.post("/me/referral", json={"codice": codice})
-    assert r.status_code == 200 and r.json()["saldo"] == 3
+    # 3 (regalo d'iscrizione, automatico al primo accesso) + 2 (complemento a 5, il totale del referral).
+    assert r.status_code == 200 and r.json()["saldo"] == 5
     assert (await client.post("/me/referral", json={"codice": codice})).status_code == 409
     prima = (await client.get("/me/daily-card")).json()
     seconda = (await client.get("/me/daily-card")).json()

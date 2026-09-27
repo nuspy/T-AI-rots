@@ -9,7 +9,7 @@ from tarot_core.domain.models import Reading, User
 from tarot_core.domain.repositories import UserRepository
 
 from .conftest import richiede_database
-from .test_flusso import _accredita, _lettura_completa
+from .test_flusso import _accredita, _azzera_regalo_iscrizione, _lettura_completa
 from .test_stese_speciali import ATTESE
 
 pytestmark = richiede_database
@@ -150,6 +150,7 @@ async def test_una_lettura_speciale_costa_un_credito_come_le_altre(client, sessi
 
 
 async def test_senza_crediti_si_riceve_402_e_non_si_ricorda_il_partner(client, session, catalogo):
+    await _azzera_regalo_iscrizione(session)
     await _scheda(client)
     r = await _apri(client, ricorda_partner=True)
     assert r.status_code == 402

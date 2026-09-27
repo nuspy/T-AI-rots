@@ -7,6 +7,7 @@ import { useCallback, useEffect } from "react";
 import Link from "@/app/componenti/link";
 import { motion } from "framer-motion";
 import { elencaCarte, elencaStese } from "@/lib/api";
+import { salvaInvito } from "@/lib/inviti";
 import { useLingua } from "@/lib/lingua";
 import { nomeStesa } from "@/lib/i18n";
 import { useCarica } from "@/lib/usa";
@@ -28,13 +29,7 @@ export function Soglia() {
    * fino alla registrazione, e il profilo lo propone da riscattare. */
   useEffect(() => {
     const codice = new URLSearchParams(window.location.search).get("invito");
-    if (codice) {
-      try {
-        window.localStorage.setItem("invito", codice.toUpperCase());
-      } catch {
-        /* archiviazione non disponibile: il codice si scrive a mano */
-      }
-    }
+    if (codice) salvaInvito(codice);
   }, []);
 
   return (

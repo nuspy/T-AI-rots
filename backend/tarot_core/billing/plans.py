@@ -305,6 +305,10 @@ class GestoreAbbonamenti:
             )
             esito.crediti_accreditati = piano.credits_per_period
 
+            from .referral import commissione_da_acquisto
+
+            await commissione_da_acquisto(self._session, abbonamento.user_id, piano.credits_per_period)
+
         esito.nuovo_periodo_fine = abbonamento.period_end
         await self._session.flush()
         return esito

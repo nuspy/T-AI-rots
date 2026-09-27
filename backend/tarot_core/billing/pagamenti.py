@@ -355,6 +355,8 @@ class GestorePagamenti:
 
         await registra_uso(self._session, checkout)       # l'uso del coupon si conta a pagamento avvenuto
 
+        from .referral import commissione_da_acquisto
+
         if checkout.plan.pacchetto:
             # Un pacchetto non apre abbonamenti: accredita i suoi crediti, che
             # non scadono perché sono stati pagati.
@@ -364,6 +366,7 @@ class GestorePagamenti:
                 checkout.user_id, checkout.plan.credits_per_period,
                 reason="acquisto", note=f"pacchetto {checkout.plan.slug}",
             )
+            await commissione_da_acquisto(self._session, checkout.user_id, checkout.plan.credits_per_period)
             return "crediti accreditati"
 
         checkout.subscription_external_id = str(
@@ -374,6 +377,7 @@ class GestorePagamenti:
             checkout.user_id, checkout.plan, annuale=checkout.annuale,
             external_id=checkout.subscription_external_id,
         )
+        await commissione_da_acquisto(self._session, checkout.user_id, checkout.plan.credits_per_period)
         return "abbonamento attivato"
 
     async def _chiudi_checkout(self, evento: EventoPagamento, stato: str) -> str:

@@ -16,6 +16,7 @@ const SEZIONI = [
   { href: "/report", etichetta: "Report" },
   { href: "/registro", etichetta: "Registro" },
   { href: "/modelli", etichetta: "Modelli" },
+  { href: "/impostazioni", etichetta: "Impostazioni" },
 ];
 
 /* Una voce è attiva anche sulle sue pagine interne: dal dettaglio di un
