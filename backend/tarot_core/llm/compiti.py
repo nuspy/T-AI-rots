@@ -58,6 +58,10 @@ class Compito(str, Enum):
     #: Traduzione di un articolo del blog in un'altra lingua (v5, fase E): non durante una lettura, ma
     #: su richiesta esplicita dalla console, sempre in bozza per la revisione editoriale.
     TRADUZIONE_ARTICOLO = "traduzione_articolo"
+    #: Traduzione dei testi lunghi di carte e stese in una nuova lingua (v5, fase D): uno strumento
+    #: offline (`tools/traduci_conoscenza.py`), mai in produzione — la bozza richiede sempre una
+    #: revisione umana prima di entrare in `LINGUE_CONTENUTO`.
+    TRADUZIONE_CONOSCENZA = "traduzione_conoscenza"
 
     @property
     def label(self) -> str:
@@ -75,6 +79,7 @@ _ETICHETTE: Dict[Compito, str] = {
     Compito.SINTESI: "Sintesi finale (CAG)",
     Compito.GIUDIZIO: "Guardrail del responso",
     Compito.TRADUZIONE_ARTICOLO: "Traduzione articoli del blog",
+    Compito.TRADUZIONE_CONOSCENZA: "Traduzione di carte e stese (offline)",
 }
 
 _DESCRIZIONI: Dict[Compito, str] = {
@@ -104,6 +109,11 @@ _DESCRIZIONI: Dict[Compito, str] = {
         "Traduce titolo, sottotitolo, corpo e campi SEO di un articolo del blog già pubblicato in "
         "un'altra lingua. Non gira durante una lettura: solo su richiesta dalla console, e il "
         "risultato è sempre salvato come bozza, mai pubblicato da solo."
+    ),
+    Compito.TRADUZIONE_CONOSCENZA: (
+        "Traduce le schede di carte e stese in una nuova lingua, una alla volta, per uno script "
+        "offline lanciato a mano — mai durante una lettura vera. Il risultato è sempre una bozza da "
+        "far rivedere a una persona."
     ),
 }
 
