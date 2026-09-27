@@ -9,16 +9,17 @@ import { motion } from "framer-motion";
 import { elencaCarte, elencaStese } from "@/lib/api";
 import { salvaInvito } from "@/lib/inviti";
 import { useLingua } from "@/lib/lingua";
-import { nomeStesa } from "@/lib/i18n";
 import { useCarica } from "@/lib/usa";
 import { BannerMazzo } from "./componenti/banner-mazzo";
 import { Carta } from "./componenti/carta";
+import { CtaIscrizione } from "./componenti/cta-iscrizione";
 import { Marchio } from "./componenti/marchio";
+import { MattonellaCategoria, MattonellaStesa } from "./componenti/mattonella-lettura";
 import { Testata } from "./componenti/testata";
 import stili from "./soglia.module.css";
 
 export function Soglia() {
-  const { t, lingua } = useLingua();
+  const { t } = useLingua();
   const carte = useCarica(useCallback(() => elencaCarte(), []), [], { pubblico: true });
   const stese = useCarica(useCallback(() => elencaStese("standard"), []), [], { pubblico: true });
   const maggiori = (carte.dati ?? []).filter((c) => c.arcano === "maggiore");
@@ -74,50 +75,61 @@ export function Soglia() {
         </div>
       </section>
 
+      {/* La carta del giorno: uno spazio suo, non un link anonimo — dice subito che è gratis e perché guardarla. */}
+      <section className={stili.sezione}>
+        <Link href="/carta-del-giorno" className={`pannello ${stili.cartaGiorno}`}>
+          <span className={stili.cartaGiornoSimbolo} aria-hidden="true">☉</span>
+          <div>
+            <strong>{t.home_carta_giorno_titolo}</strong>
+            <p>{t.home_carta_giorno_testo}</p>
+          </div>
+          <span className={stili.cartaGiornoCta}>{t.home_carta_giorno_cta} →</span>
+        </Link>
+      </section>
+
+      <CtaIscrizione />
+
+      {/* Come funziona: un'infografica, non un testo da leggere — tre passi, un'icona e una parola ciascuno. */}
       <section className={stili.sezione}>
         <h2>{t.home_come}</h2>
         <div className={stili.passi}>
-          {passi.map(([titolo, testo], i) => (
-            <motion.div key={titolo} className={`pannello ${stili.passo}`} initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
-              <span className={stili.numeroPasso}>{["I", "II", "III", "IV"][i]}</span>
-              <h3>{titolo}</h3>
-              <p>{testo}</p>
+          {passi.map((p, i) => (
+            <motion.div key={p.etichetta} className={stili.passo} initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.12 }}>
+              <span className={stili.passoIcona} aria-hidden="true">{p.icona}</span>
+              <span className={stili.passoEtichetta}>{p.etichetta}</span>
+              {i < passi.length - 1 && <span className={stili.passoFreccia} aria-hidden="true">→</span>}
             </motion.div>
           ))}
         </div>
       </section>
 
+      <CtaIscrizione />
+
+      {/* Le stese tradizionali e le letture speciali, in una sezione sola: titolo e schema soltanto, la
+          descrizione sta nel dialogo al clic. */}
       <section className={stili.sezione}>
-        <h2>{t.home_stese}</h2>
-        <div className={stili.stese}>
-          {(stese.dati ?? []).map((s) => (
-            <Link key={s.id} href={`/leggi?stesa=${s.id}`} className={`pannello ${stili.stesa}`}>
-              <strong>{nomeStesa(s, lingua)}</strong>
-              <span>{s.posizioni.length} {t.carte} · {s.mazzo === "maggiori" ? t.maggiori : t.completo}</span>
-              <p>{s.descrizione}</p>
-            </Link>
-          ))}
+        <h2>{t.home_stese_sezione}</h2>
+        <h3 className={stili.sottotitoloSezione}>{t.home_stese}</h3>
+        <div className={stili.mattonelle}>
+          {(stese.dati ?? []).map((s) => <MattonellaStesa key={s.id} stesa={s} />)}
         </div>
         <p className={stili.introSezione}>
           <Link href="/stese">{t.stesa_tutte} →</Link>
         </p>
-      </section>
 
-      <section className={stili.sezione}>
-        <h2>{t.home_speciali}</h2>
-        <p className={stili.introSezione}>{t.home_speciali_testo}</p>
-        <div className={stili.speciali}>
-          {([["compatibilita", t.tipo_compat, t.tipo_compat_desc], ["coppia", t.tipo_coppia, t.tipo_coppia_desc]] as const).map(
-            ([tipo, nome, descrizione]) => (
-              <Link key={tipo} href={`/leggi?tipo=${tipo}`} className={`pannello ${stili.stesa}`}>
-                <strong>{nome}</strong>
-                <p>{descrizione}</p>
-              </Link>
-            ),
-          )}
+        <h3 className={stili.sottotitoloSezione}>{t.home_speciali}</h3>
+        <div className={stili.mattonelle}>
+          <MattonellaCategoria
+            simbolo="♀" titolo={t.tipo_compat} descrizione={t.tipo_compat_desc} href="/leggi?tipo=compatibilita"
+          />
+          <MattonellaCategoria
+            simbolo="☽" titolo={t.tipo_coppia} descrizione={t.tipo_coppia_desc} href="/leggi?tipo=coppia"
+          />
         </div>
       </section>
+
+      <CtaIscrizione />
 
       <section className={stili.sezione}>
         <BannerMazzo />
@@ -131,6 +143,8 @@ export function Soglia() {
         </div>
         <p className={stili.avvertenza}>{t.home_avvertenza}</p>
       </section>
+
+      <CtaIscrizione />
     </div>
   );
 }

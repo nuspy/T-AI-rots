@@ -1,0 +1,54 @@
+/* Mattonelle compatte: titolo e schema, niente descrizione. Griglia centrata (l'utente lo ha chiesto
+   esplicitamente), non giustificata ai bordi come un elenco. */
+
+.mattonella {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 168px;
+  padding: 16px 14px;
+  font: inherit;
+  color: var(--testo);
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.mattonella:hover,
+.mattonella:focus-visible {
+  transform: translateY(-4px);
+  border-color: var(--bordo-forte);
+}
+
+.mattonella strong {
+  font-family: var(--font-titoli), serif;
+  font-size: 0.86rem;
+  color: var(--oro-chiaro);
+  text-align: center;
+  line-height: 1.35;
+}
+
+.miniatura {
+  width: 100%;
+  height: 76px;
+}
+
+.simbolo {
+  font-size: 2.2rem;
+  color: var(--viola-chiaro);
+  height: 76px;
+  display: flex;
+  align-items: center;
+}
+
+.descrizione {
+  color: var(--testo-tenue);
+  line-height: 1.6;
+  margin: 0 0 20px;
+}
+
+.azioni {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}

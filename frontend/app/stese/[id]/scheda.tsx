@@ -12,6 +12,7 @@ import { STESA, seoStesa } from "@/lib/seo-testi";
 import { SchedaArticolo } from "../../blog/componenti/elementi";
 import stiliBlog from "../../blog/blog.module.css";
 import { BannerMazzo } from "../../componenti/banner-mazzo";
+import { CtaIscrizione } from "../../componenti/cta-iscrizione";
 import { Involucro } from "../../componenti/testata";
 import { COLORE_SOGGETTO, Tavolo } from "../../leggi/tavolo";
 import { TesseraStesa } from "../elenco";
@@ -106,6 +107,7 @@ export function SchedaStesa({
         <Link href={`/leggi?stesa=${stesa.id}`} className="bottone">✦ {STESA.cta(linguaPagina, seo)}</Link>
         <Link href="/stese" className="bottone-secondario">{t.stesa_tutte}</Link>
       </div>
+      <CtaIscrizione compatta />
 
       {articoli.length > 0 && (
         <section className={stiliBlog.blocco} style={{ marginTop: 36 }} aria-label={t.blog_articoli_su_stesa}>
@@ -124,6 +126,7 @@ export function SchedaStesa({
           </div>
         </>
       )}
+      <CtaIscrizione />
       <BannerMazzo />
     </Involucro>
   );

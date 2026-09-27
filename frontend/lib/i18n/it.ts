@@ -27,6 +27,9 @@ export const it = {
   aria_sezioni: "Sezioni",
   entra: "Entra",
   registrati: "Registrati",
+  cta_iscrizione_titolo: "Registrati e comincia gratis",
+  cta_iscrizione_testo: (iscrizione: number, invito: number) =>
+    `${iscrizione} letture in regalo all'iscrizione — ${invito} se arrivi da un invito — e la carta del giorno sempre gratis.`,
   esci: "Esci",
   verifica_sessione: "Verifica della sessione…",
   serve_account: "Serve un account per consultare le carte.",
@@ -112,11 +115,14 @@ export const it = {
   /* soglia */
   home_come: "Come si svolge una lettura",
   home_passi: [
-    ["Domanda", "Scrivi ciò che vuoi sapere: una scelta, un sentimento, o semplicemente il futuro."],
-    ["Intervista", "L'oracolo ti fa poche domande per capire il contesto — mai la risposta al tuo quesito."],
-    ["Le carte", "Scegli dal ventaglio: le carte sono già assegnate e si girano una a una sul tavolo."],
-    ["Il responso", "L'AI unisce domanda, colloquio, stesa, dignità e simboli in una lettura coerente."],
+    { icona: "✎", etichetta: "Chiedi" },
+    { icona: "✦", etichetta: "Parla con l'indovino" },
+    { icona: "❖", etichetta: "Ricevi il responso" },
   ],
+  home_carta_giorno_titolo: "La carta del giorno",
+  home_carta_giorno_testo: "Una carta del Tarocco di Thoth, letta per te, ogni giorno — gratis, per sempre. Nessun account necessario.",
+  home_carta_giorno_cta: "Scopri la carta di oggi",
+  home_stese_sezione: "Scegli una stesa",
   home_stese: "Cinque stese della tradizione",
   home_rigore: "Rigore esoterico",
   home_rigore_1:
@@ -425,6 +431,7 @@ export const it = {
   stesa_origine: "Origine",
   stesa_fai: "Fai questa lettura",
   stesa_tutte: "Tutte le stese",
+  stesa_dettagli: "Maggiori dettagli",
   stesa_diagramma: "Lo schema della stesa: le posizioni numerate sul tavolo.",
   stesa_n_carte: (n: number) => (n === 1 ? "1 carta" : `${n} carte`),
   stesa_altre_categoria: "Altre stese dello stesso tipo",

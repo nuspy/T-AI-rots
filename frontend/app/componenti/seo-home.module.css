@@ -23,69 +23,38 @@
   color: var(--oro);
 }
 
-.testo {
-  max-width: 68ch;
-  margin: 0 0 14px;
-  font-size: 1.08rem;
-  line-height: 1.75;
-  color: var(--testo);
-}
-
-.passi {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.passo {
-  position: relative;
-  padding: 22px 22px 20px;
-}
-
-.passo strong {
-  font-family: var(--font-titoli), serif;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--oro-chiaro);
-}
-
-.passo p {
-  margin: 8px 0 0;
-  line-height: 1.65;
-  color: var(--testo-tenue);
-}
-
-.numero {
-  position: absolute;
-  top: 14px;
-  right: 18px;
-  font-family: var(--font-titoli), serif;
-  font-size: 1.6rem;
-  color: rgba(216, 180, 90, 0.35);
-}
-
 .colonne {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 28px 40px;
 }
 
-.elenco {
-  columns: 2;
-  column-gap: 24px;
-  padding: 0;
+/* Le carte e le stese, in mattonelle compatte invece di un elenco su due colonne: la pagina scende meno. */
+.mattonelleTesto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
   margin: 0 0 12px;
-  list-style: none;
 }
 
-.elenco li {
-  break-inside: avoid;
+.mattonellaTesto {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--bordo);
+  background: var(--superficie);
+  font-size: 0.82rem;
+  color: var(--testo-tenue);
+  white-space: nowrap;
 }
 
-.elenco a,
+.mattonellaTesto:hover {
+  border-color: var(--bordo-forte);
+  color: var(--oro-chiaro);
+}
+
 .sezioni p a {
   display: inline-flex;
   align-items: center;
@@ -144,7 +113,6 @@
     padding: 0 16px 140px;
   }
 
-  .passi,
   .articoli {
     grid-template-columns: 1fr;
   }

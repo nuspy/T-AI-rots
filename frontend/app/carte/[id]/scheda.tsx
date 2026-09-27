@@ -17,6 +17,7 @@ import { SchedaArticolo } from "../../blog/componenti/elementi";
 import stiliBlog from "../../blog/blog.module.css";
 import { BannerMazzo } from "../../componenti/banner-mazzo";
 import { Carta } from "../../componenti/carta";
+import { CtaIscrizione } from "../../componenti/cta-iscrizione";
 import { Involucro } from "../../componenti/testata";
 import stili from "../../pagine.module.css";
 
@@ -114,6 +115,7 @@ export function SchedaCarta({
             <Link href="/leggi" className="bottone">✦ {CARTA.cta(lingua, s)}</Link>
             <Link href="/carte" className="bottone-secondario">{t.nav_carte}</Link>
           </div>
+          <CtaIscrizione compatta />
         </article>
       </div>
 
@@ -136,6 +138,7 @@ export function SchedaCarta({
           </div>
         </section>
       )}
+      <CtaIscrizione />
       <BannerMazzo />
     </Involucro>
   );

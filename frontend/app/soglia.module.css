@@ -76,84 +76,119 @@
   margin-bottom: 26px;
 }
 
-.passi {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-
-.passo {
-  padding: 24px 20px;
-}
-
-.passo h3 {
-  margin: 8px 0;
-}
-
-.passo p {
-  color: var(--testo-tenue);
-  line-height: 1.55;
-  margin: 0;
-}
-
-.numeroPasso {
-  font-family: var(--font-titoli), serif;
-  color: var(--viola-chiaro);
-  letter-spacing: 0.2em;
-}
-
-.stese {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 14px;
-}
-
-/* Le due letture speciali: due tessere, non cinque colonne. */
-.speciali {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  max-width: 720px;
-  margin: 0 auto;
-}
-
-.introSezione {
-  text-align: center;
-  color: var(--testo-tenue);
-  margin: -6px auto 22px;
-  max-width: 58ch;
-}
-
-.stesa {
+/* La carta del giorno: uno spazio suo, con la promessa (gratis) subito leggibile. */
+.cartaGiorno {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 18px;
+  align-items: center;
+  gap: 20px;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 22px 28px;
   color: var(--testo);
   text-decoration: none !important;
   transition: transform 0.25s, border-color 0.25s;
 }
 
-.stesa:hover {
+.cartaGiorno:hover {
   transform: translateY(-4px);
   border-color: var(--bordo-forte);
 }
 
-.stesa strong {
-  font-family: var(--font-titoli), serif;
+.cartaGiornoSimbolo {
+  flex: none;
+  font-size: 2.6rem;
   color: var(--oro-chiaro);
 }
 
-.stesa span {
-  font-size: 0.78rem;
-  color: var(--viola-chiaro);
+.cartaGiorno strong {
+  display: block;
+  font-family: var(--font-titoli), serif;
+  color: var(--oro-chiaro);
+  font-size: 1.15rem;
+  margin-bottom: 4px;
 }
 
-.stesa p {
-  margin: 4px 0 0;
-  font-size: 0.88rem;
+.cartaGiorno p {
+  margin: 0;
   color: var(--testo-tenue);
+  font-size: 0.9rem;
   line-height: 1.5;
+}
+
+.cartaGiornoCta {
+  flex: none;
+  color: var(--viola-chiaro);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* L'infografica dei tre passi: icona e parola, un flusso con frecce — niente da leggere. */
+.passi {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.passo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.passoIcona {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  border: 1px solid var(--bordo-forte);
+  background: var(--superficie-alta);
+  color: var(--oro-chiaro);
+  font-size: 1.3rem;
+}
+
+.passoEtichetta {
+  font-family: var(--font-titoli), serif;
+  font-size: 0.95rem;
+  color: var(--testo);
+}
+
+.passoFreccia {
+  color: var(--viola-chiaro);
+  font-size: 1.2rem;
+  margin: 0 4px;
+}
+
+.sottotitoloSezione {
+  text-align: center;
+  font-family: var(--font-titoli), serif;
+  font-size: 1rem;
+  color: var(--viola-chiaro);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 30px 0 18px;
+}
+
+.sottotitoloSezione:first-of-type {
+  margin-top: 0;
+}
+
+/* Le mattonelle di stese e letture speciali: centrate, non giustificate ai bordi. */
+.mattonelle {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+}
+
+.introSezione {
+  text-align: center;
+  color: var(--testo-tenue);
+  margin: 14px auto 22px;
+  max-width: 58ch;
 }
 
 .rigore {
@@ -186,19 +221,20 @@
   .eroeCarte {
     height: 300px;
   }
-  .passi,
-  .stese {
-    grid-template-columns: 1fr 1fr;
-  }
   .rigore {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 560px) {
-  .passi,
-  .speciali,
-  .stese {
-    grid-template-columns: 1fr;
+  .cartaGiorno {
+    flex-direction: column;
+    text-align: center;
+  }
+  .passi {
+    flex-direction: column;
+  }
+  .passoFreccia {
+    transform: rotate(90deg);
   }
 }

@@ -20,6 +20,9 @@ export const en: Dizionario = {
   aria_sezioni: "Sections",
   entra: "Sign in",
   registrati: "Sign up",
+  cta_iscrizione_titolo: "Sign up and start free",
+  cta_iscrizione_testo: (iscrizione: number, invito: number) =>
+    `${iscrizione} free readings when you sign up — ${invito} if you come from an invite — plus a free card of the day, always.`,
   esci: "Sign out",
   verifica_sessione: "Checking your session…",
   serve_account: "You need an account to consult the cards.",
@@ -97,12 +100,16 @@ export const en: Dizionario = {
   },
 
   home_come: "How a reading unfolds",
+  /* Un'infografica, non un testo da leggere: tre passi, un'icona e una parola ciascuno. */
   home_passi: [
-    ["Question", "Write what you want to know: a choice, a feeling, or simply the future."],
-    ["Interview", "The oracle asks a few questions to understand the context — never the answer to your question."],
-    ["The cards", "Choose from the fan: the cards are already assigned and turn over one by one on the table."],
-    ["The answer", "The AI joins question, interview, spread, dignities and symbols into one coherent reading."],
+    { icona: "✎", etichetta: "Ask" },
+    { icona: "✦", etichetta: "Talk with the oracle" },
+    { icona: "❖", etichetta: "Get the response" },
   ],
+  home_carta_giorno_titolo: "The card of the day",
+  home_carta_giorno_testo: "One card from the Thoth Tarot, read for you, every day — free, forever. No account needed.",
+  home_carta_giorno_cta: "Draw today's card",
+  home_stese_sezione: "Choose a spread",
   home_stese: "Five traditional spreads",
   home_rigore: "Esoteric rigour",
   home_rigore_1:
@@ -399,6 +406,7 @@ export const en: Dizionario = {
   stesa_origine: "Origin",
   stesa_fai: "Do this reading",
   stesa_tutte: "All spreads",
+  stesa_dettagli: "More details",
   stesa_diagramma: "The layout of the spread: the numbered positions on the table.",
   stesa_n_carte: (n: number) => (n === 1 ? "1 card" : `${n} cards`),
   stesa_altre_categoria: "More spreads of the same kind",

@@ -19,6 +19,9 @@ export const hu: Dizionario = {
   aria_sezioni: "Szakaszok",
   entra: "Belépés",
   registrati: "Regisztráció",
+  cta_iscrizione_titolo: "Regisztrálj, és kezdj ingyen",
+  cta_iscrizione_testo: (iscrizione: number, invito: number) =>
+    `${iscrizione} ingyenes jóslás regisztrációkor — ${invito}, ha meghívóból érkezel — és a nap kártyája mindig ingyenes.`,
   esci: "Kilépés",
   verifica_sessione: "A munkamenet ellenőrzése…",
   serve_account: "A kártyák megkérdezéséhez fiók szükséges.",
@@ -97,11 +100,14 @@ export const hu: Dizionario = {
 
   home_come: "Hogyan zajlik egy jóslás",
   home_passi: [
-    ["Kérdés", "Írd le, mit szeretnél tudni: egy döntést, egy érzést, vagy egyszerűen a jövőt."],
-    ["Beszélgetés", "A jós néhány kérdést tesz fel, hogy megértse a helyzetet — soha nem a kérdésed válaszát."],
-    ["A kártyák", "Válassz a legyezőből: a kártyák már ki vannak osztva, és egyenként fordulnak fel az asztalon."],
-    ["A válasz", "Az MI összefűzi a kérdést, a beszélgetést, a kirakást, a méltóságokat és a szimbólumokat egyetlen, összefüggő jóslássá."],
+    { icona: "✎", etichetta: "Kérdezz" },
+    { icona: "✦", etichetta: "Beszélj a jóssal" },
+    { icona: "❖", etichetta: "Kapd meg a választ" },
   ],
+  home_carta_giorno_titolo: "A nap kártyája",
+  home_carta_giorno_testo: "Egy kártya a Thoth Tarot-ból, neked húzva, minden nap — ingyen, örökre. Fiók nélkül is.",
+  home_carta_giorno_cta: "Nézd meg a mai kártyát",
+  home_stese_sezione: "Válassz kirakást",
   home_stese: "Öt hagyományos kirakás",
   home_rigore: "Ezoterikus szigor",
   home_rigore_1:
@@ -398,6 +404,7 @@ export const hu: Dizionario = {
   stesa_origine: "Eredet",
   stesa_fai: "Ezt a jóslást kérem",
   stesa_tutte: "Minden kirakás",
+  stesa_dettagli: "További részletek",
   stesa_diagramma: "A kirakás mintája: a számozott pozíciók az asztalon.",
   stesa_n_carte: (n: number) => `${n} kártya`,
   stesa_altre_categoria: "További ilyen kirakások",

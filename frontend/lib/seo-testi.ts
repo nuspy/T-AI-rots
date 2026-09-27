@@ -43,34 +43,6 @@ export const HOME = {
       "Online tarot reading with the Thoth Tarot and AI: a short interview, cards revealed one by one, and an interpretation rooted in Golden Dawn tradition.",
       "Lettura dei tarocchi online con il Tarocco di Thoth e l'AI: una breve intervista, le carte rivelate una a una e un'interpretazione fedele alla Golden Dawn.",
     ),
-  h2Come: (l: L) => scegli(l, "How a tarot reading works here", "Come funziona una lettura"),
-  passi: (l: L) =>
-    scegli(
-      l,
-      [
-        { n: "Ask", t: "Write your question in your own words. A short interview follows: two to six questions that make it precise, so the cards answer what you really mean." },
-        { n: "Draw", t: "Shuffle, cut and choose your cards yourself. They are revealed one by one, each in its position in the spread." },
-        { n: "Read", t: "The interpretation reads every card in its position, with its Hebrew letter, its path on the Tree of Life, its element and its astrology, and ends with a synthesis you can keep." },
-      ],
-      [
-        { n: "Chiedi", t: "Scrivi la domanda con le tue parole. Segue una breve intervista, da due a sei domande, che la rende precisa: le carte rispondono a ciò che intendi davvero." },
-        { n: "Pesca", t: "Mescola, taglia e scegli le carte da te. Si rivelano una a una, ciascuna nella sua posizione della stesa." },
-        { n: "Leggi", t: "L'interpretazione legge ogni carta nella sua posizione, con la lettera ebraica, il sentiero sull'Albero della Vita, l'elemento e l'astrologia, e si chiude con una sintesi da conservare." },
-      ],
-    ),
-  h2Thoth: (l: L) => scegli(l, "Why the Thoth Tarot?", "Perché il Tarocco di Thoth?"),
-  thoth: (l: L) =>
-    scegli(
-      l,
-      [
-        "The Thoth Tarot was designed by Aleister Crowley and painted by Lady Frieda Harris between 1938 and 1943. It grew out of the Hermetic Order of the Golden Dawn, whose system maps every card to the Hebrew alphabet, the paths of the Tree of Life, the elements and the planets and signs of astrology.",
-        "That is why a reading here is more than a list of card meanings: each card is read with its own correspondences, in its position in the spread, and the cards are read in relation to one another.",
-      ],
-      [
-        "Il Tarocco di Thoth fu ideato da Aleister Crowley e dipinto da Lady Frieda Harris fra il 1938 e il 1943. Nasce dall'Ordine Ermetico della Golden Dawn, il cui sistema collega ogni carta all'alfabeto ebraico, ai sentieri dell'Albero della Vita, agli elementi e ai pianeti e segni dell'astrologia.",
-        "Per questo una lettura qui è più di un elenco di significati: ogni carta è letta con le sue corrispondenze, nella sua posizione nella stesa, e le carte sono lette in relazione fra loro.",
-      ],
-    ),
   h2Esplora: (l: L) => scegli(l, "Explore the cards and spreads", "Esplora le carte e le stese"),
   h2Domande: (l: L) => scegli(l, "Questions about AI tarot readings", "Domande sulle letture dei tarocchi con l'AI"),
   domande: (l: L): { d: string; r: string }[] =>
@@ -83,7 +55,7 @@ export const HOME = {
         },
         {
           d: "What is the Thoth Tarot?",
-          r: "The Thoth Tarot is a 78-card deck designed by Aleister Crowley and painted by Lady Frieda Harris. It follows the Hermetic Order of the Golden Dawn, so each card carries a Hebrew letter, a path on the Tree of Life, an element and an astrological attribution.",
+          r: "The Thoth Tarot is a 78-card deck designed by Aleister Crowley and painted by Lady Frieda Harris between 1938 and 1943. It grew out of the Hermetic Order of the Golden Dawn, whose system maps every card to the Hebrew alphabet, a path on the Tree of Life, an element and an astrological attribution. That is why a reading here is more than a list of card meanings: each card is read with its own correspondences, in its position in the spread, and the cards are read in relation to one another.",
         },
         {
           d: "Is the tarot reading free?",
@@ -105,7 +77,7 @@ export const HOME = {
         },
         {
           d: "Che cos'è il Tarocco di Thoth?",
-          r: "Il Tarocco di Thoth è un mazzo di 78 carte ideato da Aleister Crowley e dipinto da Lady Frieda Harris. Segue l'Ordine Ermetico della Golden Dawn: ogni carta ha una lettera ebraica, un sentiero sull'Albero della Vita, un elemento e un'attribuzione astrologica.",
+          r: "Il Tarocco di Thoth è un mazzo di 78 carte ideato da Aleister Crowley e dipinto da Lady Frieda Harris fra il 1938 e il 1943. Nasce dall'Ordine Ermetico della Golden Dawn, il cui sistema collega ogni carta all'alfabeto ebraico, a un sentiero dell'Albero della Vita, a un elemento e a un'attribuzione astrologica. Per questo una lettura qui è più di un elenco di significati: ogni carta è letta con le sue corrispondenze, nella sua posizione nella stesa, e le carte sono lette in relazione fra loro.",
         },
         {
           d: "La lettura dei tarocchi è gratuita?",

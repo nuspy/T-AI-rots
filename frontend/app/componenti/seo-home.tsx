@@ -19,47 +19,32 @@ export function SezioniSeo({
   articoli: ArticoloBreve[];
 }) {
   const maggiori = carte.filter((c) => c.arcano === "maggiore");
-  const passi = HOME.passi(lingua);
   const domande = HOME.domande(lingua);
   return (
     <div className={stili.sezioni} lang={lingua}>
-      <section aria-labelledby="home-come">
-        <h2 id="home-come">{HOME.h2Come(lingua)}</h2>
-        <ol className={stili.passi}>
-          {passi.map((p, i) => (
-            <li key={p.n} className={`pannello ${stili.passo}`}>
-              <span className={stili.numero} aria-hidden="true">{i + 1}</span>
-              <strong>{p.n}</strong>
-              <p>{p.t}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section aria-labelledby="home-thoth">
-        <h2 id="home-thoth">{HOME.h2Thoth(lingua)}</h2>
-        {HOME.thoth(lingua).map((testo) => <p key={testo} className={stili.testo}>{testo}</p>)}
-      </section>
+      {/* «Come funziona» è già in soglia.tsx, come infografica: qui sarebbe un doppione dello stesso testo. */}
 
       <section aria-labelledby="home-esplora">
         <h2 id="home-esplora">{HOME.h2Esplora(lingua)}</h2>
         <div className={stili.colonne}>
           <div>
             <h3>{lingua === "it" ? "Gli Arcani maggiori" : "The Major Arcana"}</h3>
-            <ul className={stili.elenco}>
+            <div className={stili.mattonelleTesto}>
               {maggiori.map((c) => (
-                <li key={c.id}><Link href={`/carte/${c.slug ?? c.id}`}>{c.nome ?? c.nome_it}</Link></li>
+                <Link key={c.id} href={`/carte/${c.slug ?? c.id}`} className={stili.mattonellaTesto}>
+                  {c.nome ?? c.nome_it}
+                </Link>
               ))}
-            </ul>
+            </div>
             <p><Link href="/carte">{lingua === "it" ? "Tutte le 78 carte" : "All 78 cards"} →</Link></p>
           </div>
           <div>
             <h3>{lingua === "it" ? "Le stese" : "Tarot spreads"}</h3>
-            <ul className={stili.elenco}>
+            <div className={stili.mattonelleTesto}>
               {stese.map((s) => (
-                <li key={s.id}><Link href={`/stese/${s.slug ?? s.id}`}>{s.nome}</Link></li>
+                <Link key={s.id} href={`/stese/${s.slug ?? s.id}`} className={stili.mattonellaTesto}>{s.nome}</Link>
               ))}
-            </ul>
+            </div>
             <p><Link href="/stese">{lingua === "it" ? "Tutte le stese" : "All spreads"} →</Link></p>
           </div>
         </div>

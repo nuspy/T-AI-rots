@@ -12,11 +12,29 @@ import type { LinguaPubblica } from "@/lib/percorsi";
 import { briciole, domande, grafo, urlPubblico } from "@/lib/seo";
 import { CARTA } from "@/lib/seo-testi";
 import { ESTENSIONE } from "../../componenti/carta";
+import { CtaIscrizione } from "../../componenti/cta-iscrizione";
 import { Involucro } from "../../componenti/testata";
 import { BlogMarkdown, type Riferimenti } from "../componenti/blog-markdown";
 import { CondividiArticolo } from "../componenti/condividi-articolo";
 import { Briciole, JsonLd, RigaMeta, SchedaArticolo } from "../componenti/elementi";
 import stili from "../blog.module.css";
+
+/* Il corpo, diviso ai paragrafi vuoti: serve solo per intercalare gli inviti a iscriversi a intervalli regolari
+ * negli articoli lunghi, non per interpretare il Markdown (che resta compito di `BlogMarkdown`, su ogni pezzo).
+ * Una lista o un blocco di codice che attraversano un punto di taglio restano leggibili lo stesso: il taglio cade
+ * comunque su una riga vuota, non in mezzo a un blocco. */
+function paragrafi(testo: string): string[] {
+  return testo.split(/\n{2,}/);
+}
+
+/* Ogni quanti paragrafi un invito in mezzo al testo: solo per gli articoli lunghi, e non troppo spesso — è un
+ * promemoria discreto, non un'interruzione a ogni schermata. Sotto 12 paragrafi, nessuno: un invito a metà di un
+ * articolo breve avrebbe più peso del testo che lo circonda. */
+function ogniQuanti(numeroParagrafi: number): number {
+  if (numeroParagrafi <= 12) return 0;
+  if (numeroParagrafi <= 24) return 8;
+  return 6;
+}
 
 export function VistaArticolo({
   articolo: a, riferimenti, lingua,
@@ -86,11 +104,25 @@ export function VistaArticolo({
           />
         )}
 
-        <BlogMarkdown
-          testo={a.testo}
-          riferimenti={riferimenti}
-          etichette={{ carta: t.blog_tipo_carta, stesa: t.blog_tipo_stesa, articolo: t.blog_tipo_articolo }}
-        />
+        <CtaIscrizione compatta />
+
+        {(() => {
+          const etichette = { carta: t.blog_tipo_carta, stesa: t.blog_tipo_stesa, articolo: t.blog_tipo_articolo };
+          const blocchi = paragrafi(a.testo);
+          const ogni = ogniQuanti(blocchi.length);
+          if (ogni === 0) {
+            return <BlogMarkdown testo={a.testo} riferimenti={riferimenti} etichette={etichette} />;
+          }
+          const pezzi: React.ReactNode[] = [];
+          for (let i = 0; i < blocchi.length; i += ogni) {
+            const gruppo = blocchi.slice(i, i + ogni).join("\n\n");
+            pezzi.push(<BlogMarkdown key={i} testo={gruppo} riferimenti={riferimenti} etichette={etichette} />);
+            if (i + ogni < blocchi.length) pezzi.push(<CtaIscrizione key={`cta-${i}`} compatta />);
+          }
+          return pezzi;
+        })()}
+
+        <CtaIscrizione compatta />
 
         {a.faq.length > 0 && (
           <section className={stili.blocco} aria-labelledby="articolo-faq">
