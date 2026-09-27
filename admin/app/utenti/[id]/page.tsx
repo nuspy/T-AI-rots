@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useState } from "react";
 import {
+  catalogo,
   dettaglioUtente,
   impostaAttivo,
   rettificaCrediti,
   type UtenteDettaglio,
 } from "@/lib/api";
+import { regalaCrediti } from "@/lib/offerte";
 import { giorno, quandoCompleto } from "@/lib/formato";
 import { useAzione, useDati } from "@/lib/usa";
 import comuni from "../../comuni.module.css";
@@ -129,6 +131,7 @@ function Scheda({ utente, ricarica }: { utente: UtenteDettaglio; ricarica: () =>
         </div>
       </div>
 
+      <Regalo utente={utente} ricarica={ricarica} />
       <Rettifica utente={utente} ricarica={ricarica} />
 
       <section className={stili.sezione}>
@@ -294,6 +297,104 @@ function Rettifica({ utente, ricarica }: { utente: UtenteDettaglio; ricarica: ()
         >
           Applica
         </button>
+      </form>
+      {errore && <p className={comuni.errore}>{errore}</p>}
+      {esito && <p className={comuni.esito}>{esito}</p>}
+    </section>
+  );
+}
+
+/* Un regalo di crediti: un pacchetto del catalogo o una quantità. Compare nel registro dell'utente come «Omaggio»,
+ * con la nota scritta qui, e nel registro delle operazioni con il tuo nome. A differenza della rettifica non serve a
+ * correggere un errore: serve a dare. */
+function Regalo({ utente, ricarica }: { utente: UtenteDettaglio; ricarica: () => void }) {
+  const { esegui, inCorso, errore } = useAzione();
+  const piani = useDati(catalogo);
+  const pacchetti = (piani.dati ?? []).filter((p) => p.tipo === "pacchetto" && p.attivo);
+  const [modo, setModo] = useState<"pacchetto" | "quantita">("pacchetto");
+  const [scelto, setScelto] = useState("");
+  const [quanti, setQuanti] = useState("");
+  const [nota, setNota] = useState("");
+  const [esito, setEsito] = useState<string | null>(null);
+
+  const numero = Number(quanti);
+  const pacchettoScelto = scelto || pacchetti[0]?.slug || "";
+  const valido = modo === "pacchetto" ? pacchettoScelto !== "" : Number.isInteger(numero) && numero >= 1;
+
+  const invia = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!valido) return;
+    setEsito(null);
+    const fatto = await esegui((t) =>
+      regalaCrediti(t, utente.id, {
+        ...(modo === "pacchetto" ? { piano: pacchettoScelto } : { crediti: numero }),
+        ...(nota.trim() ? { nota: nota.trim() } : {}),
+      }),
+    );
+    if (fatto) {
+      setEsito(`Regalati ${fatto.crediti} crediti: saldo ora ${fatto.saldo}.`);
+      setQuanti("");
+      setNota("");
+      ricarica();
+    }
+  };
+
+  return (
+    <section className={comuni.riquadro}>
+      <h2 className={comuni.riquadroTitolo}>Regala crediti</h2>
+      <p className={comuni.riquadroNota}>
+        Un pacchetto del catalogo o una quantità a scelta. I crediti arrivano subito, come «Omaggio», senza pagamento.
+      </p>
+      <form onSubmit={invia}>
+        <div className={comuni.riga}>
+          <label className={comuni.campo} style={{ flex: "0 1 14rem" }}>
+            <span className={comuni.campoEtichetta}>Cosa</span>
+            <select className={comuni.selezione} value={modo} onChange={(e) => setModo(e.target.value as typeof modo)}>
+              <option value="pacchetto">Un pacchetto</option>
+              <option value="quantita">Una quantità</option>
+            </select>
+          </label>
+          {modo === "pacchetto" ? (
+            <label className={comuni.campo} style={{ flex: "1 1 14rem" }}>
+              <span className={comuni.campoEtichetta}>Pacchetto</span>
+              <select className={comuni.selezione} value={pacchettoScelto} onChange={(e) => setScelto(e.target.value)}>
+                {pacchetti.length === 0 && <option value="">Nessun pacchetto in vendita</option>}
+                {pacchetti.map((p) => (
+                  <option key={p.slug} value={p.slug}>
+                    {p.nome} ({p.crediti} crediti)
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <label className={comuni.campo} style={{ flex: "0 1 9rem" }}>
+              <span className={comuni.campoEtichetta}>Crediti</span>
+              <input
+                className={comuni.ingresso}
+                type="number"
+                min={1}
+                step={1}
+                inputMode="numeric"
+                value={quanti}
+                onChange={(e) => setQuanti(e.target.value)}
+                required
+              />
+            </label>
+          )}
+          <label className={comuni.campo} style={{ flex: "1 1 16rem" }}>
+            <span className={comuni.campoEtichetta}>Nota (facoltativa)</span>
+            <input
+              className={comuni.ingresso}
+              value={nota}
+              maxLength={200}
+              onChange={(e) => setNota(e.target.value)}
+              placeholder="es. grazie per la segnalazione"
+            />
+          </label>
+          <button className={comuni.primaria} type="submit" disabled={!valido || inCorso} style={{ marginBottom: "0.9rem" }}>
+            Regala
+          </button>
+        </div>
       </form>
       {errore && <p className={comuni.errore}>{errore}</p>}
       {esito && <p className={comuni.esito}>{esito}</p>}

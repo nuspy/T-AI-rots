@@ -28,7 +28,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, Mapping, Optional, Protocol
+from typing import TYPE_CHECKING, Any, Dict, Mapping, Optional, Protocol
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -37,6 +37,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..domain.base import utcnow
 from ..domain.billing_models import PaymentCheckout, PaymentEvent, Plan, Subscription
 from ..settings import Settings, get_settings
+
+if TYPE_CHECKING:  # pragma: no cover
+    from .offerte import Sconto
 
 logger = logging.getLogger(__name__)
 
@@ -244,21 +247,50 @@ class GestorePagamenti:
         return self._provider
 
     async def apri(
-        self, user_id: int, piano: Plan, *, annuale: bool, ritorno: str,
+        self, user_id: int, piano: Plan, *, annuale: bool, ritorno: str, sconto: Optional["Sconto"] = None,
     ) -> tuple[PaymentCheckout, str]:
+        """Apre la sessione. Con un `sconto` l'importo chiesto è quello scontato e il coupon resta sul checkout."""
+        listino = piano.price_yearly if annuale and not piano.pacchetto else piano.price_monthly
         checkout = PaymentCheckout(
             user_id=user_id,
             plan_id=piano.id,
             annuale=annuale and not piano.pacchetto,
             status="aperto",
             provider=self._provider.name,
-            importo=piano.price_yearly if annuale and not piano.pacchetto else piano.price_monthly,
+            importo=sconto.finale if sconto else listino,
+            coupon_id=sconto.coupon.id if sconto else None,
+            sconto=sconto.sconto if sconto else 0,
             currency=piano.currency,
         )
         self._session.add(checkout)
         await self._session.flush()
         checkout.external_id = f"{self._provider.name}_cs_{checkout.id.hex[:16]}"
         return checkout, self._provider.url_di_pagamento(checkout, ritorno=ritorno)
+
+    async def apri_gratis(self, user_id: int, piano: Plan, sconto: "Sconto") -> PaymentCheckout:
+        """Un pacchetto che il coupon porta a zero: non c'è niente da pagare, e quindi nessun fornitore.
+
+        I crediti si accreditano subito, come regalo (`omaggio`, non `acquisto`: i conti delle vendite non devono
+        contarli). Un abbonamento non passa di qui: `offerte.valuta` non lascia che un coupon lo azzeri.
+        """
+        from .credits import RegistroCrediti
+        from .offerte import registra_uso
+
+        if not piano.pacchetto or sconto.finale != 0:
+            raise ValueError("solo un pacchetto azzerato da un coupon si completa senza pagamento")
+        checkout = PaymentCheckout(
+            user_id=user_id, plan_id=piano.id, annuale=False, status="pagato", provider="coupon", importo=0,
+            coupon_id=sconto.coupon.id, sconto=sconto.sconto, currency=piano.currency, completed_at=utcnow(),
+        )
+        self._session.add(checkout)
+        await self._session.flush()
+        checkout.external_id = f"coupon_cs_{checkout.id.hex[:16]}"
+        await RegistroCrediti(self._session).accredita(
+            user_id, piano.credits_per_period, reason="omaggio",
+            note=f"pacchetto {piano.slug} (codice {sconto.coupon.code})",
+        )
+        await registra_uso(self._session, checkout)
+        return checkout
 
     async def applica(self, evento: EventoPagamento) -> str:
         """Applica un evento verificato. Restituisce cosa è successo.
@@ -318,6 +350,10 @@ class GestorePagamenti:
 
         checkout.status = "pagato"
         checkout.completed_at = utcnow()
+
+        from .offerte import registra_uso
+
+        await registra_uso(self._session, checkout)       # l'uso del coupon si conta a pagamento avvenuto
 
         if checkout.plan.pacchetto:
             # Un pacchetto non apre abbonamenti: accredita i suoi crediti, che

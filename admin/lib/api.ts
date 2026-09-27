@@ -191,6 +191,8 @@ export interface Piano {
   attivo: boolean;
   rango: number;
   abbonati: number;
+  /** Abbonamenti (di ogni stato) più pagamenti: a zero il piano si può eliminare, altrimenti solo disattivare. */
+  usi: number;
 }
 
 /** I campi che il backend accetta: nomi inglesi, importi in centesimi. */
@@ -202,6 +204,22 @@ export interface ModificaPiano {
   credits_per_period?: number;
   /** −1 significa «illimitate». */
   letture_al_giorno?: number;
+  active?: boolean;
+  /** L'ordine di presentazione: più basso, più in alto. */
+  rank?: number;
+}
+
+/** Un piano nuovo: gli importi in centesimi. Un pacchetto ha un prezzo solo e almeno un credito. */
+export interface NuovoPiano {
+  slug: string;
+  name: string;
+  description?: string;
+  tipo: "abbonamento" | "pacchetto";
+  price_monthly: number;
+  price_yearly?: number;
+  credits_per_period?: number;
+  letture_al_giorno?: number;
+  rank?: number;
   active?: boolean;
 }
 
@@ -286,6 +304,13 @@ export const elencoPagamenti = (
   );
 
 export const catalogo = (t: string) => chiamata<Piano[]>(t, "/admin/plans");
+
+export const creaPiano = (t: string, corpo: NuovoPiano) =>
+  chiamata<Piano>(t, "/admin/plans", { method: "POST", body: JSON.stringify(corpo) });
+
+/** Solo un piano mai usato; uno usato si disattiva (il backend risponde 409). */
+export const eliminaPiano = (t: string, slug: string) =>
+  chiamata<void>(t, `/admin/plans/${encodeURIComponent(slug)}`, { method: "DELETE" });
 
 export const modificaPiano = (t: string, slug: string, corpo: ModificaPiano) =>
   chiamata<Piano>(t, `/admin/plans/${encodeURIComponent(slug)}`, {

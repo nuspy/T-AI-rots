@@ -181,15 +181,19 @@ class PianoModificato(BaseModel):
     credits_per_period: Optional[int] = Field(default=None, ge=0)
     letture_al_giorno: Optional[int] = Field(default=None, ge=-1)
     active: Optional[bool] = None
+    #: L'ordine di presentazione (più basso, più in alto).
+    rank: Optional[int] = Field(default=None, ge=0, le=10_000)
 
 
-def _piano_admin_json(p: Plan, abbonati: int = 0) -> Dict[str, Any]:
+def _piano_admin_json(p: Plan, abbonati: int = 0, usi: int = 0) -> Dict[str, Any]:
     return {
         "id": p.id, "slug": p.slug, "nome": p.name, "tipo": p.tipo,
         "descrizione": p.description, "prezzo_mensile": p.price_monthly,
         "prezzo_annuale": p.price_yearly, "crediti": p.credits_per_period,
         "limiti": p.limits or {}, "attivo": p.active, "rango": p.rank,
         "abbonati": abbonati,
+        # Abbonamenti (di ogni stato) più pagamenti aperti: se è zero, il piano si può eliminare.
+        "usi": usi,
     }
 
 
@@ -199,8 +203,12 @@ async def catalogo(session: DbSession) -> List[Dict[str, Any]]:
         select(Subscription.plan_id, func.count())
         .where(Subscription.status.in_(("attivo", "in_prova"))).group_by(Subscription.plan_id)
     )).all())
+    usi: Dict[int, int] = {}
+    for tabella in (Subscription, PaymentCheckout):
+        for piano_id, n in (await session.execute(select(tabella.plan_id, func.count()).group_by(tabella.plan_id))).all():
+            usi[piano_id] = usi.get(piano_id, 0) + n
     piani = await GestoreAbbonamenti(session).piani(solo_attivi=False)
-    return [_piano_admin_json(p, abbonati.get(p.id, 0)) for p in piani]
+    return [_piano_admin_json(p, abbonati.get(p.id, 0), usi.get(p.id, 0)) for p in piani]
 
 
 @router.patch("/plans/{slug}")
@@ -213,7 +221,7 @@ async def modifica_piano(
     if piano is None:
         raise HTTPException(status_code=404, detail="Piano non trovato")
     prima = _piano_admin_json(piano)
-    for campo in ("name", "description", "price_monthly", "price_yearly", "credits_per_period", "active"):
+    for campo in ("name", "description", "price_monthly", "price_yearly", "credits_per_period", "active", "rank"):
         valore = getattr(payload, campo)
         if valore is not None:
             setattr(piano, campo, valore)

@@ -14,6 +14,8 @@ in cui un limite commerciale diventa un guasto percepito.
 dell'utente: i crediti entrano col rinnovo del piano o con un acquisto
 registrato dal provider, e una rettifica manuale è un'operazione
 amministrativa con il suo motivo obbligatorio e il suo record di audit.
+L'unica eccezione è il **codice regalo** (`/me/coupon/riscatta`): il credito lo dà un codice che
+l'amministrazione ha creato, a uso limitato, con le sue regole (`billing/offerte.py`).
 """
 from __future__ import annotations
 
@@ -28,6 +30,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
 from ...auth.dependencies import CurrentUser, DbSession, require_role
+from ...billing import offerte
 from ...billing.credits import RegistroCrediti
 from ...billing.pagamenti import (
     ANNULLATO, PAGATO, FirmaNonValida, GestorePagamenti, PagamentiNonDisponibili,
@@ -61,6 +64,18 @@ class Sottoscrizione(BaseModel):
     #: crediti, per esempio. Solo percorsi del frontend, mai indirizzi
     #: esterni — un ritorno arbitrario sarebbe un open redirect.
     ritorno: Optional[str] = Field(default=None, max_length=300)
+    #: Un codice sconto. Lo sconto vale sul primo pagamento.
+    coupon: Optional[str] = Field(default=None, max_length=60)
+
+
+class AnteprimaCoupon(BaseModel):
+    codice: str = Field(min_length=1, max_length=60)
+    piano: str = Field(min_length=1, max_length=40)
+    annuale: bool = False
+
+
+class RiscattoCodice(BaseModel):
+    codice: str = Field(min_length=1, max_length=60)
 
 
 class Rettifica(BaseModel):
@@ -251,20 +266,108 @@ async def apri_checkout(
         if not payload.ritorno.startswith("/") or payload.ritorno.startswith("//"):
             raise HTTPException(status_code=400, detail="Ritorno non valido")
         payload.ritorno = f"{base}{payload.ritorno}"
+    sconto = None
+    if payload.coupon and payload.coupon.strip():
+        _limita_tentativi(user.id)
+        try:
+            sconto = await offerte.valuta(session, user.id, payload.coupon, piano, annuale=annuale)
+        except offerte.CouponNonValido as exc:
+            _tentativo_fallito(user.id)
+            raise _errore_coupon(exc) from exc
+
+    if sconto is not None and sconto.finale == 0:
+        # Un pacchetto azzerato dal coupon: niente da pagare, quindi nessun fornitore. I crediti sono già dati.
+        checkout = await GestorePagamenti(session).apri_gratis(user.id, piano, sconto)
+        await session.commit()
+        torna = payload.ritorno or ritorno
+        return {
+            "checkout_id": str(checkout.id), "url": f"{torna}{'&' if '?' in torna else '?'}checkout={checkout.id}",
+            "importo": 0, "sconto": checkout.sconto, "valuta": checkout.currency, "gratis": True,
+        }
+
     try:
         # Un savepoint e non un rollback: si annulla solo la sessione di
         # pagamento creata prima di chiedere l'indirizzo, non il resto della
         # transazione.
         async with session.begin_nested():
             checkout, url = await GestorePagamenti(session).apri(
-                user.id, piano, annuale=annuale, ritorno=payload.ritorno or ritorno,
+                user.id, piano, annuale=annuale, ritorno=payload.ritorno or ritorno, sconto=sconto,
             )
     except PagamentiNonDisponibili as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc),
         ) from exc
     await session.commit()
-    return {"checkout_id": str(checkout.id), "url": url, "importo": checkout.importo, "valuta": checkout.currency}
+    return {
+        "checkout_id": str(checkout.id), "url": url, "importo": checkout.importo, "sconto": checkout.sconto,
+        "valuta": checkout.currency, "gratis": False,
+    }
+
+
+# ---- codici sconto e codici regalo --------------------------------------------------------------
+#
+# Un codice si prova a mano: chi ne indovina uno sconta un acquisto o riscuote crediti. Dieci tentativi falliti in dieci
+# minuti fermano chi prova a caso. Il conto sta in memoria del processo: con più repliche il limite si moltiplica, ma un
+# codice di otto caratteri su 32 simboli ha 10^12 combinazioni, e a quel ritmo non si indovina.
+
+_TENTATIVI: Dict[int, List[float]] = {}
+FINESTRA_TENTATIVI = 600.0
+MAX_FALLITI = 10
+
+
+def _limita_tentativi(user_id: int) -> None:
+    import time
+
+    ora = time.monotonic()
+    recenti = [t for t in _TENTATIVI.get(user_id, []) if ora - t < FINESTRA_TENTATIVI]
+    _TENTATIVI[user_id] = recenti
+    if len(recenti) >= MAX_FALLITI:
+        raise HTTPException(status_code=429, detail="Troppi codici sbagliati: riprova fra qualche minuto.")
+
+
+def _tentativo_fallito(user_id: int) -> None:
+    import time
+
+    _TENTATIVI.setdefault(user_id, []).append(time.monotonic())
+
+
+def _errore_coupon(exc: "offerte.CouponNonValido") -> HTTPException:
+    return HTTPException(status_code=422, detail={"motivo": exc.motivo, "messaggio": str(exc)})
+
+
+@router.post("/me/coupon/anteprima")
+async def anteprima_coupon(payload: AnteprimaCoupon, user: CurrentUser, session: DbSession) -> Dict[str, Any]:
+    """Quanto costerebbe un'offerta con questo codice, senza aprire nessun pagamento."""
+    piano = await GestoreAbbonamenti(session).piano_per_slug(payload.piano)
+    if piano is None or not piano.active:
+        raise HTTPException(status_code=404, detail=f"Il piano «{payload.piano}» non esiste o non è più offerto.")
+    _limita_tentativi(user.id)
+    try:
+        s = await offerte.valuta(session, user.id, payload.codice, piano, annuale=payload.annuale and not piano.pacchetto)
+    except offerte.CouponNonValido as exc:
+        _tentativo_fallito(user.id)
+        raise _errore_coupon(exc) from exc
+    return {
+        "codice": s.coupon.code, "tipo": s.coupon.tipo, "listino": s.listino, "sconto": s.sconto,
+        "importo": s.finale, "valuta": piano.currency, "gratis": s.finale == 0,
+    }
+
+
+@router.post("/me/coupon/riscatta")
+async def riscatta_codice(payload: RiscattoCodice, user: CurrentUser, session: DbSession) -> Dict[str, Any]:
+    """Riscatta un codice regalo: i crediti arrivano subito."""
+    _limita_tentativi(user.id)
+    try:
+        coupon, crediti = await offerte.riscatta_regalo(session, user.id, payload.codice)
+    except offerte.CouponNonValido as exc:
+        # Niente da annullare: le regole si controllano prima di scrivere (e la riga bloccata si libera a fine richiesta).
+        _tentativo_fallito(user.id)
+        raise _errore_coupon(exc) from exc
+    await AuditRepository(session).record(
+        actor_id=user.id, action="coupon.redeem", target_type="coupon", target_id=coupon.code, after={"crediti": crediti},
+    )
+    await session.commit()
+    return {"crediti": crediti, "saldo": await RegistroCrediti(session).saldo(user.id)}
 
 
 @router.get("/me/checkout/{checkout_id}")

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { catalogo, modificaPiano, type ModificaPiano, type Piano } from "@/lib/api";
+import {
+  catalogo, creaPiano, eliminaPiano, modificaPiano, type ModificaPiano, type NuovoPiano, type Piano,
+} from "@/lib/api";
 import { centesimiDa, importoPerCampo, soldi } from "@/lib/formato";
 import { useAzione, useDati } from "@/lib/usa";
 import comuni from "../comuni.module.css";
@@ -22,6 +24,7 @@ import stili from "./catalogo.module.css";
 
 export default function Catalogo() {
   const { dati, errore, inCorso, ricarica } = useDati(catalogo);
+  const [nuova, setNuova] = useState(false);
 
   const ordinati = [...(dati ?? [])].sort((a, b) => a.rango - b.rango);
   const abbonamenti = ordinati.filter((p) => p.tipo === "abbonamento");
@@ -39,6 +42,24 @@ export default function Catalogo() {
           </p>
         </div>
       </div>
+
+      <div className={stili.comandi} style={{ marginBottom: "1.25rem" }}>
+        <button className={comuni.primaria} type="button" aria-expanded={nuova} onClick={() => setNuova(!nuova)}>
+          {nuova ? "Chiudi" : "Nuova offerta"}
+        </button>
+        <a className={comuni.secondaria} href="/coupon" style={{ display: "inline-flex", alignItems: "center" }}>
+          Coupon e codici regalo
+        </a>
+      </div>
+      {nuova && (
+        <NuovaOfferta
+          chiudi={() => setNuova(false)}
+          creata={() => {
+            setNuova(false);
+            ricarica();
+          }}
+        />
+      )}
 
       {errore && <p className={comuni.errore}>{errore}</p>}
       {!dati && inCorso && <p className={comuni.caricamento}>Caricamento…</p>}
@@ -99,7 +120,13 @@ function letture(piano: Piano): string {
 
 function SchedaPiano({ piano, ricarica }: { piano: Piano; ricarica: () => void }) {
   const [modifica, setModifica] = useState(false);
+  const [conferma, setConferma] = useState(false);
+  const { esegui, inCorso, errore } = useAzione();
   const pacchetto = piano.tipo === "pacchetto";
+
+  const elimina = async () => {
+    if ((await esegui((tok) => eliminaPiano(tok, piano.slug))) !== null) ricarica();
+  };
 
   return (
     <article className={piano.attivo ? stili.piano : stili.pianoSpento}>
@@ -152,9 +179,38 @@ function SchedaPiano({ piano, ricarica }: { piano: Piano; ricarica: () => void }
               </>
             )}
           </dl>
-          <button className={comuni.secondaria} onClick={() => setModifica(true)}>
-            Modifica
-          </button>
+          <dl className={stili.dati}>
+            <dt>Ordine</dt>
+            <dd>{piano.rango}</dd>
+            <dt>Usato</dt>
+            <dd>{piano.usi === 0 ? "mai" : piano.usi === 1 ? "1 volta" : `${piano.usi} volte`}</dd>
+          </dl>
+          <div className={stili.comandi}>
+            <button className={comuni.secondaria} onClick={() => setModifica(true)}>
+              Modifica
+            </button>
+            {piano.usi === 0 &&
+              (conferma ? (
+                <>
+                  <button className={comuni.distruttiva} onClick={elimina} disabled={inCorso}>
+                    Sì, elimina
+                  </button>
+                  <button className={comuni.secondaria} onClick={() => setConferma(false)}>
+                    Annulla
+                  </button>
+                </>
+              ) : (
+                <button className={comuni.distruttiva} onClick={() => setConferma(true)}>
+                  Elimina
+                </button>
+              ))}
+          </div>
+          {piano.usi > 0 && (
+            <p className={comuni.campoAiuto}>
+              Già usato: non si elimina, si può togliere dalla vendita («Modifica» → «In vendita»).
+            </p>
+          )}
+          {errore && <p className={comuni.errore}>{errore}</p>}
         </>
       )}
     </article>
@@ -186,6 +242,7 @@ function Modulo({
     piano.limiti.letture_al_giorno === undefined ? "" : String(piano.limiti.letture_al_giorno),
   );
   const [attivo, setAttivo] = useState(piano.attivo);
+  const [rango, setRango] = useState(String(piano.rango));
   const [problema, setProblema] = useState<string | null>(null);
 
   const invia = async (e: React.FormEvent) => {
@@ -193,6 +250,9 @@ function Modulo({
     setProblema(null);
 
     const corpo: ModificaPiano = {};
+    const nRango = Number(rango);
+    if (!Number.isInteger(nRango) || nRango < 0) return setProblema("L'ordine è un intero da 0 in su.");
+    if (nRango !== piano.rango) corpo.rank = nRango;
     if (nome.trim() && nome.trim() !== piano.nome) corpo.name = nome.trim();
     if (descrizione.trim() !== (piano.descrizione ?? "")) corpo.description = descrizione.trim();
 
@@ -300,6 +360,19 @@ function Modulo({
         )}
       </div>
 
+      <label className={comuni.campo}>
+        <span className={comuni.campoEtichetta}>Ordine</span>
+        <input
+          className={comuni.ingresso}
+          type="number"
+          min={0}
+          step={1}
+          value={rango}
+          onChange={(e) => setRango(e.target.value)}
+        />
+        <span className={comuni.campoAiuto}>Nel catalogo compaiono prima i numeri più bassi.</span>
+      </label>
+
       <label className={stili.spunta}>
         <input type="checkbox" checked={attivo} onChange={(e) => setAttivo(e.target.checked)} />
         In vendita
@@ -316,5 +389,165 @@ function Modulo({
         </button>
       </div>
     </form>
+  );
+}
+
+/* Una nuova offerta: un abbonamento (letture al giorno per un periodo, prezzo mensile e annuale) o un pacchetto
+ * (crediti una tantum, un prezzo solo). Lo slug è l'identificativo stabile: una volta creato non si cambia. */
+function NuovaOfferta({ chiudi, creata }: { chiudi: () => void; creata: () => void }) {
+  const { esegui, inCorso, errore } = useAzione();
+  const [tipo, setTipo] = useState<"abbonamento" | "pacchetto">("abbonamento");
+  const [slug, setSlug] = useState("");
+  const [nome, setNome] = useState("");
+  const [descrizione, setDescrizione] = useState("");
+  const [mensile, setMensile] = useState("");
+  const [annuale, setAnnuale] = useState("");
+  const [crediti, setCrediti] = useState("");
+  const [alGiorno, setAlGiorno] = useState("3");
+  const [rango, setRango] = useState("100");
+  const [attivo, setAttivo] = useState(true);
+  const [problema, setProblema] = useState<string | null>(null);
+  const pacchetto = tipo === "pacchetto";
+
+  const invia = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProblema(null);
+    const cMensile = centesimiDa(mensile);
+    if (cMensile === null) return setProblema("Il prezzo non è un importo valido.");
+    const corpo: NuovoPiano = {
+      slug: slug.trim(), name: nome.trim(), tipo, price_monthly: cMensile, active: attivo,
+      rank: Number(rango) || 0,
+    };
+    if (descrizione.trim()) corpo.description = descrizione.trim();
+    if (pacchetto) {
+      const n = Number(crediti);
+      if (!Number.isInteger(n) || n < 1) return setProblema("Un pacchetto accredita almeno un credito.");
+      corpo.credits_per_period = n;
+    } else {
+      const cAnnuale = annuale.trim() === "" ? 0 : centesimiDa(annuale);
+      if (cAnnuale === null) return setProblema("Il prezzo annuale non è un importo valido.");
+      corpo.price_yearly = cAnnuale;
+      const n = Number(alGiorno);
+      if (!Number.isInteger(n) || n < -1) return setProblema("Le letture al giorno sono un intero da 0 in su, o −1 per illimitate.");
+      corpo.letture_al_giorno = n;
+      if (crediti.trim() !== "") corpo.credits_per_period = Number(crediti) || 0;
+    }
+    if ((await esegui((t) => creaPiano(t, corpo))) !== null) creata();
+  };
+
+  return (
+    <section className={comuni.riquadro} aria-labelledby="nuova-offerta">
+      <h2 id="nuova-offerta" className={comuni.riquadroTitolo}>
+        Nuova offerta
+      </h2>
+      <form onSubmit={invia} className={stili.modulo}>
+        <label className={comuni.campo}>
+          <span className={comuni.campoEtichetta}>Tipo</span>
+          <select className={comuni.selezione} value={tipo} onChange={(e) => setTipo(e.target.value as typeof tipo)}>
+            <option value="abbonamento">Abbonamento (letture al giorno, si rinnova)</option>
+            <option value="pacchetto">Pacchetto (crediti una tantum, non scadono)</option>
+          </select>
+        </label>
+        <div className={comuni.riga}>
+          <label className={comuni.campo}>
+            <span className={comuni.campoEtichetta}>Nome</span>
+            <input className={comuni.ingresso} value={nome} maxLength={80} required onChange={(e) => setNome(e.target.value)} />
+          </label>
+          <label className={comuni.campo}>
+            <span className={comuni.campoEtichetta}>Slug</span>
+            <input
+              className={comuni.ingresso}
+              value={slug}
+              maxLength={40}
+              required
+              pattern="[a-z0-9][a-z0-9\-]{0,38}[a-z0-9]"
+              onChange={(e) => setSlug(e.target.value.toLowerCase())}
+              placeholder="pacchetto-100"
+            />
+            <span className={comuni.campoAiuto}>Minuscole, cifre e trattini. Non si cambia più.</span>
+          </label>
+        </div>
+        <label className={comuni.campo}>
+          <span className={comuni.campoEtichetta}>Descrizione</span>
+          <textarea
+            className={comuni.area}
+            style={{ minHeight: "4rem", fontFamily: "inherit" }}
+            value={descrizione}
+            maxLength={1000}
+            onChange={(e) => setDescrizione(e.target.value)}
+          />
+        </label>
+        <div className={comuni.riga}>
+          <label className={comuni.campo}>
+            <span className={comuni.campoEtichetta}>{pacchetto ? "Prezzo (€)" : "Prezzo mensile (€)"}</span>
+            <input
+              className={comuni.ingresso}
+              inputMode="decimal"
+              value={mensile}
+              required
+              onChange={(e) => setMensile(e.target.value)}
+              placeholder="9,90"
+            />
+          </label>
+          {!pacchetto && (
+            <label className={comuni.campo}>
+              <span className={comuni.campoEtichetta}>Prezzo annuale (€)</span>
+              <input
+                className={comuni.ingresso}
+                inputMode="decimal"
+                value={annuale}
+                onChange={(e) => setAnnuale(e.target.value)}
+                placeholder="99,00 (vuoto: non c'è)"
+              />
+            </label>
+          )}
+        </div>
+        <div className={comuni.riga}>
+          <label className={comuni.campo}>
+            <span className={comuni.campoEtichetta}>{pacchetto ? "Crediti" : "Crediti per periodo"}</span>
+            <input
+              className={comuni.ingresso}
+              type="number"
+              min={pacchetto ? 1 : 0}
+              step={1}
+              value={crediti}
+              required={pacchetto}
+              onChange={(e) => setCrediti(e.target.value)}
+            />
+          </label>
+          {!pacchetto && (
+            <label className={comuni.campo}>
+              <span className={comuni.campoEtichetta}>Letture al giorno</span>
+              <input
+                className={comuni.ingresso}
+                type="number"
+                min={-1}
+                step={1}
+                value={alGiorno}
+                onChange={(e) => setAlGiorno(e.target.value)}
+              />
+              <span className={comuni.campoAiuto}>−1 per illimitate.</span>
+            </label>
+          )}
+          <label className={comuni.campo}>
+            <span className={comuni.campoEtichetta}>Ordine</span>
+            <input className={comuni.ingresso} type="number" min={0} step={1} value={rango} onChange={(e) => setRango(e.target.value)} />
+          </label>
+        </div>
+        <label className={stili.spunta}>
+          <input type="checkbox" checked={attivo} onChange={(e) => setAttivo(e.target.checked)} />
+          In vendita subito
+        </label>
+        {(problema || errore) && <p className={comuni.errore}>{problema ?? errore}</p>}
+        <div className={stili.comandi}>
+          <button className={comuni.primaria} type="submit" disabled={inCorso}>
+            Crea l&apos;offerta
+          </button>
+          <button className={comuni.secondaria} type="button" onClick={chiudi} disabled={inCorso}>
+            Annulla
+          </button>
+        </div>
+      </form>
+    </section>
   );
 }

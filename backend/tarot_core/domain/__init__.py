@@ -7,7 +7,7 @@ visto. Caricarne uno solo produce `NoReferencedTableError` al primo uso.
 from . import base, billing_models, blog_models, config_models, models, share_models  # noqa: F401
 
 from .base import Base, OwnedMixin, TimestampMixin, utcnow
-from .billing_models import CreditEntry, PaymentCheckout, PaymentEvent, Plan, Subscription
+from .billing_models import Coupon, CouponRedemption, CreditEntry, PaymentCheckout, PaymentEvent, Plan, Subscription
 from .blog_models import (
     ApiKey, BlogPost, BlogPostLink, BlogPostRevision, BlogPostTag, BlogSection, BlogTag, MediaImage,
 )
@@ -26,6 +26,8 @@ __all__ = [
     "BlogSection",
     "BlogTag",
     "MediaImage",
+    "Coupon",
+    "CouponRedemption",
     "CreditEntry",
     "DailyCard",
     "DrawnCard",

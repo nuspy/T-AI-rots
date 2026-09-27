@@ -19,7 +19,7 @@ from ..observability.tracing import (
     instrument_engine, setup_tracing, span_corrente_con_correlazione,
 )
 from ..settings import get_settings
-from .routers import admin, admin_blog, billing, blog, condivisione, profile, public, readings, rest_blog
+from .routers import admin, admin_blog, admin_offerte, billing, blog, condivisione, profile, public, readings, rest_blog
 
 logger = logging.getLogger(__name__)
 
@@ -142,6 +142,7 @@ def create_app() -> FastAPI:
     app.include_router(condivisione.router)
     app.include_router(blog.router)
     app.include_router(admin_blog.router)
+    app.include_router(admin_offerte.router)
     app.include_router(rest_blog.router)
     app.include_router(profile.router)
     app.include_router(billing.router)

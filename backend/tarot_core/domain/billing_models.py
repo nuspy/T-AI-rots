@@ -24,7 +24,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 from sqlalchemy import (
-    BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Text, Uuid,
+    BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Text, Uuid, false, func, text, true,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -103,6 +103,68 @@ class Plan(Base, TimestampMixin):
     @property
     def pacchetto(self) -> bool:
         return self.tipo == "pacchetto"
+
+
+#: Come si sconta con un coupon. `crediti` non sconta nulla: è un codice regalo, che si riscatta (accredita crediti).
+TIPI_COUPON = ("percentuale", "importo", "crediti")
+
+
+class Coupon(Base, TimestampMixin):
+    """Un codice che sconta un acquisto o regala crediti.
+
+    Tre tipi: `percentuale` (`valore` è 1-100) e `importo` (`valore` sono centesimi) scontano un pagamento; `crediti`
+    (`valore` sono crediti) è un codice regalo, che si riscatta dal profilo senza pagare. Lo sconto vale sul primo
+    pagamento: un abbonamento si rinnova al prezzo di listino.
+
+    Un coupon usato non si cancella (le righe di `coupon_redemptions` lo citano): si disattiva.
+    """
+
+    __tablename__ = "coupons"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    #: Maiuscolo, senza spazi: chi lo scrive non deve indovinare le maiuscole.
+    code: Mapped[str] = mapped_column(String(40), unique=True, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    tipo: Mapped[str] = mapped_column(String(20), default="percentuale", nullable=False)
+    valore: Mapped[int] = mapped_column(Integer, nullable=False)
+    #: Gli slug dei piani a cui si applica; vuoto = tutti. Non vale per i codici regalo.
+    piani: Mapped[Optional[Any]] = mapped_column(JSONB)
+    solo_primo_acquisto: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false(), nullable=False)
+    valido_dal: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    valido_fino: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    #: Quante volte in tutto (vuoto = senza tetto) e quante per utente.
+    max_riscatti: Mapped[Optional[int]] = mapped_column(Integer)
+    max_per_utente: Mapped[int] = mapped_column(Integer, default=1, server_default=text("1"), nullable=False)
+    riscatti: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"), nullable=False)
+    attivo: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true(), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("tipo in ('percentuale', 'importo', 'crediti')", name="ck_coupons_tipo"),
+        CheckConstraint("valore > 0", name="ck_coupons_valore"),
+        CheckConstraint("tipo <> 'percentuale' or valore <= 100", name="ck_coupons_percentuale"),
+        CheckConstraint("max_per_utente >= 1", name="ck_coupons_per_utente"),
+    )
+
+
+class CouponRedemption(Base):
+    """Un uso di un coupon: chi, quando, per quanto. Append-only."""
+
+    __tablename__ = "coupon_redemptions"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    coupon_id: Mapped[int] = mapped_column(ForeignKey("coupons.id", ondelete="RESTRICT"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    #: L'acquisto scontato, se c'è (un codice regalo non ne ha).
+    checkout_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("payment_checkouts.id", ondelete="SET NULL"))
+    #: Centesimi scontati, o crediti regalati.
+    sconto: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"), nullable=False)
+    crediti: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        Index("ix_coupon_redemptions_coupon", "coupon_id"),
+        Index("ix_coupon_redemptions_utente", "user_id", "coupon_id"),
+    )
 
 
 class Subscription(Base, TimestampMixin):
@@ -233,7 +295,11 @@ class PaymentCheckout(Base, TimestampMixin):
     subscription_external_id: Mapped[Optional[str]] = mapped_column(String(120))
     #: Quanto è stato chiesto, in centesimi, fissato all'apertura: se il
     #: prezzo del piano cambia mentre l'utente paga, vale quello che ha visto.
+    #: È l'importo **dopo** lo sconto del coupon, se c'è.
     importo: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    #: Il coupon usato e quanto ha scontato (centesimi). Il listino è `importo + sconto`.
+    coupon_id: Mapped[Optional[int]] = mapped_column(ForeignKey("coupons.id", ondelete="SET NULL"))
+    sconto: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), default="EUR", nullable=False)
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
 
