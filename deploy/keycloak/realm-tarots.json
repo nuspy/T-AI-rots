@@ -2,6 +2,8 @@
   "realm": "tarots",
   "enabled": true,
   "displayName": "TAROTS chat",
+  "loginTheme": "tarots",
+  "accountTheme": "tarots",
   "loginWithEmailAllowed": true,
   "registrationAllowed": true,
   "registrationEmailAsUsername": true,

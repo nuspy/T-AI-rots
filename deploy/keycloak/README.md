@@ -31,6 +31,33 @@ Gli utenti di prova hanno un `id` fisso (`11111111-…`, `22222222-…`): è il
 `sub` dei loro token, e `python -m tarot_core.tools.seed` crea le righe con lo
 stesso `sub` e accredita i 1000 crediti. Al primo login l'utente li trova già.
 
+## Tema grafico (login e account)
+
+Prima non esisteva alcun tema: Keycloak mostrava il proprio aspetto di default, con il nome generico
+("Keycloak" o quanto scritto in `displayName`) e nessuna delle immagini/colori del sito. Il tema
+`tarots` (`deploy/keycloak/themes/tarots/`) è un **override CSS** sopra il tema di base `keycloak.v2`
+(Keycloak 26, basato su PatternFly), non una riscrittura dei template FreeMarker: ridefinisce i token
+globali di PatternFly (colori, font) e aggiunge il logo del sito, la stessa palette
+notte/oro/viola e gli stessi font (Cinzel per i titoli, IBM Plex Sans per l'interfaccia) di
+`frontend/app/globals.css`.
+
+- `login/theme.properties`, `login/resources/css/styles.css`, `login/resources/img/logo.webp` — pagina
+  di accesso/registrazione/recupero password.
+- `account/theme.properties` — la console self-service dell'account (`{realm}/account/`, usata anche
+  dalla gestione della 2FA descritta sopra); riusa una copia dello stesso foglio di stile (un percorso
+  relativo tra tipi di tema diversi non è garantito da Keycloak).
+- `realm-tarots.json`/`realm-tarots.prod.json` — `"loginTheme": "tarots"`, `"accountTheme": "tarots"`.
+- `Dockerfile` — `COPY themes/tarots ...` avviene **prima** di `kc.sh build`: Keycloak 26 ottimizzato
+  include i temi nella fase di build, non li legge più da disco a runtime (un tema aggiunto dopo il
+  build, senza ricostruire l'immagine, non comparirebbe).
+
+**Verifica**: solo visiva, per natura (nessun test automatico sensato per un tema grafico). Costruire
+l'immagine in locale (Docker Desktop) o montare la cartella `themes/tarots` su un'istanza di prova, ed
+entrare nella pagina di login: titolo/font/colori/bottoni devono coincidere con il resto del sito, il
+logo deve comparire in testata. Se qualche dettaglio del tema di base non è coperto dai selettori/token
+già presenti in `styles.css`, aggiungere lì il selettore preciso trovato con gli strumenti del browser
+— è un override, si estende senza toccare il tema di base.
+
 ## Identity provider
 
 Google, Facebook e Apple sono predisposti ma **spenti**: in sviluppo non ci

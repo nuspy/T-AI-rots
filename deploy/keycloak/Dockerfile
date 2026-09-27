@@ -11,6 +11,9 @@
 # di avvio in deploy/k8s/tarots.yaml.
 
 FROM quay.io/keycloak/keycloak:26.0 AS costruzione
+# Il tema va copiato PRIMA di `kc.sh build`: Keycloak 26 ottimizzato include i temi nella fase di build,
+# non li legge più a runtime da disco.
+COPY themes/tarots /opt/keycloak/themes/tarots
 ENV KC_DB=postgres \
     KC_HEALTH_ENABLED=true \
     KC_HTTP_RELATIVE_PATH=/auth

@@ -2,6 +2,8 @@
   "id": "0a1e10c5-7426-4395-bc7b-4f3a9bdfb18d",
   "realm": "tarots",
   "displayName": "TAROTS chat",
+  "loginTheme": "tarots",
+  "accountTheme": "tarots",
   "notBefore": 0,
   "defaultSignatureAlgorithm": "RS256",
   "revokeRefreshToken": false,
