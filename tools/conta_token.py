@@ -83,6 +83,9 @@ PREZZI = {
     "D GPT-5.6 Luna": dict(ingresso=0.20, uscita=1.20, cache=0.10, cache_min=1024),
     "E Claude Haiku 4.5": dict(ingresso=1.00, uscita=5.00, cache=0.10, cache_min=4096),
     "F fascia Sonnet": dict(ingresso=3.00, uscita=15.00, cache=0.10, cache_min=1024),
+    # Nebius Token Factory, prezzi comunicati dall'utente; nessuno sconto di cache dichiarato (cache=1: nessuno sconto).
+    "G Nebius Nemotron-3-Nano-30B-A3B": dict(ingresso=0.06, uscita=0.24, cache=1.0, cache_min=10**9),
+    "H Nebius Qwen3-30B-A3B-Instruct": dict(ingresso=0.10, uscita=0.30, cache=1.0, cache_min=10**9),
 }
 
 
@@ -128,6 +131,8 @@ def chiamate(scenario: dict, o) -> list[dict]:
     # Il giudice legge il responso: quello del modello finto è più corto di quello vero, e lo si sostituisce.
     finto = len(g["utente"].split("Responso da verificare:")[-1].split())
     aggiungi("giudizio", conta(g["sistema"]), conta(g["utente"]) + round((parole - finto) * tpp), 15 + round(105 * o.riscritture_attese), 600, volte)
+    for c in out:                                        # il ragionamento si paga come uscita, e si aspetta come uscita
+        c["uscita"] += o.pensiero.get(c["compito"], 0)
     return out
 
 
@@ -167,6 +172,8 @@ def main() -> int:
     ap.add_argument("--parole-sintesi", type=int, default=500, help="parole del responso standard (350-650)")
     ap.add_argument("--parole-sintesi-speciale", type=int, default=600, help="parole del responso di coppia (450-750)")
     ap.add_argument("--riscritture-attese", type=float, default=0.05, help="quota di letture che il giudice fa riscrivere")
+    ap.add_argument("--ragiona", nargs="*", default=[], metavar="COMPITO=N",
+                    help="token di ragionamento per chiamata, fatturati come uscita (es. interpretazione=800 sintesi=1500)")
     ap.add_argument("--vocabolario", type=float, default=1.0, help="moltiplicatore dei token per il vocabolario del fornitore (Claude: ~1,2)")
     o = ap.parse_args()
 
@@ -177,6 +184,7 @@ def main() -> int:
           f"responso {o.parole_sintesi}/{o.parole_sintesi_speciale} parole, {o.riscritture_attese:.0%} riscritture\n")
 
     v = o.vocabolario
+    o.pensiero = {k: int(n) for k, n in (x.split("=") for x in o.ragiona)}
     scelti = [(k, s) for k, s in dati.items() if (not o.stesa or s["spread"] == o.stesa) and (not o.lingua or s["lingua"] == o.lingua)]
     print(f"{'lettura':26} {'chiam.':>6} {'ingresso':>9} {'(fisso)':>8} {'uscita':>7} {'totale':>8}   costo per lettura in centesimi di $ (senza cache → cache calda)")
     riga_prezzi = list(PREZZI)
