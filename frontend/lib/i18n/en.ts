@@ -5,6 +5,11 @@ import type { Dizionario } from "./it";
 
 export const en: Dizionario = {
   marchio: "TAROTS chat",
+  errore_404_titolo: "Page not found",
+  errore_404_testo: "That address doesn't exist, or the page has moved. Here's where to go instead.",
+  errore_titolo: "Something went wrong",
+  errore_testo: "An unexpected error interrupted the page. You can try again, or head to one of these instead.",
+  errore_riprova: "Try again",
   motto: "The oracle of the Thoth Tarot, read by an artificial intelligence.",
   home_h1: "Online tarot reading with the Thoth Tarot and AI",
   sovratitolo: "Thoth Tarot · Aleister Crowley",

@@ -4,6 +4,11 @@ import type { Dizionario } from "./it";
 
 export const hu: Dizionario = {
   marchio: "TAROTS chat",
+  errore_404_titolo: "Az oldal nem található",
+  errore_404_testo: "Ez a cím nem létezik, vagy az oldal átköltözött. Innen érdemes újrakezdeni.",
+  errore_titolo: "Valami hiba történt",
+  errore_testo: "Egy váratlan hiba megszakította az oldalt. Próbáld újra, vagy válassz az alábbiak közül.",
+  errore_riprova: "Újra",
   motto: "A Thoth-tarot jósda, amelyet egy mesterséges intelligencia olvas.",
   home_h1: "Online tarot jóslás a Thoth-tarottal és mesterséges intelligenciával",
   sovratitolo: "Thoth-tarot · Aleister Crowley",

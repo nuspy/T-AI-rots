@@ -11,6 +11,11 @@
 
 export const it = {
   marchio: "TAROTS chat",
+  errore_404_titolo: "Pagina non trovata",
+  errore_404_testo: "L'indirizzo non esiste, o la pagina è stata spostata. Da qui si riparte.",
+  errore_titolo: "Qualcosa non ha funzionato",
+  errore_testo: "Un errore imprevisto ha interrotto la pagina. Puoi riprovare, o tornare a uno di questi posti.",
+  errore_riprova: "Riprova",
   motto: "L'oracolo del Tarocco di Thoth, letto da un'intelligenza artificiale.",
   home_h1: "Lettura dei tarocchi online con il Tarocco di Thoth e l'AI",
   sovratitolo: "Tarocco di Thoth · Aleister Crowley",

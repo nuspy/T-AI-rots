@@ -17,14 +17,22 @@
   border-bottom: 1px solid var(--bordo);
 }
 
-/* Il marchio ha la sua tipografia (`marchio.module.css`): qui solo il collegamento. Un bersaglio di almeno
- * 44 px di altezza, e il fuoco visibile attorno al segno e al nome. */
+/* Il collegamento alla home, in testata: una scritta, non il logo (che resta l'immagine della soglia e delle
+ * pagine di errore) — più leggibile a 44 px di altezza di quanto lo sia la maga rimpicciolita. Stessa tipografia
+ * dei titoli, oro, un bersaglio di almeno 44 px e il fuoco visibile. */
 .marchio {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
+  padding: 0 4px;
+  font-family: var(--font-titoli), serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--oro-chiaro);
   text-decoration: none !important;
   border-radius: 10px;
+  white-space: nowrap;
 }
 
 .marchio:focus-visible {
