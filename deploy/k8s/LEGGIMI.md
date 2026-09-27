@@ -30,7 +30,7 @@ SQL
 
 # 2. immagini: si costruiscono SUL SERVER (mai sul PC di sviluppo) e si importano
 #    in containerd, niente registry. Sorgenti: tar di backend, frontend, admin, deploy.
-docker build --provenance=false -f deploy/Dockerfile.backend -t tarots-api:v2 .
+docker build --provenance=false -f deploy/Dockerfile.backend -t tarots-api:v3 .
 docker build --provenance=false -f deploy/Dockerfile.next --build-arg APP=frontend \
   --build-arg NEXT_PUBLIC_API_URL=https://tarots.chat/api \
   --build-arg NEXT_PUBLIC_KEYCLOAK_URL=https://tarots.chat/auth \
@@ -38,16 +38,16 @@ docker build --provenance=false -f deploy/Dockerfile.next --build-arg APP=fronte
   --build-arg NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=tarot-frontend \
   --build-arg NEXT_PUBLIC_AUTH_DISABLED=false \
   --build-arg NEXT_PUBLIC_SITE_URL=https://tarots.chat \
-  --build-arg NEXT_PUBLIC_CARD_EXT=webp -t tarots-web:v2 .
+  --build-arg NEXT_PUBLIC_CARD_EXT=webp -t tarots-web:v3 .
 docker build --provenance=false -f deploy/Dockerfile.next --build-arg APP=admin \
   --build-arg NEXT_PUBLIC_API_URL=https://tarots.chat/api \
   --build-arg NEXT_PUBLIC_KEYCLOAK_URL=https://tarots.chat/auth \
   --build-arg NEXT_PUBLIC_KEYCLOAK_REALM=tarots \
   --build-arg NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=tarot-admin \
   --build-arg NEXT_PUBLIC_AUTH_DISABLED=false \
-  --build-arg NEXT_PUBLIC_BASE_PATH=/admin -t tarots-admin:v2 .
+  --build-arg NEXT_PUBLIC_BASE_PATH=/admin -t tarots-admin:v3 .
 docker build -f deploy/keycloak/Dockerfile -t tarots-keycloak:v1 deploy/keycloak
-docker save tarots-api:v2 | k3s ctr -n k8s.io images import -   # e così le altre
+docker save tarots-api:v3 | k3s ctr -n k8s.io images import -   # e così le altre
 
 # 3. segreti e realm (non stanno nel repository)
 kubectl create ns tarots
