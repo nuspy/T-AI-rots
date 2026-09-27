@@ -11,6 +11,7 @@ from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import select
 
 from ...auth.dependencies import DbSession
+from ...domain import deck_repositories
 from ...domain.repositories import ReadingRepository
 from ...domain.share_models import ShareImage
 from ...tarot.condivisione import anonimizza, simbolo_partner
@@ -150,3 +151,20 @@ async def _ha_immagine(session, reading_id) -> bool:
         select(ShareImage.reading_id).where(ShareImage.reading_id == reading_id)
     )).first()
     return riga is not None
+
+
+# ---- mazzi (v5, Fase B) -----------------------------------------------------------------------
+
+
+@router.get("/decks")
+async def mazzi(session: DbSession) -> List[Dict[str, Any]]:
+    """I mazzi visibili nel negozio adesso: attivi e dentro la finestra di attivazione, se c'è."""
+    return [deck_repositories.mazzo_json(d) for d in await deck_repositories.attivi_ora(session)]
+
+
+@router.get("/decks/{slug}")
+async def mazzo(slug: str, session: DbSession) -> Dict[str, Any]:
+    d = await deck_repositories.per_slug(session, slug)
+    if d is None or not d.attivo_ora:
+        raise HTTPException(status_code=404, detail="Mazzo non trovato")
+    return deck_repositories.mazzo_json(d)

@@ -4,7 +4,7 @@ Qui si importano tutti i moduli dei modelli: le tabelle si riferiscono l'una
 all'altra per nome, e SQLAlchemy risolve quei nomi solo fra le tabelle che ha
 visto. Caricarne uno solo produce `NoReferencedTableError` al primo uso.
 """
-from . import base, billing_models, blog_models, config_models, models, share_models  # noqa: F401
+from . import base, billing_models, blog_models, config_models, deck_models, models, share_models  # noqa: F401
 
 from .base import Base, OwnedMixin, TimestampMixin, utcnow
 from .billing_models import Coupon, CouponRedemption, CreditEntry, PaymentCheckout, PaymentEvent, Plan, Subscription
@@ -12,6 +12,7 @@ from .blog_models import (
     ApiKey, BlogPost, BlogPostLink, BlogPostRevision, BlogPostTag, BlogSection, BlogTag, MediaImage,
 )
 from .config_models import ImpostazioniCrediti, LlmProvider, ModelAssignment
+from .deck_models import Deck, DeckUnlock
 from .models import AuditLog, DailyCard, DrawnCard, InterviewTurn, Reading, User
 from .share_models import ShareEvent, ShareImage, ShareSignup, ShareVisit
 
@@ -30,6 +31,8 @@ __all__ = [
     "CouponRedemption",
     "CreditEntry",
     "DailyCard",
+    "Deck",
+    "DeckUnlock",
     "DrawnCard",
     "ImpostazioniCrediti",
     "InterviewTurn",

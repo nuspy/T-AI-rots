@@ -21,8 +21,8 @@ from ..observability.tracing import (
 )
 from ..settings import get_settings
 from .routers import (
-    admin, admin_blog, admin_impostazioni, admin_llm, admin_offerte, billing, blog, condivisione, profile, public,
-    readings, rest_blog,
+    admin, admin_blog, admin_impostazioni, admin_llm, admin_mazzi, admin_offerte, billing, blog, condivisione,
+    profile, public, readings, rest_blog,
 )
 
 # Le chiamate ai fornitori LLM (e a qualunque altro servizio HTTPS esterno) verificano il certificato con
@@ -157,6 +157,7 @@ def create_app() -> FastAPI:
     app.include_router(blog.router)
     app.include_router(admin_blog.router)
     app.include_router(admin_offerte.router)
+    app.include_router(admin_mazzi.router)
     app.include_router(admin_llm.router)
     app.include_router(admin_impostazioni.router)
     app.include_router(rest_blog.router)

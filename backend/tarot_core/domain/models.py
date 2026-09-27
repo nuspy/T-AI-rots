@@ -168,6 +168,12 @@ class Reading(Base, TimestampMixin, OwnedMixin):
     #: dell'interpretazione resta identico, non tocca `rivelata`/`prossima_da_rivelare`.
     manuale: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false(), nullable=False)
 
+    #: Il mazzo con cui è stata mostrata (v5, Fase B): nullo per il mazzo predefinito (il Thoth), che
+    #: non ha bisogno di una riga in `Deck` per essere quello di sempre. La FK è per nome di tabella
+    #: (`decks`), senza importare `deck_models.Deck` qui: SQLAlchemy la risolve al momento della
+    #: mappatura, non serve il tipo Python per una colonna che il codice usa solo come id.
+    deck_id: Mapped[Optional[int]] = mapped_column(ForeignKey("decks.id", ondelete="SET NULL"))
+
     #: Il quadro emerso dall'intervista, riassunto dal modello.
     context_summary: Mapped[Optional[str]] = mapped_column(Text)
 

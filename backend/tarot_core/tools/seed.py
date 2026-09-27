@@ -37,6 +37,7 @@ from ..billing.credits import RegistroCrediti
 from ..billing.plans import GestoreAbbonamenti
 from ..domain.billing_models import CreditEntry, Plan
 from ..domain.blog_models import BlogSection
+from ..domain.deck_models import Deck
 from ..domain.models import User
 from ..domain.repositories import nuovo_codice_invito
 from ..domain.session import dispose_engine, get_session_factory
@@ -174,6 +175,18 @@ async def scrivi_sezioni_blog(session) -> int:
     return creati
 
 
+async def scrivi_mazzo_predefinito(session) -> int:
+    """Il Thoth: il mazzo predefinito, sempre posseduto da chiunque (v5, Fase B). Senza questa riga
+    il negozio non avrebbe nulla da elencare — non serve a far funzionare le letture (il predefinito
+    non richiede alcuna riga per essere usato), solo a farlo comparire come voce del catalogo."""
+    esistente = (await session.execute(select(Deck).where(Deck.predefinito.is_(True)))).scalar_one_or_none()
+    if esistente is not None:
+        return 0
+    session.add(Deck(slug="thoth", nome="Thoth Tarot", predefinito=True, attivo=True, rank=0))
+    await session.flush()
+    return 1
+
+
 async def scrivi_utenti(session) -> int:
     crediti = get_settings().crediti_utente_di_prova
     gestore = GestoreAbbonamenti(session)
@@ -206,9 +219,13 @@ async def scrivi(*, forza: bool = False, utenti: bool = True) -> None:
         piani = await scrivi_catalogo(session, forza=forza)
         creati = await scrivi_utenti(session) if utenti else 0
         sezioni = await scrivi_sezioni_blog(session)
+        mazzi = await scrivi_mazzo_predefinito(session)
         await session.commit()
     await dispose_engine()
-    logger.info("Seed: %d piani scritti, %d utenti di prova creati, %d sezioni del blog", piani, creati, sezioni)
+    logger.info(
+        "Seed: %d piani scritti, %d utenti di prova creati, %d sezioni del blog, %d mazzo predefinito",
+        piani, creati, sezioni, mazzi,
+    )
 
 
 def main() -> int:

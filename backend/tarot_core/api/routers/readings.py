@@ -40,6 +40,7 @@ from ...auth.dependencies import CurrentUser, DbSession
 from ...billing.credits import CreditiInsufficienti, RegistroCrediti
 from ...billing.plans import GestoreAbbonamenti
 from ...billing.quote import COSTO_LETTURA, ContatoreQuote
+from ...domain import deck_repositories
 from ...domain.base import utcnow
 from ...domain.models import InterviewTurn, Reading, User
 from ...domain.repositories import AuditRepository, ReadingRepository
@@ -131,6 +132,9 @@ class NuovaLettura(BaseModel):
     #: della stesa, già estratta a mano. Con questo campo la lettura salta ventaglio/scelta e passa
     #: direttamente alla rivelazione, non appena l'intervista si conclude.
     manual_cards: Optional[List[ManualCardIn]] = None
+    #: Il mazzo con cui leggere (v5, Fase B): lo slug di un `Deck`. Assente o nullo: il predefinito
+    #: (il Thoth), sempre posseduto, nessuna verifica necessaria.
+    deck_id: Optional[str] = Field(default=None, max_length=40)
 
 
 class RispostaIntervista(BaseModel):
@@ -360,6 +364,19 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
     categoria = conoscenza.categoria_di(stesa)
     persone = _persone_dell_apertura(user, payload, categoria, lang)
 
+    # Il mazzo (v5, Fase B): assente o nullo, il predefinito — nessuna verifica. Indicato, deve
+    # esistere ed essere posseduto (il predefinito lo è sempre da chiunque). Si verifica qui, prima
+    # di addebitare: un mazzo non posseduto non deve costare un credito prima di fallire.
+    mazzo_scelto = None
+    if payload.deck_id:
+        mazzo_scelto = await deck_repositories.per_slug(session, payload.deck_id)
+        if mazzo_scelto is None or not mazzo_scelto.attivo_ora:
+            raise HTTPException(status_code=404, detail={"motivo": "mazzo_sconosciuto", "messaggio": "Mazzo non trovato."})
+        if not await deck_repositories.possiede(session, user.id, mazzo_scelto):
+            raise HTTPException(status_code=403, detail={
+                "motivo": "mazzo_non_posseduto", "messaggio": "Non possiedi ancora questo mazzo.",
+            })
+
     # "Interpreta i miei tarocchi" (v5): il mazzo è fisico, già estratto — si valida qui, con un
     # messaggio utile, prima di addebitare qualunque cosa (stesso principio delle altre verifiche
     # sopra: un errore di forma non deve costare un credito).
@@ -405,6 +422,7 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
         user, spread_id=stesa["id"], question=payload.question.strip(),
         consumo=consumo, lang=lang, status="intervista", persone=persone,
         manuale=assegnazioni_manuali is not None,
+        deck_id=mazzo_scelto.id if mazzo_scelto else None,
     )
     if assegnazioni_manuali is not None:
         # `lettura` è appena stata creata (solo un flush, mai un `select`): la relazione `cards` non è
