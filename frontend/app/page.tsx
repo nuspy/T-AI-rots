@@ -27,11 +27,12 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-/** Due articoli a caso, non i più recenti: un piccolo generatore con seme, ripetibile finché non cambia il seme
+/** Sei articoli a caso, non i più recenti: un piccolo generatore con seme, ripetibile finché non cambia il seme
  *  (il giorno di oggi, UTC), così la scelta resta la stessa per tutta la giornata invece di cambiare a ogni
  *  richiesta — un motore di ricerca che passa due volte nello stesso giorno vede la stessa pagina. */
-function dueACaso<T>(elenco: T[], seme: string): T[] {
-  if (elenco.length <= 2) return elenco;
+function seiACaso<T>(elenco: T[], seme: string): T[] {
+  const N = 6;
+  if (elenco.length <= N) return elenco;
   let h = 1779033703 ^ seme.length;
   for (let i = 0; i < seme.length; i++) {
     h = Math.imul(h ^ seme.charCodeAt(i), 3432918353);
@@ -44,7 +45,7 @@ function dueACaso<T>(elenco: T[], seme: string): T[] {
     const j = ((h >>> 0) % (i + 1) + (i + 1)) % (i + 1);
     [scelti[i], scelti[j]] = [scelti[j], scelti[i]];
   }
-  return scelti.slice(0, 2);
+  return scelti.slice(0, N);
 }
 
 export default async function Pagina() {
@@ -52,10 +53,10 @@ export default async function Pagina() {
   const [carte, stese, articoli] = await Promise.all([
     leggiDalServer<Carta[]>(`/cards?lang=${lingua}`),
     leggiDalServer<Stesa[]>(`/spreads?categoria=standard&lang=${lingua}`),
-    leggiDalServer<ElencoArticoli>(`/blog/posts?per_pagina=12&lang=${lingua}`),
+    leggiDalServer<ElencoArticoli>(`/blog/posts?per_pagina=24&lang=${lingua}`),
   ]);
   const oggi = new Date().toISOString().slice(0, 10);
-  const articoliCasuali = dueACaso(articoli?.articoli ?? [], oggi);
+  const articoliCasuali = seiACaso(articoli?.articoli ?? [], oggi);
   const dati = grafo(
     organizzazione(),
     sito(lingua),

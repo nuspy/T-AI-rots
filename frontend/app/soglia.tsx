@@ -19,9 +19,9 @@ import { Testata } from "./componenti/testata";
 import stili from "./soglia.module.css";
 
 export function Soglia() {
-  const { t } = useLingua();
-  const carte = useCarica(useCallback(() => elencaCarte(), []), [], { pubblico: true });
-  const stese = useCarica(useCallback(() => elencaStese("standard"), []), [], { pubblico: true });
+  const { t, lingua } = useLingua();
+  const carte = useCarica(useCallback(() => elencaCarte(lingua), [lingua]), [lingua], { pubblico: true });
+  const stese = useCarica(useCallback(() => elencaStese("standard", lingua), [lingua]), [lingua], { pubblico: true });
   const maggiori = (carte.dati ?? []).filter((c) => c.arcano === "maggiore");
   const scelte = [0, 1, 2, 17, 19, 21].map((n) => maggiori.find((c) => c.numero === n)).filter(Boolean);
   const passi = t.home_passi;

@@ -390,10 +390,17 @@ async function chiama<T>(
 
 /* ---- pubblico ---- */
 
-export const elencaStese = (categoria?: Categoria) =>
-  chiama<Stesa[]>(null, categoria ? `/spreads?categoria=${categoria}` : "/spreads");
-export const elencaCarte = () => chiama<Carta[]>(null, "/cards");
-export const leggiCarta = (id: string) => chiama<Carta>(null, `/cards/${encodeURIComponent(id)}`);
+export const elencaStese = (categoria?: Categoria, lang?: string) => {
+  const p = new URLSearchParams();
+  if (categoria) p.set("categoria", categoria);
+  if (lang) p.set("lang", lang);
+  const q = p.toString();
+  return chiama<Stesa[]>(null, q ? `/spreads?${q}` : "/spreads");
+};
+export const elencaCarte = (lang?: string) =>
+  chiama<Carta[]>(null, lang ? `/cards?lang=${encodeURIComponent(lang)}` : "/cards");
+export const leggiCarta = (id: string, lang?: string) =>
+  chiama<Carta>(null, lang ? `/cards/${encodeURIComponent(id)}?lang=${encodeURIComponent(lang)}` : `/cards/${encodeURIComponent(id)}`);
 export const leggiCondivisa = (token: string) =>
   chiama<LetturaCondivisa>(null, `/shared/${encodeURIComponent(token)}`);
 export const leggiDisclaimer = (lang: string) =>
