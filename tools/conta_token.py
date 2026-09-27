@@ -186,15 +186,15 @@ def main() -> int:
     v = o.vocabolario
     o.pensiero = {k: int(n) for k, n in (x.split("=") for x in o.ragiona)}
     scelti = [(k, s) for k, s in dati.items() if (not o.stesa or s["spread"] == o.stesa) and (not o.lingua or s["lingua"] == o.lingua)]
-    print(f"{'lettura':26} {'chiam.':>6} {'ingresso':>9} {'(fisso)':>8} {'uscita':>7} {'totale':>8}   costo per lettura in centesimi di $ (senza cache → cache calda)")
+    print(f"{'lettura':26} {'chiam.':>6} {'ingresso':>9} {'(fisso)':>8} {'uscita':>7} {'totale':>8}   costo per lettura in dollari (senza cache → cache calda); per 1000 letture moltiplicare per 1000")
     riga_prezzi = list(PREZZI)
     for k, s in scelti:
         e = chiamate(s, o)
         t = totali(e, v)
         celle = []
         for nome in riga_prezzi:
-            senza, con = costo(e, PREZZI[nome], v, con_cache=False) * 100, costo(e, PREZZI[nome], v, con_cache=True) * 100
-            celle.append(f"{nome[0]} {senza:5.3f}→{con:5.3f}")
+            senza, con = costo(e, PREZZI[nome], v, con_cache=False), costo(e, PREZZI[nome], v, con_cache=True)
+            celle.append(f"{nome[0]} ${senza:.4f}→${con:.4f}")
         print(f"{k:26} {t['chiamate']:6.0f} {t['ingresso']:9,.0f} {t['stabile']:8,.0f} {t['uscita']:7,.0f} {t['ingresso'] + t['uscita']:8,.0f}   " + "  ".join(celle))
 
     if len(scelti) == 1 or (o.stesa and o.lingua):
