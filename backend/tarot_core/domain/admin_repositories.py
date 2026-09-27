@@ -125,10 +125,11 @@ class RegistroAuditRepository:
         self,
         *,
         limite: int = 100,
+        offset: int = 0,
         azione: Optional[str] = None,
         target_type: Optional[str] = None,
     ) -> Sequence[AuditLog]:
-        query = select(AuditLog).order_by(AuditLog.created_at.desc()).limit(limite)
+        query = select(AuditLog).order_by(AuditLog.created_at.desc()).limit(limite).offset(offset)
         if azione:
             query = query.where(AuditLog.action == azione)
         if target_type:

@@ -394,16 +394,16 @@ async def report(tipo: str, session: DbSession, giorni: int = 30) -> StreamingRe
 
 @router.get("/audit")
 async def registro(
-    session: DbSession, limite: int = 100, azione: str = "", target_type: str = "",
+    session: DbSession, limite: int = 100, offset: int = 0, azione: str = "", target_type: str = "",
 ) -> List[Dict[str, Any]]:
     righe = await RegistroAuditRepository(session).recenti(
-        limite=min(limite, 500), azione=azione or None, target_type=target_type or None,
+        limite=min(limite, 500), offset=max(offset, 0), azione=azione or None, target_type=target_type or None,
     )
     return [
         {
             "id": r.id, "attore": r.actor_id, "azione": r.action,
             "tipo": r.target_type, "target": r.target_id,
-            "prima": r.before, "dopo": r.after, "ip": r.ip,
+            "prima": r.before, "dopo": r.after, "ip": r.ip, "correlazione": r.correlation_id,
             "quando": r.created_at.isoformat(),
         }
         for r in righe

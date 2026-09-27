@@ -12,22 +12,51 @@ import stili from "../comuni.module.css";
  * registro.
  */
 
-/* I tipi di oggetto noti, per il secondo filtro. Le azioni invece si
- * ricavano da ciò che è arrivato: cambiano più spesso, e un elenco scritto
- * qui resterebbe indietro. */
-const TIPI = ["user", "plan", "reading", "compito"];
+/* I tipi di oggetto noti, per il secondo filtro: ogni valore che il backend scrive davvero (grep su
+ * `target_type=`/`tipo=` nelle chiamate di audit). Le azioni invece si ricavano da ciò che è arrivato: cambiano
+ * più spesso, e un elenco scritto qui resterebbe indietro. */
+const TIPI = [
+  "user", "plan", "coupon", "reading", "compito", "llm_provider", "impostazioni_credito",
+  "blog_section", "blog_post", "blog_tag", "media_image", "api_key",
+];
+
+const LIMITE = 200;
 
 export default function Registro() {
   const [filtro, setFiltro] = useState("");
   const [tipo, setTipo] = useState("");
+  const [offset, setOffset] = useState(0);
   const { dati, errore, inCorso } = useDati(
-    (t) => registro(t, { azione: filtro, target_type: tipo, limite: 200 }),
-    [filtro, tipo],
+    (t) => registro(t, { azione: filtro, target_type: tipo, limite: LIMITE, offset }),
+    [filtro, tipo, offset],
   );
+  /* Le pagine si accumulano finché non cambia un filtro: allora si riparte da zero, con la pagina nuova al posto
+   * di tutte le precedenti — filtrare non deve mostrare insieme a righe di prima e di dopo il cambio.
+   *
+   * Aggiustata durante il rendering (non in un effetto): `dati` cambia identità a ogni richiesta completata,
+   * anche quando l'offset resta 0 (un filtro cambiato) — confrontarlo con l'ultimo visto, invece di aspettare
+   * che cambi l'offset, coglie anche quel caso. È il modo che React stesso consiglia per «aggiustare uno stato
+   * quando cambia un valore», al posto di un useEffect che si limiterebbe a copiare una prop in uno stato. */
+  const [accumulati, setAccumulati] = useState<VoceRegistro[]>([]);
+  const [datiVisti, setDatiVisti] = useState<VoceRegistro[] | null>(null);
+  if (dati && dati !== datiVisti) {
+    setDatiVisti(dati);
+    setAccumulati((prima) => (offset === 0 ? dati : [...prima, ...dati]));
+  }
+
+  const cambiaFiltro = (v: string) => {
+    setFiltro(v);
+    setOffset(0);
+  };
+  const cambiaTipo = (v: string) => {
+    setTipo(v);
+    setOffset(0);
+  };
 
   /* L'azione scelta resta nel menu anche quando il filtro l'ha resa l'unica,
    * o sparirebbe l'opzione per tornare indietro. */
-  const azioni = [...new Set([...(dati ?? []).map((v) => v.azione), ...(filtro ? [filtro] : [])])].sort();
+  const azioni = [...new Set([...accumulati.map((v) => v.azione), ...(filtro ? [filtro] : [])])].sort();
+  const forsePiu = (dati?.length ?? 0) === LIMITE;
 
   return (
     <>
@@ -43,7 +72,7 @@ export default function Registro() {
         <select
           className={stili.selezione}
           value={tipo}
-          onChange={(e) => setTipo(e.target.value)}
+          onChange={(e) => cambiaTipo(e.target.value)}
           aria-label="Filtra per oggetto"
           style={{ maxWidth: "12rem" }}
         >
@@ -57,7 +86,7 @@ export default function Registro() {
         <select
           className={stili.selezione}
           value={filtro}
-          onChange={(e) => setFiltro(e.target.value)}
+          onChange={(e) => cambiaFiltro(e.target.value)}
           aria-label="Filtra per azione"
           style={{ maxWidth: "16rem" }}
         >
@@ -71,13 +100,13 @@ export default function Registro() {
       </div>
 
       {errore && <p className={stili.errore}>{errore}</p>}
-      {inCorso && <p className={stili.caricamento}>Caricamento…</p>}
+      {inCorso && accumulati.length === 0 && <p className={stili.caricamento}>Caricamento…</p>}
 
-      {dati && dati.length === 0 && (
+      {accumulati.length === 0 && !inCorso && (
         <div className={stili.vuoto}>Nessuna operazione registrata.</div>
       )}
 
-      {dati && dati.length > 0 && (
+      {accumulati.length > 0 && (
         <div className={stili.contenitoreTabella}>
           <table className={stili.tabella}>
             <thead>
@@ -91,7 +120,7 @@ export default function Registro() {
               </tr>
             </thead>
             <tbody>
-              {dati.map((v) => (
+              {accumulati.map((v) => (
                 <tr key={v.id}>
                   <td className={stili.mono}>
                     {new Date(v.quando).toLocaleString("it-IT", {
@@ -115,6 +144,19 @@ export default function Registro() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {forsePiu && (
+        <div style={{ textAlign: "center", marginTop: 16 }}>
+          <button
+            type="button"
+            className={stili.secondaria}
+            disabled={inCorso}
+            onClick={() => setOffset((o) => o + LIMITE)}
+          >
+            {inCorso ? "Caricamento…" : "Carica altro"}
+          </button>
         </div>
       )}
     </>

@@ -232,6 +232,7 @@ export interface VoceRegistro {
   prima: Record<string, unknown> | null;
   dopo: Record<string, unknown> | null;
   ip: string | null;
+  correlazione: string | null;
   quando: string;
 }
 
@@ -364,7 +365,7 @@ export async function scaricaReport(
 
 export const registro = (
   t: string,
-  filtri: { azione?: string; target_type?: string; limite?: number } = {},
+  filtri: { azione?: string; target_type?: string; limite?: number; offset?: number } = {},
 ) => chiamata<VoceRegistro[]>(t, `/admin/audit${interrogazione(filtri)}`);
 
 /* ---- i modelli e i compiti ---- */
