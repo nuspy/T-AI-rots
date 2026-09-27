@@ -311,6 +311,7 @@ export interface Ordine {
   sconto_scaglioni: number;
   valuta: string;
   righe: RigaOrdine[];
+  indirizzo_spedizione: Record<string, string | null> | null;
   creato: string | null;
   completato: string | null;
 }
@@ -722,8 +723,10 @@ export const disdici = (token: string | null) =>
 export const mieiMazzi = (token: string | null) =>
   chiama<{ deck_ids: number[] }>(token, "/me/decks");
 
-export const apriOrdine = (token: string | null, voci: VoceCarrelloInvio[], ritorno?: string) =>
-  chiama<{ url: string } & Ordine>(token, "/orders", { method: "POST", body: { voci, ritorno } });
+export const apriOrdine = (token: string | null, voci: VoceCarrelloInvio[], ritorno?: string, indirizzoId?: string) =>
+  chiama<{ url: string } & Ordine>(
+    token, "/orders", { method: "POST", body: { voci, ritorno, indirizzo_id: indirizzoId } },
+  );
 
 export const elencaOrdini = (token: string | null) =>
   chiama<{ ordini: Ordine[] }>(token, "/me/orders");
@@ -764,6 +767,40 @@ export async function caricaAvatar(token: string | null, file: File): Promise<{ 
 }
 export const togliAvatar = (token: string | null) => chiama<void>(token, "/me/avatar", { method: "DELETE" });
 export const cancellaPartner = (token: string | null) => chiama<void>(token, "/me/partner", { method: "DELETE" });
+
+/* ---- indirizzi di spedizione (v5, Fase B5) ---- */
+
+export interface Indirizzo {
+  id: string;
+  nome: string;
+  via: string;
+  citta: string;
+  cap: string;
+  provincia: string | null;
+  paese: string;
+  telefono: string | null;
+  predefinito: boolean;
+}
+
+export interface IndirizzoInvio {
+  nome: string;
+  via: string;
+  citta: string;
+  cap: string;
+  provincia?: string;
+  paese: string;
+  telefono?: string;
+  predefinito?: boolean;
+}
+
+export const elencaIndirizzi = (token: string | null) =>
+  chiama<{ indirizzi: Indirizzo[] }>(token, "/me/addresses");
+export const creaIndirizzo = (token: string | null, dati: IndirizzoInvio) =>
+  chiama<Indirizzo>(token, "/me/addresses", { method: "POST", body: dati });
+export const modificaIndirizzo = (token: string | null, id: string, dati: Partial<IndirizzoInvio>) =>
+  chiama<Indirizzo>(token, `/me/addresses/${id}`, { method: "PATCH", body: dati });
+export const eliminaIndirizzo = (token: string | null, id: string) =>
+  chiama<void>(token, `/me/addresses/${id}`, { method: "DELETE" });
 export const riscattaInvito = (token: string | null, codice: string) =>
   chiama<{ crediti: number; saldo: number }>(token, "/me/referral", { method: "POST", body: { codice } });
 /** La carta del giorno per tutti (`GET /daily-card/today`): senza account, uguale per chiunque nello stesso giorno. */

@@ -10,7 +10,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "@/app/componenti/link";
 import {
-  apriOrdine, elencaMazzi, euro, leggiOrdine, mieiMazzi, scaricaPdfOrdine, urlPdfGratuito,
+  apriOrdine, elencaIndirizzi, elencaMazzi, euro, leggiOrdine, mieiMazzi, scaricaPdfOrdine, urlPdfGratuito,
   type Carta as TipoCarta, type Mazzo, type RigaOrdine, type TipoVoceOrdine,
 } from "@/lib/api";
 import { nomeCarta } from "@/lib/i18n";
@@ -165,7 +165,9 @@ function Negozio({ inizialiMazzi }: { inizialiMazzi: Mazzo[] | null }) {
 
   const mazzi = useCarica(useCallback(() => elencaMazzi(), []), [], { pubblico: true });
   const posseduti = useCarica(mieiMazzi);
+  const indirizzi = useCarica(elencaIndirizzi);
   const { esegui, inCorso, errore } = useAzione();
+  const [indirizzoScelto, setIndirizzoScelto] = useState<string | null>(null);
 
   const elenco = mazzi.dati ?? inizialiMazzi ?? [];
   const idPosseduti = new Set(posseduti.dati?.deck_ids ?? []);
@@ -220,11 +222,15 @@ function Negozio({ inizialiMazzi }: { inizialiMazzi: Mazzo[] | null }) {
   const voci = Array.from(carrello.values());
   const totaleGrezzo = voci.reduce((s, v) => s + v.prezzoUnitario * v.quantita, 0);
   const valutaCarrello = voci[0]?.valuta ?? "EUR";
+  const richiedeIndirizzo = voci.some((v) => v.tipo === "fisico");
+  const elencoIndirizzi = indirizzi.dati?.indirizzi ?? [];
+  const indirizzoAttivo = indirizzoScelto ?? elencoIndirizzi.find((i) => i.predefinito)?.id ?? elencoIndirizzi[0]?.id ?? null;
 
   const completaOrdine = async () => {
     if (!sessione.autenticata) { sessione.entra(); return; }
+    if (richiedeIndirizzo && !indirizzoAttivo) return;
     const corpo = voci.map((v) => ({ deck_id: v.deckId, tipo: v.tipo, quantita: v.quantita }));
-    const r = await esegui((tok) => apriOrdine(tok, corpo));
+    const r = await esegui((tok) => apriOrdine(tok, corpo, undefined, richiedeIndirizzo ? indirizzoAttivo ?? undefined : undefined));
     if (r?.url) window.location.assign(r.url);
   };
 
@@ -250,6 +256,7 @@ function Negozio({ inizialiMazzi }: { inizialiMazzi: Mazzo[] | null }) {
             key={m.id} mazzo={m} posseduto={m.predefinito || idPosseduti.has(m.id)}
             inCarrelloDigitale={carrello.get(chiaveVoce(m.id, "digitale"))?.quantita ?? 0}
             inCarrelloPdf={carrello.get(chiaveVoce(m.id, "pdf"))?.quantita ?? 0}
+            inCarrelloFisico={carrello.get(chiaveVoce(m.id, "fisico"))?.quantita ?? 0}
             onAggiungi={aggiungi}
           />
         ))}
@@ -265,7 +272,9 @@ function Negozio({ inizialiMazzi }: { inizialiMazzi: Mazzo[] | null }) {
               {voci.map((v) => (
                 <li key={chiaveVoce(v.deckId, v.tipo)}>
                   <span>
-                    {t.negozio_carrello_voce(v.nome, v.tipo === "digitale" ? t.negozio_digitale : t.negozio_pdf)}
+                    {t.negozio_carrello_voce(
+                      v.nome, v.tipo === "digitale" ? t.negozio_digitale : v.tipo === "pdf" ? t.negozio_pdf : t.negozio_fisico,
+                    )}
                     {v.quantita > 1 ? ` × ${v.quantita}` : ""}
                   </span>
                   <span className={stili.righeCarrelloPrezzo}>{euro(v.prezzoUnitario * v.quantita, v.valuta, locale)}</span>
@@ -279,7 +288,27 @@ function Negozio({ inizialiMazzi }: { inizialiMazzi: Mazzo[] | null }) {
             </ul>
             <p className={stili.totaleCarrello}>{t.negozio_carrello_totale}: {euro(totaleGrezzo, valutaCarrello, locale)}</p>
             <p className={stili.avviso}>{t.negozio_carrello_nota_sconto}</p>
-            <button className="bottone" disabled={inCorso} onClick={completaOrdine}>
+            {richiedeIndirizzo && sessione.autenticata && (
+              <div className={stili.nota}>
+                <strong style={{ display: "block", marginBottom: 4 }}>{t.negozio_indirizzo_titolo}</strong>
+                {elencoIndirizzi.length === 0 ? (
+                  <p>
+                    {t.negozio_indirizzo_manca}{" "}
+                    <Link href="/profilo">{t.negozio_indirizzo_vai_al_profilo}</Link>
+                  </p>
+                ) : (
+                  <select value={indirizzoAttivo ?? ""} onChange={(e) => setIndirizzoScelto(e.target.value)}>
+                    {elencoIndirizzi.map((i) => (
+                      <option key={i.id} value={i.id}>{i.nome} — {i.via}, {i.citta}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            )}
+            <button
+              className="bottone" disabled={inCorso || (richiedeIndirizzo && sessione.autenticata && !indirizzoAttivo)}
+              onClick={completaOrdine}
+            >
               {inCorso
                 ? t.negozio_ordine_in_corso
                 : sessione.autenticata ? t.negozio_completa_ordine : t.negozio_entra_per_acquistare}
@@ -293,12 +322,13 @@ function Negozio({ inizialiMazzi }: { inizialiMazzi: Mazzo[] | null }) {
 }
 
 function SchedaMazzo({
-  mazzo, posseduto, inCarrelloDigitale, inCarrelloPdf, onAggiungi,
+  mazzo, posseduto, inCarrelloDigitale, inCarrelloPdf, inCarrelloFisico, onAggiungi,
 }: {
   mazzo: Mazzo;
   posseduto: boolean;
   inCarrelloDigitale: number;
   inCarrelloPdf: number;
+  inCarrelloFisico: number;
   onAggiungi: (m: Mazzo, tipo: TipoVoceOrdine) => void;
 }) {
   const { t, locale } = useLingua();
@@ -348,9 +378,19 @@ function SchedaMazzo({
                 </button>
               </div>
             )}
-            {mazzo.prezzo_fisico != null && <p className={stili.nota}>{t.negozio_fisico_in_arrivo}</p>}
-            {(inCarrelloDigitale > 0 || inCarrelloPdf > 0) && (
-              <p className={stili.nota}>{t.negozio_nel_carrello}: {inCarrelloDigitale + inCarrelloPdf}</p>
+            {mazzo.prezzo_fisico != null && (
+              <div className={stili.rigaPrezzo}>
+                <span>{t.negozio_fisico}</span>
+                <span>{euro(mazzo.prezzo_fisico, mazzo.valuta, locale)}</span>
+                <button type="button" className="bottone-secondario" onClick={() => onAggiungi(mazzo, "fisico")}>
+                  {t.negozio_aggiungi}
+                </button>
+              </div>
+            )}
+            {(inCarrelloDigitale > 0 || inCarrelloPdf > 0 || inCarrelloFisico > 0) && (
+              <p className={stili.nota}>
+                {t.negozio_nel_carrello}: {inCarrelloDigitale + inCarrelloPdf + inCarrelloFisico}
+              </p>
             )}
           </>
         )}

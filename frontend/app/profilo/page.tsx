@@ -5,8 +5,9 @@
 
 import { useState } from "react";
 import {
-  aggiornaProfilo, cancellaPartner, caricaAvatar, impostazioniPubbliche, leggiProfilo, riscattaInvito, togliAvatar,
-  type Genere,
+  aggiornaProfilo, cancellaPartner, caricaAvatar, creaIndirizzo, elencaIndirizzi, eliminaIndirizzo,
+  impostazioniPubbliche, leggiProfilo, modificaIndirizzo, riscattaInvito, togliAvatar,
+  type Genere, type Indirizzo, type IndirizzoInvio,
 } from "@/lib/api";
 import { urlMedia } from "@/lib/blog";
 import { dimenticaInvito, leggiInvito } from "@/lib/inviti";
@@ -338,6 +339,125 @@ function Profilo() {
         )}
         {esito && <p className={stili.avvisoBuono}>{esito}</p>}
       </section>
+
+      <SezioneIndirizzi />
     </>
+  );
+}
+
+function SezioneIndirizzi() {
+  const { t } = useLingua();
+  const indirizzi = useCarica(elencaIndirizzi);
+  const { esegui, inCorso, errore } = useAzione();
+  const [inAggiunta, setInAggiunta] = useState(false);
+  const [form, setForm] = useState<IndirizzoInvio>({ nome: "", via: "", citta: "", cap: "", paese: "" });
+
+  const elenco = indirizzi.dati?.indirizzi ?? [];
+  const pronto = form.nome.trim() && form.via.trim() && form.citta.trim() && form.cap.trim() && form.paese.trim().length === 2;
+
+  const salva = async () => {
+    const r = await esegui((tok) => creaIndirizzo(tok, form));
+    if (r) {
+      setInAggiunta(false);
+      setForm({ nome: "", via: "", citta: "", cap: "", paese: "" });
+      indirizzi.ricarica();
+    }
+  };
+
+  return (
+    <section className={`pannello ${stili.scheda} ${stili.sezione}`} aria-labelledby="profilo-indirizzi">
+      <h2 id="profilo-indirizzi" className={stili.sezioneTitolo}>{t.indirizzi_titolo}</h2>
+      <p className={stili.nota}>{t.indirizzi_testo}</p>
+
+      {elenco.length === 0 && !inAggiunta && <p className={stili.nota}>{t.indirizzi_vuoto}</p>}
+
+      {elenco.length > 0 && (
+        <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 10 }}>
+          {elenco.map((i) => <RigaIndirizzo key={i.id} indirizzo={i} onCambio={indirizzi.ricarica} />)}
+        </ul>
+      )}
+
+      {inAggiunta ? (
+        <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
+          <label className={stili.campo}>
+            {t.indirizzi_nome}
+            <input value={form.nome} onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))} />
+          </label>
+          <label className={stili.campo}>
+            {t.indirizzi_via}
+            <input value={form.via} onChange={(e) => setForm((f) => ({ ...f, via: e.target.value }))} />
+          </label>
+          <div className={stili.linea}>
+            <label className={stili.campo}>
+              {t.indirizzi_citta}
+              <input value={form.citta} onChange={(e) => setForm((f) => ({ ...f, citta: e.target.value }))} />
+            </label>
+            <label className={stili.campo}>
+              {t.indirizzi_cap}
+              <input value={form.cap} onChange={(e) => setForm((f) => ({ ...f, cap: e.target.value }))} />
+            </label>
+          </div>
+          <div className={stili.linea}>
+            <label className={stili.campo}>
+              {t.indirizzi_provincia}
+              <input value={form.provincia ?? ""} onChange={(e) => setForm((f) => ({ ...f, provincia: e.target.value }))} />
+            </label>
+            <label className={stili.campo}>
+              {t.indirizzi_paese}
+              <input
+                value={form.paese} maxLength={2}
+                onChange={(e) => setForm((f) => ({ ...f, paese: e.target.value.toUpperCase() }))}
+              />
+            </label>
+          </div>
+          <label className={stili.campo}>
+            {t.indirizzi_telefono}
+            <input value={form.telefono ?? ""} onChange={(e) => setForm((f) => ({ ...f, telefono: e.target.value }))} />
+          </label>
+          <div className={stili.linea}>
+            <button className="bottone" disabled={inCorso || !pronto} onClick={salva}>{t.indirizzi_salva}</button>
+            <button className="bottone-secondario" onClick={() => setInAggiunta(false)}>{t.indirizzi_annulla}</button>
+          </div>
+          {errore && <p className={stili.errore}>{errore}</p>}
+        </div>
+      ) : (
+        <button className="bottone-secondario" style={{ marginTop: 10 }} onClick={() => setInAggiunta(true)}>
+          {t.indirizzi_aggiungi}
+        </button>
+      )}
+    </section>
+  );
+}
+
+function RigaIndirizzo({ indirizzo, onCambio }: { indirizzo: Indirizzo; onCambio: () => void }) {
+  const { t } = useLingua();
+  const { esegui, inCorso } = useAzione();
+  return (
+    <li className={stili.linea} style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+      <div>
+        <strong>{indirizzo.nome}</strong>
+        {indirizzo.predefinito && <span className={stili.etichetta} style={{ marginLeft: 8 }}>{t.indirizzi_predefinito}</span>}
+        <p className={stili.nota}>
+          {indirizzo.via}, {indirizzo.cap} {indirizzo.citta}
+          {indirizzo.provincia ? ` (${indirizzo.provincia})` : ""}, {indirizzo.paese}
+        </p>
+      </div>
+      <div className={stili.linea}>
+        {!indirizzo.predefinito && (
+          <button
+            className="bottone-secondario" disabled={inCorso}
+            onClick={async () => { await esegui((tok) => modificaIndirizzo(tok, indirizzo.id, { predefinito: true })); onCambio(); }}
+          >
+            {t.indirizzi_imposta_predefinito}
+          </button>
+        )}
+        <button
+          className="bottone-secondario" disabled={inCorso}
+          onClick={async () => { await esegui((tok) => eliminaIndirizzo(tok, indirizzo.id)); onCambio(); }}
+        >
+          {t.indirizzi_elimina}
+        </button>
+      </div>
+    </li>
   );
 }
