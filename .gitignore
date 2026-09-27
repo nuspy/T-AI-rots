@@ -22,3 +22,7 @@ next-env.d.ts
 # Strumenti
 test-results/
 playwright-report/
+
+# prompt catturati da tools/conta_token.py e usati da tools/banco_modelli.py (generati)
+prompt_catturati.json
+banco_out/
