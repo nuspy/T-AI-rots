@@ -67,6 +67,9 @@ kubectl apply -f deploy/k8s/tarots.yaml
 
 # 5. il seed: piani e utenti di prova, con TAROT_CREDITI_UTENTE_DI_PROVA crediti a testa
 kubectl -n tarots exec deploy/tarots-api -- python -m tarot_core.tools.seed
+# In un'installazione che ha già utenti veri, sempre senza gli utenti di prova (aggiunge solo piani e sezioni del blog
+# che mancano, senza toccare quelli che ci sono):
+#   kubectl -n tarots exec deploy/tarots-api -- python -m tarot_core.tools.seed --senza-utenti
 ```
 
 ## Il dominio `tarots.chat`
@@ -101,6 +104,9 @@ Il cambio si fa in quest'ordine, e **solo dopo che il DNS risponde** (senza, Let
 
    Mittente e nome delle email (`smtpServer.from`, `fromDisplayName`) si scrivono all'import del realm: in un realm già
    esistente si aggiornano dalla console (Realm settings → Email) con `noreply@tarots.chat` e «TAROTS chat».
+   Attenzione: nel realm di produzione `smtpServer` è **vuoto** (nessun server di posta configurato), quindi recupero
+   password e verifica dell'email non partono finché non si imposta un SMTP.
+   In uno script passato a `ssh … bash -s` non usare `kubectl exec -i`: si mangia il resto dello script.
 5. **Manifest**: `kubectl apply -f deploy/k8s/tarots.yaml` (tag nuovi, `KC_HOSTNAME`, `TAROT_KEYCLOAK_ISSUER_URL`,
    `TAROT_API_PUBLIC_URL`, `TAROT_WEB_PUBLIC_URL`, `TAROT_CORS_ORIGINS`). L'emittente dei token cambia con il dominio: chi
    era connesso deve accedere di nuovo. Il pod dell'API applica le migrazioni (`a41c7e92d3b6`, campi SEO e chiavi).
