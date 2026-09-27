@@ -293,6 +293,24 @@ export const en: Dizionario = {
   soggetto_strada: "The two paths",
   legenda: "Legend",
 
+  /* "Read my own cards" (v5): the deck is physical, already drawn */
+  interpreta_aggiungi: "Add",
+  interpreta_modifica: "Edit",
+  interpreta_titolo: "Read my own cards",
+  interpreta_intro:
+    "Already drew your cards with your own deck? Tell me which spread you used and which cards came up: the oracle reads your real spread, without drawing it again.",
+  interpreta_scegli_stesa: "Which spread did you use?",
+  interpreta_posiziona_titolo: "Put the cards in place",
+  interpreta_posiziona_istruzione: "Tap each position and tell us which card you found there.",
+  interpreta_posizionamento_completo: "Continue",
+  interpreta_dialogo_seme_titolo: "What card is it?",
+  interpreta_dialogo_carta_titolo: "Which one, exactly?",
+  interpreta_conferma: "OK",
+  interpreta_promo_titolo: "I read your cards",
+  interpreta_promo_testo:
+    "Already have a deck in hand? Tell us the cards you drew and let the oracle read them — a feature you won't find anywhere else.",
+  interpreta_promo_cta: "Interpret your spread",
+
   profilo_genere_titolo: "Gender",
   profilo_genere_testo:
     "Only used by compatibility and couple readings, for pronouns and agreement. «Prefer not to say» is a valid answer.",

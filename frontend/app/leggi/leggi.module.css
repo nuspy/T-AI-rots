@@ -277,6 +277,52 @@
   animation: respira 1.6s ease-in-out infinite;
 }
 
+/* "Interpreta i miei tarocchi" (v5): posizione vuota che si tocca per aprire il dialogo seme/carta. */
+.segnapostoManuale {
+  cursor: pointer;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 48px; /* bersaglio di tocco, anche su schermi stretti */
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.segnapostoManuale:hover,
+.segnapostoManuale:focus-visible {
+  border-color: var(--oro);
+  background: rgba(216, 180, 90, 0.08);
+  outline: none;
+}
+
+.segnapostoManuale small {
+  font-family: var(--font-ui), sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* Il bottone "Modifica" sovrapposto a una carta già posata, solo durante il posizionamento manuale. */
+.modificaCartaManuale {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--bordo-forte);
+  background: rgba(7, 5, 15, 0.75);
+  color: var(--testo);
+  font-size: 0.72rem;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+
+.modificaCartaManuale:hover,
+.modificaCartaManuale:focus-visible {
+  border-color: var(--oro);
+  color: var(--oro-chiaro);
+}
+
 @keyframes respira {
   0%, 100% { box-shadow: 0 0 0 rgba(216, 180, 90, 0); }
   50% { box-shadow: 0 0 28px rgba(216, 180, 90, 0.55); }

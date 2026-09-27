@@ -162,6 +162,12 @@ class Reading(Base, TimestampMixin, OwnedMixin):
     #: dove l'installazione non fa pagare.
     consumo: Mapped[str] = mapped_column(String(10), nullable=False)
 
+    #: Vero se le carte sono state inserite a mano (mazzo fisico già estratto, v5 "Interpreta i miei
+    #: tarocchi") invece che estratte dal ventaglio. Decide solo la visibilità dell'identità della
+    #: carta in `carta_json()` (già scoperta, indipendentemente da `rivelata`): il ritmo di rivelazione
+    #: dell'interpretazione resta identico, non tocca `rivelata`/`prossima_da_rivelare`.
+    manuale: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false(), nullable=False)
+
     #: Il quadro emerso dall'intervista, riassunto dal modello.
     context_summary: Mapped[Optional[str]] = mapped_column(Text)
 

@@ -63,6 +63,26 @@ def posa(
     return carta
 
 
+def posa_manuale(
+    lettura: Reading, stesa: Dict[str, Any], conoscenza: Conoscenza, assegnazioni: Dict[int, str],
+) -> None:
+    """Posa **tutte** le carte in una volta sola: il mazzo è fisico, già estratto a mano (v5,
+    "Interpreta i miei tarocchi") — non c'è un ventaglio da cui scegliere.
+
+    `assegnazioni` è già stata validata dal chiamante (una posizione non calcolata per voce, nessun
+    duplicato, ogni `card_id` esistente — qui si assume un input buono, come `posa()` assume uno slot
+    verificato). Non tocca `lettura.status`: la lettura resta in `intervista` finché l'intervista non
+    si conclude, esattamente come in una lettura normale — solo allora il chiamante decide se passare
+    a `ventaglio` (mazzo digitale) o direttamente a `rivelazione` (carte già posate)."""
+    for p in stesa["posizioni"]:
+        if p.get("calcolata"):
+            continue
+        lettura.cards.append(DrawnCard(
+            posizione=p["n"], slot=None, card_id=assegnazioni[p["n"]], rovescio=False, created_at=utcnow(),
+        ))
+    _aggiungi_calcolate(lettura, stesa, conoscenza)
+
+
 def _aggiungi_calcolate(lettura: Reading, stesa: Dict[str, Any], conoscenza: Conoscenza) -> None:
     """La carta di sintesi della croce semplice: la somma degli Arcani scelti.
 

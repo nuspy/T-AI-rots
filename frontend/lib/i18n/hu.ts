@@ -291,6 +291,24 @@ export const hu: Dizionario = {
   soggetto_strada: "A két út",
   legenda: "Jelmagyarázat",
 
+  /* "Értelmezd a kártyáimat" (v5): a paklit már valódi kártyákkal húzták ki */
+  interpreta_aggiungi: "Hozzáadás",
+  interpreta_modifica: "Szerkesztés",
+  interpreta_titolo: "Értelmezd a kártyáimat",
+  interpreta_intro:
+    "Már kihúztad a kártyákat a saját paklidból? Mondd meg, melyik kiterítést használtad, és milyen lapok jöttek ki: a jós a valódi kiterítésedet olvassa, újrahúzás nélkül.",
+  interpreta_scegli_stesa: "Melyik kiterítést használtad?",
+  interpreta_posiziona_titolo: "Tedd a lapokat a helyükre",
+  interpreta_posiziona_istruzione: "Érintsd meg az egyes helyeket, és mondd meg, melyik lapot találtad ott.",
+  interpreta_posizionamento_completo: "Tovább",
+  interpreta_dialogo_seme_titolo: "Milyen lap ez?",
+  interpreta_dialogo_carta_titolo: "Pontosan melyik?",
+  interpreta_conferma: "OK",
+  interpreta_promo_titolo: "Elolvasom a lapjaidat",
+  interpreta_promo_testo:
+    "Már van egy pakli a kezedben? Mondd el, milyen lapokat húztál, és hagyd, hogy a jós értelmezze őket — ilyen funkciót másutt nem találsz.",
+  interpreta_promo_cta: "Értelmezd a kiterítésed",
+
   profilo_genere_titolo: "Nem",
   profilo_genere_testo:
     "Csak a kompatibilitási és párkapcsolati jóslásokhoz kell, a névmásokhoz és a ragozáshoz. Az „Inkább nem mondom meg” érvényes válasz.",

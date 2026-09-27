@@ -119,6 +119,8 @@ export function Lettura() {
    * lettura: domande, interpretazioni e responso escono in questa lingua, e i
    * nomi di carte e stese la seguono. Ogni nuovo quesito la rinnova. */
   const [linguaLettura, setLinguaLettura] = useState<Lingua | null>(null);
+  /* "Interpreta i miei tarocchi" (v5): il mazzo è fisico — le carte si vedono scoperte da subito. */
+  const [manuale, setManuale] = useState(false);
   const ll: Lingua = linguaLettura ?? lingua;
 
   const stesa: Stesa | undefined = useMemo(
@@ -160,6 +162,7 @@ export function Lettura() {
       setCategoria(l.categoria);
       setNomePartner(l.persone?.partner.nome ?? null);
       setLinguaLettura(comeLingua(l.lang));
+      setManuale(l.manuale);
       setDomandaLettura(l.question);
       setDisclaimer(l.disclaimer);
       const storia: Battuta[] = [
@@ -533,6 +536,7 @@ export function Lettura() {
     setFine(null);
     setDomanda("");
     setLinguaLettura(null);
+    setManuale(false);
     caricata.current = true;
     router.replace("/leggi");
   };
@@ -638,6 +642,7 @@ export function Lettura() {
               rivelazioneInCorso={rivelazioneInCorso}
               evidenzia={fase === "scelta" ? "scelta" : fase === "rivelazione" ? "rivelazione" : null}
               nomePartner={nomePartner}
+              manuale={manuale}
             />
           )}
 

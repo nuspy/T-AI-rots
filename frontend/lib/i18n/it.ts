@@ -314,6 +314,24 @@ export const it = {
   soggetto_strada: "Le due strade",
   legenda: "Legenda",
 
+  /* "Interpreta i miei tarocchi" (v5): il mazzo è fisico, già estratto */
+  interpreta_aggiungi: "Aggiungi",
+  interpreta_modifica: "Modifica",
+  interpreta_titolo: "Interpreta i miei tarocchi",
+  interpreta_intro:
+    "Hai già tirato le carte con il tuo mazzo? Dimmi che schema hai usato e quali carte sono uscite: l'oracolo interpreta la tua stesa reale, senza estrarla di nuovo.",
+  interpreta_scegli_stesa: "Che schema hai usato?",
+  interpreta_posiziona_titolo: "Metti le carte al loro posto",
+  interpreta_posiziona_istruzione: "Tocca ogni posizione e indica quale carta hai trovato lì.",
+  interpreta_posizionamento_completo: "Continua",
+  interpreta_dialogo_seme_titolo: "Che carta è?",
+  interpreta_dialogo_carta_titolo: "Quale, esattamente?",
+  interpreta_conferma: "OK",
+  interpreta_promo_titolo: "Leggo le tue carte",
+  interpreta_promo_testo:
+    "Hai già un mazzo in mano? Dicci le carte che hai tirato e lascia che l'oracolo le interpreti — una funzione che qui non trovi da nessun'altra parte.",
+  interpreta_promo_cta: "Interpreta la tua stesa",
+
   /* il profilo */
   profilo_genere_titolo: "Sesso / genere",
   profilo_genere_testo:

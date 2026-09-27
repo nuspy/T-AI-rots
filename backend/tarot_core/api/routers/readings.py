@@ -28,12 +28,13 @@ import logging
 import secrets
 import uuid
 from datetime import date
-from typing import Any, AsyncIterator, Dict, Optional
+from typing import Any, AsyncIterator, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy import delete
+from sqlalchemy.orm.attributes import set_committed_value
 
 from ...auth.dependencies import CurrentUser, DbSession
 from ...billing.credits import CreditiInsufficienti, RegistroCrediti
@@ -53,7 +54,7 @@ from ...tarot.condivisione import pulisci_testo
 from ...tarot.intervista import IntervistaNonRiuscita, prossimo_passo, profilo_da, trascrizione, turni_da
 from ...tarot.lettura import (
     StatoNonValido, dignita_di, doppia_valenza, gia_rivelate, note_di_posizione,
-    posa, prevalenze_di, prossima_da_rivelare, wirth,
+    posa, posa_manuale, prevalenze_di, prossima_da_rivelare, wirth,
 )
 from ...tarot.llm import genera_flusso, genera_testo, richiesta
 from ...tarot.numerologia import carta_dell_anima, carta_dell_anno
@@ -111,6 +112,13 @@ class PersonaIn(BaseModel):
         return self
 
 
+class ManualCardIn(BaseModel):
+    """Una carta indicata a mano (v5, "Interpreta i miei tarocchi"): il mazzo è fisico, già estratto."""
+
+    posizione: int = Field(ge=1, le=99)
+    card_id: str = Field(min_length=1, max_length=40)
+
+
 class NuovaLettura(BaseModel):
     spread_id: str = Field(min_length=1, max_length=40)
     question: str = Field(min_length=3, max_length=1000)
@@ -119,6 +127,10 @@ class NuovaLettura(BaseModel):
     partner: Optional[PersonaIn] = None
     #: «Ricorda»: si salva il partner nel profilo per precompilare il modulo.
     ricorda_partner: bool = False
+    #: Presente solo per "Interpreta i miei tarocchi": una carta per ogni posizione non calcolata
+    #: della stesa, già estratta a mano. Con questo campo la lettura salta ventaglio/scelta e passa
+    #: direttamente alla rivelazione, non appena l'intervista si conclude.
+    manual_cards: Optional[List[ManualCardIn]] = None
 
 
 class RispostaIntervista(BaseModel):
@@ -247,13 +259,16 @@ def _persone_dell_apertura(
     return _istantanea_persone(user, payload.partner)
 
 
-def carta_json(conoscenza, c, *, completa: bool = False) -> Dict[str, Any]:
+def carta_json(conoscenza, c, *, completa: bool = False, manuale: bool = False) -> Dict[str, Any]:
     dati: Dict[str, Any] = {
         "posizione": c.posizione,
         "calcolata": c.calcolata,
         "rivelata": c.rivelata,
     }
-    if c.rivelata:
+    # In una lettura manuale l'identità è già nota (il mazzo è fisico, in mano a chi consulta): si
+    # mostra da subito, indipendentemente da `rivelata` — che resta il ritmo con cui arriva
+    # l'interpretazione, invariato rispetto a una lettura normale.
+    if c.rivelata or manuale:
         dati.update({
             "carta": conoscenza.carta_pubblica(c.card_id, completa=completa),
             "rovescio": c.rovescio,
@@ -290,6 +305,7 @@ def lettura_json(lettura: Reading, *, dettaglio: bool = True) -> Dict[str, Any]:
         "completed_at": lettura.completed_at.isoformat() if lettura.completed_at else None,
         "feedback": lettura.feedback,
         "shared": bool(lettura.share_token),
+        "manuale": lettura.manuale,
     }
     if not dettaglio:
         rivelate = [c for c in lettura.cards if c.rivelata]
@@ -305,7 +321,7 @@ def lettura_json(lettura: Reading, *, dettaglio: bool = True) -> Dict[str, Any]:
         "interview": [
             {"ruolo": t.ruolo, "testo": t.testo, "ordine": t.ordine} for t in lettura.turns
         ],
-        "cards": [carta_json(conoscenza, c) for c in lettura.cards],
+        "cards": [carta_json(conoscenza, c, manuale=lettura.manuale) for c in lettura.cards],
         "slot_count": len(lettura.deck_state or []) or None,
         "picked_slots": [c.slot for c in lettura.cards if c.slot is not None],
         "commitment": lettura.commitment,
@@ -340,8 +356,33 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
     # La lingua della lettura è quella del quesito, non quella dell'interfaccia:
     # si ricava qui, una volta, e si salva. Ogni nuovo quesito la rinnova.
     lang = rileva_lingua(payload.question, fallback=payload.lang)
-    categoria = get_conoscenza().categoria_di(stesa)
+    conoscenza = get_conoscenza()
+    categoria = conoscenza.categoria_di(stesa)
     persone = _persone_dell_apertura(user, payload, categoria, lang)
+
+    # "Interpreta i miei tarocchi" (v5): il mazzo è fisico, già estratto — si valida qui, con un
+    # messaggio utile, prima di addebitare qualunque cosa (stesso principio delle altre verifiche
+    # sopra: un errore di forma non deve costare un credito).
+    assegnazioni_manuali: Optional[Dict[int, str]] = None
+    if payload.manual_cards is not None:
+        richieste = {p["n"] for p in stesa["posizioni"] if not p.get("calcolata")}
+        date_ = {c.posizione for c in payload.manual_cards}
+        if date_ != richieste:
+            raise HTTPException(status_code=422, detail={
+                "motivo": "posizioni_manuali",
+                "messaggio": f"Servono esattamente le posizioni {sorted(richieste)}.",
+            })
+        id_dati = [c.card_id for c in payload.manual_cards]
+        if len(set(id_dati)) != len(id_dati):
+            raise HTTPException(status_code=422, detail={
+                "motivo": "carte_duplicate", "messaggio": "Una carta non può comparire due volte.",
+            })
+        sconosciute = [i for i in id_dati if i not in conoscenza.carte]
+        if sconosciute:
+            raise HTTPException(status_code=422, detail={
+                "motivo": "carta_sconosciuta", "messaggio": f"Carta sconosciuta: {sconosciute[0]}.",
+            })
+        assegnazioni_manuali = {c.posizione: c.card_id for c in payload.manual_cards}
 
     if segnale_di_crisi(payload.question):
         await AuditRepository(session).record(
@@ -363,7 +404,18 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
     lettura = await ReadingRepository(session).create(
         user, spread_id=stesa["id"], question=payload.question.strip(),
         consumo=consumo, lang=lang, status="intervista", persone=persone,
+        manuale=assegnazioni_manuali is not None,
     )
+    if assegnazioni_manuali is not None:
+        # `lettura` è appena stata creata (solo un flush, mai un `select`): la relazione `cards` non è
+        # ancora "caricata", e sia leggerla sia assegnarla (`lettura.cards = []`, che deve leggere il
+        # valore vecchio per calcolare le rimozioni) proverebbero un lazy-load fuori da un contesto
+        # awaitable. Non può avere figlie — `set_committed_value` la segna come caricata, senza query.
+        set_committed_value(lettura, "cards", [])
+        # Le carte sono già tutte posate: lo stato resta comunque `intervista` (l'intervista non è
+        # ancora cominciata) — solo a intervista conclusa si salta `ventaglio` e si va dritti a
+        # `rivelazione`, vedi sotto in `intervista()`.
+        posa_manuale(lettura, stesa, conoscenza, assegnazioni_manuali)
     if consumo == "credito":
         try:
             await RegistroCrediti(session).consuma(
@@ -476,7 +528,9 @@ async def intervista(
     lettura = await _lettura_o_404(repo, user, reading_id, lock=True)
     if passo.completo:
         lettura.context_summary = passo.riassunto
-        lettura.status = "ventaglio"
+        # Manuale: le carte sono già posate (v5, "Interpreta i miei tarocchi") — niente ventaglio da
+        # aprire, si va dritti alla rivelazione.
+        lettura.status = "rivelazione" if lettura.manuale else "ventaglio"
         await session.commit()
         return {"completa": True, "riassunto": passo.riassunto}
 

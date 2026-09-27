@@ -88,11 +88,11 @@ function Legenda({ stesa, nomePartner }: { stesa: Stesa; nomePartner?: string | 
   );
 }
 
-function Pallino({ posata, titolo }: { posata: Posata; titolo: string }) {
+function Pallino({ posata, titolo, scoperta }: { posata: Posata; titolo: string; scoperta: boolean }) {
   const { t } = useLingua();
   const lingua = useLinguaNomi();
   const [aperto, setAperto] = useState(false);
-  if (!posata.rivelata || !posata.carta) return null;
+  if (!scoperta || !posata.carta) return null;
   return (
     <div
       className={stili.pallinoAncora}
@@ -142,6 +142,8 @@ export function Tavolo({
   rivelazioneInCorso,
   evidenzia,
   nomePartner,
+  manuale,
+  onSelezionaPosizione,
 }: {
   stesa: Stesa;
   posate: Posata[];
@@ -152,7 +154,14 @@ export function Tavolo({
   evidenzia: "scelta" | "rivelazione" | null;
   /* Il nome dell'altra persona, per la legenda delle letture speciali. */
   nomePartner?: string | null;
+  /* "Interpreta i miei tarocchi" (v5): il mazzo è fisico, le carte si vedono già scoperte da subito
+   * — `posata.rivelata` resta il ritmo con cui arriva l'interpretazione, invariato, e non decide più
+   * da solo la faccia mostrata. */
+  manuale?: boolean;
+  /* Tocca una posizione vuota (solo in modalità manuale): apre il dialogo seme/carta. */
+  onSelezionaPosizione?: (posizione: number) => void;
 }) {
+  const { t } = useLingua();
   const lingua = useLinguaNomi();
   const [ref, { w, h }] = useMisura<HTMLDivElement>();
   const quadrata = stesa.forma === "quadrata";
@@ -176,6 +185,7 @@ export function Tavolo({
         const posata = perPosizione.get(pos.n);
         const nome = nomePosizione(pos, lingua);
         const attesa = prossima === pos.n;
+        const scoperta = !!posata && (posata.rivelata || !!manuale);
         return (
           <div
             key={pos.n}
@@ -191,15 +201,26 @@ export function Tavolo({
           >
             {!posata && (
               <div
-                className={`${stili.segnaposto} ${pos.soggetto ? stili.segnapostoSoggetto : ""} ${attesa && evidenzia === "scelta" ? stili.segnapostoAttivo : ""}`}
+                className={`${stili.segnaposto} ${pos.soggetto ? stili.segnapostoSoggetto : ""} ${attesa && evidenzia === "scelta" ? stili.segnapostoAttivo : ""} ${onSelezionaPosizione ? stili.segnapostoManuale : ""}`}
                 title={`${pos.n}. ${nome}`}
+                {...(onSelezionaPosizione
+                  ? {
+                      role: "button", tabIndex: 0,
+                      onClick: () => onSelezionaPosizione(pos.n),
+                      onKeyDown: (e: React.KeyboardEvent) => {
+                        if (e.key === "Enter" || e.key === " ") onSelezionaPosizione(pos.n);
+                      },
+                    }
+                  : {})}
               >
                 <span>{pos.n}</span>
+                {onSelezionaPosizione && <small>{t.interpreta_aggiungi}</small>}
               </div>
             )}
             {posata && (
               <motion.div
                 className={pos.soggetto ? stili.cartaSoggetto : undefined}
+                style={{ position: "relative" }}
                 layoutId={posata.slot !== null ? `slot-${posata.slot}` : `calcolata-${pos.n}`}
                 initial={posata.calcolata ? { opacity: 0, scale: 0.4, rotate: -20 } : false}
                 animate={{ opacity: 1, scale: 1, rotate: 0 }}
@@ -207,7 +228,7 @@ export function Tavolo({
               >
                 <Carta
                   carta={posata.carta}
-                  rivelata={posata.rivelata}
+                  rivelata={scoperta}
                   rovescio={posata.rovescio}
                   larghezza={larghezzaCarta}
                   brilla={attesa && evidenzia === "rivelazione" && !rivelazioneInCorso}
@@ -216,17 +237,26 @@ export function Tavolo({
                       ? () => onRivela(pos.n)
                       : undefined
                   }
-                  etichetta={posata.rivelata ? undefined : `${pos.n}. ${nome}`}
+                  etichetta={scoperta ? undefined : `${pos.n}. ${nome}`}
                 />
+                {onSelezionaPosizione && (
+                  <button
+                    type="button"
+                    className={stili.modificaCartaManuale}
+                    onClick={() => onSelezionaPosizione(pos.n)}
+                  >
+                    {t.interpreta_modifica}
+                  </button>
+                )}
               </motion.div>
             )}
-            {posata && !pos.rotazione && <Pallino posata={posata} titolo={`${pos.n}. ${nome}`} />}
-            {posata?.rivelata && pos.rotazione !== 0 && (
+            {posata && !pos.rotazione && <Pallino posata={posata} titolo={`${pos.n}. ${nome}`} scoperta={scoperta} />}
+            {scoperta && pos.rotazione !== 0 && (
               /* Il tavolo di una carta orizzontale è ruotato: il pallino e il suo
                * fumetto si contro-ruotano, così il testo resta verticale come
                * quello delle altre carte. L'origine è il punto d'ancoraggio. */
               <div className={stili.pallinoTraverso} style={{ transform: `rotate(${-pos.rotazione}deg)` }}>
-                <Pallino posata={posata} titolo={`${pos.n}. ${nome}`} />
+                <Pallino posata={posata!} titolo={`${pos.n}. ${nome}`} scoperta={scoperta} />
               </div>
             )}
             <span className={stili.etichettaPosizione} style={{ transform: pos.rotazione ? `rotate(${-pos.rotazione}deg)` : undefined }}>

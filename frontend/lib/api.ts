@@ -191,6 +191,9 @@ export interface Lettura {
   completed_at: string | null;
   feedback: "si" | "in_parte" | "no" | null;
   shared: boolean;
+  /* "Interpreta i miei tarocchi" (v5): il mazzo è fisico, già estratto — le carte si vedono scoperte
+   * da subito, indipendentemente dal ritmo di rivelazione dell'interpretazione. */
+  manuale: boolean;
   context_summary: string | null;
   interview: { ruolo: "oracolo" | "utente"; testo: string; ordine: number }[];
   cards: CartaPosata[];
@@ -432,6 +435,11 @@ export interface PartnerInvio {
   nascita: string;
 }
 
+export interface CartaManualeInvio {
+  posizione: number;
+  cardId: string;
+}
+
 export interface OpzioniApertura {
   spreadId: string;
   domanda: string;
@@ -440,6 +448,9 @@ export interface OpzioniApertura {
   partner?: PartnerInvio;
   /* «Ricorda»: il server salva il partner nel profilo. */
   ricordaPartner?: boolean;
+  /* "Interpreta i miei tarocchi" (v5): una carta per ogni posizione non calcolata della stesa, già
+   * estratta a mano — con questo campo la lettura salta ventaglio/scelta. */
+  manualCards?: CartaManualeInvio[];
 }
 
 export const apriLettura = (token: string | null, o: OpzioniApertura) =>
@@ -450,6 +461,7 @@ export const apriLettura = (token: string | null, o: OpzioniApertura) =>
       question: o.domanda,
       lang: o.lang,
       ...(o.partner ? { partner: o.partner, ricorda_partner: !!o.ricordaPartner } : {}),
+      ...(o.manualCards ? { manual_cards: o.manualCards.map((c) => ({ posizione: c.posizione, card_id: c.cardId })) } : {}),
     },
   });
 
