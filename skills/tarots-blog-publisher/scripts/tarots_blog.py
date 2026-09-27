@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 """tarots_blog.py: publish to the TAROTS chat blog through its REST API (v1).
 
-Standard library only (Python 3.8+). Configuration comes from the environment, never from arguments or files:
+Standard library only (Python 3.8+). Configuration comes from the environment, or from a small local cache this
+tool manages for you — never from a command argument, an article file, or a prompt:
 
     TAROTS_API_URL   the API base, e.g. https://tarots.chat/api   (https only; http is accepted for localhost)
     TAROTS_API_KEY   a `tk_live_...` key created in the console (Blog > Keys)
 
+Set both once and this tool remembers them for next time, in a file *outside any repository*
+(`~/.tarots-blog/credentials.json`, or `TAROTS_KEY_CACHE` if you point it elsewhere): later runs need neither
+variable set. Offering a *different* key than the one already saved is never silent — see `key` below.
+
 Commands (run `tarots_blog.py <command> -h` for the options):
 
+    key show|save|clear    the saved key: show its prefix and origin, save the one in TAROTS_API_KEY, or forget it
     guide                  what the blog accepts and the SEO thresholds (read once, before writing)
     sections               the sections articles can go in
     tags                   tags already in use (reuse them)
@@ -22,8 +28,11 @@ Commands (run `tarots_blog.py <command> -h` for the options):
 Exit codes: 0 ok · 2 usage or bad article file · 3 SEO score below the threshold (nothing saved)
 · 4 the API refused (message printed) · 5 configuration missing or unsafe.
 
-The key is only ever sent to TAROTS_API_URL, is never printed, and redirects are not followed (a redirect would
-carry the key to another host): if the server redirects, fix TAROTS_API_URL.
+The full key is only ever sent to TAROTS_API_URL, never printed (only its 12-character prefix is, to tell keys
+apart), and redirects are not followed (a redirect would carry the key to another host): if the server redirects,
+fix TAROTS_API_URL. The cache file holds the key in clear text (there is nothing to hash it against, unlike the
+server's own copy) — it is `chmod 600` on POSIX and lives outside any repository by default specifically so it can
+never be committed; keep it that way if `TAROTS_KEY_CACHE` is set to somewhere else.
 """
 from __future__ import annotations
 
@@ -42,6 +51,10 @@ EXIT_OK, EXIT_USAGE, EXIT_SCORE, EXIT_API, EXIT_CONFIG = 0, 2, 3, 4, 5
 
 MAX_IMAGE_BYTES = 8_000_000
 IMAGE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
+
+#: Outside any repository by design: this is the only file this tool ever writes the key to.
+CACHE_PATH = Path(os.environ["TAROTS_KEY_CACHE"]) if os.environ.get("TAROTS_KEY_CACHE") else Path.home() / ".tarots-blog" / "credentials.json"
+_noted = False  # config() prints its "using saved key" / "key saved" note once per run, not once per API call
 
 #: Friendly (English) keys of an article file → the API field. The API's own names are accepted as they are.
 FIELDS = {
@@ -66,9 +79,56 @@ class Failure(Exception):
 # ---- configuration and HTTP ------------------------------------------------------------------------------------
 
 
+def _read_cache() -> Optional[Dict[str, str]]:
+    try:
+        data = json.loads(CACHE_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return data if isinstance(data, dict) and str(data.get("key", "")).startswith("tk_live_") else None
+
+
+def _write_cache(base: str, key: str) -> None:
+    CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    CACHE_PATH.write_text(json.dumps({"url": base, "key": key}), encoding="utf-8")
+    try:
+        CACHE_PATH.chmod(0o600)  # best-effort: POSIX only, Windows ACLs work differently
+    except OSError:
+        pass
+
+
+def _clear_cache() -> None:
+    try:
+        CACHE_PATH.unlink()
+    except FileNotFoundError:
+        pass
+
+
 def config() -> Dict[str, str]:
-    base = os.environ.get("TAROTS_API_URL", "").strip().rstrip("/")
-    key = os.environ.get("TAROTS_API_KEY", "").strip()
+    """Env vars win when present; otherwise the saved key/URL are used. A key offered via TAROTS_API_KEY that
+    differs from an already-saved one is never silently swapped in — see `key show`/`key save` in the docstring."""
+    global _noted
+    env_base = os.environ.get("TAROTS_API_URL", "").strip().rstrip("/")
+    env_key = os.environ.get("TAROTS_API_KEY", "").strip()
+    cached = _read_cache()
+    if env_key and cached and cached.get("key") != env_key:
+        raise Failure(
+            f"A different key is already saved (prefix {cached['key'][:12]}...) than the one in TAROTS_API_KEY "
+            f"(prefix {env_key[:12]}...). Run `key show` to compare them, `key save` to replace the saved one "
+            "with this one, or unset TAROTS_API_KEY to keep using the saved key untouched.", EXIT_CONFIG,
+        )
+    if env_key:
+        base, key = env_base, env_key
+        if not cached and base:  # nothing saved yet: nothing to confirm, remember it for next time
+            _write_cache(base, key)
+            print(f"note: saved this key for reuse (prefix {key[:12]}...) in {CACHE_PATH}; "
+                  "omit TAROTS_API_KEY next time, or run `key clear` to forget it.", file=sys.stderr)
+    elif cached:
+        base, key = env_base or cached.get("url", ""), cached.get("key", "")
+        if not _noted:
+            print(f"note: using the saved key (prefix {key[:12]}...); set TAROTS_API_KEY to use a different one.", file=sys.stderr)
+            _noted = True
+    else:
+        base, key = env_base, env_key
     if not base:
         raise Failure("TAROTS_API_URL is not set (for example https://tarots.chat/api).", EXIT_CONFIG)
     url = urllib.parse.urlparse(base)
@@ -76,7 +136,7 @@ def config() -> Dict[str, str]:
     if url.scheme != "https" and not (url.scheme == "http" and local):
         raise Failure("TAROTS_API_URL must be https (http is only accepted for localhost): the key would travel in clear text.", EXIT_CONFIG)
     if not key.startswith("tk_live_"):
-        raise Failure("TAROTS_API_KEY is not set or is not a tk_live_ key. Create one in the console: Blog > Keys.", EXIT_CONFIG)
+        raise Failure("TAROTS_API_KEY is not set (and none is saved), or is not a tk_live_ key. Create one in the console: Blog > Keys.", EXIT_CONFIG)
     return {"base": base, "key": key}
 
 
@@ -223,6 +283,38 @@ def report(seo: Dict[str, Any]) -> None:
 
 
 # ---- commands -----------------------------------------------------------------------------------------------------
+
+
+def cmd_key(a) -> int:
+    if a.action == "show":
+        cached = _read_cache()
+        env_key = os.environ.get("TAROTS_API_KEY", "").strip()
+        print(f"cache file:  {CACHE_PATH}")
+        print(f"saved key:   {cached['key'][:12] + '...' if cached else '(none)'}"
+              + (f"  url={cached.get('url')}" if cached else ""))
+        if env_key:
+            same = bool(cached) and cached.get("key") == env_key
+            print(f"TAROTS_API_KEY: {env_key[:12]}...  ({'same as saved' if same else 'DIFFERENT from saved'})")
+        else:
+            print("TAROTS_API_KEY: (not set)")
+        return EXIT_OK
+    if a.action == "save":
+        env_base = os.environ.get("TAROTS_API_URL", "").strip().rstrip("/")
+        env_key = os.environ.get("TAROTS_API_KEY", "").strip()
+        if not env_key.startswith("tk_live_"):
+            raise Failure("TAROTS_API_KEY is not set to a tk_live_ key: nothing to save.", EXIT_CONFIG)
+        if not env_base:
+            raise Failure("TAROTS_API_URL is not set: nothing to pair the key with.", EXIT_CONFIG)
+        old = _read_cache()
+        _write_cache(env_base, env_key)
+        if old and old.get("key") != env_key:
+            print(f"replaced the saved key (was prefix {old['key'][:12]}...) with prefix {env_key[:12]}...")
+        else:
+            print(f"saved (prefix {env_key[:12]}...)")
+        return EXIT_OK
+    _clear_cache()
+    print("saved key cleared")
+    return EXIT_OK
 
 
 def cmd_guide(_a) -> int:
@@ -375,6 +467,9 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("--json", action="store_true", help="print the raw JSON instead of a summary")
     sub = p.add_subparsers(dest="command", required=True)
 
+    ky = sub.add_parser("key", help="the locally saved key: show it (prefix only), save one, or forget it")
+    ky.add_argument("action", choices=["show", "save", "clear"])
+    ky.set_defaults(run=cmd_key)
     sub.add_parser("guide", help="what the blog accepts and the SEO thresholds").set_defaults(run=cmd_guide)
     sub.add_parser("sections", help="sections articles can go in").set_defaults(run=cmd_sections)
     sub.add_parser("tags", help="tags already in use").set_defaults(run=cmd_tags)
