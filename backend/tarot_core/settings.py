@@ -87,6 +87,9 @@ class Settings(BaseSettings):
     llm_base_url: str = "http://127.0.0.1:1234/v1"
     llm_model: str = ""          # vuoto: si usa il primo modello caricato
     llm_api_key: str = "non-serve-in-locale"
+    #: Nasconde i nomi di persona al fornitore del modello (`tarot/pseudonimi.py`): gli arriva «Persona_1», chi legge
+    #: rivede il nome vero. Acceso: spegnerlo serve solo per confrontare il comportamento di un modello.
+    anonimizza_nomi: bool = True
     #: JSON: campi aggiunti a ogni richiesta al modello predefinito (vedi `ModelloConfigurato.parametri`), per
     #: esempio `{"reasoning_effort": "low"}` per regolare il ragionamento. Vuoto: nessuno.
     llm_parametri: Dict[str, Any] = Field(default_factory=dict)

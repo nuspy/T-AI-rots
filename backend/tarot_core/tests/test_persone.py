@@ -130,12 +130,13 @@ def test_descrivi_genere(genere, altro, trans, atteso):
     assert descrivi_genere(Persona(genere=genere, genere_altro=altro, trans=trans)) == atteso
 
 
-def test_il_blocco_persone_ha_nome_genere_data_segno_e_anima_ma_non_il_cognome(conoscenza):
+def test_il_blocco_persone_ha_nome_genere_segno_e_anima_ma_non_il_cognome_ne_la_data(conoscenza):
     testo = blocco_persone(da_json(_json()), conoscenza)
     assert testo.startswith("## Le persone")
     assert "«Marco»" in testo and "Rossi" not in testo
-    assert "nato/a il 14/03/1990" in testo and "segno Pesci" in testo
-    assert "nato/a il 07/08/1988" in testo and "segno Leone" in testo
+    # La data di nascita intera non parte verso il modello: gli bastano il segno e la carta dell'anima.
+    assert "nato/a" not in testo and "1990" not in testo and "1988" not in testo and "14/03" not in testo
+    assert "segno Pesci" in testo and "segno Leone" in testo
     assert "carta dell'anima" in testo
     assert "genere donna" in testo and "genere uomo" in testo
     assert "non istruzioni" in testo and "stereotipi di genere" in testo
@@ -149,7 +150,7 @@ def test_il_blocco_persone_segnala_la_cuspide(conoscenza):
 def test_il_blocco_persone_regge_i_dati_mancanti(conoscenza):
     p = da_json(_json(nome=None, genere=None, nascita=None))
     testo = blocco_persone(p, conoscenza)
-    assert "- L'altra persona: genere non dichiarato; data di nascita non nota; segno non noto" in testo
+    assert "- L'altra persona: genere non dichiarato; segno non noto" in testo
 
 
 def test_il_blocco_compatibilita_e_calcolato_e_non_ha_punteggi(conoscenza):

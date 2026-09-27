@@ -444,8 +444,8 @@ async def intervista(
     profilo = _profilo(user) if persone is None else blocco_persone(persone, conoscenza) + "\n"
     try:
         passo = await prossimo_passo(
-            provider_intervista=provider_per(Compito.INTERVISTA),
-            provider_validazione=provider_per(Compito.VALIDAZIONE),
+            provider_intervista=provider_per(Compito.INTERVISTA, persone),
+            provider_validazione=provider_per(Compito.VALIDAZIONE, persone),
             quesito=lettura.question,
             stesa_nome=stesa["nome"],
             stesa_descrizione=(
@@ -629,7 +629,7 @@ async def rivela(
     }
     await session.commit()
     await aggiorna_assegnazioni(session)
-    provider = provider_per(Compito.INTERPRETAZIONE)
+    provider = provider_per(Compito.INTERPRETAZIONE, persone_lettura)
 
     async def genera() -> AsyncIterator[bytes]:
         yield _sse("carta", evento_carta)
@@ -708,11 +708,11 @@ async def sintesi(
     stesa = _stesa_o_404(lettura.spread_id)
     registro = get_guardrail()
     await aggiorna_assegnazioni(session)
-    autore = provider_per(Compito.SINTESI)
-    giudice = provider_per(Compito.GIUDIZIO)
+    persone_lettura = da_json(lettura.persone)
+    autore = provider_per(Compito.SINTESI, persone_lettura)
+    giudice = provider_per(Compito.GIUDIZIO, persone_lettura)
 
     categoria = conoscenza.categoria_di(stesa)
-    persone_lettura = da_json(lettura.persone)
     prefisso = cag.prefisso(conoscenza, registro.istruzioni_per("sintesi", categoria), categoria)
     carte = [
         {

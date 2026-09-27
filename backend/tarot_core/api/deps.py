@@ -56,17 +56,22 @@ def verifica_modello(lang: str = "it") -> None:
     )
 
 
-def provider_per(compito) -> object:
+def provider_per(compito, persone=None) -> object:
     """Il fornitore di un compito.
 
     Con `TAROT_LLM_FINTO=true` tutti i compiti vanno al modello finto: serve
     a provare il flusso intero — e l'interfaccia — senza un modello vero.
+
+    Con `persone` (le persone di una lettura di coppia) il fornitore **non vede i nomi**: gli arriva un segnaposto e le
+    risposte tornano col nome vero (`tarot/pseudonimi.py`). Si fa qui, al confine, perché nessun punto di chiamata
+    debba ricordarsene.
     """
     from ..settings import get_settings
+    from ..tarot.pseudonimi import protetto
 
-    if get_settings().llm_finto:
-        return _modello_finto()
-    return get_registro_modelli().per(compito)
+    impostazioni = get_settings()
+    fornitore = _modello_finto() if impostazioni.llm_finto else get_registro_modelli().per(compito)
+    return protetto(fornitore, persone, attivo=impostazioni.anonimizza_nomi)
 
 
 async def aggiorna_assegnazioni(session, *, forza: bool = False) -> None:
