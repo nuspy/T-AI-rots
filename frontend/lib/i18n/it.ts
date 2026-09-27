@@ -266,6 +266,19 @@ export const it = {
   indirizzi_elimina: "Elimina",
   indirizzi_annulla: "Annulla",
 
+  /* I miei ordini (v5, Fase B6) */
+  profilo_ordini_titolo: "I miei ordini",
+  profilo_ordini_testo: "Lo storico dei tuoi acquisti nel negozio dei mazzi.",
+  profilo_ordini_vuoto: "Non hai ancora fatto nessun ordine.",
+  profilo_ordini_totale: "Totale",
+  profilo_ordini_sconto_scaglioni: "sconto per più mazzi diversi",
+  profilo_ordini_evasione: {
+    in_attesa: "in attesa di spedizione", spedito: "spedito", consegnato: "consegnato",
+  } as Record<string, string>,
+  profilo_ordini_stato: {
+    aperto: "in attesa di pagamento", pagato: "pagato", annullato: "annullato", scaduto: "scaduto",
+  } as Record<string, string>,
+
   /* tipo di lettura */
   tipo_titolo: "Che lettura vuoi fare?",
   tipo_standard: "Lettura standard",

@@ -296,6 +296,7 @@ export interface VoceCarrelloInvio {
 }
 
 export interface RigaOrdine {
+  id: number;
   tipo: TipoVoceOrdine;
   deck_id: number;
   quantita: number;

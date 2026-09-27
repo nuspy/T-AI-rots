@@ -486,6 +486,19 @@ export const en: Dizionario = {
   negozio_indirizzo_titolo: "Shipping address",
   negozio_indirizzo_manca: "The physical box set needs a shipping address.",
   negozio_indirizzo_vai_al_profilo: "Add one in your profile",
+
+  /* My orders (v5, Phase B6) */
+  profilo_ordini_titolo: "My orders",
+  profilo_ordini_testo: "Your purchase history in the deck shop.",
+  profilo_ordini_vuoto: "You haven't placed any order yet.",
+  profilo_ordini_totale: "Total",
+  profilo_ordini_sconto_scaglioni: "discount for multiple decks",
+  profilo_ordini_evasione: {
+    in_attesa: "awaiting shipment", spedito: "shipped", consegnato: "delivered",
+  } as Record<string, string>,
+  profilo_ordini_stato: {
+    aperto: "awaiting payment", pagato: "paid", annullato: "cancelled", scaduto: "expired",
+  } as Record<string, string>,
   negozio_scarica_pdf_gratis: "Download the free PDF",
   negozio_scarica_pdf: "Download your PDF",
   negozio_pdf_in_corso: "Preparing the PDF…",

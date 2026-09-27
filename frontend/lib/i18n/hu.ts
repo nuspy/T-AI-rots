@@ -484,6 +484,19 @@ export const hu: Dizionario = {
   negozio_indirizzo_titolo: "Szállítási cím",
   negozio_indirizzo_manca: "A fizikai díszdobozhoz szállítási cím szükséges.",
   negozio_indirizzo_vai_al_profilo: "Adj hozzá egyet a profilodban",
+
+  /* Rendeléseim (v5, B6 szakasz) */
+  profilo_ordini_titolo: "Rendeléseim",
+  profilo_ordini_testo: "A pakliboltban leadott vásárlásaid előzményei.",
+  profilo_ordini_vuoto: "Még nem adtál le rendelést.",
+  profilo_ordini_totale: "Összesen",
+  profilo_ordini_sconto_scaglioni: "kedvezmény több különböző paklira",
+  profilo_ordini_evasione: {
+    in_attesa: "szállításra vár", spedito: "elküldve", consegnato: "kézbesítve",
+  } as Record<string, string>,
+  profilo_ordini_stato: {
+    aperto: "fizetésre vár", pagato: "kifizetve", annullato: "törölve", scaduto: "lejárt",
+  } as Record<string, string>,
   negozio_scarica_pdf_gratis: "Ingyenes PDF letöltése",
   negozio_scarica_pdf: "A PDF-ed letöltése",
   negozio_pdf_in_corso: "PDF előkészítése…",

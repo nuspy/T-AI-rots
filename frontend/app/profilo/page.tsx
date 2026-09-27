@@ -5,9 +5,9 @@
 
 import { useState } from "react";
 import {
-  aggiornaProfilo, cancellaPartner, caricaAvatar, creaIndirizzo, elencaIndirizzi, eliminaIndirizzo,
-  impostazioniPubbliche, leggiProfilo, modificaIndirizzo, riscattaInvito, togliAvatar,
-  type Genere, type Indirizzo, type IndirizzoInvio,
+  aggiornaProfilo, cancellaPartner, caricaAvatar, creaIndirizzo, elencaIndirizzi, elencaOrdini, eliminaIndirizzo,
+  euro, impostazioniPubbliche, leggiProfilo, modificaIndirizzo, riscattaInvito, togliAvatar,
+  type Genere, type Indirizzo, type IndirizzoInvio, type Ordine,
 } from "@/lib/api";
 import { urlMedia } from "@/lib/blog";
 import { dimenticaInvito, leggiInvito } from "@/lib/inviti";
@@ -15,6 +15,7 @@ import { useLingua } from "@/lib/lingua";
 import { useSessione, AUTH_DISATTIVATA } from "@/lib/sessione";
 import { URL_ACCOUNT, leggiStato2fa } from "@/lib/sicurezza";
 import { useAzione, useCarica } from "@/lib/usa";
+import { BottonePdf } from "../componenti/bottone-pdf";
 import { Carta } from "../componenti/carta";
 import { CampiGenere } from "../componenti/campi-genere";
 import { Involucro } from "../componenti/testata";
@@ -340,8 +341,60 @@ function Profilo() {
         {esito && <p className={stili.avvisoBuono}>{esito}</p>}
       </section>
 
+      <SezioneOrdini />
       <SezioneIndirizzi />
     </>
+  );
+}
+
+function SezioneOrdini() {
+  const { t, locale } = useLingua();
+  const ordini = useCarica(elencaOrdini);
+  const elenco = ordini.dati?.ordini ?? [];
+
+  return (
+    <section className={`pannello ${stili.scheda} ${stili.sezione}`} aria-labelledby="profilo-ordini">
+      <h2 id="profilo-ordini" className={stili.sezioneTitolo}>{t.profilo_ordini_titolo}</h2>
+      <p className={stili.nota}>{t.profilo_ordini_testo}</p>
+
+      {elenco.length === 0 ? (
+        <p className={stili.nota}>{t.profilo_ordini_vuoto}</p>
+      ) : (
+        <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 14 }}>
+          {elenco.map((o) => <VoceOrdine key={o.id} ordine={o} locale={locale} />)}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function VoceOrdine({ ordine, locale }: { ordine: Ordine; locale: string }) {
+  const { t } = useLingua();
+  const etichettaStato = t.profilo_ordini_stato[ordine.status] ?? ordine.status;
+  const righePdf = ordine.righe.filter((r) => r.tipo === "pdf");
+  return (
+    <li className={stili.linea} style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
+      <div className={stili.linea} style={{ justifyContent: "space-between" }}>
+        <span className={stili.etichetta}>
+          {ordine.creato ? new Date(ordine.creato).toLocaleDateString(locale) : ""} · {etichettaStato}
+        </span>
+        <strong>{euro(ordine.importo_totale, ordine.valuta, locale)}</strong>
+      </div>
+      <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 4 }}>
+        {ordine.righe.map((r) => (
+          <li key={r.id} className={stili.nota}>
+            mazzo #{r.deck_id} — {r.tipo}{r.quantita > 1 ? ` × ${r.quantita}` : ""}
+            {r.tipo === "fisico" && r.stato_evasione && ` · ${t.profilo_ordini_evasione[r.stato_evasione] ?? r.stato_evasione}`}
+          </li>
+        ))}
+      </ul>
+      {ordine.sconto_scaglioni > 0 && (
+        <p className={stili.nota}>−{euro(ordine.sconto_scaglioni, ordine.valuta, locale)} ({t.profilo_ordini_sconto_scaglioni})</p>
+      )}
+      {ordine.status === "pagato" && righePdf.map((r) => (
+        <BottonePdf key={r.id} ordineId={ordine.id} deckId={r.deck_id} nome={`mazzo-${r.deck_id}`} />
+      ))}
+    </li>
   );
 }
 

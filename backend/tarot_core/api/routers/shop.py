@@ -39,7 +39,7 @@ class CarrelloIn(BaseModel):
 
 def _riga_json(r: Any) -> Dict[str, Any]:
     return {
-        "tipo": r.tipo, "deck_id": r.deck_id, "quantita": r.quantita,
+        "id": r.id, "tipo": r.tipo, "deck_id": r.deck_id, "quantita": r.quantita,
         "prezzo_pieno_unitario": r.prezzo_pieno_unitario, "prezzo_finale_unitario": r.prezzo_finale_unitario,
         "stato_evasione": r.stato_evasione,
     }

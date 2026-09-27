@@ -10,13 +10,14 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "@/app/componenti/link";
 import {
-  apriOrdine, elencaIndirizzi, elencaMazzi, euro, leggiOrdine, mieiMazzi, scaricaPdfOrdine, urlPdfGratuito,
+  apriOrdine, elencaIndirizzi, elencaMazzi, euro, leggiOrdine, mieiMazzi, urlPdfGratuito,
   type Carta as TipoCarta, type Mazzo, type RigaOrdine, type TipoVoceOrdine,
 } from "@/lib/api";
 import { nomeCarta } from "@/lib/i18n";
 import { useLingua } from "@/lib/lingua";
 import { useSessione } from "@/lib/sessione";
 import { useAzione, useCarica, useToken } from "@/lib/usa";
+import { BottonePdf } from "../componenti/bottone-pdf";
 import { ESTENSIONE } from "../componenti/carta";
 import { Involucro } from "../componenti/testata";
 import stili from "./mazzo.module.css";
@@ -399,40 +400,3 @@ function SchedaMazzo({
   );
 }
 
-/** Il download del PDF di una riga già pagata: richiede il token, quindi un blob invece di un
- * semplice `<a href>` (che non può portare l'intestazione Authorization). */
-function BottonePdf({ ordineId, deckId, nome }: { ordineId: string; deckId: number; nome: string }) {
-  const { t } = useLingua();
-  const token = useToken();
-  const [inCorso, setInCorso] = useState(false);
-  const [errore, setErrore] = useState<string | null>(null);
-
-  const scarica = async () => {
-    setInCorso(true);
-    setErrore(null);
-    try {
-      const blob = await scaricaPdfOrdine(token, ordineId, deckId);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${nome || "mazzo"}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch {
-      setErrore(t.negozio_pdf_errore);
-    } finally {
-      setInCorso(false);
-    }
-  };
-
-  return (
-    <div style={{ marginTop: 8 }}>
-      <button type="button" className="bottone-secondario" disabled={inCorso} onClick={scarica}>
-        {inCorso ? t.negozio_pdf_in_corso : `${t.negozio_scarica_pdf}${nome ? ` — ${nome}` : ""}`}
-      </button>
-      {errore && <p className={stili.erroreNegozio}>{errore}</p>}
-    </div>
-  );
-}

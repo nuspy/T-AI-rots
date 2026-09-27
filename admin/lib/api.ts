@@ -223,6 +223,40 @@ export interface NuovoPiano {
   active?: boolean;
 }
 
+/* ---- ordini (mazzi, v5, Fase B6) ---- */
+
+export type StatoOrdine = "aperto" | "pagato" | "annullato" | "scaduto";
+export type TipoRigaOrdine = "digitale" | "pdf" | "fisico";
+export type StatoEvasione = "in_attesa" | "spedito" | "consegnato";
+
+export interface RigaOrdine {
+  id: number;
+  tipo: TipoRigaOrdine;
+  deck_id: number;
+  quantita: number;
+  /** Centesimi. */
+  prezzo_pieno_unitario: number;
+  /** Centesimi, dopo l'eventuale offerta a tempo sul mazzo. */
+  prezzo_finale_unitario: number;
+  /** Solo per `tipo === "fisico"`. */
+  stato_evasione: StatoEvasione | null;
+}
+
+export interface Ordine {
+  id: string;
+  user_id: number;
+  status: StatoOrdine;
+  /** Centesimi, dopo lo sconto per-mazzo (già nelle righe) e quello a scaglioni. */
+  importo_totale: number;
+  /** Centesimi: solo la parte a scaglioni. */
+  sconto_scaglioni: number;
+  valuta: string;
+  righe: RigaOrdine[];
+  indirizzo_spedizione: Record<string, string | null> | null;
+  creato: string | null;
+  completato: string | null;
+}
+
 export interface VoceRegistro {
   id: number;
   attore: number | null;
@@ -303,6 +337,23 @@ export const elencoPagamenti = (
     t,
     `/admin/payments${interrogazione(filtri)}`,
   );
+
+export const elencoOrdini = (
+  t: string,
+  filtri: { status?: string; limite?: number; offset?: number } = {},
+) =>
+  chiamata<{ totale: number; incassato: number; ordini: Ordine[] }>(
+    t,
+    `/admin/orders${interrogazione(filtri)}`,
+  );
+
+export const dettaglioOrdine = (t: string, id: string) => chiamata<Ordine>(t, `/admin/orders/${id}`);
+
+/** Solo per una riga `fisico`: le altre non hanno una spedizione da seguire (il backend lo rifiuta). */
+export const aggiornaEvasione = (t: string, ordineId: string, rigaId: number, stato_evasione: StatoEvasione) =>
+  chiamata<Ordine>(t, `/admin/orders/${ordineId}/righe/${rigaId}`, {
+    method: "PATCH", body: JSON.stringify({ stato_evasione }),
+  });
 
 export const catalogo = (t: string) => chiamata<Piano[]>(t, "/admin/plans");
 
