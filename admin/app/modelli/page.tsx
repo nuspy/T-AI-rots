@@ -1,21 +1,25 @@
 "use client";
 
+import { useState } from "react";
 import {
   assegnaModello,
   modelliECompiti,
   type CompitoAssegnato,
   type ModelloConfigurato,
 } from "@/lib/api";
+import {
+  creaFornitore, eliminaFornitore, fornitori, modificaFornitore, provaFornitore,
+  type EsitoProva, type Fornitore, type ModificaFornitore, type NuovoFornitore, type TipoFornitore,
+} from "@/lib/fornitori";
 import { useAzione, useDati } from "@/lib/usa";
 import comuni from "../comuni.module.css";
 import stili from "./modelli.module.css";
 
-/* Chi serve quale compito.
+/* Chi serve quale compito, e i fornitori fra cui scegliere.
  *
- * Qui si sceglie fra nomi, non si scrivono indirizzi: l'elenco dei modelli
- * sta nella configurazione del servizio, e questa pagina non può ampliarlo.
- * La ragione è che un endpoint modificabile dall'interfaccia è traffico
- * dirottabile verso una macchina qualunque, con le chiavi appresso.
+ * I fornitori si configurano qui: indirizzo, modello e chiave. La chiave non torna mai in chiaro — un fornitore
+ * la porta solo per rispondere «ce l'ho» o «non ce l'ho» — e appena se ne aggiunge, modifica o elimina uno, il
+ * servizio lo rilegge subito: nessun riavvio, nessuna variabile d'ambiente da toccare.
  */
 
 const RICADUTA = "";
@@ -23,12 +27,21 @@ const RICADUTA = "";
 export default function Modelli() {
   const { dati, errore, inCorso, ricarica } = useDati(modelliECompiti);
   const { esegui, inCorso: inAzione, errore: erroreAzione } = useAzione();
+  const fornitoriDati = useDati(fornitori);
 
   const cambia = async (compito: string, scelto: string) => {
     const fatto = await esegui((t) =>
       assegnaModello(t, compito, scelto === RICADUTA ? null : scelto),
     );
-    if (fatto) ricarica();
+    if (fatto) {
+      ricarica();
+      fornitoriDati.ricarica();
+    }
+  };
+
+  const ricaricaTutto = () => {
+    ricarica();
+    fornitoriDati.ricarica();
   };
 
   return (
@@ -55,9 +68,8 @@ export default function Modelli() {
           <strong>Nessun modello di intelligenza artificiale è configurato.</strong>{" "}
           Finché non ne aggiungi uno le letture non partono: il servizio
           risponde «non pronto» senza addebitare nulla e non usa testi di
-          ripiego. Il modello si aggiunge nella configurazione del servizio
-          (<code>TAROT_ANTHROPIC_API_KEY</code>, oppure <code>TAROT_MODELLI</code>
-          per più modelli), poi da questa pagina si assegna ai compiti.
+          ripiego. Aggiungilo qui sotto, in <strong>Fornitori</strong>, poi
+          assegnalo ai compiti.
         </div>
       )}
       {dati?.finto && (
@@ -68,22 +80,25 @@ export default function Modelli() {
       )}
 
       {dati && (
-        <>
-          <div className={stili.compiti}>
-            {dati.compiti.map((c) => (
-              <Scheda
-                key={c.compito}
-                compito={c}
-                modelli={dati.modelli}
-                bloccato={inAzione}
-                onCambia={(scelto) => cambia(c.compito, scelto)}
-              />
-            ))}
-          </div>
-
-          <Elenco modelli={dati.modelli} />
-        </>
+        <div className={stili.compiti}>
+          {dati.compiti.map((c) => (
+            <Scheda
+              key={c.compito}
+              compito={c}
+              modelli={dati.modelli}
+              bloccato={inAzione}
+              onCambia={(scelto) => cambia(c.compito, scelto)}
+            />
+          ))}
+        </div>
       )}
+
+      <SezioneFornitori
+        dati={fornitoriDati.dati}
+        errore={fornitoriDati.errore}
+        inCorso={fornitoriDati.inCorso}
+        ricarica={ricaricaTutto}
+      />
     </>
   );
 }
@@ -143,45 +158,272 @@ function Scheda({
   );
 }
 
-function Elenco({ modelli }: { modelli: ModelloConfigurato[] }) {
+function SezioneFornitori({
+  dati, errore, inCorso, ricarica,
+}: {
+  dati: { fornitori: Fornitore[]; catalogo: TipoFornitore[] } | null;
+  errore: string | null;
+  inCorso: boolean;
+  ricarica: () => void;
+}) {
+  const [nuovo, setNuovo] = useState(false);
+
   return (
     <section className={stili.disponibili}>
-      <h2 className={stili.disponibiliTitolo}>Modelli configurati</h2>
-      <p className={stili.disponibiliNota}>
-        L&apos;elenco si cambia in <code>TAROT_MODELLI</code>, non da qui:
-        indirizzi e chiavi restano nella configurazione del servizio. Da questa
-        pagina si sceglie fra questi nomi.
-      </p>
-
-      {modelli.length === 0 ? (
-        <div className={comuni.vuoto}>Nessun modello configurato.</div>
-      ) : (
-        <div className={comuni.contenitoreTabella}>
-          <table className={comuni.tabella}>
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Fornitore</th>
-                <th>Modello</th>
-              </tr>
-            </thead>
-            <tbody>
-              {modelli.map((m) => (
-                <tr key={m.nome}>
-                  <td>
-                    <strong>{m.nome}</strong>
-                    {m.descrizione && (
-                      <div className={comuni.campoAiuto}>{m.descrizione}</div>
-                    )}
-                  </td>
-                  <td className={comuni.mono}>{m.provider}</td>
-                  <td className={comuni.mono}>{m.model || "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className={comuni.intestazione} style={{ marginBottom: "0.75rem" }}>
+        <div>
+          <h2 className={stili.disponibiliTitolo}>Fornitori</h2>
+          <p className={stili.disponibiliNota}>
+            Indirizzo, modello e chiave di ciascun fornitore. La chiave non si
+            rivede mai una volta salvata: si sostituisce, non si consulta.
+          </p>
         </div>
+        <button className={comuni.primaria} type="button" aria-expanded={nuovo} onClick={() => setNuovo(!nuovo)}>
+          {nuovo ? "Chiudi" : "Nuovo fornitore"}
+        </button>
+      </div>
+
+      {nuovo && dati && (
+        <ModuloFornitore
+          catalogo={dati.catalogo}
+          chiudi={() => setNuovo(false)}
+          salvato={() => {
+            setNuovo(false);
+            ricarica();
+          }}
+        />
+      )}
+
+      {errore && <p className={comuni.errore}>{errore}</p>}
+      {!dati && inCorso && <p className={comuni.caricamento}>Caricamento…</p>}
+      {dati && dati.fornitori.length === 0 && (
+        <div className={comuni.vuoto}>Nessun fornitore ancora: aggiungine uno.</div>
+      )}
+
+      {dati && dati.fornitori.length > 0 && (
+        <ul className={`${stili.elencoFornitori} ${inCorso ? comuni.inRicarica : ""}`} aria-label="Fornitori">
+          {dati.fornitori.map((f) => (
+            <VoceFornitore key={f.id} fornitore={f} catalogo={dati.catalogo} ricarica={ricarica} />
+          ))}
+        </ul>
       )}
     </section>
+  );
+}
+
+function VoceFornitore({
+  fornitore: f, catalogo, ricarica,
+}: {
+  fornitore: Fornitore;
+  catalogo: TipoFornitore[];
+  ricarica: () => void;
+}) {
+  const { esegui, inCorso, errore } = useAzione();
+  const [modifica, setModifica] = useState(false);
+  const [conferma, setConferma] = useState(false);
+  const [esito, setEsito] = useState<EsitoProva | null>(null);
+  const spec = catalogo.find((c) => c.tipo === f.tipo);
+
+  const commuta = async () => {
+    if (await esegui((t) => modificaFornitore(t, f.id, { attivo: !f.attivo }))) ricarica();
+  };
+  const elimina = async () => {
+    if ((await esegui((t) => eliminaFornitore(t, f.id))) !== null) ricarica();
+  };
+  const prova = async () => {
+    setEsito(null);
+    const r = await esegui((t) => provaFornitore(t, f.id));
+    if (r) setEsito(r);
+  };
+
+  return (
+    <li className={f.attivo ? stili.fornitoreVoce : stili.fornitoreVoceSpenta}>
+      <div className={stili.fornitoreTestata}>
+        <div>
+          <strong>{f.nome}</strong>
+          <div className={comuni.mono}>{spec?.label ?? f.tipo}</div>
+        </div>
+        {f.senza_filtri && <span className={stili.avviso}>senza filtri</span>}
+      </div>
+      {f.descrizione && <p className={stili.descrizione}>{f.descrizione}</p>}
+      <dl className={stili.fornitoreDati}>
+        <dt>Indirizzo</dt>
+        <dd className={comuni.mono}>{f.base_url || "—"}</dd>
+        <dt>Modello</dt>
+        <dd className={comuni.mono}>{f.model || "(quello caricato dal server)"}</dd>
+        <dt>Chiave</dt>
+        <dd>{f.has_key ? "impostata" : "nessuna"}</dd>
+        <dt>Stato</dt>
+        <dd className={f.attivo ? comuni.positivo : comuni.spento}>{f.attivo ? "attivo" : "disattivato"}</dd>
+      </dl>
+
+      {modifica ? (
+        <ModuloFornitore
+          fornitore={f}
+          catalogo={catalogo}
+          chiudi={() => setModifica(false)}
+          salvato={() => {
+            setModifica(false);
+            ricarica();
+          }}
+        />
+      ) : (
+        <div className={stili.comandiFornitore}>
+          <button type="button" className={comuni.secondaria} onClick={prova} disabled={inCorso}>
+            Prova la connessione
+          </button>
+          <button type="button" className={comuni.secondaria} onClick={commuta} disabled={inCorso}>
+            {f.attivo ? "Disattiva" : "Riattiva"}
+          </button>
+          <button type="button" className={comuni.secondaria} onClick={() => setModifica(true)}>
+            Modifica
+          </button>
+          {conferma ? (
+            <>
+              <button type="button" className={comuni.distruttiva} onClick={elimina} disabled={inCorso}>
+                Sì, elimina
+              </button>
+              <button type="button" className={comuni.secondaria} onClick={() => setConferma(false)}>
+                Annulla
+              </button>
+            </>
+          ) : (
+            <button type="button" className={comuni.distruttiva} onClick={() => setConferma(true)}>
+              Elimina
+            </button>
+          )}
+        </div>
+      )}
+      {errore && <p className={comuni.errore}>{errore}</p>}
+      {esito && (
+        <p className={esito.ok ? comuni.esito : comuni.errore}>
+          {esito.ok
+            ? `Risponde. Modelli visti: ${esito.modelli.slice(0, 5).join(", ") || "nessuno"}`
+            : `Non risponde: ${esito.errore}`}
+        </p>
+      )}
+    </li>
+  );
+}
+
+/** Un fornitore nuovo o uno esistente: stesso modulo, l'assenza di `fornitore` decide quale. */
+function ModuloFornitore({
+  fornitore: f, catalogo, chiudi, salvato,
+}: {
+  fornitore?: Fornitore;
+  catalogo: TipoFornitore[];
+  chiudi: () => void;
+  salvato: () => void;
+}) {
+  const { esegui, inCorso, errore } = useAzione();
+  const [tipo, setTipo] = useState(f?.tipo ?? catalogo[0]?.tipo ?? "");
+  const [nome, setNome] = useState(f?.nome ?? "");
+  const [baseUrl, setBaseUrl] = useState(f?.base_url ?? catalogo[0]?.base_url ?? "");
+  const [model, setModel] = useState(f?.model ?? "");
+  const [apiKey, setApiKey] = useState("");
+  const [apiKeyTocca, setApiKeyTocca] = useState(false);
+  const [descrizione, setDescrizione] = useState(f?.descrizione ?? "");
+  const [ragiona, setRagiona] = useState(f?.ragiona ?? false);
+  const [senzaFiltri, setSenzaFiltri] = useState(f?.senza_filtri ?? false);
+  const [problema, setProblema] = useState<string | null>(null);
+
+  const specScelto = catalogo.find((c) => c.tipo === tipo);
+
+  const cambiaTipo = (t: string) => {
+    setTipo(t);
+    if (!f) setBaseUrl(catalogo.find((c) => c.tipo === t)?.base_url ?? "");
+  };
+
+  const invia = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProblema(null);
+    if (!f && !nome.trim()) return setProblema("Il nome non può essere vuoto.");
+
+    if (f) {
+      const corpo: ModificaFornitore = {
+        base_url: baseUrl.trim(), model: model.trim(), descrizione: descrizione.trim(),
+        ragiona, senza_filtri: senzaFiltri,
+      };
+      if (apiKeyTocca) corpo.api_key = apiKey;
+      if (await esegui((t) => modificaFornitore(t, f.id, corpo))) salvato();
+    } else {
+      const corpo: NuovoFornitore = {
+        nome: nome.trim(), tipo, base_url: baseUrl.trim(), model: model.trim(),
+        descrizione: descrizione.trim(), ragiona, senza_filtri: senzaFiltri,
+        api_key: apiKey,
+      };
+      if (await esegui((t) => creaFornitore(t, corpo))) salvato();
+    }
+  };
+
+  return (
+    <form onSubmit={invia} className={stili.fornitoreModulo}>
+      {!f && (
+        <div className={comuni.riga}>
+          <label className={comuni.campo}>
+            <span className={comuni.campoEtichetta}>Nome</span>
+            <input className={comuni.ingresso} value={nome} maxLength={60} onChange={(e) => setNome(e.target.value)} placeholder="es. nvidia-veloce" />
+            <span className={comuni.campoAiuto}>Come lo vedrai nell&apos;assegnazione dei compiti. Non si cambia dopo.</span>
+          </label>
+          <label className={comuni.campo}>
+            <span className={comuni.campoEtichetta}>Tipo</span>
+            <select className={comuni.selezione} value={tipo} onChange={(e) => cambiaTipo(e.target.value)}>
+              {catalogo.map((c) => (
+                <option key={c.tipo} value={c.tipo}>{c.label}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
+      <label className={comuni.campo}>
+        <span className={comuni.campoEtichetta}>Indirizzo</span>
+        <input className={comuni.ingresso} value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} placeholder="https://…/v1" />
+        {specScelto?.nota && <span className={comuni.campoAiuto}>{specScelto.nota}</span>}
+      </label>
+      <div className={comuni.riga}>
+        <label className={comuni.campo}>
+          <span className={comuni.campoEtichetta}>Modello</span>
+          <input className={comuni.ingresso} value={model} onChange={(e) => setModel(e.target.value)} placeholder="vuoto: il primo caricato" />
+        </label>
+        {(specScelto?.auth ?? "api_key") === "api_key" && (
+          <label className={comuni.campo}>
+            <span className={comuni.campoEtichetta}>Chiave</span>
+            <input
+              className={comuni.ingresso}
+              type="password"
+              autoComplete="new-password"
+              value={apiKey}
+              onChange={(e) => {
+                setApiKey(e.target.value);
+                setApiKeyTocca(true);
+              }}
+              placeholder={f ? (f.has_key ? "invariata" : "nessuna") : ""}
+            />
+            {f && <span className={comuni.campoAiuto}>Vuota e toccata: la svuota. Non toccata: resta quella di prima.</span>}
+          </label>
+        )}
+      </div>
+      <label className={comuni.campo}>
+        <span className={comuni.campoEtichetta}>Descrizione (solo per te)</span>
+        <input className={comuni.ingresso} value={descrizione} maxLength={200} onChange={(e) => setDescrizione(e.target.value)} />
+      </label>
+      <label className={stili.spuntaFornitore}>
+        <input type="checkbox" checked={ragiona} onChange={(e) => setRagiona(e.target.checked)} />
+        Ragiona prima di rispondere (alza il tetto dei token nelle richieste strutturate)
+      </label>
+      <label className={stili.spuntaFornitore}>
+        <input type="checkbox" checked={senzaFiltri} onChange={(e) => setSenzaFiltri(e.target.checked)} />
+        Senza filtri (un modello «abliterato»: non rifiuta nulla)
+      </label>
+      {(problema || errore) && <p className={comuni.errore}>{problema ?? errore}</p>}
+      <div className={stili.comandiFornitore}>
+        <button className={comuni.primaria} type="submit" disabled={inCorso}>
+          {f ? "Salva" : "Crea il fornitore"}
+        </button>
+        <button className={comuni.secondaria} type="button" onClick={chiudi} disabled={inCorso}>
+          Annulla
+        </button>
+      </div>
+    </form>
   );
 }

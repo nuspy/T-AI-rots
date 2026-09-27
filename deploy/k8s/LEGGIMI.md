@@ -56,10 +56,14 @@ kubectl -n tarots create secret generic tarots-secrets \
   --from-literal=database-url='postgresql+psycopg://tarots:...@postgresql.tadamoo.svc.cluster.local:5432/tarots' \
   --from-literal=keycloak-admin-password=... \
   --from-literal=api-client-secret=... \
-  --from-literal=condivisione-sale="$(openssl rand -hex 24)"
+  --from-literal=condivisione-sale="$(openssl rand -hex 24)" \
+  --from-literal=llm-provider-key="$(python3 -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')"
 # Su un Secret che esiste già, la sola chiave nuova (senza, l'API non parte):
 #   kubectl -n tarots patch secret tarots-secrets --type merge \
 #     -p "{\"stringData\":{\"condivisione-sale\":\"$(openssl rand -hex 24)\"}}"
+# `llm-provider-key` cifra a riposo le chiavi dei fornitori LLM aggiunti dalla console («Modelli»): senza, l'API non
+# parte in produzione (vedi `Settings.validate_production`). **Cambiarla dopo che dei fornitori sono già stati
+# salvati li rende illeggibili** (tornano «nessuna chiave»): si genera una volta sola, all'inizio.
 kubectl -n tarots create configmap tarots-realm --from-file=realm.json=deploy/keycloak/realm-tarots.prod.json
 
 # 4. tutto il resto

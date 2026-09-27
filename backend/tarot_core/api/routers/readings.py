@@ -351,7 +351,7 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
         return {"crisi": True, "messaggio": in_lingua(AIUTO, lang)}
 
     # Prima di addebitare qualunque cosa: senza un modello vero non c'è lettura.
-    verifica_modello(lang)
+    await verifica_modello(session, lang)
 
     gestore = GestoreAbbonamenti(session)
     if not await gestore.tariffe_in_vigore():
@@ -432,8 +432,7 @@ async def intervista(
         return {"completa": False, "domanda": turni[-1].testo, "ordine": turni[-1].ordine}
     await session.commit()
 
-    verifica_modello(lettura.lang)
-    await aggiorna_assegnazioni(session)
+    await verifica_modello(session, lettura.lang)          # rilegge già fornitori e assegnazioni
     stesa = _stesa_o_404(lettura.spread_id)
     impostazioni = get_settings()
     conoscenza = get_conoscenza()
@@ -581,7 +580,7 @@ async def rivela(
     if carta is None or carta.posizione != posizione:
         raise _conflitto("Le carte si rivelano in ordine")
 
-    verifica_modello(lettura.lang)
+    await verifica_modello(session, lettura.lang)
     conoscenza = get_conoscenza()
     stesa = _stesa_o_404(lettura.spread_id)
     carta.rivelata = True
@@ -703,7 +702,7 @@ async def sintesi(
     if lettura.status != "sintesi":
         raise _conflitto("Il responso arriva dopo aver rivelato tutte le carte")
 
-    verifica_modello(lang)
+    await verifica_modello(session, lang)
     conoscenza = get_conoscenza()
     stesa = _stesa_o_404(lettura.spread_id)
     registro = get_guardrail()

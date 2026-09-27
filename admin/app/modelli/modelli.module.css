@@ -109,3 +109,94 @@
   max-width: 62ch;
   color: var(--inchiostro-debole);
 }
+
+/* I fornitori: una scheda ciascuno, come i coupon — è lo stesso tipo di elenco (poche righe, azioni per riga). */
+
+.elencoFornitori {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: 1rem;
+}
+
+.fornitoreVoce,
+.fornitoreVoceSpenta {
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+  padding: 1rem 1.1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.fornitoreVoceSpenta {
+  border-style: dashed;
+  background: transparent;
+}
+
+.fornitoreTestata {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.descrizione {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--inchiostro-tenue);
+}
+
+.fornitoreDati {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.25rem 0.9rem;
+  margin: 0;
+  font-size: 0.8125rem;
+}
+
+.fornitoreDati dt {
+  color: var(--inchiostro-debole);
+}
+
+.fornitoreDati dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.comandiFornitore {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.comandiFornitore > button {
+  min-height: 44px;
+}
+
+.fornitoreModulo {
+  display: grid;
+  gap: 0.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.spuntaFornitore {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  font-size: 0.875rem;
+  color: var(--inchiostro-tenue);
+  cursor: pointer;
+}
+
+.spuntaFornitore input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--rubrica);
+  flex: none;
+}

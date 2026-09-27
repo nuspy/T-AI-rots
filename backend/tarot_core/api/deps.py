@@ -21,8 +21,9 @@ def get_registro_modelli():
     chiedere di nuovo l'elenco dei modelli prima di ogni singola risposta.
     """
     from ..llm.compiti import RegistroModelli, modelli_da_impostazioni
+    from ..settings import get_settings
 
-    return RegistroModelli(modelli_da_impostazioni())
+    return RegistroModelli(modelli_da_impostazioni(), configurato=get_settings().llm_configurato())
 
 
 @lru_cache(maxsize=1)
@@ -32,12 +33,16 @@ def _modello_finto():
     return ModelloFinto()
 
 
-def verifica_modello(lang: str = "it") -> None:
+async def verifica_modello(session, lang: str = "it") -> None:
     """503 se non c'è un modello vero a cui chiedere la lettura.
 
     Le domande, le interpretazioni e il responso li scrive un modello: senza,
     il servizio non finge con testi di ripiego uguali per tutti, e non addebita
     nulla. Va chiamata **prima** di aprire (e pagare) una lettura.
+
+    Rilegge prima l'elenco dei fornitori (rispettando la stessa scadenza breve di `aggiorna_assegnazioni`): un
+    fornitore aggiunto in console un istante fa deve rendere pronto il servizio senza aspettare la chiamata
+    successiva che capiti di rinfrescarlo.
     """
     from fastapi import HTTPException, status
 
@@ -45,7 +50,8 @@ def verifica_modello(lang: str = "it") -> None:
     from ..tarot.lingue import in_lingua
     from ..tarot.testi import MODELLO_NON_CONFIGURATO
 
-    if get_settings().llm_configurato():
+    await aggiorna_assegnazioni(session)
+    if get_settings().llm_finto or get_registro_modelli().configurato:
         return
     raise HTTPException(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -75,17 +81,37 @@ def provider_per(compito, persone=None) -> object:
 
 
 async def aggiorna_assegnazioni(session, *, forza: bool = False) -> None:
-    """Rilegge dal database chi serve quale compito, se è ora.
+    """Rilegge dal database i fornitori LLM e chi serve quale compito, se è ora.
 
-    Con più repliche dell'API una modifica fatta su una non arriva alle altre
-    da sola: il registro ha una scadenza breve e si rinfresca da sé. Un errore
-    qui non ferma la richiesta — l'assegnazione di prima è vecchia di mezzo
-    minuto, non sbagliata.
+    Con più repliche dell'API una modifica fatta su una (un fornitore aggiunto in console, un'assegnazione cambiata)
+    non arriva alle altre da sola: il registro ha una scadenza breve per ciascuno dei due e si rinfresca da sé. Un
+    errore qui non ferma la richiesta — la configurazione di prima è vecchia di mezzo minuto, non sbagliata.
     """
     from ..domain.admin_repositories import assegnazioni_correnti
-    from ..llm.compiti import Compito
+    from ..llm.compiti import Compito, modelli_da_impostazioni
 
     registro = get_registro_modelli()
+
+    if forza or registro.da_rileggere_modelli():
+        try:
+            from ..domain.llm_repositories import modelli_da_db
+
+            forniti = await modelli_da_db(session)
+        except Exception:  # noqa: BLE001
+            logger.warning(
+                "Elenco dei fornitori LLM non riletto: si continua con quello "
+                "in memoria", exc_info=True,
+            )
+        else:
+            if forniti:
+                registro.aggiorna_modelli(forniti, reale=True)
+            else:
+                # Tabella vuota (impianto appena installato, nessun fornitore ancora in console): si ricade
+                # sull'ambiente, con lo stesso giudizio di «è una configurazione vera?» di sempre.
+                from ..settings import get_settings
+
+                registro.aggiorna_modelli(modelli_da_impostazioni(), reale=get_settings().llm_configurato())
+
     if not forza and not registro.da_rileggere():
         return
 

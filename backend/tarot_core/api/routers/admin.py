@@ -418,16 +418,15 @@ class Assegnazione(BaseModel):
 async def modelli(session: DbSession) -> Dict[str, Any]:
     await aggiorna_assegnazioni(session, forza=True)
     registro = get_registro_modelli()
-    impostazioni = get_settings()
     return {
         # Senza un modello vero le letture rispondono 503: la console lo dice.
-        "configurato": impostazioni.llm_configurato(),
-        "finto": impostazioni.llm_finto,
+        "configurato": registro.configurato,
+        "finto": get_settings().llm_finto,
         "modelli": [
             {"nome": m.nome, "provider": m.provider, "model": m.model, "descrizione": m.descrizione}
             # Il modello «predefinito» ricavato dai valori di ripiego non è un
             # modello configurato: non si elenca come se lo fosse.
-            for m in (registro.modelli if impostazioni.llm_configurato() else [])
+            for m in (registro.modelli if registro.configurato else [])
         ],
         "compiti": registro.stato(),
     }

@@ -254,8 +254,10 @@ spec:
             - name: TAROT_DATABASE_URL
               valueFrom: {secretKeyRef: {name: tarots-secrets, key: database-url}}
             # Nessun modello finto: senza un modello vero le letture rispondono
-            # 503 e non addebitano nulla. Il modello si configura nel Secret
-            # opzionale `tarots-llm` (vedi `envFrom` sotto).
+            # 503 e non addebitano nulla. I fornitori si aggiungono dalla
+            # console («Modelli»); il Secret opzionale `tarots-llm` (vedi
+            # `envFrom` sotto) resta solo un ripiego finché nessuno è stato
+            # ancora configurato lì.
             - {name: TAROT_ENVIRONMENT, value: prod}
             - {name: TAROT_AUTH_DISABLED, value: "false"}
             # Nessun fornitore di pagamento: il simulato lascerebbe attivare
@@ -275,15 +277,20 @@ spec:
             # (vedi LEGGIMI.md, passo 3).
             - name: TAROT_CONDIVISIONE_SALE
               valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale}}
-          # Il modello, dal Secret `tarots-llm` (facoltativo: se manca il
-          # servizio parte e dice «non pronto»). Le chiavi sono le variabili
-          # TAROT_*, per esempio:
+            # Cifra le chiavi dei fornitori LLM a riposo nel database (i fornitori si aggiungono dalla console, non
+            # da qui). Senza, in produzione l'API rifiuta di partire. Una chiave Fernet vera, generata con
+            # `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` — non un
+            # valore casuale qualunque — e aggiunta al Secret (vedi LEGGIMI.md, passo 3).
+            - name: TAROT_LLM_PROVIDER_KEY
+              valueFrom: {secretKeyRef: {name: tarots-secrets, key: llm-provider-key}}
+          # Ripiego per lo sviluppo locale o per un impianto senza ancora un fornitore in console: le chiavi sono le
+          # variabili TAROT_*, per esempio:
           #   kubectl -n tarots create secret generic tarots-llm \
           #     --from-literal=TAROT_LLM_PROVIDER=anthropic \
           #     --from-literal=TAROT_ANTHROPIC_API_KEY=... \
           #     --from-literal=TAROT_ANTHROPIC_MODEL=claude-sonnet-5
-          # oppure TAROT_MODELLI (JSON) per più modelli da assegnare ai compiti
-          # dalla console. Poi: kubectl -n tarots rollout restart deploy/tarots-api
+          # oppure TAROT_MODELLI (JSON) per più modelli. Si legge solo finché la console non ne ha uno attivo.
+          # Poi: kubectl -n tarots rollout restart deploy/tarots-api
           envFrom:
             - secretRef: {name: tarots-llm, optional: true}
           ports:

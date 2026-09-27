@@ -98,19 +98,16 @@ class Settings(BaseSettings):
     #: legittima, un silenzio di due minuti no.
     llm_stream_timeout: float = 120.0
 
-    #: L'elenco dei modelli fra cui la console sceglie, uno per compito.
-    #: JSON: `[{"nome": "...", "provider": "...", "base_url": "...",
-    #: "model": "...", "api_key": "...", "senza_filtri": false}, ...]`.
-    #:
-    #: Sta qui e non nel database perche' un endpoint modificabile
-    #: dall'interfaccia e' traffico dirottabile verso una macchina qualunque,
-    #: con le chiavi appresso. La console sceglie fra questi nomi; non li
-    #: crea e non li modifica.
-    #:
-    #: Vuoto: se ne ricava uno solo dalle impostazioni `llm_*` qui sotto, e
-    #: tutti i compiti girano su quello. Un impianto che funzionava prima
-    #: continua a funzionare senza toccare nulla.
+    #: Un elenco di fornitori dato dall'ambiente: solo un ripiego per lo sviluppo locale (`docker compose up` senza
+    #: predisporre nulla) e per i test. In produzione i fornitori si configurano dalla **console**
+    #: (`domain.config_models.LlmProvider`, cifrati in database con `llm/cifratura.py`): questa lista si legge solo
+    #: finché la tabella è vuota. JSON: `[{"nome": "...", "provider": "...", "base_url": "...", "model": "...",
+    #: "api_key": "...", "senza_filtri": false}, ...]`.
     modelli: List["ModelloConfigurato"] = Field(default_factory=list)
+    #: Chiave Fernet (32 byte base64 url-safe) con cui le chiavi dei fornitori LLM sono cifrate nel database. Il
+    #: valore predefinito è SOLO per lo sviluppo: `validate_production()` lo respinge in produzione, dove ne serve
+    #: una propria (`Fernet.generate_key()`), messa nel Secret come le altre credenziali.
+    llm_provider_key: str = "pF6wjvqBFeElH8yC0tfWcG6KFZnKDr5s6n4L5EjmMTE="
 
     #: Quale fornitore genera le risposte: `openai-compatible` (OpenAI, LM
     #: Studio, vLLM, llama.cpp e affini) o `anthropic`.
@@ -200,6 +197,11 @@ class Settings(BaseSettings):
                 problems.append("CORS aperto a qualunque origine in produzione")
             if self.condivisione_sale == "sale-di-sviluppo":
                 problems.append("TAROT_CONDIVISIONE_SALE e' quello di sviluppo in produzione")
+            if self.llm_provider_key == "pF6wjvqBFeElH8yC0tfWcG6KFZnKDr5s6n4L5EjmMTE=":
+                problems.append(
+                    "TAROT_LLM_PROVIDER_KEY e' quella di sviluppo in produzione: chi legge il database "
+                    "leggerebbe anche le chiavi dei fornitori LLM"
+                )
             if "localhost" in self.database_url:
                 problems.append("il database punta a localhost in produzione")
             if self.billing_provider == "mock":

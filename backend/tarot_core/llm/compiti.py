@@ -9,17 +9,20 @@ da quello che l'ha scritto**, o il giudice finisce per assolvere sé stesso.
 Da qui i cinque compiti. Non sono livelli di qualità: sono lavori con
 requisiti diversi, e la scelta di ciascuno è indipendente dalle altre.
 
-Questo registro è il punto in cui si innesta llmswitch: oggi i fornitori
-sono quelli di `llm/` (OpenAI-compatibili e Anthropic), e il registro sceglie
-fra modelli configurati nell'ambiente.
+Questo registro è il punto in cui si innesta `llmswitch` (progetto separato
+dell'utente, che tiene un registro di fornitori modificabile da chi
+amministra): i fornitori sono quelli di `llm/` (OpenAI-compatibili e
+Anthropic), e il registro sceglie fra modelli configurati dalla console.
 
-**Come si configura, e perché così.** Gli indirizzi e le chiavi stanno
-nell'ambiente — in Kubernetes in un Secret — e formano un elenco chiuso di
-modelli, ciascuno con un nome. La console non li crea e non li modifica:
-sceglie, fra quei nomi, chi serve quale compito. La ragione è che un
-endpoint modificabile dall'interfaccia è traffico dirottabile verso una
-macchina qualunque, con le chiavi appresso; scegliere fra un elenco già
-approvato non lo è.
+**Come si configura, e perché così.** Indirizzi, modelli e chiavi si
+aggiungono, modificano ed eliminano dalla console (`domain.config_models.
+LlmProvider`, cifrati in database — vedi `llm/cifratura.py`), non
+nell'ambiente del processo: un amministratore autenticato con il ruolo
+`admin` è il confine di fiducia, e tenere le chiavi fuori dall'immagine e
+dal Secret di Kubernetes è un guadagno, non un rischio. `TAROT_MODELLI` e le
+vecchie `TAROT_LLM_*` restano un ripiego per lo sviluppo locale e i test:
+`modelli_da_impostazioni()` si usa solo finché la tabella dei fornitori è
+vuota.
 
 Chi non ha un'assegnazione ricade sul modello predefinito. Ricade e non
 fallisce: un compito senza modello assegnato è la condizione normale di un
@@ -175,12 +178,21 @@ class RegistroModelli:
         modelli: List[ModelloConfigurato],
         *,
         assegnazioni: Optional[Dict[Compito, str]] = None,
+        configurato: bool = True,
     ) -> None:
         self._modelli = {m.nome: m for m in modelli}
         self._assegnazioni: Dict[Compito, str] = dict(assegnazioni or {})
         self._fornitori: Dict[str, object] = {}
         #: Quando le assegnazioni sono state lette dal database. Zero: mai.
         self._lette_a = 0.0
+        #: Quando l'elenco dei fornitori è stato riletto dal database. Zero: mai (all'avvio si parte da quello
+        #: costruito nel costruttore, tipicamente `modelli_da_impostazioni()`).
+        self._modelli_lette_a = 0.0
+        #: Se `modelli` è una configurazione vera, non solo il segnaposto `PREDEFINITO` che
+        #: `modelli_da_impostazioni()` ricava da impostazioni mai impostate esplicitamente (vedi `configurato`
+        #: sotto). Chi costruisce il registro con un elenco scelto a mano — i test, soprattutto — lo intende
+        #: sempre vero: il default è `True` apposta.
+        self._reale = configurato
 
     # ------------------------------------------------------------- elenco
 
@@ -188,11 +200,41 @@ class RegistroModelli:
     def modelli(self) -> List[ModelloConfigurato]:
         return list(self._modelli.values())
 
+    @property
+    def configurato(self) -> bool:
+        """C'è almeno un modello vero a cui chiedere le letture?
+
+        Un elenco non vuoto non basta: `modelli_da_impostazioni()` restituisce sempre almeno il segnaposto
+        `PREDEFINITO`, anche quando nessuna variabile d'ambiente è stata impostata — punterebbe a un LM Studio
+        locale che nel container non esiste. Questo flag distingue le due situazioni.
+        """
+        return self._reale
+
     def esiste(self, nome: str) -> bool:
         return nome in self._modelli
 
     def configurazione(self, nome: str) -> Optional[ModelloConfigurato]:
         return self._modelli.get(nome)
+
+    def aggiorna_modelli(self, modelli: List[ModelloConfigurato], *, reale: bool) -> None:
+        """Sostituisce l'elenco dei fornitori con quello letto dal database (la console).
+
+        Sostituisce e non fonde, come `aggiorna()` per le assegnazioni: un fornitore eliminato in console deve
+        sparire anche da qui, non restare finché il processo non riparte. Svuota anche la cache dei fornitori
+        costruiti: un indirizzo o una chiave cambiati non devono restare quelli di prima fino al riavvio.
+        """
+        import time
+
+        self._modelli = {m.nome: m for m in modelli}
+        self._fornitori.clear()
+        self._modelli_lette_a = time.monotonic()
+        self._reale = reale
+
+    def da_rileggere_modelli(self, ttl: float = 30.0) -> bool:
+        """Come `da_rileggere()`, per l'elenco dei fornitori invece delle assegnazioni."""
+        import time
+
+        return time.monotonic() - self._modelli_lette_a > ttl
 
     # -------------------------------------------------------- assegnazioni
 
@@ -254,8 +296,8 @@ class RegistroModelli:
         nome = self.nome_per(compito)
         if not nome:
             raise RuntimeError(
-                "nessun modello configurato: TAROT_MODELLI è vuoto e non "
-                "esiste nemmeno un modello predefinito"
+                "nessun modello configurato: nessun fornitore in console e "
+                "non esiste nemmeno un modello predefinito dall'ambiente"
             )
         return self._fornitore(nome)
 
