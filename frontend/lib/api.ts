@@ -265,6 +265,56 @@ export interface Movimento {
   reading_id: string | null;
 }
 
+/** Un mazzo del negozio (v5, Fase B): il predefinito (Thoth) è sempre posseduto, senza sblocco. */
+export interface Mazzo {
+  id: number;
+  slug: string;
+  nome: string;
+  descrizione: string | null;
+  predefinito: boolean;
+  attivo: boolean;
+  attivo_ora: boolean;
+  attivazione_da: string | null;
+  attivazione_fino: string | null;
+  prezzo_digitale: number | null;
+  prezzo_digitale_scontato: number | null;
+  offerta_attiva: boolean;
+  offerta_valido_fino: string | null;
+  prezzo_stampa: number | null;
+  prezzo_fisico: number | null;
+  richiede_spedizione: boolean;
+  valuta: string;
+  rank: number;
+}
+
+export type TipoVoceOrdine = "digitale" | "pdf" | "fisico";
+
+export interface VoceCarrelloInvio {
+  deck_id: number;
+  tipo: TipoVoceOrdine;
+  quantita?: number;
+}
+
+export interface RigaOrdine {
+  tipo: TipoVoceOrdine;
+  deck_id: number;
+  quantita: number;
+  prezzo_pieno_unitario: number;
+  prezzo_finale_unitario: number;
+  stato_evasione: string | null;
+}
+
+export interface Ordine {
+  id: string;
+  status: string;
+  importo_totale: number;
+  sconto_scaglioni: number;
+  valuta: string;
+  righe: RigaOrdine[];
+  creato: string | null;
+  completato: string | null;
+}
+
 /* Il contatore delle condivisioni: una condivisione è «verificata» quando, dopo
  * che hai usato un pulsante di condivisione, qualcun altro apre il tuo link. */
 export interface Condivisioni {
@@ -406,6 +456,9 @@ export const leggiCarta = (id: string, lang?: string) =>
   chiama<Carta>(null, lang ? `/cards/${encodeURIComponent(id)}?lang=${encodeURIComponent(lang)}` : `/cards/${encodeURIComponent(id)}`);
 export const leggiCondivisa = (token: string) =>
   chiama<LetturaCondivisa>(null, `/shared/${encodeURIComponent(token)}`);
+export const elencaMazzi = () => chiama<Mazzo[]>(null, "/decks");
+export const leggiMazzo = (slug: string) => chiama<Mazzo>(null, `/decks/${slug}`);
+
 export const leggiDisclaimer = (lang: string) =>
   chiama<{ testo: string }>(null, `/disclaimer?lang=${lang}`);
 
@@ -662,6 +715,21 @@ export const abbonaGratis = (token: string | null, piano: string) =>
   chiama<unknown>(token, "/me/subscription", { method: "POST", body: { piano } });
 export const disdici = (token: string | null) =>
   chiama<unknown>(token, "/me/subscription/cancel", { method: "POST" });
+
+/* ---- negozio mazzi (v5, Fase B3) ---- */
+
+/** Gli id dei mazzi che l'utente può già leggere (predefiniti + sblocchi acquistati). */
+export const mieiMazzi = (token: string | null) =>
+  chiama<{ deck_ids: number[] }>(token, "/me/decks");
+
+export const apriOrdine = (token: string | null, voci: VoceCarrelloInvio[], ritorno?: string) =>
+  chiama<{ url: string } & Ordine>(token, "/orders", { method: "POST", body: { voci, ritorno } });
+
+export const elencaOrdini = (token: string | null) =>
+  chiama<{ ordini: Ordine[] }>(token, "/me/orders");
+
+export const leggiOrdine = (token: string | null, id: string) =>
+  chiama<Ordine>(token, `/me/orders/${id}`);
 
 export const leggiProfilo = (token: string | null) => chiama<Profilo>(token, "/me/profile");
 export const aggiornaProfilo = (

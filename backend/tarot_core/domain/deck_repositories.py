@@ -54,6 +54,16 @@ async def possiede(session: AsyncSession, user_id: int, deck: Deck) -> bool:
     return riga is not None
 
 
+async def posseduti_ids(session: AsyncSession, user_id: int) -> set[int]:
+    """Gli id dei mazzi che `user_id` può già leggere: ogni predefinito, più ciò che risulta in
+    `DeckUnlock` — usato dal negozio per non proporre un secondo acquisto di ciò che si ha già."""
+    predefiniti = {d.id for d in await tutti(session) if d.predefinito}
+    sbloccati = (
+        await session.execute(select(DeckUnlock.deck_id).where(DeckUnlock.user_id == user_id))
+    ).scalars()
+    return predefiniti | set(sbloccati)
+
+
 def mazzo_json(d: Deck) -> Dict[str, Any]:
     return {
         "id": d.id,

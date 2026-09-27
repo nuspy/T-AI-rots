@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from ...auth.dependencies import CurrentUser, DbSession
 from ...billing.ordini import CarrelloNonValido, GestoreOrdini, VoceCarrello
 from ...billing.pagamenti import PagamentiNonDisponibili
+from ...domain import deck_repositories
 from ...domain.ordini_models import Ordine
 from ...settings import get_settings
 
@@ -47,6 +48,13 @@ def _ordine_json(o: Ordine) -> Dict[str, Any]:
         "creato": o.created_at.isoformat() if o.created_at else None,
         "completato": o.completed_at.isoformat() if o.completed_at else None,
     }
+
+
+@router.get("/me/decks")
+async def i_miei_mazzi(user: CurrentUser, session: DbSession) -> Dict[str, Any]:
+    """Quali mazzi `user` può già leggere — il negozio lo usa per proporre «Aggiungi al carrello»
+    solo per ciò che non si possiede ancora."""
+    return {"deck_ids": sorted(await deck_repositories.posseduti_ids(session, user.id))}
 
 
 @router.post("/orders", status_code=status.HTTP_201_CREATED)

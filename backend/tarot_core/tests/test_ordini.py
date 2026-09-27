@@ -169,3 +169,31 @@ async def test_un_ordine_annullato_non_sblocca(client, session):
     await client.post(f"/billing/mock/ordine/{ordine_id}/esito", data={"esito": "annulla", "ritorno": "/mazzo"})
     dettaglio = await client.get(f"/me/orders/{ordine_id}")
     assert dettaglio.json()["status"] == "annullato"
+
+
+# ---- GET /me/decks: cosa possiede già chi chiede ---------------------------------------------------
+
+
+async def test_i_miei_mazzi_include_il_predefinito_senza_sblocco(client, session):
+    predefinito = Deck(nome="Thoth", slug="thoth-test", predefinito=True, attivo=True)
+    altro = Deck(nome="Altro", slug="altro-non-posseduto", attivo=True, prezzo_digitale=1000)
+    session.add_all([predefinito, altro])
+    await session.commit()
+
+    r = await client.get("/me/decks")
+    assert r.status_code == 200
+    ids = r.json()["deck_ids"]
+    assert predefinito.id in ids
+    assert altro.id not in ids
+
+
+async def test_i_miei_mazzi_include_uno_sbloccato_da_un_ordine_pagato(client, session):
+    mazzo = Deck(nome="Da comprare", slug="da-comprare-2", attivo=True, prezzo_digitale=1000)
+    session.add(mazzo)
+    await session.commit()
+    r = await client.post("/orders", json={"voci": [{"deck_id": mazzo.id, "tipo": "digitale"}]})
+    ordine_id = r.json()["id"]
+    await client.post(f"/billing/mock/ordine/{ordine_id}/esito", data={"esito": "paga", "ritorno": "/mazzo"})
+
+    r2 = await client.get("/me/decks")
+    assert mazzo.id in r2.json()["deck_ids"]

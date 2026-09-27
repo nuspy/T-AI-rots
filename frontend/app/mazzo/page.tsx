@@ -5,7 +5,7 @@
  * ci sarà, qui si aggiunge `offers` con prezzo, valuta e disponibilità. */
 
 import type { Metadata } from "next";
-import type { Carta } from "@/lib/api";
+import type { Carta, Mazzo } from "@/lib/api";
 import { SITE_URL } from "@/lib/condivisione";
 import { linguaPagina } from "@/lib/lingua-server";
 import { NOME_MARCHIO } from "@/lib/marchio";
@@ -37,6 +37,7 @@ export default async function Pagina() {
   const lingua = await linguaPagina();
   const tutte = (await leggiDalServer<Carta[]>(`/cards?lang=${lingua}`)) ?? [];
   const carte = VETRINA.map((id) => tutte.find((c) => c.id === id)).filter((c): c is Carta => !!c);
+  const mazzi = (await leggiDalServer<Mazzo[]>("/decks")) ?? [];
   const url = urlPubblico(lingua, "/mazzo");
   const dati = grafo(
     briciole([{ nome: NOME_MARCHIO, url: SITE_URL }, { nome: MAZZO.title(lingua), url }]),
@@ -53,7 +54,7 @@ export default async function Pagina() {
   return (
     <>
       <JsonLd dati={dati} />
-      <PaginaMazzo carte={carte} />
+      <PaginaMazzo carte={carte} mazziIniziali={mazzi} />
     </>
   );
 }
