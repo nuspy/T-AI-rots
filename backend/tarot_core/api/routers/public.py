@@ -11,6 +11,7 @@ from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import select
 
 from ...auth.dependencies import DbSession
+from ...billing import mazzi as mazzi_billing
 from ...domain import deck_repositories
 from ...domain.repositories import ReadingRepository
 from ...domain.share_models import ShareImage
@@ -159,7 +160,9 @@ async def _ha_immagine(session, reading_id) -> bool:
 @router.get("/decks")
 async def mazzi(session: DbSession) -> List[Dict[str, Any]]:
     """I mazzi visibili nel negozio adesso: attivi e dentro la finestra di attivazione, se c'è."""
-    return [deck_repositories.mazzo_json(d) for d in await deck_repositories.attivi_ora(session)]
+    attivi = await deck_repositories.attivi_ora(session)
+    offerte = await deck_repositories.offerte_per(session, [d.id for d in attivi])
+    return [mazzi_billing.mazzo_con_prezzo_json(d, offerte.get(d.id)) for d in attivi]
 
 
 @router.get("/decks/{slug}")
@@ -167,4 +170,5 @@ async def mazzo(slug: str, session: DbSession) -> Dict[str, Any]:
     d = await deck_repositories.per_slug(session, slug)
     if d is None or not d.attivo_ora:
         raise HTTPException(status_code=404, detail="Mazzo non trovato")
-    return deck_repositories.mazzo_json(d)
+    offerta = await deck_repositories.offerta_per(session, d.id)
+    return mazzi_billing.mazzo_con_prezzo_json(d, offerta)

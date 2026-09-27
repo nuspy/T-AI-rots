@@ -12,7 +12,7 @@ from .blog_models import (
     ApiKey, BlogPost, BlogPostLink, BlogPostRevision, BlogPostTag, BlogSection, BlogTag, MediaImage,
 )
 from .config_models import ImpostazioniCrediti, LlmProvider, ModelAssignment
-from .deck_models import Deck, DeckUnlock
+from .deck_models import Deck, DeckUnlock, OffertaMazzo
 from .models import AuditLog, DailyCard, DrawnCard, InterviewTurn, Reading, User
 from .share_models import ShareEvent, ShareImage, ShareSignup, ShareVisit
 
@@ -38,6 +38,7 @@ __all__ = [
     "InterviewTurn",
     "LlmProvider",
     "ModelAssignment",
+    "OffertaMazzo",
     "OwnedMixin",
     "PaymentCheckout",
     "PaymentEvent",

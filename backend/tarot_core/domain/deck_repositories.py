@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .deck_models import Deck, DeckUnlock
+from .deck_models import Deck, DeckUnlock, OffertaMazzo
 
 
 async def tutti(session: AsyncSession) -> List[Deck]:
@@ -29,6 +29,17 @@ async def per_slug(session: AsyncSession, slug: str) -> Optional[Deck]:
 
 async def predefinito(session: AsyncSession) -> Optional[Deck]:
     return (await session.execute(select(Deck).where(Deck.predefinito.is_(True)))).scalar_one_or_none()
+
+
+async def offerta_per(session: AsyncSession, deck_id: int) -> Optional[OffertaMazzo]:
+    return (await session.execute(select(OffertaMazzo).where(OffertaMazzo.deck_id == deck_id))).scalar_one_or_none()
+
+
+async def offerte_per(session: AsyncSession, deck_ids: List[int]) -> Dict[int, OffertaMazzo]:
+    if not deck_ids:
+        return {}
+    righe = (await session.execute(select(OffertaMazzo).where(OffertaMazzo.deck_id.in_(deck_ids)))).scalars()
+    return {o.deck_id: o for o in righe}
 
 
 async def possiede(session: AsyncSession, user_id: int, deck: Deck) -> bool:

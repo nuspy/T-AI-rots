@@ -14,8 +14,9 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
 from ...auth.dependencies import CurrentUser, DbSession, require_role
+from ...billing import mazzi as mazzi_billing
 from ...domain import deck_repositories
-from ...domain.deck_models import Deck, DeckUnlock
+from ...domain.deck_models import Deck, DeckUnlock, OffertaMazzo
 from ...domain.models import Reading
 from ...domain.repositories import AuditRepository
 
@@ -65,7 +66,9 @@ class MazzoMod(BaseModel):
 
 @router.get("/decks")
 async def mazzi(session: DbSession) -> list[Dict[str, Any]]:
-    return [deck_repositories.mazzo_json(d) for d in await deck_repositories.tutti(session)]
+    tutti = await deck_repositories.tutti(session)
+    offerte = await deck_repositories.offerte_per(session, [d.id for d in tutti])
+    return [mazzi_billing.mazzo_con_prezzo_json(d, offerte.get(d.id)) for d in tutti]
 
 
 @router.post("/decks", status_code=201)
@@ -135,6 +138,72 @@ async def elimina_mazzo(slug: str, request: Request, user: CurrentUser, session:
     await session.delete(mazzo)
     await AuditRepository(session).record(
         action="deck.delete", actor_id=user.id, target_type="deck", target_id=slug, before=prima, ip=_ip(request),
+    )
+    await session.commit()
+    return Response(status_code=204)
+
+
+# ---- offerte a tempo (Fase B2) --------------------------------------------------------------------
+
+
+class OffertaIn(BaseModel):
+    tipo: str = Field(pattern="^(percentuale|importo)$")
+    valore: int = Field(gt=0, le=TETTO_PREZZO)
+    valido_dal: Optional[datetime] = None
+    valido_fino: Optional[datetime] = None
+
+    @model_validator(mode="after")
+    def _sensata(self) -> "OffertaIn":
+        if self.tipo == "percentuale" and self.valore > 100:
+            raise ValueError("uno sconto percentuale non può superare 100")
+        if self.valido_dal and self.valido_fino and self.valido_dal >= self.valido_fino:
+            raise ValueError("la finestra dell'offerta deve avere un inizio prima della fine")
+        return self
+
+
+@router.put("/decks/{slug}/offerta")
+async def imposta_offerta(slug: str, payload: OffertaIn, request: Request, user: CurrentUser, session: DbSession) -> Dict[str, Any]:
+    """Crea o sostituisce l'offerta del mazzo: **una sola** alla volta, non si accumulano."""
+    mazzo = await deck_repositories.per_slug(session, slug)
+    if mazzo is None:
+        raise HTTPException(status_code=404, detail="Mazzo non trovato")
+    if mazzo.prezzo_digitale is None:
+        raise HTTPException(status_code=422, detail="Il mazzo non ha un prezzo digitale da scontare.")
+    prima_offerta = await deck_repositories.offerta_per(session, mazzo.id)
+    prima = mazzi_billing.mazzo_con_prezzo_json(mazzo, prima_offerta)
+    if prima_offerta is None:
+        session.add(OffertaMazzo(
+            deck_id=mazzo.id, tipo=payload.tipo, valore=payload.valore,
+            valido_dal=payload.valido_dal, valido_fino=payload.valido_fino,
+        ))
+    else:
+        prima_offerta.tipo = payload.tipo
+        prima_offerta.valore = payload.valore
+        prima_offerta.valido_dal = payload.valido_dal
+        prima_offerta.valido_fino = payload.valido_fino
+    await session.flush()
+    offerta = await deck_repositories.offerta_per(session, mazzo.id)
+    await AuditRepository(session).record(
+        action="deck.offerta.imposta", actor_id=user.id, target_type="deck", target_id=mazzo.slug,
+        before=prima, after=mazzi_billing.mazzo_con_prezzo_json(mazzo, offerta), ip=_ip(request),
+    )
+    await session.commit()
+    return mazzi_billing.mazzo_con_prezzo_json(mazzo, offerta)
+
+
+@router.delete("/decks/{slug}/offerta", status_code=204)
+async def rimuovi_offerta(slug: str, request: Request, user: CurrentUser, session: DbSession) -> Response:
+    mazzo = await deck_repositories.per_slug(session, slug)
+    if mazzo is None:
+        raise HTTPException(status_code=404, detail="Mazzo non trovato")
+    offerta = await deck_repositories.offerta_per(session, mazzo.id)
+    if offerta is None:
+        raise HTTPException(status_code=404, detail="Questo mazzo non ha un'offerta.")
+    prima = mazzi_billing.mazzo_con_prezzo_json(mazzo, offerta)
+    await session.delete(offerta)
+    await AuditRepository(session).record(
+        action="deck.offerta.rimuovi", actor_id=user.id, target_type="deck", target_id=mazzo.slug,
+        before=prima, ip=_ip(request),
     )
     await session.commit()
     return Response(status_code=204)

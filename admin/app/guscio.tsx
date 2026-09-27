@@ -12,6 +12,7 @@ const SEZIONI = [
   { href: "/pagamenti", etichetta: "Pagamenti" },
   { href: "/catalogo", etichetta: "Catalogo" },
   { href: "/coupon", etichetta: "Coupon" },
+  { href: "/mazzi", etichetta: "Mazzi" },
   { href: "/blog", etichetta: "Blog" },
   { href: "/report", etichetta: "Report" },
   { href: "/registro", etichetta: "Registro" },

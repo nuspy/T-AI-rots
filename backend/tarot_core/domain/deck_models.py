@@ -27,6 +27,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, TimestampMixin
 
+#: Come per `Coupon`: percentuale (1-100) o importo fisso in centesimi.
+TIPI_OFFERTA_MAZZO = ("percentuale", "importo")
+
 
 class Deck(Base, TimestampMixin):
     """Un mazzo acquistabile: metadati commerciali, non l'artwork (file statici nel frontend)."""
@@ -101,4 +104,33 @@ class DeckUnlock(Base):
 
     __table_args__ = (
         UniqueConstraint("user_id", "deck_id", name="uq_deck_unlocks_utente_mazzo"),
+    )
+
+
+class OffertaMazzo(Base, TimestampMixin):
+    """Uno sconto a tempo sul prezzo digitale di un mazzo (v5, Fase B2): non un codice da riscattare
+    come `Coupon` — un prezzo mostrato, in vigore da solo. `deck_id` è la chiave primaria: **un solo**
+    sconto attivo per mazzo alla volta, sostituito con un `PUT`, non accumulato con un altro.
+
+    Nessun job di scadenza: come per `Coupon.valido_fino`, il confronto con `now()` avviene a ogni
+    lettura del prezzo (`prezzo_effettivo()` in `billing/mazzi.py`) — un'offerta scaduta sparisce da
+    sola, non richiede che qualcuno la cancelli."""
+
+    __tablename__ = "offerte_mazzo"
+
+    deck_id: Mapped[int] = mapped_column(ForeignKey("decks.id", ondelete="CASCADE"), primary_key=True)
+    tipo: Mapped[str] = mapped_column(String(12), nullable=False)
+    valore: Mapped[int] = mapped_column(Integer, nullable=False)
+    valido_dal: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    valido_fino: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+    deck: Mapped[Deck] = relationship()
+
+    __table_args__ = (
+        CheckConstraint("tipo in ('percentuale', 'importo')", name="ck_offerte_mazzo_tipo"),
+        CheckConstraint("tipo <> 'percentuale' or valore <= 100", name="ck_offerte_mazzo_percentuale"),
+        CheckConstraint(
+            "valido_dal is null or valido_fino is null or valido_dal < valido_fino",
+            name="ck_offerte_mazzo_finestra",
+        ),
     )
