@@ -8,7 +8,7 @@ stessa. I default qui sono quelli dello sviluppo con Docker Compose, cosi'
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import List, Literal
+from typing import Any, Dict, List, Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -87,6 +87,9 @@ class Settings(BaseSettings):
     llm_base_url: str = "http://127.0.0.1:1234/v1"
     llm_model: str = ""          # vuoto: si usa il primo modello caricato
     llm_api_key: str = "non-serve-in-locale"
+    #: JSON: campi aggiunti a ogni richiesta al modello predefinito (vedi `ModelloConfigurato.parametri`), per
+    #: esempio `{"reasoning_effort": "low"}` per regolare il ragionamento. Vuoto: nessuno.
+    llm_parametri: Dict[str, Any] = Field(default_factory=dict)
     #: Oltre questo tempo senza un singolo token la richiesta viene interrotta.
     #: E' un timeout fra i token, non sulla durata totale: una risposta lunga e'
     #: legittima, un silenzio di due minuti no.

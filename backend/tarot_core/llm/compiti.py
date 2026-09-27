@@ -31,9 +31,9 @@ from __future__ import annotations
 
 import logging
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +121,14 @@ class ModelloConfigurato(BaseModel):
     #: qualunque somiglia a qualunque altra cosa.
     #: Valori: vuoto, `openai`, `vllm`, `llamacpp`, `lmstudio`, `other`.
     motore: str = ""
+    #: Campi che si aggiungono a **ogni** richiesta a questo modello, per ciò che dipende dal motore e dal modello e
+    #: non ha un nome comune: soprattutto il ragionamento, che si spegne (o si regola) **nella richiesta**, non al
+    #: caricamento del modello. Per esempio `{"reasoning_effort": "low"}` o
+    #: `{"chat_template_kwargs": {"enable_thinking": false}}`: il campo giusto lo dice il motore (LM Studio, vLLM,
+    #: llama.cpp). Per avere lo stesso modello con e senza ragionamento lo si dichiara due volte, con nomi e
+    #: `parametri` diversi, e la console assegna l'uno o l'altro a ciascun compito. Un modello con il
+    #: ragionamento spento non è `ragiona`.
+    parametri: Dict[str, Any] = Field(default_factory=dict)
     #: Come si presenta in console. Non ha effetto sul comportamento.
     descrizione: str = ""
     #: Dichiara che il modello non rifiuta nulla — un modello «abliterato» ha
@@ -128,6 +136,24 @@ class ModelloConfigurato(BaseModel):
     #: è l'amministratore a decidere. Serve perché la scelta sia informata
     #: invece che accidentale, e perché resti scritto cosa si è scelto.
     senza_filtri: bool = False
+
+    @field_validator("parametri")
+    @classmethod
+    def _parametri_ammessi(cls, valore: Dict[str, Any]) -> Dict[str, Any]:
+        return controlla_parametri(valore)
+
+
+#: I campi della richiesta che l'applicazione scrive da sé: `parametri` non li può toccare (un modello che
+#: cambiasse `messages` o `stream` romperebbe la lettura, o la leggerebbe di nascosto).
+CAMPI_RISERVATI = frozenset({"model", "messages", "stream", "stream_options", "stop", "temperature", "max_tokens"})
+
+
+def controlla_parametri(parametri: Dict[str, Any]) -> Dict[str, Any]:
+    """`parametri` senza i campi che l'applicazione scrive da sé; altrimenti `ValueError`."""
+    riservati = sorted(CAMPI_RISERVATI & set(parametri))
+    if riservati:
+        raise ValueError(f"parametri non ammessi (li scrive l'applicazione): {', '.join(riservati)}")
+    return parametri
 
 
 #: Il nome che prende il modello ricavato dalle vecchie impostazioni, quando
@@ -274,6 +300,7 @@ class RegistroModelli:
                 default_model=configurazione.model,
                 motore=configurazione.motore or None,
                 ragiona=configurazione.ragiona,
+                parametri=configurazione.parametri,
                 # Il nome finisce nelle tracce: senza, due modelli diversi
                 # comparirebbero entrambi come «openai-compatibile» e non si
                 # saprebbe quale ha prodotto quale risposta.
@@ -311,6 +338,7 @@ def modelli_da_impostazioni() -> List[ModelloConfigurato]:
             api_key=(
                 s.anthropic_api_key if s.llm_provider == "anthropic" else s.llm_api_key
             ),
+            parametri={} if s.llm_provider == "anthropic" else s.llm_parametri,
             descrizione="Dalle impostazioni TAROT_LLM_*",
         )
     ]

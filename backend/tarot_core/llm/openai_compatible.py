@@ -52,6 +52,7 @@ class OpenAICompatibleProvider(LLMProvider):
         name: str = "openai-compatibile",
         motore: Optional[str] = None,
         ragiona: bool = False,
+        parametri: Optional[Dict[str, Any]] = None,
     ) -> None:
         settings = settings or get_settings()
         self.name = name
@@ -63,6 +64,9 @@ class OpenAICompatibleProvider(LLMProvider):
         #: Se il modello ragiona prima di rispondere. Alza il pavimento del
         #: budget nelle richieste strutturate: vedi `BUDGET_RAGIONAMENTO`.
         self.ragiona = ragiona
+        #: Campi aggiunti a ogni richiesta (per esempio il controllo del ragionamento, che si dà nella richiesta e
+        #: non al caricamento del modello). Quelli di una singola richiesta (`request.extra`) prevalgono.
+        self._parametri: Dict[str, Any] = dict(parametri or {})
         self._api_key = api_key or settings.llm_api_key
         self._default_model = default_model or settings.llm_model
         self._timeout = timeout or settings.llm_stream_timeout
@@ -308,6 +312,7 @@ class OpenAICompatibleProvider(LLMProvider):
             # eventi di streaming, e la contabilità dei token resta vuota
             # proprio nel percorso che si usa sempre.
             payload["stream_options"] = {"include_usage": True}
+        payload.update(self._parametri)
         payload.update(self._campi_di_cache(request))
         payload.update(request.extra)
         return payload
