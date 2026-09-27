@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import uuid
 from datetime import date, datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
@@ -14,9 +15,11 @@ from sqlalchemy import select
 
 from ...auth.dependencies import CurrentUser, DbSession
 from ...billing.credits import RegistroCrediti
+from ...domain import indirizzi_repositories
 from ...domain.base import utcnow
 from ...domain.blog_models import MediaImage
 from ...domain.models import DailyCard, User
+from ...domain.ordini_models import IndirizzoSpedizione
 from ...domain.repositories import AuditRepository, nuovo_codice_invito
 from ...tarot import blog as regole_blog
 from ...tarot.numerologia import carta_dell_anima, carta_dell_anno
@@ -270,4 +273,101 @@ async def togli_avatar(user: CurrentUser, session: DbSession) -> Response:
         if immagine is not None and immagine.uso == "avatar" and immagine.owner_id == user.id:
             await session.delete(immagine)
         await session.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# ---- indirizzi di spedizione (v5, Fase B5) --------------------------------------------------------
+
+#: Un profilo non ne accumula all'infinito: oltre questo numero, aggiungerne un altro chiede prima di
+#: cancellarne uno — non è una lista della spesa.
+TETTO_INDIRIZZI = 10
+
+
+class IndirizzoIn(BaseModel):
+    nome: str = Field(min_length=1, max_length=120)
+    via: str = Field(min_length=1, max_length=200)
+    citta: str = Field(min_length=1, max_length=120)
+    cap: str = Field(min_length=1, max_length=20)
+    provincia: Optional[str] = Field(default=None, max_length=80)
+    paese: str = Field(min_length=2, max_length=2, pattern="^[A-Za-z]{2}$")
+    telefono: Optional[str] = Field(default=None, max_length=30)
+    predefinito: bool = False
+
+
+class IndirizzoMod(BaseModel):
+    nome: Optional[str] = Field(default=None, min_length=1, max_length=120)
+    via: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    citta: Optional[str] = Field(default=None, min_length=1, max_length=120)
+    cap: Optional[str] = Field(default=None, min_length=1, max_length=20)
+    provincia: Optional[str] = Field(default=None, max_length=80)
+    paese: Optional[str] = Field(default=None, min_length=2, max_length=2, pattern="^[A-Za-z]{2}$")
+    telefono: Optional[str] = Field(default=None, max_length=30)
+    predefinito: Optional[bool] = None
+
+
+def _indirizzo_json(i: IndirizzoSpedizione) -> Dict[str, Any]:
+    return {
+        "id": str(i.id), "nome": i.nome, "via": i.via, "citta": i.citta, "cap": i.cap,
+        "provincia": i.provincia, "paese": i.paese, "telefono": i.telefono, "predefinito": i.predefinito,
+    }
+
+
+@router.get("/addresses")
+async def indirizzi(user: CurrentUser, session: DbSession) -> Dict[str, List[Dict[str, Any]]]:
+    return {"indirizzi": [_indirizzo_json(i) for i in await indirizzi_repositories.elenca(session, user.id)]}
+
+
+@router.post("/addresses", status_code=status.HTTP_201_CREATED)
+async def crea_indirizzo(payload: IndirizzoIn, user: CurrentUser, session: DbSession) -> Dict[str, Any]:
+    esistenti = await indirizzi_repositories.elenca(session, user.id)
+    if len(esistenti) >= TETTO_INDIRIZZI:
+        raise HTTPException(status_code=422, detail="Hai già troppi indirizzi salvati: eliminane uno prima di aggiungerne un altro.")
+    predefinito = payload.predefinito or not esistenti  # il primo indirizzo è predefinito di diritto
+    if predefinito:
+        await indirizzi_repositories.azzera_predefinito(session, user.id)
+    indirizzo = IndirizzoSpedizione(
+        user_id=user.id, nome=payload.nome.strip(), via=payload.via.strip(), citta=payload.citta.strip(),
+        cap=payload.cap.strip(), provincia=(payload.provincia or "").strip() or None,
+        paese=payload.paese.upper(), telefono=(payload.telefono or "").strip() or None, predefinito=predefinito,
+    )
+    session.add(indirizzo)
+    await session.commit()
+    return _indirizzo_json(indirizzo)
+
+
+@router.patch("/addresses/{indirizzo_id}")
+async def modifica_indirizzo(
+    indirizzo_id: uuid.UUID, payload: IndirizzoMod, user: CurrentUser, session: DbSession,
+) -> Dict[str, Any]:
+    indirizzo = await indirizzi_repositories.per_id(session, user.id, indirizzo_id)
+    if indirizzo is None:
+        raise HTTPException(status_code=404, detail="Indirizzo non trovato")
+    dati = payload.model_dump(exclude_unset=True)
+    if dati.get("predefinito"):
+        await indirizzi_repositories.azzera_predefinito(session, user.id, tranne=indirizzo.id)
+    for campo, valore in dati.items():
+        if campo == "paese" and isinstance(valore, str):
+            valore = valore.upper()
+        elif isinstance(valore, str) and campo != "predefinito":
+            valore = valore.strip() or None
+        setattr(indirizzo, campo, valore)
+    await session.commit()
+    return _indirizzo_json(indirizzo)
+
+
+@router.delete("/addresses/{indirizzo_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def elimina_indirizzo(indirizzo_id: uuid.UUID, user: CurrentUser, session: DbSession) -> Response:
+    indirizzo = await indirizzi_repositories.per_id(session, user.id, indirizzo_id)
+    if indirizzo is None:
+        raise HTTPException(status_code=404, detail="Indirizzo non trovato")
+    era_predefinito = indirizzo.predefinito
+    await session.delete(indirizzo)
+    await session.flush()
+    if era_predefinito:
+        # Un altro, se resta qualcuno, diventa il nuovo predefinito — mai lasciare il profilo senza
+        # nessuno quando ce n'è ancora almeno uno disponibile.
+        rimasti = await indirizzi_repositories.elenca(session, user.id)
+        if rimasti:
+            rimasti[0].predefinito = True
+    await session.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

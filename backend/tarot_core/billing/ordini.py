@@ -9,7 +9,7 @@ solo la quantità: conta `count(distinct deck_id)`, non il numero di righe.
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 from sqlalchemy import select
@@ -20,7 +20,7 @@ from sqlalchemy.orm.attributes import set_committed_value
 from ..domain.base import utcnow
 from ..domain.billing_models import PaymentEvent
 from ..domain.deck_models import Deck, DeckUnlock, OffertaMazzo
-from ..domain.ordini_models import Ordine, RigaOrdine
+from ..domain.ordini_models import IndirizzoSpedizione, Ordine, RigaOrdine
 from .mazzi import prezzo_effettivo
 from .pagamenti import EventoPagamento, ProviderPagamenti, provider_pagamenti
 
@@ -110,7 +110,10 @@ class GestoreOrdini:
         self._session = session
         self._provider = provider or provider_pagamenti()
 
-    async def apri(self, user_id: int, voci: List[VoceCarrello], *, ritorno: str) -> tuple[Ordine, str]:
+    async def apri(
+        self, user_id: int, voci: List[VoceCarrello], *, ritorno: str,
+        indirizzo: Optional[IndirizzoSpedizione] = None,
+    ) -> tuple[Ordine, str]:
         deck_ids = list({v.deck_id for v in voci})
         decks = {
             d.id: d for d in (await self._session.execute(select(Deck).where(Deck.id.in_(deck_ids)))).scalars()
@@ -118,10 +121,11 @@ class GestoreOrdini:
         for deck_id in deck_ids:
             if deck_id not in decks or not decks[deck_id].attivo_ora:
                 raise CarrelloNonValido(f"mazzo non disponibile: {deck_id}")
-        if any(v.tipo == "fisico" for v in voci):
-            # Fase B5 (indirizzi di spedizione) non è ancora arrivata: il tipo esiste già nello schema
-            # (per non dover fare un'altra migrazione quando arriverà), ma non è ancora acquistabile.
-            raise CarrelloNonValido("il mazzo fisico non è ancora disponibile all'acquisto")
+        richiede_indirizzo = any(v.tipo == "fisico" for v in voci)
+        if richiede_indirizzo and (indirizzo is None or indirizzo.user_id != user_id):
+            raise CarrelloNonValido("serve un indirizzo di spedizione per il mazzo fisico")
+        if not richiede_indirizzo:
+            indirizzo = None  # arrivato per errore col carrello sbagliato: non si registra su un ordine che non spedisce
         offerte_righe = (
             await self._session.execute(select(OffertaMazzo).where(OffertaMazzo.deck_id.in_(deck_ids)))
         ).scalars()
@@ -132,6 +136,8 @@ class GestoreOrdini:
         ordine = Ordine(
             user_id=user_id, status="aperto", provider=self._provider.name,
             importo_totale=risultato.totale, sconto_scaglioni=risultato.sconto_scaglioni,
+            indirizzo_spedizione_id=indirizzo.id if indirizzo else None,
+            indirizzo_spedizione=indirizzo.campi() if indirizzo else None,
         )
         self._session.add(ordine)
         await self._session.flush()
@@ -197,6 +203,10 @@ class GestoreOrdini:
                         user_id=ordine.user_id, deck_id=riga.deck_id, acquired_at=utcnow(),
                         riga_ordine_id=riga.id,
                     ))
+            elif riga.tipo == "fisico":
+                # Da qui in poi il registro ordini (Fase B6) segue la spedizione; per ora c'è solo il
+                # primo stato, che dice «sì, questa riga va evasa».
+                riga.stato_evasione = riga.stato_evasione or "in_attesa"
         await self._session.flush()
         return "ordine pagato"
 

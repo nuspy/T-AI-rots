@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Any, Dict, Optional
 
-from sqlalchemy import BigInteger, CheckConstraint, DateTime, ForeignKey, Integer, String, Uuid
+from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Integer, JSON, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, TimestampMixin
@@ -35,11 +35,13 @@ class Ordine(Base, TimestampMixin):
     #: `prezzo_finale_unitario` di ogni riga, non serve ripeterlo qui.
     sconto_scaglioni: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     valuta: Mapped[str] = mapped_column(String(3), default="EUR", nullable=False)
-    #: L'indirizzo scelto al checkout, se il carrello ha una riga fisica (Fase B5): una **fotografia**,
-    #: non una FK viva — un indirizzo poi modificato o cancellato non deve riscrivere la storia
-    #: dell'ordine. Nessun vincolo di chiave esterna: il valore, quando c'è, è l'id di una riga
-    #: `indirizzi_spedizione` al momento dell'ordine, arriva con la migrazione di B5.
+    #: L'indirizzo scelto al checkout, se il carrello ha una riga fisica (Fase B5). Il riferimento
+    #: (senza FK: una riga di `indirizzi_spedizione` cancellata non deve invalidare un ordine passato)
+    #: serve solo per un eventuale «modifica il tuo indirizzo salvato partendo da questo»; la verità
+    #: storica è `indirizzo_spedizione`, una copia dei campi presa al momento dell'ordine — un
+    #: indirizzo poi corretto o cancellato non deve riscrivere silenziosamente la storia dell'ordine.
     indirizzo_spedizione_id: Mapped[Optional[uuid.UUID]] = mapped_column(Uuid)
+    indirizzo_spedizione: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
 
     righe: Mapped[list["RigaOrdine"]] = relationship(
@@ -83,3 +85,31 @@ class RigaOrdine(Base):
             name="ck_righe_ordine_stato_evasione",
         ),
     )
+
+
+class IndirizzoSpedizione(Base, TimestampMixin):
+    """Un indirizzo salvato nel profilo (Fase B5): il checkout ne sceglie uno quando il carrello
+    contiene una riga fisica, e ne copia i campi nell'ordine (`Ordine.indirizzo_spedizione`) — questa
+    riga può cambiare dopo, quella copia no."""
+
+    __tablename__ = "indirizzi_spedizione"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    nome: Mapped[str] = mapped_column(String(120), nullable=False)
+    via: Mapped[str] = mapped_column(String(200), nullable=False)
+    citta: Mapped[str] = mapped_column(String(120), nullable=False)
+    cap: Mapped[str] = mapped_column(String(20), nullable=False)
+    provincia: Mapped[Optional[str]] = mapped_column(String(80))
+    #: Codice ISO a due lettere ("IT", "HU", …): basta per instradare una spedizione fisica reale.
+    paese: Mapped[str] = mapped_column(String(2), nullable=False)
+    telefono: Mapped[Optional[str]] = mapped_column(String(30))
+    predefinito: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    def campi(self) -> Dict[str, Any]:
+        """La fotografia da copiare in un ordine: solo i campi dell'indirizzo, mai l'id o l'utente —
+        chi legge lo storico di un ordine non deve poter risalire a una riga viva del profilo."""
+        return {
+            "nome": self.nome, "via": self.via, "citta": self.citta, "cap": self.cap,
+            "provincia": self.provincia, "paese": self.paese, "telefono": self.telefono,
+        }

@@ -16,7 +16,7 @@ from .blog_models import (
 from .config_models import ImpostazioniCrediti, LlmProvider, ModelAssignment
 from .deck_models import Deck, DeckUnlock, OffertaMazzo
 from .models import AuditLog, DailyCard, DrawnCard, InterviewTurn, Reading, User
-from .ordini_models import Ordine, RigaOrdine
+from .ordini_models import IndirizzoSpedizione, Ordine, RigaOrdine
 from .share_models import ShareEvent, ShareImage, ShareSignup, ShareVisit
 
 __all__ = [
@@ -38,6 +38,7 @@ __all__ = [
     "DeckUnlock",
     "DrawnCard",
     "ImpostazioniCrediti",
+    "IndirizzoSpedizione",
     "InterviewTurn",
     "LlmProvider",
     "ModelAssignment",

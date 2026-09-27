@@ -6,7 +6,7 @@ L'ordine non nasce pagato: nasce quando il fornitore conferma il pagamento (stes
 from __future__ import annotations
 
 import uuid
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import Response
@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 from ...auth.dependencies import CurrentUser, DbSession
 from ...billing.ordini import CarrelloNonValido, GestoreOrdini, VoceCarrello
 from ...billing.pagamenti import PagamentiNonDisponibili
-from ...domain import deck_repositories
+from ...domain import deck_repositories, indirizzi_repositories
 from ...domain.ordini_models import Ordine
 from ...settings import get_settings
 from ...tarot.stampa_mazzo import pdf_per_mazzo
@@ -33,6 +33,8 @@ class VoceIn(BaseModel):
 class CarrelloIn(BaseModel):
     voci: List[VoceIn] = Field(min_length=1, max_length=20)
     ritorno: str = ""
+    #: Obbligatorio solo se il carrello contiene una riga «fisico»: `GestoreOrdini.apri()` lo verifica.
+    indirizzo_id: Optional[uuid.UUID] = None
 
 
 def _riga_json(r: Any) -> Dict[str, Any]:
@@ -48,6 +50,7 @@ def _ordine_json(o: Ordine) -> Dict[str, Any]:
         "id": str(o.id), "status": o.status, "importo_totale": o.importo_totale,
         "sconto_scaglioni": o.sconto_scaglioni, "valuta": o.valuta,
         "righe": [_riga_json(r) for r in o.righe],
+        "indirizzo_spedizione": o.indirizzo_spedizione,
         "creato": o.created_at.isoformat() if o.created_at else None,
         "completato": o.completed_at.isoformat() if o.completed_at else None,
     }
@@ -69,10 +72,16 @@ async def apri_ordine(payload: CarrelloIn, user: CurrentUser, session: DbSession
             raise HTTPException(status_code=400, detail="Ritorno non valido")
         ritorno = f"{base}{payload.ritorno}"
 
+    indirizzo = None
+    if payload.indirizzo_id is not None:
+        indirizzo = await indirizzi_repositories.per_id(session, user.id, payload.indirizzo_id)
+        if indirizzo is None:
+            raise HTTPException(status_code=404, detail="Indirizzo non trovato")
+
     voci = [VoceCarrello(deck_id=v.deck_id, tipo=v.tipo, quantita=v.quantita) for v in payload.voci]
     try:
         async with session.begin_nested():
-            ordine, url = await GestoreOrdini(session).apri(user.id, voci, ritorno=ritorno)
+            ordine, url = await GestoreOrdini(session).apri(user.id, voci, ritorno=ritorno, indirizzo=indirizzo)
     except CarrelloNonValido as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except PagamentiNonDisponibili as exc:
