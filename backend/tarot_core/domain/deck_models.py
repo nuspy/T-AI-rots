@@ -16,12 +16,11 @@ bisogno di essere comprato, e non deve poter essere disattivato per errore (vedi
 """
 from __future__ import annotations
 
-import uuid
 from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import (
-    BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid, false, true,
+    BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, false, true,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -95,10 +94,10 @@ class DeckUnlock(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     deck_id: Mapped[int] = mapped_column(ForeignKey("decks.id", ondelete="CASCADE"), nullable=False)
     acquired_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    #: La riga d'ordine che ha originato lo sblocco (Fase B3): nulla finché quella tabella non esiste
-    #: ancora, poi valorizzata per i nuovi sblocchi. Nessun vincolo di chiave esterna per ora — arriva
-    #: con la migrazione di B3, quando la tabella `righe_ordine` esiste.
-    riga_ordine_id: Mapped[Optional[uuid.UUID]] = mapped_column(Uuid)
+    #: La riga d'ordine che ha originato lo sblocco (Fase B3, `domain/ordini_models.py::RigaOrdine`,
+    #: chiave `BigInteger` come le altre righe interne). Nullo per gli sblocchi che non vengono da un
+    #: acquisto vero (nessuno, oggi — ma il predefinito non passa mai di qui, quindi resta possibile).
+    riga_ordine_id: Mapped[Optional[int]] = mapped_column(BigInteger)
 
     deck: Mapped[Deck] = relationship()
 

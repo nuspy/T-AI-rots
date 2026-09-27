@@ -396,13 +396,17 @@ async def stato_checkout(
 
 @router.post("/billing/webhook")
 async def webhook(request: Request, session: DbSession) -> Dict[str, Any]:
-    """Gli eventi del fornitore di pagamento.
+    """Gli eventi del fornitore di pagamento: piani (`checkout.*`) e ordini del negozio mazzi
+    (`ordine.*`, v5 Fase B3) — smistati sul tipo, condividono lo stesso `payment_events` per
+    l'idempotenza (è indicizzato per id-evento del fornitore, non per ciò che paga).
 
     Senza autenticazione dell'utente — chi chiama è il fornitore — e per
     questo con la firma verificata prima di leggere qualunque cosa. Risponde
     200 anche a un evento già applicato: il fornitore rimanda finché non lo
     riceve, e un errore qui lo farebbe rimandare per sempre.
     """
+    from ...billing.ordini import GestoreOrdini
+
     corpo = await request.body()
     gestore = GestorePagamenti(session)
     try:
@@ -411,7 +415,10 @@ async def webhook(request: Request, session: DbSession) -> Dict[str, Any]:
         logger.warning("Evento di pagamento rifiutato: %s", exc)
         raise HTTPException(status_code=400, detail=f"evento non valido: {exc}") from exc
 
-    esito = await gestore.applica(evento)
+    if evento.tipo.startswith("ordine."):
+        esito = await GestoreOrdini(session, gestore.provider).applica(evento)
+    else:
+        esito = await gestore.applica(evento)
     await session.commit()
     logger.info("Evento %s (%s): %s", evento.id, evento.tipo, esito)
     return {"ricevuto": evento.id, "esito": esito}
@@ -489,6 +496,58 @@ async def esito_simulato(
     return RedirectResponse(
         f"{ritorno}{separatore}checkout={checkout.id}", status_code=status.HTTP_303_SEE_OTHER,
     )
+
+
+@router.get("/billing/mock/ordine/{ordine_id}", response_class=HTMLResponse)
+async def pagina_simulata_ordine(ordine_id: uuid.UUID, session: DbSession, ritorno: str = "") -> HTMLResponse:
+    """La pagina simulata di pagamento per un ordine del negozio mazzi (v5, Fase B3) — sorella di
+    `pagina_simulata`, per un `Ordine` invece che un `PaymentCheckout`."""
+    from ...domain.ordini_models import Ordine
+
+    _simulatore()
+    ordine = await session.get(Ordine, ordine_id)
+    if ordine is None:
+        raise HTTPException(status_code=404, detail="Ordine non trovato")
+
+    importo = f"{ordine.importo_totale / 100:.2f} {ordine.valuta}"
+    n_righe = sum(r.quantita for r in ordine.righe)
+    periodo = f"{n_righe} {'mazzo' if n_righe == 1 else 'mazzi'}, una tantum"
+    chiuso = ordine.status != "aperto"
+    return HTMLResponse(_PAGINA.format(
+        piano="Il tuo ordine",
+        importo=html.escape(importo),
+        periodo=periodo,
+        azione=f"/billing/mock/ordine/{ordine.id}/esito",
+        ritorno=html.escape(ritorno, quote=True),
+        stato=html.escape(ordine.status),
+        disabilitato="disabled" if chiuso else "",
+    ))
+
+
+@router.post("/billing/mock/ordine/{ordine_id}/esito")
+async def esito_simulato_ordine(ordine_id: uuid.UUID, request: Request, session: DbSession) -> RedirectResponse:
+    """Il clic su «Paga» o «Annulla» per un ordine — sorella di `esito_simulato`."""
+    from ...billing.ordini import ORDINE_ANNULLATO, ORDINE_PAGATO, GestoreOrdini
+    from ...domain.ordini_models import Ordine
+
+    simulatore = _simulatore()
+    modulo = await request.form()
+    scelta = str(modulo.get("esito", ""))
+    ritorno = str(modulo.get("ritorno", "")) or get_settings().web_public_url
+
+    ordine = await session.get(Ordine, ordine_id)
+    if ordine is None:
+        raise HTTPException(status_code=404, detail="Ordine non trovato")
+
+    tipo = ORDINE_PAGATO if scelta == "paga" else ORDINE_ANNULLATO
+    corpo = simulatore.evento(tipo, {"ordine_id": str(ordine.id), "importo": ordine.importo_totale})
+    gestore = GestoreOrdini(session, simulatore)
+    evento = simulatore.verifica(corpo, {"X-Mock-Signature": simulatore.firma(corpo)})
+    await gestore.applica(evento)
+    await session.commit()
+
+    separatore = "&" if "?" in ritorno else "?"
+    return RedirectResponse(f"{ritorno}{separatore}ordine={ordine.id}", status_code=status.HTTP_303_SEE_OTHER)
 
 
 _PAGINA = """<!doctype html>

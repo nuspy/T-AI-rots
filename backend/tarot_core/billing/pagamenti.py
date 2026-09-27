@@ -39,6 +39,7 @@ from ..domain.billing_models import PaymentCheckout, PaymentEvent, Plan, Subscri
 from ..settings import Settings, get_settings
 
 if TYPE_CHECKING:  # pragma: no cover
+    from ..domain.ordini_models import Ordine
     from .offerte import Sconto
 
 logger = logging.getLogger(__name__)
@@ -73,7 +74,12 @@ class ProviderPagamenti(Protocol):
     name: str
 
     def url_di_pagamento(self, checkout: PaymentCheckout, *, ritorno: str) -> str:
-        """Dove mandare l'utente a pagare."""
+        """Dove mandare l'utente a pagare un piano."""
+        ...
+
+    def url_di_pagamento_ordine(self, ordine: "Ordine", *, ritorno: str) -> str:
+        """Dove mandare l'utente a pagare un ordine del negozio mazzi (v5, Fase B3): un carrello non
+        è un `Plan`, quindi non passa da `url_di_pagamento` — stesso principio, contenuto diverso."""
         ...
 
     def verifica(self, corpo: bytes, intestazioni: Mapping[str, str]) -> EventoPagamento:
@@ -109,6 +115,11 @@ class PagamentiSimulati:
         from urllib.parse import quote
 
         return f"{self._api}/billing/mock/checkout/{checkout.id}?ritorno={quote(ritorno, safe='')}"
+
+    def url_di_pagamento_ordine(self, ordine: "Ordine", *, ritorno: str) -> str:
+        from urllib.parse import quote
+
+        return f"{self._api}/billing/mock/ordine/{ordine.id}?ritorno={quote(ritorno, safe='')}"
 
     # -- firma -------------------------------------------------------------
 
