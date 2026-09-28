@@ -37,7 +37,12 @@ VERSIONE_API = "2023-06-01"
 
 
 class AnthropicProvider:
-    """Il Messages API, in streaming."""
+    """Il Messages API, in streaming.
+
+    Non implementa `embed()`: Anthropic non offre un endpoint di embedding. `llm.base.
+    supporta_embedding()` lo riconosce per assenza del metodo, senza bisogno di una dichiarazione
+    esplicita qui — assegnare `Compito.EMBEDDING` a un fornitore Anthropic va evitato in console.
+    """
 
     name = "anthropic"
     #: Dichiarato per `scegli_strategia`: qui il caching è quello del fornitore.

@@ -151,3 +151,21 @@ class LLMProvider(Protocol):
 
     async def available_models(self) -> List[str]:
         ...
+
+    async def embed(self, texts: List[str]) -> List[List[float]]:
+        """Vettorizza una lista di testi. Solo i fornitori che lo offrono lo implementano.
+
+        Non ogni fornitore ha un endpoint di embedding (Anthropic non ne offre uno): verificare
+        con `supporta_embedding()` prima di chiamarlo, invece di intercettare l'eccezione.
+        """
+        ...
+
+
+def supporta_embedding(provider: object) -> bool:
+    """Se questo fornitore sa vettorizzare testo.
+
+    Duck-typing invece di `isinstance` su un Protocol: lo stesso idioma di `tarot/llm.py`
+    (`hasattr(provider, "complete_json")`), perché un `Protocol` non impone che ogni
+    implementazione dichiari ogni metodo — chi non vettorizza semplicemente non definisce `embed`.
+    """
+    return hasattr(provider, "embed")

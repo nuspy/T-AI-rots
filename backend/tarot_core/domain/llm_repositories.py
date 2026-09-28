@@ -51,7 +51,7 @@ async def modelli_da_db(session: AsyncSession) -> List[ModelloConfigurato]:
     return [
         ModelloConfigurato(
             nome=f.nome, provider=f.provider, base_url=f.base_url, model=f.model,
-            api_key=decifra(f.api_key_cifrata), ragiona=f.ragiona, motore=f.motore,
+            embed_model=f.embed_model, api_key=decifra(f.api_key_cifrata), ragiona=f.ragiona, motore=f.motore,
             parametri=f.parametri or {}, descrizione=f.descrizione, senza_filtri=f.senza_filtri,
         )
         for f in righe

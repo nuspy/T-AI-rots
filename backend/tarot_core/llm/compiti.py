@@ -66,6 +66,10 @@ class Compito(str, Enum):
     #: offline (`tools/crea_mazzo.py`), mai in produzione — la scena scritta è sempre una bozza da
     #: approvare a mano prima di generare l'immagine vera.
     CREAZIONE_MAZZO = "creazione_mazzo"
+    #: Vettorizzazione per la memoria RAG (v6, fase A): domande, sintesi e memorie estratte diventano
+    #: un vettore per il recupero per pertinenza. Non tutti i fornitori lo offrono (Anthropic no):
+    #: verificare `llm.base.supporta_embedding()` prima di assegnarlo, non solo alla chiamata.
+    EMBEDDING = "embedding"
 
     @property
     def label(self) -> str:
@@ -85,6 +89,7 @@ _ETICHETTE: Dict[Compito, str] = {
     Compito.TRADUZIONE_ARTICOLO: "Traduzione articoli del blog",
     Compito.TRADUZIONE_CONOSCENZA: "Traduzione di carte e stese (offline)",
     Compito.CREAZIONE_MAZZO: "Scene di un mazzo nuovo (offline)",
+    Compito.EMBEDDING: "Vettorizzazione per la memoria (RAG)",
 }
 
 _DESCRIZIONI: Dict[Compito, str] = {
@@ -126,6 +131,11 @@ _DESCRIZIONI: Dict[Compito, str] = {
         "durante una lettura vera. Il risultato è sempre una bozza da approvare prima di generare "
         "l'immagine."
     ),
+    Compito.EMBEDDING: (
+        "Trasforma un testo (una domanda, una sintesi, una memoria estratta) in un vettore, per "
+        "ritrovare ciò che è pertinente a una lettura o una conversazione. Non è generazione di "
+        "testo: il fornitore assegnato deve offrire un endpoint di embedding."
+    ),
 }
 
 
@@ -140,6 +150,9 @@ class ModelloConfigurato(BaseModel):
     base_url: str = ""
     #: Vuoto: il primo modello che il server ha caricato.
     model: str = ""
+    #: Il modello che VETTORIZZA, quando questo fornitore ne offre uno diverso da quello di chat.
+    #: Vuoto: `embed()` ricade su `model`.
+    embed_model: str = ""
     api_key: str = ""
     #: Il modello ragiona prima di rispondere, e il ragionamento consuma il
     #: budget di uscita insieme alla risposta. Dichiararlo evita due tentativi
@@ -370,6 +383,7 @@ class RegistroModelli:
                 base_url=configurazione.base_url or None,
                 api_key=configurazione.api_key or None,
                 default_model=configurazione.model,
+                embed_model=configurazione.embed_model,
                 motore=configurazione.motore or None,
                 ragiona=configurazione.ragiona,
                 parametri=configurazione.parametri,

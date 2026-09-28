@@ -53,10 +53,15 @@ class OpenAICompatibleProvider(LLMProvider):
         motore: Optional[str] = None,
         ragiona: bool = False,
         parametri: Optional[Dict[str, Any]] = None,
+        embed_model: str = "",
     ) -> None:
         settings = settings or get_settings()
         self.name = name
         self._base_url = (base_url or settings.llm_base_url).rstrip("/")
+        #: Il modello di embedding, se diverso da quello di chat. Vuoto: `embed()` ricade su
+        #: `default_model` — un server con un solo modello caricato (LM Studio, vLLM) spesso non
+        #: ne ha uno dedicato, ed è comunque in grado di rispondere a `/embeddings`.
+        self._embed_model = embed_model
         #: Il motore dietro l'indirizzo: decide quale `ContextStrategy` si usa
         #: e quali campi di cache si possono mandare. Dichiarato qui perché è
         #: il fornitore a sapere a cosa sta parlando.
@@ -86,6 +91,30 @@ class OpenAICompatibleProvider(LLMProvider):
             )
             response.raise_for_status()
             return [m["id"] for m in response.json().get("data", [])]
+
+    async def embed(self, texts: List[str]) -> List[List[float]]:
+        """Vettorizza una lista di testi via `POST {base_url}/embeddings`.
+
+        L'ordine del risultato segue `index` dalla risposta, non l'ordine di arrivo: il server
+        OpenAI-compatibile non garantisce di rispettare l'ordine di `input` sotto concorrenza, e
+        un embedding scambiato con un altro finirebbe silenziosamente sul testo sbagliato.
+        """
+        if not texts:
+            return []
+        modello = self._embed_model or self._default_model or await self.resolve_model()
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
+            response = await client.post(
+                f"{self._base_url}/embeddings",
+                json={"model": modello, "input": texts},
+                headers=self._headers(),
+            )
+            if response.status_code >= 400:
+                corpo = response.text
+                raise GenerationError(
+                    f"{response.status_code} da {self._base_url}/embeddings: {corpo[:500]}"
+                )
+            dati = sorted(response.json()["data"], key=lambda d: d["index"])
+            return [d["embedding"] for d in dati]
 
     async def resolve_model(self) -> str:
         """Il modello da usare, chiedendo al server se non è configurato.
