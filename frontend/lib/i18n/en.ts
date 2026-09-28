@@ -281,6 +281,15 @@ export const en: Dizionario = {
   chat_muto_attiva: "Unmute sound",
   chat_leggi_le_carte_per: (argomento: string) => `Read the cards about: ${argomento}`,
 
+  /* "Ask me something" invite + anonymous reading (v6, Phase F) */
+  invito_titolo: "Ask me something, I'll give you a free reading",
+  invito_titolo_autenticato: "Ask me something",
+  invito_placeholder: "What do you want to ask?",
+  invito_invia: "Ask",
+  invito_gia_usata: "You've already used your free reading: register to continue.",
+  anteprima_titolo: "The preview",
+  anteprima_registrati: "Register for free to read the detailed analysis and get 3 more free readings",
+
   tipo_titolo: "Which reading would you like?",
   tipo_standard: "Standard reading",
   tipo_standard_desc: "One question and one traditional spread: the classic reading.",

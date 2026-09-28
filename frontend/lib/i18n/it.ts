@@ -298,6 +298,15 @@ export const it = {
   chat_muto_attiva: "Attiva il suono",
   chat_leggi_le_carte_per: (argomento: string) => `Leggi le carte per: ${argomento}`,
 
+  /* Invito "fammi una domanda" + lettura anonima (v6, Fase F) */
+  invito_titolo: "Fammi una domanda, ti offro una lettura gratuita",
+  invito_titolo_autenticato: "Fammi una domanda",
+  invito_placeholder: "Cosa vuoi chiedere?",
+  invito_invia: "Chiedi",
+  invito_gia_usata: "Hai già usato la tua lettura gratuita: registrati per continuare.",
+  anteprima_titolo: "L'anteprima",
+  anteprima_registrati: "Registrati gratuitamente per leggere la analisi dettagliata e avere altre 3 letture in omaggio",
+
   /* I miei ordini (v5, Fase B6) */
   profilo_ordini_titolo: "I miei ordini",
   profilo_ordini_testo: "Lo storico dei tuoi acquisti nel negozio dei mazzi.",

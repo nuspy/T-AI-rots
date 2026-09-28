@@ -50,6 +50,8 @@ export function Responso({
   commitment,
   saldo,
   onNuova,
+  anonimo = false,
+  onRegistrati,
 }: {
   id: string;
   testo: string;
@@ -58,6 +60,10 @@ export function Responso({
   commitment: string | null;
   saldo: number | null;
   onNuova: () => void;
+  /* v6, Fase F: vero per un visitatore anonimo — `testo` è l'anteprima, non il responso vero, e
+   * condividere o vedere il mazzo non hanno senso finché la lettura non è sua. */
+  anonimo?: boolean;
+  onRegistrati?: () => void;
 }) {
   const { t } = useLingua();
   const [condividendo, setCondividendo] = useState(false);
@@ -72,9 +78,16 @@ export function Responso({
       transition={{ duration: 0.7 }}
       aria-live="polite"
     >
-      <h2 className={stili.responsoTitolo}>✦ {t.il_responso} ✦</h2>
+      <h2 className={stili.responsoTitolo}>✦ {anonimo ? t.anteprima_titolo : t.il_responso} ✦</h2>
       <Markdown testo={testo} className={`oracolo ${stili.responsoTesto}`} />
-      {finito && (
+      {finito && anonimo && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+          <div className={stili.azioniCentro}>
+            <button className="bottone" onClick={onRegistrati}>{t.anteprima_registrati}</button>
+          </div>
+        </motion.div>
+      )}
+      {finito && !anonimo && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
           <p className={stili.disclaimerFinale}>{disclaimer}</p>
           {commitment && (

@@ -1,0 +1,80 @@
+/* L'invito "fammi una domanda" (v6, Fase F): due ancoraggi, stesso contenuto. */
+
+.invito {
+  position: fixed;
+  left: max(16px, env(safe-area-inset-left));
+  right: max(16px, env(safe-area-inset-right));
+  z-index: 55;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--bordo-forte);
+  background: rgba(20, 16, 29, 0.92);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--bagliore);
+}
+
+.inHome {
+  top: max(84px, calc(env(safe-area-inset-top) + 84px));
+}
+
+.altrove {
+  top: 33vh;
+}
+
+.chiudi {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--testo);
+  cursor: pointer;
+  border-radius: 999px;
+}
+
+.chiudi:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.titolo {
+  margin: 0 0 10px;
+  padding-right: 28px;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.modulo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.campo {
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--bordo);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--testo);
+  font-size: 15px;
+}
+
+@media (min-width: 480px) {
+  .modulo {
+    flex-direction: row;
+  }
+
+  .campo {
+    flex: 1;
+  }
+}

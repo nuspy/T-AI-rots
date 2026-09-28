@@ -28,6 +28,7 @@ import {
   ErroreApi,
   aggiornaProfilo,
   apriLettura,
+  apriLetturaAnonima,
   apriVentaglio,
   cancellaPartner,
   elencaStese,
@@ -116,7 +117,9 @@ export function Lettura() {
 
   const [faseResponso, setFaseResponso] = useState("unione");
   const [testoResponso, setTestoResponso] = useState("");
-  const [fine, setFine] = useState<{ disclaimer: string; commitment: string | null; saldo: number | null } | null>(null);
+  const [fine, setFine] = useState<
+    { disclaimer: string; commitment: string | null; saldo: number | null; anonimo?: boolean } | null
+  >(null);
   const [domandaLettura, setDomandaLettura] = useState("");
   /* La lingua del quesito, ricavata dal server all'apertura e salvata con la
    * lettura: domande, interpretazioni e responso escono in questa lingua, e i
@@ -342,12 +345,17 @@ export function Lettura() {
           profilo.ricarica();
         }
       }
-      const a = await apriLettura(sessione.token, {
-        spreadId: stesaId,
-        domanda: testoDomanda,
-        lang: lingua,
-        ...(speciale ? { partner: partnerDa(persone), ricordaPartner: persone.ricorda } : {}),
-      });
+      // v6, Fase F: senza login, solo la lettura standard gratuita — niente crediti, niente dati
+      // di una seconda persona. `speciale` non è raggiungibile senza autenticazione (la scelta del
+      // tipo passa dal profilo), ma il ramo resta comunque protetto per chiarezza.
+      const a = sessione.autenticata
+        ? await apriLettura(sessione.token, {
+            spreadId: stesaId,
+            domanda: testoDomanda,
+            lang: lingua,
+            ...(speciale ? { partner: partnerDa(persone), ricordaPartner: persone.ricorda } : {}),
+          })
+        : await apriLetturaAnonima(stesaId, testoDomanda, lingua);
       if (a.crisi) {
         setLinguaLettura(null);
         setBattute([{ id: nuovoId(), autore: "sistema", testo: a.messaggio ?? "" }]);
@@ -371,7 +379,9 @@ export function Lettura() {
     } catch (e) {
       const dettaglio = e instanceof ErroreApi ? (e.dettaglio as { motivo?: string } | undefined) : undefined;
       if (e instanceof ErroreApi && e.stato === 402) setMostraAcquisto(true);
-      else if (e instanceof ErroreApi && e.stato === 422 && dettaglio?.motivo === "profilo_incompleto") {
+      else if (e instanceof ErroreApi && e.stato === 409 && dettaglio?.motivo === "lettura_gratuita_gia_usata") {
+        setErrore(t.invito_gia_usata);
+      } else if (e instanceof ErroreApi && e.stato === 422 && dettaglio?.motivo === "profilo_incompleto") {
         /* La scheda è ancora incompleta: si torna ai dati, che ora si vedono. */
         profilo.ricarica();
         setErrore(e.message);
@@ -514,7 +524,7 @@ export function Lettura() {
           setFase("pronto-sintesi");
           return;
         } else if (ev.tipo === "fine") {
-          setFine({ disclaimer: ev.disclaimer, commitment: ev.commitment, saldo: ev.saldo });
+          setFine({ disclaimer: ev.disclaimer, commitment: ev.commitment, saldo: ev.saldo, anonimo: ev.anonimo });
           setFase("completata");
           conto.ricarica();
         }
@@ -733,6 +743,8 @@ export function Lettura() {
               commitment={fine?.commitment ?? null}
               saldo={fine?.saldo ?? null}
               onNuova={nuova}
+              anonimo={fine?.anonimo ?? false}
+              onRegistrati={() => sessione.registrati()}
             />
           )}
         </div>

@@ -279,6 +279,15 @@ export const hu: Dizionario = {
   chat_muto_attiva: "Hang bekapcsolása",
   chat_leggi_le_carte_per: (argomento: string) => `Olvassuk ki a lapokat erről: ${argomento}`,
 
+  /* "Kérdezz tőlem valamit" felhívás + anonim jóslás (v6, F szakasz) */
+  invito_titolo: "Kérdezz tőlem valamit, ingyenes jóslást ajánlok",
+  invito_titolo_autenticato: "Kérdezz tőlem valamit",
+  invito_placeholder: "Mit szeretnél kérdezni?",
+  invito_invia: "Kérdezz",
+  invito_gia_usata: "Már felhasználtad az ingyenes jóslásodat: regisztrálj a folytatáshoz.",
+  anteprima_titolo: "Előnézet",
+  anteprima_registrati: "Regisztrálj ingyen, hogy elolvasd a részletes elemzést, és kapj még 3 ingyenes jóslást",
+
   tipo_titolo: "Milyen jóslást szeretnél?",
   tipo_standard: "Hagyományos jóslás",
   tipo_standard_desc: "Egy kérdés és egy hagyományos kirakás: a megszokott jóslás.",

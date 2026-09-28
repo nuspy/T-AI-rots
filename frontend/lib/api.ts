@@ -439,6 +439,11 @@ async function chiama<T>(
       method: init.method ?? "GET",
       headers: intestazioni(token),
       body: init.body === undefined ? undefined : JSON.stringify(init.body),
+      /* Il cookie anti-abuso della lettura anonima (v6, Fase F, `tarots_anon`) viaggia solo così:
+       * frontend e API sono domini diversi in produzione, e senza `include` il browser non lo
+       * manderebbe né lo accetterebbe da una risposta. Nessun altro cookie esiste in questo
+       * progetto, quindi non c'è nulla da escludere mandandolo su ogni chiamata. */
+      credentials: "include",
     }),
   );
 }
@@ -518,6 +523,15 @@ export const apriLettura = (token: string | null, o: OpzioniApertura) =>
       ...(o.partner ? { partner: o.partner, ricorda_partner: !!o.ricordaPartner } : {}),
       ...(o.manualCards ? { manual_cards: o.manualCards.map((c) => ({ posizione: c.posizione, card_id: c.cardId })) } : {}),
     },
+  });
+
+/* La lettura gratuita per chi non ha un account (v6, Fase F): solo standard, nessun dato di una
+ * seconda persona. Usa gli stessi endpoint di sempre con `token=null` da lì in poi — il cookie
+ * anti-abuso (`credentials: "include"`, sopra) fa il resto. Un 409 significa "già usata: registrati". */
+export const apriLetturaAnonima = (spreadId: string, domanda: string, lang: string) =>
+  chiama<Apertura>(null, "/readings/anonime", {
+    method: "POST",
+    body: { spread_id: spreadId, question: domanda, lang },
   });
 
 export interface PassoIntervista {
@@ -617,7 +631,10 @@ export type EventoSintesi =
       guardia: string;
       commitment: string;
       deck_salt: string;
-      saldo: number;
+      saldo: number | null;
+      /* v6, Fase F: vero per un visitatore anonimo — il "testo" ricevuto è l'anteprima, mai il
+       * responso vero, e il client deve mostrare l'invito a registrarsi invece del risultato. */
+      anonimo?: boolean;
     };
 
 async function* flusso(
@@ -629,6 +646,7 @@ async function* flusso(
     method: "POST",
     headers: intestazioni(token),
     signal: segnale,
+    credentials: "include", // il cookie tarots_anon (v6, Fase F): vedi la nota in chiama()
   });
   if (!risposta.ok || !risposta.body) {
     await leggi(risposta);

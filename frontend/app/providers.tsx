@@ -8,6 +8,7 @@ import { ProviderLingua, type Lingua } from "@/lib/lingua";
 import { AUTH_DISATTIVATA, SessioneDiSviluppo, SessioneKeycloak } from "@/lib/sessione";
 import { AttribuzioneCondivisione } from "./componenti/attribuzione";
 import { ChatProattiva } from "./componenti/chat-proattiva";
+import { InvitoDomanda } from "./componenti/invito-domanda";
 import { Promemoria2fa } from "./componenti/promemoria-2fa";
 import { RiscattoInvitoAutomatico } from "./componenti/riscatto-invito";
 
@@ -80,6 +81,7 @@ export function Providers({ children, linguaIniziale }: { children: React.ReactN
           <AttribuzioneCondivisione />
           <RiscattoInvitoAutomatico />
           <Promemoria2fa />
+          <InvitoDomanda />
           <ChatProattiva />
           {children}
         </SessioneKeycloak>
