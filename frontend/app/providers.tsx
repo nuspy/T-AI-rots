@@ -19,7 +19,15 @@ import { RiscattoInvitoAutomatico } from "./componenti/riscatto-invito";
  * chi intercettasse il codice di riscattarlo. Registrazione, login con email e
  * login social (Google, Facebook, Apple) sono pagine di Keycloak.
  *
- * I token stanno in `sessionStorage`: durano quanto la scheda.
+ * I token stanno in `localStorage` (v6, Fase G: prima erano in `sessionStorage`, e duravano solo
+ * quanto la scheda). La scelta è deliberata e non priva di costo: un token in `localStorage` è
+ * leggibile da qualunque script capace di eseguire nella pagina — niente nel browser lo protegge,
+ * a differenza di un cookie `HttpOnly`. Il progetto si affidava a `sessionStorage` esplicitamente
+ * per questa ragione. Il cambio è stato scelto per il login persistente (non rifare l'accesso a ogni
+ * riapertura del browser), accettando il rischio: se in futuro emergesse un vettore XSS altrove,
+ * l'impatto passa da "la scheda si disconnette" a "il token resta rubabile finché non scade o non
+ * si fa logout esplicito ovunque". Nessuna mitigazione aggiuntiva oltre a quelle già in essere
+ * (niente HTML grezzo nel blog, nessun `dangerouslySetInnerHTML`).
  *
  * **Il provider gira anche sul server.** Le pagine pubbliche (carte, stese, blog) devono
  * uscire dal server già scritte: chi le cerca — un motore di ricerca, un'anteprima
@@ -27,7 +35,7 @@ import { RiscattoInvitoAutomatico } from "./componenti/riscatto-invito";
  * gestore dell'accesso e dice «sessione in caricamento», come nel primo rendering del
  * browser: i due alberi coincidono e l'idratazione non ha da correggere niente.
  * Ciò che dipende dal browser (`redirect_uri` da `window.location.origin`, i token in
- * `sessionStorage`) si calcola solo dove `window` esiste.
+ * `localStorage`) si calcola solo dove `window` esiste.
  */
 
 const authority = `${
@@ -60,7 +68,7 @@ export function Providers({ children, linguaIniziale }: { children: React.ReactN
             /* Rinnovo silenzioso prima della scadenza: senza, una lettura
              * lunga si interrompe con un 401 a metà del responso. */
             automaticSilentRenew: true,
-            userStore: nelBrowser ? new WebStorageStateStore({ store: window.sessionStorage }) : undefined,
+            userStore: nelBrowser ? new WebStorageStateStore({ store: window.localStorage }) : undefined,
             onSigninCallback,
           },
     [],

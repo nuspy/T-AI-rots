@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .config_models import ImpostazioniChat, ImpostazioniCrediti
+from .config_models import ImpostazioniChat, ImpostazioniCrediti, ImpostazioniSessione
 from .repositories import AuditRepository
 
 ID_RIGA = 1
@@ -84,6 +84,40 @@ async def aggiorna_chat(
     if prima != dopo:
         await AuditRepository(session).record(
             action="impostazioni_chat.modifica", actor_id=attore_id, target_type="impostazioni_chat",
+            target_id=str(ID_RIGA), before=prima, after=dopo, ip=ip,
+        )
+    return riga
+
+
+# ---- sessione (v6, Fase G) --------------------------------------------------------------------
+
+
+async def correnti_sessione(session: AsyncSession) -> ImpostazioniSessione:
+    riga = await session.get(ImpostazioniSessione, ID_RIGA)
+    if riga is None:
+        riga = ImpostazioniSessione(id=ID_RIGA)
+        session.add(riga)
+        await session.flush()
+    return riga
+
+
+def pubblico_sessione(riga: ImpostazioniSessione) -> Dict[str, int]:
+    return {"sso_session_max_lifespan_secondi": riga.sso_session_max_lifespan_secondi}
+
+
+async def specchia_sessione(
+    session: AsyncSession, secondi: int, *, attore_id: int, ip: str | None = None,
+) -> ImpostazioniSessione:
+    """Scrive la copia locale **dopo** che il cambio vero su Keycloak è riuscito: mai prima, altrimenti
+    un errore di rete verso Keycloak lascerebbe questa tabella a mentire su cosa vale davvero."""
+    riga = await correnti_sessione(session)
+    prima = pubblico_sessione(riga)
+    riga.sso_session_max_lifespan_secondi = secondi
+    riga.updated_by = attore_id
+    dopo = pubblico_sessione(riga)
+    if prima != dopo:
+        await AuditRepository(session).record(
+            action="impostazioni_sessione.modifica", actor_id=attore_id, target_type="impostazioni_sessione",
             target_id=str(ID_RIGA), before=prima, after=dopo, ip=ip,
         )
     return riga

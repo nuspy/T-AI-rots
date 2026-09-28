@@ -157,6 +157,19 @@
         "user",
         "admin"
       ]
+    },
+    {
+      "username": "service-account-tarot-api",
+      "enabled": true,
+      "serviceAccountClientId": "tarot-api",
+      "realmRoles": [
+        "default-roles-tarots"
+      ],
+      "clientRoles": {
+        "realm-management": [
+          "manage-realm"
+        ]
+      }
     }
   ],
   "defaultRole": {

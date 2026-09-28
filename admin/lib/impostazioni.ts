@@ -30,3 +30,17 @@ export const salvaImpostazioniChat = (t: string, corpo: Partial<ImpostazioniChat
     method: "PUT",
     body: JSON.stringify(corpo),
   });
+
+/* Login persistente (v6, Fase G): la durata massima della sessione, cambiata live su Keycloak. */
+export interface ImpostazioniSessione {
+  sso_session_max_lifespan_secondi: number;
+}
+
+export const impostazioniSessione = (t: string) =>
+  chiamata<ImpostazioniSessione>(t, "/admin/impostazioni-sessione");
+
+export const salvaImpostazioniSessione = (t: string, corpo: ImpostazioniSessione) =>
+  chiamata<ImpostazioniSessione>(t, "/admin/impostazioni-sessione", {
+    method: "PUT",
+    body: JSON.stringify(corpo),
+  });

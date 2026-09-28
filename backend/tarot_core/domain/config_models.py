@@ -80,6 +80,25 @@ class ImpostazioniChat(Base, TimestampMixin):
     )
 
 
+class ImpostazioniSessione(Base, TimestampMixin):
+    """La durata massima della sessione (v6, Fase G), solo per mostrarla in console.
+
+    La fonte di verità resta Keycloak (`ssoSessionMaxLifespan` del realm, cambiato da
+    `auth/keycloak_admin.py`): questa riga è uno specchio, scritto solo quando il cambio su
+    Keycloak riesce. Un admin che guarda solo questa tabella dopo un cambio fatto a mano sul realm
+    (o dopo un reimport del realm JSON) vedrebbe un numero non più vero — vedi la nota sulla deriva
+    in `deploy/keycloak/README.md`."""
+
+    __tablename__ = "impostazioni_sessione"
+    __table_args__ = (CheckConstraint("id = 1", name="ck_impostazioni_sessione_singleton"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
+    sso_session_max_lifespan_secondi: Mapped[int] = mapped_column(Integer, nullable=False, default=36000)
+    updated_by: Mapped[Optional[int]] = mapped_column(
+        BigInteger, ForeignKey("users.id", ondelete="SET NULL"),
+    )
+
+
 class LlmProvider(Base, TimestampMixin):
     """Un fornitore LLM configurato dalla console: indirizzo, modello, chiave cifrata.
 

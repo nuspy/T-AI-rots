@@ -40,6 +40,12 @@ class Settings(BaseSettings):
     keycloak_url: str = "http://localhost:8080"
     keycloak_realm: str = "tarots"
     keycloak_client_id: str = "tarot-api"
+    #: Il segreto del client `tarot-api` (confidenziale, `serviceAccountsEnabled`): serve solo al
+    #: grant client-credentials di `auth/keycloak_admin.py` (v6, Fase G), per cambiare
+    #: `ssoSessionMaxLifespan` dalla console senza toccare Keycloak a mano. Vuoto: l'admin API di
+    #: Keycloak resta silenziosamente non disponibile, non un errore all'avvio — un impianto senza
+    #: bisogno del login persistente configurabile non deve smettere di partire per questo.
+    keycloak_client_secret: str = ""
     #: L'indirizzo pubblico di Keycloak, quello scritto nel campo `iss` dei
     #: token. Vuoto vale `keycloak_url`, come in sviluppo; in un cluster
     #: `keycloak_url` e' il servizio interno da cui si leggono le chiavi, e

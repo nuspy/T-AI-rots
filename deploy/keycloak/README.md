@@ -185,6 +185,27 @@ esporta il realm intero:
 Va rifatto dopo ogni modifica al realm di sviluppo che debba arrivare in
 produzione.
 
+### v6, Fase G: ruolo di servizio su `tarot-api`
+
+`realm-tarots.json` (e la copia già propagata a mano in `realm-tarots.prod.json`, non ancora
+rigenerata con lo script) assegnano ora all'utente di servizio `service-account-tarot-api` il ruolo
+client `manage-realm` di `realm-management`:
+
+```json
+"clientRoles": { "realm-management": ["manage-realm"] }
+```
+
+Serve a `auth/keycloak_admin.py` per cambiare `ssoSessionMaxLifespan` dalla console (login
+persistente, v6 Fase G) senza un client dedicato — `tarot-api` aveva già `serviceAccountsEnabled:
+true`, inutilizzato. **Non verificato contro un import Keycloak vero** (niente Docker in locale in
+questa sessione): la sintassi è quella stabile del formato di export di Keycloak
+(`UserRepresentation.clientRoles`), ma va confermata importando il file su un'istanza di prova prima
+di fidarsene in produzione — esattamente il passo "Verifica manuale prima del primo avvio" qui sopra.
+Se il ruolo non risultasse assegnato dopo l'import, va aggiunto a mano dalla console
+(Users → service-account-tarot-api → Role mapping → Assign role → filtra per client
+`realm-management` → `manage-realm`), poi ri-esportato con lo script perché il file resti la fonte
+di verità.
+
 ## Verifica manuale prima del primo avvio
 
 1. Importato il file su un'istanza di prova, entrare nella console come

@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import {
-  impostazioniChat, impostazioniCrediti, salvaImpostazioniChat, salvaImpostazioniCrediti,
+  impostazioniChat, impostazioniCrediti, impostazioniSessione,
+  salvaImpostazioniChat, salvaImpostazioniCrediti, salvaImpostazioniSessione,
   type ImpostazioniChat as ValoriChat, type ImpostazioniCrediti as Valori,
+  type ImpostazioniSessione as ValoriSessione,
 } from "@/lib/impostazioni";
 import { useAzione, useDati } from "@/lib/usa";
 import comuni from "../comuni.module.css";
@@ -18,6 +20,7 @@ import comuni from "../comuni.module.css";
 export default function Impostazioni() {
   const { dati, errore, inCorso, ricarica } = useDati(impostazioniCrediti);
   const chat = useDati(impostazioniChat);
+  const sessioneLogin = useDati(impostazioniSessione);
 
   return (
     <>
@@ -38,6 +41,10 @@ export default function Impostazioni() {
       {chat.errore && <p className={comuni.errore}>{chat.errore}</p>}
       {chat.inCorso && !chat.dati && <p className={comuni.caricamento}>Caricamento…</p>}
       {chat.dati && <ModuloChat valori={chat.dati} ricarica={chat.ricarica} />}
+
+      {sessioneLogin.errore && <p className={comuni.errore}>{sessioneLogin.errore}</p>}
+      {sessioneLogin.inCorso && !sessioneLogin.dati && <p className={comuni.caricamento}>Caricamento…</p>}
+      {sessioneLogin.dati && <ModuloSessione valori={sessioneLogin.dati} ricarica={sessioneLogin.ricarica} />}
     </>
   );
 }
@@ -148,6 +155,52 @@ function ModuloChat({ valori, ricarica }: { valori: ValoriChat; ricarica: () => 
           />
           <span className={comuni.campoAiuto}>
             Vale sia per l&apos;attesa di una risposta sia per il tempo dopo l&apos;ultimo turno.
+          </span>
+        </label>
+        {(problema || errore) && <p className={comuni.errore}>{problema ?? errore}</p>}
+        {salvato && !problema && !errore && <p className={comuni.esito}>Salvato.</p>}
+        <button className={comuni.primaria} type="submit" disabled={inCorso}>
+          Salva
+        </button>
+      </form>
+    </section>
+  );
+}
+
+/* Login persistente (v6, Fase G): la durata massima della sessione, in ore per comodità di lettura
+ * — Keycloak la vuole in secondi, la conversione resta qui invece che nel modello del backend. */
+function ModuloSessione({ valori, ricarica }: { valori: ValoriSessione; ricarica: () => void }) {
+  const { esegui, inCorso, errore } = useAzione();
+  const [ore, setOre] = useState(String(Math.round(valori.sso_session_max_lifespan_secondi / 3600)));
+  const [salvato, setSalvato] = useState(false);
+  const [problema, setProblema] = useState<string | null>(null);
+
+  const invia = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProblema(null);
+    setSalvato(false);
+    const n = Number(ore);
+    if (!Number.isFinite(n) || n < 0.1 || n > 8760) {
+      return setProblema("Le ore sono un numero fra 0,1 e 8760 (un anno).");
+    }
+    const fatto = await esegui((t) =>
+      salvaImpostazioniSessione(t, { sso_session_max_lifespan_secondi: Math.round(n * 3600) }),
+    );
+    if (fatto) {
+      setSalvato(true);
+      ricarica();
+    }
+  };
+
+  return (
+    <section className={comuni.riquadro} aria-labelledby="sessione-titolo">
+      <h2 id="sessione-titolo" className={comuni.riquadroTitolo}>Login persistente</h2>
+      <form onSubmit={invia} className={comuni.riga} style={{ flexWrap: "wrap", alignItems: "flex-end" }}>
+        <label className={comuni.campo}>
+          <span className={comuni.campoEtichetta}>Durata massima della sessione (ore)</span>
+          <input className={comuni.ingresso} inputMode="decimal" value={ore} onChange={(e) => setOre(e.target.value)} />
+          <span className={comuni.campoAiuto}>
+            Cambia subito la sessione su Keycloak — vale sia per il sito sia per questa console.
           </span>
         </label>
         {(problema || errore) && <p className={comuni.errore}>{problema ?? errore}</p>}

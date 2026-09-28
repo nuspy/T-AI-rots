@@ -20,10 +20,14 @@ import {
  * segreto — quindi PKCE non è un'opzione fra le altre: è ciò che impedisce a
  * chi intercettasse il codice di riscattarlo.
  *
- * I token stanno in `sessionStorage` e non in `localStorage`: durano quanto la
- * scheda, e un token che sopravvive alla chiusura del browser su una macchina
- * condivisa è un token che qualcun altro può usare. Il costo è un nuovo login
- * aprendo una scheda nuova, e la sessione SSO di Keycloak lo rende indolore.
+ * I token stanno in `localStorage` (v6, Fase G: prima erano in `sessionStorage`, apposta, proprio
+ * perché un token che sopravvive alla chiusura del browser su una macchina condivisa è un token che
+ * qualcun altro può usare — qui il rischio è più alto che nel frontend, dato il ruolo `admin`). Il
+ * cambio è deliberato per il login persistente anche in console, su richiesta esplicita, e accetta
+ * lo stesso compromesso del frontend: un token in `localStorage` è leggibile da qualunque script
+ * capace di eseguire nella pagina, niente nel browser lo protegge come farebbe un cookie `HttpOnly`.
+ * Nessuna mitigazione aggiuntiva oltre a quelle già in essere. Chi amministra da una postazione
+ * condivisa dovrebbe comunque fare logout esplicito, non solo chiudere la scheda.
  *
  * **Perché il provider si monta solo dopo l'idratazione.** `redirect_uri` si
  * ricava da `window.location.origin`, che sul server non esiste. Montandolo
@@ -86,7 +90,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
              * modifica al catalogo. */
             automaticSilentRenew: true,
             userStore: new WebStorageStateStore({
-              store: window.sessionStorage,
+              store: window.localStorage,
             }),
             onSigninCallback,
           }

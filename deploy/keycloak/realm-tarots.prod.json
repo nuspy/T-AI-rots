@@ -497,6 +497,11 @@
       "realmRoles": [
         "default-roles-tarots"
       ],
+      "clientRoles": {
+        "realm-management": [
+          "manage-realm"
+        ]
+      },
       "notBefore": 0,
       "groups": []
     }
