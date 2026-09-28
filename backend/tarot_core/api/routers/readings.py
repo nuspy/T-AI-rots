@@ -30,13 +30,13 @@ import uuid
 from datetime import date
 from typing import Any, AsyncIterator, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator, model_validator
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 from sqlalchemy.orm.attributes import set_committed_value
 
-from ...auth.dependencies import CurrentUser, DbSession
+from ...auth.dependencies import COOKIE_ANONIMO, CurrentUser, DbSession, OptionalUser
 from ...billing.credits import CreditiInsufficienti, RegistroCrediti
 from ...billing.plans import GestoreAbbonamenti
 from ...billing.quote import COSTO_LETTURA, ContatoreQuote
@@ -54,6 +54,7 @@ from ...tarot import cag, interpretazione
 from ...tarot.condivisione import pulisci_testo
 from ...tarot.intervista import IntervistaNonRiuscita, prossimo_passo, profilo_da, trascrizione, turni_da
 from ...tarot.memoria import estrai_e_salva
+from ...tarot.teaser import genera_teaser
 from ...tarot.memoria_retrieval import da_istantanea, formatta_per_sintesi, istantanea, rilevanti
 from ...tarot.lettura import (
     StatoNonValido, dignita_di, doppia_valenza, gia_rivelate, note_di_posizione,
@@ -190,8 +191,17 @@ def _stesa_o_404(spread_id: str) -> Dict[str, Any]:
     return stesa
 
 
-async def _lettura_o_404(repo: ReadingRepository, user: User, reading_id: uuid.UUID, *, lock: bool = False) -> Reading:
-    lettura = await (repo.get_for_update if lock else repo.get)(user, reading_id)
+async def _lettura_o_404(
+    repo: ReadingRepository, user: Optional[User], reading_id: uuid.UUID, *,
+    lock: bool = False, anon_id: Optional[str] = None,
+) -> Reading:
+    """`anon_id` (v6, Fase F): quando presente, la lettura può anche essere quella di un visitatore
+    anonimo (nessun `user`) — vedi `ReadingRepository.get_flex()`. Senza, il comportamento è quello
+    di sempre: solo il proprietario autenticato."""
+    if anon_id is not None or user is None:
+        lettura = await repo.get_flex(reading_id, owner=user, anon_id=anon_id, lock=lock)
+    else:
+        lettura = await (repo.get_for_update if lock else repo.get)(user, reading_id)
     if lettura is None:
         raise HTTPException(status_code=404, detail="Lettura non trovata")
     return lettura
@@ -504,21 +514,94 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
     }
 
 
+class NuovaLetturaAnonima(BaseModel):
+    """Solo lo standard (v6, Fase F): niente compatibilità/coppia (dati di una seconda persona,
+    fuori scope per chi non ha nemmeno un account) né mazzo fisico."""
+
+    spread_id: str = Field(min_length=1, max_length=40)
+    question: str = Field(min_length=3, max_length=1000)
+    lang: str = Field(default="it", max_length=5)
+
+
+DURATA_COOKIE_ANONIMO = 60 * 60 * 24 * 365  # un anno
+
+
+@router.post("/readings/anonime", status_code=status.HTTP_201_CREATED)
+async def apri_anonima(
+    payload: NuovaLetturaAnonima, request: Request, response: Response, session: DbSession,
+) -> Dict[str, Any]:
+    """L'apertura gratuita per chi non ha un account (v6, Fase F, invito "fammi una domanda").
+
+    Nessun credito, nessuna quota: `consumo="anonimo"`. Un solo colpo per cookie — un secondo
+    tentativo con lo stesso `tarots_anon` trova già una lettura sua e viene respinto, non ne apre
+    una seconda gratis.
+    """
+    stesa = _stesa_o_404(payload.spread_id)
+    if get_conoscenza().categoria_di(stesa) != "standard":
+        raise HTTPException(status_code=422, detail="La lettura gratuita per anonimi è solo standard")
+    lang = rileva_lingua(payload.question, fallback=payload.lang)
+
+    if segnale_di_crisi(payload.question):
+        return {"crisi": True, "messaggio": in_lingua(AIUTO, lang)}
+
+    anon_id = request.cookies.get(COOKIE_ANONIMO)
+    # `get_flex` cerca per un `reading_id` preciso: qui serve invece "esiste già una lettura con
+    # questo anon_id", indipendentemente da quale — una query dedicata.
+    esiste_gia = anon_id is not None and (await session.execute(
+        select(Reading.id).where(Reading.anon_id == anon_id).limit(1)
+    )).first() is not None
+    if esiste_gia:
+        raise HTTPException(status_code=409, detail={
+            "motivo": "lettura_gratuita_gia_usata",
+            "messaggio": "Hai già usato la tua lettura gratuita: registrati per continuare.",
+        })
+
+    await verifica_modello(session, lang)
+    nuovo_anon_id = anon_id or secrets.token_urlsafe(32)
+    lettura = Reading(
+        owner_id=None, anon_id=nuovo_anon_id, spread_id=stesa["id"], question=payload.question.strip(),
+        consumo="anonimo", lang=lang, status="intervista",
+    )
+    session.add(lettura)
+    await session.commit()
+
+    # `SameSite`: in produzione frontend e API sono due domini diversi (tarots.chat, fx.tadamoo.com)
+    # — una richiesta genuinamente incrociata fra siti, dove `Lax` non manderebbe mai il cookie su
+    # un fetch/XHR. `None` lo richiede `Secure` (solo HTTPS): in sviluppo, dove i due lati girano
+    # sullo stesso "sito" (localhost, porte diverse), `Lax` senza `Secure` funziona lo stesso ed
+    # evita di dover servire il frontend di sviluppo in HTTPS solo per questo cookie.
+    in_produzione = get_settings().environment == "prod"
+    response.set_cookie(
+        COOKIE_ANONIMO, nuovo_anon_id, max_age=DURATA_COOKIE_ANONIMO,
+        httponly=True, secure=in_produzione, samesite="none" if in_produzione else "lax",
+    )
+    return {
+        "id": str(lettura.id),
+        "status": lettura.status,
+        "consumo": "anonimo",
+        "lang": lang,
+        "categoria": "standard",
+        "disclaimer": in_lingua(DISCLAIMER, lang),
+        "stesa": get_conoscenza().stesa_pubblica(stesa),
+    }
+
+
 # ---- intervista ---------------------------------------------------------------
 
 
 @router.post("/readings/{reading_id}/interview")
 async def intervista(
-    reading_id: uuid.UUID, payload: RispostaIntervista, user: CurrentUser,
-    session: DbSession,
+    reading_id: uuid.UUID, payload: RispostaIntervista, user: OptionalUser,
+    session: DbSession, request: Request,
 ) -> Dict[str, Any]:
     """Registra la risposta e restituisce la prossima domanda, o chiude.
 
     Risposta JSON e non SSE: l'uscita del modello è un JSON che non si può
     mostrare a metà. Il frontend la scrive a macchina.
     """
+    anon_id = None if user else request.cookies.get(COOKIE_ANONIMO)
     repo = ReadingRepository(session)
-    lettura = await _lettura_o_404(repo, user, reading_id, lock=True)
+    lettura = await _lettura_o_404(repo, user, reading_id, lock=True, anon_id=anon_id)
     if lettura.status != "intervista":
         raise _conflitto("L'intervista è già conclusa")
 
@@ -547,7 +630,7 @@ async def intervista(
     persone = da_json(lettura.persone)
     # Nelle letture speciali il profilo del prompt sono le due persone (col
     # partner senza cognome); nella standard, la carta dell'anima e dell'anno.
-    profilo = _profilo(user) if persone is None else blocco_persone(persone, conoscenza) + "\n"
+    profilo = (_profilo(user) if user else "") if persone is None else blocco_persone(persone, conoscenza) + "\n"
     try:
         passo = await prossimo_passo(
             provider_intervista=provider_per(Compito.INTERVISTA, persone),
@@ -598,16 +681,17 @@ async def intervista(
     return {"completa": False, "domanda": passo.domanda, "ordine": ordine, "scartate": passo.scartate}
 
 
-async def _chiudi_per_crisi(session, user: User, lettura: Reading) -> Dict[str, Any]:
+async def _chiudi_per_crisi(session, user: Optional[User], lettura: Reading) -> Dict[str, Any]:
     """Ferma la lettura e restituisce il credito: chi è in crisi riceve aiuto,
-    non carte."""
+    non carte. Una lettura anonima (v6, Fase F) non ha nulla da rimborsare."""
     lettura.status = "annullata"
-    if lettura.consumo == "credito":
+    if user and lettura.consumo == "credito":
         await RegistroCrediti(session).rimborsa(
             user.id, COSTO_LETTURA, reading_id=lettura.id, note="lettura sospesa: segnale di crisi",
         )
     await AuditRepository(session).record(
-        action="reading.crisis", actor_id=user.id, target_type="reading", target_id=str(lettura.id),
+        action="reading.crisis", actor_id=user.id if user else None,
+        target_type="reading", target_id=str(lettura.id),
     )
     await session.commit()
     return {"completa": False, "crisi": True, "messaggio": in_lingua(AIUTO, lettura.lang)}
@@ -618,14 +702,15 @@ async def _chiudi_per_crisi(session, user: User, lettura: Reading) -> Dict[str, 
 
 @router.post("/readings/{reading_id}/fan")
 async def ventaglio(
-    reading_id: uuid.UUID, user: CurrentUser, session: DbSession,
+    reading_id: uuid.UUID, user: OptionalUser, session: DbSession, request: Request,
     payload: Optional[TaglioMazzo] = None,
 ) -> Dict[str, Any]:
     """Mescola, taglia dove ha cliccato chi consulta e fissa il mazzo. Al
     client vanno solo il numero degli slot e il commitment: le carte restano
     sul server finché non si rivelano."""
+    anon_id = None if user else request.cookies.get(COOKIE_ANONIMO)
     repo = ReadingRepository(session)
-    lettura = await _lettura_o_404(repo, user, reading_id, lock=True)
+    lettura = await _lettura_o_404(repo, user, reading_id, lock=True, anon_id=anon_id)
     stesa = _stesa_o_404(lettura.spread_id)
     conoscenza = get_conoscenza()
 
@@ -651,10 +736,11 @@ async def ventaglio(
 
 @router.post("/readings/{reading_id}/pick")
 async def scegli(
-    reading_id: uuid.UUID, payload: Scelta, user: CurrentUser, session: DbSession,
+    reading_id: uuid.UUID, payload: Scelta, user: OptionalUser, session: DbSession, request: Request,
 ) -> Dict[str, Any]:
+    anon_id = None if user else request.cookies.get(COOKIE_ANONIMO)
     repo = ReadingRepository(session)
-    lettura = await _lettura_o_404(repo, user, reading_id, lock=True)
+    lettura = await _lettura_o_404(repo, user, reading_id, lock=True, anon_id=anon_id)
     stesa = _stesa_o_404(lettura.spread_id)
     try:
         carta = posa(lettura, stesa, payload.slot, get_conoscenza())
@@ -674,16 +760,17 @@ async def scegli(
 
 @router.post("/readings/{reading_id}/reveal/{posizione}")
 async def rivela(
-    reading_id: uuid.UUID, posizione: int, user: CurrentUser, session: DbSession,
-    fabbrica: SessionFactory,
+    reading_id: uuid.UUID, posizione: int, user: OptionalUser, session: DbSession,
+    fabbrica: SessionFactory, request: Request,
 ) -> StreamingResponse:
     """Gira la carta e ne dà l'interpretazione immediata, in streaming.
 
     Le carte si rivelano in ordine di posizione: la lettura è un racconto, e
     l'interpretazione di ciascuna tiene conto di quelle già viste.
     """
+    anon_id = None if user else request.cookies.get(COOKIE_ANONIMO)
     repo = ReadingRepository(session)
-    lettura = await _lettura_o_404(repo, user, reading_id, lock=True)
+    lettura = await _lettura_o_404(repo, user, reading_id, lock=True, anon_id=anon_id)
     if lettura.status != "rivelazione":
         raise _conflitto("Non ci sono carte da rivelare")
     carta = prossima_da_rivelare(lettura)
@@ -761,7 +848,7 @@ async def rivela(
             yield _sse("sostituisci", {"testo": testo})
 
         async with fabbrica() as s:
-            r = await ReadingRepository(s).get_for_update(user, reading_id)
+            r = await ReadingRepository(s).get_flex(reading_id, owner=user, anon_id=anon_id, lock=True)
             if r is not None:
                 for c in r.cards:
                     if c.posizione == posizione:
@@ -787,7 +874,8 @@ def _interpretazione_prudente(carta: Dict[str, Any], rovescio: bool, lang: str) 
 
 @router.post("/readings/{reading_id}/synthesis")
 async def sintesi(
-    reading_id: uuid.UUID, user: CurrentUser, session: DbSession, fabbrica: SessionFactory,
+    reading_id: uuid.UUID, user: OptionalUser, session: DbSession, fabbrica: SessionFactory,
+    request: Request,
 ) -> StreamingResponse:
     """Il responso finale: CAG, poi guardrail, poi il testo all'utente.
 
@@ -795,17 +883,28 @@ async def sintesi(
     giudice, e solo un testo approvato arriva allo schermo. Nel frattempo il
     flusso manda eventi di fase, così la connessione resta viva e l'utente
     vede che la lettura sta prendendo forma.
+
+    **Per un visitatore anonimo (v6, Fase F)**: il responso vero si genera e si salva per intero
+    (così il claim alla registrazione non deve ricalcolare nulla), ma ciò che arriva al client è
+    un'anteprima breve (`teaser.py`) — mai il testo vero, nemmeno troncato.
     """
+    anon_id = None if user else request.cookies.get(COOKIE_ANONIMO)
+    is_anonimo = user is None
     repo = ReadingRepository(session)
-    lettura = await _lettura_o_404(repo, user, reading_id)
+    lettura = await _lettura_o_404(repo, user, reading_id, anon_id=anon_id)
     lang = lingua(lettura.lang)
 
     if lettura.status == "completata":
-        chiusura = _chiusura(lettura, await RegistroCrediti(session).saldo(user.id))
+        saldo = await RegistroCrediti(session).saldo(user.id) if user else None
+        chiusura = _chiusura(lettura, saldo)
+        chiusura["anonimo"] = is_anonimo
+        # `teaser` è nullo per una lettura bloccata dal guardrail (non generato apposta): in quel
+        # caso `synthesis` contiene già il messaggio generico del blocco, non il responso vero.
+        testo_da_servire = (lettura.teaser or lettura.synthesis or "") if is_anonimo else (lettura.synthesis or "")
         await session.commit()
 
         async def rilegge() -> AsyncIterator[bytes]:
-            yield _sse("token", {"testo": lettura.synthesis or ""})
+            yield _sse("token", {"testo": testo_da_servire})
             yield _sse("fine", chiusura)
         return _flusso(rilegge())
 
@@ -823,7 +922,9 @@ async def sintesi(
 
     categoria = conoscenza.categoria_di(stesa)
     prefisso = cag.prefisso(conoscenza, registro.istruzioni_per("sintesi", categoria), categoria)
-    memorie_rilevanti = await _memorie_per_sintesi(session, user.id, lettura.memorie_recuperate or [])
+    memorie_rilevanti = (
+        await _memorie_per_sintesi(session, user.id, lettura.memorie_recuperate or []) if user else ""
+    )
     carte = [
         {
             "card_id": c.card_id, "rovescio": c.rovescio, "posizione": c.posizione,
@@ -836,7 +937,7 @@ async def sintesi(
         contesto=lettura.context_summary or "", carte=carte,
         dignita=dignita_di(lettura, stesa, conoscenza, solo_rivelate=False),
         prevalenze=prevalenze_di(lettura, conoscenza),
-        profilo=_profilo(user) if persone_lettura is None else "",
+        profilo=(_profilo(user) if user else "") if persone_lettura is None else "",
         wirth=wirth(lettura, stesa, conoscenza), lang=lang,
         colloquio=trascrizione(turni_da(lettura.turns)),
         persone=blocco_persone(persone_lettura, conoscenza) if persone_lettura else "",
@@ -898,27 +999,36 @@ async def sintesi(
         elif not verdetto.verificato:
             logger.warning("Responso della lettura %s non verificato dal giudice", reading_id)
 
+        # Per un anonimo, l'anteprima si genera qui: sul responso vero, mai su quello bloccato (un
+        # rifiuto del guardrail non ha nulla su cui basare un'anteprima sensata).
+        teaser_testo = ""
+        if is_anonimo and esito != "bloccato":
+            teaser_testo = await genera_teaser(autore, responso=responso, lang=lang)
+
         async with fabbrica() as s:
-            r = await ReadingRepository(s).get_for_update(user, reading_id)
+            r = await ReadingRepository(s).get_flex(reading_id, owner=user, anon_id=anon_id, lock=True)
             if r is None:
                 return
             r.synthesis = responso
+            r.teaser = teaser_testo or None
             r.guard_outcome = esito
             r.status = "completata"
             r.completed_at = utcnow()
             if esito == "bloccato":
                 await AuditRepository(s).record(
-                    action="reading.guard_block", actor_id=user.id,
+                    action="reading.guard_block", actor_id=user.id if user else None,
                     target_type="reading", target_id=str(reading_id),
                     after={"violazioni": verdetto.violazioni},
                 )
             await s.commit()
-            saldo = await RegistroCrediti(s).saldo(user.id)
+            saldo = await RegistroCrediti(s).saldo(user.id) if user else None
             chiusura = _chiusura(r, saldo)
+            chiusura["anonimo"] = is_anonimo
 
-        if esito != "bloccato":
+        if user and esito != "bloccato":
             # In background, mai atteso: un'estrazione lenta o fallita non deve ritardare né
-            # rompere una risposta già consegnata all'utente (v6, Fase B).
+            # rompere una risposta già consegnata all'utente (v6, Fase B). Un anonimo non ha un
+            # profilo a cui attaccare memorie: niente da estrarre finché non si registra.
             asyncio.create_task(estrai_e_salva(
                 fabbrica, user.id, reading_id,
                 quesito=lettura.question, colloquio=argomenti["colloquio"], sintesi=responso,
@@ -928,9 +1038,11 @@ async def sintesi(
 
         yield _sse("fase", {"fase": "responso", "guardia": esito})
         # Il testo esce a frammenti: già approvato, ma lo si scrive davanti
-        # all'utente come si gira una carta — un colpo solo sarebbe un muro.
-        for i in range(0, len(responso), 24):
-            yield _sse("token", {"testo": responso[i:i + 24]})
+        # all'utente come si gira una carta — un colpo solo sarebbe un muro. Per un anonimo è
+        # l'anteprima che esce così, mai il responso vero.
+        testo_da_mostrare = teaser_testo if (is_anonimo and esito != "bloccato") else responso
+        for i in range(0, len(testo_da_mostrare), 24):
+            yield _sse("token", {"testo": testo_da_mostrare[i:i + 24]})
             await asyncio.sleep(0.012)
         yield _sse("fine", chiusura)
 

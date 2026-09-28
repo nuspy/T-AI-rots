@@ -20,7 +20,7 @@ import contextlib
 import logging
 import os
 import sys
-from typing import AsyncIterator
+from typing import AsyncIterator, Optional
 
 import pytest
 import pytest_asyncio
@@ -259,9 +259,15 @@ async def catalogo(session):
 
 
 class Identita:
-    """Chi fa la richiesta. Si cambia a metà test per provare l'isolamento."""
+    """Chi fa la richiesta. Si cambia a metà test per provare l'isolamento.
 
-    def __init__(self, principal: Principal) -> None:
+    `principal = None` simula un visitatore anonimo (v6, Fase F) sugli endpoint che lo ammettono
+    (`OptionalUser`): niente header `Authorization` nella richiesta vera, ma l'override deve
+    restituire `None` invece del principal di sviluppo, altrimenti quegli endpoint non sarebbero mai
+    testabili come anonimi attraverso questo client.
+    """
+
+    def __init__(self, principal: Optional[Principal]) -> None:
         self.principal = principal
 
 
@@ -277,7 +283,7 @@ async def client(session_factory, principal_utente, monkeypatch):
 
     from tarot_core.api import deps
     from tarot_core.api.app import create_app
-    from tarot_core.auth.dependencies import current_principal
+    from tarot_core.auth.dependencies import current_principal, current_principal_opzionale
     from tarot_core.domain.session import get_db_session, get_session_factory
     from tarot_core.settings import get_settings
 
@@ -296,6 +302,7 @@ async def client(session_factory, principal_utente, monkeypatch):
     app.dependency_overrides[get_db_session] = sessione
     app.dependency_overrides[get_session_factory] = lambda: session_factory
     app.dependency_overrides[current_principal] = lambda: identita.principal
+    app.dependency_overrides[current_principal_opzionale] = lambda: identita.principal
 
     trasporto = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=trasporto, base_url="http://test") as c:

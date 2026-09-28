@@ -174,6 +174,13 @@ class Reading(Base, TimestampMixin, OwnedMixin):
     #: mappatura, non serve il tipo Python per una colonna che il codice usa solo come id.
     deck_id: Mapped[Optional[int]] = mapped_column(ForeignKey("decks.id", ondelete="SET NULL"))
 
+    #: L'identità anonima (v6, Fase F): valorizzato solo quando la lettura nasce senza login, il
+    #: valore del cookie `tarots_anon`. Vincolo applicativo, non di database: esattamente uno fra
+    #: `owner_id` e `anon_id` è valorizzato alla nascita. Resta anche dopo la registrazione (il
+    #: reclamo popola `owner_id` ma non cancella `anon_id`): impedisce una seconda lettura gratuita
+    #: con lo stesso cookie anche a registrazione avvenuta.
+    anon_id: Mapped[Optional[str]] = mapped_column(String(64), index=True)
+
     #: Il quadro emerso dall'intervista, riassunto dal modello.
     context_summary: Mapped[Optional[str]] = mapped_column(Text)
 
@@ -197,6 +204,10 @@ class Reading(Base, TimestampMixin, OwnedMixin):
     commitment: Mapped[Optional[str]] = mapped_column(String(64))
 
     synthesis: Mapped[Optional[str]] = mapped_column(Text)
+    #: L'anteprima per un visitatore anonimo (v6, Fase F): generata e salvata una sola volta insieme
+    #: a `synthesis`, così una pagina ricaricata prima della registrazione non richiama il modello
+    #: una seconda volta. Nullo per ogni lettura che non è mai stata anonima.
+    teaser: Mapped[Optional[str]] = mapped_column(Text)
     #: L'esito del guardrail sul responso: `ok`, `riscritto`, `bloccato`.
     guard_outcome: Mapped[Optional[str]] = mapped_column(String(20))
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
@@ -235,7 +246,7 @@ class Reading(Base, TimestampMixin, OwnedMixin):
             name="ck_readings_status",
         ),
         CheckConstraint(
-            "consumo in ('credito', 'quota', 'omaggio')", name="ck_readings_consumo",
+            "consumo in ('credito', 'quota', 'omaggio', 'anonimo')", name="ck_readings_consumo",
         ),
         CheckConstraint(
             "feedback is null or feedback in ('si', 'in_parte', 'no')",

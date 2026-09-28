@@ -16,7 +16,7 @@ import secrets
 import uuid
 from typing import TYPE_CHECKING, Optional, Sequence
 
-from sqlalchemy import desc, func, select
+from sqlalchemy import desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .base import utcnow
@@ -124,6 +124,40 @@ class ReadingRepository:
             .where(Reading.id == reading_id, Reading.owner_id == owner.id)
             .with_for_update()
         )).scalar_one_or_none()
+
+    async def get_flex(
+        self, reading_id: uuid.UUID, *, owner: Optional[User], anon_id: Optional[str], lock: bool = False,
+    ) -> Optional[Reading]:
+        """Come `get`/`get_for_update`, ma per gli endpoint condivisi fra utenti autenticati e
+        visitatori anonimi (v6, Fase F): questa lettura è mia se `owner_id` combacia, oppure se non
+        ha ancora un proprietario e il suo `anon_id` combacia col cookie di chi chiede.
+
+        Dopo il reclamo alla registrazione `owner_id` non è più nullo: da lì in poi solo la prima
+        condizione vale, e il vecchio cookie anonimo smette di dare accesso — corretto, perché la
+        lettura è ormai di un utente e passa dal percorso normale.
+        """
+        condizioni = []
+        if owner is not None:
+            condizioni.append(Reading.owner_id == owner.id)
+        if anon_id:
+            condizioni.append((Reading.owner_id.is_(None)) & (Reading.anon_id == anon_id))
+        if not condizioni:
+            return None
+        query = select(Reading).where(Reading.id == reading_id, or_(*condizioni))
+        if lock:
+            query = query.with_for_update()
+        return (await self._session.execute(query)).scalar_one_or_none()
+
+    async def reclama_anonima(self, anon_id: str, owner: User) -> Optional[Reading]:
+        """Alla prima registrazione (`current_user()`, `appena_creato`): se il cookie corrisponde a
+        una lettura ancora senza proprietario, la assegna. Non rigenera nulla: la sintesi, se già
+        c'era, resta quella già calcolata — il client la rilegge per intero dopo la registrazione."""
+        lettura = (await self._session.execute(
+            select(Reading).where(Reading.anon_id == anon_id, Reading.owner_id.is_(None))
+        )).scalar_one_or_none()
+        if lettura is not None:
+            lettura.owner_id = owner.id
+        return lettura
 
     async def list_recent(
         self, owner: User, *, limite: int = 50, prima_di: Optional[uuid.UUID] = None,

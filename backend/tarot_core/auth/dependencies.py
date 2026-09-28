@@ -92,9 +92,39 @@ async def current_principal(
 CurrentPrincipal = Annotated[Principal, Depends(current_principal)]
 
 
+async def current_principal_opzionale(
+    request: Request,
+    authorization: Annotated[Optional[str], Header()] = None,
+) -> Optional[Principal]:
+    """Come `current_principal`, ma restituisce `None` invece di sollevare 401 (v6, Fase F).
+
+    Dichiarata come dipendenza a parte — e non una chiamata diretta a `current_principal` dentro
+    `current_user_opzionale` — perché `app.dependency_overrides` di FastAPI sostituisce una funzione
+    per ogni suo uso in `Depends(...)`: chiamarla a mano bypasserebbe l'override che i test usano per
+    simulare l'identità (`conftest.py::client`), e ogni endpoint reso opzionale per gli anonimi
+    smetterebbe di essere testabile come autenticato.
+    """
+    settings = get_settings()
+    if settings.auth_disabled:
+        return PRINCIPAL_DI_SVILUPPO
+    if not authorization or not authorization.lower().startswith("bearer "):
+        return None
+    try:
+        return get_token_verifier().verify(authorization.split(" ", 1)[1].strip())
+    except AuthenticationError:
+        return None
+
+
+#: Il nome del cookie anti-abuso della lettura anonima (v6, Fase F): impostato da `POST
+#: /readings/anonime`, letto qui per il reclamo alla registrazione. Un solo posto per il nome,
+#: perché il router e questo modulo devono restare d'accordo sulla stessa stringa.
+COOKIE_ANONIMO = "tarots_anon"
+
+
 async def current_user(
     principal: CurrentPrincipal,
     session: Annotated[AsyncSession, Depends(get_db_session)],
+    request: Request,
 ) -> User:
     """L'utente del database, allineato al token."""
     try:
@@ -109,6 +139,7 @@ async def current_user(
             from ..billing.credits import RegistroCrediti
             from ..billing.plans import GestoreAbbonamenti
             from ..domain.impostazioni_repositories import correnti as impostazioni_correnti
+            from ..domain.repositories import ReadingRepository
 
             await GestoreAbbonamenti(session).apri_piano_base(utente.id)
             impostazioni = await impostazioni_correnti(session)
@@ -116,6 +147,11 @@ async def current_user(
                 await RegistroCrediti(session).accredita(
                     utente.id, impostazioni.crediti_iscrizione, reason="omaggio", note="iscrizione",
                 )
+            # Il reclamo della lettura anonima (v6, Fase F): non rigenera nulla, sposta solo
+            # `owner_id` su una lettura già completa — il client la rilegge per intero.
+            anon_id = request.cookies.get(COOKIE_ANONIMO)
+            if anon_id:
+                await ReadingRepository(session).reclama_anonima(anon_id, utente)
             await session.commit()
         return utente
     except PermissionError as exc:
@@ -125,6 +161,21 @@ async def current_user(
 
 
 CurrentUser = Annotated[User, Depends(current_user)]
+
+
+async def current_user_opzionale(
+    principal: Annotated[Optional[Principal], Depends(current_principal_opzionale)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    request: Request,
+) -> Optional[User]:
+    """Come `current_user`, ma senza sollevare 401 se manca l'autenticazione (v6, Fase F): per gli
+    endpoint della lettura che un visitatore anonimo e un utente registrato condividono."""
+    if principal is None:
+        return None
+    return await current_user(principal, session, request)
+
+
+OptionalUser = Annotated[Optional[User], Depends(current_user_opzionale)]
 
 
 def require_role(role: str):
