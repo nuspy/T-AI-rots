@@ -145,7 +145,7 @@ spec:
         - name: keycloak
           # deploy/keycloak/Dockerfile: Keycloak 26 già costruito per Postgres,
           # health e percorso /auth. Costruito sul server, senza registry.
-          image: tarots-keycloak:v2
+          image: tarots-keycloak:v3
           imagePullPolicy: IfNotPresent
           # `start` (produzione), non `start-dev`: database vero, HTTPS dietro proxy.
           args: ["start", "--optimized", "--import-realm"]
