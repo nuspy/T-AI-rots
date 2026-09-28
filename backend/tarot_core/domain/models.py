@@ -177,6 +177,12 @@ class Reading(Base, TimestampMixin, OwnedMixin):
     #: Il quadro emerso dall'intervista, riassunto dal modello.
     context_summary: Mapped[Optional[str]] = mapped_column(Text)
 
+    #: Le memorie rilevanti recuperate all'apertura (v6, Fase C): `[{"id", "contenuto", "tipo",
+    #: "campo_attinenza"}, ...]`. Un'istantanea, come `persone`: resta la stessa per tutta
+    #: l'intervista anche se nel frattempo un'altra lettura scrivesse una nuova memoria — altrimenti
+    #: le regole del colloquio cambierebbero a metà. La sintesi la rilegge e la filtra ulteriormente.
+    memorie_recuperate: Mapped[Optional[List[Dict[str, Any]]]] = mapped_column(JSONB)
+
     #: Nelle letture speciali, l'**istantanea** delle due persone al momento
     #: dell'apertura: `{"v": 1, "tu": {...}, "partner": {...}}`. È una copia, non
     #: un riferimento: la lettura resta coerente col responso anche se poi

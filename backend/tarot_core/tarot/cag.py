@@ -84,6 +84,12 @@ Come costruire il responso:
   persona.
 - Il futuro è la tendenza più probabile delle forze attuali, che le scelte di
   chi consulta possono cambiare: niente fatalismo, niente certezze assolute.
+- Se il messaggio contiene una sezione «Memoria: letture precedenti», fai un
+  confronto esplicito prima/dopo quando pertinente («rispetto a ciò che sapevo
+  di te…»), senza inventare continuità che le memorie non supportano: una
+  memoria STABILE descrive chi consulta senza mai essere messa in discussione
+  di nuovo, una VARIABILE è la situazione a cui si può chiedere se qualcosa è
+  cambiato.
 """
 
 _FORMATO_STANDARD = """
@@ -286,6 +292,7 @@ def parte_variabile(
     persone: str = "",
     compatibilita: str = "",
     soggetti: Optional[Dict[int, str]] = None,
+    memorie_rilevanti: str = "",
 ) -> str:
     """La lettura concreta: tutto ciò che cambia da una consultazione all'altra.
 
@@ -295,7 +302,9 @@ def parte_variabile(
 
     `carte` è l'elenco con `card_id`, `rovescio`, `posizione`, `calcolata` e
     l'`interpretazione` immediata già data. `colloquio` è la trascrizione
-    dell'intervista: le domande dell'oracolo e le risposte.
+    dell'intervista: le domande dell'oracolo e le risposte. `memorie_rilevanti`
+    (v6, Fase C) è già formattato dal chiamante (`readings.py`), come per
+    `colloquio`: è per-utente, quindi qui e non nel prefisso stabile.
     """
     righe = [
         "# La lettura",
@@ -304,6 +313,8 @@ def parte_variabile(
     ]
     if colloquio:
         righe += ["", "Colloquio (domande dell'oracolo e risposte di chi consulta):", colloquio]
+    if memorie_rilevanti:
+        righe += ["", "## Memoria: letture precedenti", memorie_rilevanti]
     if profilo:
         righe.append(f"Profilo di chi consulta:\n{profilo}")
     if persone:

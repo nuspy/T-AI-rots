@@ -40,20 +40,21 @@ from ...auth.dependencies import CurrentUser, DbSession
 from ...billing.credits import CreditiInsufficienti, RegistroCrediti
 from ...billing.plans import GestoreAbbonamenti
 from ...billing.quote import COSTO_LETTURA, ContatoreQuote
-from ...domain import deck_repositories
+from ...domain import deck_repositories, memoria_repositories
 from ...domain.base import utcnow
 from ...domain.models import InterviewTurn, Reading, User
 from ...domain.repositories import AuditRepository, ReadingRepository
 from ...domain.share_models import ShareImage
 from ...domain.session import SessionFactory
 from ...guards.lettura import giudica, segnale_di_crisi, uscita_proibita
-from ...llm.base import GenerationError
+from ...llm.base import GenerationError, supporta_embedding
 from ...llm.compiti import Compito
 from ...settings import get_settings
 from ...tarot import cag, interpretazione
 from ...tarot.condivisione import pulisci_testo
 from ...tarot.intervista import IntervistaNonRiuscita, prossimo_passo, profilo_da, trascrizione, turni_da
 from ...tarot.memoria import estrai_e_salva
+from ...tarot.memoria_retrieval import da_istantanea, formatta_per_sintesi, istantanea, rilevanti
 from ...tarot.lettura import (
     StatoNonValido, dignita_di, doppia_valenza, gia_rivelate, note_di_posizione,
     posa, posa_manuale, prevalenze_di, prossima_da_rivelare, wirth,
@@ -289,6 +290,26 @@ def _soggetti(stesa: Dict[str, Any], persone: Optional[Persone]) -> Optional[Dic
     return {p["n"]: soggetto_testo(p.get("soggetto"), persone) for p in stesa["posizioni"]}
 
 
+async def _memorie_per_sintesi(session: DbSession, owner_id: int, snapshot: List[Dict[str, Any]]) -> str:
+    """Il blocco «Memoria» per la sintesi (v6, Fase C): le prime 3 dell'istantanea presa all'apertura,
+    con il "prima" di ogni variabile che ha una versione precedente — per il confronto che la sintesi
+    fa esplicitamente quando pertinente (vedi `cag._CORPO_SINTESI`)."""
+    voci = snapshot[:3]
+    if not voci:
+        return ""
+    precedenti: Dict[str, str] = {}
+    for v in voci:
+        if v["tipo"] != "variabile":
+            continue
+        try:
+            catena_ = await memoria_repositories.catena(session, owner_id, uuid.UUID(v["id"]))
+        except Exception:  # noqa: BLE001 - il confronto prima/dopo è un arricchimento, non un requisito
+            continue
+        if len(catena_) > 1:
+            precedenti[v["id"]] = catena_[-2].contenuto
+    return formatta_per_sintesi(voci, precedenti)
+
+
 def lettura_json(lettura: Reading, *, dettaglio: bool = True) -> Dict[str, Any]:
     conoscenza = get_conoscenza()
     stesa = conoscenza.stesa(lettura.spread_id) or {}
@@ -419,11 +440,26 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
         diritti = await gestore.diritti_di(user.id)
         consumo = "quota" if await ContatoreQuote(session).quota_disponibile(user.id, diritti) else "credito"
 
+    # Il recupero delle memorie (v6, Fase C): un'istantanea presa una volta sola, qui, che vale per
+    # tutta l'intervista. Non deve mai impedire l'apertura di una lettura: un fornitore di embedding
+    # non configurato o che fallisce lascia solo la lista vuota, non un errore all'utente.
+    memorie_recuperate: List[Dict[str, Any]] = []
+    try:
+        provider_embed = provider_per(Compito.EMBEDDING, persone)
+        if supporta_embedding(provider_embed):
+            candidati = await memoria_repositories.candidati_per(session, user.id)
+            if candidati:
+                vettore = (await provider_embed.embed([payload.question.strip()]))[0]
+                memorie_recuperate = istantanea(rilevanti(candidati, vettore, top_n=5))
+    except Exception:  # noqa: BLE001 - il recupero memorie non deve mai bloccare l'apertura
+        logger.warning("Recupero memorie non riuscito all'apertura della lettura", exc_info=True)
+
     lettura = await ReadingRepository(session).create(
         user, spread_id=stesa["id"], question=payload.question.strip(),
         consumo=consumo, lang=lang, status="intervista", persone=persone,
         manuale=assegnazioni_manuali is not None,
         deck_id=mazzo_scelto.id if mazzo_scelto else None,
+        memorie_recuperate=memorie_recuperate,
     )
     if assegnazioni_manuali is not None:
         # `lettura` è appena stata creata (solo un flush, mai un `select`): la relazione `cards` non è
@@ -530,6 +566,7 @@ async def intervista(
             categoria=categoria,
             nota=stesa.get("nota_intervista", ""),
             parole_neutre=parole_neutre(persone),
+            memorie=da_istantanea(lettura.memorie_recuperate or []),
         )
     except (IntervistaNonRiuscita, RuntimeError) as exc:
         # Nessuna domanda di riserva: si dice che l'oracolo non ha risposto.
@@ -786,6 +823,7 @@ async def sintesi(
 
     categoria = conoscenza.categoria_di(stesa)
     prefisso = cag.prefisso(conoscenza, registro.istruzioni_per("sintesi", categoria), categoria)
+    memorie_rilevanti = await _memorie_per_sintesi(session, user.id, lettura.memorie_recuperate or [])
     carte = [
         {
             "card_id": c.card_id, "rovescio": c.rovescio, "posizione": c.posizione,
@@ -804,6 +842,7 @@ async def sintesi(
         persone=blocco_persone(persone_lettura, conoscenza) if persone_lettura else "",
         compatibilita=blocco_compatibilita(persone_lettura, conoscenza) if persone_lettura else "",
         soggetti=_soggetti(stesa, persone_lettura),
+        memorie_rilevanti=memorie_rilevanti,
     )
 
     # La transazione della richiesta si chiude prima dello streaming: il

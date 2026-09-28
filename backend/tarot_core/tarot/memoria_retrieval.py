@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import List, Sequence
+from typing import Any, Dict, List, Sequence
 from uuid import UUID
 
 
@@ -48,6 +48,53 @@ def similarita_coseno(a: Sequence[float], b: Sequence[float]) -> float:
     if norma_a == 0.0 or norma_b == 0.0:
         return 0.0
     return prodotto / (norma_a * norma_b)
+
+
+_ETICHETTE_TIPO = {"stabile": "STABILE", "variabile": "VARIABILE"}
+
+
+def formatta_memorie(rilevanti_: Sequence[MemoriaRilevante]) -> str:
+    """Il blocco di prompt per l'intervista. Vuoto se non c'è nulla."""
+    if not rilevanti_:
+        return ""
+    return "\n".join(
+        f"- [{_ETICHETTE_TIPO.get(m.tipo, m.tipo.upper())} — {m.campo_attinenza}] {m.contenuto}"
+        for m in rilevanti_
+    )
+
+
+def istantanea(rilevanti_: Sequence[MemoriaRilevante]) -> List[Dict[str, str]]:
+    """La forma serializzabile in JSONB, per `Reading.memorie_recuperate` (un'istantanea, come `persone`)."""
+    return [
+        {"id": str(m.id), "contenuto": m.contenuto, "tipo": m.tipo, "campo_attinenza": m.campo_attinenza}
+        for m in rilevanti_
+    ]
+
+
+def da_istantanea(dati: Sequence[Dict[str, Any]]) -> List[MemoriaRilevante]:
+    """L'inverso di `istantanea()`: `distanza` non serve più dopo il recupero, resta a zero."""
+    return [
+        MemoriaRilevante(
+            id=UUID(d["id"]), contenuto=d["contenuto"], tipo=d["tipo"],
+            campo_attinenza=d["campo_attinenza"], distanza=0.0,
+        )
+        for d in (dati or [])
+    ]
+
+
+def formatta_per_sintesi(voci: Sequence[Dict[str, Any]], precedenti: Dict[str, str]) -> str:
+    """Il blocco per la sintesi: come `formatta_memorie()`, con il "prima" di ogni variabile che ha
+    una versione precedente in catena (`precedenti`: id della memoria corrente -> testo di prima)."""
+    if not voci:
+        return ""
+    righe = []
+    for v in voci:
+        riga = f"- [{_ETICHETTE_TIPO.get(v['tipo'], v['tipo'].upper())} — {v['campo_attinenza']}] {v['contenuto']}"
+        prima = precedenti.get(v["id"])
+        if prima:
+            riga += f" (prima si sapeva: {prima})"
+        righe.append(riga)
+    return "\n".join(righe)
 
 
 def rilevanti(

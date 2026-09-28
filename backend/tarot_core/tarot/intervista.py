@@ -33,6 +33,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 from ..llm.base import GenerationError
 from .llm import genera_json, richiesta
 from .lingue import istruzione_lingua
+from .memoria_retrieval import MemoriaRilevante, formatta_memorie
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +85,14 @@ Regole inviolabili:
 - Non ripetere domande già poste e non chiedere ciò che è già stato detto.
 - Non chiedere dati sensibili superflui (indirizzi, nomi completi, dati sanitari
   dettagliati).
+
+Se il messaggio contiene una sezione «Cose già note su questa persona»:
+- Una memoria STABILE è un fatto acquisito: NON chiederne conferma né un
+  eventuale cambiamento, nemmeno in negativo (se sai che gli manca una gamba,
+  non chiedere né se ha handicap fisici né se "gli è ricresciuta").
+- Una memoria VARIABILE puoi usarla per chiedere se la situazione si è
+  evoluta rispetto a quanto già noto, invece di richiedere da capo il
+  contesto che già hai.
 
 Rispondi SOLO con un oggetto JSON:
 {"completo": false, "domanda": "<la prossima domanda>"}
@@ -260,6 +269,7 @@ async def prossimo_passo(
     categoria: str = "standard",
     nota: str = "",
     parole_neutre: Sequence[str] = (),
+    memorie: Sequence[MemoriaRilevante] = (),
 ) -> Passo:
     """Decide la prossima domanda, o chiude l'intervista col riassunto.
 
@@ -267,6 +277,11 @@ async def prossimo_passo(
     anche le regole sulle relazioni; `nota` è l'avvertenza della stesa scelta, e
     `parole_neutre` le parole (il nome del partner) che non contano come
     ripetizione del quesito.
+
+    `memorie` (v6, Fase C) è lo stesso elenco per tutta l'intervista, recuperato
+    una sola volta all'apertura della lettura: non si ricalcola a ogni domanda,
+    altrimenti una memoria scritta da un'altra lettura in corso cambierebbe le
+    regole a metà colloquio.
 
     Le domande sono fra `min_domande` e `max_domande`: quante ne servano lo
     decide il modello. Prima del minimo una chiusura viene respinta; al
@@ -276,12 +291,14 @@ async def prossimo_passo(
     obbligo_chiusura = poste >= max_domande
     prima_del_minimo = poste < min_domande
 
+    blocco_memorie = formatta_memorie(memorie)
     utente = (
         f"Quesito: {quesito}\n"
         f"Stesa scelta: {stesa_nome}\n"
         + (f"{stesa_descrizione}\n" if stesa_descrizione else "")
         + f"{profilo}"
         + (f"Nota sulla stesa: {nota}\n" if nota else "")
+        + (f"Cose già note su questa persona:\n{blocco_memorie}\n" if blocco_memorie else "")
         + f"Domande già poste: {poste} (minimo {min_domande}, massimo {max_domande})\n\n"
         f"Colloquio finora:\n{trascrizione(turni)}\n\n"
         + (
