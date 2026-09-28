@@ -73,6 +73,9 @@ class Compito(str, Enum):
     #: Estrae i fatti stabili/variabili da una lettura appena conclusa, per ricordarli alle
     #: prossime (v6, fase B). Gira dopo la sintesi, mai durante: la memoria nasce da un fatto concluso.
     MEMORIA_ESTRAZIONE = "memoria_estrazione"
+    #: La chat proattiva (v6, fase E): apre da sola una conversazione basandosi sulle memorie, e
+    #: propone letture sul tema in corso. Testo libero + un campo di proposta strutturato.
+    CHAT_PROATTIVA = "chat_proattiva"
 
     @property
     def label(self) -> str:
@@ -94,6 +97,7 @@ _ETICHETTE: Dict[Compito, str] = {
     Compito.CREAZIONE_MAZZO: "Scene di un mazzo nuovo (offline)",
     Compito.EMBEDDING: "Vettorizzazione per la memoria (RAG)",
     Compito.MEMORIA_ESTRAZIONE: "Estrazione della memoria da una lettura conclusa",
+    Compito.CHAT_PROATTIVA: "Chat proattiva basata sulla memoria",
 }
 
 _DESCRIZIONI: Dict[Compito, str] = {
@@ -144,6 +148,11 @@ _DESCRIZIONI: Dict[Compito, str] = {
         "Legge il quesito, il colloquio e la sintesi di una lettura appena conclusa e ne estrae i "
         "fatti da ricordare — stabili (non si richiedono più) o variabili (se ne può chiedere "
         "l'evoluzione). Gira in background dopo la sintesi, non durante la lettura."
+    ),
+    Compito.CHAT_PROATTIVA: (
+        "Apre o continua una conversazione con un utente già loggato, basandosi sulle sue memorie, "
+        "e può proporre una lettura sul tema in corso. Non è la sintesi di una lettura: è un "
+        "compagno che tiene viva l'interazione, con un tono più leggero e diretto."
     ),
 }
 

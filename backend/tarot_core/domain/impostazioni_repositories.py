@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .config_models import ImpostazioniCrediti
+from .config_models import ImpostazioniChat, ImpostazioniCrediti
 from .repositories import AuditRepository
 
 ID_RIGA = 1
@@ -49,6 +49,41 @@ async def aggiorna(
     if prima != dopo:
         await AuditRepository(session).record(
             action="impostazioni_credito.modifica", actor_id=attore_id, target_type="impostazioni_credito",
+            target_id=str(ID_RIGA), before=prima, after=dopo, ip=ip,
+        )
+    return riga
+
+
+# ---- chat proattiva (v6, Fase E) -------------------------------------------------------------------
+
+
+async def correnti_chat(session: AsyncSession) -> ImpostazioniChat:
+    riga = await session.get(ImpostazioniChat, ID_RIGA)
+    if riga is None:
+        riga = ImpostazioniChat(id=ID_RIGA)
+        session.add(riga)
+        await session.flush()
+    return riga
+
+
+def pubblico_chat(riga: ImpostazioniChat) -> Dict[str, int]:
+    return {"proattiva_minuti_inattivita": riga.proattiva_minuti_inattivita}
+
+
+async def aggiorna_chat(
+    session: AsyncSession, campi: Dict[str, Any], *, attore_id: int, ip: str | None = None,
+) -> ImpostazioniChat:
+    riga = await correnti_chat(session)
+    prima = pubblico_chat(riga)
+
+    if "proattiva_minuti_inattivita" in campi and campi["proattiva_minuti_inattivita"] is not None:
+        riga.proattiva_minuti_inattivita = int(campi["proattiva_minuti_inattivita"])
+    riga.updated_by = attore_id
+
+    dopo = pubblico_chat(riga)
+    if prima != dopo:
+        await AuditRepository(session).record(
+            action="impostazioni_chat.modifica", actor_id=attore_id, target_type="impostazioni_chat",
             target_id=str(ID_RIGA), before=prima, after=dopo, ip=ip,
         )
     return riga

@@ -42,6 +42,21 @@ async def candidati_per(session: AsyncSession, owner_id: int) -> List[CandidatoM
     ]
 
 
+async def piu_recenti(session: AsyncSession, owner_id: int, *, limite: int = 5) -> List[UserMemory]:
+    """Le ultime memorie aggiornate (v6, Fase E): per la chat proattiva, che non ha una domanda
+    specifica da vettorizzare come query — a differenza dell'apertura di una lettura (`rilevanti()`
+    in `tarot/memoria_retrieval.py`), qui il criterio è solo la recenza."""
+    righe = (
+        await session.execute(
+            select(UserMemory)
+            .where(UserMemory.owner_id == owner_id, UserMemory.superseded_by.is_(None))
+            .order_by(UserMemory.updated_at.desc())
+            .limit(limite)
+        )
+    ).scalars()
+    return list(righe)
+
+
 async def elenca(session: AsyncSession, owner_id: int) -> List[UserMemory]:
     """Le memorie correnti dell'utente, per la sezione "Memoria" del profilo (Fase D)."""
     righe = (

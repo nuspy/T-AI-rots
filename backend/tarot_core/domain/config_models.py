@@ -66,6 +66,20 @@ class ImpostazioniCrediti(Base, TimestampMixin):
     )
 
 
+class ImpostazioniChat(Base, TimestampMixin):
+    """La sola manopola della chat proattiva (v6, Fase E): dopo quanti minuti di inattività l'AI
+    apre da sola una conversazione. Singleton come `ImpostazioniCrediti`, stessa ragione."""
+
+    __tablename__ = "impostazioni_chat"
+    __table_args__ = (CheckConstraint("id = 1", name="ck_impostazioni_chat_singleton"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
+    proattiva_minuti_inattivita: Mapped[int] = mapped_column(Integer, nullable=False, default=5)
+    updated_by: Mapped[Optional[int]] = mapped_column(
+        BigInteger, ForeignKey("users.id", ondelete="SET NULL"),
+    )
+
+
 class LlmProvider(Base, TimestampMixin):
     """Un fornitore LLM configurato dalla console: indirizzo, modello, chiave cifrata.
 
