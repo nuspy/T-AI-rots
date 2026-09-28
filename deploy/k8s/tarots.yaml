@@ -187,12 +187,20 @@ spec:
             - {name: KC_APPLE_ENABLED, value: "false"}
             - {name: KC_APPLE_CLIENT_ID, value: non-usato}
             - {name: KC_APPLE_CLIENT_SECRET, value: non-usato}
-            # Nessun SMTP: gli utenti si creano già con l'email verificata.
-            - {name: KC_SMTP_HOST, value: localhost}
-            - {name: KC_SMTP_PORT, value: "25"}
+            # Stalwart Mail Server (v6): container Docker "stalwart-mail" sullo stesso host,
+            # dominio tarots.chat, submission SMTPS implicito (465) — porta 587/STARTTLS non ha un
+            # listener attivo su questa immagine, per questo si usa 465+ssl invece del piu' comune
+            # 587+starttls. Il segreto della password sta in tarots-secrets (chiave smtp-password),
+            # da creare a parte: `kubectl -n tarots create secret generic tarots-secrets
+            # --from-literal=smtp-password='...' --dry-run=client -o yaml | kubectl apply -f -`
+            # (o un patch se il Secret esiste gia' con altre chiavi). Applicato live sul realm via
+            # kcadm il 2026-09-28; questi valori servono solo a un futuro reimport del realm.
+            - {name: KC_SMTP_HOST, value: mail.tadamoo.com}
+            - {name: KC_SMTP_PORT, value: "465"}
             - {name: KC_SMTP_FROM, value: "noreply@tarots.chat"}
-            - {name: KC_SMTP_USER, value: ""}
-            - {name: KC_SMTP_PASSWORD, value: ""}
+            - {name: KC_SMTP_USER, value: "noreply@tarots.chat"}
+            - name: KC_SMTP_PASSWORD
+              valueFrom: {secretKeyRef: {name: tarots-secrets, key: smtp-password}}
           ports:
             - {name: http, containerPort: 8080}
           volumeMounts:

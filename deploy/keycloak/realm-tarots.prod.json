@@ -1668,14 +1668,14 @@
   },
   "smtpServer": {
     "password": "${KC_SMTP_PASSWORD}",
-    "starttls": "true",
+    "starttls": "false",
     "port": "${KC_SMTP_PORT}",
     "auth": "true",
     "host": "${KC_SMTP_HOST}",
     "from": "${KC_SMTP_FROM}",
     "fromDisplayName": "TAROTS chat",
     "user": "${KC_SMTP_USER}",
-    "ssl": "false"
+    "ssl": "true"
   },
   "eventsEnabled": false,
   "eventsListeners": [

@@ -132,6 +132,18 @@ a:hover {
   color: var(--tarots-oro);
 }
 
+/* La conferma "stai continuando come ..." che il tema di base `keycloak.v2` mostra su ogni passo
+ * successivo al primo (password, OTP, ecc.): un campo readonly con l'username/email appena scritto,
+ * più un bottone per ricominciare il login. È comportamento di serie del tema (macro `username` in
+ * `template.ftl`, mostrata quando `auth.showUsername()` è vero), non un errore di configurazione di
+ * questo progetto — ma è ridondante nel nostro flusso e va tolto dalla vista: l'input non porta dati
+ * che servano a completare l'autenticazione (quella resta nel cookie di sessione), è solo un'etichetta.
+ * `:has()` individua il gruppo campo dal suo contenuto invece di indovinare una classe/id del gruppo
+ * stesso, che il tema di base non documenta stabilmente. */
+.pf-v5-c-form__group:has(#kc-attempted-username) {
+  display: none !important;
+}
+
 /* Messaggi di errore/avviso */
 .pf-v5-c-alert.pf-m-danger,
 .alert-error {

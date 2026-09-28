@@ -91,7 +91,9 @@ def realm_di_partenza() -> dict:
             "host": "${KC_SMTP_HOST}", "port": "${KC_SMTP_PORT}", "from": "${KC_SMTP_FROM}",
             "fromDisplayName": "TAROTS chat", "auth": "true",
             "user": "${KC_SMTP_USER}", "password": "${KC_SMTP_PASSWORD}",
-            "starttls": "true", "ssl": "false",
+            # Stalwart (v6) non ha un listener STARTTLS su 587 in questa immagine: si usa il
+            # submission SMTPS implicito su 465 invece del piu' comune 587+starttls.
+            "starttls": "false", "ssl": "true",
         },
         "identityProviders": [
             _provider("google", "Google", "google", {"defaultScope": "openid profile email"}),
