@@ -288,6 +288,16 @@ export const it = {
   memoria_conferma_conferma: "Conferma la cancellazione",
   memoria_conferma_annulla: "Annulla",
 
+  /* Chat proattiva (v6, Fase E) */
+  chat_titolo: "L'oracolo",
+  chat_apri: "Apri la chat con l'oracolo",
+  chat_placeholder: "Scrivi qualcosa…",
+  chat_invia: "Invia",
+  chat_chiudi: "Chiudi",
+  chat_muto_disattiva: "Disattiva il suono",
+  chat_muto_attiva: "Attiva il suono",
+  chat_leggi_le_carte_per: (argomento: string) => `Leggi le carte per: ${argomento}`,
+
   /* I miei ordini (v5, Fase B6) */
   profilo_ordini_titolo: "I miei ordini",
   profilo_ordini_testo: "Lo storico dei tuoi acquisti nel negozio dei mazzi.",

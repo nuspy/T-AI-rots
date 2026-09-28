@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import {
-  impostazioniCrediti, salvaImpostazioniCrediti, type ImpostazioniCrediti as Valori,
+  impostazioniChat, impostazioniCrediti, salvaImpostazioniChat, salvaImpostazioniCrediti,
+  type ImpostazioniChat as ValoriChat, type ImpostazioniCrediti as Valori,
 } from "@/lib/impostazioni";
 import { useAzione, useDati } from "@/lib/usa";
 import comuni from "../comuni.module.css";
@@ -16,6 +17,7 @@ import comuni from "../comuni.module.css";
 
 export default function Impostazioni() {
   const { dati, errore, inCorso, ricarica } = useDati(impostazioniCrediti);
+  const chat = useDati(impostazioniChat);
 
   return (
     <>
@@ -32,6 +34,10 @@ export default function Impostazioni() {
       {errore && <p className={comuni.errore}>{errore}</p>}
       {inCorso && !dati && <p className={comuni.caricamento}>Caricamento…</p>}
       {dati && <Modulo valori={dati} ricarica={ricarica} />}
+
+      {chat.errore && <p className={comuni.errore}>{chat.errore}</p>}
+      {chat.inCorso && !chat.dati && <p className={comuni.caricamento}>Caricamento…</p>}
+      {chat.dati && <ModuloChat valori={chat.dati} ricarica={chat.ricarica} />}
     </>
   );
 }
@@ -95,6 +101,53 @@ function Modulo({ valori, ricarica }: { valori: Valori; ricarica: () => void }) 
           />
           <span className={comuni.campoAiuto}>
             A ogni pacchetto o rinnovo di chi è stato invitato, per sempre — non solo alla prima volta.
+          </span>
+        </label>
+        {(problema || errore) && <p className={comuni.errore}>{problema ?? errore}</p>}
+        {salvato && !problema && !errore && <p className={comuni.esito}>Salvato.</p>}
+        <button className={comuni.primaria} type="submit" disabled={inCorso}>
+          Salva
+        </button>
+      </form>
+    </section>
+  );
+}
+
+/* Chat proattiva (v6, Fase E): quanti minuti di inattività prima che l'AI apra da sola una
+ * conversazione con l'utente, basandosi sulle sue memorie. */
+function ModuloChat({ valori, ricarica }: { valori: ValoriChat; ricarica: () => void }) {
+  const { esegui, inCorso, errore } = useAzione();
+  const [minuti, setMinuti] = useState(String(valori.proattiva_minuti_inattivita));
+  const [salvato, setSalvato] = useState(false);
+  const [problema, setProblema] = useState<string | null>(null);
+
+  const invia = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProblema(null);
+    setSalvato(false);
+    const n = Number(minuti);
+    if (!Number.isInteger(n) || n < 1 || n > 180) {
+      return setProblema("I minuti di inattività sono un intero fra 1 e 180.");
+    }
+    const fatto = await esegui((t) => salvaImpostazioniChat(t, { proattiva_minuti_inattivita: n }));
+    if (fatto) {
+      setSalvato(true);
+      ricarica();
+    }
+  };
+
+  return (
+    <section className={comuni.riquadro} aria-labelledby="chat-titolo">
+      <h2 id="chat-titolo" className={comuni.riquadroTitolo}>Chat proattiva</h2>
+      <form onSubmit={invia} className={comuni.riga} style={{ flexWrap: "wrap", alignItems: "flex-end" }}>
+        <label className={comuni.campo}>
+          <span className={comuni.campoEtichetta}>Minuti di inattività prima che l&apos;AI scriva da sola</span>
+          <input
+            className={comuni.ingresso} inputMode="numeric" value={minuti}
+            onChange={(e) => setMinuti(e.target.value)}
+          />
+          <span className={comuni.campoAiuto}>
+            Vale sia per l&apos;attesa di una risposta sia per il tempo dopo l&apos;ultimo turno.
           </span>
         </label>
         {(problema || errore) && <p className={comuni.errore}>{problema ?? errore}</p>}

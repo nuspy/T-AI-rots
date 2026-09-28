@@ -271,6 +271,16 @@ export const en: Dizionario = {
   memoria_conferma_conferma: "Confirm deletion",
   memoria_conferma_annulla: "Cancel",
 
+  /* Proactive chat (v6, Phase E) */
+  chat_titolo: "The oracle",
+  chat_apri: "Open the chat with the oracle",
+  chat_placeholder: "Write something…",
+  chat_invia: "Send",
+  chat_chiudi: "Close",
+  chat_muto_disattiva: "Mute sound",
+  chat_muto_attiva: "Unmute sound",
+  chat_leggi_le_carte_per: (argomento: string) => `Read the cards about: ${argomento}`,
+
   tipo_titolo: "Which reading would you like?",
   tipo_standard: "Standard reading",
   tipo_standard_desc: "One question and one traditional spread: the classic reading.",

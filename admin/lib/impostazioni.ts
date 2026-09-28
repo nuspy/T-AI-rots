@@ -16,3 +16,17 @@ export const salvaImpostazioniCrediti = (t: string, corpo: Partial<ImpostazioniC
     method: "PUT",
     body: JSON.stringify(corpo),
   });
+
+/* La chat proattiva (v6, Fase E): una sola manopola, il timer di inattività. */
+export interface ImpostazioniChat {
+  proattiva_minuti_inattivita: number;
+}
+
+export const impostazioniChat = (t: string) =>
+  chiamata<ImpostazioniChat>(t, "/admin/impostazioni-chat");
+
+export const salvaImpostazioniChat = (t: string, corpo: Partial<ImpostazioniChat>) =>
+  chiamata<ImpostazioniChat>(t, "/admin/impostazioni-chat", {
+    method: "PUT",
+    body: JSON.stringify(corpo),
+  });

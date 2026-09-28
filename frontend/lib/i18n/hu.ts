@@ -269,6 +269,16 @@ export const hu: Dizionario = {
   memoria_conferma_conferma: "Törlés megerősítése",
   memoria_conferma_annulla: "Mégse",
 
+  /* Proaktív csevegés (v6, E szakasz) */
+  chat_titolo: "Az orákulum",
+  chat_apri: "Csevegés megnyitása az orákulummal",
+  chat_placeholder: "Írj valamit…",
+  chat_invia: "Küldés",
+  chat_chiudi: "Bezárás",
+  chat_muto_disattiva: "Hang némítása",
+  chat_muto_attiva: "Hang bekapcsolása",
+  chat_leggi_le_carte_per: (argomento: string) => `Olvassuk ki a lapokat erről: ${argomento}`,
+
   tipo_titolo: "Milyen jóslást szeretnél?",
   tipo_standard: "Hagyományos jóslás",
   tipo_standard_desc: "Egy kérdés és egy hagyományos kirakás: a megszokott jóslás.",

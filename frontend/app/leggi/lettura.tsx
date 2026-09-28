@@ -95,7 +95,10 @@ export function Lettura() {
   const [nomePartner, setNomePartner] = useState<string | null>(null);
   const [id, setId] = useState<string | null>(idIniziale);
   const [stesaId, setStesaId] = useState<string | null>(stesaIniziale);
-  const [domanda, setDomanda] = useState("");
+  /* `?domanda=` (dalla chat proattiva, v6 Fase E, o dal banner "fammi una domanda", Fase F):
+   * precompila il campo del quesito senza inviarlo — resta modificabile dall'utente. Letto una
+   * sola volta al mount, come `idIniziale`/`tipoIniziale`. */
+  const [domanda, setDomanda] = useState(() => parametri.get("domanda") ?? "");
   const [disclaimer, setDisclaimer] = useState<string | null>(null);
   const [mostraDisclaimer, setMostraDisclaimer] = useState(false);
   const [mostraAcquisto, setMostraAcquisto] = useState(false);

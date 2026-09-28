@@ -802,6 +802,30 @@ export const modificaIndirizzo = (token: string | null, id: string, dati: Partia
   chiama<Indirizzo>(token, `/me/addresses/${id}`, { method: "PATCH", body: dati });
 export const eliminaIndirizzo = (token: string | null, id: string) =>
   chiama<void>(token, `/me/addresses/${id}`, { method: "DELETE" });
+/* ---- chat proattiva (v6, Fase E) ---- */
+
+export interface PropostaLettura {
+  argomento: string;
+  categoria: Categoria;
+}
+
+export interface TurnoChat {
+  id: string;
+  ruolo: "ai" | "utente";
+  testo: string;
+  proposta: PropostaLettura | null;
+  creato: string | null;
+}
+
+export const impostazioniChat = (token: string | null) =>
+  chiama<{ proattiva_minuti_inattivita: number }>(token, "/impostazioni-chat");
+export const storicoChat = (token: string | null) =>
+  chiama<{ turni: TurnoChat[] }>(token, "/chat/proattiva");
+export const avviaChat = (token: string | null) =>
+  chiama<{ turno: TurnoChat | null }>(token, "/chat/proattiva/avvio", { method: "POST" });
+export const inviaMessaggioChat = (token: string | null, testo: string) =>
+  chiama<{ turno: TurnoChat | null }>(token, "/chat/proattiva/messaggio", { method: "POST", body: { testo } });
+
 /* ---- memoria (v6, Fase D) ---- */
 
 export type TipoMemoria = "stabile" | "variabile";
