@@ -75,6 +75,59 @@ async def test_elimina_tutte_svuota_lo_scope_dell_utente(client, session, princi
     assert await repo.elenca(session, io.id) == []
 
 
+# ---- scrivi_o_fondi (v6, Fase B) -------------------------------------------------------------------
+
+
+async def test_una_stabile_duplicata_si_scarta(client, session, principal_utente):
+    await client.get("/me/addresses")
+    io = await UserRepository(session).ensure(principal_utente)
+    session.add(_memoria(io.id, tipo="stabile", campo="salute", embedding=[1.0, 0.0], contenuto="manca una gamba"))
+    await session.commit()
+
+    esito = await repo.scrivi_o_fondi(
+        session, io.id, contenuto="gli manca una gamba", tipo="stabile",
+        campo_attinenza="salute", embedding=[0.99, 0.01],
+    )
+    await session.commit()
+
+    assert esito is None
+    assert len(await repo.elenca(session, io.id)) == 1
+
+
+async def test_una_stabile_non_simile_si_aggiunge(client, session, principal_utente):
+    await client.get("/me/addresses")
+    io = await UserRepository(session).ensure(principal_utente)
+    session.add(_memoria(io.id, tipo="stabile", campo="salute", embedding=[1.0, 0.0], contenuto="manca una gamba"))
+    await session.commit()
+
+    esito = await repo.scrivi_o_fondi(
+        session, io.id, contenuto="e' allergico ai gatti", tipo="stabile",
+        campo_attinenza="salute", embedding=[0.0, 1.0],
+    )
+    await session.commit()
+
+    assert esito is not None
+    assert len(await repo.elenca(session, io.id)) == 2
+
+
+async def test_una_variabile_nuova_sostituisce_quella_sullo_stesso_campo(client, session, principal_utente):
+    await client.get("/me/addresses")
+    io = await UserRepository(session).ensure(principal_utente)
+    session.add(_memoria(io.id, tipo="variabile", campo="lavoro", embedding=[1.0, 0.0], contenuto="cerca lavoro"))
+    await session.commit()
+
+    esito = await repo.scrivi_o_fondi(
+        session, io.id, contenuto="ha trovato lavoro", tipo="variabile",
+        campo_attinenza="lavoro", embedding=[0.0, 1.0],
+    )
+    await session.commit()
+
+    correnti = await repo.elenca(session, io.id)
+    assert [r.contenuto for r in correnti] == ["ha trovato lavoro"]
+    catena = await repo.catena(session, io.id, esito.id)
+    assert [r.contenuto for r in catena] == ["cerca lavoro", "ha trovato lavoro"]
+
+
 async def test_catena_risale_dalla_testa_alla_piu_vecchia(client, session, principal_utente):
     await client.get("/me/addresses")
     io = await UserRepository(session).ensure(principal_utente)

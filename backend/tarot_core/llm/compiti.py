@@ -70,6 +70,9 @@ class Compito(str, Enum):
     #: un vettore per il recupero per pertinenza. Non tutti i fornitori lo offrono (Anthropic no):
     #: verificare `llm.base.supporta_embedding()` prima di assegnarlo, non solo alla chiamata.
     EMBEDDING = "embedding"
+    #: Estrae i fatti stabili/variabili da una lettura appena conclusa, per ricordarli alle
+    #: prossime (v6, fase B). Gira dopo la sintesi, mai durante: la memoria nasce da un fatto concluso.
+    MEMORIA_ESTRAZIONE = "memoria_estrazione"
 
     @property
     def label(self) -> str:
@@ -90,6 +93,7 @@ _ETICHETTE: Dict[Compito, str] = {
     Compito.TRADUZIONE_CONOSCENZA: "Traduzione di carte e stese (offline)",
     Compito.CREAZIONE_MAZZO: "Scene di un mazzo nuovo (offline)",
     Compito.EMBEDDING: "Vettorizzazione per la memoria (RAG)",
+    Compito.MEMORIA_ESTRAZIONE: "Estrazione della memoria da una lettura conclusa",
 }
 
 _DESCRIZIONI: Dict[Compito, str] = {
@@ -135,6 +139,11 @@ _DESCRIZIONI: Dict[Compito, str] = {
         "Trasforma un testo (una domanda, una sintesi, una memoria estratta) in un vettore, per "
         "ritrovare ciò che è pertinente a una lettura o una conversazione. Non è generazione di "
         "testo: il fornitore assegnato deve offrire un endpoint di embedding."
+    ),
+    Compito.MEMORIA_ESTRAZIONE: (
+        "Legge il quesito, il colloquio e la sintesi di una lettura appena conclusa e ne estrae i "
+        "fatti da ricordare — stabili (non si richiedono più) o variabili (se ne può chiedere "
+        "l'evoluzione). Gira in background dopo la sintesi, non durante la lettura."
     ),
 }
 

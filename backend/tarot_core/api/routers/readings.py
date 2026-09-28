@@ -53,6 +53,7 @@ from ...settings import get_settings
 from ...tarot import cag, interpretazione
 from ...tarot.condivisione import pulisci_testo
 from ...tarot.intervista import IntervistaNonRiuscita, prossimo_passo, profilo_da, trascrizione, turni_da
+from ...tarot.memoria import estrai_e_salva
 from ...tarot.lettura import (
     StatoNonValido, dignita_di, doppia_valenza, gia_rivelate, note_di_posizione,
     posa, posa_manuale, prevalenze_di, prossima_da_rivelare, wirth,
@@ -875,6 +876,16 @@ async def sintesi(
             await s.commit()
             saldo = await RegistroCrediti(s).saldo(user.id)
             chiusura = _chiusura(r, saldo)
+
+        if esito != "bloccato":
+            # In background, mai atteso: un'estrazione lenta o fallita non deve ritardare né
+            # rompere una risposta già consegnata all'utente (v6, Fase B).
+            asyncio.create_task(estrai_e_salva(
+                fabbrica, user.id, reading_id,
+                quesito=lettura.question, colloquio=argomenti["colloquio"], sintesi=responso,
+                provider_estrazione=provider_per(Compito.MEMORIA_ESTRAZIONE, persone_lettura),
+                provider_embedding=provider_per(Compito.EMBEDDING, persone_lettura),
+            ))
 
         yield _sse("fase", {"fase": "responso", "guardia": esito})
         # Il testo esce a frammenti: già approvato, ma lo si scrive davanti
