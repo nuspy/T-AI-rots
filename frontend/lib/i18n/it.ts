@@ -266,6 +266,28 @@ export const it = {
   indirizzi_elimina: "Elimina",
   indirizzi_annulla: "Annulla",
 
+  /* Memoria (v6, Fase D) */
+  memoria_titolo: "Memoria",
+  memoria_testo: "Ciò che l'oracolo ricorda di te, da letture e conversazioni precedenti.",
+  memoria_vuoto: "Non c'è ancora nessuna memoria.",
+  memoria_tipo_stabile: "Stabile",
+  memoria_tipo_variabile: "Variabile",
+  memoria_tooltip_seleziona: "Seleziona",
+  memoria_tooltip_modifica: "Modifica",
+  memoria_tooltip_elimina: "Elimina",
+  memoria_modifica_salva: "Salva",
+  memoria_modifica_annulla: "Annulla",
+  memoria_bottone_cancella_selezionate: "Cancella memorie selezionate",
+  memoria_bottone_cancella_tutte: "Cancella tutte le memorie",
+  memoria_conferma_titolo: "Confermi la cancellazione?",
+  memoria_conferma_testo: (n: number) =>
+    n === 1 ? "Stai per cancellare 1 memoria selezionata." : `Stai per cancellare ${n} memorie selezionate.`,
+  memoria_conferma_testo_tutte: "Stai per cancellare TUTTE le tue memorie.",
+  memoria_conferma_checkbox: "Capisco che non si può annullare",
+  memoria_conferma_continua: "Continua",
+  memoria_conferma_conferma: "Conferma la cancellazione",
+  memoria_conferma_annulla: "Annulla",
+
   /* I miei ordini (v5, Fase B6) */
   profilo_ordini_titolo: "I miei ordini",
   profilo_ordini_testo: "Lo storico dei tuoi acquisti nel negozio dei mazzi.",

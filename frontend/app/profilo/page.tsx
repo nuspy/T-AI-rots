@@ -5,9 +5,10 @@
 
 import { useState } from "react";
 import {
-  aggiornaProfilo, cancellaPartner, caricaAvatar, creaIndirizzo, elencaIndirizzi, elencaOrdini, eliminaIndirizzo,
-  euro, impostazioniPubbliche, leggiProfilo, modificaIndirizzo, riscattaInvito, togliAvatar,
-  type Genere, type Indirizzo, type IndirizzoInvio, type Ordine,
+  aggiornaProfilo, cancellaPartner, caricaAvatar, creaIndirizzo, elencaIndirizzi, elencaMemorie, elencaOrdini,
+  eliminaIndirizzo, eliminaMemoria, eliminaMemorieSelezionate, eliminaTutteLeMemorie,
+  euro, impostazioniPubbliche, leggiProfilo, modificaIndirizzo, modificaMemoria, riscattaInvito, togliAvatar,
+  type Genere, type Indirizzo, type IndirizzoInvio, type Memoria, type Ordine,
 } from "@/lib/api";
 import { urlMedia } from "@/lib/blog";
 import { dimenticaInvito, leggiInvito } from "@/lib/inviti";
@@ -18,6 +19,7 @@ import { useAzione, useCarica } from "@/lib/usa";
 import { BottonePdf } from "../componenti/bottone-pdf";
 import { Carta } from "../componenti/carta";
 import { CampiGenere } from "../componenti/campi-genere";
+import { Modale } from "../componenti/modale";
 import { Involucro } from "../componenti/testata";
 import { componiBigliettino, scaricaBlob } from "./bigliettino-invito";
 import stili from "../pagine.module.css";
@@ -343,6 +345,7 @@ function Profilo() {
 
       <SezioneOrdini />
       <SezioneIndirizzi />
+      <SezioneMemoria />
     </>
   );
 }
@@ -509,6 +512,174 @@ function RigaIndirizzo({ indirizzo, onCambio }: { indirizzo: Indirizzo; onCambio
           onClick={async () => { await esegui((tok) => eliminaIndirizzo(tok, indirizzo.id)); onCambio(); }}
         >
           {t.indirizzi_elimina}
+        </button>
+      </div>
+    </li>
+  );
+}
+
+/* Memoria (v6, Fase D): elenco, modifica in linea, cancellazione singola e multipla con doppia
+ * conferma. Il bottone in fondo è testato: "cancella selezionate" se ce n'è almeno una, altrimenti
+ * "cancella tutte" — mai i due insieme, per non lasciare ambiguo su cosa sta per succedere. */
+function SezioneMemoria() {
+  const { t } = useLingua();
+  const memorie = useCarica(elencaMemorie);
+  const { esegui, inCorso } = useAzione();
+  const [selezionate, setSelezionate] = useState<Set<string>>(new Set());
+  const [confermaAperta, setConfermaAperta] = useState(false);
+  const [passoConferma, setPassoConferma] = useState<1 | 2>(1);
+  const [checkConferma, setCheckConferma] = useState(false);
+
+  const elenco = memorie.dati?.memorie ?? [];
+  const haSelezionate = selezionate.size > 0;
+
+  const toggleSelezione = (id: string) => {
+    setSelezionate((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const chiudiConferma = () => {
+    setConfermaAperta(false);
+    setPassoConferma(1);
+    setCheckConferma(false);
+  };
+
+  const confermaCancellazione = async () => {
+    if (haSelezionate) {
+      await esegui((tok) => eliminaMemorieSelezionate(tok, [...selezionate]));
+    } else {
+      await esegui((tok) => eliminaTutteLeMemorie(tok));
+    }
+    setSelezionate(new Set());
+    chiudiConferma();
+    memorie.ricarica();
+  };
+
+  return (
+    <section className={`pannello ${stili.scheda} ${stili.sezione}`} aria-labelledby="profilo-memoria">
+      <h2 id="profilo-memoria" className={stili.sezioneTitolo}>{t.memoria_titolo}</h2>
+      <p className={stili.nota}>{t.memoria_testo}</p>
+
+      {elenco.length === 0 ? (
+        <p className={stili.nota}>{t.memoria_vuoto}</p>
+      ) : (
+        <>
+          <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 10 }}>
+            {elenco.map((m) => (
+              <RigaMemoria
+                key={m.id} memoria={m}
+                selezionata={selezionate.has(m.id)}
+                onSeleziona={() => toggleSelezione(m.id)}
+                onCambio={memorie.ricarica}
+              />
+            ))}
+          </ul>
+          <button className="bottone-secondario" style={{ marginTop: 10 }} onClick={() => setConfermaAperta(true)}>
+            {haSelezionate ? t.memoria_bottone_cancella_selezionate : t.memoria_bottone_cancella_tutte}
+          </button>
+        </>
+      )}
+
+      <Modale aperta={confermaAperta} titolo={t.memoria_conferma_titolo} onChiudi={chiudiConferma}>
+        {passoConferma === 1 ? (
+          <>
+            <p>{haSelezionate ? t.memoria_conferma_testo(selezionate.size) : t.memoria_conferma_testo_tutte}</p>
+            <div className={stili.linea} style={{ marginTop: 14 }}>
+              <button className="bottone" onClick={() => setPassoConferma(2)}>{t.memoria_conferma_continua}</button>
+              <button className="bottone-secondario" onClick={chiudiConferma}>{t.memoria_conferma_annulla}</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <label style={{ display: "flex", gap: 8, alignItems: "center", margin: "4px 0 14px" }}>
+              <input type="checkbox" checked={checkConferma} onChange={(e) => setCheckConferma(e.target.checked)} />
+              {t.memoria_conferma_checkbox}
+            </label>
+            <div className={stili.linea}>
+              <button className="bottone" disabled={!checkConferma || inCorso} onClick={confermaCancellazione}>
+                {t.memoria_conferma_conferma}
+              </button>
+              <button className="bottone-secondario" onClick={chiudiConferma}>{t.memoria_conferma_annulla}</button>
+            </div>
+          </>
+        )}
+      </Modale>
+    </section>
+  );
+}
+
+function RigaMemoria({
+  memoria, selezionata, onSeleziona, onCambio,
+}: {
+  memoria: Memoria; selezionata: boolean; onSeleziona: () => void; onCambio: () => void;
+}) {
+  const { t } = useLingua();
+  const { esegui, inCorso } = useAzione();
+  const [inModifica, setInModifica] = useState(false);
+  const [contenuto, setContenuto] = useState(memoria.contenuto);
+  const [campo, setCampo] = useState(memoria.campo_attinenza);
+
+  const annullaModifica = () => {
+    setInModifica(false);
+    setContenuto(memoria.contenuto);
+    setCampo(memoria.campo_attinenza);
+  };
+
+  const salvaModifica = async () => {
+    await esegui((tok) => modificaMemoria(tok, memoria.id, { contenuto: contenuto.trim(), campo_attinenza: campo.trim() }));
+    setInModifica(false);
+    onCambio();
+  };
+
+  return (
+    <li className={stili.linea} style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className={stili.linea} style={{ gap: 8 }}>
+          <span className={stili.etichetta}>
+            {memoria.tipo === "stabile" ? t.memoria_tipo_stabile : t.memoria_tipo_variabile}
+          </span>
+          <span className={stili.etichetta}>{memoria.campo_attinenza}</span>
+        </div>
+        {inModifica ? (
+          <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
+            <textarea
+              value={contenuto} rows={3} style={{ width: "100%", resize: "vertical" }}
+              onChange={(e) => setContenuto(e.target.value)}
+            />
+            <input value={campo} onChange={(e) => setCampo(e.target.value)} />
+            <div className={stili.linea}>
+              <button className="bottone" disabled={inCorso || !contenuto.trim()} onClick={salvaModifica}>
+                {t.memoria_modifica_salva}
+              </button>
+              <button className="bottone-secondario" onClick={annullaModifica}>{t.memoria_modifica_annulla}</button>
+            </div>
+          </div>
+        ) : (
+          <p className={stili.nota}>{memoria.contenuto}</p>
+        )}
+      </div>
+      <div className={stili.linea} style={{ gap: 6, flexShrink: 0 }}>
+        <input
+          type="checkbox" checked={selezionata} onChange={onSeleziona}
+          title={t.memoria_tooltip_seleziona} aria-label={t.memoria_tooltip_seleziona}
+          style={{ width: 22, height: 22 }}
+        />
+        <button
+          className="bottone-secondario" style={{ minWidth: 44, minHeight: 44, padding: 0 }}
+          title={t.memoria_tooltip_modifica} aria-label={t.memoria_tooltip_modifica}
+          onClick={() => setInModifica((v) => !v)}
+        >
+          ✎
+        </button>
+        <button
+          className="bottone-secondario" style={{ minWidth: 44, minHeight: 44, padding: 0 }}
+          title={t.memoria_tooltip_elimina} aria-label={t.memoria_tooltip_elimina} disabled={inCorso}
+          onClick={async () => { await esegui((tok) => eliminaMemoria(tok, memoria.id)); onCambio(); }}
+        >
+          🗑
         </button>
       </div>
     </li>

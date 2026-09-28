@@ -249,6 +249,28 @@ export const en: Dizionario = {
   indirizzi_elimina: "Delete",
   indirizzi_annulla: "Cancel",
 
+  /* Memory (v6, Phase D) */
+  memoria_titolo: "Memory",
+  memoria_testo: "What the oracle remembers about you, from past readings and conversations.",
+  memoria_vuoto: "There's no memory yet.",
+  memoria_tipo_stabile: "Stable",
+  memoria_tipo_variabile: "Evolving",
+  memoria_tooltip_seleziona: "Select",
+  memoria_tooltip_modifica: "Edit",
+  memoria_tooltip_elimina: "Delete",
+  memoria_modifica_salva: "Save",
+  memoria_modifica_annulla: "Cancel",
+  memoria_bottone_cancella_selezionate: "Delete selected memories",
+  memoria_bottone_cancella_tutte: "Delete all memories",
+  memoria_conferma_titolo: "Confirm deletion?",
+  memoria_conferma_testo: (n: number) =>
+    n === 1 ? "You're about to delete 1 selected memory." : `You're about to delete ${n} selected memories.`,
+  memoria_conferma_testo_tutte: "You're about to delete ALL your memories.",
+  memoria_conferma_checkbox: "I understand this can't be undone",
+  memoria_conferma_continua: "Continue",
+  memoria_conferma_conferma: "Confirm deletion",
+  memoria_conferma_annulla: "Cancel",
+
   tipo_titolo: "Which reading would you like?",
   tipo_standard: "Standard reading",
   tipo_standard_desc: "One question and one traditional spread: the classic reading.",

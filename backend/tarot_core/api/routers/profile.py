@@ -15,16 +15,19 @@ from sqlalchemy import select
 
 from ...auth.dependencies import CurrentUser, DbSession
 from ...billing.credits import RegistroCrediti
-from ...domain import indirizzi_repositories
+from ...domain import indirizzi_repositories, memoria_repositories
 from ...domain.base import utcnow
 from ...domain.blog_models import MediaImage
+from ...domain.memory_models import UserMemory
 from ...domain.models import DailyCard, User
 from ...domain.ordini_models import IndirizzoSpedizione
 from ...domain.repositories import AuditRepository, nuovo_codice_invito
+from ...llm.base import supporta_embedding
+from ...llm.compiti import Compito
 from ...tarot import blog as regole_blog
 from ...tarot.numerologia import carta_dell_anima, carta_dell_anno
 from ...tarot.persone import LUNGHEZZA_GENERE_ALTRO, mancanti, pulisci
-from ..deps import get_conoscenza
+from ..deps import get_conoscenza, provider_per
 from .blog import nome_pubblico, url_immagine
 from .condivisione import contatore
 
@@ -369,5 +372,76 @@ async def elimina_indirizzo(indirizzo_id: uuid.UUID, user: CurrentUser, session:
         rimasti = await indirizzi_repositories.elenca(session, user.id)
         if rimasti:
             rimasti[0].predefinito = True
+    await session.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# ---- memoria (v6, Fase D) -----------------------------------------------------------------------
+
+
+class MemoriaMod(BaseModel):
+    contenuto: Optional[str] = Field(default=None, min_length=1, max_length=1000)
+    campo_attinenza: Optional[str] = Field(default=None, min_length=1, max_length=40)
+
+
+class MemorieDaEliminare(BaseModel):
+    ids: List[uuid.UUID] = Field(default_factory=list)
+    tutte: bool = False
+
+
+def _memoria_json(m: UserMemory) -> Dict[str, Any]:
+    return {
+        "id": str(m.id), "contenuto": m.contenuto, "tipo": m.tipo,
+        "campo_attinenza": m.campo_attinenza, "fonte": m.fonte,
+        "aggiornata": m.updated_at.isoformat() if m.updated_at else None,
+    }
+
+
+@router.get("/memories")
+async def memorie(user: CurrentUser, session: DbSession) -> Dict[str, List[Dict[str, Any]]]:
+    return {"memorie": [_memoria_json(m) for m in await memoria_repositories.elenca(session, user.id)]}
+
+
+@router.patch("/memories/{memoria_id}")
+async def modifica_memoria(
+    memoria_id: uuid.UUID, payload: MemoriaMod, user: CurrentUser, session: DbSession,
+) -> Dict[str, Any]:
+    """Modifica una memoria. Se il contenuto cambia, l'embedding si ricalcola: altrimenti il
+    retrieval futuro cercherebbe sul vettore vecchio con un testo nuovo — un disallineamento
+    silenzioso che nessun test noterebbe finché qualcuno non si accorge che non torna più fuori."""
+    memoria = await memoria_repositories.per_id(session, user.id, memoria_id)
+    if memoria is None:
+        raise HTTPException(status_code=404, detail="Memoria non trovata")
+
+    contenuto_nuovo = (payload.contenuto or "").strip()
+    if contenuto_nuovo and contenuto_nuovo != memoria.contenuto:
+        provider_embed = provider_per(Compito.EMBEDDING)
+        if supporta_embedding(provider_embed):
+            memoria.embedding = (await provider_embed.embed([contenuto_nuovo]))[0]
+        memoria.contenuto = contenuto_nuovo
+    campo_nuovo = (payload.campo_attinenza or "").strip()
+    if campo_nuovo:
+        memoria.campo_attinenza = campo_nuovo
+    await session.commit()
+    return _memoria_json(memoria)
+
+
+@router.delete("/memories/{memoria_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def elimina_memoria(memoria_id: uuid.UUID, user: CurrentUser, session: DbSession) -> Response:
+    trovata = await memoria_repositories.elimina(session, user.id, memoria_id)
+    if not trovata:
+        raise HTTPException(status_code=404, detail="Memoria non trovata")
+    await session.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.delete("/memories", status_code=status.HTTP_204_NO_CONTENT)
+async def elimina_memorie(payload: MemorieDaEliminare, user: CurrentUser, session: DbSession) -> Response:
+    """Cancellazione multipla: `tutte` prevale su `ids` se entrambi sono valorizzati — un client
+    che li manda insieme intende «tutte», non un sottoinsieme ambiguo."""
+    if payload.tutte:
+        await memoria_repositories.elimina_tutte(session, user.id)
+    elif payload.ids:
+        await memoria_repositories.elimina_molte(session, user.id, payload.ids)
     await session.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

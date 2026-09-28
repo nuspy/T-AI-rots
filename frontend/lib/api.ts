@@ -802,6 +802,30 @@ export const modificaIndirizzo = (token: string | null, id: string, dati: Partia
   chiama<Indirizzo>(token, `/me/addresses/${id}`, { method: "PATCH", body: dati });
 export const eliminaIndirizzo = (token: string | null, id: string) =>
   chiama<void>(token, `/me/addresses/${id}`, { method: "DELETE" });
+/* ---- memoria (v6, Fase D) ---- */
+
+export type TipoMemoria = "stabile" | "variabile";
+
+export interface Memoria {
+  id: string;
+  contenuto: string;
+  tipo: TipoMemoria;
+  campo_attinenza: string;
+  fonte: "lettura" | "chat";
+  aggiornata: string | null;
+}
+
+export const elencaMemorie = (token: string | null) =>
+  chiama<{ memorie: Memoria[] }>(token, "/me/memories");
+export const modificaMemoria = (token: string | null, id: string, dati: { contenuto?: string; campo_attinenza?: string }) =>
+  chiama<Memoria>(token, `/me/memories/${id}`, { method: "PATCH", body: dati });
+export const eliminaMemoria = (token: string | null, id: string) =>
+  chiama<void>(token, `/me/memories/${id}`, { method: "DELETE" });
+export const eliminaMemorieSelezionate = (token: string | null, ids: string[]) =>
+  chiama<void>(token, "/me/memories", { method: "DELETE", body: { ids } });
+export const eliminaTutteLeMemorie = (token: string | null) =>
+  chiama<void>(token, "/me/memories", { method: "DELETE", body: { tutte: true } });
+
 export const riscattaInvito = (token: string | null, codice: string) =>
   chiama<{ crediti: number; saldo: number }>(token, "/me/referral", { method: "POST", body: { codice } });
 /** La carta del giorno per tutti (`GET /daily-card/today`): senza account, uguale per chiunque nello stesso giorno. */

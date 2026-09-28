@@ -247,6 +247,28 @@ export const hu: Dizionario = {
   indirizzi_elimina: "Törlés",
   indirizzi_annulla: "Mégse",
 
+  /* Emlékezet (v6, D szakasz) */
+  memoria_titolo: "Emlékezet",
+  memoria_testo: "Amit az orákulum rólad megjegyzett a korábbi jóslásokból és beszélgetésekből.",
+  memoria_vuoto: "Még nincs semmilyen emlék.",
+  memoria_tipo_stabile: "Állandó",
+  memoria_tipo_variabile: "Változó",
+  memoria_tooltip_seleziona: "Kijelölés",
+  memoria_tooltip_modifica: "Szerkesztés",
+  memoria_tooltip_elimina: "Törlés",
+  memoria_modifica_salva: "Mentés",
+  memoria_modifica_annulla: "Mégse",
+  memoria_bottone_cancella_selezionate: "Kijelölt emlékek törlése",
+  memoria_bottone_cancella_tutte: "Összes emlék törlése",
+  memoria_conferma_titolo: "Megerősíted a törlést?",
+  memoria_conferma_testo: (n: number) =>
+    n === 1 ? "1 kijelölt emléket fogsz törölni." : `${n} kijelölt emléket fogsz törölni.`,
+  memoria_conferma_testo_tutte: "Az ÖSSZES emlékedet törölni fogod.",
+  memoria_conferma_checkbox: "Tudom, hogy ez nem vonható vissza",
+  memoria_conferma_continua: "Tovább",
+  memoria_conferma_conferma: "Törlés megerősítése",
+  memoria_conferma_annulla: "Mégse",
+
   tipo_titolo: "Milyen jóslást szeretnél?",
   tipo_standard: "Hagyományos jóslás",
   tipo_standard_desc: "Egy kérdés és egy hagyományos kirakás: a megszokott jóslás.",
