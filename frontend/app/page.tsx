@@ -10,7 +10,6 @@ import { linguaPagina } from "@/lib/lingua-server";
 import { alternative, anteprima, applicazione, domande, grafo, organizzazione, sito, urlPubblico } from "@/lib/seo";
 import { HOME } from "@/lib/seo-testi";
 import { leggiDalServer } from "@/lib/server-api";
-import { BannerInterpreta } from "./componenti/banner-interpreta";
 import { JsonLd } from "./componenti/json-ld";
 import { SezioniSeo } from "./componenti/seo-home";
 import { Soglia } from "./soglia";
@@ -68,7 +67,6 @@ export default async function Pagina() {
     <>
       <JsonLd dati={dati} />
       <Soglia />
-      <BannerInterpreta />
       <SezioniSeo lingua={lingua} carte={carte ?? []} stese={stese ?? []} articoli={articoliCasuali} />
     </>
   );

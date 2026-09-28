@@ -10,6 +10,7 @@ import { elencaCarte, elencaStese } from "@/lib/api";
 import { salvaInvito } from "@/lib/inviti";
 import { useLingua } from "@/lib/lingua";
 import { useCarica } from "@/lib/usa";
+import { BannerInterpreta } from "./componenti/banner-interpreta";
 import { BannerMazzo } from "./componenti/banner-mazzo";
 import { Carta } from "./componenti/carta";
 import { CtaIscrizione } from "./componenti/cta-iscrizione";
@@ -85,6 +86,12 @@ export function Soglia() {
           </div>
           <span className={stili.cartaGiornoCta}>{t.home_carta_giorno_cta} →</span>
         </Link>
+      </section>
+
+      {/* Una delle funzioni distintive del sito, in cima alla pagina: leggere le proprie carte fisiche
+          merita la stessa visibilità della carta del giorno, non uno scroll in fondo per trovarla. */}
+      <section className={stili.sezione}>
+        <BannerInterpreta />
       </section>
 
       <CtaIscrizione />
