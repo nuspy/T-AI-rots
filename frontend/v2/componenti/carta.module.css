@@ -1,0 +1,69 @@
+/* The V2 card: a thin cream frame (like the prototype's #f5e6bf border), a soft plum shadow, brass glow when it
+ * waits to be revealed. */
+
+.carta {
+  --w: 120px;
+  width: var(--w);
+  aspect-ratio: 9 / 16;
+  perspective: 1200px;
+  position: relative;
+  user-select: none;
+}
+
+.cliccabile { cursor: pointer; }
+
+.interno {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.lato {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overflow: hidden;
+  border: 2px solid #f5e6bf;
+  box-shadow: 0 12px 22px rgba(32, 16, 38, .32);
+}
+
+.fronte { transform: rotateY(180deg); }
+
+.orientamento {
+  width: 100%;
+  height: 100%;
+  transition: transform .6s ease;
+}
+
+.immagine {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The card that waits to be revealed: a brass ring that breathes slowly — controlled, not a flare. */
+.brilla .lato { border-color: var(--brass-pale); animation: bagliore 2.4s ease-in-out infinite; }
+
+@keyframes bagliore {
+  0%, 100% { box-shadow: 0 12px 22px rgba(32, 16, 38, .32), 0 0 0 2px rgba(214, 182, 109, .45); }
+  50% { box-shadow: 0 12px 22px rgba(32, 16, 38, .32), 0 0 0 5px rgba(214, 182, 109, .8); }
+}
+
+.testo {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  text-align: center;
+  color: #fff7e8;
+  background: var(--plum);
+  font-family: var(--serif);
+  font-size: calc(var(--w) * .1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brilla .lato { animation: none; box-shadow: 0 0 0 3px var(--brass-pale); }
+}

@@ -1,0 +1,31 @@
+/* COPIA DELL'INGLESE — da tradurre. Rigenerata da copia-inglese.mjs finché questa riga resta qui. */
+/* The spreads and a single spread. */
+
+export const stese = {
+  meta_titolo: "Tarot spreads",
+  meta_descrizione: "The layouts a reading can take: the position gives each card its meaning.",
+  eyebrow: "Spreads",
+  titolo: "Choose a shape that helps the question unfold.",
+  intro: "The position gives each card its meaning. Here are the classic layouts and those made to read a bond between two people.",
+  standard: "Classic spreads",
+  standard_testo: "From the simplest to the Celtic Cross and the Astrological Wheel.",
+  compat: "Compatibility",
+  compat_testo: "What joins you and another person, and what sets you apart.",
+  coppia: "A couple",
+  coppia_testo: "The state of the bond you are living: strengths, friction, direction.",
+  fisica: "Physical draw",
+  fisica_testo: "Place the cards you already pulled from your own deck.",
+  maggiori: "22 Major Arcana",
+  completo: "Full deck",
+  stesa_eyebrow: "A spread",
+  stesa_posizioni: "The positions",
+  stesa_posizione: "Position {n}",
+  stesa_come: "How to read it",
+  stesa_coppie: "Positions to read together",
+  stesa_origine: "Origin",
+  stesa_cta: "Begin a reading with this spread",
+  stesa_tutte: "All spreads",
+  stesa_altre: "More spreads of the same kind",
+  stesa_diagramma: "The layout of the spread: numbered positions on the table.",
+  non_trovata_stesa: "This spread does not exist.",
+};

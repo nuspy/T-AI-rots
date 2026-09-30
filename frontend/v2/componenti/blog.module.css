@@ -1,0 +1,22 @@
+/* The journal article: editorial serif, a measured column, brass details. */
+
+.testo { max-width: 68ch; font: 1.06rem/1.8 var(--serif); color: var(--ink); overflow-wrap: anywhere; }
+.testo h2 { margin: 2.4rem 0 .8rem; font: 400 clamp(1.45rem, 2.6vw, 1.9rem)/1.25 var(--serif); letter-spacing: -.02em; color: var(--plum); }
+.testo h3 { margin: 1.8rem 0 .6rem; font: 400 1.25rem/1.3 var(--serif); color: var(--plum); }
+.testo p { margin: 0 0 1.1rem; }
+.testo a { color: var(--plum); text-decoration: underline; text-decoration-color: var(--brass); text-underline-offset: 4px; }
+.testo img { display: block; max-width: 100%; height: auto; margin: 1.5rem 0; }
+.testo blockquote { margin: 1.5rem 0; padding: .4rem 0 .4rem 1.2rem; border-left: 3px solid var(--brass); font-style: italic; color: var(--ink-soft); }
+.testo ul, .testo ol { padding-left: 1.3rem; }
+.testo li { margin-bottom: .4rem; }
+.testo code { padding: .1rem .3rem; background: var(--paper-deep); font-size: .88em; }
+.tabella { overflow-x: auto; margin: 1.4rem 0; }
+.tabella table { border-collapse: collapse; min-width: 100%; font: .92rem/1.5 var(--sans); }
+.tabella th, .tabella td { padding: .55rem .7rem; border-bottom: 1px solid var(--line); text-align: left; }
+.video { position: relative; aspect-ratio: 16 / 9; margin: 1.6rem 0; background: var(--plum-deep); }
+.video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.scheda { display: grid; grid-template-columns: auto 1fr; gap: 1rem; align-items: center; max-width: 520px; margin: 1.6rem 0; padding: .9rem; border: 1px solid var(--line); border-left: 3px solid var(--brass); background: var(--paper-light); text-decoration: none !important; }
+.scheda:hover { border-color: var(--brass); }
+.scheda img { width: 60px; height: auto; margin: 0; border: 2px solid #f5e6bf; }
+.scheda small { display: block; color: var(--verdigris); font: 700 .7rem var(--sans); letter-spacing: .08em; text-transform: uppercase; }
+.scheda strong { font: 400 1.1rem var(--serif); color: var(--ink); }

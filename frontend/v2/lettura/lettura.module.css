@@ -1,0 +1,156 @@
+/* The V2 reading: the table is a plum cloth inside the ritual console, cards wear a cream frame, the waiting card
+ * glows brass. Geometry (positions, fan arcs, the cut) is the same as the site's reading: only the dress changes.
+ * Geometry never mirrors in right-to-left languages; text does. */
+
+/* ---- the scene ---- */
+.scena { display: grid; gap: .3rem; margin-bottom: 1.4rem; }
+.scena small { color: var(--verdigris); font-size: .74rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.scena q { font: italic clamp(1.25rem, 2.6vw, 1.7rem)/1.35 var(--serif); color: var(--ink); }
+
+/* On narrow screens the panel that matters now comes first: the conversation during the interview, the ritual
+ * afterwards. */
+.inRito > :last-child { order: -1; }
+@media (min-width: 761px) { .inRito > :last-child { order: 0; } }
+
+/* ---- preparation ---- */
+.passo { margin: 1.8rem 0 .8rem; font: 400 1.25rem var(--serif); }
+.passo:first-child { margin-top: 0; }
+.domanda { width: 100%; min-height: 120px; padding: .85rem; border: 1px solid rgba(178,131,54,.55); border-radius: 0; color: var(--ink); background: #fff; font-size: 1rem; resize: vertical; box-shadow: 0 10px 30px rgba(60,24,70,.08); }
+.tipi { display: grid; grid-template-columns: 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.tipo { display: grid; gap: .2rem; align-content: start; min-height: 64px; padding: .8rem 1rem; border: 0; color: var(--ink); background: var(--paper); text-align: left; }
+.tipo b { font: 400 1.05rem var(--serif); }
+.tipo span { color: var(--ink-soft); font-size: .82rem; line-height: 1.45; }
+.tipo[aria-pressed="true"] { color: #fff7e8; background: var(--plum); }
+.tipo[aria-pressed="true"] span { color: #d9cade; }
+.tipo:hover:not([aria-pressed="true"]) { background: #efe6d6; }
+.stese { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .9rem; }
+.stesa { display: grid; gap: .35rem; align-content: start; padding: .8rem; border: 1px solid var(--line); color: var(--ink); background: #fff; text-align: left; transition: border-color .18s, transform .18s; }
+.stesa:hover { border-color: var(--brass); transform: translateY(-2px); }
+.stesa[aria-pressed="true"] { border-color: var(--plum); box-shadow: inset 0 0 0 1px var(--plum), 3px 3px 0 var(--brass-pale); }
+.stesa b { font: 400 .98rem/1.25 var(--serif); }
+.stesa small { color: var(--ink-soft); font-size: .76rem; }
+.miniatura { width: 100%; height: auto; aspect-ratio: 100 / 64; background: var(--plum-deep); }
+.stili { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .6rem; }
+
+/* the chosen spread, in the dark console */
+.stesaScelta { width: 100%; text-align: left; }
+.stesaScelta h3 { margin: .2rem 0 .4rem; font: 400 1.5rem var(--serif); color: #fff7e8; }
+.stesaScelta p { margin: 0 0 .8rem; color: #d9cade; font-size: .92rem; }
+.stesaScelta .miniatura { max-width: 320px; margin: 0 auto 1rem; display: block; background: transparent; }
+.posizioniElenco { margin: 0 0 1.2rem; padding-left: 1.2rem; color: #eadbe9; font-size: .86rem; columns: 2; column-gap: 1.6rem; }
+.posizioniElenco li { break-inside: avoid; margin-bottom: .35rem; }
+.origine { color: var(--brass-pale) !important; font-size: .78rem !important; letter-spacing: .04em; }
+
+.ricordato { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .6rem; margin-bottom: 1rem; padding: .7rem .9rem; border-left: 3px solid var(--verdigris); background: #e7f2ee; font-size: .9rem; }
+
+/* ---- the conversation ---- */
+.dialogo { display: flex; flex-direction: column; min-height: 360px; }
+.battute { position: relative; display: grid; align-content: start; gap: .8rem; max-height: min(62vh, 620px); overflow-y: auto; padding-right: .3rem; }
+.battuta { max-width: 92%; margin: 0; padding: .8rem 1rem; border-left: 2px solid var(--brass); background: var(--paper); font-size: .95rem; }
+.battuta p { margin: .25rem 0 0; white-space: pre-line; }
+.battutaUtente { justify-self: end; border-left: 0; border-right: 2px solid var(--verdigris); color: #fff; background: var(--verdigris); }
+.battutaUtente .autore { color: #d8e7df; }
+.battutaSistema { max-width: 100%; border-left-color: var(--ink-soft); background: transparent; color: var(--ink-soft); font-size: .84rem; }
+.battutaOracolo p { font-family: var(--serif); font-size: .98rem; line-height: 1.65; }
+.autore { display: block; color: var(--verdigris); font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.cursore { display: inline-block; margin-left: 2px; color: var(--brass); animation: lampeggia 1s steps(2) infinite; }
+.attesa { display: inline-flex; gap: 5px; padding: .6rem .2rem; }
+.attesa span { width: 7px; height: 7px; border-radius: 50%; background: var(--brass); animation: pulsa 1.2s infinite ease-in-out; }
+.attesa span:nth-child(2) { animation-delay: .15s; }
+.attesa span:nth-child(3) { animation-delay: .3s; }
+.risposta { display: grid; grid-template-columns: 1fr auto; gap: .6rem; margin-top: 1rem; }
+.risposta textarea { min-height: 52px; padding: .75rem; border: 1px solid var(--line); border-radius: 0; color: var(--ink); background: #fff; font-size: 1rem; resize: vertical; }
+
+/* ---- the ritual console ---- */
+.console { display: grid; gap: 1rem; justify-items: center; text-align: center; }
+.consoleTesto { max-width: 34ch; margin: .2rem auto .6rem; font: italic 1.15rem/1.45 var(--serif); color: #fbf3e5; }
+.zona { width: 100%; display: grid; justify-items: center; gap: .8rem; }
+
+/* ---- the table ---- */
+.tavolo, .tavoloQuadrato { position: relative; width: 100%; aspect-ratio: 16 / 12; margin: .4rem 0 1rem; direction: ltr; }
+.tavoloQuadrato { aspect-ratio: 1 / 1; max-width: 640px; margin-inline: auto; }
+/* The table wears the V2 ritual motif, not a starry cloth: a flat deep-plum surface (the demo panels' #28152f),
+ * a brass hairline, and one faint concentric ring — the same ring as the home page's ritual object. No glow, no
+ * pattern: the cards are the image. */
+.tappeto { position: absolute; inset: 0; overflow: hidden; border: 1px solid rgba(214,182,109,.35); background: #28152f; }
+.tappeto::before { content: ""; position: absolute; left: 50%; top: 50%; width: min(78%, 92vh); aspect-ratio: 1; translate: -50% -50%; border: 1px solid rgba(178,131,54,.32); border-radius: 50%; box-shadow: 0 0 0 18px rgba(178,131,54,.04), 0 0 0 44px rgba(25,112,111,.04); }
+.tavoloQuadrato .tappeto { border-radius: 50%; }
+.posizione { position: absolute; display: flex; flex-direction: column; align-items: center; }
+.posizione:has(.fumetto) { z-index: 60 !important; }
+.segnaposto { width: 100%; aspect-ratio: 9 / 16; display: grid; place-items: center; border: 1px solid rgba(214,182,109,.3); color: var(--brass-pale); background: rgba(60,24,70,.55); font: .9rem var(--serif); }
+.segnapostoAttivo { border-color: var(--brass-pale); color: #fff7e8; background: rgba(178,131,54,.16); animation: respira 2.4s ease-in-out infinite; }
+.segnapostoManuale { cursor: pointer; flex-direction: column; gap: 4px; min-height: 48px; }
+.segnapostoManuale:hover, .segnapostoManuale:focus-visible { border-color: var(--brass-pale); background: rgba(214,182,109,.12); }
+.segnapostoManuale small { font: 700 .66rem var(--sans); letter-spacing: .06em; text-transform: uppercase; }
+.modificaManuale { position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); min-height: 36px; padding: 0 .7rem; border: 1px solid rgba(214,182,109,.6); border-radius: 999px; color: #fff7e8; background: rgba(32,16,38,.82); font-size: .72rem; }
+.etichettaPosizione { position: absolute; top: 100%; margin-top: 4px; color: #d9cade; font-size: .66rem; letter-spacing: .04em; white-space: nowrap; pointer-events: none; }
+.cartaSoggetto { outline: 2px solid var(--soggetto, transparent); outline-offset: 2px; }
+.segnapostoSoggetto { border-color: var(--soggetto) !important; }
+.legenda { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem 1rem; margin: -.3rem 0 1rem; padding: 0; list-style: none; color: #eadbe9; font-size: .82rem; }
+.legenda li { display: inline-flex; align-items: center; gap: .45rem; }
+.legendaPunto { width: 12px; height: 12px; border-radius: 50%; background: var(--soggetto); box-shadow: 0 0 0 1px rgba(0,0,0,.3); }
+
+.pallinoAncora { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); z-index: 10; }
+.pallinoTraverso { position: absolute; top: -40px; left: 50%; }
+/* The dot is small to the eye but the target is 44px: an invisible ring around it. */
+.pallino, .pallinoAttesa { position: relative; width: 16px; height: 16px; padding: 0; border: 2px solid #fff7e8; border-radius: 50%; background: var(--brass); box-shadow: 0 2px 6px rgba(32,16,38,.4); }
+.pallino::after, .pallinoAttesa::after { content: ""; position: absolute; inset: -14px; }
+/* Still being written: verdigris, with a slow pulse that stops when the interpretation is complete. */
+.pallinoAttesa { background: var(--verdigris); animation: pulsaPunto 2s ease-in-out infinite; }
+.fumetto { position: absolute; bottom: 26px; left: 50%; translate: -50% 0; z-index: 50; width: min(320px, 78vw); padding: .9rem 1rem; color: var(--ink); background: var(--paper-light); border-top: 3px solid var(--brass); box-shadow: 0 18px 36px rgba(32,16,38,.35); text-align: left; }
+.fumetto p { margin: .5rem 0 0; font: .95rem/1.55 var(--serif); }
+.fumettoPosizione { display: block; color: var(--verdigris); font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.fumettoCarta { display: block; margin-top: .1rem; color: var(--plum); font: 400 1.05rem var(--serif); }
+.fumettoMeta { display: block; margin-top: .15rem; color: var(--ink-soft); font-size: .76rem; }
+
+/* ---- shuffle, cut, fan ---- */
+.mazzoCliccabile { display: block; margin: 0 auto; padding: 18px 48px; border: 0; background: none; cursor: pointer; }
+.mazzoCliccabile:hover { transform: translateY(-2px); }
+.mescolamento { position: relative; width: 120px; aspect-ratio: 9 / 16; margin: 10px auto; direction: ltr; }
+.mazzettoCarta { position: absolute; inset: 0; overflow: hidden; border: 2px solid #f5e6bf; box-shadow: 0 8px 20px rgba(0,0,0,.4); }
+.taglio { width: min(100%, 720px); margin: 0 auto; padding: 0 8px; }
+.tagliaMazzo { position: relative; width: 100%; margin-top: 8px; cursor: pointer; touch-action: pan-y; direction: ltr; }
+.cartaDelTaglio { position: absolute; top: 12px; overflow: hidden; border: 1px solid #f5e6bf; box-shadow: -2px 4px 10px rgba(0,0,0,.4); }
+.lineaTaglio { position: absolute; top: 0; bottom: 0; z-index: 40; width: 0; border-left: 2px solid var(--brass-pale); pointer-events: none; }
+.lineaTaglio span { position: absolute; top: -8px; left: -8px; color: var(--brass-pale); }
+.ventaglioGruppi { display: flex; flex-direction: column; gap: 28px; width: 100%; direction: ltr; }
+.ventaglio { position: relative; width: 100%; overflow: visible; direction: ltr; }
+.ventaglioBraccio { position: absolute; left: 50%; top: 30px; }
+/* Fan cards as in the prototype's fan: cream frame (#ead9b2), a plain drop shadow; the chosen one rises. */
+.ventaglioCarta { display: block; width: 100%; height: 100%; padding: 0; overflow: hidden; border: 2px solid #ead9b2; background: none; box-shadow: 0 10px 18px rgba(0,0,0,.34); }
+.ventaglioCarta:disabled { cursor: default; opacity: 1; }
+.ventaglioCarta:hover:not(:disabled), .ventaglioCarta:focus-visible { border-color: var(--brass-pale); box-shadow: 0 14px 22px rgba(0,0,0,.4); }
+
+/* ---- the answer ---- */
+.responso { position: relative; max-width: 860px; margin: 0 auto; padding: clamp(1.4rem, 5vw, 3rem); background: var(--paper-light); border: 1px solid var(--line); border-top: 3px solid var(--brass); box-shadow: 0 24px 50px rgba(60,24,70,.1); }
+.responso h2 { margin: 0 0 1.2rem; font: 400 clamp(1.8rem, 3.4vw, 2.6rem)/1.15 var(--serif); letter-spacing: -.03em; }
+.testo { font: 1.04rem/1.75 var(--serif); color: var(--ink); }
+.testo h3 { margin: 1.6rem 0 .5rem; color: var(--plum); font: 400 1.25rem var(--serif); }
+.testo p { margin: 0 0 1rem; }
+.testo ul { padding-left: 1.2rem; }
+.anteprima { margin-top: 1.4rem; padding: 1.2rem; color: #fff7e8; background: var(--plum); box-shadow: 10px 10px 0 var(--brass-pale); }
+.anteprima p { margin: 0 0 1rem; color: #e6d8e8; }
+.avvertenza { margin: 1.4rem 0 0; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: .84rem; white-space: pre-line; }
+.verifica { margin-top: 1rem; font-size: .84rem; color: var(--ink-soft); }
+.verifica summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--plum); }
+.verifica code { display: block; overflow-wrap: anywhere; padding: .6rem; background: var(--paper); font-size: .76rem; }
+.fase { display: grid; justify-items: center; gap: 1rem; padding: 2rem 1rem; text-align: center; }
+.fase p { max-width: 36ch; margin: 0; font: italic 1.1rem/1.5 var(--serif); color: var(--ink-soft); }
+.sigillo { width: 84px; height: 84px; }
+
+@keyframes respira { 0%, 100% { box-shadow: 0 0 0 0 rgba(214,182,109,0); } 50% { box-shadow: 0 0 0 4px rgba(214,182,109,.35); } }
+@keyframes pulsaPunto { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.22); } }
+@keyframes pulsa { 0%, 80%, 100% { opacity: .25; transform: scale(.8); } 40% { opacity: 1; transform: scale(1); } }
+@keyframes lampeggia { to { visibility: hidden; } }
+
+:global(html[dir="rtl"]) .fumetto, :global(html[dir="rtl"]) .etichettaPosizione { direction: rtl; }
+
+@media (max-width: 640px) {
+  .tavolo { aspect-ratio: 1 / 1; }
+  .etichettaPosizione { display: none; }
+  .posizioniElenco { columns: 1; }
+  .stese { grid-template-columns: 1fr 1fr; }
+  .risposta { grid-template-columns: 1fr; }
+  .battute { max-height: 58vh; }
+}
+@media (prefers-reduced-motion: reduce) { .segnapostoAttivo, .pallino, .pallinoAttesa, .cursore { animation: none; } }

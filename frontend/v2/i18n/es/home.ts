@@ -1,0 +1,156 @@
+/* COPIA DELL'INGLESE — da tradurre. Rigenerata da copia-inglese.mjs finché questa riga resta qui. */
+/* The home page: question first, then the ritual, the memory, the decks, the physical bridge, the method. */
+
+export const home = {
+  meta_titolo: "TAROTS chat — a living Tarot ritual",
+  meta_descrizione: "A living Tarot ritual with guided interpretation and a reader who remembers your story.",
+
+  eyebrow: "Thoth Tarot · guided ritual · contextual interpretation",
+  titolo_1: "A question can become a ",
+  titolo_em: "way back",
+  titolo_2: " to yourself.",
+  lede: "Ask what is on your mind. Then shuffle, cut and choose the cards yourself. TAROTS chat connects the symbols, your question and the story you bring with you.",
+  domanda_etichetta: "What is on your mind?",
+  domanda_segnaposto: "What is on your mind?",
+  domanda_invia: "Ask your question",
+  domanda_breve: "A few more words help the cards: write at least three letters.",
+  cta_gratis: "Start your free reading",
+  cta_fisiche: "Already have cards in your hands?",
+  cta_giorno: "Or draw today's card, free",
+  fiducia_1: "No prediction is guaranteed",
+  fiducia_2: "You choose the cards",
+  fiducia_3: "Memory stays yours to manage",
+  oggetto_aria: "A Thoth Tarot card on a ritual table",
+  oggetto_carta: "The Lovers, a Thoth Tarot card",
+  nota_titolo: "A living ritual",
+  nota_testo: "Not a random card. A moment you take part in.",
+
+  demo_eyebrow: "See the experience",
+  demo_titolo: "The conversation leads. The ritual makes it yours.",
+  demo_intro: "You can begin without an account. Take part in the whole ritual, receive a first response, then decide whether the full reading deserves a place in your story.",
+  demo_contesto: "A question, in context",
+  demo_1: "“I want to know whether I am avoiding a choice.”",
+  demo_2: "We can look at the choice without forcing an answer. Is the tension about a relationship, work, or both?",
+  demo_3: "“Both, but the relationship is what I feel first.”",
+  demo_carte: "Then the cards",
+  demo_didascalia: "Shuffle · interrupt · cut · choose · reveal",
+  demo_esempio: "An example conversation",
+
+  temi_eyebrow: "Begin where you are",
+  temi_titolo: "What is asking for your attention?",
+  temi_cta: "Ask your own question",
+  temi: [
+    { chiave: "amore", simbolo: "♁", nome: "Love", nota: "what is opening" },
+    { chiave: "relazione", simbolo: "☌", nome: "Relationship", nota: "what is changing" },
+    { chiave: "lavoro", simbolo: "♃", nome: "Career", nota: "where to place energy" },
+    { chiave: "decisione", simbolo: "↔", nome: "A difficult decision", nota: "what each path asks" },
+    { chiave: "inspiegabile", simbolo: "◌", nome: "Something unexplained", nota: "what wants a name" },
+    { chiave: "se", simbolo: "✦", nome: "Self-discovery", nota: "what wants to be seen" },
+  ],
+
+  rito_eyebrow: "The digital ritual",
+  rito_titolo: "A reading has a tempo.",
+  rito_passi: [
+    { titolo: "Ask", testo: "Give the reading a real question." },
+    { titolo: "Shuffle", testo: "Begin the movement, then interrupt it." },
+    { titolo: "Cut", testo: "Choose where the deck divides." },
+    { titolo: "Draw", testo: "Select cards from the opened fan." },
+    { titolo: "Reveal", testo: "See each card in its place." },
+    { titolo: "Interpret", testo: "Connect cards, question and context." },
+  ],
+
+  /* the declaration: the ritual is a real draw, not an animation */
+  vero_eyebrow: "A real draw, not an animation",
+  vero_titolo: "Every card you touch is a real card.",
+  vero_testo: "When the deck moves, when you cut it, when you choose from the fan, you are not watching a graphic effect. On the table lies a real deck of virtual cards — the full 78, or the 22 Major Arcana — each with its own identity and its own orientation, like the cards in your hands.",
+  vero_fatti: [
+    { titolo: "Shuffled by chance", testo: "The order comes from a cryptographic source of randomness, not from a script. No one decides it in advance — not even us. You decide when the shuffle ends." },
+    { titolo: "Cut where you choose", testo: "The point you touch is where the real deck divides: the cards after it move to the front, as they would between your hands." },
+    { titolo: "Sealed before you draw", testo: "Before the fan opens, every card already holds its place, sealed with a cryptographic fingerprint. The card you touch is the card you draw — and at the end you can verify that nothing changed." },
+  ],
+  vero_chiusa: "A draw as honest as one made live, at a table. What the cards say remains a matter of reflection, never a guaranteed prediction.",
+
+  memoria_citazione: "“Last week you asked how your relationship might develop. How are things going now?”",
+  memoria_piede: "A follow-up begins with what matters, not a blank page.",
+  memoria_eyebrow: "Your reader remembers your story",
+  memoria_titolo: "Continuity without pretending to know more than you share.",
+  memoria_voci: [
+    { titolo: "Questions and themes", testo: "so you can return to the thread of a situation." },
+    { titolo: "Readings and outcomes", testo: "so reflection can include what happened next." },
+    { titolo: "Your choices", testo: "you can review, edit or delete what is remembered." },
+  ],
+  memoria_cta: "See how memory works",
+  memoria_etichetta: "your reader remembers",
+
+  diff_eyebrow: "Why it feels different",
+  diff: [
+    { simbolo: "✦", titolo: "A ritual you participate in", testo: "Real virtual cards: the interruption, the cut and the choice are yours, and they count." },
+    { simbolo: "◌", titolo: "Contextual interpretation", testo: "The reading holds the question, positions, combinations and conversation together." },
+    { simbolo: "↺", titolo: "A story with memory", testo: "Return to an earlier question and see it with what has changed." },
+    { simbolo: "✋", titolo: "Your physical deck is welcome", testo: "Draw cards in the room, then bring their positions here for interpretation." },
+  ],
+
+  mazzi_disponibile: "Available now",
+  mazzi_eyebrow: "Choose a visual language",
+  mazzi_titolo: "Begin with the Thoth Tarot. Leave room for more worlds.",
+  mazzi_intro: "The Thoth Tarot is available now. The reading experience is designed around a deck, so new decks can bring their own card library, ritual, stories and physical edition without replacing the path you are on.",
+  mazzi_futuri_aria: "Future decks, not yet available",
+  mazzi_futuri: ["The Lovers · planned", "Italian Celebration · planned", "Halloween Tarots · planned"],
+  mazzi_cta: "Explore the Thoth deck",
+  mazzi_voto: "Help choose the next one",
+
+  fisico_eyebrow: "A bridge to the physical world",
+  fisico_titolo: "Already have a Tarot deck?",
+  fisico_intro: "Draw the cards yourself, put them in their positions, and let TAROTS chat help you read the pattern. The ritual stays in your hands.",
+  fisico_cta: "Use your own cards",
+  fisico_carta_alt: "The Hermit, Thoth Tarot card",
+  fisico_scheda_titolo: "Physical card reading",
+  fisico_scheda_testo: "Choose a spread, name the cards you drew, add your question and continue with a guided interpretation.",
+
+  metodo_eyebrow: "Method, trust and privacy",
+  metodo_titolo: "What happens behind a reading.",
+  metodo: [
+    { titolo: "The Thoth tradition", testo: "Every card carries its real attributions — Hebrew letter, path, decan, sephira — and neighbouring cards modulate each other through elemental dignities." },
+    { titolo: "One card at a time", testo: "Cards are revealed in order. Each interpretation holds the cards already seen, then the whole spread is read together with your question and your words." },
+    { titolo: "The role of the AI", testo: "An AI connects symbols, positions and your words. It interprets; it does not know the future, and it tells you so." },
+    { titolo: "Your data", testo: "Readings and memory stay in your account. The other person's surname never reaches the AI, and you can delete what is remembered at any time." },
+  ],
+
+  funnel_eyebrow: "Free first, deeper by choice",
+  funnel_titolo: "Value arrives before the invitation to register.",
+  funnel_intro: "Your first reading is free and needs no account: you take part in the whole ritual and see a first response. When you want the full interpretation, a free account keeps it and adds {n} more free readings.",
+  funnel_passi: [
+    { etichetta: "01 · Start", testo: "Ask a question and take part in the ritual." },
+    { etichetta: "02 · Deepen", testo: "See a first response to the cards you chose." },
+    { etichetta: "03 · Keep it", testo: "Create a free account when the reading has earned its place." },
+    { etichetta: "04 · Return", testo: "Keep the thread, use your free readings, come back to the story." },
+  ],
+
+  cond_eyebrow: "Share an opening",
+  cond_titolo: "A reading can become someone else's way in.",
+  cond_testo: "Share a reading or your invitation. Whoever signs up from your link receives free readings, and so do you: {n} for every person who joins.",
+  cond_cta: "Find your invitation",
+
+  diario_eyebrow: "The content graph",
+  diario_titolo: "A journal that leads back to a question.",
+  diario_cta: "Visit the journal",
+  diario_riserva: [
+    { etichetta: "Card library", titolo: "Read the images, correspondences and meanings" },
+    { etichetta: "Ritual guide", titolo: "Which spread helps a difficult decision?" },
+    { etichetta: "Card of the day", titolo: "A small encounter, free every day" },
+  ],
+
+  faq_eyebrow: "A clear boundary",
+  faq_titolo: "Mystical does not have to mean misleading.",
+  faq: [
+    { d: "Is this a prediction?", r: "No. Tarot can be a reflective language for questions, patterns and choices. It does not guarantee future events or scientific certainty." },
+    { d: "Is it free?", r: "Your first reading is free, without an account: you take part in the whole ritual and see a first response. A free account unlocks the full interpretation and adds free readings. After that, readings use packages or a subscription. The card of the day is always free." },
+    { d: "What does the reader remember?", r: "When you choose to create an account, it can retain your questions, readings and selected context to support follow-ups. You can review, edit or delete it." },
+    { d: "Do I need a TAROTS chat deck?", r: "No. You can use the Thoth deck in the digital ritual or draw from your own physical Tarot deck and enter the cards you pulled." },
+    { d: "Why create an account after the first experience?", r: "Registration is where a reading becomes part of your story: it saves the full reading, unlocks the additional free readings and lets memory work for you." },
+  ],
+
+  finale_eyebrow: "The first step is simple",
+  finale_titolo: "Ask the question that has been waiting.",
+  finale_testo: "Come into the ritual. Let the cards speak. Return when life gives the question a new shape.",
+};

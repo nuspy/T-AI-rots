@@ -17,6 +17,14 @@ export const impostaLinguaMessaggi = (l: Lingua) => {
   linguaMessaggi = l;
 };
 
+/* La v2 (`app/(v2)`) ha un dizionario suo, separato da quello del sito: i due messaggi d'errore che nascono qui
+ * li prende da lì. I due siti non convivono mai nella stessa pagina (layout radice diversi, si passa dall'uno
+ * all'altro ricaricando), quindi un valore globale basta. `null` torna al dizionario del sito. */
+let messaggiPropri: { sessione: string; richiesta: string } | null = null;
+export const impostaMessaggiErrore = (m: { sessione: string; richiesta: string } | null) => {
+  messaggiPropri = m;
+};
+
 /* ---- tipi del dominio ---- */
 
 export interface LetteraEbraica {
@@ -422,9 +430,10 @@ async function leggi<T>(risposta: Response): Promise<T> {
     } catch {
       /* il corpo non era JSON: restano i codici */
     }
-    const t = dizionario(linguaMessaggi);
+    const d = dizionario(linguaMessaggi);
+    const m = messaggiPropri ?? { sessione: d.err_sessione, richiesta: d.err_richiesta };
     throw new ErroreApi(
-      risposta.status === 401 ? t.err_sessione : (motivo ?? t.err_richiesta),
+      risposta.status === 401 ? m.sessione : (motivo ?? m.richiesta),
       risposta.status,
       dettaglio,
     );

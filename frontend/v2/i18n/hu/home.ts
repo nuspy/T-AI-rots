@@ -1,0 +1,156 @@
+/* La home: prima la domanda, poi il rito, la dichiarazione, la memoria, i mazzi, le carte fisiche, il metodo. */
+
+import type { home as Base } from "../en/home";
+
+export const home: typeof Base = {
+  meta_titolo: "TAROTS chat — élő tarot-rituálé",
+  meta_descrizione: "Élő tarot-rituálé vezetett értelmezéssel, és egy tarotolvasóval, aki emlékszik a történetedre.",
+
+  eyebrow: "Thoth-tarot · vezetett rituálé · összefüggésekben olvasott értelmezés",
+  titolo_1: "Egy kérdés lehet a ",
+  titolo_em: "visszaút",
+  titolo_2: " önmagadhoz.",
+  lede: "Kérdezd meg, ami foglalkoztat. Aztán te magad keverd meg, emeld el és válaszd ki a kártyákat. A TAROTS chat összeköti a szimbólumokat, a kérdésedet és a történetet, amelyet magaddal hozol.",
+  domanda_etichetta: "Mi jár a fejedben?",
+  domanda_segnaposto: "Mi jár a fejedben?",
+  domanda_invia: "Tedd fel a kérdésed",
+  domanda_breve: "Néhány szóval többet adsz a kártyáknak: írj legalább három betűt.",
+  cta_gratis: "Kezdd el az ingyenes jóslást",
+  cta_fisiche: "Már a kezedben vannak a kártyák?",
+  cta_giorno: "Vagy húzd ki a mai kártyát, ingyen",
+  fiducia_1: "Egyetlen jóslat sem garantált",
+  fiducia_2: "A kártyákat te választod",
+  fiducia_3: "Az emlékezetet te kezeled",
+  oggetto_aria: "Egy Thoth-tarot kártya a rituális asztalon",
+  oggetto_carta: "A Szeretők, Thoth-tarot kártya",
+  nota_titolo: "Élő rituálé",
+  nota_testo: "Nem egy véletlen kártya. Egy pillanat, amelyben részt veszel.",
+
+  demo_eyebrow: "Nézd meg az élményt",
+  demo_titolo: "A beszélgetés vezet. A rituálé teszi a magadévá.",
+  demo_intro: "Fiók nélkül is elkezdheted. Végigcsinálod az egész rituálét, kapsz egy első választ, aztán eldöntöd, megérdemli-e a teljes jóslás a helyét a történetedben.",
+  demo_contesto: "Egy kérdés, összefüggésében",
+  demo_1: "„Tudni szeretném, hogy nem egy döntés elől térek-e ki.”",
+  demo_2: "Megnézhetjük a döntést anélkül, hogy választ kényszerítenénk ki. A feszültség egy kapcsolatról szól, a munkáról, vagy mindkettőről?",
+  demo_3: "„Mindkettőről, de a kapcsolatot érzem először.”",
+  demo_carte: "Aztán a kártyák",
+  demo_didascalia: "Keverés · megállítás · emelés · választás · felfedés",
+  demo_esempio: "Egy példabeszélgetés",
+
+  temi_eyebrow: "Kezdd ott, ahol most vagy",
+  temi_titolo: "Mi kéri most a figyelmedet?",
+  temi_cta: "Tedd fel a saját kérdésed",
+  temi: [
+    { chiave: "amore", simbolo: "♁", nome: "Szerelem", nota: "ami most kinyílik" },
+    { chiave: "relazione", simbolo: "☌", nome: "Kapcsolat", nota: "ami változik" },
+    { chiave: "lavoro", simbolo: "♃", nome: "Munka", nota: "hová tedd az energiádat" },
+    { chiave: "decisione", simbolo: "↔", nome: "Nehéz döntés", nota: "mit kér tőled mindkét út" },
+    { chiave: "inspiegabile", simbolo: "◌", nome: "Valami megmagyarázhatatlan", nota: "ami nevet keres" },
+    { chiave: "se", simbolo: "✦", nome: "Önismeret", nota: "ami látszani szeretne" },
+  ],
+
+  rito_eyebrow: "A digitális rituálé",
+  rito_titolo: "Egy jóslásnak saját ritmusa van.",
+  rito_passi: [
+    { titolo: "Kérdezz", testo: "Adj a jóslásnak egy valódi kérdést." },
+    { titolo: "Keverj", testo: "Indítsd el a mozgást, aztán állítsd meg." },
+    { titolo: "Emelj", testo: "Válaszd ki, hol válik ketté a pakli." },
+    { titolo: "Húzz", testo: "Válassz kártyákat a kinyílt legyezőből." },
+    { titolo: "Fordítsd fel", testo: "Lásd minden kártyát a maga helyén." },
+    { titolo: "Értelmezz", testo: "Kösd össze a kártyákat, a kérdést és az összefüggéseket." },
+  ],
+
+  vero_eyebrow: "Valódi húzás, nem animáció",
+  vero_titolo: "Minden kártya, amelyhez hozzáérsz, valódi kártya.",
+  vero_testo: "Amikor a pakli mozog, amikor elemeled, amikor a legyezőből választasz, nem egy grafikai effektust nézel. Az asztalon virtuális kártyák valódi paklija fekszik — a teljes 78 lapos, vagy a 22 Nagy Arkánum —, és minden kártyának megvan a maga azonossága és iránya, ahogy a kezedben tartott lapoknak is.",
+  vero_fatti: [
+    { titolo: "A véletlen keveri", testo: "A sorrendet kriptográfiai véletlenforrás adja, nem egy előre megírt szkript. Senki sem dönti el előre — mi sem. Te döntöd el, mikor ér véget a keverés." },
+    { titolo: "Ott emeled el, ahol akarod", testo: "Ahol megérinted, ott válik ketté a valódi pakli: az utána következő lapok előre kerülnek, ahogy a két kezed között is." },
+    { titolo: "Lepecsételve, mielőtt húzol", testo: "Mielőtt a legyező kinyílik, minden kártya már a helyén van, kriptográfiai ujjlenyomattal lepecsételve. Amelyik kártyát megérinted, azt húzod ki — és a végén ellenőrizheted, hogy semmi sem változott." },
+  ],
+  vero_chiusa: "Olyan tisztességes húzás, mint egy élő, asztal melletti. Amit a kártyák mondanak, az elmélkedés tárgya marad, soha nem garantált jóslat.",
+
+  memoria_citazione: "„A múlt héten azt kérdezted, hogyan alakulhat a kapcsolatod. Hogy mennek most a dolgok?”",
+  memoria_piede: "A folytatás azzal kezdődik, ami fontos, nem egy üres lappal.",
+  memoria_eyebrow: "A tarotolvasód emlékszik a történetedre",
+  memoria_titolo: "Folytonosság, anélkül, hogy többet tudna, mint amennyit megosztasz.",
+  memoria_voci: [
+    { titolo: "Kérdések és témák", testo: "hogy visszatalálj egy helyzet szálához." },
+    { titolo: "Jóslások és kimenetelük", testo: "hogy az elmélkedés azt is magába foglalja, ami utána történt." },
+    { titolo: "A te döntéseid", testo: "átnézheted, módosíthatod vagy törölheted, amire emlékszik." },
+  ],
+  memoria_cta: "Nézd meg, hogyan működik az emlékezet",
+  memoria_etichetta: "a tarotolvasód emlékszik",
+
+  diff_eyebrow: "Miért más",
+  diff: [
+    { simbolo: "✦", titolo: "Rituálé, amelyben részt veszel", testo: "Valódi virtuális kártyák: a megállítás, az emelés és a választás a tiéd, és számít." },
+    { simbolo: "◌", titolo: "Összefüggésekben olvasott értelmezés", testo: "A jóslás együtt tartja a kérdést, a pozíciókat, a lapok kapcsolatait és a beszélgetést." },
+    { simbolo: "↺", titolo: "Történet emlékezettel", testo: "Térj vissza egy korábbi kérdéshez, és nézd meg azzal együtt, ami azóta változott." },
+    { simbolo: "✋", titolo: "A saját paklid is szívesen látott", testo: "Húzd ki a lapokat a szobádban, aztán hozd ide a helyüket az értelmezéshez." },
+  ],
+
+  mazzi_disponibile: "Már elérhető",
+  mazzi_eyebrow: "Válassz képi nyelvet",
+  mazzi_titolo: "Kezdd a Thoth-tarottal. Hagyj helyet más világoknak.",
+  mazzi_intro: "A Thoth-tarot már elérhető. A jóslás élménye egy pakli köré épül, így az új paklik a saját kártyatárukat, rituáléjukat, történeteiket és fizikai kiadásukat hozhatják anélkül, hogy felváltanák az utat, amelyen jársz.",
+  mazzi_futuri_aria: "Jövőbeli paklik, még nem elérhetők",
+  mazzi_futuri: ["The Lovers · tervezett", "Italian Celebration · tervezett", "Halloween Tarots · tervezett"],
+  mazzi_cta: "Fedezd fel a Thoth-paklit",
+  mazzi_voto: "Segíts kiválasztani a következőt",
+
+  fisico_eyebrow: "Híd a fizikai világ felé",
+  fisico_titolo: "Van már saját tarot-paklid?",
+  fisico_intro: "Húzd ki te magad a kártyákat, tedd őket a helyükre, és a TAROTS chat segít kiolvasni a mintázatot. A rituálé a te kezedben marad.",
+  fisico_cta: "Használd a saját kártyáidat",
+  fisico_carta_alt: "A Remete, Thoth-tarot kártya",
+  fisico_scheda_titolo: "Fizikai kártyák értelmezése",
+  fisico_scheda_testo: "Válassz kirakást, nevezd meg a kihúzott lapokat, add hozzá a kérdésed, és folytasd vezetett értelmezéssel.",
+
+  metodo_eyebrow: "Módszer, bizalom és adatvédelem",
+  metodo_titolo: "Mi történik egy jóslás mögött.",
+  metodo: [
+    { titolo: "A Thoth-hagyomány", testo: "Minden kártya a valódi megfeleléseit hordozza — héber betű, ösvény, dekád, szefira —, a szomszédos lapok pedig az elemi méltóságokon keresztül árnyalják egymást." },
+    { titolo: "Egyszerre egy kártya", testo: "A kártyák sorban fordulnak fel. Minden értelmezés számol a már látott lapokkal, aztán az egész kirakást együtt olvassuk a kérdéseddel és a szavaiddal." },
+    { titolo: "A mesterséges intelligencia szerepe", testo: "Egy MI összeköti a szimbólumokat, a pozíciókat és a szavaidat. Értelmez; a jövőt nem ismeri, és ezt meg is mondja." },
+    { titolo: "Az adataid", testo: "A jóslások és az emlékezet a fiókodban maradnak. A másik személy vezetékneve soha nem jut el az MI-hez, és amire a tarotolvasód emlékszik, azt bármikor törölheted." },
+  ],
+
+  funnel_eyebrow: "Először ingyen, mélyebben, ha te is akarod",
+  funnel_titolo: "Az érték előbb érkezik, mint a regisztrációra szóló meghívás.",
+  funnel_intro: "Az első jóslásod ingyenes, és nem kell hozzá fiók: végigcsinálod az egész rituálét, és kapsz egy első választ. Ha a teljes értelmezést szeretnéd, egy ingyenes fiók megőrzi, és még {n} ingyenes jóslást ad hozzá.",
+  funnel_passi: [
+    { etichetta: "01 · Kezdés", testo: "Tegyél fel egy kérdést, és vegyél részt a rituáléban." },
+    { etichetta: "02 · Elmélyülés", testo: "Lásd az első választ a kiválasztott kártyákra." },
+    { etichetta: "03 · Megőrzés", testo: "Hozz létre ingyenes fiókot, amikor a jóslás kiérdemelte a helyét." },
+    { etichetta: "04 · Visszatérés", testo: "Tartsd meg a szálat, használd az ingyenes jóslásaidat, térj vissza a történethez." },
+  ],
+
+  cond_eyebrow: "Nyiss ajtót másnak",
+  cond_titolo: "Egy jóslás másnak is lehet a bejárat.",
+  cond_testo: "Oszd meg egy jóslásodat vagy a meghívódat. Aki a linkedről regisztrál, ingyenes jóslásokat kap, és te is: minden csatlakozó után {n} ingyenes jóslást kapsz.",
+  cond_cta: "Keresd meg a meghívódat",
+
+  diario_eyebrow: "A tartalmak hálója",
+  diario_titolo: "Egy napló, amely visszavezet egy kérdéshez.",
+  diario_cta: "Nézd meg a naplót",
+  diario_riserva: [
+    { etichetta: "Kártyatár", titolo: "Olvasd a képeket, a megfeleléseket és a jelentéseket" },
+    { etichetta: "Rituális útmutató", titolo: "Melyik kirakás segít egy nehéz döntésnél?" },
+    { etichetta: "A nap kártyája", titolo: "Egy kis találkozás, minden nap ingyen" },
+  ],
+
+  faq_eyebrow: "Világos határ",
+  faq_titolo: "A misztikus nem jelenti azt, hogy félrevezető.",
+  faq: [
+    { d: "Ez jóslat a jövőről?", r: "Nem. A tarot a kérdések, mintázatok és döntések elmélkedő nyelve lehet. Nem garantál jövőbeli eseményeket, sem tudományos bizonyosságot." },
+    { d: "Ingyenes?", r: "Az első jóslásod ingyenes, fiók nélkül: végigcsinálod az egész rituálét, és kapsz egy első választ. Egy ingyenes fiók feloldja a teljes értelmezést, és ingyenes jóslásokat ad hozzá. Utána a jóslásokhoz csomag vagy előfizetés kell. A nap kártyája mindig ingyenes." },
+    { d: "Mire emlékszik a tarotolvasód?", r: "Ha úgy döntesz, hogy fiókot hozol létre, megőrizheti a kérdéseidet, a jóslásaidat és a kiválasztott összefüggéseket, hogy a folytatás értelmes legyen. Átnézheted, módosíthatod vagy törölheted." },
+    { d: "Kell hozzá TAROTS chat pakli?", r: "Nem. Használhatod a Thoth-paklit a digitális rituáléban, vagy húzhatsz a saját fizikai tarot-paklidból, és megadhatod a kihúzott lapokat." },
+    { d: "Miért érdemes fiókot létrehozni az első élmény után?", r: "A regisztrációval válik egy jóslás a történeted részévé: elmenti a teljes jóslást, feloldja a további ingyenes jóslásokat, és az emlékezet neked dolgozik." },
+  ],
+
+  finale_eyebrow: "Az első lépés egyszerű",
+  finale_titolo: "Tedd fel a kérdést, amely eddig várt.",
+  finale_testo: "Lépj be a rituáléba. Hagyd, hogy a kártyák beszéljenek. Térj vissza, amikor az élet új formát ad a kérdésnek.",
+};

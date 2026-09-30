@@ -49,7 +49,13 @@ function ruoliDaToken(token?: string | null): string[] {
   }
 }
 
-export function SessioneKeycloak({ children }: { children: React.ReactNode }) {
+export function SessioneKeycloak({
+  children, ritorno2fa = "/profilo",
+}: {
+  children: React.ReactNode;
+  /** Dove torna chi attiva la verifica in due passaggi: il profilo del sito, o quello della v2. */
+  ritorno2fa?: string;
+}) {
   const auth = useAuth();
   const valore = useMemo<Sessione>(
     () => ({
@@ -66,10 +72,10 @@ export function SessioneKeycloak({ children }: { children: React.ReactNode }) {
       /* «Application initiated action» di Keycloak: dopo l'accesso (o subito, se la
        * sessione è fresca) mostra la configurazione dell'OTP e poi torna qui. */
       attiva2fa: () =>
-        auth.signinRedirect({ extraQueryParams: { kc_action: "CONFIGURE_TOTP" }, state: { ritorno: "/profilo" } }),
+        auth.signinRedirect({ extraQueryParams: { kc_action: "CONFIGURE_TOTP" }, state: { ritorno: ritorno2fa } }),
       esci: () => auth.signoutRedirect(),
     }),
-    [auth],
+    [auth, ritorno2fa],
   );
   return <Contesto.Provider value={valore}>{children}</Contesto.Provider>;
 }

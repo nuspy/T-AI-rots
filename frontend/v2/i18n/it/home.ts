@@ -1,0 +1,156 @@
+/* La home: prima la domanda, poi il rito, la memoria, i mazzi, il ponte con le carte fisiche, il metodo. */
+
+import type { home as Base } from "../en/home";
+
+export const home: typeof Base = {
+  meta_titolo: "TAROTS chat — un rito vivo dei Tarocchi",
+  meta_descrizione: "Un rito vivo dei Tarocchi, con un'interpretazione guidata e un lettore che ricorda la tua storia.",
+
+  eyebrow: "Tarocchi di Thoth · rito guidato · interpretazione nel contesto",
+  titolo_1: "Una domanda può diventare ",
+  titolo_em: "la strada",
+  titolo_2: " per tornare a te.",
+  lede: "Chiedi ciò che hai in mente. Poi mescola, taglia e scegli tu le carte. TAROTS chat mette in relazione i simboli, la tua domanda e la storia che porti con te.",
+  domanda_etichetta: "Che cosa hai in mente?",
+  domanda_segnaposto: "Che cosa hai in mente?",
+  domanda_invia: "Fai la tua domanda",
+  domanda_breve: "Qualche parola in più aiuta le carte: scrivi almeno tre lettere.",
+  cta_gratis: "Inizia la tua lettura gratuita",
+  cta_fisiche: "Hai già le carte tra le mani?",
+  cta_giorno: "Oppure pesca la carta di oggi, gratis",
+  fiducia_1: "Nessuna previsione è garantita",
+  fiducia_2: "Le carte le scegli tu",
+  fiducia_3: "La memoria la gestisci tu",
+  oggetto_aria: "Una carta dei Tarocchi di Thoth su un tavolo rituale",
+  oggetto_carta: "Gli Amanti, carta dei Tarocchi di Thoth",
+  nota_titolo: "Un rito vivo",
+  nota_testo: "Non una carta a caso. Un momento a cui prendi parte.",
+
+  demo_eyebrow: "Guarda l'esperienza",
+  demo_titolo: "La conversazione guida. Il rito la rende tua.",
+  demo_intro: "Puoi cominciare senza un account. Prendi parte a tutto il rito, ricevi una prima risposta, poi decidi se la lettura completa merita un posto nella tua storia.",
+  demo_contesto: "Una domanda, nel suo contesto",
+  demo_1: "«Vorrei capire se sto evitando una scelta.»",
+  demo_2: "Possiamo guardare la scelta senza forzare una risposta. La tensione riguarda una relazione, il lavoro, o entrambi?",
+  demo_3: "«Entrambi, ma la relazione è ciò che sento per prima.»",
+  demo_carte: "Poi le carte",
+  demo_didascalia: "Mescola · interrompi · taglia · scegli · svela",
+  demo_esempio: "Una conversazione di esempio",
+
+  temi_eyebrow: "Comincia da dove sei",
+  temi_titolo: "Che cosa chiede la tua attenzione?",
+  temi_cta: "Fai la tua domanda",
+  temi: [
+    { chiave: "amore", simbolo: "♁", nome: "Amore", nota: "ciò che si sta aprendo" },
+    { chiave: "relazione", simbolo: "☌", nome: "Relazione", nota: "ciò che sta cambiando" },
+    { chiave: "lavoro", simbolo: "♃", nome: "Lavoro", nota: "dove mettere le energie" },
+    { chiave: "decisione", simbolo: "↔", nome: "Una decisione difficile", nota: "che cosa chiede ogni strada" },
+    { chiave: "inspiegabile", simbolo: "◌", nome: "Qualcosa di inspiegabile", nota: "ciò che cerca un nome" },
+    { chiave: "se", simbolo: "✦", nome: "Conoscere sé stessi", nota: "ciò che chiede di essere visto" },
+  ],
+
+  rito_eyebrow: "Il rito digitale",
+  rito_titolo: "Una lettura ha il suo tempo.",
+  rito_passi: [
+    { titolo: "Chiedi", testo: "Dai alla lettura una domanda vera." },
+    { titolo: "Mescola", testo: "Avvia il movimento, poi interrompilo." },
+    { titolo: "Taglia", testo: "Scegli dove il mazzo si divide." },
+    { titolo: "Pesca", testo: "Scegli le carte dal ventaglio aperto." },
+    { titolo: "Svela", testo: "Guarda ogni carta al suo posto." },
+    { titolo: "Interpreta", testo: "Collega carte, domanda e contesto." },
+  ],
+
+  vero_eyebrow: "Un'estrazione vera, non un'animazione",
+  vero_titolo: "Ogni carta che tocchi è una carta vera.",
+  vero_testo: "Quando il mazzo si muove, quando lo tagli, quando scegli dal ventaglio, non stai guardando un effetto grafico. Sul tavolo c'è un vero mazzo di carte virtuali — tutte e 78, o i 22 Arcani Maggiori — ognuna con la sua identità e il suo verso, come le carte che tieni in mano.",
+  vero_fatti: [
+    { titolo: "Mescolato dal caso", testo: "L'ordine nasce da una fonte di casualità crittografica, non da un copione. Nessuno lo decide in anticipo, nemmeno noi. Sei tu a decidere quando la mescolata finisce." },
+    { titolo: "Tagliato dove scegli", testo: "Il punto che tocchi è quello in cui il mazzo vero si divide: le carte che seguono passano davanti, come farebbero tra le tue mani." },
+    { titolo: "Sigillato prima della scelta", testo: "Prima che il ventaglio si apra, ogni carta ha già il suo posto, sigillato con un'impronta crittografica. La carta che tocchi è la carta che peschi — e alla fine puoi verificare che nulla sia cambiato." },
+  ],
+  vero_chiusa: "Un'estrazione onesta come una fatta dal vivo, a un tavolo. Ciò che le carte dicono resta materia di riflessione, mai una previsione garantita.",
+
+  memoria_citazione: "«La settimana scorsa mi hai chiesto come si sarebbe evoluta la tua relazione. Come vanno le cose adesso?»",
+  memoria_piede: "Il seguito comincia da ciò che conta, non da una pagina bianca.",
+  memoria_eyebrow: "Il tuo lettore ricorda la tua storia",
+  memoria_titolo: "Continuità, senza fingere di sapere più di quanto condividi.",
+  memoria_voci: [
+    { titolo: "Domande e temi", testo: "per riprendere il filo di una situazione." },
+    { titolo: "Letture ed esiti", testo: "perché la riflessione tenga conto di ciò che è accaduto dopo." },
+    { titolo: "Le tue scelte", testo: "puoi rivedere, modificare o cancellare ciò che viene ricordato." },
+  ],
+  memoria_cta: "Scopri come funziona la memoria",
+  memoria_etichetta: "il tuo lettore ricorda",
+
+  diff_eyebrow: "Perché è diverso",
+  diff: [
+    { simbolo: "✦", titolo: "Un rito a cui partecipi", testo: "Carte virtuali vere: l'interruzione, il taglio e la scelta sono tuoi, e contano." },
+    { simbolo: "◌", titolo: "Un'interpretazione nel contesto", testo: "La lettura tiene insieme la domanda, le posizioni, le combinazioni e la conversazione." },
+    { simbolo: "↺", titolo: "Una storia con memoria", testo: "Torna a una domanda di ieri e guardala alla luce di ciò che è cambiato." },
+    { simbolo: "✋", titolo: "Il tuo mazzo fisico è il benvenuto", testo: "Pesca le carte nella tua stanza, poi porta qui le loro posizioni per l'interpretazione." },
+  ],
+
+  mazzi_disponibile: "Disponibile ora",
+  mazzi_eyebrow: "Scegli un linguaggio visivo",
+  mazzi_titolo: "Comincia dai Tarocchi di Thoth. Lascia spazio ad altri mondi.",
+  mazzi_intro: "I Tarocchi di Thoth sono disponibili ora. L'esperienza di lettura è pensata attorno a un mazzo: i mazzi nuovi porteranno la loro biblioteca di carte, il loro rito, le loro storie e la loro edizione fisica, senza cambiare il cammino che stai facendo.",
+  mazzi_futuri_aria: "Mazzi futuri, non ancora disponibili",
+  mazzi_futuri: ["The Lovers · in arrivo", "Italian Celebration · in arrivo", "Halloween Tarots · in arrivo"],
+  mazzi_cta: "Esplora il mazzo di Thoth",
+  mazzi_voto: "Aiutaci a scegliere il prossimo",
+
+  fisico_eyebrow: "Un ponte con il mondo fisico",
+  fisico_titolo: "Hai già un mazzo di Tarocchi?",
+  fisico_intro: "Pesca tu le carte, disponile nelle loro posizioni e lascia che TAROTS chat ti aiuti a leggerne il disegno. Il rito resta nelle tue mani.",
+  fisico_cta: "Usa le tue carte",
+  fisico_carta_alt: "L'Eremita, carta dei Tarocchi di Thoth",
+  fisico_scheda_titolo: "Lettura delle carte fisiche",
+  fisico_scheda_testo: "Scegli una stesa, indica le carte che hai pescato, aggiungi la tua domanda e prosegui con un'interpretazione guidata.",
+
+  metodo_eyebrow: "Metodo, fiducia e privacy",
+  metodo_titolo: "Che cosa accade dietro una lettura.",
+  metodo: [
+    { titolo: "La tradizione di Thoth", testo: "Ogni carta porta le sue attribuzioni vere — lettera ebraica, sentiero, decano, sefira — e le carte vicine si modulano a vicenda attraverso le dignità elementali." },
+    { titolo: "Una carta alla volta", testo: "Le carte si svelano in ordine. Ogni interpretazione tiene conto di quelle già viste, poi l'intera stesa si legge insieme alla tua domanda e alle tue parole." },
+    { titolo: "Il ruolo dell'AI", testo: "Un'intelligenza artificiale collega simboli, posizioni e parole tue. Interpreta; non conosce il futuro, e te lo dice." },
+    { titolo: "I tuoi dati", testo: "Letture e memoria restano nel tuo account. Il cognome dell'altra persona non arriva mai all'AI, e puoi cancellare ciò che viene ricordato in qualsiasi momento." },
+  ],
+
+  funnel_eyebrow: "Prima gratis, poi più a fondo se lo scegli",
+  funnel_titolo: "Il valore arriva prima dell'invito a iscriversi.",
+  funnel_intro: "La prima lettura è gratuita e non chiede un account: prendi parte a tutto il rito e vedi una prima risposta. Quando vuoi l'interpretazione completa, un account gratuito la conserva e aggiunge {n} letture in regalo.",
+  funnel_passi: [
+    { etichetta: "01 · Comincia", testo: "Fai una domanda e prendi parte al rito." },
+    { etichetta: "02 · Approfondisci", testo: "Vedi una prima risposta alle carte che hai scelto." },
+    { etichetta: "03 · Tienila", testo: "Crea un account gratuito quando la lettura si è guadagnata il suo posto." },
+    { etichetta: "04 · Ritorna", testo: "Tieni il filo, usa le letture in regalo, torna alla tua storia." },
+  ],
+
+  cond_eyebrow: "Condividi un'apertura",
+  cond_titolo: "Una lettura può diventare la porta d'ingresso di qualcun altro.",
+  cond_testo: "Condividi una lettura o il tuo invito. Chi si iscrive dal tuo link riceve letture in regalo, e anche tu: {n} per ogni persona che arriva.",
+  cond_cta: "Trova il tuo invito",
+
+  diario_eyebrow: "Una rete di contenuti",
+  diario_titolo: "Un diario che riporta a una domanda.",
+  diario_cta: "Visita il diario",
+  diario_riserva: [
+    { etichetta: "Le carte", titolo: "Leggi le immagini, le corrispondenze e i significati" },
+    { etichetta: "Guida al rito", titolo: "Quale stesa aiuta davanti a una decisione difficile?" },
+    { etichetta: "Carta del giorno", titolo: "Un piccolo incontro, gratis ogni giorno" },
+  ],
+
+  faq_eyebrow: "Un confine chiaro",
+  faq_titolo: "Mistico non vuol dire ingannevole.",
+  faq: [
+    { d: "È una previsione?", r: "No. I Tarocchi possono essere un linguaggio per riflettere su domande, schemi e scelte. Non garantiscono eventi futuri né certezze scientifiche." },
+    { d: "È gratuito?", r: "La prima lettura è gratuita, senza account: prendi parte a tutto il rito e vedi una prima risposta. Un account gratuito sblocca l'interpretazione completa e aggiunge letture in regalo. Poi le letture si fanno con pacchetti o abbonamento. La carta del giorno è sempre gratuita." },
+    { d: "Che cosa ricorda il lettore?", r: "Se scegli di creare un account, può conservare le tue domande, le tue letture e il contesto che selezioni, per dare un seguito alle conversazioni. Puoi rivedere, modificare o cancellare tutto." },
+    { d: "Mi serve un mazzo di TAROTS chat?", r: "No. Puoi usare il mazzo di Thoth nel rito digitale, oppure pescare dal tuo mazzo di Tarocchi fisico e inserire le carte che sono uscite." },
+    { d: "Perché creare un account dopo la prima esperienza?", r: "Con l'iscrizione una lettura entra nella tua storia: si conserva completa, si sbloccano le letture in regalo e la memoria comincia a lavorare per te." },
+  ],
+
+  finale_eyebrow: "Il primo passo è semplice",
+  finale_titolo: "Fai la domanda che stava aspettando.",
+  finale_testo: "Entra nel rito. Lascia parlare le carte. Torna quando la vita darà alla domanda una forma nuova.",
+};
