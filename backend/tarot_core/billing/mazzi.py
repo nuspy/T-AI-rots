@@ -66,12 +66,12 @@ def prezzo_effettivo(
     return PrezzoMazzo(listino=listino, scontato=max(listino - sconto, 0), offerta_attiva=True)
 
 
-def mazzo_con_prezzo_json(deck: Deck, offerta: Optional[OffertaMazzo]) -> Dict[str, Any]:
+def mazzo_con_prezzo_json(deck: Deck, offerta: Optional[OffertaMazzo], lang: Optional[str] = None) -> Dict[str, Any]:
     """Il JSON del mazzo (metadati, da `deck_repositories.mazzo_json`) più il prezzo effettivo: il
     negozio e la console mostrano sempre questa forma, mai i due pezzi calcolati separatamente."""
     prezzi = {tipo: prezzo_effettivo(deck, offerta, tipo=tipo) for tipo in FORMATI}
     scontato = {tipo: p.scontato if p.offerta_attiva else None for tipo, p in prezzi.items()}
-    return mazzo_json(deck) | {
+    return mazzo_json(deck, lang) | {
         "prezzo_digitale_scontato": scontato["digitale"],
         "prezzo_stampa_scontato": scontato["pdf"],
         "prezzo_fisico_scontato": scontato["fisico"],

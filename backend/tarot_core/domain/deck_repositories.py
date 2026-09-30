@@ -79,12 +79,17 @@ async def posseduti_ids(session: AsyncSession, user_id: int) -> set[int]:
     return predefiniti | set(sbloccati)
 
 
-def mazzo_json(d: Deck) -> Dict[str, Any]:
+def mazzo_json(d: Deck, lang: Optional[str] = None) -> Dict[str, Any]:
+    from ..billing.lingue import in_lingua
+
     return {
         "id": d.id,
         "slug": d.slug,
-        "nome": d.nome,
-        "descrizione": d.descrizione,
+        "nome": in_lingua(d.nomi, lang, d.nome),
+        "descrizione": in_lingua(d.descrizioni, lang, d.descrizione),
+        # Tutte le traduzioni: la console le mostra per modificarle.
+        "nomi": d.nomi or {},
+        "descrizioni": d.descrizioni or {},
         "predefinito": d.predefinito,
         "attivo": d.attivo,
         "attivo_ora": d.attivo_ora,

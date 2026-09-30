@@ -184,12 +184,16 @@ class PianoModificato(BaseModel):
     active: Optional[bool] = None
     #: L'ordine di presentazione (più basso, più in alto).
     rank: Optional[int] = Field(default=None, ge=0, le=10_000)
+    #: Le traduzioni (v8.5): lingua → testo. Si sostituiscono per intero; una lingua vuota si toglie.
+    nomi: Optional[Dict[str, Optional[str]]] = None
+    descrizioni: Optional[Dict[str, Optional[str]]] = None
 
 
 def _piano_admin_json(p: Plan, abbonati: int = 0, usi: int = 0) -> Dict[str, Any]:
     return {
         "id": p.id, "slug": p.slug, "nome": p.name, "tipo": p.tipo,
-        "descrizione": p.description, "prezzo_mensile": p.price_monthly,
+        "descrizione": p.description, "nomi": p.nomi or {}, "descrizioni": p.descrizioni or {},
+        "prezzo_mensile": p.price_monthly,
         "prezzo_annuale": p.price_yearly, "crediti": p.credits_per_period,
         "limiti": p.limits or {}, "attivo": p.active, "rango": p.rank,
         "abbonati": abbonati,
@@ -228,6 +232,12 @@ async def modifica_piano(
             setattr(piano, campo, valore)
     if payload.letture_al_giorno is not None:
         piano.limits = {**(piano.limits or {}), "letture_al_giorno": payload.letture_al_giorno}
+    from ...billing.lingue import pulisci
+
+    if payload.nomi is not None:
+        piano.nomi = pulisci(payload.nomi, 80)
+    if payload.descrizioni is not None:
+        piano.descrizioni = pulisci(payload.descrizioni, 1000)
     from ...domain.repositories import AuditRepository
 
     await AuditRepository(session).record(

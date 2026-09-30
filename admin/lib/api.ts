@@ -182,6 +182,9 @@ export interface Piano {
   nome: string;
   tipo: "abbonamento" | "pacchetto";
   descrizione: string | null;
+  /** Le traduzioni (v8.5): lingua → testo. */
+  nomi?: Record<string, string>;
+  descrizioni?: Record<string, string>;
   /** Centesimi. */
   prezzo_mensile: number | null;
   /** Centesimi. */
@@ -207,6 +210,9 @@ export interface ModificaPiano {
   active?: boolean;
   /** L'ordine di presentazione: più basso, più in alto. */
   rank?: number;
+  /** Sostituiscono per intero le traduzioni; una lingua vuota si toglie. */
+  nomi?: Record<string, string>;
+  descrizioni?: Record<string, string>;
 }
 
 /** Un piano nuovo: gli importi in centesimi. Un pacchetto ha un prezzo solo e almeno un credito. */

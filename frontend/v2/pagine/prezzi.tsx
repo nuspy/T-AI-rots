@@ -9,8 +9,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTraccia } from "lanterna-osservatore/react";
 import {
-  abbonaGratis, anteprimaCoupon, apriPagamento, disdici, elencaPiani, euro, impostazioniPubbliche, leggiConto,
-  leggiMovimenti, motivoCodice, riscattaCodice, statoPagamento, type AnteprimaCoupon, type Conto, type Piano,
+  abbonaGratis, anteprimaCoupon, apriPagamento, disdici, euro, impostazioniPubbliche, leggiMovimenti, motivoCodice, riscattaCodice, statoPagamento, type AnteprimaCoupon, type Conto, type Piano,
 } from "@/lib/api";
 import { useSessione } from "@/lib/sessione";
 import { f, plurale } from "@/v2/i18n";
@@ -18,6 +17,7 @@ import LinkV2 from "@/v2/componenti/link";
 import { useLingua } from "@/v2/lib/lingua";
 import { R, indirizzoV2 } from "@/v2/lib/percorsi";
 import { useAzione, useCarica } from "@/v2/lib/usa";
+import { useConto, usePiani } from "@/v2/lib/dati";
 
 export function Prezzi() {
   return <Suspense fallback={null}><Contenuto /></Suspense>;
@@ -30,9 +30,9 @@ function Contenuto() {
   const { t, locale } = useLingua();
   const k = t.prezzi;
   const sessione = useSessione();
-  const piani = useCarica(elencaPiani, [], { pubblico: true });
+  const piani = usePiani();
   const omaggi = useCarica(impostazioniPubbliche, [], { pubblico: true });
-  const conto = useCarica(leggiConto);
+  const conto = useConto();
   const movimenti = useCarica(leggiMovimenti);
   const [codice, setCodice] = useState<string | null>(null);
   const ricarica = () => { conto.ricarica(); movimenti.ricarica(); };

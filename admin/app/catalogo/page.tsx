@@ -7,6 +7,7 @@ import {
 import { centesimiDa, importoPerCampo, soldi } from "@/lib/formato";
 import { useAzione, useDati } from "@/lib/usa";
 import comuni from "../comuni.module.css";
+import { Traduzioni, diverse, type Testi } from "../traduzioni";
 import stili from "./catalogo.module.css";
 
 /* Il catalogo: cosa si vende e a quanto.
@@ -243,6 +244,8 @@ function Modulo({
   );
   const [attivo, setAttivo] = useState(piano.attivo);
   const [rango, setRango] = useState(String(piano.rango));
+  const [nomiT, setNomiT] = useState<Testi>(piano.nomi ?? {});
+  const [descrizioniT, setDescrizioniT] = useState<Testi>(piano.descrizioni ?? {});
   const [problema, setProblema] = useState<string | null>(null);
 
   const invia = async (e: React.FormEvent) => {
@@ -281,6 +284,8 @@ function Modulo({
     if (nCrediti !== (piano.crediti ?? 0)) corpo.credits_per_period = nCrediti;
 
     if (attivo !== piano.attivo) corpo.active = attivo;
+    if (diverse(nomiT, piano.nomi ?? {})) corpo.nomi = nomiT;
+    if (diverse(descrizioniT, piano.descrizioni ?? {})) corpo.descrizioni = descrizioniT;
 
     if (Object.keys(corpo).length === 0) {
       chiudi();
@@ -306,6 +311,8 @@ function Modulo({
           onChange={(e) => setDescrizione(e.target.value)}
         />
       </label>
+
+      <Traduzioni nomi={nomiT} descrizioni={descrizioniT} onNomi={setNomiT} onDescrizioni={setDescrizioniT} />
 
       <div className={comuni.riga}>
         <label className={comuni.campo}>

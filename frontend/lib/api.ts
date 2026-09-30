@@ -487,7 +487,8 @@ export const leggiCarta = (id: string, lang?: string) =>
   chiama<Carta>(null, lang ? `/cards/${encodeURIComponent(id)}?lang=${encodeURIComponent(lang)}` : `/cards/${encodeURIComponent(id)}`);
 export const leggiCondivisa = (token: string) =>
   chiama<LetturaCondivisa>(null, `/shared/${encodeURIComponent(token)}`);
-export const elencaMazzi = () => chiama<Mazzo[]>(null, "/decks");
+/* `lang` (v8.5): nome e descrizione nella lingua della pagina, con ripiego sull'inglese. */
+export const elencaMazzi = (lang?: string) => chiama<Mazzo[]>(null, lang ? `/decks?lang=${lang}` : "/decks");
 export const leggiMazzo = (slug: string) => chiama<Mazzo>(null, `/decks/${slug}`);
 /* v7, Fase J: gli id dei mazzi che l'utente può già leggere — per proporre nel selettore solo
  * quelli posseduti (più i gratuiti, cioè senza prezzo digitale, già filtrabili lato chiamante). */
@@ -726,8 +727,9 @@ export async function* sintesi(
 
 /* ---- cassa e profilo ---- */
 
-export const elencaPiani = () => chiama<Piano[]>(null, "/plans");
-export const leggiConto = (token: string | null) => chiama<Conto>(token, "/me/billing");
+export const elencaPiani = (lang?: string) => chiama<Piano[]>(null, lang ? `/plans?lang=${lang}` : "/plans");
+export const leggiConto = (token: string | null, lang?: string) =>
+  chiama<Conto>(token, lang ? `/me/billing?lang=${lang}` : "/me/billing");
 export const leggiMovimenti = (token: string | null) =>
   chiama<{ saldo: number; movimenti: Movimento[] }>(token, "/me/credits");
 export const apriPagamento = (token: string | null, piano: string, annuale: boolean, ritorno?: string, coupon?: string) =>

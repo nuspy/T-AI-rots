@@ -25,7 +25,7 @@ from typing import Any, Dict, List, Optional
 import html
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
@@ -33,6 +33,7 @@ from ...analytics import eventi as analytics
 from ...auth.dependencies import CurrentUser, DbSession, require_role
 from ...billing import offerte
 from ...billing.credits import RegistroCrediti
+from ...billing.lingue import in_lingua
 from ...billing.pagamenti import (
     ANNULLATO, PAGATO, FirmaNonValida, GestorePagamenti, PagamentiNonDisponibili,
     PagamentiSimulati, provider_pagamenti,
@@ -86,12 +87,12 @@ class Rettifica(BaseModel):
     motivo: str = Field(min_length=3, max_length=500)
 
 
-def _piano_json(p) -> Dict[str, Any]:
+def _piano_json(p, lang: Optional[str] = None) -> Dict[str, Any]:
     return {
         "slug": p.slug,
-        "nome": p.name,
+        "nome": in_lingua(p.nomi, lang, p.name),
         "tipo": p.tipo,
-        "descrizione": p.description,
+        "descrizione": in_lingua(p.descrizioni, lang, p.description),
         "valuta": p.currency,
         "prezzo_mensile": p.price_monthly,
         "prezzo_annuale": p.price_yearly,
@@ -101,13 +102,13 @@ def _piano_json(p) -> Dict[str, Any]:
     }
 
 
-def _abbonamento_json(a) -> Optional[Dict[str, Any]]:
+def _abbonamento_json(a, lang: Optional[str] = None) -> Optional[Dict[str, Any]]:
     if a is None:
         return None
     return {
         "id": str(a.id),
         "piano": a.plan.slug,
-        "nome": a.plan.name,
+        "nome": in_lingua(a.plan.nomi, lang, a.plan.name),
         "stato": a.status,
         "periodo_inizio": a.period_start.isoformat(),
         "periodo_fine": a.period_end.isoformat(),
@@ -116,13 +117,18 @@ def _abbonamento_json(a) -> Optional[Dict[str, Any]]:
 
 
 @router.get("/plans")
-async def piani(session: DbSession) -> List[Dict[str, Any]]:
-    """Il catalogo. Pubblico: si guarda prima di avere un account."""
-    return [_piano_json(p) for p in await GestoreAbbonamenti(session).piani()]
+async def piani(
+    session: DbSession, lang: Optional[str] = Query(default=None, pattern="^[a-z]{2}$"),
+) -> List[Dict[str, Any]]:
+    """Il catalogo. Pubblico: si guarda prima di avere un account. `lang`: nomi e descrizioni in quella lingua
+    (poi l'inglese, poi l'originale); senza, l'originale."""
+    return [_piano_json(p, lang) for p in await GestoreAbbonamenti(session).piani()]
 
 
 @router.get("/me/billing")
-async def il_mio_conto(user: CurrentUser, session: DbSession) -> Dict[str, Any]:
+async def il_mio_conto(
+    user: CurrentUser, session: DbSession, lang: Optional[str] = Query(default=None, pattern="^[a-z]{2}$"),
+) -> Dict[str, Any]:
     """Piano, diritti e saldo in una chiamata.
 
     Insieme e non in tre endpoint perché è una schermata sola: chiederli
@@ -134,7 +140,7 @@ async def il_mio_conto(user: CurrentUser, session: DbSession) -> Dict[str, Any]:
     diritti = await gestore.diritti_di(user.id)
 
     return {
-        "abbonamento": _abbonamento_json(abbonamento),
+        "abbonamento": _abbonamento_json(abbonamento, lang),
         "diritti": diritti.to_dict(),
         "saldo": await RegistroCrediti(session).saldo(user.id),
         # Quanto dei limiti è usato: mostrarlo prima evita che il limite si

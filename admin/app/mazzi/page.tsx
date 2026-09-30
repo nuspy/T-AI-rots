@@ -11,6 +11,7 @@ import {
 } from "@/lib/mazzi";
 import { useAzione, useDati } from "@/lib/usa";
 import comuni from "../comuni.module.css";
+import { Traduzioni, diverse, type Testi } from "../traduzioni";
 
 function soldi(centesimi: number | null, valuta = "EUR"): string {
   if (centesimi === null) return "—";
@@ -350,6 +351,8 @@ function DettagliMazzo({ mazzo, onSalvato }: { mazzo: Mazzo; onSalvato: () => vo
   const [fino, setFino] = useState(perCampo(mazzo.attivazione_fino));
   const [rank, setRank] = useState(String(mazzo.rank));
   const [spedizione, setSpedizione] = useState(mazzo.richiede_spedizione);
+  const [nomiT, setNomiT] = useState<Testi>(mazzo.nomi ?? {});
+  const [descrizioniT, setDescrizioniT] = useState<Testi>(mazzo.descrizioni ?? {});
 
   const salva = async () => {
     const fatto = await esegui((t) => modificaMazzo(t, mazzo.slug, {
@@ -358,6 +361,8 @@ function DettagliMazzo({ mazzo, onSalvato }: { mazzo: Mazzo; onSalvato: () => vo
       attivazione_fino: fino ? new Date(fino).toISOString() : null,
       rank: Number(rank) || 0,
       richiede_spedizione: spedizione,
+      ...(diverse(nomiT, mazzo.nomi ?? {}) ? { nomi: nomiT } : {}),
+      ...(diverse(descrizioniT, mazzo.descrizioni ?? {}) ? { descrizioni: descrizioniT } : {}),
     }));
     if (fatto) onSalvato();
   };
@@ -391,6 +396,8 @@ function DettagliMazzo({ mazzo, onSalvato }: { mazzo: Mazzo; onSalvato: () => vo
         </label>
         <button type="button" className={comuni.primaria} disabled={inCorso} onClick={salva}>Salva</button>
       </div>
+      <Traduzioni nomi={nomiT} descrizioni={descrizioniT} onNomi={setNomiT} onDescrizioni={setDescrizioniT}
+        massimoDescrizione={2000} />
     </div>
   );
 }

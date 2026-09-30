@@ -19,9 +19,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { useOsservatore, useTraccia } from "lanterna-osservatore/react";
 import {
-  ErroreApi, aggiornaProfilo, apriLettura, apriLetturaAnonima, apriVentaglio, cancellaPartner, elencaCarte,
-  elencaMazzi, mieiMazzi, elencaStese, impostazioniPubbliche, leggiConto, leggiDisclaimer, leggiLettura, leggiProfilo,
-  rispondi, rivela, scegliCarta, sintesi, type Categoria, type Genere, type Lettura, type Stesa,
+  ErroreApi, aggiornaProfilo, apriLettura, apriLetturaAnonima, apriVentaglio, cancellaPartner, elencaCarte, mieiMazzi, elencaStese, impostazioniPubbliche, leggiDisclaimer, leggiLettura, leggiProfilo, rispondi, rivela, scegliCarta, sintesi, type Categoria, type Genere, type Lettura, type Stesa,
 } from "@/lib/api";
 import { comeLingua, type Lingua } from "@/lib/i18n/lingue";
 import { nomeCarta, nomePosizione, nomeStesa } from "@/lib/i18n/nomi";
@@ -31,7 +29,7 @@ import { dizionarioPronto, f, plurale } from "@/v2/i18n";
 import { Dichiarazione } from "@/v2/componenti/dichiarazione";
 import LinkV2 from "@/v2/componenti/link";
 import { Modale } from "@/v2/componenti/modale";
-import { linguaContenuti } from "@/v2/lib/dati";
+import { linguaContenuti, useConto, useMazzi } from "@/v2/lib/dati";
 import { LinguaNomi, useLingua } from "@/v2/lib/lingua";
 import { R, indirizzoV2 } from "@/v2/lib/percorsi";
 import { useCarica } from "@/v2/lib/usa";
@@ -71,9 +69,9 @@ export function LetturaV2() {
   const idIniziale = parametri.get("id");
 
   const stese = useCarica(() => elencaStese(undefined, linguaContenuti(lingua)), [lingua], { pubblico: true });
-  const conto = useCarica(leggiConto);
+  const conto = useConto();
   const profilo = useCarica(leggiProfilo);
-  const mazzi = useCarica(elencaMazzi, [], { pubblico: true });
+  const mazzi = useMazzi();
   const posseduti = useCarica(mieiMazzi);
   const omaggi = useCarica(impostazioniPubbliche, [], { pubblico: true });
   const cartaParam = parametri.get("card");

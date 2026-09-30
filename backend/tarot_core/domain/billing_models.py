@@ -64,6 +64,10 @@ class Plan(Base, TimestampMixin):
     slug: Mapped[str] = mapped_column(String(40), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(80), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text)
+    #: Nome e descrizione nelle lingue del sito (v8.5, `billing/lingue.py`): lingua → testo. Vuoti: si mostra
+    #: l'inglese, poi il nome originale.
+    nomi: Mapped[Dict[str, str]] = mapped_column(JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb"))
+    descrizioni: Mapped[Dict[str, str]] = mapped_column(JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb"))
     #: `abbonamento` o `pacchetto`. Stanno nella stessa tabella perché
     #: passano dallo stesso checkout e dalla stessa contabilità: un pacchetto
     #: è un piano che non si rinnova e accredita crediti invece di quota.

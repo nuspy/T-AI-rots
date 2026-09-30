@@ -17,6 +17,7 @@ from sqlalchemy.exc import IntegrityError
 
 from ...auth.dependencies import CurrentUser, DbSession, require_role
 from ...billing import mazzi as mazzi_billing
+from ...billing.lingue import pulisci
 from ...domain import deck_repositories
 from ...domain.deck_models import Deck, DeckUnlock, OffertaMazzo
 from ...domain.deck_upload_models import DeckArtworkUpload
@@ -63,6 +64,9 @@ class MazzoNuovo(BaseModel):
 class MazzoMod(BaseModel):
     nome: Optional[str] = Field(default=None, min_length=1, max_length=80)
     descrizione: Optional[str] = Field(default=None, max_length=2000)
+    #: Le traduzioni (v8.5): lingua → testo, sostituite per intero.
+    nomi: Optional[Dict[str, Optional[str]]] = None
+    descrizioni: Optional[Dict[str, Optional[str]]] = None
     attivo: Optional[bool] = None
     attivazione_da: Optional[datetime] = None
     attivazione_fino: Optional[datetime] = None
@@ -122,6 +126,8 @@ async def modifica_mazzo(slug: str, payload: MazzoMod, request: Request, user: C
             valore = valore.strip()
         if campo == "descrizione":
             valore = (valore or "").strip() or None
+        if campo in ("nomi", "descrizioni"):
+            valore = pulisci(valore, 80 if campo == "nomi" else 2000)
         setattr(mazzo, campo, valore)
     await session.flush()
     await AuditRepository(session).record(

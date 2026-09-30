@@ -10,8 +10,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTraccia } from "lanterna-osservatore/react";
 import {
-  apriOrdine, elencaIndirizzi, elencaMazzi, euro, leggiOrdine, mieiMazzi, preventivoCarrello, scaricaPdfOrdine,
-  urlPdfGratuito, ErroreApi, type Mazzo, type Preventivo, type RigaOrdine, type TipoVoceOrdine,
+  apriOrdine, elencaIndirizzi, euro, leggiOrdine, mieiMazzi, preventivoCarrello, scaricaPdfOrdine, urlPdfGratuito, ErroreApi, type Mazzo, type Preventivo, type RigaOrdine, type TipoVoceOrdine,
 } from "@/lib/api";
 import { useSessione } from "@/lib/sessione";
 import { f, plurale } from "@/v2/i18n";
@@ -22,6 +21,7 @@ import { useCarrello } from "@/v2/lib/carrello";
 import { useLingua } from "@/v2/lib/lingua";
 import { R, indirizzoV2 } from "@/v2/lib/percorsi";
 import { useAzione, useCarica } from "@/v2/lib/usa";
+import { useMazzi } from "@/v2/lib/dati";
 
 const TIPI: TipoVoceOrdine[] = ["fisico", "pdf", "digitale"];
 
@@ -75,7 +75,7 @@ export function Negozio() {
   const k = t.negozio;
   const sessione = useSessione();
   const carrello = useCarrello();
-  const mazzi = useCarica(elencaMazzi, [], { pubblico: true });
+  const mazzi = useMazzi();
   const posseduti = useCarica(mieiMazzi);
   const [galleria, setGalleria] = useState<Mazzo | null>(null);
   const [aggiunto, setAggiunto] = useState<string | null>(null);
@@ -198,7 +198,7 @@ function CarrelloContenuto() {
   const carrello = useCarrello();
   const parametri = useSearchParams();
   const traccia = useTraccia();
-  const mazzi = useCarica(elencaMazzi, [], { pubblico: true });
+  const mazzi = useMazzi();
   const indirizzi = useCarica(elencaIndirizzi);
   const { esegui, inCorso, errore } = useAzione();
   const [indirizzoScelto, setIndirizzoScelto] = useState<string | null>(null);

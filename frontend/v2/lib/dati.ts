@@ -3,10 +3,12 @@
  * indicizzata, e la lingua può essere una qualunque delle quindici (il server conosce solo quella
  * dell'indirizzo). */
 
-import { API, ErroreApi } from "@/lib/api";
+import { API, ErroreApi, elencaMazzi, elencaPiani, leggiConto } from "@/lib/api";
 import type {
   ArticoloBlog, ArticoloBreve, DettaglioSezione, ElencoArticoli, EtichettaConConteggio, NodoSezione,
 } from "@/lib/blog";
+import { useLingua } from "@/v2/lib/lingua";
+import { useCarica } from "@/v2/lib/usa";
 
 export async function leggiPubblico<T>(percorso: string): Promise<T> {
   const r = await fetch(`${API}${percorso}`, { credentials: "include" });
@@ -36,3 +38,20 @@ export const etichette = () => leggiPubblico<EtichettaConConteggio[]>("/blog/tag
 /** Gli articoli che parlano di una carta o di una stesa. */
 export const articoliSu = (tipo: "carta" | "stesa", id: string) =>
   leggiPubblico<ArticoloBreve[]>(`/blog/links/${tipo}/${encodeURIComponent(id)}`);
+
+/* I mazzi e i piani nella lingua della pagina (v8.5): nomi e descrizioni tradotti dal server. */
+export function useMazzi() {
+  const { lingua } = useLingua();
+  return useCarica(() => elencaMazzi(lingua), [lingua], { pubblico: true });
+}
+
+export function usePiani() {
+  const { lingua } = useLingua();
+  return useCarica(() => elencaPiani(lingua), [lingua], { pubblico: true });
+}
+
+/* Il conto (saldo, abbonamento): il nome del piano nella lingua della pagina. `dipendenze` per rileggerlo. */
+export function useConto(dipendenze: unknown[] = []) {
+  const { lingua } = useLingua();
+  return useCarica((tok) => leggiConto(tok, lingua), [lingua, ...dipendenze]);
+}

@@ -216,20 +216,21 @@ async def _ha_immagine(session, reading_id) -> bool:
 
 
 @router.get("/decks")
-async def mazzi(session: DbSession) -> List[Dict[str, Any]]:
-    """I mazzi visibili nel negozio adesso: attivi e dentro la finestra di attivazione, se c'è."""
+async def mazzi(session: DbSession, lang: Optional[str] = Query(default=None, pattern="^[a-z]{2}$")) -> List[Dict[str, Any]]:
+    """I mazzi visibili nel negozio adesso: attivi e dentro la finestra di attivazione, se c'è. `lang`: nome e
+    descrizione in quella lingua (poi l'inglese, poi l'originale)."""
     attivi = await deck_repositories.attivi_ora(session)
     offerte = await deck_repositories.offerte_per(session, [d.id for d in attivi])
-    return [mazzi_billing.mazzo_con_prezzo_json(d, offerte.get(d.id)) for d in attivi]
+    return [mazzi_billing.mazzo_con_prezzo_json(d, offerte.get(d.id), lang) for d in attivi]
 
 
 @router.get("/decks/{slug}")
-async def mazzo(slug: str, session: DbSession) -> Dict[str, Any]:
+async def mazzo(slug: str, session: DbSession, lang: Optional[str] = Query(default=None, pattern="^[a-z]{2}$")) -> Dict[str, Any]:
     d = await deck_repositories.per_slug(session, slug)
     if d is None or not d.attivo_ora:
         raise HTTPException(status_code=404, detail="Mazzo non trovato")
     offerta = await deck_repositories.offerta_per(session, d.id)
-    return mazzi_billing.mazzo_con_prezzo_json(d, offerta)
+    return mazzi_billing.mazzo_con_prezzo_json(d, offerta, lang)
 
 
 @router.get("/decks/{slug}/pdf")

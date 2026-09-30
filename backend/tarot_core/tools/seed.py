@@ -90,8 +90,10 @@ UTENTI_DI_PROVA = [
 
 
 async def scrivi_catalogo(session, *, forza: bool = False) -> int:
+    from ..billing.lingue import TRADUZIONI_PIANI
+
     scritti = 0
-    for voce in CATALOGO:
+    for voce in (v | TRADUZIONI_PIANI.get(v["slug"], {}) for v in CATALOGO):
         piano = (await session.execute(select(Plan).where(Plan.slug == voce["slug"]))).scalar_one_or_none()
         if piano is None:
             session.add(Plan(**voce, currency="EUR", active=True))

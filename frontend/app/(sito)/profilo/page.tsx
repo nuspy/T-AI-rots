@@ -51,7 +51,7 @@ function Profilo() {
   /* v7, Fase J: il mazzo di default. `undefined` finché non lo si tocca (così vale quello del
    * profilo); `null` è una scelta esplicita ("torna al predefinito globale"). */
   const [mazzoDefault, setMazzoDefault] = useState<number | null | undefined>(undefined);
-  const tuttiIMazzi = useCarica(elencaMazzi, [], { pubblico: true });
+  const tuttiIMazzi = useCarica(() => elencaMazzi(), [], { pubblico: true });
   const mieiMazzi = useCarica(elencaMieiMazzi);
   const [nomePubblico, setNomePubblico] = useState<string | null>(null);
   const [erroreAvatar, setErroreAvatar] = useState<string | null>(null);

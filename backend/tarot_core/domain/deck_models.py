@@ -17,7 +17,7 @@ bisogno di essere comprato, e non deve poter essere disattivato per errore (vedi
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from sqlalchemy import (
     BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, false, text,
@@ -41,6 +41,10 @@ class Deck(Base, TimestampMixin):
     slug: Mapped[str] = mapped_column(String(40), unique=True, nullable=False)
     nome: Mapped[str] = mapped_column(String(80), nullable=False)
     descrizione: Mapped[Optional[str]] = mapped_column(Text)
+    #: Nome e descrizione nelle lingue del sito (v8.5, `billing/lingue.py`): lingua → testo. Vuoti: si mostra
+    #: l'inglese, poi il nome originale.
+    nomi: Mapped[Dict[str, str]] = mapped_column(JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb"))
+    descrizioni: Mapped[Dict[str, str]] = mapped_column(JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb"))
 
     #: Il Thoth: sempre posseduto da tutti, nessuna riga di sblocco necessaria. Non può essere
     #: disattivato (vincolo sotto) — un impianto senza nessun mazzo utilizzabile non deve poter

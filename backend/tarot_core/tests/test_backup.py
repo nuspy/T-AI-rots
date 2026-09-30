@@ -133,6 +133,17 @@ async def test_il_backup_carica_verifica_e_tiene_solo_le_ultime_copie(session, s
     assert ultimo.read_bytes()[:5] == b"PGDMP"
 
 
+async def test_due_copie_nello_stesso_secondo_non_si_sovrascrivono(session, session_factory, nas, monkeypatch):
+    await _configura(session, nas)
+    fermo = datetime(2026, 10, 1, 2, 30, tzinfo=timezone.utc)
+    nome_vero = backup._nome_copia
+    monkeypatch.setattr(backup, "_nome_copia", lambda tipo, quando: nome_vero(tipo, fermo))
+    nomi = [(await backup.esegui_backup(session_factory, manuale=True, url_db=URL_TEST)).file for _ in range(3)]
+    assert nomi == ["tarots-20261001-023000.dump", "tarots-20261001-023000-2.dump", "tarots-20261001-023000-3.dump"]
+    elenco = [c.nome for c in backup.elenco_copie(_dest(nas, impronta_host=backup.impronta(nas.chiave_host)))]
+    assert elenco == ["tarots-20261001-023000-3.dump", "tarots-20261001-023000-2.dump", "tarots-20261001-023000.dump"]
+
+
 async def test_il_backup_notturno_spento_si_salta(session, session_factory, nas):
     await _configura(session, nas, attivo=False)
     r = await backup.esegui_backup(session_factory, url_db=URL_TEST)

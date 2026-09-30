@@ -8,6 +8,8 @@ export interface Mazzo {
   slug: string;
   nome: string;
   descrizione: string | null;
+  nomi?: Record<string, string>;
+  descrizioni?: Record<string, string>;
   predefinito: boolean;
   attivo: boolean;
   attivo_ora: boolean;
@@ -36,6 +38,8 @@ export interface NuovoMazzo {
   slug: string;
   nome: string;
   descrizione?: string | null;
+  nomi?: Record<string, string>;
+  descrizioni?: Record<string, string>;
   predefinito?: boolean;
   attivo?: boolean;
   attivazione_da?: string | null;

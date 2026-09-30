@@ -85,7 +85,7 @@ export function Lettura() {
   const profilo = useCarica(leggiProfilo);
   /* v7, Fase J: il mazzo di default dell'utente, se ne ha scelto uno diverso dal predefinito
    * globale — precompila l'artwork della lettura, senza un cambio a metà stesa (fuori scope qui). */
-  const mazziDisponibili = useCarica(elencaMazzi, [], { pubblico: true });
+  const mazziDisponibili = useCarica(() => elencaMazzi(), [], { pubblico: true });
   const slugMazzoAttivo = mazziDisponibili.dati?.find(
     (m) => m.id === profilo.dati?.mazzo_predefinito_id && !m.predefinito,
   )?.slug ?? null;

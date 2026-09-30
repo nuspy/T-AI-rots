@@ -53,7 +53,7 @@ ID_RIGA = 1
 #: Le copie di sicurezza fatte prima di un ripristino che si tengono.
 CONSERVA_SICUREZZA = 3
 #: Il nome di ogni copia: niente altro si legge, si scarica o si cancella dalla cartella del NAS.
-NOME_COPIA = re.compile(r"^tarots-(sicurezza-)?(\d{8}-\d{6})\.dump$")
+NOME_COPIA = re.compile(r"^tarots-(sicurezza-)?(\d{8}-\d{6}(?:-\d{1,3})?)\.dump$")
 LOCK_TIMEOUT_MS = 60_000
 TIMEOUT_SSH = 20
 
@@ -208,8 +208,9 @@ class Archivio:
                 modificata=datetime.fromtimestamp(a.st_mtime or 0, tz=timezone.utc),
                 con_sha256=f"{nome}.sha256" in voci,
             ))
-        # Dalla più recente, per data e ora nel nome (non per data di modifica: una copia ricaricata non ringiovanisce).
-        return sorted(copie, key=lambda c: NOME_COPIA.match(c.nome).group(2), reverse=True)
+        # Dalla più recente, per data e ora nel nome (non per data di modifica: una copia ricaricata non ringiovanisce);
+        # a parità di secondo, il suffisso `-2`, `-3` viene dopo.
+        return sorted(copie, key=_ordine_copia, reverse=True)
 
 
 @contextmanager
@@ -347,16 +348,30 @@ def _rotazione(archivio: Archivio, conserva: int) -> List[str]:
     return eliminati
 
 
+def _nome_libero(archivio: "Archivio", nome: str) -> str:
+    """Due copie nello stesso secondo (un «Esegui ora» ripetuto, la copia di sicurezza subito dopo un'altra) non
+    devono sovrascriversi: la seconda prende `-2`, la terza `-3`…"""
+    presenti = {c.nome for c in archivio.elenco()}
+    if nome not in presenti:
+        return nome
+    base = nome[: -len(".dump")]
+    n = 2
+    while f"{base}-{n}.dump" in presenti:
+        n += 1
+    return f"{base}-{n}.dump"
+
+
 def _fai_backup(dest: Destinazione, tipo: str, url_db: Optional[str]) -> Dict[str, Any]:
     """Il lavoro vero, sincrono (in un thread): dump, caricamento, verifica, rotazione."""
     nome = _nome_copia(tipo, utcnow())
     with tempfile.TemporaryDirectory(prefix="tarots-backup-") as cartella:
-        locale = Path(cartella) / nome
+        locale = Path(cartella) / "copia.dump"
         dump(locale, url_db)
         byte = locale.stat().st_size
         impronta_file = sha256_di(locale)
         with apri(dest) as archivio:
             archivio.assicura_cartella()
+            nome = _nome_libero(archivio, nome)
             sul_nas = archivio.carica(locale, nome)
             if sul_nas != byte:
                 archivio.elimina(nome)
@@ -457,6 +472,13 @@ def _scarica_e_verifica(dest: Destinazione, nome: str, locale: Path) -> str:
     if atteso and atteso.split()[0] != trovato:
         raise ErroreBackup(f"la copia {nome} non corrisponde al suo sha256: file rovinato, ripristino annullato")
     return trovato
+
+
+def _ordine_copia(c: Copia):
+    """Data e ora nel nome, poi il suffisso numerico (`-2` dopo la copia senza suffisso)."""
+    istante = NOME_COPIA.match(c.nome).group(2)
+    giorno, ora, *resto = istante.split("-")
+    return (giorno, ora, int(resto[0]) if resto else 1)
 
 
 def _passo(testo: str) -> None:

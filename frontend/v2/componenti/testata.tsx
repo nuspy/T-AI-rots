@@ -6,14 +6,13 @@
  * mouse (la scritta resta visibile, anche sul telefono). Solo destinazioni della v2 (specifica v2, §19). */
 
 import { usePathname, useRouter } from "next/navigation";
-import { leggiConto } from "@/lib/api";
 import { ADMIN_URL, useSessione } from "@/lib/sessione";
 import { LINGUE, comeLingua, f, plurale } from "@/v2/i18n";
 import { useCarrello } from "@/v2/lib/carrello";
 import { useLingua } from "@/v2/lib/lingua";
 import { R, senzaPrefisso } from "@/v2/lib/percorsi";
-import { useCarica } from "@/v2/lib/usa";
 import LinkV2 from "./link";
+import { useConto } from "@/v2/lib/dati";
 
 /* Icone a tratto, 24×24, colore del testo: nessuna libreria per quattro disegni. */
 const ICONE = {
@@ -71,7 +70,7 @@ function Crediti({ percorso }: { percorso: string }) {
   const { t } = useLingua();
   const k = t.comune;
   const sessione = useSessione();
-  const conto = useCarica(leggiConto, [percorso]);
+  const conto = useConto([percorso]);
   const saldo = sessione.autenticata ? conto.dati?.saldo : undefined;
   const titolo = saldo == null ? k.testata_crediti_tip : f(k.testata_crediti_tip_n, { n: plurale(saldo, k.testata_crediti_n) });
   return (

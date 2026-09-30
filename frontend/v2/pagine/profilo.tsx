@@ -8,9 +8,7 @@
 import { useState } from "react";
 import { componiBigliettino, scaricaBlob } from "@/app/(sito)/profilo/bigliettino-invito";
 import {
-  aggiornaProfilo, cancellaPartner, caricaAvatar, creaIndirizzo, elencaIndirizzi, elencaMazzi, elencaMieiMazzi,
-  elencaOrdini, eliminaIndirizzo, euro, impostaPreferenzaStatistiche, impostazioniPubbliche, leggiPreferenzaStatistiche,
-  leggiProfilo, modificaIndirizzo, riscattaInvito, togliAvatar, type Genere, type Indirizzo, type IndirizzoInvio, type Ordine,
+  aggiornaProfilo, cancellaPartner, caricaAvatar, creaIndirizzo, elencaIndirizzi, elencaMieiMazzi, elencaOrdini, eliminaIndirizzo, euro, impostaPreferenzaStatistiche, impostazioniPubbliche, leggiPreferenzaStatistiche, leggiProfilo, modificaIndirizzo, riscattaInvito, togliAvatar, type Genere, type Indirizzo, type IndirizzoInvio, type Ordine,
 } from "@/lib/api";
 import { urlMedia } from "@/lib/blog";
 import { dimenticaInvito, leggiInvito } from "@/lib/inviti";
@@ -25,6 +23,7 @@ import { useLingua } from "@/v2/lib/lingua";
 import { R } from "@/v2/lib/percorsi";
 import { useAzione, useCarica } from "@/v2/lib/usa";
 import { BottonePdfV2 } from "./negozio";
+import { useMazzi } from "@/v2/lib/dati";
 
 function Sezione({ id, titolo, children }: { id: string; titolo: string; children: React.ReactNode }) {
   return (
@@ -57,7 +56,7 @@ function Dentro() {
   const profilo = useCarica(leggiProfilo);
   const { esegui, inCorso, errore } = useAzione();
   const stato2fa = useCarica(leggiStato2fa);
-  const tutti = useCarica(elencaMazzi, [], { pubblico: true });
+  const tutti = useMazzi();
   const miei = useCarica(elencaMieiMazzi);
   const omaggi = useCarica(impostazioniPubbliche, [], { pubblico: true });
   const [nascita, setNascita] = useState<string | null>(null);
@@ -300,7 +299,7 @@ function Ordini() {
   const { t, locale } = useLingua();
   const k = t.profilo;
   const ordini = useCarica(elencaOrdini);
-  const mazzi = useCarica(elencaMazzi, [], { pubblico: true });
+  const mazzi = useMazzi();
   const nome = (id: number) => mazzi.dati?.find((m) => m.id === id)?.nome ?? `#${id}`;
   const elenco = ordini.dati?.ordini ?? [];
   return (

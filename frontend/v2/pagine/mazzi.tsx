@@ -5,7 +5,7 @@
  * delle immagini, la biblioteca, la lettura, l'edizione fisica. */
 
 import { useRouter } from "next/navigation";
-import { elencaMazzi, euro, urlPdfGratuito, votoHome, type Mazzo } from "@/lib/api";
+import { euro, urlPdfGratuito, votoHome, type Mazzo } from "@/lib/api";
 import { f } from "@/v2/i18n";
 import { ImmagineCarta } from "@/v2/componenti/carta";
 import LinkV2 from "@/v2/componenti/link";
@@ -13,6 +13,7 @@ import { useCarrello } from "@/v2/lib/carrello";
 import { useLingua } from "@/v2/lib/lingua";
 import { R, indirizzoV2 } from "@/v2/lib/percorsi";
 import { useCarica } from "@/v2/lib/usa";
+import { useMazzi } from "@/v2/lib/dati";
 
 /* Le immagini di un mazzo: il predefinito (Thoth) nella cartella piatta, gli altri nella propria. */
 const cartellaDi = (m: Mazzo) => (m.predefinito ? null : m.slug);
@@ -21,7 +22,7 @@ const CAMPIONE = ["maj-00", "maj-02", "maj-06", "maj-09", "maj-17", "maj-19"];
 export function Mazzi() {
   const { t } = useLingua();
   const k = t.mazzi;
-  const mazzi = useCarica(elencaMazzi, [], { pubblico: true });
+  const mazzi = useMazzi();
   const disponibili = (mazzi.dati ?? []).filter((m) => m.predefinito || m.attivo_ora);
   return (
     <>
@@ -64,7 +65,7 @@ export function Mazzi() {
 export function SchedaMazzo({ slug }: { slug: string }) {
   const { t } = useLingua();
   const k = t.mazzi;
-  const mazzi = useCarica(elencaMazzi, [], { pubblico: true });
+  const mazzi = useMazzi();
   if (mazzi.errore) return <section className="band band-tight"><p className="error">{mazzi.errore}</p></section>;
   if (!mazzi.dati) return <section className="band band-tight"><p className="muted">{t.comune.carica}</p></section>;
   const m = mazzi.dati.find((x) => x.slug === slug);
