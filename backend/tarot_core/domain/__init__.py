@@ -5,7 +5,8 @@ all'altra per nome, e SQLAlchemy risolve quei nomi solo fra le tabelle che ha
 visto. Caricarne uno solo produce `NoReferencedTableError` al primo uso.
 """
 from . import (  # noqa: F401
-    base, billing_models, blog_models, config_models, deck_models, models, ordini_models, share_models,
+    base, billing_models, blog_models, chat_models, config_models, consent_models, deck_models,
+    deck_upload_models, memory_models, models, ordini_models, share_models, voting_models,
 )
 
 from .base import Base, OwnedMixin, TimestampMixin, utcnow
@@ -13,11 +14,16 @@ from .billing_models import Coupon, CouponRedemption, CreditEntry, PaymentChecko
 from .blog_models import (
     ApiKey, BlogPost, BlogPostLink, BlogPostRevision, BlogPostTag, BlogSection, BlogTag, MediaImage,
 )
+from .chat_models import ChatProattivaTurno
 from .config_models import ImpostazioniCrediti, LlmProvider, ModelAssignment
+from .consent_models import UserConsent
 from .deck_models import Deck, DeckUnlock, OffertaMazzo
+from .deck_upload_models import DeckArtworkUpload
+from .memory_models import UserMemory
 from .models import AuditLog, DailyCard, DrawnCard, InterviewTurn, Reading, User
 from .ordini_models import IndirizzoSpedizione, Ordine, RigaOrdine
 from .share_models import ShareEvent, ShareImage, ShareSignup, ShareVisit
+from .voting_models import DeckCandidate, DeckSuggestion, DeckVote, VotingRound
 
 __all__ = [
     "AuditLog",
@@ -29,13 +35,18 @@ __all__ = [
     "BlogPostTag",
     "BlogSection",
     "BlogTag",
+    "ChatProattivaTurno",
     "MediaImage",
     "Coupon",
     "CouponRedemption",
     "CreditEntry",
     "DailyCard",
     "Deck",
+    "DeckArtworkUpload",
+    "DeckCandidate",
+    "DeckSuggestion",
     "DeckUnlock",
+    "DeckVote",
     "DrawnCard",
     "ImpostazioniCrediti",
     "IndirizzoSpedizione",
@@ -57,5 +68,8 @@ __all__ = [
     "Subscription",
     "TimestampMixin",
     "User",
+    "UserConsent",
+    "UserMemory",
     "utcnow",
+    "VotingRound",
 ]

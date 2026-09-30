@@ -54,7 +54,9 @@ class MediaImage(Base):
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-    __table_args__ = (CheckConstraint("uso in ('blog', 'avatar')", name="ck_media_images_uso"),)
+    #: v7, Fase K: 'voto' sono le carte di prova di un mazzo candidato al voto — stesso schema
+    #: blob, servite dallo stesso `GET /blog/media/{id}.webp` (non filtra per `uso`).
+    __table_args__ = (CheckConstraint("uso in ('blog', 'avatar', 'voto')", name="ck_media_images_uso"),)
 
 
 class BlogSection(Base, TimestampMixin):

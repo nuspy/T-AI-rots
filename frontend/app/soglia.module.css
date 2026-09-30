@@ -56,6 +56,10 @@
 .eroeCarte {
   position: relative;
   height: 420px;
+  /* v7: le carte volanti arrivano fino a left:78% della loro larghezza propria; senza questo,
+   * su schermi stretti l'ultima sfora il bordo destro e allarga il documento oltre il device,
+   * causando lo zoom/pan orizzontale di default segnalato su mobile. */
+  overflow: hidden;
 }
 
 .cartaVolante {

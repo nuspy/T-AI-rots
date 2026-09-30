@@ -342,6 +342,10 @@ export interface Profilo {
   promemoria_2fa: boolean;
   /* Come ti presenti nei commenti del blog (`null` = il primo nome) e il nome che si vede davvero. */
   nome_pubblico: string | null;
+  /* v7: "esoterico" (default) non cambia nulla; "quotidiano" evita termini tecnici non spiegati. */
+  registro_linguistico: "esoterico" | "quotidiano";
+  /* v7, Fase J: null = il mazzo predefinito globale. */
+  mazzo_predefinito_id: number | null;
   nome_mostrato: string;
   /* L'immagine personale: percorso relativo dell'API (vedi `urlMedia`). */
   avatar: string | null;
@@ -465,6 +469,10 @@ export const leggiCondivisa = (token: string) =>
   chiama<LetturaCondivisa>(null, `/shared/${encodeURIComponent(token)}`);
 export const elencaMazzi = () => chiama<Mazzo[]>(null, "/decks");
 export const leggiMazzo = (slug: string) => chiama<Mazzo>(null, `/decks/${slug}`);
+/* v7, Fase J: gli id dei mazzi che l'utente può già leggere — per proporre nel selettore solo
+ * quelli posseduti (più i gratuiti, cioè senza prezzo digitale, già filtrabili lato chiamante). */
+export const elencaMieiMazzi = (token: string | null) =>
+  chiama<{ deck_ids: number[] }>(token, "/me/decks");
 
 export const leggiDisclaimer = (lang: string) =>
   chiama<{ testo: string }>(null, `/disclaimer?lang=${lang}`);
@@ -776,6 +784,9 @@ export const aggiornaProfilo = (
     is_trans?: boolean;
     promemoria_2fa?: boolean;
     nome_pubblico?: string;
+    registro_linguistico?: "esoterico" | "quotidiano";
+    /* `0` azzera la scelta e torna al predefinito globale. */
+    mazzo_predefinito_id?: number;
   },
 ) => chiama<Profilo>(token, "/me/profile", { method: "PATCH", body: dati });
 /* L'avatar: l'immagine come corpo della richiesta; il server la ritaglia e la riscrive in WebP. */
@@ -889,6 +900,82 @@ export interface ImpostazioniPubbliche {
 }
 
 export const impostazioniPubbliche = () => chiama<ImpostazioniPubbliche>(null, "/impostazioni-pubbliche");
+
+/* ---- consenso GDPR (v7, Fase G) ---- */
+
+export type TipoConsenso = "cookie" | "condivisione_dati_partner";
+export type ValoreConsenso = "accettato" | "rifiutato";
+
+/* La versione del testo informativo mostrato: cambiarla in futuro (nuova informativa) fa
+ * ricomparire il banner anche a chi aveva già scelto sulla versione precedente. */
+export const VERSIONE_INFORMATIVA = "v1";
+
+export const leggiConsenso = (token: string | null) =>
+  chiama<Record<TipoConsenso, ValoreConsenso | null>>(token, "/consenso");
+
+export const registraConsenso = (token: string | null, tipo: TipoConsenso, valore: ValoreConsenso) =>
+  chiama<{ esito: string }>(token, "/consenso", {
+    method: "POST",
+    body: { tipo, valore, versione_informativa: VERSIONE_INFORMATIVA },
+  });
+
+/* ---- vota il prossimo mazzo (v7, Fase K) ---- */
+
+export interface CampioneVoto {
+  etichetta: string | null;
+  url: string | null;
+}
+
+export interface CandidatoVoto {
+  id: string;
+  nome: string;
+  descrizione: string | null;
+  campioni: CampioneVoto[];
+  /* `null` finché l'utente non ha votato in questa tornata: le percentuali non si mostrano prima,
+   * per non influenzare il voto. */
+  percentuale: number | null;
+}
+
+export interface VincitorePrecedente {
+  nome: string;
+  percentuale: number;
+}
+
+export interface StatoVoto {
+  tornata: { id: string } | null;
+  mio_voto: string | null;
+  candidati: CandidatoVoto[];
+  vincitori_precedenti: VincitorePrecedente[] | null;
+}
+
+export const statoVotoMazzi = (token: string | null) => chiama<StatoVoto>(token, "/voto/mazzi");
+export const votaMazzo = (token: string | null, candidateId: string) =>
+  chiama<{ esito: string }>(token, `/voto/mazzi/${candidateId}`, { method: "POST" });
+
+/* «Tornate elettorali»: il riepilogo per la home page, pubblico (nessun account richiesto) — ogni
+ * candidato dell'ultima tornata chiusa, non solo il vincitore, per il riquadro con le miniature
+ * ingrandibili in home. */
+export interface CandidatoRisultato {
+  nome: string;
+  percentuale: number;
+  campioni: CampioneVoto[];
+}
+
+export interface RisultatoRecente {
+  chiusa_il: string | null;
+  candidati: CandidatoRisultato[];
+}
+
+export interface VotoHome {
+  voto_aperto: boolean;
+  risultato_recente: RisultatoRecente | null;
+}
+
+export const votoHome = () => chiama<VotoHome>(null, "/voto/home");
+
+/** "Suggerisci tema mazzo": un iscritto propone liberamente un tema in testo libero. */
+export const suggerisciTemaMazzo = (token: string | null, testo: string) =>
+  chiama<{ esito: string }>(token, "/voto/suggerimenti", { method: "POST", body: { testo } });
 
 export function euro(centesimi: number, valuta = "EUR", locale = "it-IT"): string {
   return new Intl.NumberFormat(locale, { style: "currency", currency: valuta }).format(centesimi / 100);

@@ -13,6 +13,7 @@ from typing import Any, Dict, Optional, Sequence
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..llm.compiti import AssegnazioneModello
 from .base import utcnow
 from .config_models import ModelAssignment
 from .models import AuditLog, User
@@ -145,19 +146,34 @@ class AssegnazioniModelliRepository(_ConAudit):
     innocuo dare a un amministratore il potere di cambiare assegnazione.
     """
 
-    async def correnti(self) -> Dict[str, str]:
+    async def correnti(self) -> Dict[str, AssegnazioneModello]:
         righe = (await self._session.execute(select(ModelAssignment))).scalars()
-        return {r.task: r.model_name for r in righe}
+        return {
+            r.task: AssegnazioneModello(r.model_name, r.ragiona_override, r.parametri_override)
+            for r in righe
+        }
 
-    async def assegna(self, compito: str, modello: Optional[str]) -> None:
+    async def assegna(
+        self, compito: str, modello: Optional[str], *,
+        ragiona: Optional[bool] = None, parametri_override: Optional[Dict[str, Any]] = None,
+    ) -> Optional[AssegnazioneModello]:
         """Assegna un modello a un compito, o toglie l'assegnazione.
 
         `None` cancella la riga invece di scrivere il nome del predefinito:
         un compito senza riga *ricade* sul predefinito e continua a seguirlo
         se un giorno cambia, mentre un nome scritto resterebbe quello.
+
+        `ragiona`/`parametri_override` (v7): `None` lascia il campo invariato per una riga già
+        esistente (questa chiamata non tocca il reasoning, solo il modello) — **tranne** alla
+        creazione di una riga nuova, dove `ragiona=None` diventa esplicitamente `False`: il
+        backlog vuole il reasoning spento per default su ogni compito, non "eredita dal
+        fornitore" per quelli non ancora toccati dall'amministratore.
         """
         riga = await self._session.get(ModelAssignment, compito)
-        prima = {"modello": riga.model_name} if riga else None
+        prima = (
+            {"modello": riga.model_name, "ragiona": riga.ragiona_override, "parametri_override": riga.parametri_override}
+            if riga else None
+        )
 
         if modello is None:
             if riga is not None:
@@ -165,27 +181,43 @@ class AssegnazioniModelliRepository(_ConAudit):
             dopo = None
         else:
             if riga is None:
-                riga = ModelAssignment(task=compito, model_name=modello)
+                riga = ModelAssignment(
+                    task=compito, model_name=modello,
+                    ragiona_override=False if ragiona is None else ragiona,
+                )
                 self._session.add(riga)
             else:
                 riga.model_name = modello
+                if ragiona is not None:
+                    riga.ragiona_override = ragiona
+            if parametri_override is not None:
+                riga.parametri_override = parametri_override
             riga.updated_by = self._contesto.attore.id
-            dopo = {"modello": modello}
+            dopo = {"modello": modello, "ragiona": riga.ragiona_override, "parametri_override": riga.parametri_override}
+
+        risultato = (
+            AssegnazioneModello(riga.model_name, riga.ragiona_override, riga.parametri_override)
+            if modello is not None else None
+        )
 
         if prima == dopo:
-            return
+            return risultato
 
         await self._registra(
             "modello.assegna", tipo="compito", target_id=compito,
             prima=prima, dopo=dopo,
         )
+        return risultato
 
 
-async def assegnazioni_correnti(session: AsyncSession) -> Dict[str, str]:
+async def assegnazioni_correnti(session: AsyncSession) -> Dict[str, AssegnazioneModello]:
     """Le assegnazioni, senza contesto amministrativo.
 
     Serve a chi legge e basta: l'API a ogni rinfresco, il worker all'inizio
     di un lavoro. Il repository con l'audit serve a chi scrive.
     """
     righe = (await session.execute(select(ModelAssignment))).scalars()
-    return {r.task: r.model_name for r in righe}
+    return {
+        r.task: AssegnazioneModello(r.model_name, r.ragiona_override, r.parametri_override)
+        for r in righe
+    }

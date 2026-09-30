@@ -293,6 +293,7 @@ def parte_variabile(
     compatibilita: str = "",
     soggetti: Optional[Dict[int, str]] = None,
     memorie_rilevanti: str = "",
+    registro: str = "",
 ) -> str:
     """La lettura concreta: tutto ciò che cambia da una consultazione all'altra.
 
@@ -304,7 +305,11 @@ def parte_variabile(
     l'`interpretazione` immediata già data. `colloquio` è la trascrizione
     dell'intervista: le domande dell'oracolo e le risposte. `memorie_rilevanti`
     (v6, Fase C) è già formattato dal chiamante (`readings.py`), come per
-    `colloquio`: è per-utente, quindi qui e non nel prefisso stabile.
+    `colloquio`: è per-utente, quindi qui e non nel prefisso stabile. `registro`
+    (v7, Fase F) è `user.registro_linguistico`: vuoto o `"esoterico"` non
+    aggiunge nulla (comportamento identico a prima di v7); `"quotidiano"`
+    aggiunge un'istruzione breve. Per-utente come `memorie_rilevanti`, mai nel
+    prefisso stabile.
     """
     righe = [
         "# La lettura",
@@ -335,5 +340,12 @@ def parte_variabile(
         )
     if vincoli:
         righe += ["", "## Correzioni richieste", vincoli]
+    if registro == "quotidiano":
+        righe += [
+            "",
+            "Registro linguistico richiesto: quotidiano. Evita termini tecnici esoterici non "
+            "spiegati (lettera ebraica, sefira, percorso, gradi iniziatici): se un riferimento "
+            "serve, traducilo subito in parole comuni invece di darlo per noto.",
+        ]
     righe += ["", istruzione_lingua(lang)]
     return "\n".join(righe)

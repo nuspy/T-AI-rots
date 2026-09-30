@@ -26,3 +26,22 @@ playwright-report/
 # prompt catturati da tools/conta_token.py e usati da tools/banco_modelli.py (generati)
 prompt_catturati.json
 banco_out/
+banco_out_*/
+
+# Grafica sorgente dei mazzi (pesante, non è codice): la versione Web va copiata a mano in
+# frontend/public/cards/<slug>/, la cartella intera non si versiona qui.
+/Grafica/
+
+# Documenti di lavoro personali (marketing, roadmap), non codice del repo.
+/Documents/
+
+# Skill installate localmente da Hermes (gestite da lui, non dal repo del progetto).
+/.agents/
+
+# Contenuto generato dallo skill tarots-blog-publisher durante l'uso, non file della skill.
+skills/tarots-blog-publisher/assets/article-*
+skills/tarots-blog-publisher/assets/plan-50.json
+skills/tarots-blog-publisher/cover/
+
+# Trascrizioni di sessione finite per errore dentro il repo.
+frontend/*-this-session-is-being-continued-*.txt

@@ -39,21 +39,43 @@ conversazione**, non solo il percorso del file.
 
 Scrive `Grafica/Cards/<NomeSet>/descrizioni.json`, `stile.md` (copia) e `manifest.json`.
 
-### 3. Immagine di prova con GPT Image, nel browser (cancello 2)
-Usa **Claude in Chrome** (nessuno script: è un lavoro interattivo). Per il fronte e poi per il dorso:
-1. Apri ChatGPT, genera un'immagine con **GPT Image**, incollando il `prompt` (e il `negative_prompt`
-   se l'interfaccia lo prevede) da `descrizioni.json`.
-2. Imposta **formato 9:16, risoluzione 2K, qualità Alta** nell'interfaccia — mai nel testo del prompt.
-3. Scarica il risultato e mostralo all'operatore.
+### 3. Immagine di prova con GPT Image (cancello 2)
+
+**Predefinito: `browser-image-gen`** (skill condivisa, GPT Image via litmedia.ai — gratis per questo
+modello al momento della scrittura, 2026-09-29; verificare comunque `Credits Required` nell'output,
+il sito può cambiarlo senza preavviso). Richiede il login una tantum di quella skill già fatto una
+volta per l'account. Per il fronte e poi per il dorso:
+```
+python -m tarot_core.tools.crea_mazzo genera --set <NomeSet> <id-o-dorso>
+```
+Legge il `prompt` già scritto in `descrizioni.json` (nessuna necessità di incollarlo a mano), genera
+a 9:16/2K/Alta qualità di default, e scrive il file grezzo in
+`Grafica/Cards/<NomeSet>/_staging/<id-o-dorso>.png` — **non lo salva ancora nel mazzo finale**:
+guarda l'immagine (leggi il file) e mostrala all'operatore prima di continuare.
+
+**Niente prompt negativo**: `descrizioni.json` contiene solo `prompt` (positivo). litmedia.ai (dietro
+`browser-image-gen`) espone un unico campo di testo, senza un secondo campo "negative prompt" —
+concatenare un blocco "Avoid: ..." dentro lo stesso prompt non è un vero negative prompt e, bug
+osservato (2026-09-29), può far scattare il filtro di contenuti sensibili del sito e far fallire la
+generazione in silenzio (`{"code":1005,"msg":"Create failed, contains sensitive prompt"}`) anche per
+parole elencate solo per dire di evitarle (es. "nudity" dentro un "Avoid: nudity, ..."). Le esclusioni
+(niente foto reali, niente testo/watermark indesiderato, niente anatomia deforme, ecc.) vanno invece
+scritte nel prompt positivo come istruzioni dirette allo stile e alla scena.
+
+**Alternativa manuale, se il sito è cambiato o il browser automatizzato non funziona**: usa
+**Claude in Chrome** (nessuno script, lavoro interattivo) — apri ChatGPT, genera con **GPT Image**
+incollando il `prompt` da `descrizioni.json`, imposta **formato 9:16, risoluzione 2K, qualità Alta**
+nell'interfaccia (mai nel testo del prompt), scarica il risultato.
 
 - **Approvate** → passo 4.
 - **Da correggere** → chiedi cosa cambiare, torna al passo 2 con `--cambia` se il problema è nella
-  scena, oppure rigenera direttamente nella stessa conversazione ChatGPT se è solo una questione di
-  resa. Ripeti finché fronte e dorso non sono approvati.
+  scena, oppure rilancia `genera` (o rigenera nella stessa conversazione ChatGPT, via manuale) se è
+  solo una questione di resa. Ripeti finché fronte e dorso non sono approvati.
 
-**Limite onesto**: 77 fronti + 1 dorso generati uno alla volta via interfaccia web sono lenti
-(verosimilmente più sessioni) e possono incontrare limiti di frequenza o cambi di layout lato
-ChatGPT. Fai il punto con l'operatore ogni 10-15 carte, non macinarle tutte senza supervisione.
+**Limite onesto**: 77 fronti + 1 dorso restano 78 generazioni singole (una alla volta, ~60-90s
+ciascuna con `browser-image-gen`) — più veloce e senza supervisione continua rispetto alla via
+manuale, ma pur sempre non istantaneo né in batch. Fai il punto con l'operatore ogni 10-15 carte,
+non macinarle tutte senza mostrare almeno qualche risultato lungo la strada.
 
 ### 4. Descrivere e generare tutte le altre carte
 ```
@@ -61,9 +83,9 @@ python -m tarot_core.tools.crea_mazzo tutte --set <NomeSet>
 ```
 Scrive la scena per le carte restanti (bozza incrementale in `descrizioni.json`: non tocca mai il
 campione già approvato né le carte già fatte; un'interruzione a metà si riprende rilanciando lo
-stesso comando). Poi, per ciascuna, ripeti la generazione dell'immagine del passo 3 — senza il
-cancello di approvazione singolo (quello è stato il campione), ma controllando a vista ogni
-immagine prima di scaricarla.
+stesso comando). Poi, per ciascuna, ripeti la generazione del passo 3 (`crea_mazzo genera --set
+<NomeSet> <id>`, o la via manuale) — senza il cancello di approvazione singolo (quello è stato il
+campione), ma controllando comunque il file generato prima di lanciare `salva` (passo 5).
 
 ### 5. Scaricare e organizzare
 Per ogni immagine scaricata dal browser:
@@ -106,7 +128,9 @@ un anno diverso da quello corrente.
 
 ## File
 - `backend/tarot_core/tools/crea_mazzo.py`: il generatore di scene/prompt (`campione`, `tutte`,
-  `salva`). `-h` su ciascun sottocomando per i dettagli.
+  `genera`, `salva`). `-h` su ciascun sottocomando per i dettagli. `genera` chiama la skill globale
+  `browser-image-gen` (percorso di default `~/.claude/skills/browser-image-gen`, sovrascrivibile con
+  `BROWSER_IMAGE_GEN_DIR`) — richiede il suo login una tantum già fatto, vedi il suo `SKILL.md`.
 - `backend/tarot_core/tools/stampa_bozza_mazzo.py`: il PDF di prova.
 - `tools/resize_cards.py` (radice del repo, non dentro il backend): la conversione WebP per il web.
 - `backend/tarot_core/tarot/stampa_mazzo.py`: la griglia di stampa condivisa con la produzione.

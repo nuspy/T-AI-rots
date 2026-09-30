@@ -1,0 +1,51 @@
+/* Il banner cookie GDPR (v7, Fase G): barra intera in basso, sopra a tutto il resto (anche sopra
+ * la barra di navigazione mobile e l'invito "fammi una domanda") finché non c'è una scelta — un
+ * banner di consenso che si mescolasse con altra UI sarebbe meno leggibile, non più elegante. */
+
+.banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
+  background: rgba(10, 7, 22, 0.97);
+  border-top: 1px solid var(--bordo-forte);
+  backdrop-filter: blur(8px);
+}
+
+.testo {
+  margin: 0;
+  flex: 1 1 260px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--testo);
+}
+
+.testo a {
+  color: var(--oro-chiaro);
+}
+
+.azioni {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+  .banner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .azioni {
+    justify-content: stretch;
+  }
+  .azioni > button {
+    flex: 1;
+  }
+}

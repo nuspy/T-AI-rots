@@ -664,7 +664,7 @@ async def intervista(
             },
         ) from exc
 
-    lettura = await _lettura_o_404(repo, user, reading_id, lock=True)
+    lettura = await _lettura_o_404(repo, user, reading_id, lock=True, anon_id=anon_id)
     if passo.completo:
         lettura.context_summary = passo.riassunto
         # Manuale: le carte sono già posate (v5, "Interpreta i miei tarocchi") — niente ventaglio da
@@ -814,6 +814,7 @@ async def rivela(
         lang=lang,
         persone=blocco_persone(persone_lettura, conoscenza) if persone_lettura else "",
         soggetto=(soggetti or {}).get(posizione, ""),
+        registro=user.registro_linguistico if user else "",
     )
     evento_carta = {
         "posizione": posizione,
@@ -944,6 +945,7 @@ async def sintesi(
         compatibilita=blocco_compatibilita(persone_lettura, conoscenza) if persone_lettura else "",
         soggetti=_soggetti(stesa, persone_lettura),
         memorie_rilevanti=memorie_rilevanti,
+        registro=user.registro_linguistico if user else "",
     )
 
     # La transazione della richiesta si chiude prima dello streaming: il

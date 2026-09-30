@@ -33,6 +33,7 @@ rotta.
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -225,6 +226,22 @@ def controlla_parametri(parametri: Dict[str, Any]) -> Dict[str, Any]:
 PREDEFINITO = "predefinito"
 
 
+@dataclass(frozen=True)
+class AssegnazioneModello:
+    """A quale modello serve un compito, con eventuali sovrascritture SOLO per lui (v7).
+
+    Prima di v7 un'assegnazione era solo un nome: due compiti sullo stesso fornitore condividevano
+    inevitabilmente `ragiona`/`parametri`, e l'unico modo per avere lo stesso modello con e senza
+    ragionamento era duplicare il fornitore in console (vedi il commento su `ModelloConfigurato.
+    parametri`). `ragiona_override`/`parametri_override` (`None` = eredita dal fornitore assegnato)
+    tolgono quel bisogno.
+    """
+
+    nome: str
+    ragiona_override: Optional[bool] = None
+    parametri_override: Optional[Dict[str, Any]] = None
+
+
 class RegistroModelli:
     """L'elenco dei modelli e chi serve cosa.
 
@@ -238,11 +255,11 @@ class RegistroModelli:
         self,
         modelli: List[ModelloConfigurato],
         *,
-        assegnazioni: Optional[Dict[Compito, str]] = None,
+        assegnazioni: Optional[Dict[Compito, AssegnazioneModello]] = None,
         configurato: bool = True,
     ) -> None:
         self._modelli = {m.nome: m for m in modelli}
-        self._assegnazioni: Dict[Compito, str] = dict(assegnazioni or {})
+        self._assegnazioni: Dict[Compito, AssegnazioneModello] = dict(assegnazioni or {})
         self._fornitori: Dict[str, object] = {}
         #: Quando le assegnazioni sono state lette dal database. Zero: mai.
         self._lette_a = 0.0
@@ -299,16 +316,19 @@ class RegistroModelli:
 
     # -------------------------------------------------------- assegnazioni
 
-    def assegna(self, compito: Compito, nome: Optional[str]) -> None:
+    def assegna(
+        self, compito: Compito, nome: Optional[str], *,
+        ragiona_override: Optional[bool] = None, parametri_override: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """Registra o toglie un'assegnazione. `None` fa tornare al predefinito."""
         if nome is None:
             self._assegnazioni.pop(compito, None)
             return
         if nome not in self._modelli:
             raise ValueError(f"modello sconosciuto: {nome!r}")
-        self._assegnazioni[compito] = nome
+        self._assegnazioni[compito] = AssegnazioneModello(nome, ragiona_override, parametri_override)
 
-    def aggiorna(self, assegnazioni: Dict[Compito, str]) -> None:
+    def aggiorna(self, assegnazioni: Dict[Compito, AssegnazioneModello]) -> None:
         """Sostituisce tutte le assegnazioni con quelle lette dal database.
 
         Sostituisce e non fonde: un compito tolto dalla tabella deve tornare
@@ -318,7 +338,7 @@ class RegistroModelli:
         import time
 
         self._assegnazioni = {
-            compito: nome for compito, nome in assegnazioni.items() if nome
+            compito: a for compito, a in assegnazioni.items() if a.nome
         }
         self._lette_a = time.monotonic()
 
@@ -336,17 +356,18 @@ class RegistroModelli:
 
     def nome_per(self, compito: Compito) -> str:
         """Il nome del modello che serve questo compito, assegnato o no."""
-        assegnato = self._assegnazioni.get(compito)
-        if assegnato and assegnato in self._modelli:
-            return assegnato
-        if assegnato:
+        assegnazione = self._assegnazioni.get(compito)
+        nome = assegnazione.nome if assegnazione else None
+        if nome and nome in self._modelli:
+            return nome
+        if nome:
             # Un modello tolto dall'ambiente mentre l'assegnazione restava:
             # va detto, perché il compito sta girando su un altro modello e
             # nessuno se ne accorgerebbe dai risultati.
             logger.warning(
                 "Il compito «%s» era assegnato a «%s», che non è più fra i "
                 "modelli configurati: si usa il predefinito",
-                compito.value, assegnato,
+                compito.value, nome,
             )
         if PREDEFINITO in self._modelli:
             return PREDEFINITO
@@ -360,59 +381,81 @@ class RegistroModelli:
                 "nessun modello configurato: nessun fornitore in console e "
                 "non esiste nemmeno un modello predefinito dall'ambiente"
             )
+        assegnazione = self._assegnazioni.get(compito)
+        # L'override si applica solo se l'assegnazione punta ancora al modello in uso: se
+        # `nome_per` è ricaduto sul predefinito (modello assegnato sparito), l'override di
+        # un'assegnazione ormai orfana non ha più senso applicarlo.
+        if assegnazione and assegnazione.nome == nome and (
+            assegnazione.ragiona_override is not None or assegnazione.parametri_override
+        ):
+            return self._fornitore_override(nome, assegnazione)
         return self._fornitore(nome)
 
     def stato(self) -> List[dict]:
         """Cosa mostrare in console: i compiti, chi li serve, e perché."""
-        return [
-            {
+        righe = []
+        for compito in Compito:
+            assegnazione = self._assegnazioni.get(compito)
+            in_uso = self.nome_per(compito)
+            righe.append({
                 "compito": compito.value,
                 "label": compito.label,
                 "descrizione": compito.descrizione,
-                "assegnato": self._assegnazioni.get(compito),
-                "in_uso": self.nome_per(compito),
-                "senza_filtri": bool(
-                    (m := self._modelli.get(self.nome_per(compito)))
-                    and m.senza_filtri
-                ),
-            }
-            for compito in Compito
-        ]
+                "assegnato": assegnazione.nome if assegnazione else None,
+                "ragiona_override": assegnazione.ragiona_override if assegnazione else None,
+                "in_uso": in_uso,
+                "senza_filtri": bool((m := self._modelli.get(in_uso)) and m.senza_filtri),
+            })
+        return righe
 
     # ------------------------------------------------------------- interno
 
     def _fornitore(self, nome: str):
         if nome in self._fornitori:
             return self._fornitori[nome]
+        fornitore = self._costruisci(self._modelli[nome], nome)
+        self._fornitori[nome] = fornitore
+        return fornitore
 
-        configurazione = self._modelli[nome]
+    def _fornitore_override(self, nome: str, assegnazione: AssegnazioneModello):
+        """Un fornitore con `ragiona`/`parametri` sovrascritti SOLO per questa assegnazione.
+
+        Mai in cache per nome: la cache di `_fornitore` è per fornitore condiviso, e due compiti
+        sullo stesso fornitore con override diversi si scambierebbero le impostazioni se finissero
+        sulla stessa voce. Costruire un oggetto in più è economico (nessuna chiamata di rete),
+        quindi qui si sceglie la correttezza sopra il riuso.
+        """
+        base = self._modelli[nome]
+        ragiona = base.ragiona if assegnazione.ragiona_override is None else assegnazione.ragiona_override
+        parametri = {**base.parametri, **(assegnazione.parametri_override or {})}
+        configurazione = base.model_copy(update={"ragiona": ragiona, "parametri": parametri})
+        return self._costruisci(configurazione, f"{nome}+override")
+
+    def _costruisci(self, configurazione: ModelloConfigurato, nome_traccia: str):
         if configurazione.provider == "anthropic":
             from .anthropic import AnthropicProvider
 
-            fornitore = AnthropicProvider(
+            return AnthropicProvider(
                 base_url=configurazione.base_url or None,
                 api_key=configurazione.api_key or None,
                 default_model=configurazione.model,
             )
-        else:
-            from .openai_compatible import OpenAICompatibleProvider
 
-            fornitore = OpenAICompatibleProvider(
-                base_url=configurazione.base_url or None,
-                api_key=configurazione.api_key or None,
-                default_model=configurazione.model,
-                embed_model=configurazione.embed_model,
-                motore=configurazione.motore or None,
-                ragiona=configurazione.ragiona,
-                parametri=configurazione.parametri,
-                # Il nome finisce nelle tracce: senza, due modelli diversi
-                # comparirebbero entrambi come «openai-compatibile» e non si
-                # saprebbe quale ha prodotto quale risposta.
-                name=nome,
-            )
+        from .openai_compatible import OpenAICompatibleProvider
 
-        self._fornitori[nome] = fornitore
-        return fornitore
+        return OpenAICompatibleProvider(
+            base_url=configurazione.base_url or None,
+            api_key=configurazione.api_key or None,
+            default_model=configurazione.model,
+            embed_model=configurazione.embed_model,
+            motore=configurazione.motore or None,
+            ragiona=configurazione.ragiona,
+            parametri=configurazione.parametri,
+            # Il nome finisce nelle tracce: senza, due modelli diversi
+            # comparirebbero entrambi come «openai-compatibile» e non si
+            # saprebbe quale ha prodotto quale risposta.
+            name=nome_traccia,
+        )
 
 
 def modelli_da_impostazioni() -> List[ModelloConfigurato]:

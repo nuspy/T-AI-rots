@@ -21,8 +21,8 @@ from ..observability.tracing import (
 )
 from ..settings import get_settings
 from .routers import (
-    admin, admin_blog, admin_impostazioni, admin_llm, admin_mazzi, admin_offerte, admin_ordini, billing, blog,
-    chat, condivisione, profile, public, readings, rest_blog, shop,
+    admin, admin_blog, admin_impostazioni, admin_llm, admin_mazzi, admin_offerte, admin_ordini, admin_voto,
+    billing, blog, chat, condivisione, profile, public, readings, rest_blog, shop, voto,
 )
 
 # Le chiamate ai fornitori LLM (e a qualunque altro servizio HTTPS esterno) verificano il certificato con
@@ -168,6 +168,8 @@ def create_app() -> FastAPI:
     app.include_router(shop.router)
     app.include_router(admin.router)
     app.include_router(chat.router)
+    app.include_router(voto.router)
+    app.include_router(admin_voto.router)
 
     # Qui e non nel lifespan: la strumentazione di FastAPI inserisce un
     # middleware ASGI, e Starlette costruisce la catena dei middleware alla

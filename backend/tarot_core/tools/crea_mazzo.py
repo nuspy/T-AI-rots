@@ -6,6 +6,7 @@ di passare alla generazione vera dell'immagine.
     python -m tarot_core.tools.crea_mazzo campione --set Lovers --stile-file stile.md
     python -m tarot_core.tools.crea_mazzo campione --set Lovers --stile-file stile.md --cambia "meno rosso, piu' oro"
     python -m tarot_core.tools.crea_mazzo tutte --set Lovers
+    python -m tarot_core.tools.crea_mazzo genera --set Lovers maj-06
     python -m tarot_core.tools.crea_mazzo salva --set Lovers maj-06 C:\\Users\\...\\Downloads\\scaricata.png
     python -m tarot_core.tools.crea_mazzo salva --set Lovers dorso C:\\Users\\...\\Downloads\\dorso.png
 
@@ -25,9 +26,11 @@ rapporto d'aspetto: quelli si impostano nell'interfaccia dove l'immagine viene p
 `--cambia`) prima di lanciare `tutte`; `tutte` scrive una bozza incrementale (`descrizioni.json`) e
 non parte mai da zero — le carte già presenti (il campione approvato, o quelle di una corsa
 precedente interrotta) restano intoccate, così un'interruzione a metà non perde il lavoro fatto e
-rilanciare il comando prosegue da solo con quelle mancanti. La generazione dell'immagine vera (GPT
-Image, nel browser) e il suo stesso cancello di approvazione restano fuori da questo script: sono un
-lavoro interattivo, non automatizzabile in un comando.
+rilanciare il comando prosegue da solo con quelle mancanti. `genera` produce l'immagine vera (GPT
+Image, via la skill condivisa `browser-image-gen`) ma scrive solo un file di staging, mai il mazzo
+finale direttamente: il cancello di approvazione (guardare il file prima di `salva`) resta un passo
+umano esplicito, non automatizzato via — vedi `skill crea-mazzo-tarocchi` per l'alternativa
+interattiva (Claude in Chrome) quando il browser automatizzato non è disponibile.
 """
 from __future__ import annotations
 
@@ -35,6 +38,7 @@ import argparse
 import asyncio
 import json
 import logging
+import os
 import re
 import sys
 from datetime import datetime, timezone
@@ -47,7 +51,7 @@ from ..llm.compiti import Compito, RegistroModelli, modelli_da_impostazioni
 from ..paths import PROJECT_ROOT
 from ..tarot.conoscenza import Conoscenza
 from ..tarot.llm import genera_json, richiesta
-from .prompt_immagini import _identita, _testi  # riuso: stessa identità esoterica, stessa lingua
+from .prompt_immagini import NUMERI, SEMI, _identita, _testi  # riuso: stessa identità esoterica, stessa lingua
 
 logger = logging.getLogger(__name__)
 
@@ -62,13 +66,6 @@ CARTA_CAMPIONE_PREDEFINITA = "maj-06"
 #: risoluzione e il formato si impostano nell'interfaccia di generazione, non nel prompt.
 _VIETATO_DIMENSIONI = re.compile(
     r"\d+\s*[x×]\s*\d+\s*(px|pixel)?|aspect\s*ratio|\b\d{1,2}\s*:\s*\d{1,2}\b", re.IGNORECASE,
-)
-
-NEGATIVO_BASE = (
-    "photograph, photorealistic, 3D render, CGI, anime, cartoon, comic style, flat vector clip art, "
-    "watermark, signature, logo, extra text, captions, misspelled text, garbled letters, random "
-    "letters, wrong card name, modern objects, cropped frame, missing border, low resolution, blurry, "
-    "jpeg artifacts, deformed anatomy, extra limbs, extra fingers, nudity, gore, horror"
 )
 
 TESTO_CARTA = (
@@ -156,9 +153,26 @@ def avverti_se_stile_ha_dimensioni(stile: str) -> Optional[str]:
     return None
 
 
+def _vincolo_conteggio(carta: Dict[str, Any]) -> str:
+    """Per le carte numerali (non maggiori, non di corte): un vincolo esplicito e non negoziabile
+    sul numero di oggetti raffigurati, per non ripetere il difetto del primo mazzo (es. un "Sei di
+    Dischi" che non mostrava sei dischi). Solo qui, non nella pipeline di produzione del Thoth
+    (_identita() resta invariata, e' condivisa e testata contro un JSON pubblicato)."""
+    if carta["arcano"] == "maggiore" or carta.get("corte"):
+        return ""
+    numero = carta["numero"]
+    seme = SEMI[carta["seme"]]
+    return (
+        f"\nMANDATORY COUNT (non-negotiable): this is the {NUMERI[numero]} of {seme} — the scene must "
+        f"depict exactly {numero} of the suit's symbolic objects/motifs standing in for {seme.lower()}, "
+        f"clearly countable at a glance, matching the number {numero} precisely. Never one more, never "
+        f"one less. Count them yourself before finalising the scene description.\n"
+    )
+
+
 async def scrivi_scena_carta(provider: Any, carta: Dict[str, Any], stile: str, *, feedback: str = "") -> str:
     prompt = PROMPT_SCENA_CARTA.format(
-        identita=_identita(carta), stile=stile.strip(),
+        identita=_identita(carta) + _vincolo_conteggio(carta), stile=stile.strip(),
         feedback=f"\nCORREZIONE RICHIESTA DALL'OPERATORE (tienine conto rispetto al tentativo precedente): {feedback}\n" if feedback else "",
     )
     dati = await genera_json(provider, richiesta([prompt], "Scrivi la scena.", temperatura=0.8, max_tokens=1024))
@@ -183,7 +197,7 @@ def costruisci_prompt_carta(carta: Dict[str, Any], stile: str, scena: str) -> Di
     ])
     return {
         "id": carta["id"], "name": nome, "top_text": alto, "bottom_text": basso,
-        "scene": scena.strip(), "prompt": prompt, "negative_prompt": NEGATIVO_BASE,
+        "scene": scena.strip(), "prompt": prompt,
     }
 
 
@@ -193,7 +207,7 @@ def costruisci_prompt_dorso(stile: str, scena: str) -> Dict[str, Any]:
         "SCENE (the back design, no text): " + scena.strip(),
         TESTO_DORSO,
     ])
-    return {"scene": scena.strip(), "prompt": prompt, "negative_prompt": NEGATIVO_BASE}
+    return {"scene": scena.strip(), "prompt": prompt}
 
 
 # ---------------------------------------------------------------------------------------- file I/O
@@ -324,6 +338,65 @@ async def genera_tutte(
     return esito
 
 
+#: Percorso della skill condivisa browser-image-gen (venv + script Playwright), fuori da questo
+#: repository (vive nella cartella skill globale dell'utente, come litmedia-skill). Sovrascrivibile
+#: con la variabile d'ambiente BROWSER_IMAGE_GEN_DIR se installata altrove.
+BROWSER_IMAGE_GEN_DIR = Path(os.environ.get(
+    "BROWSER_IMAGE_GEN_DIR",
+    Path.home() / ".claude" / "skills" / "browser-image-gen",
+))
+
+
+def genera_immagine_browser(
+    cartella: Path, id_o_dorso: str, *, aspect: str = "9:16", resolution: str = "2K",
+    quality: str = "High", timeout_s: int = 300,
+) -> Path:
+    """Genera l'immagine di una carta (o del dorso) con GPT Image via browser-image-gen
+    (litmedia.ai, gratis al momento della scrittura per questo modello), leggendo il prompt gia'
+    scritto in descrizioni.json. NON la converte ne' la organizza nel mazzo finale: scrive solo il
+    file grezzo in una sottocartella di staging, cosi' il cancello di approvazione umana resta un
+    passo esplicito e separato (rivedere il file, poi chiamare `salva`) — mai automatico.
+    """
+    import subprocess
+
+    descrizioni = _leggi_json(cartella / "descrizioni.json")
+    chiave = "dorso" if id_o_dorso == "dorso" else id_o_dorso
+    voce = descrizioni.get("dorso") if id_o_dorso == "dorso" else descrizioni.get("carte", {}).get(chiave)
+    if voce is None:
+        raise KeyError(f"'{id_o_dorso}' non presente in descrizioni.json — lanciare prima 'campione' o 'tutte'")
+
+    prompt_completo = voce["prompt"]
+
+    script = BROWSER_IMAGE_GEN_DIR / "scripts" / "genera_immagine.py"
+    python_venv = BROWSER_IMAGE_GEN_DIR / "venv" / "Scripts" / "python.exe"
+    if not python_venv.exists():
+        raise FileNotFoundError(
+            f"venv di browser-image-gen non trovato in {python_venv} — controllare BROWSER_IMAGE_GEN_DIR"
+        )
+
+    staging = cartella / "_staging"
+    staging.mkdir(parents=True, exist_ok=True)
+    destinazione = staging / f"{id_o_dorso}.png"
+
+    comando = [
+        str(python_venv), str(script),
+        "--model", "gpt-image",
+        "--prompt", prompt_completo,
+        "--aspect", aspect,
+        "--resolution", resolution,
+        "--quality", quality,
+        "--output", str(destinazione),
+        "--timeout", str(timeout_s),
+    ]
+    risultato = subprocess.run(comando, capture_output=True, text=True)
+    if risultato.returncode != 0:
+        raise RuntimeError(
+            f"genera_immagine.py fallito (browser-image-gen):\n{risultato.stderr or risultato.stdout}"
+        )
+    print(risultato.stderr, file=sys.stderr)  # note/URL/costo stampati dallo script sottostante
+    return destinazione
+
+
 def salva_immagine(cartella: Path, id_o_dorso: str, file_scaricato: Path) -> Path:
     """Converte il file scaricato in WebP a piena risoluzione, col nome standard del mazzo, e
     aggiorna il manifest. Pura rispetto alla riga di comando."""
@@ -365,10 +438,8 @@ async def _campione(args: argparse.Namespace) -> int:
 
     if args.solo in ("fronte", "entrambi"):
         print(f"\n=== FRONTE — {card_id} ===\n{descrizioni['carte'][card_id]['prompt']}\n")
-        print(f"--- negative prompt ---\n{NEGATIVO_BASE}\n")
     if args.solo in ("dorso", "entrambi"):
         print(f"\n=== DORSO ===\n{descrizioni['dorso']['prompt']}\n")
-        print(f"--- negative prompt ---\n{NEGATIVO_BASE}\n")
 
     print(f"Scritto in {cartella / 'descrizioni.json'} — revisione umana prima di generare l'immagine.", file=sys.stderr)
     return 0
@@ -395,6 +466,21 @@ async def _tutte(args: argparse.Namespace) -> int:
     if esito["falliti"]:
         print("Rilanciare lo stesso comando per riprovare le carte fallite (non sono state scritte).", file=sys.stderr)
         return 1
+    return 0
+
+
+def _genera(args: argparse.Namespace) -> int:
+    try:
+        destinazione = genera_immagine_browser(
+            _cartella(args.set), args.id, aspect=args.aspect, resolution=args.resolution,
+            quality=args.quality, timeout_s=args.timeout,
+        )
+    except (KeyError, FileNotFoundError, RuntimeError) as exc:
+        print(f"errore: {exc}", file=sys.stderr)
+        return 1
+    print(f"Generata (grezza, non ancora salvata nel mazzo): {destinazione}")
+    print("Rivedi l'immagine prima di procedere, poi:", file=sys.stderr)
+    print(f"  python -m tarot_core.tools.crea_mazzo salva --set {args.set} {args.id} {destinazione}", file=sys.stderr)
     return 0
 
 
@@ -433,11 +519,25 @@ def main(argv: Optional[List[str]] = None) -> int:
     p_salva.add_argument("id", help="Id della carta, o 'dorso'.")
     p_salva.add_argument("file_scaricato", help="Percorso del file scaricato dal browser.")
 
+    p_genera = sub.add_parser(
+        "genera",
+        help="Genera l'immagine (GPT Image via browser-image-gen) per una carta gia' descritta in descrizioni.json. "
+             "Scrive solo il file grezzo di staging: rivedere l'immagine e poi lanciare 'salva' per finalizzarla.",
+    )
+    p_genera.add_argument("--set", required=True)
+    p_genera.add_argument("id", help="Id della carta (deve gia' esistere in descrizioni.json), o 'dorso'.")
+    p_genera.add_argument("--aspect", default="9:16")
+    p_genera.add_argument("--resolution", default="2K")
+    p_genera.add_argument("--quality", default="High", choices=("Low", "Medium", "High"))
+    p_genera.add_argument("--timeout", type=int, default=300)
+
     args = p.parse_args(argv)
     if args.comando == "campione":
         return asyncio.run(_campione(args))
     if args.comando == "tutte":
         return asyncio.run(_tutte(args))
+    if args.comando == "genera":
+        return _genera(args)
     return _salva(args)
 
 

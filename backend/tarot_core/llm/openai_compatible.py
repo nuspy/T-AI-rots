@@ -33,9 +33,9 @@ from .base import (
     TruncatedResponse, Usage,
 )
 from .json_mode import (
-    BUDGET_RAGIONAMENTO, DIALETTI, TENTATIVI_DI_BUDGET, TETTO_TOKEN,
-    e_rifiuto_del_formato,
-    estrai_json, formato_risposta, prossimo_budget,
+    DIALETTI, TENTATIVI_DI_BUDGET, TETTO_TOKEN,
+    FiltroPensieroInline, e_rifiuto_del_formato,
+    estrai_json, formato_risposta, pavimento_ragionamento, prossimo_budget,
 )
 
 logger = logging.getLogger(__name__)
@@ -67,7 +67,8 @@ class OpenAICompatibleProvider(LLMProvider):
         #: il fornitore a sapere a cosa sta parlando.
         self.motore = motore or riconosci_motore(self._base_url, settings.llm_engine)
         #: Se il modello ragiona prima di rispondere. Alza il pavimento del
-        #: budget nelle richieste strutturate: vedi `BUDGET_RAGIONAMENTO`.
+        #: budget su OGNI richiesta (non solo quelle strutturate): vedi
+        #: `pavimento_ragionamento()`.
         self.ragiona = ragiona
         #: Campi aggiunti a ogni richiesta (per esempio il controllo del ragionamento, che si dà nella richiesta e
         #: non al caricamento del modello). Quelli di una singola richiesta (`request.extra`) prevalgono.
@@ -146,6 +147,7 @@ class OpenAICompatibleProvider(LLMProvider):
         testo_accumulato: List[str] = []
         usage: Optional[Usage] = None
         finish_reason = ""
+        filtro_pensiero = FiltroPensieroInline()
 
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             async with client.stream(
@@ -185,15 +187,23 @@ class OpenAICompatibleProvider(LLMProvider):
 
                         # Nome del campo diverso da un motore all'altro: LM
                         # Studio usa `reasoning`, altri `reasoning_content`.
-                        pensiero = delta.get("reasoning") or delta.get(
+                        pensiero_campo = delta.get("reasoning") or delta.get(
                             "reasoning_content"
                         ) or ""
-                        if pensiero:
-                            yield StreamChunk(reasoning=pensiero)
+                        if pensiero_campo:
+                            yield StreamChunk(reasoning=pensiero_campo)
 
-                        if (testo := delta.get("content")):
-                            testo_accumulato.append(testo)
-                            yield StreamChunk(text=testo)
+                        # Alcuni motori non separano affatto il ragionamento: lo scrivono
+                        # dentro `content`, tipicamente fra `<think>...</think>`. Senza
+                        # questo filtro quel testo attraverserebbe come se fosse la
+                        # risposta vera — vedi `FiltroPensieroInline` per la storia del bug.
+                        if (grezzo := delta.get("content")):
+                            testo, pensiero_inline = filtro_pensiero.filtra(grezzo)
+                            if pensiero_inline:
+                                yield StreamChunk(reasoning=pensiero_inline)
+                            if testo:
+                                testo_accumulato.append(testo)
+                                yield StreamChunk(text=testo)
 
         completo = "".join(testo_accumulato)
         if finish_reason == "length" and not completo.strip():
@@ -331,7 +341,7 @@ class OpenAICompatibleProvider(LLMProvider):
             # È un tetto, non un obiettivo: chi ha finito si ferma, e su un
             # modello che non ragiona la riga non fa nulla.
             payload["max_tokens"] = (
-                max(request.max_tokens, BUDGET_RAGIONAMENTO)
+                max(request.max_tokens, pavimento_ragionamento(self._parametri))
                 if self.ragiona else request.max_tokens
             )
         if request.stop:

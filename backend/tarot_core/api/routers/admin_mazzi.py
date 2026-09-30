@@ -5,8 +5,9 @@ statici nel frontend, non passa da qui (vedi il commento in cima a `domain/deck_
 in una lettura non si elimina: si disattiva. Lo stesso principio di piani e coupon."""
 from __future__ import annotations
 
+import uuid
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field, model_validator
@@ -17,8 +18,15 @@ from ...auth.dependencies import CurrentUser, DbSession, require_role
 from ...billing import mazzi as mazzi_billing
 from ...domain import deck_repositories
 from ...domain.deck_models import Deck, DeckUnlock, OffertaMazzo
+from ...domain.deck_upload_models import DeckArtworkUpload
 from ...domain.models import Reading
 from ...domain.repositories import AuditRepository
+from ...tarot.artwork_validazione import ZipArtworkNonValido, nomi_attesi, valida_zip
+from ..deps import get_conoscenza
+
+#: Oltre non ha senso: 78 WebP a 360×640 pesano tipicamente 3-6 MB in totale compressi in uno ZIP;
+#: un tetto largo (50 MB) scarta subito un file sbagliato invece di riempire la tabella di blob.
+TETTO_ZIP_BYTE = 50 * 1024 * 1024
 
 router = APIRouter(prefix="/admin", tags=["mazzi"], dependencies=[Depends(require_role("admin"))])
 
@@ -204,6 +212,89 @@ async def rimuovi_offerta(slug: str, request: Request, user: CurrentUser, sessio
     await AuditRepository(session).record(
         action="deck.offerta.rimuovi", actor_id=user.id, target_type="deck", target_id=mazzo.slug,
         before=prima, ip=_ip(request),
+    )
+    await session.commit()
+    return Response(status_code=204)
+
+
+# ---- upload dell'artwork (v7, Fase I) ----------------------------------------------------------
+#
+# Scope deciso con l'operatore: automatizza la RICEZIONE e la VALIDAZIONE dei file, non elimina il
+# rilascio. L'artwork finale resta statico nell'immagine del frontend (vedi `deck_models.py`): dopo
+# l'upload, l'amministratore scarica lo ZIP validato (stessa sessione autenticata del browser già
+# usata per `scaricaReport`, `admin/lib/api.ts`) e lo estrae a mano in
+# `frontend/public/cards/<slug>/` prima del prossimo build+deploy.
+
+
+@router.post("/decks/{slug}/artwork", status_code=201)
+async def carica_artwork(
+    slug: str, request: Request, user: CurrentUser, session: DbSession,
+) -> Dict[str, Any]:
+    corpo = await request.body()
+    if not corpo:
+        raise HTTPException(status_code=400, detail="Nessun file ricevuto")
+    if len(corpo) > TETTO_ZIP_BYTE:
+        raise HTTPException(status_code=413, detail=f"Il file supera {TETTO_ZIP_BYTE // (1024*1024)} MB")
+
+    conoscenza = get_conoscenza()
+    attesi = nomi_attesi(conoscenza.ordine)
+    try:
+        presenti, mancanti = valida_zip(corpo, attesi)
+    except ZipArtworkNonValido as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if mancanti:
+        raise HTTPException(
+            status_code=400,
+            detail={"motivo": "file_mancanti", "mancanti": sorted(mancanti), "attesi": len(attesi)},
+        )
+
+    riga = DeckArtworkUpload(
+        slug=slug, zip_bytes=corpo, file_count=len(presenti & attesi), created_by=user.id,
+    )
+    session.add(riga)
+    await AuditRepository(session).record(
+        action="deck.artwork.carica", actor_id=user.id, target_type="deck", target_id=slug,
+        after={"file_count": riga.file_count}, ip=_ip(request),
+    )
+    await session.commit()
+    return {"id": str(riga.id), "slug": slug, "file_count": riga.file_count, "creato_il": riga.created_at.isoformat()}
+
+
+@router.get("/decks/{slug}/artwork")
+async def elenco_artwork(slug: str, session: DbSession) -> List[Dict[str, Any]]:
+    righe = (await session.execute(
+        select(DeckArtworkUpload)
+        .where(DeckArtworkUpload.slug == slug)
+        .order_by(DeckArtworkUpload.created_at.desc())
+    )).scalars().all()
+    return [
+        {"id": str(r.id), "file_count": r.file_count, "creato_il": r.created_at.isoformat()}
+        for r in righe
+    ]
+
+
+@router.get("/decks/{slug}/artwork/{upload_id}")
+async def scarica_artwork(slug: str, upload_id: uuid.UUID, session: DbSession) -> Response:
+    riga = await session.get(DeckArtworkUpload, upload_id)
+    if riga is None or riga.slug != slug:
+        raise HTTPException(status_code=404, detail="Upload non trovato")
+    return Response(
+        content=riga.zip_bytes, media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{slug}-artwork.zip"'},
+    )
+
+
+@router.delete("/decks/{slug}/artwork/{upload_id}", status_code=204)
+async def elimina_artwork(
+    slug: str, upload_id: uuid.UUID, request: Request, user: CurrentUser, session: DbSession,
+) -> Response:
+    riga = await session.get(DeckArtworkUpload, upload_id)
+    if riga is None or riga.slug != slug:
+        raise HTTPException(status_code=404, detail="Upload non trovato")
+    await session.delete(riga)
+    await AuditRepository(session).record(
+        action="deck.artwork.elimina", actor_id=user.id, target_type="deck", target_id=slug,
+        ip=_ip(request),
     )
     await session.commit()
     return Response(status_code=204)

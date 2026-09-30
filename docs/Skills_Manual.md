@@ -9,6 +9,7 @@ immediatamente anche la versione globale (e viceversa) — è la stessa cartella
 ```
 C:\Users\atain\.claude\skills\tarots-blog-publisher  →  E:\Projects\T-AI-rots\skills\tarots-blog-publisher
 C:\Users\atain\.claude\skills\crea-mazzo-tarocchi     →  E:\Projects\T-AI-rots\skills\crea-mazzo-tarocchi
+C:\Users\atain\.claude\skills\browser-image-gen      →  E:\Projects\T-AI-rots\skills\browser-image-gen
 ```
 
 Per ricreare le junction (es. su un'altra macchina, o se cancellate per sbaglio):
@@ -16,12 +17,28 @@ Per ricreare le junction (es. su un'altra macchina, o se cancellate per sbaglio)
 ```powershell
 New-Item -ItemType Junction -Path "$HOME\.claude\skills\tarots-blog-publisher" -Target "E:\Projects\T-AI-rots\skills\tarots-blog-publisher"
 New-Item -ItemType Junction -Path "$HOME\.claude\skills\crea-mazzo-tarocchi"   -Target "E:\Projects\T-AI-rots\skills\crea-mazzo-tarocchi"
+New-Item -ItemType Junction -Path "$HOME\.claude\skills\browser-image-gen"    -Target "E:\Projects\T-AI-rots\skills\browser-image-gen"
 ```
 
 Su Windows **non usare `ln -s` da Git Bash senza privilegi**: senza il permesso di creare symlink,
-MSYS copia silenziosamente la cartella invece di collegarla, e la copia smette di aggiornarsi da sola.
-Una `New-Item -ItemType Junction` da PowerShell non richiede quel privilegio ed è il modo con cui sono
-collegati anche gli altri skill esterni al repo (`book-forge`, `wiki-import`).
+MSYS copia silenziosamente la cartella invece di collegarla, e la copia smette di aggiornarsi da sola
+(capitato di persona il 2026-09-30 con `browser-image-gen` e `litmedia-skill`: `ln -s` ha creato due
+copie scollegate invece di due link, senza errore visibile). Una `New-Item -ItemType Junction` da
+PowerShell non richiede quel privilegio ed è il modo con cui sono collegati anche gli altri skill
+esterni al repo (`book-forge`, `wiki-import`).
+
+**`browser-image-gen` porta con sé un ambiente Python locale (`venv/`, ~400 MB) e la sessione di
+login del browser (`sessione_litmedia.json`)**: entrambi vivono FUORI da `skills/browser-image-gen/`
+(in `C:\Users\atain\.claude\browser-image-gen-runtime\`), perché una cartella-skill così pesante
+impedisce ad alcuni agenti (Hermes, confermato) di indicizzarla — lo scanner delle skill si blocca o
+la salta silenziosamente sopra una certa dimensione. `sessione_litmedia.json` nel repo è invece solo
+la sua *copia locale non versionata* (vedi `.gitignore` dentro `skills/browser-image-gen/`): un
+token di accesso personale a litmedia.ai, mai da committare, come una chiave API.
+
+**Skill esterne di cui questo progetto dipende, ma che non gli appartengono** (niente junction da
+qui, restano dove sono):
+- `litmedia-skill` — clone del repository ufficiale del vendor (`github.com/litmedia-ai/skill`),
+  vive solo in `C:\Users\atain\.claude\skills\litmedia-skill`.
 
 ## Indice
 
@@ -29,6 +46,7 @@ collegati anche gli altri skill esterni al repo (`book-forge`, `wiki-import`).
 |---|---|---|
 | [`tarots-blog-publisher`](#tarots-blog-publisher) | Scrivere e pubblicare un articolo del blog di tarots.chat, con SEO e cover | descrivi la richiesta ("pubblica un articolo su...") o `/tarots-blog-publisher` |
 | [`crea-mazzo-tarocchi`](#crea-mazzo-tarocchi) | Creare la grafica di un mazzo di tarocchi nuovo (78 carte + dorso), fino al PDF stampabile | descrivi la richiesta ("crea un mazzo con questo stile...") o `/crea-mazzo-tarocchi` |
+| [`browser-image-gen`](#browser-image-gen) | Generare un'immagine gratis/a basso costo su litmedia.ai pilotando un browser vero — alternativa gratuita a LitMedia per la cover del blog e per le carte dei mazzi | usata da `tarots-blog-publisher` e da `crea-mazzo-tarocchi`/`crea_mazzo.py genera`, non tipicamente invocata da sola |
 
 ---
 
@@ -96,13 +114,18 @@ Flag globale: `--json` su qualunque comando stampa il JSON grezzo invece del ria
    regola in `references/seo-checklist.md`. L'articolo va in un file JSON (vedi
    `assets/example-article.json`), il corpo Markdown in un file a parte referenziato con
    `"body_file"`.
-6. **Cover**: 16:9, niente testo nell'immagine, generata con LitMedia seguendo
-   `references/image-generation.md` (stima costo e consenso dell'operatore prima di generare).
+6. **Cover**: 3:2, niente testo nell'immagine. Due modi, scelta per singola esecuzione (dettagli in
+   `references/image-generation.md`): **LitMedia** (default, a pagamento, stima costo e consenso
+   dell'operatore prima di generare) oppure **`browser-image-gen`** (gratis con Nano Banana/Flux, più
+   lento — usarlo quando l'operatore lo chiede per nome). **Mai il tool nativo di generazione immagini
+   dell'agente** (es. `image_generate` di Hermes): non supporta Nano Banana e ignora la scelta gratis/a
+   pagamento — va sempre lanciato lo script della skill scelta come comando di shell.
 7. **Controllo**: `check article.json`, correggere finché il punteggio è ≥ 85 senza `FIX` (o dopo 4
    round).
-8. **Pubblicazione**: `post article.json --cover cover.png`. `"status": "draft"` di default;
-   `"published"` solo se l'operatore lo chiede esplicitamente. Su errore di rete, controllare `mine`
-   prima di rilanciare (l'articolo potrebbe esistere già).
+8. **Pubblicazione**: `post article.json --cover cover.png` — **è l'unico strumento di pubblicazione**:
+   mai Postiz o un altro tool di programmazione social, anche se disponibile nella stessa sessione.
+   `"status": "draft"` di default; `"published"` solo se l'operatore lo chiede esplicitamente. Su
+   errore di rete, controllare `mine` prima di rilanciare (l'articolo potrebbe esistere già).
 9. **Report finale**: titolo, parola chiave, punteggio, stato, URL, eventuali `note:` per un editor.
 
 ### Regole rigide
@@ -256,6 +279,51 @@ riceve un segnaposto grigio invece di far fallire l'intera stampa.
   scrive le scene (console → modelli).
 - `references/pipeline.md` (nello skill) — dettaglio di cosa controllare a ogni cancello di
   approvazione e come riprendere una corsa interrotta leggendo `manifest.json`.
+
+---
+
+## `browser-image-gen`
+
+**Cosa fa**: genera un'immagine su uno dei modelli gratuiti/economici di litmedia.ai (Nano Banana,
+Flux, GPT Image, Seedream, Wan, Stable Diffusion) pilotando un vero browser (Playwright) invece di
+chiamare l'API a pagamento di LitMedia. Alternativa gratuita per qualunque skill che ha bisogno di
+un'illustrazione generata e può tollerare un flusso più lento, un'immagine alla volta (~60-90s).
+
+**Quando si attiva**: non da sola — è richiamata da `tarots-blog-publisher` (cover/immagine inline
+dell'articolo, quando l'operatore chiede il metodo gratuito/browser o nomina "Nano Banana"/"Flux") e
+da `crea-mazzo-tarocchi`/`crea_mazzo.py genera` (immagine di una carta del mazzo).
+
+**Setup una tantum**: `python scripts/login_una_tantum.py` apre un browser per il login interattivo a
+litmedia.ai e salva la sessione in `sessione_litmedia.json` (accanto agli script, non versionato —
+vedi `.gitignore` nella cartella dello skill). Verifica che sia ancora valida con
+`python scripts/verifica_sessione.py`.
+
+### Comandi (`scripts/`)
+
+| Comando | Parametri | Cosa fa |
+|---|---|---|
+| `login_una_tantum.py` | — | Login interattivo, salva la sessione. Da rifare se `verifica_sessione.py` segnala sessione scaduta. |
+| `verifica_sessione.py` | — | Controllo headless che la sessione salvata sia ancora valida. |
+| `genera_immagine.py` | `--model NOME` `--prompt "TESTO"` `--aspect W:H` `--output FILE` `[--resolution 1K]` | Genera e scarica l'immagine. Stampa sempre `Credits Required` prima di generare: il gratuito di oggi (`nano-banana`, `flux`) può cambiare senza preavviso, verificare quel valore prima di assumere costo zero. |
+
+**L'interprete Python non è quello di sistema**: gli script richiedono l'ambiente virtuale dedicato
+(`browser-use` + `playwright`), che vive in `C:\Users\atain\.claude\browser-image-gen-runtime\venv\`
+(fuori dal repo, vedi nota più sopra sul perché). Lanciare sempre con quel Python:
+```
+C:\Users\atain\.claude\browser-image-gen-runtime\venv\Scripts\python.exe scripts\genera_immagine.py --model nano-banana --prompt "..." --aspect 3:2 --output cover.png
+```
+
+### Regole rigide
+
+- Mai bypassare errori TLS.
+- Mai generare foto false di persone reali, screenshot falsi, o riproduzioni delle carte del mazzo
+  Thoth protette da copyright — vale la stessa regola di `litmedia-skill`.
+- Verificare `Credits Required` a ogni generazione, non fidarsi solo di questa nota.
+
+### File dello skill
+
+- `scripts/login_una_tantum.py`, `scripts/verifica_sessione.py`, `scripts/genera_immagine.py`.
+- `sessione_litmedia.json` — copia locale non versionata della sessione (vedi sopra).
 
 ---
 

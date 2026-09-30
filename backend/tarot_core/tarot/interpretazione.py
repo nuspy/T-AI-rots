@@ -113,13 +113,15 @@ def messaggio(
     lang: str = "it",
     persone: str = "",
     soggetto: str = "",
+    registro: str = "",
 ) -> str:
     """Il messaggio utente per una carta: i valori di questa posa, nient'altro.
 
     `nomi` è (nome della carta, nome della posizione) nella lingua della
     risposta, se non è l'italiano: il modello li usa così come sono. `persone` è
     il blocco «Le persone» e `soggetto` il testo di chi parla la posizione: solo
-    nelle letture di compatibilità e di coppia.
+    nelle letture di compatibilità e di coppia. `registro` (v7, Fase F) è
+    `user.registro_linguistico`: vuoto o `"esoterico"` non aggiunge nulla.
     """
     parti = [
         f"Quesito: {quesito}",
@@ -160,5 +162,11 @@ def messaggio(
     parti += ["", scheda(carta, rovescio), ""]
     if nomi and lingua(lang) != "it":
         parti.append(f"Nomi da usare nella risposta: carta «{nomi[0]}», posizione «{nomi[1]}».")
+    if registro == "quotidiano":
+        parti.append(
+            "Registro linguistico richiesto: quotidiano. Evita termini tecnici esoterici non "
+            "spiegati (lettera ebraica, sefira, percorso, gradi iniziatici): se un riferimento "
+            "serve, traducilo subito in parole comuni invece di darlo per noto."
+        )
     parti.append(istruzione_lingua(lang))
     return "\n".join(parti)

@@ -22,8 +22,16 @@ situation was built on an assumption you have not looked at.
 ## How to read The Tower in a spread
 
 In a [[spread:celtic-cross]] the position matters more than the card: in the "challenge" place it names what must
-change; in the "outcome" place it asks whether you are ready to let go. For a first practice, try the
-[[spread:three-card]] and draw for past, present and what needs to fall.
+change; in the "outcome" place it asks whether you are ready to let go.
+
+![A simplified Celtic Cross layout with ten numbered card positions on a dark background](https://tarots.chat/api/blog/media/example-uploaded-id.webp)
+
+For a first practice, try the [[spread:three-card]] and draw for past, present and what needs to fall.
+
+*This is the shape of a genuine inline image: one, placed where a diagram actually clarifies the text (here, the
+positions of a spread just named above), generated and uploaded per `references/image-generation.md` — not a
+second cover, not a decoration. A real article either has one like this or explicitly says in the step 9 report why
+it didn't need one; it does not just omit the step silently.*
 
 *Sources to open and cite in a real article: the Golden Dawn correspondences in an established reference, and
 Crowley's* The Book of Thoth *(1944) for the card's own text. The FAQ is not written in the body: it goes in the

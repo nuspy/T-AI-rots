@@ -5,15 +5,18 @@ Tre di Spade»: sono la porta d'ingresso organica del servizio.
 """
 from __future__ import annotations
 
+import secrets
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import Response
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 
-from ...auth.dependencies import DbSession
+from ...auth.dependencies import COOKIE_ANONIMO, DbSession, OptionalUser
 from ...billing import mazzi as mazzi_billing
-from ...domain import deck_repositories
+from ...domain import consent_repositories, deck_repositories
+from ...domain.consent_models import TIPI_CONSENSO
 from ...domain.repositories import ReadingRepository
 from ...domain.share_models import ShareImage
 from ...settings import get_settings
@@ -25,6 +28,11 @@ from ...tarot.testi import DISCLAIMER, QUALCUNO_DI_SPECIALE
 from ..deps import get_conoscenza
 
 router = APIRouter(tags=["pubblico"])
+
+#: Lo stesso anno di `readings.py::DURATA_COOKIE_ANONIMO` — non importato da lì per non accoppiare
+#: due router per una singola costante: un consenso cookie può arrivare prima di qualunque lettura,
+#: quindi questo file deve poter generare l'identità anonima da solo.
+DURATA_COOKIE_ANONIMO = 60 * 60 * 24 * 365
 
 
 #: `?lang=` sceglie la lingua dei testi lunghi: `en` (la lingua delle pagine pubbliche) o `it`. Senza,
@@ -94,6 +102,51 @@ async def impostazioni_pubbliche(session: DbSession) -> Dict[str, int]:
     from ...domain.impostazioni_repositories import correnti, pubblico
 
     return pubblico(await correnti(session))
+
+
+@router.get("/consenso")
+async def consenso_attuale(request: Request, session: DbSession, user: OptionalUser) -> Dict[str, Optional[str]]:
+    """I consensi correnti di questa persona (loggata o anonima): il banner cookie e la sezione
+    privacy del profilo li usano per non richiedere di nuovo una scelta già data. `None` per un
+    tipo mai deciso — non un rifiuto implicito."""
+    anon_id = None if user else request.cookies.get(COOKIE_ANONIMO)
+    correnti = await consent_repositories.correnti_per(session, user_id=user.id if user else None, anon_id=anon_id)
+    return {tipo: (correnti[tipo].valore if tipo in correnti else None) for tipo in TIPI_CONSENSO}
+
+
+class Consenso(BaseModel):
+    tipo: str = Field(pattern="^(cookie|condivisione_dati_partner)$")
+    valore: str = Field(pattern="^(accettato|rifiutato)$")
+    #: La versione del testo informativo che questa persona ha effettivamente visto prima di
+    #: scegliere — non un default silenzioso: un consenso senza sapere a quale testo si riferisce
+    #: non è verificabile in un contenzioso.
+    versione_informativa: str = Field(min_length=1, max_length=20)
+
+
+@router.post("/consenso")
+async def registra_consenso(
+    payload: Consenso, request: Request, response: Response, session: DbSession, user: OptionalUser,
+) -> Dict[str, str]:
+    """Registra (o sostituisce) il consenso di questa persona per `payload.tipo`.
+
+    Funziona anche per chi non si è mai registrato: un consenso cookie arriva quasi sempre PRIMA
+    di qualunque lettura, quindi qui — non solo in `/readings/anonime` — può nascere l'identità
+    anonima (`tarots_anon`), stessa convenzione di v6 Fase F."""
+    anon_id = None if user else request.cookies.get(COOKIE_ANONIMO)
+    if user is None and anon_id is None:
+        anon_id = secrets.token_urlsafe(32)
+        in_produzione = get_settings().environment == "prod"
+        response.set_cookie(
+            COOKIE_ANONIMO, anon_id, max_age=DURATA_COOKIE_ANONIMO,
+            httponly=True, secure=in_produzione, samesite="none" if in_produzione else "lax",
+        )
+    await consent_repositories.registra(
+        session, user_id=user.id if user else None, anon_id=anon_id,
+        tipo=payload.tipo, valore=payload.valore, versione_informativa=payload.versione_informativa,
+        ip=request.client.host if request.client else None,
+    )
+    await session.commit()
+    return {"esito": "ok"}
 
 
 @router.get("/shared/{token}")

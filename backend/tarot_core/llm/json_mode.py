@@ -26,7 +26,7 @@ from __future__ import annotations
 import json
 import logging
 import re
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,8 @@ TENTATIVI_DI_BUDGET = 3
 #: modello che ragiona all'infinito farebbe crescere il costo a ogni tentativo.
 TETTO_TOKEN = 32_768
 
-#: Da dove parte la scala dei budget per un modello che ragiona.
+#: Da dove parte la scala dei budget per un modello che ragiona, quando il suo
+#: fornitore non dichiara un `reasoning_budget` proprio (vedi `pavimento_ragionamento`).
 #:
 #: La scala triplica a ogni tentativo, e con un modello che ragiona ogni
 #: tentativo è una generazione intera: partire da duemila token significa
@@ -48,6 +49,35 @@ TETTO_TOKEN = 32_768
 #: perché su un modello che non ragiona sarebbe solo un tetto più alto e
 #: inutile.
 BUDGET_RAGIONAMENTO = 6144
+
+#: Margine per la risposta vera DOPO che il modello ha finito di ragionare,
+#: quando il pavimento si calcola dal `reasoning_budget` dichiarato dal
+#: fornitore (vedi `pavimento_ragionamento`). Non serve tararlo con
+#: precisione: se non basta, il ripiego a budget crescente di
+#: `_genera_con_budget` (per le risposte strutturate) alza ulteriormente il
+#: tetto da qui.
+MARGINE_RISPOSTA_DOPO_RAGIONAMENTO = 2048
+
+
+def pavimento_ragionamento(parametri: Dict[str, Any]) -> int:
+    """Il `max_tokens` minimo per un modello che ragiona, dato ciò che il SUO
+    fornitore dichiara di lasciargli pensare.
+
+    Bug costoso osservato in produzione (2026-09-29): il fornitore attivo dichiara
+    `reasoning_budget: 16384` nei propri `parametri` (il numero di token che il
+    MODELLO userà per pensare, un parametro mandato a lui) mentre il codice
+    applicativo imponeva un pavimento fisso di soli 6144 token su `max_tokens` (il
+    tetto della risposta HTTP INTERA, pensiero incluso) — una contraddizione
+    diretta: si dice al modello "pensa pure fino a 16384" e si taglia l'intera
+    risposta a 6144, garantendo il troncamento a meta' pensiero nella maggioranza
+    delle chiamate. Il pavimento deve quindi seguire il `reasoning_budget`
+    dichiarato per QUEL fornitore, non un numero fisso nel codice che puo'
+    disallinearsi silenziosamente da un parametro cambiato in console.
+    """
+    dichiarato = parametri.get("reasoning_budget")
+    if isinstance(dichiarato, (int, float)) and dichiarato > 0:
+        return int(dichiarato) + MARGINE_RISPOSTA_DOPO_RAGIONAMENTO
+    return BUDGET_RAGIONAMENTO
 
 _RECINTO = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL)
 
@@ -152,6 +182,68 @@ def sembra_degenerata(coda: str, generati: int) -> bool:
     if generati < _SOGLIA_FUGA:
         return False
     return coda.count(finestra[-200:]) >= 8
+
+
+_APERTURA_PENSIERO = "<think>"
+_CHIUSURA_PENSIERO = "</think>"
+
+
+class FiltroPensieroInline:
+    """Separa il ragionamento scritto DENTRO `content` (fra `<think>...</think>`) dal
+    testo vero, per i motori che non lo mettono in un campo dedicato (`reasoning`/
+    `reasoning_content`).
+
+    Bug costoso osservato in produzione (2026-09-29): un fornitore con `ragiona: true`
+    scrive il proprio chain-of-thought nel campo `content` normale invece che in un campo
+    separato. Senza questo filtro, quel testo attraversa `stream()`/`genera_flusso()` come
+    se fosse la risposta vera — mostrato in streaming all'utente nell'interpretazione delle
+    carte, o mescolato al JSON della sintesi (dove una graffa dentro il ragionamento può far
+    prendere il pezzo sbagliato a `estrai_json`, un fallimento intermittente e non un errore
+    di rete). Con un solo campo `content` che alterna testo vero e ragionamento a seconda del
+    turno, la separazione va fatta qui, non a monte: un fornitore può ragionare in un turno
+    e rispondere subito nel successivo, quindi lo stato (`dentro`) vive per la durata di UNA
+    generazione, non è una proprietà fissa del fornitore.
+
+    Bufferizza i frammenti in arrivo perché un tag puo' arrivare spezzato fra due chunk dello
+    stream (es. `<thi` in un evento, `nk>` nel successivo): non basta cercare il tag intero in
+    ciascun frammento preso da solo.
+    """
+
+    def __init__(self) -> None:
+        self._dentro = False
+        self._buffer = ""
+
+    def filtra(self, frammento: str) -> tuple[str, str]:
+        """Ritorna `(testo_vero, pensiero)` ricavati da questo nuovo frammento di `content`."""
+        self._buffer += frammento
+        vero: List[str] = []
+        pensiero: List[str] = []
+
+        while True:
+            tag = _CHIUSURA_PENSIERO if self._dentro else _APERTURA_PENSIERO
+            idx = self._buffer.find(tag)
+            if idx == -1:
+                # Nessun tag completo nel buffer: emetti tutto tranne una coda che
+                # potrebbe essere l'inizio del tag cercato, per non tagliarlo a metà.
+                sicura = _lunghezza_senza_prefisso_di(self._buffer, tag)
+                pezzo, self._buffer = self._buffer[:sicura], self._buffer[sicura:]
+                (pensiero if self._dentro else vero).append(pezzo)
+                break
+            pezzo, self._buffer = self._buffer[:idx], self._buffer[idx + len(tag):]
+            (pensiero if self._dentro else vero).append(pezzo)
+            self._dentro = not self._dentro
+
+        return "".join(vero), "".join(pensiero)
+
+
+def _lunghezza_senza_prefisso_di(buffer: str, tag: str) -> int:
+    """Quanto di `buffer` si può emettere subito senza rischiare di tagliare `tag` a metà:
+    tutto tranne l'eventuale coda finale che è un prefisso non vuoto di `tag`."""
+    massimo = min(len(buffer), len(tag) - 1)
+    for lunghezza_coda in range(massimo, 0, -1):
+        if tag.startswith(buffer[-lunghezza_coda:]):
+            return len(buffer) - lunghezza_coda
+    return len(buffer)
 
 
 def prossimo_budget(corrente: Optional[int], predefinito: int = 4096) -> int:

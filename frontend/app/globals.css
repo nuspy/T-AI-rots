@@ -45,11 +45,13 @@ body {
   color: var(--testo);
   font-family: var(--font-ui), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  /* v7: su `html`, non solo su `body` — il pan/zoom indotto dal pinch-zoom mobile agisce sul
+   * layout viewport calcolato dal documento, non solo sullo scroll clippato dal body. */
+  overflow-x: hidden;
 }
 
 body {
   min-height: 100vh;
-  overflow-x: hidden;
 }
 
 a {

@@ -56,6 +56,40 @@ def test_la_parte_variabile_non_porta_la_sezione_memoria_se_vuota(conoscenza):
     assert "Memoria" not in testo
 
 
+# ---- registro linguistico (v7, Fase F): blocco iniettato nella parte variabile ----------------------
+
+
+def _carte_prova(conoscenza, stesa):
+    return [
+        {"card_id": cid, "rovescio": False, "posizione": i + 1, "calcolata": False, "interpretazione": ""}
+        for i, cid in enumerate(conoscenza.mazzo_per(stesa)[:3])
+    ]
+
+
+def test_registro_quotidiano_aggiunge_l_istruzione(conoscenza):
+    stesa = conoscenza.stesa("tre-carte")
+    testo = cag.parte_variabile(
+        conoscenza=conoscenza, stesa=stesa, quesito="q", contesto="c",
+        carte=_carte_prova(conoscenza, stesa), dignita={}, prevalenze={}, registro="quotidiano",
+    )
+    assert "Registro linguistico richiesto: quotidiano" in testo
+
+
+@pytest.mark.parametrize("registro", ["", "esoterico"])
+def test_registro_esoterico_o_vuoto_non_cambia_il_prompt(conoscenza, registro):
+    stesa = conoscenza.stesa("tre-carte")
+    carte = _carte_prova(conoscenza, stesa)
+    con_default = cag.parte_variabile(
+        conoscenza=conoscenza, stesa=stesa, quesito="q", contesto="c", carte=carte, dignita={}, prevalenze={},
+    )
+    con_registro_esplicito = cag.parte_variabile(
+        conoscenza=conoscenza, stesa=stesa, quesito="q", contesto="c", carte=carte, dignita={}, prevalenze={},
+        registro=registro,
+    )
+    assert con_default == con_registro_esplicito
+    assert "Registro linguistico" not in con_default
+
+
 def test_formatta_per_sintesi_aggiunge_il_prima_per_le_variabili_con_storia():
     voci = [{"id": "abc", "contenuto": "ha trovato lavoro", "tipo": "variabile", "campo_attinenza": "lavoro"}]
     testo = formatta_per_sintesi(voci, {"abc": "cercava lavoro"})

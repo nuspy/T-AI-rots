@@ -101,6 +101,21 @@ class User(Base, TimestampMixin):
     #: "trans", "nascita"}`. Si cancella dal profilo.
     partner_ricordato: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB)
 
+    #: v7: il registro linguistico delle risposte per QUESTO utente. `esoterico` (default) non
+    #: cambia nulla rispetto a prima di v7; `quotidiano` chiede al modello di evitare termini
+    #: tecnici esoterici non spiegati. Vive per-utente (non nel prefisso stabile/cacheable della
+    #: sintesi), stesso principio già usato per `memorie_rilevanti` in `tarot/cag.py`.
+    registro_linguistico: Mapped[str] = mapped_column(
+        String(20), default="esoterico", server_default="esoterico", nullable=False,
+    )
+
+    #: v7, Fase J: il mazzo scelto come default per le nuove letture. `None` = il mazzo
+    #: predefinito globale (`Deck.predefinito`), come oggi. Non un vincolo di possesso qui: lo
+    #: applica l'endpoint che lo legge, stesso principio di `avatar_id`.
+    mazzo_predefinito_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("decks.id", ondelete="SET NULL"),
+    )
+
     #: Il codice che l'utente condivide per invitare altri. Nasce con l'utente.
     referral_code: Mapped[Optional[str]] = mapped_column(String(16), unique=True)
     #: Chi l'ha invitato. Scritto una volta sola, al primo riscatto.
@@ -124,6 +139,10 @@ class User(Base, TimestampMixin):
         CheckConstraint(
             "gender is null or gender in ('donna', 'uomo', 'non_binario', 'altro', 'non_dice')",
             name="ck_users_gender",
+        ),
+        CheckConstraint(
+            "registro_linguistico in ('esoterico', 'quotidiano')",
+            name="ck_users_registro_linguistico",
         ),
     )
 

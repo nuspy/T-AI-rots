@@ -1,8 +1,8 @@
 .cosmo {
   position: fixed;
+  /* v7: `inset: 0` già fissa i quattro lati — `width`/`height` in vw/vh erano ridondanti e, su
+   * alcuni browser mobile, `100vw` può eccedere la larghezza reale per via della scrollbar. */
   inset: 0;
-  width: 100vw;
-  height: 100vh;
   z-index: -1;
   display: block;
   /* Il ripiego senza WebGL, e ciò che si vede nei primi istanti. */

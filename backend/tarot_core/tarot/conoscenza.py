@@ -77,7 +77,13 @@ class Conoscenza:
         mazzo = json.loads((cartella / "deck.json").read_text(encoding="utf-8"))
         stese = json.loads((cartella / "spreads.json").read_text(encoding="utf-8"))
         dottrina_path = cartella / "doctrine.md"
-        dottrina = dottrina_path.read_text(encoding="utf-8") if dottrina_path.exists() else ""
+        # `\r\n`→`\n`: il prefisso di prompt che include questo testo deve restare byte-identico
+        # a prescindere da come git ha fatto il checkout (`core.autocrlf` su Windows altrimenti
+        # introduce CRLF silenziosamente, cambiando l'impronta del prefisso stabile).
+        dottrina = (
+            dottrina_path.read_text(encoding="utf-8").replace("\r\n", "\n")
+            if dottrina_path.exists() else ""
+        )
         nomi_path = cartella / "nomi.json"
         nomi = json.loads(nomi_path.read_text(encoding="utf-8")) if nomi_path.exists() else {}
         testi = _carica_testi(cartella)

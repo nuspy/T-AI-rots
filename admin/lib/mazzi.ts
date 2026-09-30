@@ -1,7 +1,7 @@
 /* I mazzi in vendita (v5, Fase B): metadati commerciali soltanto — l'artwork è file statici nel
  * frontend, non passa da qui. Un mazzo posseduto o già usato non si elimina: si disattiva. */
 
-import { chiamata } from "./api";
+import { API, ErroreApi, chiamata } from "./api";
 
 export interface Mazzo {
   id: number;
@@ -68,3 +68,48 @@ export const impostaOfferta = (t: string, slug: string, corpo: OffertaIn) =>
 
 export const rimuoviOfferta = (t: string, slug: string) =>
   chiamata<void>(t, `/admin/decks/${encodeURIComponent(slug)}/offerta`, { method: "DELETE" });
+
+/* ---- upload dell'artwork (v7, Fase I) ----
+ * Automatizza solo la ricezione e la validazione dei file (nomi corretti, tutte le carte
+ * presenti): l'artwork finale resta statico nel frontend, un mazzo nuovo richiede comunque un
+ * rilascio — l'amministratore scarica lo ZIP validato e lo estrae a mano nel repository. */
+
+export interface ArtworkUpload {
+  id: string;
+  file_count: number;
+  creato_il: string;
+}
+
+export const elencoArtwork = (t: string, slug: string) =>
+  chiamata<ArtworkUpload[]>(t, `/admin/decks/${encodeURIComponent(slug)}/artwork`);
+
+/** Il body è lo ZIP grezzo, non JSON: si sovrascrive il `Content-Type` di default. */
+export const caricaArtwork = (t: string, slug: string, file: File) =>
+  chiamata<ArtworkUpload>(t, `/admin/decks/${encodeURIComponent(slug)}/artwork`, {
+    method: "POST",
+    body: file,
+    headers: { "Content-Type": "application/zip" },
+  });
+
+/** Scarica lo ZIP con la sessione autenticata del browser, come i CSV di `scaricaReport`. */
+export async function scaricaArtwork(t: string, slug: string, uploadId: string): Promise<void> {
+  const risposta = await fetch(
+    `${API}/admin/decks/${encodeURIComponent(slug)}/artwork/${uploadId}`,
+    { headers: t ? { Authorization: `Bearer ${t}` } : {} },
+  );
+  if (!risposta.ok) throw new ErroreApi("Impossibile scaricare l'artwork", risposta.status);
+  const indirizzo = URL.createObjectURL(await risposta.blob());
+  try {
+    const a = document.createElement("a");
+    a.href = indirizzo;
+    a.download = `${slug}-artwork.zip`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(indirizzo), 0);
+  }
+}
+
+export const eliminaArtwork = (t: string, slug: string, uploadId: string) =>
+  chiamata<void>(t, `/admin/decks/${encodeURIComponent(slug)}/artwork/${uploadId}`, { method: "DELETE" });

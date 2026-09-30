@@ -3,10 +3,10 @@
 /* La soglia: chi arriva vede subito le carte muoversi e capisce cosa succede
  * in una lettura, prima ancora di registrarsi. */
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "@/app/componenti/link";
 import { motion } from "framer-motion";
-import { elencaCarte, elencaStese } from "@/lib/api";
+import { elencaCarte, elencaStese, votoHome } from "@/lib/api";
 import { salvaInvito } from "@/lib/inviti";
 import { useLingua } from "@/lib/lingua";
 import { useCarica } from "@/lib/usa";
@@ -16,7 +16,9 @@ import { Carta } from "./componenti/carta";
 import { CtaIscrizione } from "./componenti/cta-iscrizione";
 import { Marchio } from "./componenti/marchio";
 import { MattonellaCategoria, MattonellaStesa } from "./componenti/mattonella-lettura";
+import { Modale } from "./componenti/modale";
 import { Testata } from "./componenti/testata";
+import paginaStili from "./pagine.module.css";
 import stili from "./soglia.module.css";
 
 export function Soglia() {
@@ -70,7 +72,7 @@ export function Soglia() {
                 y: { duration: 4 + i * 0.4, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 },
               }}
             >
-              <Carta carta={c} rivelata={i % 2 === 0} larghezza={150} />
+              <Carta carta={c} rivelata={i % 2 === 0} larghezza="clamp(64px, 18vw, 150px)" />
             </motion.div>
           ))}
         </div>
@@ -142,6 +144,10 @@ export function Soglia() {
         <BannerMazzo />
       </section>
 
+      {/* Vota il prossimo mazzo (v7, Fase K + "tornate elettorali"): CTA se c'è una tornata aperta,
+          risultato dell'ultima con miniature ingrandibili se una tornata si è appena chiusa. */}
+      <VotoRiepilogoHome />
+
       <section className={stili.sezione}>
         <h2>{t.home_rigore}</h2>
         <div className={stili.rigore}>
@@ -153,5 +159,70 @@ export function Soglia() {
 
       <CtaIscrizione />
     </div>
+  );
+}
+
+/** Vota il prossimo mazzo, in home: pubblico, nessun account richiesto (`GET /voto/home`). Se c'è
+ * una tornata aperta mostra la CTA verso `/vota-mazzo`; se l'ultima si è appena chiusa, mostra ogni
+ * mazzo che era in corsa (non solo il vincitore) con le sue miniature ingrandibili in un dialogo. */
+function VotoRiepilogoHome() {
+  const { t } = useLingua();
+  const dati = useCarica(votoHome, [], { pubblico: true });
+  const [ingrandita, setIngrandita] = useState<{ url: string; titolo: string } | null>(null);
+  const d = dati.dati;
+  if (!d || (!d.voto_aperto && !d.risultato_recente)) return null;
+
+  return (
+    <>
+      {d.voto_aperto && (
+        <section className={stili.sezione}>
+          <Link href="/vota-mazzo" className={`pannello ${stili.cartaGiorno}`}>
+            <span className={stili.cartaGiornoSimbolo} aria-hidden="true">★</span>
+            <div>
+              <strong>{t.home_vota_titolo}</strong>
+              <p>{t.home_vota_testo}</p>
+            </div>
+            <span className={stili.cartaGiornoCta}>{t.vota_bottone} →</span>
+          </Link>
+        </section>
+      )}
+
+      {d.risultato_recente && (
+        <section className={stili.sezione}>
+          <div className="pannello" style={{ padding: 24 }}>
+            <h2>{t.home_vota_risultato_titolo}</h2>
+            <div className={paginaStili.carteRiga}>
+              {d.risultato_recente.candidati.flatMap((c) =>
+                c.campioni.filter((camp) => camp.url).map((camp, i) => (
+                  <button
+                    key={`${c.nome}-${i}`}
+                    type="button"
+                    onClick={() => setIngrandita({ url: camp.url as string, titolo: `${c.nome} · ${t.vota_percentuale(c.percentuale)}` })}
+                    style={{
+                      display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+                      border: "none", background: "none", cursor: "zoom-in", padding: 0, color: "inherit",
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={camp.url as string} alt={camp.etichetta ?? c.nome} width={110} style={{ borderRadius: 8 }} />
+                    <span style={{ fontSize: "0.82rem", color: "var(--testo-debole)" }}>{c.nome} · {t.vota_percentuale(c.percentuale)}</span>
+                  </button>
+                )),
+              )}
+            </div>
+            <p style={{ marginTop: 14 }}>
+              <Link href="/vota-mazzo">{t.vota_vedi_statistiche} →</Link>
+            </p>
+          </div>
+        </section>
+      )}
+
+      <Modale aperta={!!ingrandita} titolo={ingrandita?.titolo ?? ""} onChiudi={() => setIngrandita(null)}>
+        {ingrandita && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={ingrandita.url} alt={ingrandita.titolo} style={{ maxWidth: "100%", borderRadius: 12, display: "block" }} />
+        )}
+      </Modale>
+    </>
   );
 }

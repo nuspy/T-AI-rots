@@ -5,7 +5,8 @@
 
 import { useState } from "react";
 import {
-  aggiornaProfilo, cancellaPartner, caricaAvatar, creaIndirizzo, elencaIndirizzi, elencaMemorie, elencaOrdini,
+  aggiornaProfilo, cancellaPartner, caricaAvatar, creaIndirizzo, elencaIndirizzi, elencaMazzi,
+  elencaMemorie, elencaMieiMazzi, elencaOrdini,
   eliminaIndirizzo, eliminaMemoria, eliminaMemorieSelezionate, eliminaTutteLeMemorie,
   euro, impostazioniPubbliche, leggiProfilo, modificaIndirizzo, modificaMemoria, riscattaInvito, togliAvatar,
   type Genere, type Indirizzo, type IndirizzoInvio, type Memoria, type Ordine,
@@ -20,6 +21,7 @@ import { BottonePdf } from "../componenti/bottone-pdf";
 import { Carta } from "../componenti/carta";
 import { CampiGenere } from "../componenti/campi-genere";
 import { Modale } from "../componenti/modale";
+import { mazziUtilizzabili, SelezionaMazzo } from "../componenti/seleziona-mazzo";
 import { Involucro } from "../componenti/testata";
 import { componiBigliettino, scaricaBlob } from "./bigliettino-invito";
 import stili from "../pagine.module.css";
@@ -42,6 +44,14 @@ function Profilo() {
   /* La casella del promemoria risponde subito al tocco: `null` finché non la si tocca,
    * così vale quello del profilo. */
   const [promemoria, setPromemoria] = useState<boolean | null>(null);
+  /* v7: il registro linguistico delle risposte. `null` finché non lo si tocca, così vale
+   * quello del profilo (stesso principio di `promemoria`/`genere` qui sopra). */
+  const [registro, setRegistro] = useState<"esoterico" | "quotidiano" | null>(null);
+  /* v7, Fase J: il mazzo di default. `undefined` finché non lo si tocca (così vale quello del
+   * profilo); `null` è una scelta esplicita ("torna al predefinito globale"). */
+  const [mazzoDefault, setMazzoDefault] = useState<number | null | undefined>(undefined);
+  const tuttiIMazzi = useCarica(elencaMazzi, [], { pubblico: true });
+  const mieiMazzi = useCarica(elencaMieiMazzi);
   const [nomePubblico, setNomePubblico] = useState<string | null>(null);
   const [erroreAvatar, setErroreAvatar] = useState<string | null>(null);
   const [nomeSalvato, setNomeSalvato] = useState(false);
@@ -254,6 +264,39 @@ function Profilo() {
               <span>{t.sic_promemoria}</span>
             </label>
           )}
+        </section>
+      )}
+
+      <section className={`pannello ${stili.scheda} ${stili.sezione}`} aria-labelledby="profilo-registro">
+        <h2 id="profilo-registro" className={stili.sezioneTitolo}>{t.prof_registro_titolo}</h2>
+        <p className={stili.nota}>{t.prof_registro_testo}</p>
+        <select
+          value={registro ?? p.registro_linguistico}
+          onChange={async (e) => {
+            const valore = e.target.value as "esoterico" | "quotidiano";
+            setRegistro(valore);
+            await esegui((tok) => aggiornaProfilo(tok, { registro_linguistico: valore }));
+            profilo.ricarica();
+          }}
+        >
+          <option value="esoterico">{t.prof_registro_esoterico}</option>
+          <option value="quotidiano">{t.prof_registro_quotidiano}</option>
+        </select>
+      </section>
+
+      {tuttiIMazzi.dati && mieiMazzi.dati && (
+        <section className={`pannello ${stili.scheda} ${stili.sezione}`} aria-labelledby="profilo-mazzo">
+          <h2 id="profilo-mazzo" className={stili.sezioneTitolo}>{t.prof_mazzo_titolo}</h2>
+          <p className={stili.nota}>{t.prof_mazzo_testo}</p>
+          <SelezionaMazzo
+            mazzi={mazziUtilizzabili(tuttiIMazzi.dati, mieiMazzi.dati.deck_ids)}
+            valore={mazzoDefault !== undefined ? mazzoDefault : p.mazzo_predefinito_id}
+            onCambia={async (deckId) => {
+              setMazzoDefault(deckId);
+              await esegui((tok) => aggiornaProfilo(tok, { mazzo_predefinito_id: deckId ?? 0 }));
+              profilo.ricarica();
+            }}
+          />
         </section>
       )}
 

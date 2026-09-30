@@ -17,6 +17,7 @@ import { motion } from "framer-motion";
 import type { Carta as TipoCarta } from "@/lib/api";
 import { nomeCarta } from "@/lib/i18n";
 import { useLingua, useLinguaNomi } from "@/lib/lingua";
+import { percorsoCarta, useMazzoAttivo } from "@/lib/mazzo-attivo";
 import stili from "./carta.module.css";
 
 /* `webp` è il formato delle immagini definitive; `NEXT_PUBLIC_CARD_EXT` resta
@@ -24,7 +25,11 @@ import stili from "./carta.module.css";
 export const ESTENSIONE = process.env.NEXT_PUBLIC_CARD_EXT ?? "webp";
 
 /* Il ventaglio monta 78 dorsi: se `dorso.webp` non c'è, dopo il primo errore
- * gli altri partono già dal disegno invece di rifare 78 richieste. */
+ * gli altri partono già dal disegno invece di rifare 78 richieste.
+ * v7: la bandiera è globale, non per mazzo — un dorso mancante su UN mazzo disabiliterebbe il
+ * caricamento anche per gli altri finché non si ricarica la pagina. Non è un problema oggi (il
+ * mazzo predefinito ha sempre il suo dorso): da rivedere se la Fase J rende comune cambiare mazzo
+ * a runtime senza un giro di pagina. */
 let dorsoAssente = false;
 
 function DorsoDisegnato() {
@@ -69,11 +74,12 @@ function DorsoDisegnato() {
 
 export function Dorso() {
   const [assente, setAssente] = useState(dorsoAssente);
+  const mazzo = useMazzoAttivo();
   if (assente) return <DorsoDisegnato />;
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={`/cards/dorso.${ESTENSIONE}`}
+      src={percorsoCarta(mazzo, `dorso.${ESTENSIONE}`)}
       alt=""
       className={stili.immagine}
       onError={() => {
@@ -87,12 +93,13 @@ export function Dorso() {
 
 export function Faccia({ carta }: { carta: TipoCarta }) {
   const [mancante, setMancante] = useState(false);
+  const mazzo = useMazzoAttivo();
   const nome = nomeCarta(carta, useLinguaNomi());
   if (mancante) return <div className={stili.testo}>{nome}</div>;
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={`/cards/${carta.id}.${ESTENSIONE}`}
+      src={percorsoCarta(mazzo, `${carta.id}.${ESTENSIONE}`)}
       alt={nome}
       className={stili.immagine}
       onError={() => setMancante(true)}
@@ -113,7 +120,9 @@ export function Carta({
   carta?: TipoCarta | null;
   rivelata: boolean;
   rovescio?: boolean;
-  larghezza?: number;
+  /* Un numero è in px; una stringa (es. `clamp(64px, 20vw, 150px)`) passa così com'è —
+   * serve per le carte a larghezza responsiva (v7, hero della home). */
+  larghezza?: number | string;
   brilla?: boolean;
   onClick?: () => void;
   etichetta?: string;
@@ -121,10 +130,11 @@ export function Carta({
   const girata = rivelata && !!carta;
   const { t } = useLingua();
   const lingua = useLinguaNomi();
+  const w = typeof larghezza === "number" ? `${larghezza}px` : larghezza;
   return (
     <div
       className={`${stili.carta} ${brilla ? stili.brilla : ""} ${onClick ? stili.cliccabile : ""}`}
-      style={{ "--w": `${larghezza}px` } as React.CSSProperties}
+      style={{ "--w": w } as React.CSSProperties}
       onClick={onClick}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}

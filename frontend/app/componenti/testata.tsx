@@ -94,6 +94,7 @@ export function Testata() {
   const percorso = usePathname();
   const router = useRouter();
   const V = {
+    home: { href: "/", etichetta: t.nav_home, segno: "⌂" },
     leggi: { href: "/leggi", etichetta: t.nav_leggi, segno: "✦" },
     letture: { href: "/letture", etichetta: t.nav_letture, segno: "☰" },
     carte: { href: "/carte", etichetta: t.nav_carte, segno: "◈" },
@@ -102,11 +103,14 @@ export function Testata() {
     mazzo: { href: "/mazzo", etichetta: t.nav_mazzo, segno: "❖" },
     blog: { href: "/blog", etichetta: t.nav_blog, segno: "✎" },
     piano: { href: "/piano", etichetta: t.nav_piano, segno: "◇" },
+    vota: { href: "/vota-mazzo", etichetta: t.nav_vota, segno: "★" },
   };
-  /* Chi non ha un account non ha «Le mie letture»: al suo posto il blog, che è la porta d'ingresso
-   * dei contenuti. Per chi è registrato il blog sta sotto «Altro». */
-  const voci: Voce[] = sessione.autenticata ? [V.leggi, V.letture, V.carte, V.stese] : [V.leggi, V.carte, V.stese, V.blog];
-  const altre: Voce[] = sessione.autenticata ? [V.giorno, V.blog, V.mazzo, V.piano] : [V.giorno, V.mazzo, V.piano];
+  /* v7: Home in evidenza, Carta del giorno e Blog nella barra principale; Le carte e Le stese
+   * dietro «Altro». Chi non ha un account non ha «Le mie letture». */
+  const voci: Voce[] = sessione.autenticata
+    ? [V.home, V.leggi, V.letture, V.giorno, V.blog]
+    : [V.home, V.leggi, V.giorno, V.blog];
+  const altre: Voce[] = [V.carte, V.stese, V.mazzo, V.piano, V.vota];
   /* Le voci si scrivono con i nomi delle cartelle (`/carte`); l'indirizzo che si vede è nella lingua (`/cards`,
    * `/it/carte`). La pagina attiva si riconosce confrontando quello. */
   const attiva = (href: string) => {

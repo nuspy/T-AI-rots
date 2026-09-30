@@ -70,3 +70,28 @@ Nuova sezione/tab "Memoria" nel profilo utente:
 **Nota di scope**: richiesta grande e articolata (RAG, chat proattiva, pianificazione automatica
 lato admin, UI di gestione memoria) — non ancora iniziata, da pianificare come più fasi quando si
 arriva a v6.
+
+## 3. Invito "fammi una domanda" + chat in home e in ogni pagina, con lettura gratuita a step
+
+Un invito grafico molto evidente (i18n, es. "Fammi una domanda, ti offro una lettura gratuita" o
+simile) con accanto uno spazio chat per scrivere la propria domanda:
+- **In home**: appena sotto il logo, in alto.
+- **In ogni altra pagina del sito**: alla stessa altezza relativa, a 1/3 dell'altezza della pagina.
+- Per **utenti loggati**: stesso invito/chat, ma senza offrire la lettura gratuita nell'invito
+  (l'omaggio è solo per chi non è ancora registrato).
+- Per **utenti non loggati**: si procede subito alla domanda, **senza richiedere login prima**. Il
+  sistema formula la risposta completa internamente ma **non la mostra**: mostra invece una
+  **risposta riassuntiva** e un invito, come bottone nella chat, i18n: "Registrati gratuitamente per
+  leggere l'analisi dettagliata e avere altre 3 letture in omaggio" — che porta a
+  registrazione/login.
+  - **Dopo la registrazione**, l'utente viene portato **in automatico** alla risposta avanzata già
+    generata (non ricalcolata da capo).
+  - **Cookie anti-abuso**: servono per impedire che lo stesso utente ripeta la lettura gratuita più
+    volte per evitare di pagare/registrarsi (tracciare che questa lettura gratuita è già stata usata
+    su questo browser/dispositivo).
+
+## 4. Cookie di sessione persistente, durata massima configurabile (anche per admin)
+
+Cookie per **mantenere il login tra una sessione e l'altra**, senza dover rifare login ogni volta,
+con una **durata massima** (configurabile). Vale anche per l'accesso alla console admin, non solo
+per il sito pubblico.

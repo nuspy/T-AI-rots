@@ -7,6 +7,7 @@ import { SITE_URL } from "@/lib/condivisione";
 import { ProviderLingua, type Lingua } from "@/lib/lingua";
 import { AUTH_DISATTIVATA, SessioneDiSviluppo, SessioneKeycloak } from "@/lib/sessione";
 import { AttribuzioneCondivisione } from "./componenti/attribuzione";
+import { BannerCookie } from "./componenti/banner-cookie";
 import { ChatProattiva } from "./componenti/chat-proattiva";
 import { InvitoDomanda } from "./componenti/invito-domanda";
 import { Promemoria2fa } from "./componenti/promemoria-2fa";
@@ -91,6 +92,7 @@ export function Providers({ children, linguaIniziale }: { children: React.ReactN
           <Promemoria2fa />
           <InvitoDomanda />
           <ChatProattiva />
+          <BannerCookie />
           {children}
         </SessioneKeycloak>
       </ProviderLingua>

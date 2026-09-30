@@ -412,6 +412,11 @@ async def registro(
 
 class Assegnazione(BaseModel):
     modello: Optional[str] = Field(default=None, max_length=60)
+    #: v7: se questo COMPITO ragiona, a prescindere dal fornitore assegnato. `None` in
+    #: questa richiesta significa "non toccare" (compatibile con le richieste di prima di v7
+    #: che assegnano solo il modello); un valore esplicito sovrascrive.
+    ragiona: Optional[bool] = None
+    parametri_override: Optional[Dict[str, Any]] = None
 
 
 @router.get("/models")
@@ -443,7 +448,18 @@ async def assegna(
     registro = get_registro_modelli()
     if payload.modello is not None and not registro.esiste(payload.modello):
         raise HTTPException(status_code=400, detail="Modello non configurato")
-    await AssegnazioniModelliRepository(session, _contesto(user, request)).assegna(c.value, payload.modello)
+    risultato = await AssegnazioniModelliRepository(session, _contesto(user, request)).assegna(
+        c.value, payload.modello, ragiona=payload.ragiona, parametri_override=payload.parametri_override,
+    )
     await session.commit()
-    registro.assegna(c, payload.modello)
+    # Lo stato in memoria si allinea a quello scritto (`risultato`), mai ricostruito dal solo
+    # payload: un aggiornamento parziale (es. solo il modello, senza toccare il reasoning)
+    # cancellerebbe altrimenti un override esistente fino al prossimo rinfresco periodico.
+    if risultato is None:
+        registro.assegna(c, None)
+    else:
+        registro.assegna(
+            c, risultato.nome,
+            ragiona_override=risultato.ragiona_override, parametri_override=risultato.parametri_override,
+        )
     return {"compiti": registro.stato()}

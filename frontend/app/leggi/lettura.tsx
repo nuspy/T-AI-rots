@@ -31,6 +31,7 @@ import {
   apriLetturaAnonima,
   apriVentaglio,
   cancellaPartner,
+  elencaMazzi,
   elencaStese,
   leggiConto,
   leggiDisclaimer,
@@ -48,6 +49,7 @@ import {
 import Link from "@/app/componenti/link";
 import { comeLingua, dizionario, nomeCarta, nomePosizione, nomeStesa, type Lingua } from "@/lib/i18n";
 import { LinguaNomi, useLingua } from "@/lib/lingua";
+import { ProviderMazzoAttivo } from "@/lib/mazzo-attivo";
 import { useSessione } from "@/lib/sessione";
 import { useCarica } from "@/lib/usa";
 import { Acquisto, Disclaimer } from "../componenti/modale";
@@ -80,6 +82,12 @@ export function Lettura() {
   const stese = useCarica(useCallback(() => elencaStese(), []), [], { pubblico: true });
   const conto = useCarica(leggiConto);
   const profilo = useCarica(leggiProfilo);
+  /* v7, Fase J: il mazzo di default dell'utente, se ne ha scelto uno diverso dal predefinito
+   * globale — precompila l'artwork della lettura, senza un cambio a metà stesa (fuori scope qui). */
+  const mazziDisponibili = useCarica(elencaMazzi, [], { pubblico: true });
+  const slugMazzoAttivo = mazziDisponibili.dati?.find(
+    (m) => m.id === profilo.dati?.mazzo_predefinito_id && !m.predefinito,
+  )?.slug ?? null;
 
   /* Dall'indirizzo: `?id=` riprende una lettura; `?tipo=` salta la scelta del tipo;
    * `?stesa=` (i link della soglia) porta alla stesa, o ai dati delle persone se
@@ -634,6 +642,7 @@ export function Lettura() {
    * dialogo è `sticky`, e uno sticky resta fermo finché il suo contenitore
    * non finisce. Con il responso dentro, la barra lo attraversava. */
   return (
+    <ProviderMazzoAttivo slug={slugMazzoAttivo}>
     <LinguaNomi valore={linguaLettura}>
     <div className={stili.consulto}>
       <div className={stili.colonnaTavolo}>
@@ -757,5 +766,6 @@ export function Lettura() {
       )}
       <Acquisto aperta={mostraAcquisto} onChiudi={() => setMostraAcquisto(false)} ritorno="/leggi" />
     </LinguaNomi>
+    </ProviderMazzoAttivo>
   );
 }

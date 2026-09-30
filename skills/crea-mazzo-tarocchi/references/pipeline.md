@@ -23,21 +23,32 @@ Passi concreti con Claude in Chrome (carica i tool `tabs_context_mcp`, `navigate
 `read_page`, `tabs_create_mcp` prima di iniziare, se deferred):
 
 1. Apri una tab su ChatGPT (o l'interfaccia di GPT Image che l'operatore usa).
-2. Incolla il `prompt` di `descrizioni.json` per la carta corrente (o il dorso). Se l'interfaccia
-   accetta un negative prompt separato, incolla anche `negative_prompt`; altrimenti ignoralo (è
-   comunque un aiuto, non un requisito rigido).
+2. Incolla il `prompt` di `descrizioni.json` per la carta corrente (o il dorso) — solo quello: niente
+   prompt negativo separato (vedi nota sotto, `descrizioni.json` non ne contiene uno).
 3. Imposta **9:16**, **2K**, **qualità Alta** nei controlli dell'interfaccia — mai riscrivendoli nel
    prompt.
 4. Genera, aspetta il risultato, scaricalo.
 5. Mostra l'immagine scaricata all'operatore in conversazione prima di procedere.
+
+**Perché niente prompt negativo**: `descrizioni.json` contiene solo `prompt` (positivo), non un
+campo separato per le esclusioni. GPT Image via litmedia.ai (`browser-image-gen`) espone un unico
+campo di testo: concatenare un blocco tipo "Avoid: nudity, gore, horror, ..." nello stesso prompt non
+funziona come vero negative prompt e, bug osservato (2026-09-29), può far scattare il filtro di
+contenuti sensibili del sito e far fallire la generazione senza nessun segnale visibile in pagina
+(`{"code":1005,"msg":"Create failed, contains sensitive prompt"}` nella risposta di rete) — anche per
+parole elencate solo per dire di evitarle. Le esclusioni vanno espresse come istruzioni positive
+dentro lo stile/la scena (es. "bordo dorato pulito, nessun elemento moderno" invece di "no modern
+objects" in un blocco a parte).
 
 Cosa controllare prima di chiedere l'approvazione:
 - **Il testo sulla carta è esatto e leggibile** (nome in alto/basso, ortografia corretta) — GPT Image
   rende bene il testo ma non è garantito, controlla lettera per lettera sulle prime carte.
 - **Il bordo/cornice è coerente** con le altre carte già approvate (stesso spessore, stesso stile) —
   fondamentale dalla seconda carta in poi, altrimenti il mazzo non sembra un mazzo.
-- **Niente elementi vietati**: watermark, firme, testo spurio, anatomia deformata (il
-  `negative_prompt` li scoraggia ma non li esclude).
+- **Niente elementi vietati**: watermark, firme, testo spurio, anatomia deformata — non c'è un
+  prompt negativo a scoraggiarli (vedi nota sotto), quindi il `prompt` positivo deve già dire cosa
+  rendere bene (bordo pulito, testo corretto, anatomia coerente); un difetto va corretto rigenerando
+  o correggendo la scena, non aggiungendo un'esclusione a parte.
 
 Se la carta non va bene, chiedi all'operatore cosa cambiare e valuta se serve:
 - rigenerare con lo stesso prompt (variazione casuale) — spesso basta;

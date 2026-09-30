@@ -5,8 +5,9 @@
 
 import { useState } from "react";
 import {
-  creaMazzo, eliminaMazzo, impostaOfferta, mazzi as leggiMazzi, modificaMazzo, rimuoviOfferta,
-  type Mazzo, type NuovoMazzo, type TipoOfferta,
+  caricaArtwork, creaMazzo, eliminaArtwork, eliminaMazzo, elencoArtwork, impostaOfferta,
+  mazzi as leggiMazzi, modificaMazzo, rimuoviOfferta, scaricaArtwork,
+  type ArtworkUpload, type Mazzo, type NuovoMazzo, type TipoOfferta,
 } from "@/lib/mazzi";
 import { useAzione, useDati } from "@/lib/usa";
 import comuni from "../comuni.module.css";
@@ -134,6 +135,7 @@ function RigaMazzo({
 }) {
   const { esegui, inCorso, errore } = useAzione();
   const [offertaAperta, setOffertaAperta] = useState(false);
+  const [artworkAperto, setArtworkAperto] = useState(false);
   const [tipo, setTipo] = useState<TipoOfferta>("percentuale");
   const [valore, setValore] = useState("");
   const [validoFino, setValidoFino] = useState("");
@@ -187,6 +189,10 @@ function RigaMazzo({
           )}
         </td>
         <td>
+          <button type="button" className={comuni.secondaria} disabled={bloccato}
+            onClick={() => setArtworkAperto((a) => !a)}>
+            Artwork
+          </button>
           {!mazzo.predefinito && (
             <button type="button" className={comuni.distruttiva} disabled={bloccato} onClick={onElimina}>Elimina</button>
           )}
@@ -209,7 +215,75 @@ function RigaMazzo({
           </td>
         </tr>
       )}
+      {artworkAperto && (
+        <tr>
+          <td colSpan={7}>
+            <PannelloArtwork slug={mazzo.slug} />
+          </td>
+        </tr>
+      )}
     </>
+  );
+}
+
+/** v7, Fase I: carica, scarica ed elimina lo ZIP di artwork in staging per un mazzo. Automatizza
+ * solo la ricezione/validazione — l'estrazione in `frontend/public/cards/<slug>/` e il rilascio
+ * restano un passo manuale, per scelta esplicita (l'artwork resta un file statico nell'immagine). */
+function PannelloArtwork({ slug }: { slug: string }) {
+  const { dati, errore: erroreLettura, inCorso: caricamento, ricarica } = useDati(
+    (t) => elencoArtwork(t, slug), [slug],
+  );
+  const { esegui, inCorso, errore } = useAzione();
+  const [file, setFile] = useState<File | null>(null);
+
+  const carica = async () => {
+    if (!file) return;
+    if ((await esegui((t) => caricaArtwork(t, slug, file))) !== null) {
+      setFile(null);
+      ricarica();
+    }
+  };
+
+  const scarica = async (uploadId: string) => {
+    await esegui((t) => scaricaArtwork(t, slug, uploadId));
+  };
+
+  const elimina = async (uploadId: string) => {
+    if ((await esegui((t) => eliminaArtwork(t, slug, uploadId))) !== null) ricarica();
+  };
+
+  return (
+    <div>
+      <p className={comuni.sottotitolo}>
+        Carica uno ZIP con tutte le 78 carte + il dorso (stesso nome file = id carta, come produce
+        <code> resize_cards.py</code>). Dopo il caricamento, scarica lo ZIP e estrailo in{" "}
+        <code>frontend/public/cards/{slug}/</code> prima del prossimo rilascio.
+      </p>
+      {(erroreLettura || errore) && <p className={comuni.errore}>{erroreLettura ?? errore}</p>}
+      <div className={comuni.riga}>
+        <input type="file" accept=".zip" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+        <button type="button" className={comuni.primaria} disabled={!file || inCorso} onClick={carica}>
+          Carica
+        </button>
+      </div>
+      {caricamento && <p>Caricamento…</p>}
+      {dati && dati.length === 0 && <p className={comuni.spento}>Nessun upload in attesa.</p>}
+      {dati && dati.length > 0 && (
+        <ul>
+          {dati.map((u: ArtworkUpload) => (
+            <li key={u.id}>
+              {u.file_count} file — {new Date(u.creato_il).toLocaleString("it-IT")}{" "}
+              <button type="button" className={comuni.secondaria} disabled={inCorso} onClick={() => scarica(u.id)}>
+                Scarica
+              </button>{" "}
+              <button type="button" className={comuni.distruttiva} disabled={inCorso} onClick={() => elimina(u.id)}>
+                Elimina
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 

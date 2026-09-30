@@ -15,7 +15,7 @@ from sqlalchemy import select
 
 from ...auth.dependencies import CurrentUser, DbSession
 from ...billing.credits import RegistroCrediti
-from ...domain import indirizzi_repositories, memoria_repositories
+from ...domain import deck_repositories, indirizzi_repositories, memoria_repositories
 from ...domain.base import utcnow
 from ...domain.blog_models import MediaImage
 from ...domain.memory_models import UserMemory
@@ -51,6 +51,13 @@ class ModificaProfilo(BaseModel):
     promemoria_2fa: Optional[bool] = None
     #: Come ti presenti nei commenti del blog. Vuoto = si usa il primo nome.
     nome_pubblico: Optional[str] = Field(default=None, max_length=60)
+    #: v7: il registro delle risposte. `esoterico` (default) non cambia nulla; `quotidiano`
+    #: evita termini tecnici esoterici non spiegati.
+    registro_linguistico: Optional[str] = Field(default=None, pattern="^(esoterico|quotidiano)$")
+    #: v7, Fase J: il mazzo di default per le nuove letture. `0` (non un id vero) azzera la scelta
+    #: e torna al predefinito globale — `None` qui significa invece "non toccare questo campo",
+    #: come per gli altri campi opzionali di questo schema.
+    mazzo_predefinito_id: Optional[int] = None
 
 
 class Invito(BaseModel):
@@ -75,6 +82,8 @@ async def _profilo_json(user: User, session) -> Dict[str, Any]:
         "promemoria_2fa": user.promemoria_2fa,
         "nome_pubblico": user.nome_pubblico,
         "nome_mostrato": nome_pubblico(user),
+        "registro_linguistico": user.registro_linguistico,
+        "mazzo_predefinito_id": user.mazzo_predefinito_id,
         "avatar": url_immagine(user.avatar_id),
         # Il partner ricordato ha il cognome: si mostra solo al proprietario.
         "partner_ricordato": user.partner_ricordato,
@@ -128,6 +137,16 @@ async def modifica(payload: ModificaProfilo, user: CurrentUser, session: DbSessi
         user.promemoria_2fa = payload.promemoria_2fa
     if payload.nome_pubblico is not None:
         user.nome_pubblico = pulisci(payload.nome_pubblico, 60) or None
+    if payload.registro_linguistico is not None:
+        user.registro_linguistico = payload.registro_linguistico
+    if payload.mazzo_predefinito_id is not None:
+        if payload.mazzo_predefinito_id == 0:
+            user.mazzo_predefinito_id = None
+        else:
+            mazzo = await deck_repositories.per_id(session, payload.mazzo_predefinito_id)
+            if mazzo is None or not await deck_repositories.possiede(session, user.id, mazzo):
+                raise HTTPException(status_code=400, detail="Mazzo non posseduto o inesistente")
+            user.mazzo_predefinito_id = mazzo.id
     await session.commit()
     return await _profilo_json(user, session)
 
@@ -423,6 +442,7 @@ async def modifica_memoria(
     if campo_nuovo:
         memoria.campo_attinenza = campo_nuovo
     await session.commit()
+    await session.refresh(memoria)  # `updated_at` è calcolato dal DB (onupdate): va riletto, non solo committato
     return _memoria_json(memoria)
 
 

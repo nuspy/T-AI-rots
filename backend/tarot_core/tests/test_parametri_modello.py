@@ -8,7 +8,7 @@ import pytest
 from pydantic import ValidationError
 
 from tarot_core.llm.base import GenerationRequest, Message
-from tarot_core.llm.compiti import ModelloConfigurato, RegistroModelli
+from tarot_core.llm.compiti import AssegnazioneModello, Compito, ModelloConfigurato, RegistroModelli
 from tarot_core.llm.openai_compatible import OpenAICompatibleProvider
 
 SPENTO = {"chat_template_kwargs": {"enable_thinking": False}}
@@ -61,6 +61,30 @@ def test_lo_stesso_modello_con_e_senza_ragionamento_si_assegna_per_compito():
     ragiona, diretto = registro._fornitore("qwen-ragiona"), registro._fornitore("qwen-diretto")
     assert ragiona.ragiona is True and ragiona._parametri == {}
     assert diretto.ragiona is False and diretto._parametri == SPENTO
+
+
+def test_override_per_compito_non_si_scambiano_fra_loro_sullo_stesso_fornitore():
+    """v7: due compiti sullo stesso fornitore, uno forzato a ragionare e l'altro no — bug reale
+    evitato: la cache di `_fornitore()` è per nome di fornitore, un override deve passare da un
+    percorso che non la tocca (`_fornitore_override`), altrimenti il secondo `per()` chiamato
+    restituirebbe l'oggetto (e il `ragiona`) del primo."""
+    modello = ModelloConfigurato(nome="unico", base_url="http://x/v1", model="m", ragiona=False)
+    registro = RegistroModelli([modello], assegnazioni={
+        Compito.SINTESI: AssegnazioneModello("unico", ragiona_override=True),
+        Compito.INTERPRETAZIONE: AssegnazioneModello("unico", ragiona_override=False),
+    })
+    con_ragionamento = registro.per(Compito.SINTESI)
+    senza_ragionamento = registro.per(Compito.INTERPRETAZIONE)
+    assert con_ragionamento.ragiona is True
+    assert senza_ragionamento.ragiona is False
+
+
+def test_senza_override_lassegnazione_usa_il_ragiona_del_fornitore():
+    modello = ModelloConfigurato(nome="unico", base_url="http://x/v1", model="m", ragiona=True)
+    registro = RegistroModelli([modello], assegnazioni={
+        Compito.SINTESI: AssegnazioneModello("unico"),
+    })
+    assert registro.per(Compito.SINTESI).ragiona is True
 
 
 def test_il_modello_ricavato_dalle_vecchie_impostazioni_porta_i_suoi_parametri(monkeypatch):

@@ -285,6 +285,11 @@ export interface CompitoAssegnato {
    * due cose si comportano uguale oggi e diversamente domani, quando il
    * predefinito cambia: per questo restano distinte. */
   assegnato: string | null;
+  /* v7: se questo COMPITO ragiona, a prescindere dal fornitore assegnato. `null` solo per
+   * un compito senza assegnazione propria (ricade sul predefinito) — un'assegnazione toccata
+   * dalla console ha sempre un valore esplicito, mai `null` (il backlog vuole il reasoning
+   * spento per default, non "eredita" per i compiti non ancora toccati). */
+  ragiona_override: boolean | null;
   in_uso: string;
   senza_filtri: boolean;
 }
@@ -436,8 +441,11 @@ export const assegnaModello = (
   t: string,
   compito: string,
   modello: string | null,
+  /* `undefined` (parametro omesso) = non toccare il reasoning di questa assegnazione, es. quando
+   * si cambia solo il modello. Un valore esplicito lo sovrascrive. */
+  ragiona?: boolean,
 ) =>
   chiamata<{ compiti: CompitoAssegnato[] }>(t, `/admin/models/${compito}`, {
     method: "PUT",
-    body: JSON.stringify({ modello }),
+    body: JSON.stringify(ragiona === undefined ? { modello } : { modello, ragiona }),
   });

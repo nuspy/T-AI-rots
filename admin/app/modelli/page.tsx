@@ -39,6 +39,11 @@ export default function Modelli() {
     }
   };
 
+  const cambiaRagiona = async (compito: string, assegnato: string | null, ragiona: boolean) => {
+    if (!assegnato) return; // niente da sovrascrivere finché il compito ricade sul predefinito
+    if (await esegui((t) => assegnaModello(t, compito, assegnato, ragiona))) ricarica();
+  };
+
   const ricaricaTutto = () => {
     ricarica();
     fornitoriDati.ricarica();
@@ -88,6 +93,7 @@ export default function Modelli() {
               modelli={dati.modelli}
               bloccato={inAzione}
               onCambia={(scelto) => cambia(c.compito, scelto)}
+              onCambiaRagiona={(ragiona) => cambiaRagiona(c.compito, c.assegnato, ragiona)}
             />
           ))}
         </div>
@@ -108,13 +114,19 @@ function Scheda({
   modelli,
   bloccato,
   onCambia,
+  onCambiaRagiona,
 }: {
   compito: CompitoAssegnato;
   modelli: ModelloConfigurato[];
   bloccato: boolean;
   onCambia: (scelto: string) => void;
+  onCambiaRagiona: (ragiona: boolean) => void;
 }) {
   const id = `compito-${compito.compito}`;
+  const idRagiona = `${id}-ragiona`;
+  /* v7: senza un'assegnazione propria (ricade sul predefinito) non c'è una riga a cui
+   * agganciare l'override — bisogna prima scegliere un modello per questo compito. */
+  const puoRagionare = compito.assegnato != null;
 
   return (
     <section className={stili.scheda}>
@@ -142,6 +154,19 @@ function Scheda({
           </option>
         ))}
       </select>
+
+      <label className={stili.spuntaFornitore} htmlFor={idRagiona} title={
+        puoRagionare ? undefined : "Scegli prima un modello per questo compito"
+      }>
+        <input
+          id={idRagiona}
+          type="checkbox"
+          checked={compito.ragiona_override ?? false}
+          disabled={bloccato || !puoRagionare}
+          onChange={(e) => onCambiaRagiona(e.target.checked)}
+        />
+        Ragiona prima di rispondere
+      </label>
 
       <p className={stili.inUso}>
         In uso: <strong>{compito.in_uso}</strong>

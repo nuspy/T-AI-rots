@@ -8,7 +8,6 @@ import pytest
 from PIL import Image
 
 from tarot_core.tools.crea_mazzo import (
-    NEGATIVO_BASE,
     SceneNonRiuscita,
     avverti_se_stile_ha_dimensioni,
     costruisci_prompt_carta,
@@ -112,7 +111,7 @@ def test_costruisci_prompt_carta():
     assert STILE in voce["prompt"]
     assert "Una scena con Mercurio alato." in voce["prompt"]
     assert "SCENE (what is painted inside the frame):" in voce["prompt"]
-    assert voce["negative_prompt"] == NEGATIVO_BASE
+    assert "negative_prompt" not in voce
 
 
 def test_costruisci_prompt_dorso():

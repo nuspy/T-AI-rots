@@ -23,7 +23,10 @@ from .test_intervista import Copione
 #: cambiata di proposito, non per effetto collaterale.
 # Cambiata una sola volta di proposito, quando il nome del prodotto è diventato «TAROTS chat»: sostituendo di nuovo
 # il nome con «T-AI-rots» l'impronta torna a 688f5c67…, cioè il prefisso non è cambiato in nient'altro.
-IMPRONTA_PREFISSO_STANDARD = "98add712b79a63c68ca510623c011a91e1940b90db73d6ce97feef1dff82c6a3"
+# Cambiata di nuovo di proposito nel commit 057a84d (v6 Fase C, memoria): _CORPO_SINTESI ha
+# un'istruzione stabile in più sul confronto prima/dopo con le memorie — il commit lo dichiarava
+# "verificato con un test" ma questa impronta non era stata aggiornata di conseguenza.
+IMPRONTA_PREFISSO_STANDARD = "613b0d4c628fbe518935d7628b10655180d48162a3284bfa608369c343145cc1"
 
 
 @pytest.fixture(scope="module")

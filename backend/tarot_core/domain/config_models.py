@@ -40,6 +40,17 @@ class ModelAssignment(Base, TimestampMixin):
     updated_by: Mapped[Optional[int]] = mapped_column(
         BigInteger, ForeignKey("users.id", ondelete="SET NULL"),
     )
+    #: Se questo COMPITO ragiona, a prescindere da cosa dichiara il fornitore assegnato.
+    #: `NULL` = eredita da `llm_providers.ragiona` (comportamento di prima di v7). Un valore
+    #: esplicito sovrascrive: due compiti sullo stesso fornitore possono così avere reasoning
+    #: diverso (bug corretto in v7: prima si duplicava il fornitore per ottenere lo stesso
+    #: effetto, vedi `llm/compiti.py`). Le righe nuove nascono a `False` (default richiesto
+    #: dall'operatore), non `NULL`: v7 vuole il ragionamento spento ovunque per default, non
+    #: "eredita" per i compiti non ancora toccati.
+    ragiona_override: Mapped[Optional[bool]] = mapped_column(Boolean)
+    #: Parametri aggiuntivi (`reasoning_budget`, `chat_template_kwargs`, ecc.) SOLO per questo
+    #: compito, sovrapposti a quelli del fornitore assegnato. `NULL`/vuoto = eredita.
+    parametri_override: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB)
 
 
 class ImpostazioniCrediti(Base, TimestampMixin):

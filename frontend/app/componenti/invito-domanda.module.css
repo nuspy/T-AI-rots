@@ -15,12 +15,21 @@
   box-shadow: var(--bagliore);
 }
 
-.inHome {
-  top: max(84px, calc(env(safe-area-inset-top) + 84px));
+/* v7: ancorato in basso invece che in alto/a 1/3 pagina, sia in home sia altrove. Le due classi
+ * restano separate (stesso principio del resto del file) anche se oggi coincidono, così una
+ * futura differenza fra le due varianti non richiede di reintrodurle da zero. */
+.inHome,
+.altrove {
+  bottom: max(16px, env(safe-area-inset-bottom));
 }
 
-.altrove {
-  top: 33vh;
+/* Sotto agli 860px la testata mostra la barra di navigazione fissa in basso (vedi
+ * testata.module.css, stessa soglia): il banner deve stare sopra di lei, non sovrapporla. */
+@media (max-width: 860px) {
+  .inHome,
+  .altrove {
+    bottom: calc(64px + max(16px, env(safe-area-inset-bottom)));
+  }
 }
 
 .chiudi {
