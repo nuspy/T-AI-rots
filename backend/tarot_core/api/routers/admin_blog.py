@@ -22,7 +22,7 @@ from ...auth.chiavi import SCOPES_VALIDI, genera_chiave
 from ...auth.dependencies import CurrentUser, DbSession, require_role
 from ...domain.base import utcnow
 from ...domain.blog_models import ApiKey, BlogPost, BlogSection, BlogTag, MediaImage
-from ...domain.blog_repositories import BlogRepository, ErroreBlog
+from ...domain.blog_repositories import BlogRepository, ErroreBlog, assicura_miniatura
 from ...domain.models import User
 from ...domain.repositories import AuditRepository
 from ...llm.compiti import Compito
@@ -30,7 +30,7 @@ from ..deps import provider_per, verifica_modello
 from ...tarot import blog as regole
 from ...tarot import blog_seo
 from ...tarot import traduzione_blog
-from .blog import url_immagine
+from .blog import url_immagine, url_miniatura
 
 router = APIRouter(prefix="/admin/blog", tags=["console-blog"], dependencies=[Depends(require_role("admin"))])
 
@@ -89,6 +89,12 @@ def _sezione_json(s: BlogSection, n_articoli: int = 0) -> Dict[str, Any]:
     }
 
 
+async def _miniatura_di(session, immagine_id: Optional[uuid.UUID]) -> None:
+    """La miniatura dell'immagine che si sta assegnando a una sezione, se manca."""
+    if immagine_id is not None and (img := await session.get(MediaImage, immagine_id)) is not None:
+        await assicura_miniatura(img)
+
+
 async def _conteggi_admin(session) -> Dict[int, int]:
     q = select(BlogPost.sezione_id, func.count()).where(BlogPost.sezione_id.is_not(None)).group_by(BlogPost.sezione_id)
     return {sid: n for sid, n in (await session.execute(q)).all()}
@@ -108,6 +114,7 @@ async def crea_sezione(payload: SezioneIn, user: CurrentUser, session: DbSession
     dati["slug"] = await repo.slug_sezione_libero(dati["slug"] or dati["nome"])
     if payload.parent_id is not None and await repo.sezione(payload.parent_id) is None:
         raise HTTPException(status_code=422, detail="la sezione padre non esiste")
+    await _miniatura_di(session, payload.immagine_id)
     sezione = BlogSection(**dati)
     session.add(sezione)
     await session.flush()
@@ -135,6 +142,7 @@ async def modifica_sezione(sezione_id: int, payload: SezioneMod, user: CurrentUs
         dati["slug"] = await repo.slug_sezione_libero(dati["slug"], sezione.id)
     elif "slug" in dati:
         del dati["slug"]
+    await _miniatura_di(session, dati.get("immagine_id"))
     prima = {"slug": sezione.slug, "nome": sezione.nome, "parent_id": sezione.parent_id}
     for campo, valore in dati.items():
         setattr(sezione, campo, valore)
@@ -467,6 +475,7 @@ async def carica_immagine(request: Request, user: CurrentUser, session: DbSessio
     except regole.ImmagineNonValida as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     img = MediaImage(uso="blog", webp=webp, larghezza=larghezza, altezza=altezza, owner_id=user.id)
+    await assicura_miniatura(img)
     session.add(img)
     await session.flush()
     await AuditRepository(session).record(
@@ -474,7 +483,10 @@ async def carica_immagine(request: Request, user: CurrentUser, session: DbSessio
         after={"byte": len(webp), "larghezza": larghezza, "altezza": altezza},
     )
     await session.commit()
-    return {"id": str(img.id), "url": url_immagine(img.id), "larghezza": larghezza, "altezza": altezza, "byte": len(webp)}
+    return {
+        "id": str(img.id), "url": url_immagine(img.id), "mini": url_miniatura(img.id),
+        "larghezza": larghezza, "altezza": altezza, "byte": len(webp),
+    }
 
 
 @router.get("/media")
@@ -598,7 +610,7 @@ async def controllo_seo(payload: ControlloSeoIn) -> Dict[str, Any]:
 
 class ChiaveIn(BaseModel):
     nome: str = Field(min_length=1, max_length=80)
-    scopes: List[Literal["blog:write", "blog:publish"]] = Field(default_factory=lambda: ["blog:write"], min_length=1)
+    scopes: List[Literal["blog:write", "blog:publish", "blog:media"]] = Field(default_factory=lambda: ["blog:write"], min_length=1)
     limite_minuto: int = Field(default=30, ge=1, le=600)
     limite_giorno: int = Field(default=20, ge=1, le=500)
 

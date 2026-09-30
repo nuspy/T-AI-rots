@@ -128,7 +128,7 @@ export function SchedaCarta({ id }: { id: string }) {
             {(articoli.dati ?? []).slice(0, 3).map((a) => (
               <LinkV2 key={a.slug} className="article" href={R.articolo(a.slug)}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={urlMedia(a.immagine?.url) ?? `/cards/${c.id}.webp`} alt="" loading="lazy" />
+                <img src={urlMedia(a.immagine?.mini ?? a.immagine?.url) ?? `/cards/${c.id}.webp`} alt="" loading="lazy" />
                 <small>{a.sezione?.nome ?? ""}</small>
                 <h3>{a.titolo}</h3>
               </LinkV2>

@@ -26,7 +26,7 @@ export function Tessera({ a, grande = false }: { a: ArticoloBreve; grande?: bool
   return (
     <LinkV2 className={`article ${grande ? "article-featured" : ""}`} href={R.articolo(a.slug)}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={urlMedia(a.immagine?.url) ?? "/cards/maj-06.webp"} alt="" loading="lazy" />
+      <img src={urlMedia(a.immagine?.mini ?? a.immagine?.url) ?? "/cards/maj-06.webp"} alt="" loading="lazy" />
       <small>{a.sezione?.nome ?? a.tags[0]?.nome ?? t.blog.eyebrow}</small>
       <h3>{a.titolo}</h3>
       {grande && a.estratto && <p>{a.estratto}</p>}

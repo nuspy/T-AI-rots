@@ -21,6 +21,7 @@ from ...auth.dependencies import CurrentUser, DbSession, require_role
 from ...domain import deck_repositories, voting_repositories
 from ...domain.base import utcnow
 from ...domain.blog_models import MediaImage
+from ...domain.blog_repositories import assicura_miniatura
 from ...domain.deck_models import Deck
 from ...domain.repositories import AuditRepository
 from ...domain.voting_models import DeckCandidate, DeckSuggestion, VotingRound
@@ -219,6 +220,7 @@ async def carica_campione(
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     img = MediaImage(uso="voto", webp=webp, larghezza=larghezza, altezza=altezza, owner_id=user.id)
+    await assicura_miniatura(img)
     session.add(img)
     await session.flush()
     candidato.campioni = [*candidato.campioni, {"etichetta": etichetta, "media_id": str(img.id)}]

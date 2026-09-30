@@ -252,7 +252,7 @@ export function Home() {
             ? articoliDiario.map((a) => (
                 <LinkV2 key={a.slug} className="article" href={R.articolo(a.slug)}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={urlMedia(a.immagine?.url) ?? "/cards/maj-06.webp"} alt="" loading="lazy" />
+                  <img src={urlMedia(a.immagine?.mini ?? a.immagine?.url) ?? "/cards/maj-06.webp"} alt="" loading="lazy" />
                   <small>{a.sezione?.nome ?? a.tags[0]?.nome ?? h.diario_eyebrow}</small>
                   <h3>{a.titolo}</h3>
                 </LinkV2>

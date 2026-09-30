@@ -7,6 +7,8 @@ import { API } from "./api";
 
 export interface ImmagineBreve {
   url: string;
+  /* La miniatura (480 px di larghezza) per gli elenchi; il dettaglio usa `url`. */
+  mini?: string | null;
   alt: string;
 }
 

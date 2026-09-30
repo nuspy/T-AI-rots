@@ -48,6 +48,12 @@ class MediaImage(Base):
     webp: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     larghezza: Mapped[int] = mapped_column(Integer, nullable=False)
     altezza: Mapped[int] = mapped_column(Integer, nullable=False)
+    #: La miniatura per gli elenchi (`tarot.blog.miniatura`): si crea a ogni caricamento e ogni volta che l'immagine
+    #: viene assegnata a un articolo o a una sezione, se manca (`assicura_miniatura`). `None` per gli avatar e per le
+    #: immagini più vecchie non ancora passate da `tools/miniature_blog.py`: allora si serve la grande.
+    mini_webp: Mapped[Optional[bytes]] = mapped_column(LargeBinary)
+    mini_larghezza: Mapped[Optional[int]] = mapped_column(Integer)
+    mini_altezza: Mapped[Optional[int]] = mapped_column(Integer)
     #: Chi l'ha caricata (per gli avatar, il proprietario).
     owner_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), index=True,

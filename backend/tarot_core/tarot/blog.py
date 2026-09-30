@@ -153,6 +153,9 @@ MAX_CARICO_IMMAGINE = 8_000_000
 MAX_PIXEL = 40_000_000
 MIN_LATO = 64
 LARGHEZZA_MAX_ARTICOLO = 1600
+#: La miniatura degli elenchi (schede degli articoli, correlati, home): larghezza e qualità WebP.
+LARGHEZZA_MINI = 480
+QUALITA_MINI = 72
 LATO_AVATAR = 256
 FORMATI_IMMAGINE = frozenset({"PNG", "JPEG", "WEBP"})
 
@@ -209,6 +212,20 @@ def prepara_immagine_articolo(dati: bytes) -> Tuple[bytes, int, int]:
         altezza = round(immagine.height * LARGHEZZA_MAX_ARTICOLO / immagine.width)
         immagine = immagine.resize((LARGHEZZA_MAX_ARTICOLO, max(1, altezza)), Image.Resampling.LANCZOS)
     return _in_webp(immagine, 82), immagine.width, immagine.height
+
+
+def miniatura(webp: bytes) -> Tuple[bytes, int, int]:
+    """La miniatura di un'immagine già preparata (il WebP salvato): non oltre `LARGHEZZA_MINI` di larghezza, stesse
+    proporzioni. Serve agli elenchi, che mostrano l'immagine piccola: la grande resta per la pagina dell'articolo.
+    Un'immagine già stretta si ricodifica soltanto, più leggera."""
+    from PIL import Image
+
+    immagine = Image.open(io.BytesIO(webp))
+    immagine.load()
+    if immagine.width > LARGHEZZA_MINI:
+        altezza = round(immagine.height * LARGHEZZA_MINI / immagine.width)
+        immagine = immagine.resize((LARGHEZZA_MINI, max(1, altezza)), Image.Resampling.LANCZOS)
+    return _in_webp(immagine, QUALITA_MINI, metodo=6), immagine.width, immagine.height
 
 
 def prepara_avatar(dati: bytes) -> Tuple[bytes, int, int]:

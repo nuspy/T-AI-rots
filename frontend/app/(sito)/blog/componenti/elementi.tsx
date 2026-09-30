@@ -35,7 +35,8 @@ export function RigaMeta({ articolo }: { articolo: ArticoloBreve }) {
 }
 
 export function SchedaArticolo({ articolo, grande = false }: { articolo: ArticoloBreve; grande?: boolean }) {
-  const immagine = urlMedia(articolo.immagine?.url);
+  // Negli elenchi la miniatura; la scheda grande in evidenza tiene l'immagine intera.
+  const immagine = urlMedia((grande ? null : articolo.immagine?.mini) ?? articolo.immagine?.url);
   return (
     <Link
       href={`/blog/${articolo.slug}`}

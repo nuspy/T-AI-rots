@@ -45,17 +45,17 @@ with `tarots_blog.py`. LitMedia is a separate skill with its own login and credi
 
 ```
 python <litmedia-skill>/scripts/ai_image.py list-models --type text2image
-python <litmedia-skill>/scripts/ai_image.py estimate-cost --type text2image --model "Nano Banana 2" --resolution 1K --count 1
-python <litmedia-skill>/scripts/ai_image.py run --type text2image --model "Nano Banana 2" \
-    --prompt "<prompt>" --aspect-ratio 3:2 --resolution 1K --count 1 --output-dir ./cover
+python <litmedia-skill>/scripts/ai_image.py estimate-cost --type text2image --model "Seedream 5.0" --resolution 2K --count 1
+python <litmedia-skill>/scripts/ai_image.py run --type text2image --model "Seedream 5.0" \
+    --prompt "<prompt>" --aspect-ratio 3:2 --resolution 2K --count 1 --output-dir ./cover
 ```
 
-**Resolution: always `1K`, never `2K` or `4K`, for a cover.** The page never actually displays the cover wider than
-~800 px (checked against the live site) — generating at `2K` (~2048 px) or higher only spends more credits for
-detail nobody sees, the browser downscales it either way. `1K` (~1024 px) is the smallest tier the API exposes and
-is already above what the page shows. If the model has no `--resolution` parameter at all (e.g. plain "Nano
-Banana"), that is fine too — do not add one. Generate **one** image; a second only if the first is unusable. The
-result is downloaded into `--output-dir`; pass that file to `tarots_blog.py post … --cover <file>`.
+**Model: Seedream 5.0 at `2K` (10 credits)** — the fast and stable one on the API (about a minute). It has no `1K`
+tier; `2K` is its smallest. **Do not use "Nano Banana"** through the API: tasks are accepted and then fail on
+LitMedia's side ("Image generation failed", checked 2026-09-30); it is free only on the website. The server shrinks
+every upload to 1600 px and makes a 480 px thumbnail for the lists, so a larger file costs nothing on the page.
+Generate **one** image; a second only if the first is unusable. The result is downloaded into `--output-dir`; pass
+that file to `tarots_blog.py post … --cover <file>`.
 
 ## Option B: browser-image-gen (free/browser)
 
@@ -98,25 +98,31 @@ The output will always be `.webp` even if you pass `--output cover.png`. Pass it
 
 ## Prompt recipe (English)
 
+**The full recipe, the house style line and the examples are in `tarots-blog-images/references/prompts.md`** — use
+them. The summary below is kept for agents that only have this skill.
+
+**Never a tarot spread on a table** (cards face down, a fan of cards, a reading table): every early cover was that
+picture and they all had to be redone. At most one card, as a small detail of a larger scene.
+
 `<subject/symbol> + <scene or composition> + <mood and light> + <style> + <constraints>`
 
-- Subject from the article: the card's symbols (a tower struck by lightning, a starry night sky with a kneeling
-  figure and water, the moon over two towers), the season (equinox balance, winter solstice candlelight), the practice
-  (a journal, candles and cards on a table).
+- Subject from the article: the human situation it speaks to (a break-up, waiting, a choice), the card's world as a
+  real scene (a lighthouse in a storm for the Tower, a summer garden for the Empress), the season or the sky, an
+  object charged with meaning (a key, a letter, two rings), a visual metaphor (two paths in a wood, a door ajar).
 - Composition for 3:2: leave calm space, one clear focal point, nothing important at the far edges.
-- Mood: contemplative, mystical, warm candlelight or deep indigo night with gold accents (the brand palette is indigo,
-  night violet and gold).
-- Style: painterly, or an elegant esoteric illustration; consistent across articles.
-- Constraints, always: `no text, no letters, no watermark, no logo, no recognizable real person`.
+- Style, appended unchanged to every prompt (the site's palette: paper, plum, brass, verdigris): `editorial painterly
+  illustration, soft natural light, warm paper-cream highlights, deep plum shadows, touches of brass gold and
+  verdigris green, gentle film grain, calm composition with breathing space, contemplative mood`.
+- Constraints, always: `no text, no letters, no numbers, no watermark, no logo, no recognizable real person`.
 
 Examples:
 
 - *"A lone stone tower on a cliff struck by a golden lightning bolt at night, storm clouds in deep indigo and violet,
   sparks falling, dramatic but symbolic, esoteric painterly illustration, calm dark space on the left, no text, no
   letters, no watermark"* (article: The Tower)
-- *"A wooden table at dusk with a Thoth-style tarot spread of cards face down, a burning candle, a brass astrolabe
-  and dried flowers, warm candlelight against deep indigo shadows, contemplative mood, painterly, no
-  text, no readable card faces, no watermark"* (article: how to start a tarot journal)
+- *"Close-up of an open notebook on a windowsill with a pressed rose and a fountain pen, morning light, a single
+  tarot card tucked between the pages showing only its patterned back, editorial painterly illustration, …, no text,
+  no letters, no watermark"* (article: how to start a tarot journal)
 
 ## Alt text and file
 
@@ -128,7 +134,7 @@ fits without sounding forced. PNG, JPEG or WebP up to 8 MB.
 
 **Checked against the live blog (2026-09-28): none of the sampled published articles had a real inline image —
 only a cover, sometimes not even that.** The instruction below was being treated as optional and skipped every
-time. It is not optional: a genuinely useful inline image (a diagram, a spread layout, a close-up of a symbol
+time. It is not optional: a genuinely useful inline image (a diagram of a spread's positions, a scene from the text, a close-up of a symbol
 discussed in the text) is part of a normal article, the same way a cover is. Decide explicitly for every article
 whether one belongs, and say so in the step 9 report either way ("inline image: yes, showing X" / "inline image:
 none, the topic didn't call for one") — never just silently skip the decision.
@@ -139,9 +145,7 @@ generate the same way, then `python scripts/tarots_blog.py upload picture.png` o
 Markdown body — not at the very top (that is what the cover is for) and not inside the closing
 paragraph.
 
-**Resolution: the smallest the model allows.** This is a small illustration inside a column of text, not a hero
-image — never `2K` or `4K`. Use `--resolution "1K"` if the model requires one, or prefer a fixed-price model with no
-resolution parameter at all (e.g. plain "Nano Banana" — also the cheapest option, see `list-models`). Same
+**Model and size: Seedream 5.0 at `2K`**, aspect `4:3` (or `1:1` for a symbol close-up), never `4K`. Same
 cost-and-consent rule as the cover: each inline image is a separate generation, counted and consented to like any
 other. One inline image is normally enough; a second only if the article genuinely covers two distinct visual
 ideas — a wall of decorative images hurts more than it helps.

@@ -78,10 +78,10 @@ python scripts/tarots_blog.py catalog --grep tower   # link shortcuts for cards 
 - Internal links inside sentences with shortcuts: `[[card:the-tower]]`, `[[spread:celtic-cross]]`,
   `[[post:some-existing-slug]]` (a card or spread on its own line becomes a card with its picture). Take the exact
   shortcut from `catalog`. An unknown reference disappears silently, so copy, don't guess.
-- **Inline images — decide explicitly, don't silently skip**: for every article, actively decide whether a diagram,
-  a spread layout, or a symbol close-up would genuinely help — most articles about a spread or a specific symbol do
-  benefit from one. If yes, generate it (see `references/image-generation.md`, smallest resolution the model
-  allows — never the cover's size) and upload it with `python scripts/tarots_blog.py upload picture.png`, then paste
+- **Inline images — decide explicitly, don't silently skip**: for every article, actively decide whether a scene
+  from the text, a diagram of a spread's positions (a diagram, never cards on a table) or a symbol close-up would
+  genuinely help — most articles about a spread or a specific symbol do benefit from one. If yes, generate it (see
+  `references/image-generation.md`: Seedream 5.0, 2K, 4:3, a subject different from the cover) and upload it with `python scripts/tarots_blog.py upload picture.png`, then paste
   it into the body as ordinary Markdown: `![alt text](url)`. One is normally enough, not one per paragraph. State
   the decision either way in the step 9 report.
 - **Inline video**: a line on its own with `[[video:youtube:VIDEO_ID]]` embeds that YouTube video (11-character id
@@ -113,13 +113,20 @@ Put the article in a JSON file (see `assets/example-article.json`; friendly Engl
 Markdown in a file next to it and reference it with `"body_file": "article.md"`, so no quoting problems.
 
 ### 6. Cover image
-3:2, no text in the image. Two ways to produce the file — `references/image-generation.md` covers both and how to
-choose: **LitMedia** (`litmedia-skill`, paid API, default) or **browser-image-gen** (free for Nano Banana/Flux,
-slower, use when the operator asks for the free/browser method by name). Cost estimate and consent first either
-way, never bypass TLS errors. Save the result as a PNG/JPEG/WebP file. If using `browser-image-gen`, the script 
-automatically converts to WebP (PNG/JPEG → WebP via PIL, quality=85) — always verify the output is `.webp` before 
-passing it to `tarots_blog.py post --cover`. If image generation is not possible, continue without a cover and say 
-so in the report: an article without an image is better than a stalled one.
+3:2, no text in the image. **Its own subject, taken from this article — never tarot cards laid out on a table**:
+the blog's first covers were all that picture and had to be redone. Write the prompt with the recipe and the house
+style of `tarots-blog-images/references/prompts.md` (the same rules, shared by both skills), and look at the result
+before using it.
+
+Generate with **LitMedia Seedream 5.0 at 2K** (10 credits; `references/image-generation.md`): it is the fast and
+stable model on the API. Nano Banana fails on the API side at the moment; Seedream has no 1K. **browser-image-gen**
+only when the operator asks for the free/browser method by name. Cost estimate and consent first either way, never
+bypass TLS errors. Save the result as a PNG/JPEG/WebP file. The server makes the thumbnail for the blog lists by
+itself. If image generation is not possible, continue without a cover and say so in the report: an article without
+an image is better than a stalled one.
+
+To change the pictures of articles that already exist (yours or others'), use the **`tarots-blog-images`** skill:
+it has its own key with the `blog:media` permission.
 
 ### 7. Check, fix, repeat
 ```

@@ -44,6 +44,17 @@ def condizione_pubblica(sezioni_visibili: Iterable[int], adesso: Optional[dateti
     )
 
 
+async def assicura_miniatura(img: MediaImage) -> None:
+    """Crea la miniatura di un'immagine se non l'ha ancora (le miniature servono agli elenchi del blog). Si chiama a
+    ogni caricamento e ogni volta che un'immagine viene assegnata a un articolo o a una sezione: così un'immagine
+    riusata o caricata prima delle miniature la riceve comunque. Gli avatar non ne hanno bisogno. Idempotente."""
+    if img.mini_webp is not None or img.uso == "avatar":
+        return
+    import asyncio
+
+    img.mini_webp, img.mini_larghezza, img.mini_altezza = await asyncio.to_thread(regole.miniatura, img.webp)
+
+
 class BlogRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
@@ -313,8 +324,12 @@ class BlogRepository:
             if sezione.tipo != "articoli":
                 raise ErroreBlog("gli articoli stanno nelle sezioni di tipo «articoli»")
         immagine_id = dati.get("immagine_id")
-        if immagine_id is not None and await self._session.get(MediaImage, immagine_id) is None:
-            raise ErroreBlog("l'immagine non esiste")
+        if immagine_id is not None:
+            img = await self._session.get(MediaImage, immagine_id)
+            if img is None:
+                raise ErroreBlog("l'immagine non esiste")
+            # Anche un'immagine riusata da un altro articolo, o caricata prima delle miniature, ne esce con la sua.
+            await assicura_miniatura(img)
 
     async def salva(
         self, post: Optional[BlogPost], dati: Dict[str, Any], *, autore_id: Optional[int],

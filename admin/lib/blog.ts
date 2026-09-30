@@ -310,7 +310,7 @@ export const controlloSeo = (t: string, corpo: DatiControlloSeo) =>
 
 /* ---- le chiavi applicative (per gli agenti che pubblicano via REST) ---- */
 
-export type PermessoChiave = "blog:write" | "blog:publish";
+export type PermessoChiave = "blog:write" | "blog:publish" | "blog:media";
 
 export interface ChiaveApi {
   id: number;

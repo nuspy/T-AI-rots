@@ -35,6 +35,11 @@ def url_immagine(immagine_id: Optional[uuid.UUID]) -> Optional[str]:
     return f"/blog/media/{immagine_id}.webp" if immagine_id else None
 
 
+def url_miniatura(immagine_id: Optional[uuid.UUID]) -> Optional[str]:
+    """La miniatura per gli elenchi. Se un'immagine non l'ha ancora, lo stesso indirizzo serve la grande."""
+    return f"/blog/media/{immagine_id}-mini.webp" if immagine_id else None
+
+
 def nome_pubblico(utente: Optional[User]) -> str:
     """Come si presenta chi scrive o commenta: il nome scelto, altrimenti il primo nome. Mai l'email."""
     if utente is None:
@@ -84,7 +89,10 @@ def post_breve_json(p: BlogPost, autori: Dict[int, User], sezioni: Dict[int, Blo
         "titolo": p.titolo,
         "sottotitolo": p.sottotitolo,
         "estratto": regole.estratto(p.testo, 220, nome_riferimento),
-        "immagine": {"url": url_immagine(p.immagine_id), "alt": p.immagine_alt or p.titolo} if p.immagine_id else None,
+        "immagine": (
+            {"url": url_immagine(p.immagine_id), "mini": url_miniatura(p.immagine_id), "alt": p.immagine_alt or p.titolo}
+            if p.immagine_id else None
+        ),
         "sezione": sezione_breve_json(sezione) if sezione else None,
         "autore": autore_json(autori.get(p.autore_id) if p.autore_id is not None else None),
         "pubblicato_il": p.pubblicato_il.isoformat() if p.pubblicato_il else None,
@@ -356,17 +364,21 @@ async def mappa(session: DbSession) -> Dict[str, Any]:
 
 @router.get("/media/{nome}")
 async def immagine(nome: str, session: DbSession) -> Response:
-    """Un'immagine caricata (articolo, sezione, avatar). Cache immutabile: l'id non si riusa."""
+    """Un'immagine caricata (articolo, sezione, avatar), o la sua miniatura (`<id>-mini.webp`, per gli elenchi; la
+    grande se la miniatura non c'è ancora). Cache immutabile: l'id non si riusa, e la miniatura di un'immagine non
+    cambia."""
     if not nome.endswith(".webp"):
         raise HTTPException(status_code=404, detail="Immagine non trovata")
+    base = nome[: -len(".webp")]
+    mini = base.endswith("-mini")
     try:
-        immagine_id = uuid.UUID(nome[: -len(".webp")])
+        immagine_id = uuid.UUID(base[: -len("-mini")] if mini else base)
     except ValueError:
         raise HTTPException(status_code=404, detail="Immagine non trovata") from None
     img = await session.get(MediaImage, immagine_id)
     if img is None:
         raise HTTPException(status_code=404, detail="Immagine non trovata")
     return Response(
-        content=img.webp, media_type="image/webp",
+        content=(img.mini_webp or img.webp) if mini else img.webp, media_type="image/webp",
         headers={"Cache-Control": "public, max-age=31536000, immutable", "X-Content-Type-Options": "nosniff"},
     )

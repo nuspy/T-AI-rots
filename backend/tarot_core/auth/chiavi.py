@@ -28,7 +28,9 @@ from .dependencies import DbSession
 
 PREFISSO_CHIAVE = "tk_live_"
 LUNGHEZZA_PREFISSO = 12
-SCOPES_VALIDI = ("blog:write", "blog:publish")
+#: `blog:media` (v8.3): cambia solo le immagini (copertina e immagini nel testo) di **qualunque** articolo, anche
+#: pubblicato e scritto da altri; non tocca testo, SEO né stato. Per uno skill che rifà le immagini del blog.
+SCOPES_VALIDI = ("blog:write", "blog:publish", "blog:media")
 
 
 def impronta(chiave: str) -> str:
@@ -82,8 +84,9 @@ def azzera_limiti() -> None:
     _richieste.clear()
 
 
-def richiede(scope: str):
-    """Dipendenza FastAPI: `Depends(richiede("blog:write"))` restituisce la `ChiaveVerificata` o risponde 401/403/429."""
+def richiede(*ammessi: str):
+    """Dipendenza FastAPI: `Depends(richiede("blog:write"))` restituisce la `ChiaveVerificata` o risponde 401/403/429.
+    Con più permessi basta averne uno (`richiede("blog:write", "blog:media")`)."""
 
     async def dipendenza(request: Request, session: DbSession) -> ChiaveVerificata:
         chiave = _estrai(request)
@@ -100,8 +103,8 @@ def richiede(scope: str):
             raise HTTPException(status_code=401, detail="Chiave non valida o revocata.", headers={"WWW-Authenticate": "Bearer"})
         assert riga is not None
         scopes: List[str] = list(riga.scopes or [])
-        if scope not in scopes:
-            raise HTTPException(status_code=403, detail=f"La chiave non ha il permesso «{scope}».")
+        if not any(scope in scopes for scope in ammessi):
+            raise HTTPException(status_code=403, detail=f"La chiave non ha il permesso «{' o '.join(ammessi)}».")
         attesa = _entro_il_limite(riga.id, riga.limite_minuto, time.monotonic())
         if attesa:
             raise HTTPException(

@@ -19,8 +19,8 @@ import { Schede } from "../schede";
  *
  * **La chiave si vede una volta sola**: alla creazione. Nel database resta solo un'impronta, quindi non si può
  * rileggere né recuperare: se si perde, si revoca e se ne crea un'altra. Ogni chiave ha permessi (scrivere bozze,
- * pubblicare) e due limiti (richieste al minuto, articoli al giorno), e vede e modifica solo gli articoli che ha
- * creato. Revocarla la ferma subito. */
+ * pubblicare, cambiare le immagini) e due limiti (richieste al minuto, articoli al giorno). Vede e modifica solo gli
+ * articoli che ha creato; il permesso «Cambiare le immagini» è l'eccezione: tocca le immagini di tutti. Revocarla la ferma subito. */
 
 const PERMESSI: { id: PermessoChiave; nome: string; aiuto: string }[] = [
   { id: "blog:write", nome: "Scrivere bozze", aiuto: "Crea e modifica bozze, carica immagini, controlla la SEO." },
@@ -28,6 +28,11 @@ const PERMESSI: { id: PermessoChiave; nome: string; aiuto: string }[] = [
     id: "blog:publish",
     nome: "Pubblicare",
     aiuto: "Può anche pubblicare: l'articolo esce sul sito senza passare da una persona.",
+  },
+  {
+    id: "blog:media",
+    nome: "Cambiare le immagini",
+    aiuto: "Solo le immagini (copertina e immagini nel testo) di qualunque articolo, anche pubblicato: per uno skill che rifà le immagini. Non tocca testo, SEO né stato.",
   },
 ];
 

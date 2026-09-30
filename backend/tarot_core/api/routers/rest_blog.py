@@ -13,6 +13,7 @@ salvare niente.
 - una chiave con `blog:write` crea **bozze**; `stato: "pubblicato"`, `pubblicato_il` e `in_evidenza` servono
   `blog:publish`, altrimenti l'articolo resta bozza e la risposta lo dice in `avvisi`;
 - una chiave modifica e cancella **solo gli articoli che ha creato**, e cancella solo le bozze;
+- l'eccezione è `blog:media`: cambia le **sole immagini** (copertina e immagini nel testo) di qualunque articolo;
 - niente scaricamento di immagini da un indirizzo (sarebbe una richiesta dal nostro server verso un indirizzo scelto
   da fuori): l'immagine arriva come corpo (`POST /v1/blog/media`) o come `immagine_base64`;
 - un tetto di articoli al giorno e di richieste al minuto per chiave.
@@ -24,6 +25,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import binascii
+import re
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Literal, Optional
@@ -37,14 +39,14 @@ from ...auth.chiavi import ChiaveVerificata, richiede
 from ...auth.dependencies import DbSession
 from ...domain.base import utcnow
 from ...domain.blog_models import BlogPost, BlogSection, MediaImage
-from ...domain.blog_repositories import BlogRepository, ErroreBlog
+from ...domain.blog_repositories import BlogRepository, ErroreBlog, assicura_miniatura
 from ...domain.repositories import AuditRepository
 from ...settings import get_settings
 from ...tarot import blog as regole
 from ...tarot import blog_seo
 from ..deps import get_conoscenza
 from .admin_blog import FaqIn, articolo_admin_json
-from .blog import url_immagine
+from .blog import url_immagine, url_miniatura
 
 router = APIRouter(prefix="/v1/blog", tags=["rest-blog"])
 
@@ -151,6 +153,7 @@ async def _immagine_da_base64(session, testo: str) -> uuid.UUID:
     except regole.ImmagineNonValida as exc:
         raise _errore(str(exc)) from exc
     img = MediaImage(uso="blog", webp=webp, larghezza=larghezza, altezza=altezza, owner_id=None)
+    await assicura_miniatura(img)
     session.add(img)
     await session.flush()
     return img.id
@@ -221,7 +224,7 @@ async def _dati_per_salvare(
 
 
 @router.get("/guide")
-async def guida(chiave: ChiaveVerificata = Depends(richiede("blog:write"))) -> Dict[str, Any]:
+async def guida(chiave: ChiaveVerificata = Depends(richiede("blog:write", "blog:media"))) -> Dict[str, Any]:
     """Cosa accetta il blog e con quali soglie SEO: da leggere una volta, prima di scrivere."""
     return {
         "chiave": {"nome": chiave.nome, "prefisso": chiave.prefisso, "scopes": list(chiave.scopes), "limite_giorno": chiave.limite_giorno},
@@ -243,7 +246,13 @@ async def guida(chiave: ChiaveVerificata = Depends(richiede("blog:write"))) -> D
             "sezioni": "GET /v1/blog/sections", "catalogo_carte_e_stese": "GET /v1/blog/catalog", "etichette": "GET /v1/blog/tags",
             "articoli_miei": "GET /v1/blog/posts", "controllo_seo": "POST /v1/blog/seo-check", "immagine": "POST /v1/blog/media",
             "crea": "POST /v1/blog/posts", "modifica": "PATCH /v1/blog/posts/{id}", "elimina_bozza": "DELETE /v1/blog/posts/{id}",
+            "immagini_di_tutti_con_blog_media": "GET /v1/blog/media-posts, GET /v1/blog/media-posts/{id}, PUT /v1/blog/posts/{id}/cover, PUT /v1/blog/posts/{id}/inline",
         },
+        "immagini": [
+            "Nel testo: ![testo alternativo](/blog/media/<id>.webp), su una riga da sola, dove l'immagine serve al discorso.",
+            "Ogni immagine caricata riceve da sola la sua miniatura per gli elenchi (campo `mini`): non va caricata a parte.",
+            "Video: [[video:youtube:ID]] su una riga da sola.",
+        ],
     }
 
 
@@ -300,7 +309,7 @@ async def controllo_seo(payload: ArticoloRest, chiave: ChiaveVerificata = Depend
 
 
 @router.post("/media", status_code=201)
-async def carica_immagine(request: Request, session: DbSession, chiave: ChiaveVerificata = Depends(richiede("blog:write"))) -> Dict[str, Any]:
+async def carica_immagine(request: Request, session: DbSession, chiave: ChiaveVerificata = Depends(richiede("blog:write", "blog:media"))) -> Dict[str, Any]:
     """Carica un'immagine: come corpo grezzo (`Content-Type: image/png|jpeg|webp`) o come JSON
     `{"immagine_base64": "…"}`. Si orienta, si porta a 1600 px di larghezza al massimo e si riscrive in WebP."""
     tipo = request.headers.get("content-type", "")
@@ -318,6 +327,7 @@ async def carica_immagine(request: Request, session: DbSession, chiave: ChiaveVe
         except regole.ImmagineNonValida as exc:
             raise _errore(str(exc)) from exc
         img = MediaImage(uso="blog", webp=webp, larghezza=larghezza, altezza=altezza, owner_id=None)
+        await assicura_miniatura(img)
         session.add(img)
         await session.flush()
         immagine_id = img.id
@@ -330,7 +340,10 @@ async def carica_immagine(request: Request, session: DbSession, chiave: ChiaveVe
     )
     await session.commit()
     assert img is not None
-    return {"id": str(immagine_id), "url": url_immagine(immagine_id), "larghezza": img.larghezza, "altezza": img.altezza, "byte": len(img.webp)}
+    return {
+        "id": str(immagine_id), "url": url_immagine(immagine_id), "mini": url_miniatura(immagine_id),
+        "larghezza": img.larghezza, "altezza": img.altezza, "byte": len(img.webp),
+    }
 
 
 # ---- gli articoli --------------------------------------------------------------------------------------------------
@@ -443,3 +456,209 @@ async def elimina(post_id: uuid.UUID, session: DbSession, chiave: ChiaveVerifica
     )
     await BlogRepository(session).elimina(p)
     await session.commit()
+
+
+# ---- le immagini di qualunque articolo (`blog:media`) ------------------------------------------------------------
+#
+# Uno skill che rifà le immagini del blog lavora su tutti gli articoli, anche pubblicati e scritti da altri: per
+# questo c'è un permesso a parte, che tocca **solo** le immagini. Il testo cambia soltanto nelle righe delle immagini
+# (e si salva con `BlogRepository.salva`, quindi con la versione precedente conservata); titolo, SEO e stato mai.
+
+_IMMAGINE_MD = re.compile(r'!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)')
+
+
+def _immagini_nel_testo(testo: str) -> List[Dict[str, Any]]:
+    return [{"indice": i, "alt": m.group(1), "url": m.group(2)} for i, m in enumerate(_IMMAGINE_MD.finditer(testo))]
+
+
+def _alt_pulito(alt: str) -> str:
+    return re.sub(r"[\[\]\n]+", " ", alt).strip()[:200]
+
+
+async def _media_post_json(session, p: BlogPost, *, con_testo: bool) -> Dict[str, Any]:
+    sezione = await session.get(BlogSection, p.sezione_id) if p.sezione_id is not None else None
+    dati: Dict[str, Any] = {
+        "id": str(p.id), "slug": p.slug, "titolo": p.titolo, "sottotitolo": p.sottotitolo, "lang": p.lang,
+        "stato": p.stato, "sezione": sezione.nome if sezione else None, "parola_chiave": p.seo_parola_chiave,
+        "tags": [t.nome for t in p.tags], "url": _url_pubblico(p),
+        "estratto": regole.estratto(p.testo, 400),
+        "copertina": (
+            {"id": str(p.immagine_id), "url": url_immagine(p.immagine_id), "mini": url_miniatura(p.immagine_id), "alt": p.immagine_alt}
+            if p.immagine_id else None
+        ),
+        "immagini_nel_testo": _immagini_nel_testo(p.testo),
+    }
+    if con_testo:
+        dati["testo"] = p.testo
+    return dati
+
+
+async def _articolo_qualunque(session, post_id: uuid.UUID) -> BlogPost:
+    p = await BlogRepository(session).per_id(post_id)
+    if p is None:
+        raise HTTPException(status_code=404, detail="Articolo non trovato")
+    return p
+
+
+async def _immagine_scelta(session, immagine_id: Optional[uuid.UUID], immagine_base64: Optional[str]) -> uuid.UUID:
+    """L'immagine indicata (già caricata) o quella in base64 (che si carica adesso), con la sua miniatura."""
+    if immagine_base64:
+        return await _immagine_da_base64(session, immagine_base64)
+    if immagine_id is None:
+        raise _errore("Serve `immagine_id` (da POST /v1/blog/media) o `immagine_base64`.")
+    img = await session.get(MediaImage, immagine_id)
+    if img is None:
+        raise _errore("L'immagine non esiste.", 404)
+    await assicura_miniatura(img)
+    return img.id
+
+
+@router.get("/media-posts")
+async def media_articoli(
+    session: DbSession,
+    stato: Optional[Literal["bozza", "pubblicato", "archiviato"]] = None,
+    lang: Optional[str] = Query(default=None, pattern="^[a-z]{2}$"),
+    pagina: int = Query(default=1, ge=1),
+    per_pagina: int = Query(default=25, ge=1, le=100),
+    chiave: ChiaveVerificata = Depends(richiede("blog:media")),
+) -> Dict[str, Any]:
+    """Tutti gli articoli, con copertina e immagini nel testo: per scegliere quali immagini rifare."""
+    q = select(BlogPost)
+    if stato:
+        q = q.where(BlogPost.stato == stato)
+    if lang:
+        q = q.where(BlogPost.lang == lang)
+    totale = int((await session.execute(select(func.count()).select_from(q.subquery()))).scalar_one())
+    q = q.order_by(BlogPost.created_at.desc()).limit(per_pagina).offset((pagina - 1) * per_pagina)
+    posts = list((await session.execute(q)).scalars())
+    return {
+        "totale": totale, "pagina": pagina, "per_pagina": per_pagina,
+        "articoli": [await _media_post_json(session, p, con_testo=False) for p in posts],
+    }
+
+
+@router.get("/media-posts/{post_id}")
+async def media_articolo(post_id: uuid.UUID, session: DbSession, chiave: ChiaveVerificata = Depends(richiede("blog:media"))) -> Dict[str, Any]:
+    """Un articolo con il testo intero: per capire di che cosa parla e dove un'immagine serve al discorso."""
+    return await _media_post_json(session, await _articolo_qualunque(session, post_id), con_testo=True)
+
+
+class CopertinaIn(BaseModel):
+    immagine_id: Optional[uuid.UUID] = None
+    immagine_base64: Optional[str] = None
+    alt: str = Field(min_length=3, max_length=200, description="Descrive l'immagine per chi non la vede (e per i motori).")
+
+
+@router.put("/posts/{post_id}/cover")
+async def cambia_copertina(
+    post_id: uuid.UUID, payload: CopertinaIn, session: DbSession, chiave: ChiaveVerificata = Depends(richiede("blog:media")),
+) -> Dict[str, Any]:
+    """Sostituisce la copertina di un articolo (qualunque, anche pubblicato). Tocca solo immagine e testo alternativo."""
+    p = await _articolo_qualunque(session, post_id)
+    prima = str(p.immagine_id) if p.immagine_id else None
+    nuova = await _immagine_scelta(session, payload.immagine_id, payload.immagine_base64)
+    try:
+        await BlogRepository(session).salva(p, {"immagine_id": nuova, "immagine_alt": _alt_pulito(payload.alt)}, autore_id=None)
+    except ErroreBlog as exc:
+        await session.rollback()
+        raise _errore(str(exc)) from exc
+    await AuditRepository(session).record(
+        action="blog.rest.cover", actor_id=None, target_type="blog_post", target_id=str(p.id),
+        before={"immagine_id": prima}, after={"chiave": chiave.prefisso, "immagine_id": str(p.immagine_id)},
+    )
+    risposta = await _media_post_json(session, p, con_testo=False)
+    await session.commit()
+    return risposta
+
+
+class SostituzioneInline(BaseModel):
+    #: Quale immagine del testo: per posizione (0 = la prima) o per indirizzo attuale.
+    indice: Optional[int] = Field(default=None, ge=0)
+    url_attuale: Optional[str] = None
+    immagine_id: Optional[uuid.UUID] = None
+    immagine_base64: Optional[str] = None
+    alt: Optional[str] = Field(default=None, max_length=200)
+
+
+class AggiuntaInline(BaseModel):
+    #: Dopo quale paragrafo (0 = il primo; i paragrafi sono separati da una riga vuota).
+    dopo_paragrafo: int = Field(ge=0)
+    immagine_id: Optional[uuid.UUID] = None
+    immagine_base64: Optional[str] = None
+    alt: str = Field(min_length=3, max_length=200)
+
+
+class ImmaginiInlineIn(BaseModel):
+    sostituisci: List[SostituzioneInline] = Field(default_factory=list, max_length=20)
+    aggiungi: List[AggiuntaInline] = Field(default_factory=list, max_length=10)
+    rimuovi: List[int] = Field(default_factory=list, max_length=20, description="Indici delle immagini da togliere.")
+
+
+@router.put("/posts/{post_id}/inline")
+async def cambia_immagini_nel_testo(
+    post_id: uuid.UUID, payload: ImmaginiInlineIn, session: DbSession, chiave: ChiaveVerificata = Depends(richiede("blog:media")),
+) -> Dict[str, Any]:
+    """Sostituisce, aggiunge o toglie immagini nel testo di un articolo (qualunque). Cambiano solo le righe delle
+    immagini; il resto del testo resta com'è, e la versione precedente si conserva."""
+    p = await _articolo_qualunque(session, post_id)
+    testo = p.testo
+    trovate = list(_IMMAGINE_MD.finditer(testo))
+
+    # Le sostituzioni e le rimozioni si decidono sugli indici del testo di partenza, poi si applicano dal fondo.
+    modifiche: Dict[int, Optional[str]] = {}
+    for s in payload.sostituisci:
+        if s.indice is not None:
+            indice = s.indice
+        elif s.url_attuale:
+            indice = next((i for i, m in enumerate(trovate) if m.group(2) == s.url_attuale), -1)
+        else:
+            raise _errore("Ogni sostituzione indica `indice` o `url_attuale`.")
+        if not 0 <= indice < len(trovate):
+            raise _errore(f"Nel testo non c'è l'immagine {s.indice if s.indice is not None else s.url_attuale}.")
+        nuova = await _immagine_scelta(session, s.immagine_id, s.immagine_base64)
+        alt = _alt_pulito(s.alt) if s.alt else trovate[indice].group(1)
+        modifiche[indice] = f"![{alt}]({url_immagine(nuova)})"
+    for indice in payload.rimuovi:
+        if not 0 <= indice < len(trovate):
+            raise _errore(f"Nel testo non c'è l'immagine {indice}.")
+        modifiche[indice] = None
+    for indice in sorted(modifiche, reverse=True):
+        m = trovate[indice]
+        nuovo = modifiche[indice]
+        if nuovo is None:
+            # Via l'immagine e, se stava su una riga da sola, anche la riga vuota che la separava dal seguito.
+            prima, dopo = testo[: m.start()].rstrip(" \t"), testo[m.end():]
+            if (prima.endswith("\n\n") or not prima) and dopo.startswith("\n\n"):
+                dopo = dopo[2:]
+            testo = prima + dopo
+        else:
+            testo = testo[: m.start()] + nuovo + testo[m.end():]
+
+    if payload.aggiungi:
+        paragrafi = testo.split("\n\n")
+        inserimenti: Dict[int, List[str]] = {}
+        for a in payload.aggiungi:
+            if a.dopo_paragrafo >= len(paragrafi):
+                raise _errore(f"Il testo ha {len(paragrafi)} paragrafi: `dopo_paragrafo` va da 0 a {len(paragrafi) - 1}.")
+            nuova = await _immagine_scelta(session, a.immagine_id, a.immagine_base64)
+            inserimenti.setdefault(a.dopo_paragrafo, []).append(f"![{_alt_pulito(a.alt)}]({url_immagine(nuova)})")
+        uscita: List[str] = []
+        for i, par in enumerate(paragrafi):
+            uscita.append(par)
+            uscita.extend(inserimenti.get(i, []))
+        testo = "\n\n".join(uscita)
+
+    if testo != p.testo:
+        try:
+            await BlogRepository(session).salva(p, {"testo": testo}, autore_id=None)
+        except ErroreBlog as exc:
+            await session.rollback()
+            raise _errore(str(exc)) from exc
+    await AuditRepository(session).record(
+        action="blog.rest.inline", actor_id=None, target_type="blog_post", target_id=str(p.id),
+        after={"chiave": chiave.prefisso, "sostituite": len(payload.sostituisci), "aggiunte": len(payload.aggiungi),
+               "rimosse": len(payload.rimuovi)},
+    )
+    risposta = await _media_post_json(session, p, con_testo=True)
+    await session.commit()
+    return risposta
