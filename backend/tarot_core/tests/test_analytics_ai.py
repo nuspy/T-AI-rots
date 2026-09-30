@@ -98,3 +98,19 @@ async def test_vista_dell_esploratore_e_sezione_sconosciuta(admin, session):
 
 async def test_solo_admin(client):
     assert (await client.post("/admin/analytics/analizza", json={"sezione": "traffico"})).status_code == 403
+
+
+async def test_i_risultati_di_colab_entrano_come_fatti(admin, session, prompt_visti):
+    import uuid
+
+    from ..domain.analytics_models import TABELLE
+
+    await session.execute(TABELLE.importati.insert().values(
+        id=uuid.uuid4(), titolo="Segmenti RFM", descrizione="k-means su 90 giorni",
+        colonne=["segmento", "clienti"], righe=[["fedeli", 12], ["a rischio", 7]],
+    ))
+    await session.commit()
+    analisi = (await admin.post("/admin/analytics/analizza", json={"sezione": "ricavi", "giorni": 30})).json()
+    studi = [f for f in analisi["fatti"] if f["sezione"].startswith("Studio Colab «Segmenti RFM»")]
+    assert [f["testo"] for f in studi] == ["segmento: fedeli; clienti: 12.", "segmento: a rischio; clienti: 7."]
+    assert "Segmenti RFM" in prompt_visti[-1]["utente"]

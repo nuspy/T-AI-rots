@@ -18,6 +18,7 @@ from ...domain.impostazioni_repositories import correnti_chat, pubblico_chat
 from ...llm.compiti import Compito
 from ...tarot.chat_proattiva import genera_turno
 from ...tarot.memoria_retrieval import formatta_memorie
+from ...analytics import eventi as analytics
 from ..deps import aggiorna_assegnazioni, provider_per
 
 router = APIRouter(tags=["chat"])
@@ -69,6 +70,7 @@ async def avvio(user: CurrentUser, session: DbSession) -> Dict[str, Any]:
         if esito.proposta else None
     )
     turno = await chat_repositories.aggiungi(session, user.id, ruolo="ai", testo=esito.messaggio, proposta=proposta)
+    await analytics.evento(session, analytics.CHAT_AVVIO, utente_id=user.id, proprieta={"proposta": proposta is not None})
     await session.commit()
     return {"turno": _turno_json(turno)}
 
@@ -78,6 +80,7 @@ async def messaggio(payload: MessaggioIn, user: CurrentUser, session: DbSession)
     await aggiorna_assegnazioni(session)
     turni_prima = await chat_repositories.recenti(session, user.id)
     await chat_repositories.aggiungi(session, user.id, ruolo="utente", testo=payload.testo.strip())
+    await analytics.evento(session, analytics.CHAT_MESSAGGIO, utente_id=user.id)
     await session.commit()
 
     memorie = await _memorie_recenti(session, user.id)

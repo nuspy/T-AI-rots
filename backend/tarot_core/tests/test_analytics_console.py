@@ -124,6 +124,36 @@ async def test_ogni_misura_e_dimensione_del_catalogo_si_esegue(session, nome):
                                            filtri=[{"dimensione": d, "operatore": "contiene", "valori": ["x"]}]), k_minimo=5)
 
 
+async def test_ritorni_e_giorni_tra_le_visite(session):
+    adesso = datetime.now(timezone.utc)
+    # Col consenso (id del browser): due visite a due giorni di distanza.
+    await _visita(session, "198.51.100.20", IPHONE, {"n": "page_view", "p": "/"}, quando=adesso - timedelta(days=2), id_browser="b-ritorno")
+    await _visita(session, "198.51.100.21", IPHONE, {"n": "page_view", "p": "/"}, quando=adesso, id_browser="b-ritorno")
+    # Senza consenso né accesso: non si sa se è nuovo.
+    await _visita(session, "198.51.100.22", WINDOWS, {"n": "page_view", "p": "/"}, quando=adesso)
+    q = Interrogazione(sorgente="visite", misure=["sessioni", "sessioni_di_ritorno", "giorni_tra_visite"],
+                       dimensioni=["tipo_visitatore"], da=OGGI - timedelta(days=3), a=OGGI)
+    r = await esegui(session, CATALOGO, q)
+    per_tipo = {x["tipo_visitatore"]: x for x in r.righe}
+    assert per_tipo["di ritorno"]["sessioni"] == 1 and per_tipo["di ritorno"]["giorni_tra_visite"] == 2.0
+    assert per_tipo["nuovo"]["sessioni"] == 1
+    assert per_tipo["non noto (senza cookie né accesso)"]["sessioni"] == 1
+    assert r.totali["sessioni_di_ritorno"] == 1
+
+
+async def test_paese_e_visite_prima_degli_iscritti(session, utente):
+    from lanterna.eventi import segna_registrazione
+
+    adesso = datetime.now(timezone.utc)
+    await segna_registrazione(session, TABELLE, utente.id)
+    await session.execute(TABELLE.utenti.update().values(visite_prima_registrazione=3))
+    s = TABELLE.sessioni
+    sessione_id = await _visita(session, "198.51.100.23", IPHONE, {"n": "page_view", "p": "/"}, quando=adesso, utente_id=utente.id)
+    await session.execute(s.update().where(s.c.id == sessione_id).values(paese="HU"))
+    r = await esegui(session, CATALOGO, _q(sorgente="utenti", misure=["utenti"], dimensioni=["paese", "visite_prima_fascia"]))
+    assert r.righe == [{"paese": "HU", "visite_prima_fascia": "2-3", "utenti": 1}]
+
+
 async def test_intervallo_troppo_lungo(session):
     with pytest.raises(ErroreInterrogazione):
         await esegui(session, CATALOGO, Interrogazione(sorgente="visite", misure=["sessioni"], da=date(2020, 1, 1), a=OGGI))

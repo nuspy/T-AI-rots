@@ -115,9 +115,27 @@ async def raccogli_fatti(session, sezione: str, da: date, a: date, vista: Option
         q = _con_confronto(vista.model_copy(update={"da": da, "a": a}))
         r = await esegui(session, catalogo.CATALOGO, q, fuso=FUSO, k_minimo=K_MINIMO)
         da_risultato(fatti, catalogo.CATALOGO[q.sorgente].etichetta, r, righe_max=12)
+        return fatti  # una vista dell'Esploratore parla solo di sé
     else:
         raise ValueError(f"sezione sconosciuta: {sezione}")
+    await _da_studi(session, fatti)
     return fatti
+
+
+async def _da_studi(session, fatti: Fatti, *, quanti: int = 2, giorni: int = 90, righe: int = 5) -> None:
+    """Gli ultimi risultati rimandati dai notebook (Colab), come fatti: una segmentazione o una
+    previsione fatta fuori può spiegare i numeri della console. Solo le prime righe di ciascuno."""
+    t = TABELLE.importati
+    limite = datetime.now(ZoneInfo("UTC")) - timedelta(days=giorni)
+    studi = (await session.execute(
+        select(t.c.titolo, t.c.descrizione, t.c.colonne, t.c.righe)
+        .where(t.c.created_at >= limite).order_by(desc(t.c.created_at)).limit(quanti)
+    )).all()
+    for titolo, descrizione, colonne, valori in studi:
+        for riga in (valori or [])[:righe]:
+            coppie = "; ".join(f"{c}: {v}" for c, v in zip(colonne, riga))
+            numeri = [v for v in riga if isinstance(v, (int, float)) and not isinstance(v, bool)]
+            fatti.aggiungi(f"Studio Colab «{titolo}»" + (f" ({descrizione[:80]})" if descrizione else ""), coppie + ".", *numeri)
 
 
 # ---- impostazioni ------------------------------------------------------------------------------

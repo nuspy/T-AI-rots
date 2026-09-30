@@ -16,6 +16,7 @@ import { BottoniEsporta } from "./esporta";
 import { PannelloAI } from "./pannello-ai";
 
 const MISURE = ["sessioni", "visitatori", "pagine", "tasso_coinvolgimento", "tempo_medio", "utenti"];
+const MISURE_RITORNI = ["sessioni_di_ritorno", "giorni_tra_visite", "sessioni_estese"];
 
 export default function Traffico() {
   const { giorni, da, a, imposta } = usePeriodo();
@@ -23,6 +24,8 @@ export default function Traffico() {
   const base = { da, a };
 
   const totali = useRisultato({ ...base, sorgente: "visite", misure: MISURE, confronto: "precedente" });
+  const ritorni = useRisultato({ ...base, sorgente: "visite", misure: MISURE_RITORNI, confronto: "precedente" });
+  const tipi = useRisultato({ ...base, sorgente: "visite", misure: ["sessioni"], dimensioni: ["tipo_visitatore"] });
   const andamento = useRisultato({ ...base, sorgente: "visite", misure: ["sessioni"], granularita: "giorno", limite: 400 });
   const per = (dimensione: string) => ({ ...base, sorgente: "visite", misure: ["sessioni"], dimensioni: [dimensione], limite: 10 });
   const canali = useRisultato(per("canale"));
@@ -83,6 +86,13 @@ export default function Traffico() {
               precedente={p?.tempo_medio ?? null} formato={(n) => formatta(n, "secondi")} />
             <Tessera etichetta="Utenti registrati" valore={Number(t.utenti)} precedente={p ? Number(p.utenti) : null}
               nota="con l'accesso fatto" />
+            <Tessera etichetta="Sessioni di ritorno" valore={ritorni.dati ? Number(ritorni.dati.totali.sessioni_di_ritorno) : null}
+              precedente={ritorni.dati?.confronto ? Number(ritorni.dati.confronto.totali.sessioni_di_ritorno) : null}
+              nota={`riconoscibili solo con accesso o cookie (${formatta(Number(ritorni.dati?.totali.sessioni_estese ?? 0))} sessioni col consenso)`} />
+            <Tessera etichetta="Giorni fra una visita e l'altra" meglio="giu"
+              valore={ritorni.dati?.totali.giorni_tra_visite == null ? null : Number(ritorni.dati.totali.giorni_tra_visite)}
+              precedente={ritorni.dati?.confronto?.totali.giorni_tra_visite ?? null} formato={(n) => formatta(n, "decimale")}
+              nota="media, per chi torna" />
           </div>
 
           <Colonne
@@ -93,6 +103,8 @@ export default function Traffico() {
           />
 
           <div className={stili.coppie}>
+            <Barre titolo="Nuovi o di ritorno" descrizione="Senza cookie né accesso non si può sapere: lo diciamo invece di contarli come nuovi."
+              unita="sessioni" barre={barreDa(tipi.dati, "tipo_visitatore", "sessioni")} onScegli={tocca("tipo_visitatore")} />
             <Barre titolo="Canali" descrizione="Da dove arriva la visita: motori, social, assistenti AI, campagne…"
               unita="sessioni" barre={barreDa(canali.dati, "canale", "sessioni")} onScegli={tocca("canale")} />
             <Barre titolo="Siti di provenienza" unita="sessioni" barre={barreDa(referrer.dati, "referrer", "sessioni")}

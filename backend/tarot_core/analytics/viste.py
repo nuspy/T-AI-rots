@@ -27,6 +27,8 @@ def traffico(da: date, a: date) -> List[Voce]:
         ("Campagne", _q(da, a, "visite", ["sessioni", "utenti", "tasso_coinvolgimento"], ["campagna", "sorgente_utm"], limite=100), ""),
         ("Paesi", _q(da, a, "visite", ["sessioni", "visitatori"], ["paese"], limite=50), "stimati dall'IP"),
         ("Dispositivi", _q(da, a, "visite", m, ["dispositivo", "so"]), ""),
+        ("Nuovi e di ritorno", _q(da, a, "visite", ["sessioni", "giorni_tra_visite"], ["tipo_visitatore"]),
+         "ritorni riconoscibili solo con accesso o cookie"),
         ("Pagine d'ingresso", _q(da, a, "visite", ["sessioni", "tasso_coinvolgimento"], ["ingresso"], limite=50), ""),
         ("Pagine più viste", _q(
             da, a, "eventi", ["eventi", "sessioni"], ["percorso"], limite=50,
@@ -48,6 +50,8 @@ def utenti(da: date, a: date) -> List[Voce]:
         ("Età e genere", _q(da, a, "utenti", ["utenti"], ["fascia_eta", "genere"], limite=100), ""),
         ("Primo canale", _q(da, a, "utenti", m, ["primo_canale"]), "per chi si è iscritto con gli analytics attivi"),
         ("Prima campagna", _q(da, a, "utenti", m, ["prima_campagna", "prima_sorgente"], limite=100), ""),
+        ("Paese", _q(da, a, "utenti", ["utenti"], ["paese"], limite=50), "dall'ultima visita con l'accesso"),
+        ("Visite prima di iscriversi", _q(da, a, "utenti", ["utenti"], ["visite_prima_fascia"]), "solo con i cookie accettati"),
     ]
 
 
@@ -76,8 +80,10 @@ def letture(da: date, a: date) -> List[Voce]:
 
 def rapporto(da: date, a: date) -> List[Voce]:
     """Il rapporto settimanale: il meglio di ogni collezione, in poche pagine."""
-    t, u, r, l = traffico(da, a), utenti(da, a), ricavi(da, a), letture(da, a)
-    return [t[0], t[1], t[7], u[0], u[4], r[1], r[2], l[1]]
+    tutte = {titolo: voce for gruppo in (traffico, utenti, ricavi, letture) for voce in gruppo(da, a) for titolo in [voce[0]]}
+    scelte = ["Visite al giorno", "Canali", "Nuovi e di ritorno", "Pagine più viste", "Iscritti al giorno", "Primo canale",
+              "Per piano", "Per primo canale", "Per stesa"]
+    return [tutte[titolo] for titolo in scelte]
 
 
 COLLEZIONI: Dict[str, Tuple[str, Callable[[date, date], List[Voce]]]] = {

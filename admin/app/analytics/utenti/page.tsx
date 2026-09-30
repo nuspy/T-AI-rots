@@ -30,6 +30,8 @@ export default function Utenti() {
   const canale = useRisultato(per("primo_canale"));
   const campagna = useRisultato(per("prima_campagna"));
   const lingua = useRisultato(per("lingua_account"));
+  const paese = useRisultato(per("paese"));
+  const visitePrima = useRisultato(per("visite_prima_fascia"));
   const incrocio = useRisultato({ ...base, misure: ["utenti"], dimensioni: ["fascia_eta", "genere"], limite: 100 });
   const valoreCampagne = useRisultato({
     da, a, sorgente: "acquisti", misure: ["ricavi", "clienti", "acquisti"], dimensioni: ["prima_campagna"], limite: 20,
@@ -90,6 +92,11 @@ export default function Utenti() {
               barre={barreDa(canale.dati, "primo_canale", "utenti")} onScegli={tocca("primo_canale")} />
             <Barre titolo="Prima campagna" unita="iscritti" barre={barreDa(campagna.dati, "prima_campagna", "utenti")}
               onScegli={tocca("prima_campagna")} />
+            <Barre titolo="Paese" descrizione="Dall'IP dell'ultima visita con l'accesso fatto." unita="iscritti"
+              barre={barreDa(paese.dati, "paese", "utenti")} onScegli={tocca("paese")} />
+            <Barre titolo="Dopo quante visite si iscrivono" descrizione="Solo per chi aveva accettato i cookie prima di iscriversi."
+              unita="iscritti" barre={barreDa(visitePrima.dati, "visite_prima_fascia", "utenti")}
+              colonneTabella={[{ titolo: "quota", valori: (visitePrima.dati?.righe ?? []).map((r) => formatta(Number(r.utenti) / Math.max(1, Number(visitePrima.dati?.totali.utenti ?? 1)), "percento")) }]} />
             <Barre titolo="Lingua dell'account" unita="iscritti" barre={barreDa(lingua.dati, "lingua_account", "utenti")} />
           </div>
 

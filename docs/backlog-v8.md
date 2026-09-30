@@ -150,8 +150,13 @@ raccolta in produzione prima del resto). Fasi:
   import firmato HMAC, notebook precompilato da scaricare, pagina Studi.
 - **Da fare prima del secondo rilascio**: prova a vista della console a 360 px e 1280 px (rimandata
   per memoria del PC impegnata), deploy di API/sito/console col manifest completo (CronJob notturno e
-  settimanale), destinatari del rapporto. I risultati importati da Colab non entrano ancora come fatti
-  nell'interpretazione AI.
+  settimanale), destinatari del rapporto.
+- **Controllo di completezza (2026-09-30) — fatto.** Aggiunti: visitatori nuovi/di ritorno e giorni
+  fra le visite (dove riconoscibili), paese degli iscritti e «dopo quante visite si iscrivono»,
+  revoca del consenso cookie dalla pagina Privacy, risultati di Colab come fatti per l'AI, eventi
+  della chat proattiva, sezione Analytics nel LEGGIMI, confronto coi prodotti commerciali
+  (`docs/ricerca-analytics.md`, punto 8). Proposte facoltative da decidere: annotazioni sui grafici,
+  avvisi automatici, parole chiave dalla Search Console, obiettivi configurabili, tempo reale.
 
 ## 4. Statistiche di ingresso (traffico)
 

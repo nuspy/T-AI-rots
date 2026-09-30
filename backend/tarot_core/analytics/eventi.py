@@ -31,6 +31,8 @@ COUPON_RISCATTATO = "coupon_riscattato"
 INVITO_RISCATTATO = "invito_riscattato"
 VOTO_MAZZO = "voto_mazzo"
 CARTA_DEL_GIORNO = "carta_del_giorno"
+CHAT_AVVIO = "chat_avvio"
+CHAT_MESSAGGIO = "chat_messaggio"
 
 
 async def evento(

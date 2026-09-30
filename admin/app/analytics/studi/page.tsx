@@ -28,7 +28,7 @@ export default function StudiPagina() {
           <p className={comuni.sottotitolo}>
             Per le analisi che la console non fa: scarica un notebook già pronto, aprilo in Google Colab (File → Carica
             notebook) e incolla il token quando lo chiede. Il notebook riceve solo aggregati (gruppi di almeno 5 persone) e
-            può rimandare qui i suoi risultati.
+            può rimandare qui i suoi risultati, che l&apos;interpretazione AI usa per 90 giorni.
           </p>
         </div>
       </div>

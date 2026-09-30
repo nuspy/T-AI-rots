@@ -12,7 +12,7 @@ Regole:
 """
 from __future__ import annotations
 
-from sqlalchemy import DateTime, Integer, Numeric, String, and_, case, cast, func, literal, select
+from sqlalchemy import DateTime, Integer, Numeric, String, and_, case, cast, exists, func, literal, or_, select
 
 from lanterna.interroga import Dimensione, Misura, Sorgente
 
@@ -86,6 +86,38 @@ def _dim_persona(ut=UT, riferimento=None):
     }
 
 
+# ---- ritorni --------------------------------------------------------------------------------------
+#
+# Senza cookie un ritorno si riconosce solo in due casi: l'account (chi ha fatto l'accesso) o
+# l'identificativo esteso (chi ha accettato i cookie). Per tutti gli altri il tipo di visitatore è
+# «non noto», e lo si dice invece di contarli come nuovi.
+
+
+def _stesso_visitatore(s2):
+    return or_(
+        and_(S.c.utente_id.is_not(None), s2.c.utente_id == S.c.utente_id),
+        and_(S.c.visitatore_esteso.is_not(None), s2.c.visitatore_esteso == S.c.visitatore_esteso),
+    )
+
+
+def _visita_precedente():
+    s2 = S.alias("precedente")
+    return select(func.max(s2.c.inizio)).where(_stesso_visitatore(s2), s2.c.inizio < S.c.inizio).scalar_subquery()
+
+
+def _di_ritorno():
+    s2 = S.alias("precedente")
+    return exists().where(_stesso_visitatore(s2), s2.c.inizio < S.c.inizio)
+
+
+def _tipo_visitatore():
+    return case(
+        (_di_ritorno(), literal("di ritorno")),
+        (or_(S.c.utente_id.is_not(None), S.c.visitatore_esteso.is_not(None)), literal("nuovo")),
+        else_=literal("non noto (senza cookie né accesso)"),
+    )
+
+
 VISITE = Sorgente(
     etichetta="Visite",
     descrizione="Una riga per sessione (30 minuti di inattività la chiudono). «Visitatori» somma gli "
@@ -109,8 +141,18 @@ VISITE = Sorgente(
             "Sessioni col consenso", lambda: func.count(S.c.visitatore_esteso),
             descrizione="Il campione su cui si misurano i ritorni",
         ),
+        "sessioni_di_ritorno": Misura(
+            "Sessioni di ritorno", lambda: func.count().filter(_di_ritorno()),
+            descrizione="Di chi era già venuto (riconoscibile solo con l'accesso o i cookie accettati)",
+        ),
+        "giorni_tra_visite": Misura(
+            "Giorni medi dalla visita precedente",
+            lambda: arrotonda(func.avg(func.extract("epoch", S.c.inizio - _visita_precedente()) / 86400.0), 1),
+            "decimale", "Solo per i ritorni riconoscibili",
+        ),
     },
     dimensioni={
+        "tipo_visitatore": Dimensione("Nuovo o di ritorno", _tipo_visitatore),
         "canale": Dimensione("Canale", lambda: S.c.canale),
         "referrer": Dimensione("Sito di provenienza", lambda: _nd(S.c.referrer_dominio)),
         "campagna": Dimensione("Campagna", lambda: _nd(S.c.utm_campagna)),
@@ -207,7 +249,27 @@ UTENTI = Sorgente(
             "Solo per chi ha dato il consenso del banner prima di iscriversi",
         ),
     },
-    dimensioni={**_dim_persona(), **_dim_attribuzione()},
+    dimensioni={
+        **_dim_persona(),
+        **_dim_attribuzione(),
+        "paese": Dimensione(
+            "Paese (ultima visita)", lambda: _nd(
+                select(S.c.paese).where(S.c.utente_id == UT.c.id, S.c.paese.is_not(None))
+                .order_by(S.c.inizio.desc()).limit(1).scalar_subquery()
+            ),
+            descrizione="Dall'IP dell'ultima visita con l'accesso fatto; n.d. per chi si è opposto",
+        ),
+        "visite_prima_fascia": Dimensione(
+            "Visite prima di iscriversi", lambda: case(
+                (U.c.visite_prima_registrazione.is_(None), literal("non noto (senza cookie)")),
+                (U.c.visite_prima_registrazione <= 1, literal("1 (al primo arrivo)")),
+                (U.c.visite_prima_registrazione <= 3, literal("2-3")),
+                (U.c.visite_prima_registrazione <= 9, literal("4-9")),
+                else_=literal("10 o più"),
+            ),
+            descrizione="Solo per chi aveva accettato i cookie prima di iscriversi",
+        ),
+    },
 )
 
 LETTURE = Sorgente(

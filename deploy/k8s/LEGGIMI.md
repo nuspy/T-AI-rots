@@ -264,6 +264,35 @@ non configurato si salta, uno che fallisce non ferma gli altri. Esito e storico 
 Prova a mano del CronJob: `kubectl -n tarots create job --from=cronjob/tarots-notifica-motori prova-notifica`,
 poi `kubectl -n tarots logs job/prova-notifica`.
 
+## Analytics (v8, libreria `lanterna`)
+
+Raccolta nostra, nel database dell'API (tabelle `an_*`): il sito manda i lotti a `POST /api/e`, l'API
+aggiunge gli eventi di business (iscrizione, letture, acquisti…). Nessun cookie per la misura di base;
+l'IP serve solo in memoria (paese/città da DB-IP City Lite, impronta giornaliera) e non si salva mai.
+Console: **Analytics** (Traffico, Utenti, Imbuti, Ricavi, Esploratore, Rapporti, Studi, Impostazioni).
+
+- **Spegnere la raccolta** senza ricostruire: `TAROT_ANALYTICS_ATTIVI=false` nel deployment dell'API
+  (l'endpoint risponde 204 e scarta tutto; gli eventi di business non si scrivono).
+- **Paese e città**: il file `/opt/geo/citta.mmdb` è nell'immagine (build con `GEO_MESE`, vedi
+  «Aggiornare»); `TAROT_ANALYTICS_GEO` lo indica. Senza file mancano solo paese e città.
+- **Giro notturno** (`tarots-analytics-notte`, 3:30): riepilogo giornaliero anonimo degli ultimi tre
+  giorni (idempotente) e cancellazione di sessioni ed eventi oltre i 25 mesi.
+  Prova: `kubectl -n tarots create job --from=cronjob/tarots-analytics-notte prova-analytics`.
+- **Rapporto settimanale** (`tarots-rapporto-settimanale`, lunedì 0:30): email a chi è in elenco in
+  console → Analytics → Rapporti, via Stalwart (`mail.tadamoo.com:465`, `noreply@tarots.chat`, la
+  password è `smtp-password` in `tarots-secrets`, la stessa di Keycloak). Un solo tentativo
+  (`backoffLimit: 0`): un rapporto rimandato arriverebbe doppio. Esito nella console e in
+  `kubectl -n tarots logs job/<nome>`. Prima volta: aggiungere un destinatario e premere «Invia ora»
+  per verificare che Stalwart accetti l'invio.
+- **Interpretazione AI**: il modello si sceglie in console → Modelli → «Interpretazione dei dati»; il
+  contesto del business in Analytics → Impostazioni. Riceve solo aggregati (gruppi di almeno 5 persone).
+- **Colab**: i token si creano in Analytics → Studi; nel database resta solo la loro impronta.
+  L'export per i notebook è `GET /api/analytics/export/<collezione>`, l'import firmato
+  `POST /api/analytics/importa`.
+- **Opposizione e consenso**: l'utente si oppone al legame visite-account dal profilo; il consenso
+  dei cookie (livello esteso) si cambia dal banner o dalla pagina Privacy. Base giuridica e bilanciamento
+  in `docs/privacy/lia-analytics.md`.
+
 ## Console di Keycloak
 
 Non è pubblica. Da un terminale sul server:

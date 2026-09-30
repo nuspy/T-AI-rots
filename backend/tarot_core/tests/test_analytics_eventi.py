@@ -79,3 +79,11 @@ async def test_opposizione_dal_profilo(client, session):
     await client.get("/me/profile")
     assert all(e["utente_id"] is None for e in await _eventi(session))
     assert (await client.put("/me/statistiche", json={"opposizione": False})).json() == {"opposizione": False}
+
+
+async def test_la_chat_emette_eventi_senza_il_testo(client, session):
+    r = await client.post("/chat/proattiva/messaggio", json={"testo": "Ho litigato con mia sorella Giulia"})
+    assert r.status_code == 200, r.text
+    [evento] = await _eventi(session, "chat_messaggio")
+    assert evento["utente_id"] is not None and evento["proprieta"] == {}
+    assert "Giulia" not in json.dumps(await _eventi(session), default=str)

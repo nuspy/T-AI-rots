@@ -20,5 +20,12 @@ export function impostaConsensoAnalytics(valore: "accettato" | "rifiutato" | nul
   if (prima && !esteso) dimentica(idVisitatore(), `${API}/e/dimentica`);
 }
 
+/** Revoca esplicita (pagina privacy): il server dimentica l'identificativo di questo browser. Solo
+ *  per chi aveva accettato: a chi non ha mai accettato non si crea nessun identificativo. */
+export function dimenticaAnalytics(): void {
+  esteso = false;
+  dimentica(idVisitatore(), `${API}/e/dimentica`);
+}
+
 /** L'identificativo del browser, solo col consenso. */
 export const idPerAnalytics = (): string | null => (esteso ? idVisitatore() : null);

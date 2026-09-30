@@ -6,6 +6,7 @@
 
 import { useState } from "react";
 import { leggiConsenso, registraConsenso } from "@/lib/api";
+import { dimenticaAnalytics, impostaConsensoAnalytics } from "@/lib/analytics";
 import { useLingua } from "@/lib/lingua";
 import { useSessione } from "@/lib/sessione";
 import { useCarica } from "@/lib/usa";
@@ -20,6 +21,21 @@ export default function PaginaPrivacy() {
   const [locale, setLocale] = useState<"accettato" | "rifiutato" | null>(null);
 
   const attuale = locale ?? consenso.dati?.condivisione_dati_partner ?? null;
+  /* Il consenso dei cookie (il livello esteso degli analytics) si cambia qui quando si vuole: revocarlo
+   * deve essere facile quanto darlo, e fa dimenticare l'identificativo del browser anche al server. */
+  const [cookieLocale, setCookieLocale] = useState<"accettato" | "rifiutato" | null>(null);
+  const cookie = cookieLocale ?? consenso.dati?.cookie ?? null;
+  const scegliCookie = async (valore: "accettato" | "rifiutato") => {
+    setInCorso(true);
+    try {
+      await registraConsenso(sessione.token, "cookie", valore);
+      if (valore === "rifiutato" && cookie === "accettato") dimenticaAnalytics();
+      else impostaConsensoAnalytics(valore);
+      setCookieLocale(valore);
+    } finally {
+      setInCorso(false);
+    }
+  };
 
   const scegli = async (valore: "accettato" | "rifiutato") => {
     setInCorso(true);
@@ -75,6 +91,21 @@ export default function PaginaPrivacy() {
         <p className={stili.nota}>{t.privacy_statistiche_account}</p>
         <p className={stili.nota}>{t.privacy_statistiche_esteso}</p>
         <p className={stili.nota}>{t.privacy_statistiche_conservazione}</p>
+        <div className={stili.linea} role="group" aria-label={t.privacy_cookie_titolo}>
+          <button type="button" className={cookie === "accettato" ? "bottone" : "bottone-secondario"} disabled={inCorso}
+            aria-pressed={cookie === "accettato"} onClick={() => scegliCookie("accettato")}>
+            {t.privacy_cookie_accetta}
+          </button>
+          <button type="button" className={cookie === "rifiutato" ? "bottone" : "bottone-secondario"} disabled={inCorso}
+            aria-pressed={cookie === "rifiutato"} onClick={() => scegliCookie("rifiutato")}>
+            {t.privacy_cookie_rifiuta}
+          </button>
+        </div>
+        {cookie && (
+          <p className={stili.nota} role="status">
+            {cookie === "accettato" ? t.privacy_cookie_stato_accettato : t.privacy_cookie_stato_rifiutato}
+          </p>
+        )}
         <p className={stili.nota}>
           {t.privacy_statistiche_geo}{" "}
           <a href="https://db-ip.com" rel="noopener" target="_blank">IP Geolocation by DB-IP</a> (CC BY 4.0)
