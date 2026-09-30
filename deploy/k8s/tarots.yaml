@@ -255,7 +255,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: tarots-api:v7
+          image: tarots-api:v7-2
           imagePullPolicy: IfNotPresent
           # Il CMD dell'immagine applica le migrazioni e poi serve.
           env:

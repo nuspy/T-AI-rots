@@ -34,7 +34,7 @@ from .base import (
 )
 from .json_mode import (
     DIALETTI, TENTATIVI_DI_BUDGET, TETTO_TOKEN,
-    FiltroPensieroInline, e_rifiuto_del_formato,
+    FiltroPensieroInline, JsonNonInterpretabile, e_rifiuto_del_formato,
     estrai_json, formato_risposta, pavimento_ragionamento, prossimo_budget,
 )
 
@@ -239,7 +239,7 @@ class OpenAICompatibleProvider(LLMProvider):
 
         for dialetto in dialetti:
             try:
-                testo = await self._genera_con_budget(request, dialetto)
+                testo = await self._genera_con_budget(request, dialetto, richiede_json=True)
             except GenerationError as exc:
                 if not e_rifiuto_del_formato(exc):
                     raise
@@ -265,9 +265,22 @@ class OpenAICompatibleProvider(LLMProvider):
         )
 
     async def _genera_con_budget(
-        self, request: GenerationRequest, dialetto: Optional[str]
+        self, request: GenerationRequest, dialetto: Optional[str], *, richiede_json: bool = False,
     ) -> str:
-        """Riprova con più spazio quando il modello esaurisce il budget."""
+        """Riprova con più spazio quando il modello esaurisce il budget.
+
+        `richiede_json`: chi chiama (`complete_json`) non si accontenta di un testo qualunque — se
+        alla fine non c'è traccia di una struttura JSON, non è "il modello ha risposto in prosa"
+        (`_sembra_troncato` non lo segnala perché non è un JSON aperto e mai chiuso): è quasi sempre
+        un modello che ragiona in prosa libera, senza tag `<think>` — vedi `FiltroPensieroInline`,
+        pensato per quelli con i tag — colto a metà pensiero dal budget, prima ancora di iniziare la
+        risposta vera. Bug osservato in produzione (2026-09-30): il validatore dell'intervista
+        (`max_tokens=200`) falliva con `JsonNonInterpretabile` — non un `GenerationError`, quindi
+        nemmeno il ripiego "il validatore non risponde, la domanda passa" scattava — su una risposta
+        che iniziava con `"Here's a thinking process:\\n\\n1. **Analyze User Input:**..."` e non
+        arrivava mai al JSON. Vale lo stesso rimedio del JSON troncato: più spazio, non un
+        fallimento immediato.
+        """
         # Il pavimento per i modelli che ragionano lo applica il costruttore
         # del payload, che vale anche per le chiamate non strutturate: qui
         # basta la scala dei tentativi.
@@ -296,6 +309,13 @@ class OpenAICompatibleProvider(LLMProvider):
                 # c'era e non scattava mai.
                 if _sembra_troncato(testo):
                     motivo = "JSON incompleto: struttura non chiusa"
+                elif richiede_json and not _contiene_json_valido(testo):
+                    # Non basta cercare una graffa: il ragionamento in prosa libera può nominarne
+                    # una (es. descrivendo lo schema atteso) senza mai emettere JSON vero — la
+                    # verifica deve essere il parser stesso, non un'euristica sulla presenza di un
+                    # carattere (bug osservato in produzione: `_contiene_json` diceva "c'è" e
+                    # `estrai_json` falliva comunque un attimo dopo, uscendo dal ripiego).
+                    motivo = "nessun JSON riconoscibile nella risposta (probabile ragionamento non concluso)"
                 else:
                     return testo
 
@@ -453,3 +473,17 @@ def _sembra_troncato(testo: str) -> bool:
             aperte -= 1
 
     return aperte > 0 or in_stringa
+
+
+def _contiene_json_valido(testo: str) -> bool:
+    """Vero se `estrai_json` riesce davvero a interpretare il testo.
+
+    Deliberatamente il parser stesso, non un'euristica sulla presenza di `{`/`[`: un modello che
+    ragiona in prosa libera può nominare una graffa (descrivendo lo schema atteso) senza mai
+    emettere JSON vero — un controllo sulla sola presenza del carattere direbbe "c'è" e lascerebbe
+    poi fallire `estrai_json` un attimo dopo, fuori da questo ripiego."""
+    try:
+        estrai_json(testo)
+    except JsonNonInterpretabile:
+        return False
+    return True

@@ -7,7 +7,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from tarot_core.llm.base import GenerationRequest, Message
+from tarot_core.llm.base import GenerationError, GenerationRequest, Message
 from tarot_core.llm.compiti import AssegnazioneModello, Compito, ModelloConfigurato, RegistroModelli
 from tarot_core.llm.openai_compatible import OpenAICompatibleProvider
 
@@ -98,3 +98,66 @@ def test_il_modello_ricavato_dalle_vecchie_impostazioni_porta_i_suoi_parametri(m
     finally:
         monkeypatch.delenv("TAROT_LLM_PARAMETRI")
         get_settings.cache_clear()
+
+
+async def test_complete_json_riprova_con_piu_budget_se_non_trova_json(monkeypatch):
+    """Bug reale in produzione (2026-09-30): il validatore dell'intervista (`max_tokens=200`)
+    riceveva un modello che ragiona in prosa libera, senza tag `<think>` ("Here's a thinking
+    process:..."), e falliva con `JsonNonInterpretabile` invece di riprovare con più spazio —
+    un `GenerationError` sarebbe stato gestito da chi chiama (`_giudica` in `intervista.py`),
+    questo mandava in 500 l'intera intervista, bloccando ogni lettura."""
+    p = OpenAICompatibleProvider(base_url="http://x/v1", default_model="m")
+    risposte = iter([
+        "Here's a thinking process:\n\n1. Analyze the question...",
+        '{"valida": false, "motivo": "troppo diretta"}',
+    ])
+    budget_usati = []
+
+    async def complete_finto(richiesta):
+        budget_usati.append(richiesta.max_tokens)
+        return next(risposte)
+
+    monkeypatch.setattr(p, "complete", complete_finto)
+    richiesta = GenerationRequest(messages=[Message("user", "?")], max_tokens=200, temperature=0.0)
+    dati = await p.complete_json(richiesta)
+
+    assert dati == {"valida": False, "motivo": "troppo diretta"}
+    assert budget_usati == [200, 600]
+
+
+async def test_complete_json_riprova_anche_se_il_pensiero_nomina_una_graffa(monkeypatch):
+    """Seconda causa dello stesso bug reale: la prima versione del fix cercava solo `{`/`[` nel
+    testo (`_contiene_json`), ma il ragionamento in prosa può nominare una graffa descrivendo lo
+    schema atteso ("l'output dovrebbe essere {'valida': bool}...") senza mai emettere JSON vero —
+    quel controllo diceva "c'è" e lasciava comunque fallire `estrai_json` un attimo dopo, fuori dal
+    ripiego. La verifica deve essere il parser stesso (`_contiene_json_valido`)."""
+    p = OpenAICompatibleProvider(base_url="http://x/v1", default_model="m")
+    risposte = iter([
+        "Let me think about the expected shape, something like {'valida': bool, 'motivo': str}, "
+        "but I have not produced the real answer yet, still reasoning about the question...",
+        '{"valida": false, "motivo": "troppo diretta"}',
+    ])
+
+    async def complete_finto(richiesta):
+        return next(risposte)
+
+    monkeypatch.setattr(p, "complete", complete_finto)
+    richiesta = GenerationRequest(messages=[Message("user", "?")], max_tokens=200, temperature=0.0)
+    dati = await p.complete_json(richiesta)
+
+    assert dati == {"valida": False, "motivo": "troppo diretta"}
+
+
+async def test_complete_json_si_arrende_con_generation_error_non_json_non_interpretabile(monkeypatch):
+    """Se il JSON non arriva mai nemmeno al tetto massimo, l'errore dev'essere `GenerationError`
+    (che i chiamanti già gestiscono con un ripiego) e non `JsonNonInterpretabile` (non gestito,
+    diventava un 500)."""
+    p = OpenAICompatibleProvider(base_url="http://x/v1", default_model="m")
+
+    async def complete_finto(richiesta):
+        return "Sto ancora pensando e non arrivo mai a una risposta strutturata."
+
+    monkeypatch.setattr(p, "complete", complete_finto)
+    richiesta = GenerationRequest(messages=[Message("user", "?")], max_tokens=200, temperature=0.0)
+    with pytest.raises(GenerationError):
+        await p.complete_json(richiesta)
