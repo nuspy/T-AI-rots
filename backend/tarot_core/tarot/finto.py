@@ -135,6 +135,13 @@ class ModelloFinto:
                 f"senza fretta di concludere. È una forza da riconoscere e da orientare, "
                 f"non una sentenza."
             )
+        if compito == "teaser":
+            # L'anteprima per chi non ha un account: due o tre frasi, che si fermano prima del consiglio.
+            return (
+                "Le carte che hai scelto descrivono un passaggio che chiede presenza più che velocità. "
+                "Al centro della stesa c'è una forza che merita di essere guardata da vicino, "
+                "e il modo in cui si lega alle altre dice molto della tua domanda…"
+            )
         if compito == "sintesi":
             # L'«Ordine del racconto» del messaggio: una tappa per riga.
             tappe = re.findall(

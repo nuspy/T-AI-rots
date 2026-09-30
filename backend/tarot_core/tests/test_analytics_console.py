@@ -224,6 +224,22 @@ async def test_imbuto_della_lettura(client, session, principal_admin):
     assert segmenti == {"mobile": [1, 1, 1, 1, 1, 1], "desktop": [1, 1, 1, 0, 0, 0]}
 
 
+async def test_imbuto_della_lettura_v2_separato_dal_sito(client, session, principal_admin):
+    """La lettura della v2 ha il suo imbuto; i suoi eventi non entrano in quello del sito, e viceversa."""
+    fasi_v2 = ["preparazione", "intervista", "taglio", "scelta", "rivelazione", "completata"]
+    await _visita(session, "198.51.100.7", IPHONE, {"n": "page_view", "p": "/v2/read"},
+                  *[{"n": "lettura_fase", "p": "/v2/read", "x": {"fase": f}} for f in fasi_v2])
+    await _visita(session, "198.51.100.8", WINDOWS, {"n": "page_view", "p": "/it/v2/read"},
+                  *[{"n": "lettura_fase", "p": "/it/v2/read", "x": {"fase": f}} for f in fasi_v2[:3]])
+    await session.commit()
+    client.identita.principal = principal_admin
+    r = await client.post("/admin/analytics/imbuto", json={"imbuto": "lettura_v2", "da": OGGI.isoformat(), "a": OGGI.isoformat()})
+    assert r.status_code == 200, r.text
+    assert [p["n"] for p in r.json()["passi"]] == [2, 2, 2, 2, 1, 1, 1]
+    r = await client.post("/admin/analytics/imbuto", json={"imbuto": "lettura", "da": OGGI.isoformat(), "a": OGGI.isoformat()})
+    assert [p["n"] for p in r.json()["passi"]] == [0, 0, 0, 0, 0, 0]
+
+
 async def test_imbuto_iscrizione_lega_l_evento_di_server_alla_visita(client, session, principal_admin):
     client.identita.principal = None
     intestazioni = {"user-agent": IPHONE, "x-real-ip": "198.51.100.7"}

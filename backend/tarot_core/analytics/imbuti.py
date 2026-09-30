@@ -3,6 +3,10 @@
 I percorsi sono quelli visibili nel browser, in tutte le lingue (inglese alla radice, italiano sotto
 `/it`, vedi `frontend/lib/percorsi.ts`). Le fasi della lettura sono quelle di `leggi/lettura.tsx`
 (evento `lettura_fase`).
+
+La v2 (`/v2`, `/it/v2`: `frontend/v2/lettura/lettura.tsx`) ha imbuti suoi: la lettura comincia con la
+preparazione (domanda, tipo, stesa) invece della scelta della stesa, e gli eventi della sua pagina portano il
+percorso della v2. Ogni passo della lettura è legato al percorso, così i due siti non si mescolano.
 """
 from __future__ import annotations
 
@@ -14,17 +18,33 @@ from . import eventi as ev
 
 Per = Literal["sessione", "utente"]
 
+_LEGGI = ("/leggi",)
+_LEGGI_V2 = ("/v2/read", "/it/v2/read")
+
 IMBUTI: Dict[str, Tuple[str, Per, List[Passo]]] = {
     "lettura": (
         "Lettura: dalla pagina al responso",
         "sessione",
         [
-            Passo("page_view", "Apre la pagina della lettura", percorsi=("/leggi",)),
-            Passo("lettura_fase", "Sceglie la stesa", {"fase": "stesa"}),
-            Passo("lettura_fase", "Intervista", {"fase": "intervista"}),
-            Passo("lettura_fase", "Sceglie le carte", {"fase": "scelta"}),
-            Passo("lettura_fase", "Rivela le carte", {"fase": "rivelazione"}),
-            Passo("lettura_fase", "Responso", {"fase": "completata"}),
+            Passo("page_view", "Apre la pagina della lettura", percorsi=_LEGGI),
+            Passo("lettura_fase", "Sceglie la stesa", {"fase": "stesa"}, percorsi=_LEGGI),
+            Passo("lettura_fase", "Intervista", {"fase": "intervista"}, percorsi=_LEGGI),
+            Passo("lettura_fase", "Sceglie le carte", {"fase": "scelta"}, percorsi=_LEGGI),
+            Passo("lettura_fase", "Rivela le carte", {"fase": "rivelazione"}, percorsi=_LEGGI),
+            Passo("lettura_fase", "Responso", {"fase": "completata"}, percorsi=_LEGGI),
+        ],
+    ),
+    "lettura_v2": (
+        "v2 · Lettura: dalla domanda all'interpretazione",
+        "sessione",
+        [
+            Passo("page_view", "Apre la lettura (v2)", percorsi=_LEGGI_V2),
+            Passo("lettura_fase", "Prepara domanda e stesa", {"fase": "preparazione"}, percorsi=_LEGGI_V2),
+            Passo("lettura_fase", "Intervista", {"fase": "intervista"}, percorsi=_LEGGI_V2),
+            Passo("lettura_fase", "Mescola e taglia", {"fase": "taglio"}, percorsi=_LEGGI_V2),
+            Passo("lettura_fase", "Sceglie le carte", {"fase": "scelta"}, percorsi=_LEGGI_V2),
+            Passo("lettura_fase", "Rivela le carte", {"fase": "rivelazione"}, percorsi=_LEGGI_V2),
+            Passo("lettura_fase", "Interpretazione", {"fase": "completata"}, percorsi=_LEGGI_V2),
         ],
     ),
     "iscrizione": (
@@ -42,6 +62,16 @@ IMBUTI: Dict[str, Tuple[str, Per, List[Passo]]] = {
         [
             Passo("page_view", "Apre i prezzi", percorsi=("/pricing", "/it/piano")),
             Passo("piano_scelto", "Sceglie un piano"),
+            Passo(ev.CHECKOUT_AVVIATO, "Va al pagamento"),
+            Passo(ev.ACQUISTO, "Paga"),
+        ],
+    ),
+    "acquisto_v2": (
+        "v2 · Prezzi → acquisto (iscritti)",
+        "utente",
+        [
+            Passo("page_view", "Apre i prezzi (v2)", percorsi=("/v2/pricing", "/it/v2/pricing")),
+            Passo("piano_scelto", "Sceglie un piano", percorsi=("/v2/pricing", "/it/v2/pricing")),
             Passo(ev.CHECKOUT_AVVIATO, "Va al pagamento"),
             Passo(ev.ACQUISTO, "Paga"),
         ],
