@@ -3,6 +3,7 @@
 /* Una lettura conclusa, dentro la mia storia: la domanda, il tavolo, il quadro, l'interpretazione, e il ritorno
  * sulla lettura («si è avverato?»), che il lettore terrà presente nelle prossime. */
 
+import { ProviderMazzoAttivo } from "@/lib/mazzo-attivo";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Markdown } from "@/app/(sito)/componenti/markdown";
@@ -85,6 +86,7 @@ export function DettaglioLettura({ id }: { id: string }) {
   };
 
   return (
+    <ProviderMazzoAttivo slug={lt.mazzo ?? null}>
     <LinguaNomi valore={ll}>
       <section className="band band-tight">
         <LinkV2 className="button button-quiet button-small" href={R.storia}>← {s.indietro}</LinkV2>
@@ -158,5 +160,6 @@ export function DettaglioLettura({ id }: { id: string }) {
         </div>
       </Modale>
     </LinguaNomi>
+    </ProviderMazzoAttivo>
   );
 }

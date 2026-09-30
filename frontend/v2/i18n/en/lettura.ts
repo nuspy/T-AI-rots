@@ -176,4 +176,5 @@ export const lettura = {
   cond_speciale: "In readings about two people the other person's name never appears: a symbol and the words “someone special” take its place.",
   cond_attivo: "The link is active: whoever opens it sees the reading, never your name.",
   cond_disattiva: "Turn the link off",
+  mazzo_titolo: "Which deck",
 };

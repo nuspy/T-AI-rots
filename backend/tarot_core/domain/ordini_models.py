@@ -75,7 +75,8 @@ class RigaOrdine(Base):
     stato_evasione: Mapped[Optional[str]] = mapped_column(String(12))
 
     ordine: Mapped[Ordine] = relationship(back_populates="righe")
-    deck: Mapped["Deck"] = relationship()  # noqa: F821 — solo per l'annotazione, risolto da SQLAlchemy per nome
+    #: Caricato con le righe (`selectin`): il nome del mazzo serve a ogni elenco di ordini (console, profilo).
+    deck: Mapped["Deck"] = relationship(lazy="selectin")  # noqa: F821 — solo per l'annotazione, risolto per nome
 
     __table_args__ = (
         CheckConstraint("tipo in ('digitale', 'pdf', 'fisico')", name="ck_righe_ordine_tipo"),

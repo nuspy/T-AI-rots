@@ -59,10 +59,15 @@ export function BottonePdfV2({ ordineId, deckId, nome }: { ordineId: string; dec
   );
 }
 
-/** Il prezzo di listino di un formato (per il digitale, quello scontato se c'è un'offerta). `null`: non in vendita. */
+/** Il listino di un formato. `null`: non in vendita. */
+function listinoDi(m: Mazzo, tipo: TipoVoceOrdine): number | null {
+  return tipo === "digitale" ? m.prezzo_digitale : tipo === "pdf" ? m.prezzo_stampa : m.prezzo_fisico;
+}
+
+/** Il prezzo da pagare adesso: lo scontato se l'offerta vale per quel formato, altrimenti il listino. */
 function prezzoDi(m: Mazzo, tipo: TipoVoceOrdine): number | null {
-  if (tipo === "digitale") return m.offerta_attiva ? (m.prezzo_digitale_scontato ?? m.prezzo_digitale) : m.prezzo_digitale;
-  return tipo === "pdf" ? m.prezzo_stampa : m.prezzo_fisico;
+  const scontato = tipo === "digitale" ? m.prezzo_digitale_scontato : tipo === "pdf" ? m.prezzo_stampa_scontato : m.prezzo_fisico_scontato;
+  return scontato ?? listinoDi(m, tipo);
 }
 
 export function Negozio() {
@@ -97,8 +102,9 @@ export function Negozio() {
       <p className="sr-only" role="status" aria-live="polite">{aggiunto ?? ""}</p>
       <div className="shop-grid">
         {elenco.map((m) => {
-          const mioDigitale = m.predefinito || idPosseduti.has(m.id);
-          const scontato = m.offerta_attiva && m.prezzo_digitale_scontato != null;
+          /* Il digitale gratuito è di tutti, come il predefinito: nessun acquisto. */
+          const mioDigitale = m.predefinito || m.prezzo_digitale === 0 || idPosseduti.has(m.id);
+          const scontato = m.offerta_attiva;
           const nelCarrello = carrello.voci.filter((v) => v.deckId === m.id).reduce((s, v) => s + v.quantita, 0);
           return (
             <article key={m.id} className="shop-object">
@@ -116,7 +122,7 @@ export function Negozio() {
                       return (
                         <li key={tipo} className="shop-format">
                           <span>{nomeTipo(tipo)}</span>
-                          <span className="available">{m.predefinito ? k.incluso : k.posseduto}</span>
+                          <span className="available">{m.predefinito || m.prezzo_digitale === 0 ? k.incluso : k.posseduto}</span>
                         </li>
                       );
                     }
@@ -136,7 +142,7 @@ export function Negozio() {
                           {nomeTipo(tipo)}
                           {prezzo != null ? (
                             <b className="shop-price">
-                              {tipo === "digitale" && scontato && <s className="small muted">{euro(m.prezzo_digitale!, m.valuta, locale)}</s>}{" "}
+                              {listinoDi(m, tipo) !== prezzo && <s className="small muted">{euro(listinoDi(m, tipo)!, m.valuta, locale)}</s>}{" "}
                               {euro(prezzo, m.valuta, locale)}
                             </b>
                           ) : <small className="muted shop-price">{k.prezzo_in_arrivo}</small>}

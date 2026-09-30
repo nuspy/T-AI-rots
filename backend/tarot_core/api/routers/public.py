@@ -180,6 +180,7 @@ async def condivisa(token: str, session: DbSession) -> Dict[str, Any]:
     return {
         "question": anonimo(lettura.question),
         "lang": lettura.lang,
+        "mazzo": deck_repositories.slug_immagini(lettura.mazzo),
         "stesa": conoscenza.stesa_pubblica(stesa) if stesa else None,
         "categoria": categoria,
         "speciale": speciale,

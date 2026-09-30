@@ -21,14 +21,21 @@ export interface Mazzo {
   rank: number;
   /** Presenti solo quando arriva da un elenco/dettaglio che unisce anche il prezzo (sempre, in console). */
   prezzo_digitale_scontato: number | null;
+  prezzo_stampa_scontato?: number | null;
+  prezzo_fisico_scontato?: number | null;
+  offerta_formati?: FormatoOfferta[];
   offerta_attiva: boolean;
+  offerta_valido_dal?: string | null;
   offerta_valido_fino: string | null;
 }
+
+/** I prodotti a cui un'offerta si applica (v8.5). */
+export type FormatoOfferta = "digitale" | "pdf" | "fisico";
 
 export interface NuovoMazzo {
   slug: string;
   nome: string;
-  descrizione?: string;
+  descrizione?: string | null;
   predefinito?: boolean;
   attivo?: boolean;
   attivazione_da?: string | null;
@@ -61,6 +68,7 @@ export interface OffertaIn {
   valore: number;
   valido_dal?: string | null;
   valido_fino?: string | null;
+  formati?: FormatoOfferta[];
 }
 
 export const impostaOfferta = (t: string, slug: string, corpo: OffertaIn) =>

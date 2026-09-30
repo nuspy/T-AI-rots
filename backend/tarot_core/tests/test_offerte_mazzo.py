@@ -124,6 +124,21 @@ async def test_admin_non_puo_scontare_un_mazzo_senza_prezzo(come):
     assert r.status_code == 422
 
 
+async def test_admin_sconta_pdf_e_scatola_e_il_negozio_lo_mostra(come, client):
+    admin = come("admin")
+    await admin.post("/admin/decks", json={"slug": "st", "nome": "Stampa", "prezzo_stampa": 1000, "prezzo_fisico": 4000})
+    # senza prezzo digitale, un'offerta sul digitale non ha senso
+    assert (await admin.put("/admin/decks/st/offerta", json={"tipo": "percentuale", "valore": 20})).status_code == 422
+    r = await admin.put("/admin/decks/st/offerta", json={"tipo": "percentuale", "valore": 20, "formati": ["pdf", "fisico"]})
+    assert r.status_code == 200, r.text
+    dati = (await admin.get("/decks/st")).json()
+    assert dati["offerta_attiva"] is True and dati["offerta_formati"] == ["pdf", "fisico"]
+    assert dati["prezzo_stampa_scontato"] == 800 and dati["prezzo_fisico_scontato"] == 3200
+    assert dati["prezzo_digitale_scontato"] is None
+    q = (await admin.post("/shop/quote", json={"voci": [{"deck_id": dati["id"], "tipo": "pdf"}]})).json()
+    assert q["totale"] == 800
+
+
 async def test_admin_rimuove_l_offerta(come):
     admin = come("admin")
     await admin.post("/admin/decks", json={"slug": "yy", "nome": "Y", "prezzo_digitale": 1000})

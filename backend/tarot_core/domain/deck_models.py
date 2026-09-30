@@ -17,11 +17,13 @@ bisogno di essere comprato, e non deve poter essere disattivato per errore (vedi
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from sqlalchemy import (
-    BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, false, true,
+    BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, false, text,
+    true,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, TimestampMixin
@@ -122,6 +124,10 @@ class OffertaMazzo(Base, TimestampMixin):
     valore: Mapped[int] = mapped_column(Integer, nullable=False)
     valido_dal: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     valido_fino: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    #: A quali prodotti si applica (v8.5): `digitale`, `pdf`, `fisico`. Le offerte nate prima valevano solo sul
+    #: digitale, e così restano.
+    formati: Mapped[List[str]] = mapped_column(JSONB, nullable=False, default=lambda: ["digitale"],
+                                               server_default=text("'[\"digitale\"]'::jsonb"))
 
     deck: Mapped[Deck] = relationship()
 

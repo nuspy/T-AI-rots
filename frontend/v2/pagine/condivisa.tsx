@@ -7,6 +7,7 @@
  * Come nel sito: dopo qualche secondo di pagina visibile la visita si conta (è ciò che rende «verificata» una
  * condivisione), e il link si ricorda per attribuire un'eventuale iscrizione a chi l'ha condiviso. */
 
+import { ProviderMazzoAttivo } from "@/lib/mazzo-attivo";
 import { useEffect } from "react";
 import { Markdown } from "@/app/(sito)/componenti/markdown";
 import { impostazioniPubbliche, leggiCondivisa, registraVisita } from "@/lib/api";
@@ -70,6 +71,7 @@ export function Condivisa({ token }: { token: string }) {
   const invitoN = omaggi.dati?.crediti_iscrizione ?? CREDITI_ISCRIZIONE;
 
   return (
+    <ProviderMazzoAttivo slug={d.mazzo ?? null}>
     <LinguaNomi valore={ll}>
       <section className="subhero subhero-compact">
         <p className="eyebrow">{c.eyebrow}</p>
@@ -113,5 +115,6 @@ export function Condivisa({ token }: { token: string }) {
         </div>
       </section>
     </LinguaNomi>
+    </ProviderMazzoAttivo>
   );
 }

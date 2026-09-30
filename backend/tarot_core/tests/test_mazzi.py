@@ -116,6 +116,35 @@ async def test_un_mazzo_sbloccato_si_puo_usare(client, session, catalogo):
     await session.commit()
     r = await client.post("/readings", json={"spread_id": "tre-carte", "question": "Domanda?", "deck_id": "premium"})
     assert r.status_code == 201, r.text
+    # La lettura ricorda il suo mazzo: riaperta e nello storico mostra le sue immagini (v8.5).
+    lettura_id = r.json()["reading_id"] if "reading_id" in r.json() else r.json()["id"]
+    assert (await client.get(f"/me/readings/{lettura_id}")).json()["mazzo"] == "premium"
+    assert (await client.get("/me/readings")).json()["letture"][0]["mazzo"] == "premium"
+
+
+async def test_con_il_predefinito_o_senza_mazzo_la_lettura_non_ha_cartella(client, session, catalogo):
+    await _accredita(session, client.identita.principal)
+    session.add(Deck(nome="Thoth", slug="thoth", predefinito=True, attivo=True))
+    await session.commit()
+    for corpo in ({"deck_id": "thoth"}, {}):
+        r = await client.post("/readings", json={"spread_id": "tre-carte", "question": "Domanda?", **corpo})
+        assert r.status_code == 201, r.text
+    assert {x["mazzo"] for x in (await client.get("/me/readings")).json()["letture"]} == {None}
+
+
+async def test_un_mazzo_digitale_gratuito_si_usa_senza_ordine(client, session, catalogo):
+    await _accredita(session, client.identita.principal)
+    session.add(Deck(nome="In regalo", slug="regalo", attivo=True, prezzo_digitale=0, prezzo_stampa=990))
+    await session.commit()
+    r = await client.post("/readings", json={"spread_id": "tre-carte", "question": "Domanda?", "deck_id": "regalo"})
+    assert r.status_code == 201, r.text
+    mio = (await client.get("/me/decks")).json()["deck_ids"]
+    regalo = (await client.get("/decks/regalo")).json()["id"]
+    assert regalo in mio
+    # comprarlo non ha senso; il PDF invece si compra
+    voci = {"voci": [{"deck_id": regalo, "tipo": "digitale"}]}
+    assert (await client.post("/shop/quote", json=voci)).status_code == 422
+    assert (await client.post("/shop/quote", json={"voci": [{"deck_id": regalo, "tipo": "pdf"}]})).status_code == 200
 
 
 async def test_un_mazzo_spento_si_respinge_anche_se_posseduto(client, session, catalogo):

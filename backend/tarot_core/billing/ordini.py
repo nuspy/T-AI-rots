@@ -2,7 +2,7 @@
 scaglioni per mazzi diversi nello stesso ordine, e l'apertura/applicazione dell'ordine (v5, Fase B3).
 
 **Ordine di applicazione degli sconti**, fissato qui e in un punto solo: prima lo sconto per-mazzo
-(`OffertaMazzo`, riga per riga — solo sul digitale, non su PDF o fisico), poi lo sconto a scaglioni
+(`OffertaMazzo`, riga per riga, sui formati che l'offerta indica: dalla v8.5 anche PDF e fisico), poi lo sconto a scaglioni
 sul subtotale che ne risulta. Comprare due copie dello **stesso** mazzo non fa salire lo scaglione,
 solo la quantità: conta `count(distinct deck_id)`, non il numero di righe.
 """
@@ -21,7 +21,7 @@ from ..domain.base import utcnow
 from ..domain.billing_models import PaymentEvent
 from ..domain.deck_models import Deck, DeckUnlock, OffertaMazzo
 from ..domain.ordini_models import IndirizzoSpedizione, Ordine, RigaOrdine
-from .mazzi import prezzo_effettivo
+from .mazzi import listino_di, prezzo_effettivo
 from .pagamenti import EventoPagamento, ProviderPagamenti, provider_pagamenti
 
 #: Lo sconto a scaglioni: 10% dal secondo mazzo diverso in poi, fino a un tetto del 50%.
@@ -63,7 +63,7 @@ class RisultatoCarrello:
 
 
 def _prezzo_pieno(deck: Deck, tipo: str) -> Optional[int]:
-    return {"digitale": deck.prezzo_digitale, "pdf": deck.prezzo_stampa, "fisico": deck.prezzo_fisico}[tipo]
+    return listino_di(deck, tipo)
 
 
 def calcola_carrello(
@@ -86,10 +86,11 @@ def calcola_carrello(
         listino = _prezzo_pieno(deck, voce.tipo)
         if listino is None:
             raise CarrelloNonValido(f"«{deck.nome}» non offre il prodotto «{voce.tipo}»")
-        if voce.tipo == "digitale":
-            finale = prezzo_effettivo(deck, offerte.get(deck.id)).da_mostrare or listino
-        else:
-            finale = listino
+        if voce.tipo == "digitale" and listino == 0:
+            raise CarrelloNonValido(f"«{deck.nome}» digitale è gratuito: non serve comprarlo")
+        # `is None` e non `or`: uno sconto che porta il prezzo a zero è un prezzo, non un'assenza.
+        mostrato = prezzo_effettivo(deck, offerte.get(deck.id), tipo=voce.tipo).da_mostrare
+        finale = listino if mostrato is None else mostrato
         righe.append(RigaCalcolata(voce=voce, prezzo_pieno_unitario=listino, prezzo_finale_unitario=finale))
 
     subtotale = sum(r.prezzo_finale_unitario * r.voce.quantita for r in righe)
@@ -113,6 +114,10 @@ class GestoreOrdini:
     async def preventivo(self, voci: List[VoceCarrello]) -> RisultatoCarrello:
         """Quanto costa un carrello, con gli stessi controlli e lo stesso calcolo dell'apertura: il negozio lo
         mostra prima di pagare (anche a chi non ha ancora un account). Non scrive niente."""
+        decks, offerte = await self._carica(voci)
+        return calcola_carrello(voci, decks, offerte)
+
+    async def _carica(self, voci: List[VoceCarrello]) -> tuple[Dict[int, Deck], Dict[int, OffertaMazzo]]:
         deck_ids = list({v.deck_id for v in voci})
         decks = {
             d.id: d for d in (await self._session.execute(select(Deck).where(Deck.id.in_(deck_ids)))).scalars()
@@ -124,7 +129,7 @@ class GestoreOrdini:
             await self._session.execute(select(OffertaMazzo).where(OffertaMazzo.deck_id.in_(deck_ids)))
         ).scalars()
         offerte = {o.deck_id: o for o in offerte_righe}
-        return calcola_carrello(voci, decks, offerte)
+        return decks, offerte
 
     async def apri(
         self, user_id: int, voci: List[VoceCarrello], *, ritorno: str,
@@ -136,7 +141,8 @@ class GestoreOrdini:
         if not richiede_indirizzo:
             indirizzo = None  # arrivato per errore col carrello sbagliato: non si registra su un ordine che non spedisce
 
-        risultato = await self.preventivo(voci)
+        decks, offerte = await self._carica(voci)
+        risultato = calcola_carrello(voci, decks, offerte)
 
         ordine = Ordine(
             user_id=user_id, status="aperto", provider=self._provider.name,
@@ -157,6 +163,7 @@ class GestoreOrdini:
                 prezzo_pieno_unitario=riga.prezzo_pieno_unitario, prezzo_finale_unitario=riga.prezzo_finale_unitario,
             )
             self._session.add(nuova)
+            set_committed_value(nuova, "deck", decks[riga.voce.deck_id])  # già caricato: niente accesso pigro
             righe_scritte.append(nuova)
         ordine.external_id = f"{self._provider.name}_ord_{ordine.id.hex[:16]}"
         await self._session.flush()

@@ -175,4 +175,5 @@ export const lettura: typeof Base = {
   cond_speciale: "Nelle letture su due persone il nome dell'altra persona non compare mai: al suo posto un simbolo e le parole «qualcuno di speciale».",
   cond_attivo: "Il link è attivo: chi lo apre vede la lettura, mai il tuo nome.",
   cond_disattiva: "Disattiva il link",
+  mazzo_titolo: "Con quale mazzo",
 };

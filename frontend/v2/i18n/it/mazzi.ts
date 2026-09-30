@@ -57,4 +57,5 @@ export const mazzi: typeof Base = {
   suggerisci_segnaposto: "Per esempio: un mazzo ispirato alle stagioni giapponesi…",
   suggerisci_invia: "Invia il suggerimento",
   suggerisci_grazie: "Grazie: il tuo suggerimento è arrivato.",
+  stampa_cta: "Stampa i tuoi Tarocchi",
 };

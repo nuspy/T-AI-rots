@@ -184,6 +184,8 @@ export interface Compatibilita {
 
 export interface Lettura {
   id: string;
+  /* La cartella delle immagini del mazzo della lettura; `null` = il predefinito (v8.5). */
+  mazzo?: string | null;
   spread_id: string;
   stesa: string;
   stesa_nomi: Record<string, string>;
@@ -222,6 +224,8 @@ export interface Lettura {
 
 export interface LetturaBreve {
   id: string;
+  /* La cartella delle immagini del mazzo della lettura; `null` = il predefinito (v8.5). */
+  mazzo?: string | null;
   spread_id: string;
   stesa: string;
   stesa_nomi: Record<string, string>;
@@ -286,6 +290,10 @@ export interface Mazzo {
   attivazione_fino: string | null;
   prezzo_digitale: number | null;
   prezzo_digitale_scontato: number | null;
+  /* v8.5: l'offerta può valere anche sul PDF e sulla scatola. */
+  prezzo_stampa_scontato?: number | null;
+  prezzo_fisico_scontato?: number | null;
+  offerta_formati?: TipoVoceOrdine[];
   offerta_attiva: boolean;
   offerta_valido_fino: string | null;
   prezzo_stampa: number | null;
@@ -307,6 +315,8 @@ export interface RigaOrdine {
   id: number;
   tipo: TipoVoceOrdine;
   deck_id: number;
+  /* Il mazzo della riga (v8.5): il nome da mostrare. */
+  mazzo?: { nome: string; slug: string } | null;
   quantita: number;
   prezzo_pieno_unitario: number;
   prezzo_finale_unitario: number;
@@ -382,6 +392,7 @@ export type Simbolo = "venere" | "marte" | "mercurio" | "stella";
  * nome dell'altra persona è già stato sostituito dal server con `partner_frase`. */
 export interface LetturaCondivisa {
   question: string;
+  mazzo?: string | null;
   lang: string;
   stesa: Stesa | null;
   categoria: Categoria;
@@ -528,6 +539,8 @@ export interface OpzioniApertura {
   /* "Interpreta i miei tarocchi" (v5): una carta per ogni posizione non calcolata della stesa, già
    * estratta a mano — con questo campo la lettura salta ventaglio/scelta. */
   manualCards?: CartaManualeInvio[];
+  /* Lo slug di un mazzo posseduto (v8.5): la lettura lo ricorda per le immagini. Assente: il predefinito. */
+  mazzo?: string | null;
 }
 
 export const apriLettura = (token: string | null, o: OpzioniApertura) =>
@@ -539,6 +552,7 @@ export const apriLettura = (token: string | null, o: OpzioniApertura) =>
       lang: o.lang,
       ...(o.partner ? { partner: o.partner, ricorda_partner: !!o.ricordaPartner } : {}),
       ...(o.manualCards ? { manual_cards: o.manualCards.map((c) => ({ posizione: c.posizione, card_id: c.cardId })) } : {}),
+      ...(o.mazzo ? { deck_id: o.mazzo } : {}),
     },
   });
 

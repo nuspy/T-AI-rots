@@ -4,12 +4,14 @@
  * sviluppo sono dichiarati come tali, mai presentati come disponibili. Ogni mazzo ha la sua pagina: il linguaggio
  * delle immagini, la biblioteca, la lettura, l'edizione fisica. */
 
-import { elencaMazzi, votoHome, type Mazzo } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { elencaMazzi, euro, urlPdfGratuito, votoHome, type Mazzo } from "@/lib/api";
 import { f } from "@/v2/i18n";
 import { ImmagineCarta } from "@/v2/componenti/carta";
 import LinkV2 from "@/v2/componenti/link";
+import { useCarrello } from "@/v2/lib/carrello";
 import { useLingua } from "@/v2/lib/lingua";
-import { R } from "@/v2/lib/percorsi";
+import { R, indirizzoV2 } from "@/v2/lib/percorsi";
 import { useCarica } from "@/v2/lib/usa";
 
 /* Le immagini di un mazzo: il predefinito (Thoth) nella cartella piatta, gli altri nella propria. */
@@ -97,6 +99,7 @@ export function SchedaMazzo({ slug }: { slug: string }) {
             <LinkV2 href={`${R.fisica}?deck=${m.slug}`}>{k.cta_fisica}</LinkV2>
             <LinkV2 href={R.negozio}>{k.cta_negozio}</LinkV2>
           </div>
+          <StampaMazzo mazzo={m} />
         </div>
       </section>
       <section className="band band-tight">
@@ -135,5 +138,30 @@ export function RiepilogoVoto() {
         ))}
       </ul>
     </div>
+  );
+}
+
+/** «Stampa i tuoi Tarocchi» (v8.5): il PDF da stampare nel carrello, poi al carrello. Gratuito, si scarica subito;
+ * senza prezzo non si propone. */
+function StampaMazzo({ mazzo }: { mazzo: Mazzo }) {
+  const { t, locale, prefissoIt } = useLingua();
+  const k = t.mazzi;
+  const carrello = useCarrello();
+  const router = useRouter();
+  if (mazzo.prezzo_stampa == null) return null;
+  if (mazzo.prezzo_stampa === 0) {
+    return (
+      <a className="button button-brass" style={{ marginTop: "1.2rem" }} href={urlPdfGratuito(mazzo.slug)} download data-an="deck_pdf_viewed">
+        {k.stampa_cta} · {t.negozio.pdf_gratis}
+      </a>
+    );
+  }
+  const prezzo = mazzo.prezzo_stampa_scontato ?? mazzo.prezzo_stampa;
+  return (
+    <button type="button" className="button button-brass" style={{ marginTop: "1.2rem" }}
+      data-an="carrello_aggiunto" data-an-mazzo={mazzo.slug} data-an-tipo="pdf"
+      onClick={() => { carrello.aggiungi(mazzo.id, "pdf"); router.push(indirizzoV2(R.carrello, prefissoIt)); }}>
+      {k.stampa_cta} · {euro(prezzo, mazzo.valuta, locale)}
+    </button>
   );
 }

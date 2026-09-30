@@ -4,10 +4,11 @@
  * domanda, il tipo di lettura, le persone, la forma della stesa), a destra la console del rito che mostra la
  * stesa scelta e l'invito a cominciare. */
 
-import type { Categoria, Stesa, Stile } from "@/lib/api";
+import type { Categoria, Mazzo, Stesa, Stile } from "@/lib/api";
 import { nomePosizione, nomeStesa } from "@/lib/i18n/nomi";
 import { plurale } from "@/v2/i18n";
 import { useLingua } from "@/v2/lib/lingua";
+import { ImmagineCarta } from "@/v2/componenti/carta";
 import { MiniaturaStesa } from "./miniatura";
 import stili from "./lettura.module.css";
 
@@ -27,6 +28,31 @@ export function SceltaTipo({ categoria, onScegli }: { categoria: Categoria; onSc
             <span>{l.tipi[c].testo}</span>
           </button>
         ))}
+      </div>
+    </>
+  );
+}
+
+/** Il mazzo della lettura, quando se ne possiede più d'uno (v8.5): il dorso e il nome. Il Thoth vale `null`. */
+export function SceltaMazzo({
+  mazzi, scelto, onScegli,
+}: { mazzi: Mazzo[]; scelto: string | null; onScegli: (slug: string | null) => void }) {
+  const { t } = useLingua();
+  const l = t.lettura;
+  return (
+    <>
+      <h3 className={stili.passo}>{l.mazzo_titolo}</h3>
+      <div className={stili.tipi} role="group" aria-label={l.mazzo_titolo}>
+        {mazzi.map((m) => {
+          const valore = m.predefinito ? null : m.slug;
+          return (
+            <button key={m.id} type="button" className={`${stili.tipo} ${stili.mazzo}`} aria-pressed={valore === scelto}
+              onClick={() => onScegli(valore)}>
+              <ImmagineCarta id="dorso" alt="" mazzo={valore} />
+              <b>{m.nome}</b>
+            </button>
+          );
+        })}
       </div>
     </>
   );

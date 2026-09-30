@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from lanterna.rete import ip_client
@@ -160,6 +160,8 @@ class OffertaIn(BaseModel):
     valore: int = Field(gt=0, le=TETTO_PREZZO)
     valido_dal: Optional[datetime] = None
     valido_fino: Optional[datetime] = None
+    #: I prodotti scontati (v8.5): il digitale, il PDF da stampare, la scatola fisica.
+    formati: List[Literal["digitale", "pdf", "fisico"]] = Field(default_factory=lambda: ["digitale"], min_length=1)
 
     @model_validator(mode="after")
     def _sensata(self) -> "OffertaIn":
@@ -176,20 +178,23 @@ async def imposta_offerta(slug: str, payload: OffertaIn, request: Request, user:
     mazzo = await deck_repositories.per_slug(session, slug)
     if mazzo is None:
         raise HTTPException(status_code=404, detail="Mazzo non trovato")
-    if mazzo.prezzo_digitale is None:
-        raise HTTPException(status_code=422, detail="Il mazzo non ha un prezzo digitale da scontare.")
+    formati = list(dict.fromkeys(payload.formati))
+    senza_prezzo = [f for f in formati if mazzi_billing.listino_di(mazzo, f) is None]
+    if senza_prezzo:
+        raise HTTPException(status_code=422, detail=f"Il mazzo non ha un prezzo da scontare per: {', '.join(senza_prezzo)}.")
     prima_offerta = await deck_repositories.offerta_per(session, mazzo.id)
     prima = mazzi_billing.mazzo_con_prezzo_json(mazzo, prima_offerta)
     if prima_offerta is None:
         session.add(OffertaMazzo(
             deck_id=mazzo.id, tipo=payload.tipo, valore=payload.valore,
-            valido_dal=payload.valido_dal, valido_fino=payload.valido_fino,
+            valido_dal=payload.valido_dal, valido_fino=payload.valido_fino, formati=formati,
         ))
     else:
         prima_offerta.tipo = payload.tipo
         prima_offerta.valore = payload.valore
         prima_offerta.valido_dal = payload.valido_dal
         prima_offerta.valido_fino = payload.valido_fino
+        prima_offerta.formati = formati
     await session.flush()
     offerta = await deck_repositories.offerta_per(session, mazzo.id)
     await AuditRepository(session).record(

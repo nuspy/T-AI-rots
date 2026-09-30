@@ -58,4 +58,5 @@ export const mazzi = {
   suggerisci_segnaposto: "For example: a deck inspired by the Japanese seasons…",
   suggerisci_invia: "Send the suggestion",
   suggerisci_grazie: "Thank you: your suggestion has been received.",
+  stampa_cta: "Print your own Tarot",
 };

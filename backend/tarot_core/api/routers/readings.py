@@ -343,6 +343,7 @@ def lettura_json(lettura: Reading, *, dettaglio: bool = True) -> Dict[str, Any]:
         "feedback": lettura.feedback,
         "shared": bool(lettura.share_token),
         "manuale": lettura.manuale,
+        "mazzo": deck_repositories.slug_immagini(lettura.mazzo),
     }
     if not dettaglio:
         rivelate = [c for c in lettura.cards if c.rivelata]

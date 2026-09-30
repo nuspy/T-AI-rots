@@ -37,16 +37,25 @@ def _offerta_valida(offerta: Optional[OffertaMazzo], adesso: datetime) -> bool:
     return True
 
 
+FORMATI = ("digitale", "pdf", "fisico")
+
+
+def listino_di(deck: Deck, tipo: str) -> Optional[int]:
+    return {"digitale": deck.prezzo_digitale, "pdf": deck.prezzo_stampa, "fisico": deck.prezzo_fisico}[tipo]
+
+
 def prezzo_effettivo(
-    deck: Deck, offerta: Optional[OffertaMazzo], *, adesso: Optional[datetime] = None,
+    deck: Deck, offerta: Optional[OffertaMazzo], *, tipo: str = "digitale", adesso: Optional[datetime] = None,
 ) -> PrezzoMazzo:
-    """Il prezzo digitale di `deck`, con lo sconto di `offerta` se in vigore adesso.
+    """Il prezzo di `deck` nel formato `tipo`, con lo sconto di `offerta` se in vigore adesso e se vale per quel
+    formato (le offerte nate prima della v8.5 valgono solo sul digitale).
 
     Non tocca il database, non verifica che `offerta.deck_id == deck.id` (è compito di chi carica
     entrambi, tipicamente con un join): qui c'è solo l'aritmetica, per essere provabile senza sessione."""
     adesso = adesso or utcnow()
-    listino = deck.prezzo_digitale
-    if listino is None or not _offerta_valida(offerta, adesso):
+    listino = listino_di(deck, tipo)
+    formati = (offerta.formati or ["digitale"]) if offerta is not None else []
+    if listino is None or tipo not in formati or not _offerta_valida(offerta, adesso):
         return PrezzoMazzo(listino=listino, scontato=None, offerta_attiva=False)
 
     assert offerta is not None  # per il type-checker: _offerta_valida ha già escluso None
@@ -60,9 +69,14 @@ def prezzo_effettivo(
 def mazzo_con_prezzo_json(deck: Deck, offerta: Optional[OffertaMazzo]) -> Dict[str, Any]:
     """Il JSON del mazzo (metadati, da `deck_repositories.mazzo_json`) più il prezzo effettivo: il
     negozio e la console mostrano sempre questa forma, mai i due pezzi calcolati separatamente."""
-    prezzo = prezzo_effettivo(deck, offerta)
+    prezzi = {tipo: prezzo_effettivo(deck, offerta, tipo=tipo) for tipo in FORMATI}
+    scontato = {tipo: p.scontato if p.offerta_attiva else None for tipo, p in prezzi.items()}
     return mazzo_json(deck) | {
-        "prezzo_digitale_scontato": prezzo.scontato if prezzo.offerta_attiva else None,
-        "offerta_attiva": prezzo.offerta_attiva,
+        "prezzo_digitale_scontato": scontato["digitale"],
+        "prezzo_stampa_scontato": scontato["pdf"],
+        "prezzo_fisico_scontato": scontato["fisico"],
+        "offerta_attiva": any(p.offerta_attiva for p in prezzi.values()),
+        "offerta_formati": [t for t, p in prezzi.items() if p.offerta_attiva],
+        "offerta_valido_dal": offerta.valido_dal.isoformat() if offerta and offerta.valido_dal else None,
         "offerta_valido_fino": offerta.valido_fino.isoformat() if offerta and offerta.valido_fino else None,
     }

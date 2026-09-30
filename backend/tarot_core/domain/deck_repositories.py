@@ -23,6 +23,12 @@ async def attivi_ora(session: AsyncSession) -> List[Deck]:
     return [d for d in await tutti(session) if d.attivo_ora]
 
 
+def slug_immagini(deck) -> Optional[str]:
+    """La cartella delle immagini di un mazzo per il frontend: `None` per il predefinito (il Thoth vive nella
+    cartella piatta `/cards/`), lo slug per gli altri."""
+    return deck.slug if deck is not None and not deck.predefinito else None
+
+
 async def per_slug(session: AsyncSession, slug: str) -> Optional[Deck]:
     return (await session.execute(select(Deck).where(Deck.slug == slug))).scalar_one_or_none()
 
@@ -46,9 +52,14 @@ async def offerte_per(session: AsyncSession, deck_ids: List[int]) -> Dict[int, O
     return {o.deck_id: o for o in righe}
 
 
+def di_tutti(deck: Deck) -> bool:
+    """Il predefinito, e un mazzo digitale gratuito (prezzo 0, v8.5): li possiede chiunque, senza ordine."""
+    return deck.predefinito or deck.prezzo_digitale == 0
+
+
 async def possiede(session: AsyncSession, user_id: int, deck: Deck) -> bool:
-    """Il predefinito è sempre posseduto: nessuna riga in `DeckUnlock` necessaria."""
-    if deck.predefinito:
+    """Il predefinito e i gratuiti sono sempre posseduti: nessuna riga in `DeckUnlock` necessaria."""
+    if di_tutti(deck):
         return True
     riga = (
         await session.execute(
@@ -61,7 +72,7 @@ async def possiede(session: AsyncSession, user_id: int, deck: Deck) -> bool:
 async def posseduti_ids(session: AsyncSession, user_id: int) -> set[int]:
     """Gli id dei mazzi che `user_id` può già leggere: ogni predefinito, più ciò che risulta in
     `DeckUnlock` — usato dal negozio per non proporre un secondo acquisto di ciò che si ha già."""
-    predefiniti = {d.id for d in await tutti(session) if d.predefinito}
+    predefiniti = {d.id for d in await tutti(session) if di_tutti(d)}
     sbloccati = (
         await session.execute(select(DeckUnlock.deck_id).where(DeckUnlock.user_id == user_id))
     ).scalars()

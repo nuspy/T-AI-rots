@@ -20,7 +20,7 @@ import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { useOsservatore, useTraccia } from "lanterna-osservatore/react";
 import {
   ErroreApi, aggiornaProfilo, apriLettura, apriLetturaAnonima, apriVentaglio, cancellaPartner, elencaCarte,
-  elencaMazzi, elencaStese, impostazioniPubbliche, leggiConto, leggiDisclaimer, leggiLettura, leggiProfilo,
+  elencaMazzi, mieiMazzi, elencaStese, impostazioniPubbliche, leggiConto, leggiDisclaimer, leggiLettura, leggiProfilo,
   rispondi, rivela, scegliCarta, sintesi, type Categoria, type Genere, type Lettura, type Stesa,
 } from "@/lib/api";
 import { comeLingua, type Lingua } from "@/lib/i18n/lingue";
@@ -37,7 +37,7 @@ import { R, indirizzoV2 } from "@/v2/lib/percorsi";
 import { useCarica } from "@/v2/lib/usa";
 import { Dialogo, type Battuta } from "./dialogo";
 import { FormPersone, partnerDa, personeDaProfilo, personeVuote, type DatiPersone } from "./persone";
-import { SceltaStesa, SceltaTipo, StesaNellaConsole } from "./preparazione";
+import { SceltaMazzo, SceltaStesa, SceltaTipo, StesaNellaConsole } from "./preparazione";
 import { FaseResponso, Responso } from "./responso";
 import { Tavolo, type Posata } from "./tavolo";
 import { Mescolamento, Taglio, Ventaglio } from "./ventaglio";
@@ -74,6 +74,7 @@ export function LetturaV2() {
   const conto = useCarica(leggiConto);
   const profilo = useCarica(leggiProfilo);
   const mazzi = useCarica(elencaMazzi, [], { pubblico: true });
+  const posseduti = useCarica(mieiMazzi);
   const omaggi = useCarica(impostazioniPubbliche, [], { pubblico: true });
   const cartaParam = parametri.get("card");
   const carte = useCarica(
@@ -89,6 +90,16 @@ export function LetturaV2() {
     if (daIndirizzo) return daIndirizzo.slug;
     return lista.find((m) => m.id === profilo.dati?.mazzo_predefinito_id && !m.predefinito)?.slug ?? null;
   }, [mazzi.dati, deckParam, profilo.dati]);
+  /* I mazzi con cui si può leggere: il predefinito e quelli posseduti (v8.5). Con più d'uno, la preparazione li
+   * propone. La scelta si manda all'apertura e la lettura la ricorda; una lettura ripresa usa il suo. */
+  const utilizzabili = useMemo(() => {
+    const miei = new Set(posseduti.dati?.deck_ids ?? []);
+    return (mazzi.dati ?? []).filter((m) => m.attivo_ora && (m.predefinito || miei.has(m.id)));
+  }, [mazzi.dati, posseduti.dati]);
+  const [mazzoScelto, setMazzoScelto] = useState<string | null | undefined>(undefined);
+  const [mazzoLettura, setMazzoLettura] = useState<string | null | undefined>(undefined);
+  const slugAttivo = mazzoLettura !== undefined ? mazzoLettura : mazzoScelto !== undefined ? mazzoScelto : slugMazzo;
+  const mazzoDaInviare = slugAttivo && utilizzabili.some((m) => m.slug === slugAttivo && !m.predefinito) ? slugAttivo : null;
 
   const tipoIniziale = comeCategoria(parametri.get("type"));
   const [fase, setFase] = useState<Fase>(idIniziale ? "intervista" : "preparazione");
@@ -193,6 +204,7 @@ export function LetturaV2() {
 
   const riprendi = useCallback((lt: Lettura) => {
     const lingueLettura = comeLingua(lt.lang) ?? lingua;
+    setMazzoLettura(lt.mazzo ?? null);
     setStesaId(lt.spread_id);
     setCategoria(lt.categoria);
     setNomePartner(lt.persone?.partner.nome ?? null);
@@ -351,7 +363,7 @@ export function LetturaV2() {
       }
       const a = sessione.autenticata
         ? await apriLettura(sessione.token, {
-            spreadId: stesaId, domanda: testoDomanda, lang: lingua,
+            spreadId: stesaId, domanda: testoDomanda, lang: lingua, mazzo: mazzoDaInviare,
             ...(speciale ? { partner: partnerDa(persone), ricordaPartner: persone.ricorda } : {}),
           })
         : await apriLetturaAnonima(stesaId, testoDomanda, lingua);
@@ -607,6 +619,9 @@ export function LetturaV2() {
                   />
                   {speciale && <p className="muted small">{l.domanda_facoltativa}</p>}
                   <SceltaTipo categoria={categoria} onScegli={scegliTipo} />
+                  {utilizzabili.length > 1 && (
+                    <SceltaMazzo mazzi={utilizzabili} scelto={slugAttivo} onScegli={setMazzoScelto} />
+                  )}
                   {serveAccount ? (
                     <div className="notice">
                       <p style={{ margin: "0 0 .8rem" }}>{l.tipo_serve_account}</p>
@@ -680,7 +695,7 @@ export function LetturaV2() {
                     : { etichetta: l.console_sintesi, testo: fase === "pronto-sintesi" ? l.console_sintesi_testo : undefined };
 
   return (
-    <ProviderMazzoAttivo slug={slugMazzo}>
+    <ProviderMazzoAttivo slug={slugAttivo}>
       <LinguaNomi valore={linguaLettura}>
         <section className="band band-tight">
           <div className={stili.scena}>

@@ -75,7 +75,7 @@ function RigaMazzo({ ordineId, riga, suCambio }: { ordineId: string; riga: RigaO
   const { esegui, inCorso } = useAzione();
   return (
     <li>
-      mazzo #{riga.deck_id} — {ETICHETTA_TIPO[riga.tipo] ?? riga.tipo}
+      {riga.mazzo?.nome ?? `mazzo #${riga.deck_id}`} — {ETICHETTA_TIPO[riga.tipo] ?? riga.tipo}
       {riga.quantita > 1 ? ` × ${riga.quantita}` : ""}
       <span className={stili.campoAiuto}>
         {" "}{soldi(riga.prezzo_finale_unitario * riga.quantita)}

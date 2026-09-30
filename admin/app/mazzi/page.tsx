@@ -7,7 +7,7 @@ import { useState } from "react";
 import {
   caricaArtwork, creaMazzo, eliminaArtwork, eliminaMazzo, elencoArtwork, impostaOfferta,
   mazzi as leggiMazzi, modificaMazzo, rimuoviOfferta, scaricaArtwork,
-  type ArtworkUpload, type Mazzo, type NuovoMazzo, type TipoOfferta,
+  type ArtworkUpload, type FormatoOfferta, type Mazzo, type NuovoMazzo, type TipoOfferta,
 } from "@/lib/mazzi";
 import { useAzione, useDati } from "@/lib/usa";
 import comuni from "../comuni.module.css";
@@ -138,13 +138,20 @@ function RigaMazzo({
   const [artworkAperto, setArtworkAperto] = useState(false);
   const [tipo, setTipo] = useState<TipoOfferta>("percentuale");
   const [valore, setValore] = useState("");
+  const [validoDal, setValidoDal] = useState("");
   const [validoFino, setValidoFino] = useState("");
+  const [dettagliAperti, setDettagliAperti] = useState(false);
+  /* Si propongono i formati che hanno un prezzo. */
+  const [formati, setFormati] = useState<FormatoOfferta[]>(() => (
+    (["digitale", "pdf", "fisico"] as FormatoOfferta[]).filter((f) => prezzoDi(mazzo, f) !== null)
+  ));
 
   const salvaOfferta = async () => {
     const v = Number(valore);
-    if (!v || v <= 0) return;
+    if (!v || v <= 0 || formati.length === 0) return;
     const fatto = await esegui((t) => impostaOfferta(t, mazzo.slug, {
-      tipo, valore: tipo === "percentuale" ? v : Math.round(v * 100),
+      tipo, valore: tipo === "percentuale" ? v : Math.round(v * 100), formati,
+      valido_dal: validoDal ? new Date(validoDal).toISOString() : null,
       valido_fino: validoFino ? new Date(validoFino).toISOString() : null,
     }));
     if (fatto) { setOffertaAperta(false); onOfferta(); }
@@ -171,14 +178,20 @@ function RigaMazzo({
         </td>
         <td>
           <PrezzoInline valore={mazzo.prezzo_digitale} bloccato={bloccato} onSalva={(t) => onPrezzo("prezzo_digitale", t)} />
-          {mazzo.offerta_attiva && (
+          {mazzo.prezzo_digitale_scontato != null && (
             <div className={comuni.positivo}>{soldi(mazzo.prezzo_digitale_scontato, mazzo.valuta)}</div>
           )}
         </td>
-        <td><PrezzoInline valore={mazzo.prezzo_stampa} bloccato={bloccato} onSalva={(t) => onPrezzo("prezzo_stampa", t)} /></td>
-        <td><PrezzoInline valore={mazzo.prezzo_fisico} bloccato={bloccato} onSalva={(t) => onPrezzo("prezzo_fisico", t)} /></td>
         <td>
-          {mazzo.prezzo_digitale === null ? (
+          <PrezzoInline valore={mazzo.prezzo_stampa} bloccato={bloccato} onSalva={(t) => onPrezzo("prezzo_stampa", t)} />
+          {mazzo.prezzo_stampa_scontato != null && <div className={comuni.positivo}>{soldi(mazzo.prezzo_stampa_scontato, mazzo.valuta)}</div>}
+        </td>
+        <td>
+          <PrezzoInline valore={mazzo.prezzo_fisico} bloccato={bloccato} onSalva={(t) => onPrezzo("prezzo_fisico", t)} />
+          {mazzo.prezzo_fisico_scontato != null && <div className={comuni.positivo}>{soldi(mazzo.prezzo_fisico_scontato, mazzo.valuta)}</div>}
+        </td>
+        <td>
+          {mazzo.prezzo_digitale === null && mazzo.prezzo_stampa === null && mazzo.prezzo_fisico === null ? (
             <span className={comuni.spento}>senza prezzo</span>
           ) : mazzo.offerta_attiva ? (
             <button type="button" className={comuni.secondaria} disabled={inCorso} onClick={togliOfferta}>Togli</button>
@@ -189,6 +202,10 @@ function RigaMazzo({
           )}
         </td>
         <td>
+          <button type="button" className={comuni.secondaria} disabled={bloccato}
+            onClick={() => setDettagliAperti((a) => !a)}>
+            Dettagli
+          </button>{" "}
           <button type="button" className={comuni.secondaria} disabled={bloccato}
             onClick={() => setArtworkAperto((a) => !a)}>
             Artwork
@@ -209,9 +226,33 @@ function RigaMazzo({
               </select>
               <input className={comuni.ingresso} type="number" min={0} step={tipo === "percentuale" ? 1 : 0.01}
                 value={valore} onChange={(e) => setValore(e.target.value)} placeholder={tipo === "percentuale" ? "20" : "5.00"} />
-              <input className={comuni.ingresso} type="datetime-local" value={validoFino} onChange={(e) => setValidoFino(e.target.value)} />
-              <button type="button" className={comuni.primaria} disabled={inCorso} onClick={salvaOfferta}>Salva</button>
+              <label className={comuni.campo}>
+                <span className={comuni.campoEtichetta}>Dal (vuoto: subito)</span>
+                <input className={comuni.ingresso} type="datetime-local" value={validoDal} onChange={(e) => setValidoDal(e.target.value)} />
+              </label>
+              <label className={comuni.campo}>
+                <span className={comuni.campoEtichetta}>Fino a (vuoto: senza scadenza)</span>
+                <input className={comuni.ingresso} type="datetime-local" value={validoFino} onChange={(e) => setValidoFino(e.target.value)} />
+              </label>
+              <fieldset className={comuni.campo} style={{ border: 0, padding: 0, margin: 0 }}>
+                <legend className={comuni.campoEtichetta}>Su quali prodotti</legend>
+                {(["digitale", "pdf", "fisico"] as FormatoOfferta[]).map((f) => (
+                  <label key={f} style={{ display: "inline-flex", gap: ".35rem", marginRight: ".8rem", alignItems: "center", minHeight: 44 }}>
+                    <input type="checkbox" checked={formati.includes(f)} disabled={prezzoDi(mazzo, f) === null}
+                      onChange={(e) => setFormati((x) => (e.target.checked ? [...x, f] : x.filter((y) => y !== f)))} />
+                    {NOMI_FORMATO[f]}
+                  </label>
+                ))}
+              </fieldset>
+              <button type="button" className={comuni.primaria} disabled={inCorso || formati.length === 0} onClick={salvaOfferta}>Salva</button>
             </div>
+          </td>
+        </tr>
+      )}
+      {dettagliAperti && (
+        <tr>
+          <td colSpan={7}>
+            <DettagliMazzo mazzo={mazzo} onSalvato={() => { setDettagliAperti(false); onOfferta(); }} />
           </td>
         </tr>
       )}
@@ -283,6 +324,73 @@ function PannelloArtwork({ slug }: { slug: string }) {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+const NOMI_FORMATO: Record<FormatoOfferta, string> = { digitale: "digitale", pdf: "PDF da stampare", fisico: "scatola fisica" };
+
+function prezzoDi(m: Mazzo, f: FormatoOfferta): number | null {
+  return f === "digitale" ? m.prezzo_digitale : f === "pdf" ? m.prezzo_stampa : m.prezzo_fisico;
+}
+
+/** Da `2026-10-01T08:00:00+00:00` al valore di un `datetime-local` nell'ora locale. */
+function perCampo(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const z = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`;
+}
+
+/** v8.5: descrizione, finestra di attivazione (stagionale), ordine nel negozio e spedizione. */
+function DettagliMazzo({ mazzo, onSalvato }: { mazzo: Mazzo; onSalvato: () => void }) {
+  const { esegui, inCorso, errore } = useAzione();
+  const [descrizione, setDescrizione] = useState(mazzo.descrizione ?? "");
+  const [da, setDa] = useState(perCampo(mazzo.attivazione_da));
+  const [fino, setFino] = useState(perCampo(mazzo.attivazione_fino));
+  const [rank, setRank] = useState(String(mazzo.rank));
+  const [spedizione, setSpedizione] = useState(mazzo.richiede_spedizione);
+
+  const salva = async () => {
+    const fatto = await esegui((t) => modificaMazzo(t, mazzo.slug, {
+      descrizione: descrizione.trim() || null,
+      attivazione_da: da ? new Date(da).toISOString() : null,
+      attivazione_fino: fino ? new Date(fino).toISOString() : null,
+      rank: Number(rank) || 0,
+      richiede_spedizione: spedizione,
+    }));
+    if (fatto) onSalvato();
+  };
+
+  return (
+    <div>
+      {errore && <p className={comuni.errore}>{errore}</p>}
+      <div className={comuni.riga} style={{ flexWrap: "wrap", alignItems: "flex-end" }}>
+        <label className={comuni.campo} style={{ flex: "1 1 320px" }}>
+          <span className={comuni.campoEtichetta}>Descrizione (nel negozio)</span>
+          <textarea className={comuni.ingresso} rows={3} maxLength={2000} value={descrizione} onChange={(e) => setDescrizione(e.target.value)} />
+        </label>
+        <label className={comuni.campo}>
+          <span className={comuni.campoEtichetta}>In vendita dal</span>
+          <input className={comuni.ingresso} type="datetime-local" value={da} onChange={(e) => setDa(e.target.value)} />
+          <span className={comuni.campoAiuto}>Vuoto: da subito.</span>
+        </label>
+        <label className={comuni.campo}>
+          <span className={comuni.campoEtichetta}>Fino a</span>
+          <input className={comuni.ingresso} type="datetime-local" value={fino} onChange={(e) => setFino(e.target.value)} />
+          <span className={comuni.campoAiuto}>Vuoto: senza scadenza (un mazzo stagionale sparisce da solo).</span>
+        </label>
+        <label className={comuni.campo}>
+          <span className={comuni.campoEtichetta}>Ordine nel negozio</span>
+          <input className={comuni.ingresso} type="number" value={rank} onChange={(e) => setRank(e.target.value)} style={{ width: 90 }} />
+          <span className={comuni.campoAiuto}>Più basso, prima.</span>
+        </label>
+        <label className={comuni.campo} style={{ flexDirection: "row", gap: ".5rem", alignItems: "center" }}>
+          <input type="checkbox" checked={spedizione} onChange={(e) => setSpedizione(e.target.checked)} />
+          <span>La scatola fisica si spedisce (serve un indirizzo)</span>
+        </label>
+        <button type="button" className={comuni.primaria} disabled={inCorso} onClick={salva}>Salva</button>
+      </div>
     </div>
   );
 }

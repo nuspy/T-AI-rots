@@ -174,4 +174,5 @@ export const lettura: typeof Base = {
   cond_speciale: "A két emberről szóló jóslásokban a másik személy neve soha nem jelenik meg: helyette egy szimbólum és a „valaki különleges” szavak állnak.",
   cond_attivo: "A link aktív: aki megnyitja, látja a jóslást, de a nevedet soha.",
   cond_disattiva: "A link kikapcsolása",
+  mazzo_titolo: "Melyik paklival",
 };

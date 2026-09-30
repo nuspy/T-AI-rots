@@ -57,4 +57,5 @@ export const mazzi: typeof Base = {
   suggerisci_segnaposto: "Például: a japán évszakok ihlette pakli…",
   suggerisci_invia: "Javaslat elküldése",
   suggerisci_grazie: "Köszönjük: megkaptuk a javaslatodat.",
+  stampa_cta: "Nyomtasd ki a saját tarotkártyáidat",
 };

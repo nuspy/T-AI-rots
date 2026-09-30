@@ -88,6 +88,20 @@ def test_offerta_non_si_applica_a_pdf_o_fisico():
     assert r.righe[0].prezzo_finale_unitario == 500  # non scontato: l'offerta vale solo sul digitale
 
 
+def test_un_offerta_sul_pdf_e_sulla_scatola_si_applica_a_quei_formati():
+    decks = {1: _mazzo(1, prezzo_digitale=1000, prezzo_stampa=500, prezzo_fisico=4000)}
+    offerte = {1: OffertaMazzo(deck_id=1, tipo="percentuale", valore=50, formati=["pdf", "fisico"])}
+    r = calcola_carrello([VoceCarrello(deck_id=1, tipo=t) for t in ("digitale", "pdf", "fisico")], decks, offerte)
+    assert [x.prezzo_finale_unitario for x in r.righe] == [1000, 250, 2000]
+
+
+def test_uno_sconto_che_porta_a_zero_non_torna_al_listino():
+    decks = {1: _mazzo(1, prezzo_stampa=500)}
+    offerte = {1: OffertaMazzo(deck_id=1, tipo="percentuale", valore=100, formati=["pdf"])}
+    r = calcola_carrello([VoceCarrello(deck_id=1, tipo="pdf")], decks, offerte)
+    assert r.righe[0].prezzo_finale_unitario == 0 and r.totale == 0
+
+
 # ---- l'ordine, dall'apertura al pagamento (col simulatore) ----------------------------------------
 
 
@@ -245,6 +259,7 @@ async def test_con_i_pagamenti_disattivati_l_ordine_si_registra_in_attesa(client
     dati = r.json()
     assert dati["url"] is None and dati["pagamento_attivo"] is False
     assert dati["status"] == "aperto" and dati["importo_totale"] == 990
+    assert dati["righe"][0]["mazzo"] == {"nome": "Da stampare", "slug": "da-stampare"}
     elenco = (await client.get("/me/orders")).json()
     assert any(o["id"] == dati["id"] and o["status"] == "aperto" for o in elenco["ordini"])
     # il PDF non si scarica finché l'ordine non è pagato

@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from sqlalchemy import (
     BigInteger, Boolean, CheckConstraint, Date, DateTime, ForeignKey, Index,
@@ -28,6 +28,9 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, OwnedMixin, TimestampMixin, owner_index
+
+if TYPE_CHECKING:  # solo per i tipi: deck_models importa i modelli di qui
+    from .deck_models import Deck
 
 #: Il genere dichiarato da chi consulta e dal partner nelle letture speciali.
 #: «non_dice» è una risposta valida. Non esiste un campo per l'orientamento.
@@ -192,6 +195,9 @@ class Reading(Base, TimestampMixin, OwnedMixin):
     #: (`decks`), senza importare `deck_models.Deck` qui: SQLAlchemy la risolve al momento della
     #: mappatura, non serve il tipo Python per una colonna che il codice usa solo come id.
     deck_id: Mapped[Optional[int]] = mapped_column(ForeignKey("decks.id", ondelete="SET NULL"))
+    #: Il mazzo stesso, per le immagini alla riapertura, nel dettaglio e nella condivisione (v8.5). Si carica
+    #: con la lettura (`selectin`): una riga in più per lotto di letture, nessun accesso pigro fuori contesto.
+    mazzo: Mapped[Optional["Deck"]] = relationship("Deck", lazy="selectin", viewonly=True)
 
     #: L'identità anonima (v6, Fase F): valorizzato solo quando la lettura nasce senza login, il
     #: valore del cookie `tarots_anon`. Vincolo applicativo, non di database: esattamente uno fra

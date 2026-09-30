@@ -233,6 +233,8 @@ export interface RigaOrdine {
   id: number;
   tipo: TipoRigaOrdine;
   deck_id: number;
+  /* Il mazzo della riga (v8.5): il nome da mostrare. */
+  mazzo?: { nome: string; slug: string } | null;
   quantita: number;
   /** Centesimi. */
   prezzo_pieno_unitario: number;

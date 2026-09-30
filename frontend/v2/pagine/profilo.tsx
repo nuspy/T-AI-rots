@@ -314,14 +314,14 @@ function Ordini() {
               <ul className="list-plain small">
                 {o.righe.map((r) => (
                   <li key={r.id}>
-                    {nome(r.deck_id)} — {k.ordini_tipo[r.tipo] ?? r.tipo}{r.quantita > 1 ? ` × ${r.quantita}` : ""}
+                    {r.mazzo?.nome ?? nome(r.deck_id)} — {k.ordini_tipo[r.tipo] ?? r.tipo}{r.quantita > 1 ? ` × ${r.quantita}` : ""}
                     {r.tipo === "fisico" && r.stato_evasione && ` · ${k.ordini_evasione[r.stato_evasione] ?? r.stato_evasione}`}
                   </li>
                 ))}
               </ul>
               {o.sconto_scaglioni > 0 && <p className="small">−{euro(o.sconto_scaglioni, o.valuta, locale)} ({k.ordini_sconto})</p>}
               {o.status === "pagato" && o.righe.filter((r) => r.tipo === "pdf").map((r) => (
-                <BottonePdfV2 key={r.id} ordineId={o.id} deckId={r.deck_id} nome={nome(r.deck_id)} />
+                <BottonePdfV2 key={r.id} ordineId={o.id} deckId={r.deck_id} nome={r.mazzo?.nome ?? nome(r.deck_id)} />
               ))}
             </li>
           ))}
