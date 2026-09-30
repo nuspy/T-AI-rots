@@ -82,13 +82,19 @@ proprio, non ancora un remote GitHub: quella scelta resta dell'operatore), pacch
 dipendenze per IndexNow/WebSub, extra opzionale `[search-console]` per quello. 9/9 test verdi
 (mockati, nessuna chiamata di rete reale nei test). README con esempi d'uso.
 
-**Non ancora fatto, di proposito**: il collegamento dentro T-AI-rots (`admin_blog.py`, quando un
-articolo passa a "pubblicato") non è stato scritto — collegarlo significa introdurre vere chiamate
-di rete verso servizi esterni nel percorso di pubblicazione dell'app in produzione, e questo va
-rivisto dall'operatore prima di essere attivato, non deciso in autonomia durante la notte. Mancano
-anche: nome/decisione se pubblicare `seo-notify` come repository GitHub proprio; le credenziali
-(chiave IndexNow, service account Search Console) che andrebbero in un Secret k8s quando si deciderà
-di attivarlo.
+**Collegato in T-AI-rots (2026-09-30)**, su indicazione dell'operatore: gli articoli escono a gruppi
+(3 alla volta), quindi **niente notifica a ogni pubblicazione ma un giro al giorno a mezzanotte**, in
+automatico. Implementazione:
+- CronJob k8s `tarots-notifica-motori` (`0 0 * * *`, `Europe/Rome`) → `python -m
+  tarot_core.tools.notifica_motori`; logica in `tarot/notifiche_motori.py`. La finestra parte
+  dall'esecuzione precedente (un giro saltato non perde articoli); senza novità non parte nulla.
+- Registro degli invii nella tabella `notifiche_motori`; console admin → **SEO**: stato dei canali,
+  storico, «Invia ora».
+- IndexNow attivo (chiave pubblica in `frontend/public/<chiave>.txt`); WebSub attivo (hub dichiarato
+  nel feed RSS); **Search Console in attesa del service account** dell'operatore (procedura in
+  `deploy/k8s/LEGGIMI.md`, "Notifica ai motori di ricerca").
+- `seo-notify` entra nell'immagine dal contesto di build (accanto a `backend/`), resta un progetto
+  separato. Ancora da decidere: pubblicarlo come repository proprio (GitHub/GitBucket).
 
 ## 3. Oracolo: widget ancorato in fondo pagina (dal backlog dettato il 2026-09-29)
 

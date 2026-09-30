@@ -44,6 +44,9 @@ export async function GET() {
     `<title>${esci(BLOG.feedTitolo(lingua))}</title>`,
     `<link>${esci(urlPubblico(lingua, "/blog"))}</link>`,
     `<atom:link href="${esci(urlPubblico(lingua, "/blog/feed.xml"))}" rel="self" type="application/rss+xml"/>`,
+    /* WebSub: l'hub a cui la notifica notturna annuncia il feed aggiornato. Deve coincidere con
+     * `TAROT_WEBSUB_HUB` del backend (deploy/k8s/tarots.yaml). */
+    `<atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>`,
     `<description>${esci(BLOG.feedDescrizione(lingua))}</description>`,
     `<language>${lingua === "it" ? "it" : "en"}</language>`,
     `<image><url>${SITE_URL}/marchio/logo-256.webp</url><title>${esci(BLOG.feedTitolo(lingua))}</title><link>${esci(urlPubblico(lingua, "/blog"))}</link></image>`,

@@ -27,9 +27,18 @@ def richiesta(
 
 
 async def genera_json(provider, req: GenerationRequest) -> Dict[str, Any]:
-    """Un oggetto JSON dal modello, o `GenerationError`."""
+    """Un oggetto JSON dal modello, o `GenerationError`.
+
+    Anche quando il fornitore interpreta il JSON da sé (`complete_json`): un errore di parsing
+    (`JsonNonInterpretabile`, `json.JSONDecodeError` — entrambi `ValueError`) diventa
+    `GenerationError`, l'unico che i chiamanti gestiscono col loro ripiego. Senza, una risposta
+    illeggibile arrivava fino a un 500 invece del ripiego previsto (osservato 2026-09-30 sul
+    validatore dell'intervista e sulla chat proattiva)."""
     if hasattr(provider, "complete_json"):
-        dati = await provider.complete_json(req)
+        try:
+            dati = await provider.complete_json(req)
+        except ValueError as exc:
+            raise GenerationError(f"JSON non interpretabile: {exc}") from exc
     else:
         testo = await provider.complete(req)
         try:

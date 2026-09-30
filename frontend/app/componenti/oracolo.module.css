@@ -67,6 +67,7 @@
 /* La cronologia (solo per chi ha fatto login, quando esiste): sopra la barra d'invio, non un
  * pannello a parte — niente più aperto/chiuso al click. */
 .storico {
+  position: relative;
   max-height: 240px;
   overflow-y: auto;
   display: flex;
@@ -108,12 +109,16 @@
 
 .campo {
   min-height: 46px;
-  padding: 0 14px;
-  border-radius: 999px;
+  max-height: 160px;
+  padding: 12px 14px;
+  border-radius: 16px;
   border: 1px solid var(--bordo);
   background: rgba(255, 255, 255, 0.04);
   color: var(--testo);
-  font-size: 15px;
+  font: inherit;
+  font-size: 16px; /* 16px: sotto, Safari iOS fa lo zoom sul campo al tocco */
+  line-height: 1.4;
+  resize: vertical;
 }
 
 @media (min-width: 480px) {

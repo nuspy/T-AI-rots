@@ -65,6 +65,9 @@
   gap: 0.25rem;
   margin-right: auto;
   overflow-x: auto;
+  /* Senza, un elemento flex non si restringe sotto la larghezza del suo contenuto: la barra non
+   * scorreva mai al suo interno e allargava tutta la pagina su mobile (scroll orizzontale). */
+  min-width: 0;
 }
 
 .voce,

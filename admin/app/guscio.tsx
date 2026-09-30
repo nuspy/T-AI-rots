@@ -16,6 +16,7 @@ const SEZIONI = [
   { href: "/voto-mazzi", etichetta: "Vota il prossimo mazzo" },
   { href: "/ordini", etichetta: "Ordini" },
   { href: "/blog", etichetta: "Blog" },
+  { href: "/seo", etichetta: "SEO" },
   { href: "/report", etichetta: "Report" },
   { href: "/registro", etichetta: "Registro" },
   { href: "/modelli", etichetta: "Modelli" },

@@ -92,6 +92,14 @@ class ModelloFinto:
             return json.dumps({"completo": False, "domanda": _DOMANDE[n % len(_DOMANDE)]}, ensure_ascii=False)
         if compito == "validazione":
             return json.dumps({"valida": True, "motivo": ""})
+        if compito == "chat_proattiva":
+            scritto = re.search(r"L'utente ha appena scritto: (.+)", utente)
+            messaggio = (
+                f"Ti ascolto. Hai scritto: «{scritto.group(1).strip()[:120]}». Raccontami un po' di più, "
+                "se vuoi: cosa ti porta a pensarci proprio adesso?"
+                if scritto else "Ciao. Come stai oggi? C'è qualcosa che ti gira per la testa?"
+            )
+            return json.dumps({"messaggio": messaggio, "proposta": None}, ensure_ascii=False)
         if compito == "giudizio":
             return json.dumps({"esito": "ok", "violazioni": []})
         if compito == "interpretazione":

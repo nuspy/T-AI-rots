@@ -150,6 +150,20 @@ class Settings(BaseSettings):
     #: serve a provare il flusso intero senza un modello vero.
     llm_finto: bool = False
 
+    #: Notifica notturna ai motori di ricerca (v8, libreria `seo-notify`). Ogni canale è
+    #: facoltativo: senza configurazione si salta, non fa fallire gli altri.
+    #: La chiave IndexNow (Bing, Yandex…) NON è un segreto: il protocollo la vuole pubblica, in
+    #: `https://<sito>/<chiave>.txt` (il file sta in `frontend/public/`).
+    indexnow_chiave: str = ""
+    #: Il JSON di un service account Google con accesso alla proprietà in Search Console (montato
+    #: da un Secret). Vuoto o file assente: Google si salta.
+    search_console_credenziali: str = ""
+    #: La proprietà come registrata in Search Console: `sc-domain:tarots.chat` (proprietà di
+    #: dominio) o `https://tarots.chat/` (prefisso URL).
+    search_console_proprieta: str = ""
+    #: L'hub WebSub a cui annunciare il feed RSS del blog. Vuoto: WebSub si salta.
+    websub_hub: str = ""
+
     cors_origins: List[str] = Field(
         default_factory=lambda: ["http://localhost:3000", "http://localhost:3001"]
     )

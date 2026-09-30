@@ -413,7 +413,9 @@ class RegistroModelli:
     def _fornitore(self, nome: str):
         if nome in self._fornitori:
             return self._fornitori[nome]
-        fornitore = self._costruisci(self._modelli[nome], nome)
+        base = self._modelli[nome]
+        configurazione = base.model_copy(update={"parametri": _parametri_coerenti(base.parametri, base.ragiona)})
+        fornitore = self._costruisci(configurazione, nome)
         self._fornitori[nome] = fornitore
         return fornitore
 
@@ -427,7 +429,15 @@ class RegistroModelli:
         """
         base = self._modelli[nome]
         ragiona = base.ragiona if assegnazione.ragiona_override is None else assegnazione.ragiona_override
-        parametri = {**base.parametri, **(assegnazione.parametri_override or {})}
+        # I parametri del fornitore si allineano al `ragiona` del compito; un `parametri_override`
+        # scritto a mano dall'amministratore resta l'ultima parola (va applicato dopo).
+        parametri = {**_parametri_coerenti(base.parametri, ragiona), **(assegnazione.parametri_override or {})}
+        # E se l'override scritto a mano accende/spegne il pensiero del modello, il margine di budget
+        # lo segue: "app spenta, modello acceso" è proprio lo stato che faceva finire il ragionamento
+        # nel testo (budget esaurito a metà pensiero, verificato su Nebius il 2026-09-30).
+        kwargs = parametri.get("chat_template_kwargs")
+        if isinstance(kwargs, dict) and "enable_thinking" in kwargs:
+            ragiona = bool(kwargs["enable_thinking"])
         configurazione = base.model_copy(update={"ragiona": ragiona, "parametri": parametri})
         return self._costruisci(configurazione, f"{nome}+override")
 
@@ -456,6 +466,29 @@ class RegistroModelli:
             # saprebbe quale ha prodotto quale risposta.
             name=nome_traccia,
         )
+
+
+def _parametri_coerenti(parametri: Dict[str, Any], ragiona: bool) -> Dict[str, Any]:
+    """I `parametri` di un fornitore allineati al `ragiona` effettivo del compito.
+
+    `ragiona` da solo decide soltanto il margine di budget lato applicazione (vedi
+    `pavimento_ragionamento`): il MODELLO ragiona o no secondo `chat_template_kwargs.enable_thinking`
+    che il fornitore manda. Bug osservato in produzione (2026-09-30): v7 aveva messo
+    `ragiona_override=False` su ogni compito, ma il fornitore continuava a mandare
+    `enable_thinking: true` — il modello ragionava sempre (risposte lente), senza più il margine di
+    budget, e Nebius restituiva il ragionamento come testo normale ("Here's a thinking process:")
+    dentro l'interpretazione delle carte e prima del JSON dei validatori.
+
+    Si tocca solo una chiave che il fornitore dichiara già (`enable_thinking` dentro
+    `chat_template_kwargs`): per un motore che non la conosce, nessuna modifica. Da spento si toglie
+    anche `reasoning_budget`, che senza ragionamento non ha senso."""
+    kwargs = parametri.get("chat_template_kwargs")
+    if not isinstance(kwargs, dict) or "enable_thinking" not in kwargs:
+        return parametri
+    coerenti = {**parametri, "chat_template_kwargs": {**kwargs, "enable_thinking": ragiona}}
+    if not ragiona:
+        coerenti.pop("reasoning_budget", None)
+    return coerenti
 
 
 def modelli_da_impostazioni() -> List[ModelloConfigurato]:

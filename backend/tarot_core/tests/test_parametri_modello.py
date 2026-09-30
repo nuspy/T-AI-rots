@@ -100,6 +100,53 @@ def test_il_modello_ricavato_dalle_vecchie_impostazioni_porta_i_suoi_parametri(m
         get_settings.cache_clear()
 
 
+ACCESO = {"reasoning_budget": 16384, "chat_template_kwargs": {"enable_thinking": True}}
+
+
+def test_ragiona_spento_per_compito_spegne_davvero_il_ragionamento_del_modello():
+    """Bug reale in produzione (2026-09-30): `ragiona_override=False` toglieva solo il margine di
+    budget lato app, ma il fornitore continuava a mandare `enable_thinking: true` — il modello
+    ragionava sempre (lento) e il ragionamento finiva come testo nelle carte."""
+    modello = ModelloConfigurato(nome="n", base_url="http://x/v1", model="m", ragiona=True, parametri=ACCESO)
+    registro = RegistroModelli([modello], assegnazioni={
+        Compito.INTERPRETAZIONE: AssegnazioneModello("n", ragiona_override=False),
+        Compito.SINTESI: AssegnazioneModello("n", ragiona_override=True),
+    })
+    spento = registro.per(Compito.INTERPRETAZIONE)
+    acceso = registro.per(Compito.SINTESI)
+    assert spento._parametri["chat_template_kwargs"] == {"enable_thinking": False}
+    assert "reasoning_budget" not in spento._parametri
+    assert acceso._parametri["chat_template_kwargs"] == {"enable_thinking": True}
+    assert acceso._parametri["reasoning_budget"] == 16384
+
+
+def test_fornitore_senza_override_con_ragiona_falso_non_manda_enable_thinking_vero():
+    modello = ModelloConfigurato(nome="n", base_url="http://x/v1", model="m", ragiona=False, parametri=ACCESO)
+    registro = RegistroModelli([modello], assegnazioni={Compito.INTERVISTA: AssegnazioneModello("n")})
+    assert registro.per(Compito.INTERVISTA)._parametri["chat_template_kwargs"] == {"enable_thinking": False}
+
+
+def test_il_parametri_override_esplicito_resta_l_ultima_parola():
+    modello = ModelloConfigurato(nome="n", base_url="http://x/v1", model="m", ragiona=True, parametri=ACCESO)
+    registro = RegistroModelli([modello], assegnazioni={Compito.SINTESI: AssegnazioneModello(
+        "n", ragiona_override=False, parametri_override={"chat_template_kwargs": {"enable_thinking": True}},
+    )})
+    fornitore = registro.per(Compito.SINTESI)
+    assert fornitore._parametri["chat_template_kwargs"] == {"enable_thinking": True}
+    # Il margine di budget segue il modello: "app spenta, modello acceso" faceva finire il
+    # ragionamento nel testo quando il budget si esauriva a metà pensiero.
+    assert fornitore.ragiona is True
+
+
+def test_un_motore_senza_enable_thinking_non_viene_toccato():
+    modello = ModelloConfigurato(nome="n", base_url="http://x/v1", model="m", ragiona=True,
+                                 parametri={"reasoning_effort": "low"})
+    registro = RegistroModelli([modello], assegnazioni={
+        Compito.SINTESI: AssegnazioneModello("n", ragiona_override=False),
+    })
+    assert registro.per(Compito.SINTESI)._parametri == {"reasoning_effort": "low"}
+
+
 async def test_complete_json_riprova_con_piu_budget_se_non_trova_json(monkeypatch):
     """Bug reale in produzione (2026-09-30): il validatore dell'intervista (`max_tokens=200`)
     riceveva un modello che ragiona in prosa libera, senza tag `<think>` ("Here's a thinking

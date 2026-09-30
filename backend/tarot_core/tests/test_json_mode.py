@@ -73,3 +73,31 @@ def test_piu_blocchi_di_pensiero_nello_stesso_stream():
         pensiero_tot += p
     assert vero_tot == "testo1testo2"
     assert pensiero_tot == "unodue"
+
+
+async def test_genera_json_trasforma_un_json_illeggibile_in_generation_error():
+    """Bug reale (2026-09-30): un fornitore che interpreta il JSON da sé poteva far uscire un errore
+    di parsing invece di `GenerationError`, e i chiamanti (validatore, chat proattiva) finivano in
+    500 invece del loro ripiego."""
+    import pytest
+
+    from tarot_core.llm.base import GenerationError
+    from tarot_core.llm.json_mode import JsonNonInterpretabile
+    from tarot_core.tarot.llm import genera_json, richiesta
+
+    class Fornitore:
+        async def complete_json(self, req):
+            raise JsonNonInterpretabile("solo prosa")
+
+    with pytest.raises(GenerationError):
+        await genera_json(Fornitore(), richiesta(["# Compito: prova"], "?"))
+
+
+async def test_il_modello_finto_risponde_alla_chat_proattiva():
+    from tarot_core.tarot.chat_proattiva import genera_turno
+    from tarot_core.tarot.finto import ModelloFinto
+
+    apertura = await genera_turno(ModelloFinto())
+    risposta = await genera_turno(ModelloFinto(), messaggio_utente="Sono preoccupata per il lavoro")
+    assert apertura.messaggio
+    assert "lavoro" in risposta.messaggio

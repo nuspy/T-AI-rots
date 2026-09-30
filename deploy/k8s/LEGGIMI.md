@@ -219,6 +219,44 @@ Nuovo tag nelle `docker build` (sul server) e in `tarots.yaml`, poi
 migrazioni all'avvio. Il server di tadamoo è carico: build e import in
 containerd durano da minuti a un'ora, una immagine alla volta.
 
+**Contesto di build dell'API (v8)**: `deploy/Dockerfile.backend` installa `seo-notify`, un progetto
+separato (in locale `E:\Projects\seo-notify`, non su PyPI), che deve stare **accanto a `backend/`**
+nel contesto di build. Il tar dei sorgenti si prepara così:
+
+```bash
+tar --exclude=.git --exclude=node_modules --exclude=.venv --exclude=.next --exclude=__pycache__ \
+  -czf tarots-src.tar.gz backend frontend admin deploy -C /e/Projects seo-notify
+```
+
+## Notifica ai motori di ricerca (v8)
+
+Il CronJob `tarots-notifica-motori` (stessa immagine dell'API) ogni notte a mezzanotte, ora italiana,
+annuncia gli articoli del blog pubblicati o modificati dall'ultimo giro. Tre canali indipendenti: uno
+non configurato si salta, uno che fallisce non ferma gli altri. Esito e storico nella console, pagina
+**SEO**, dove «Invia ora» fa lo stesso giro subito.
+
+- **IndexNow** (Bing, Yandex…): la chiave è pubblica per protocollo. Sta in `tarots.yaml`
+  (`TAROT_INDEXNOW_CHIAVE`) e nel file `frontend/public/<chiave>.txt`, che deve contenere la chiave
+  stessa: cambiandola, vanno cambiati entrambi e ricostruito il sito.
+- **WebSub** (feed RSS): l'hub è `TAROT_WEBSUB_HUB`, e deve coincidere con il `<atom:link rel="hub">`
+  scritto in `frontend/app/blog/feed.xml/route.ts`.
+- **Search Console** (Google): nessun OAuth interattivo, un *service account*. Una volta sola, dal
+  browser: Google Cloud Console → abilitare «Google Search Console API» → creare un account di
+  servizio → chiave JSON. In Search Console, sulla proprietà di dominio `tarots.chat` (verificata via
+  DNS): Impostazioni → Utenti e autorizzazioni → aggiungere l'email dell'account di servizio come
+  **Proprietario**. Poi sul server:
+
+  ```bash
+  kubectl -n tarots create secret generic tarots-search-console --from-file=credentials.json=/root/sa.json
+  shred -u /root/sa.json
+  ```
+
+  Il Secret è montato (facoltativo) sia nell'API sia nel CronJob: dal giro successivo il canale Google
+  risulta «configurato». La proprietà è `TAROT_SEARCH_CONSOLE_PROPRIETA` (`sc-domain:tarots.chat`).
+
+Prova a mano del CronJob: `kubectl -n tarots create job --from=cronjob/tarots-notifica-motori prova-notifica`,
+poi `kubectl -n tarots logs job/prova-notifica`.
+
 ## Console di Keycloak
 
 Non è pubblica. Da un terminale sul server:

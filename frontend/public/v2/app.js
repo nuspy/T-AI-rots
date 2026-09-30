@@ -251,7 +251,10 @@
     });
   }
 
-  const path = location.pathname.replace(/\/$/, "") || "/v2";
+  /* `/v2/read`, `/v2/read/` and `/v2/read/index.html` are the same page: the server rewrites the clean
+   * forms to the file, so the router must accept all three. */
+  const pulito = location.pathname.replace(/\/index\.html$/, "").replace(/\/$/, "") || "/v2";
+  const path = pulito === "/v2" ? "/v2" : `${pulito}/index.html`;
   const view = renderers[path] || home;
   document.title = ({ home: "Tarots.chat V2 — a living Tarot ritual", read: "Start a free Tarot reading — Tarots.chat V2", decks: "Tarot decks — Tarots.chat V2", thoth: "Thoth Tarot — Tarots.chat V2", cards: "Card library — Tarots.chat V2", lovers: "The Lovers — Tarots.chat V2", physical: "Read your physical cards — Tarots.chat V2", story: "My story — Tarots.chat V2" })[view.name] || "Tarots.chat V2";
   byId("app").innerHTML = view();

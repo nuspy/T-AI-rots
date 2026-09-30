@@ -56,6 +56,7 @@ export function Oracolo() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const caricatoRef = useRef(false);
+  const storicoRef = useRef<HTMLDivElement | null>(null);
 
   const [muto, setMuto] = useState(false);
   const [turni, setTurni] = useState<TurnoChat[]>([]);
@@ -92,6 +93,21 @@ export function Oracolo() {
     setTurni((prima) => [...prima, r.turno!]);
     suona();
   }, [sessione.token, suona]);
+
+  // Una risposta nuova dell'AI si porta in vista dal suo inizio (dentro lo storico, non la pagina):
+  // si legge dall'alto invece di finire in fondo. La propria risposta, in fondo.
+  const ultimoTurno = turni[turni.length - 1];
+  useEffect(() => {
+    const storico = storicoRef.current;
+    if (!storico || !ultimoTurno) return;
+    if (ultimoTurno.ruolo === "utente") {
+      storico.scrollTo({ top: storico.scrollHeight, behavior: "smooth" });
+      return;
+    }
+    const elemento = storico.querySelector<HTMLElement>(`[data-turno="${CSS.escape(ultimoTurno.id)}"]`);
+    // `.storico` è `position: relative`, quindi `offsetTop` è già relativo a lui.
+    if (elemento) storico.scrollTo({ top: elemento.offsetTop, behavior: "smooth" });
+  }, [ultimoTurno?.id, ultimoTurno?.ruolo]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Il timer di inattività: riparte a ogni turno (dell'AI o dell'utente). Solo per chi ha fatto login:
   // per chi non l'ha fatto non esiste una conversazione da riaprire da sola.
@@ -168,9 +184,9 @@ export function Oracolo() {
       <p className={stili.titolo}>{sessione.autenticata ? t.chat_titolo : t.invito_titolo}</p>
 
       {sessione.autenticata && turni.length > 0 && (
-        <div className={stili.storico} role="log">
+        <div className={stili.storico} role="log" ref={storicoRef}>
           {turni.map((turno) => (
-            <div key={turno.id}>
+            <div key={turno.id} data-turno={turno.id}>
               <p className={`${stili.turno} ${turno.ruolo === "ai" ? stili.turnoAi : stili.turnoUtente}`}>
                 {turno.testo}
               </p>
@@ -188,11 +204,12 @@ export function Oracolo() {
       )}
 
       <div className={stili.modulo}>
-        <input
-          className={stili.campo} value={testo}
+        {/* Area di testo, non input: Invio va a capo, si invia solo col pulsante. */}
+        <textarea
+          className={stili.campo} value={testo} rows={1} maxLength={2000}
           placeholder={sessione.autenticata ? t.chat_placeholder : t.invito_placeholder}
+          aria-label={sessione.autenticata ? t.chat_placeholder : t.invito_placeholder}
           onChange={(e) => setTesto(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") invia(); }}
         />
         <button
           type="button" className={`bottone ${stili.invia}`}

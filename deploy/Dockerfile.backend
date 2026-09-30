@@ -17,6 +17,12 @@ WORKDIR /app
 COPY backend/requirements.txt ./
 RUN pip install -r requirements.txt
 
+# `seo-notify` (notifica ai motori di ricerca, v8) è un progetto separato e riutilizzabile, non
+# pubblicato su PyPI: il contesto di build lo porta accanto a `backend/` (vedi deploy/k8s/LEGGIMI.md,
+# "Aggiornare"). Con l'extra `search-console` per il canale Google.
+COPY seo-notify /opt/seo-notify
+RUN pip install "/opt/seo-notify[search-console]"
+
 COPY backend/alembic.ini ./
 COPY backend/tarot_core ./tarot_core
 # I guardrail sono dati, letti da `data/guards` all'avvio. La base di
