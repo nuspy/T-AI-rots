@@ -1,17 +1,18 @@
-/* COPIA DELL'INGLESE — da tradurre. Rigenerata da copia-inglese.mjs finché questa riga resta qui. */
-/* A shared reading: the door for whoever receives the link. */
+/* Una lettura condivisa: la porta d'ingresso di chi riceve il link. */
 
-export const condivisa = {
-  eyebrow: "A reading someone shared with you",
-  titolo_predefinito: "A question, the cards, and what they opened.",
-  nota: "Shared from a personal Tarot reading. The name of whoever shared it is never shown.",
-  domanda: "The question",
-  l_interpretazione: "The interpretation",
-  invito_titolo: "Your own question is waiting.",
-  invito_testo: "Take part in the ritual yourself: your first reading is free and needs no account. If you create one, whoever sent you this link receives {n} free readings.",
-  inizia: "Start your free reading",
-  iscriviti: "Create a free account",
-  giorno: "Or draw today's card",
-  non_trovata_titolo: "This reading is no longer shared.",
-  non_trovata_testo: "Whoever shared it may have turned the link off. You can still begin your own reading.",
+import type { condivisa as Base } from "../en/condivisa";
+
+export const condivisa: typeof Base = {
+  eyebrow: "Расклад, которым с тобой поделились",
+  titolo_predefinito: "Вопрос, карты и то, что они открыли.",
+  nota: "Из личного расклада Таро. Имя того, кто поделился, никогда не показывается.",
+  domanda: "Вопрос",
+  l_interpretazione: "Толкование",
+  invito_titolo: "Твой собственный вопрос ждёт.",
+  invito_testo: "Пройди ритуал сам: первый расклад бесплатный и не требует аккаунта. Если ты его создашь, тот, кто прислал тебе эту ссылку, получит бесплатные расклады (количество: {n}).",
+  inizia: "Начать бесплатный расклад",
+  iscriviti: "Создать бесплатный аккаунт",
+  giorno: "Или вытяни карту дня",
+  non_trovata_titolo: "Этим раскладом больше не делятся.",
+  non_trovata_testo: "Возможно, тот, кто им поделился, отключил ссылку. Ты всё равно можешь начать свой расклад.",
 };

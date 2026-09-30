@@ -10,8 +10,11 @@
  * riapertura dopo un po' di silenzio («Last week you asked…»), le proposte di lettura. Quando il lettore scrive
  * da sé, il dock mostra un punto e, se il suono è acceso, un rintocco.
  *
- * Non compare dove c'è già una conversazione in pagina: la home (la domanda sta nell'eroe), la lettura, la
- * lettura delle proprie carte e le letture condivise. */
+ * v8.5: è una **barra fissa in fondo alla finestra**, a tutta larghezza, con il campo sempre visibile — anche nella
+ * home e nel blog. La conversazione di chi è dentro si apre sopra la barra. La pagina lascia in fondo lo spazio della
+ * barra (`--oracolo-h`, misurata dal vivo), e ciò che sta in fondo (il banner dei cookie, la barra del carrello) si
+ * appoggia sopra. Non compare dove c'è già una conversazione in pagina: la lettura, la lettura delle proprie carte e
+ * le letture condivise. */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -51,6 +54,7 @@ export function DockLettore() {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const caricato = useRef(false);
   const corpo = useRef<HTMLDivElement | null>(null);
+  const barra = useRef<HTMLDivElement | null>(null);
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMuto(leggiMuto()), []);
@@ -91,7 +95,21 @@ export function DockLettore() {
     if (el) c.scrollTo({ top: el.offsetTop - 8, behavior: "smooth" });
   }, [ultimo?.id, ultimo?.ruolo, aperto]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (percorso === R.home || NASCOSTO.some((p) => percorso === p || percorso.startsWith(`${p}/`))) return null;
+  const nascosta = NASCOSTO.some((p) => percorso === p || percorso.startsWith(`${p}/`));
+
+  /* L'altezza della barra diventa lo spazio in fondo alla pagina: nessun contenuto resta sotto la barra. */
+  useEffect(() => {
+    const radice = document.documentElement;
+    const el = barra.current;
+    if (nascosta || !el) { radice.style.setProperty("--oracolo-h", "0px"); return; }
+    const misura = () => radice.style.setProperty("--oracolo-h", `${Math.ceil(el.getBoundingClientRect().height)}px`);
+    misura();
+    const osservatore = new ResizeObserver(misura);
+    osservatore.observe(el);
+    return () => { osservatore.disconnect(); radice.style.setProperty("--oracolo-h", "0px"); };
+  }, [nascosta]);
+
+  if (nascosta) return null;
 
   const vai = (indirizzo: string) => router.push(indirizzoV2(indirizzo, prefissoIt));
 
@@ -103,6 +121,8 @@ export function DockLettore() {
       return;
     }
     if (inCorso) return;
+    setAperto(true);
+    setNuovo(false);
     setTesto("");
     setInCorso(true);
     setTurni((prima) => [...prima, { id: `locale-${Date.now()}`, ruolo: "utente", testo: pulito, proposta: null, creato: null }]);
@@ -128,26 +148,23 @@ export function DockLettore() {
 
   const dentro = sessione.autenticata;
   return (
-    <div className="dock">
+    <div className="oracolo" ref={barra}>
       {dentro && <audio ref={audio} src="/suoni/chime.wav" preload="none" />}
-      {aperto && (
-        <section className="dock-panel" id="dock-lettore" aria-labelledby="dock-titolo">
+      {aperto && dentro && (
+        <section className="oracolo-pannello" id="dock-lettore" aria-labelledby="dock-titolo">
           <div className="dock-head">
-            <h2 id="dock-titolo">{dentro ? t.comune.dock_titolo : t.comune.dock_titolo_anonimo}</h2>
+            <h2 id="dock-titolo">{t.comune.dock_titolo}</h2>
             <div>
-              {dentro && (
-                <button type="button" onClick={cambiaMuto} aria-label={muto ? t.comune.dock_muto : t.comune.dock_suono}
-                  title={muto ? t.comune.dock_muto : t.comune.dock_suono}>
-                  {muto ? "🔇" : "🔊"}
-                </button>
-              )}
+              <button type="button" onClick={cambiaMuto} aria-label={muto ? t.comune.dock_muto : t.comune.dock_suono}
+                title={muto ? t.comune.dock_muto : t.comune.dock_suono}>
+                {muto ? "🔇" : "🔊"}
+              </button>
               <button type="button" onClick={alterna} aria-label={t.comune.chiudi}>✕</button>
             </div>
           </div>
           <div className="dock-body" ref={corpo} role="log" aria-live="polite">
-            {!dentro && <p className="intro">{t.comune.dock_testo_anonimo}</p>}
-            {dentro && turni.length === 0 && <p className="intro">{t.comune.dock_vuoto}</p>}
-            {dentro && turni.map((turno) => (
+            {turni.length === 0 && <p className="intro">{t.comune.dock_vuoto}</p>}
+            {turni.map((turno) => (
               <div key={turno.id} data-turno={turno.id} style={{ display: "grid" }}>
                 <p className={`message ${turno.ruolo === "utente" ? "message-user" : ""}`} dir="auto">{turno.testo}</p>
                 {turno.proposta && (
@@ -162,25 +179,32 @@ export function DockLettore() {
             ))}
             {inCorso && <span className="typing" aria-label={t.comune.dock_attesa}><span /><span /><span /></span>}
           </div>
-          <form className="dock-form" onSubmit={(e) => { e.preventDefault(); void invia(); }}>
-            <textarea
-              value={testo} rows={1} maxLength={2000} dir="auto"
-              placeholder={dentro ? t.comune.dock_segnaposto : t.comune.dock_segnaposto_anonimo}
-              aria-label={dentro ? t.comune.dock_segnaposto : t.comune.dock_segnaposto_anonimo}
-              onChange={(e) => setTesto(e.target.value)}
-            />
-            <button type="submit" className="button button-brass" disabled={!testo.trim() || (dentro && inCorso)}>
-              {dentro ? t.comune.dock_invia : t.comune.dock_invia_anonimo}
-            </button>
-          </form>
         </section>
       )}
-      <button type="button" className="dock-toggle" onClick={alterna} aria-expanded={aperto} aria-controls="dock-lettore"
-        aria-label={t.comune.dock_apri} data-an="dock_apri">
-        {nuovo && <span className="dot" aria-hidden="true" />}
-        <span aria-hidden="true">✦</span>
-        <span className="label-long" aria-hidden="true">{t.comune.dock_apri}</span>
-      </button>
+      <form className="oracolo-barra" onSubmit={(e) => { e.preventDefault(); void invia(); }}
+        aria-label={dentro ? t.comune.dock_titolo : t.comune.dock_titolo_anonimo}>
+        {dentro ? (
+          <button type="button" className="oracolo-apri" onClick={alterna} aria-expanded={aperto} aria-controls="dock-lettore"
+            title={t.comune.dock_apri} aria-label={t.comune.dock_apri} data-an="dock_apri">
+            {nuovo && <span className="dot" aria-hidden="true" />}
+            <span aria-hidden="true">✦</span>
+          </button>
+        ) : (
+          <span className="oracolo-segno" aria-hidden="true" title={t.comune.dock_testo_anonimo}>✦</span>
+        )}
+        <textarea
+          value={testo} rows={1} maxLength={2000} dir="auto"
+          placeholder={dentro ? t.comune.dock_segnaposto : t.comune.dock_segnaposto_anonimo}
+          aria-label={dentro ? t.comune.dock_segnaposto : t.comune.dock_segnaposto_anonimo}
+          onChange={(e) => setTesto(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void invia(); } }}
+        />
+        <button type="submit" className="button button-brass oracolo-invia" disabled={!testo.trim() || (dentro && inCorso)}
+          data-an="dock_invia">
+          <span className="oracolo-invia-testo">{dentro ? t.comune.dock_invia : t.comune.dock_invia_anonimo}</span>
+          <span className="oracolo-invia-icona" aria-hidden="true">→</span>
+        </button>
+      </form>
     </div>
   );
 }

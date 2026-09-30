@@ -1,37 +1,38 @@
-/* COPIA DELL'INGLESE — da tradurre. Rigenerata da copia-inglese.mjs finché questa riga resta qui. */
-/* Method & privacy. The legal content is the site's own (same controller, same choices, same statistics policy);
- * the V2 adds what the reader remembers and how the AI is used, in plain words. */
+/* Metodo e privacy: i contenuti legali del sito (stesso titolare, stesse scelte, stesse statistiche), più che cosa
+ * ricorda il lettore e come si usa l'AI. */
 
-export const privacy = {
-  meta_titolo: "Method & privacy",
-  meta_descrizione: "What is kept, why, and how you decide: readings, memory, statistics and cookies.",
-  eyebrow: "Method & privacy",
-  titolo: "Mystical does not have to mean opaque.",
-  intro: "What is kept, why, and how you decide. The same rules apply to every page of TAROTS chat.",
+import type { privacy as Base } from "../en/privacy";
 
-  letture_titolo: "Your readings and your memory",
-  letture_testo: "Readings are kept in your account so you can return to them. What your reader remembers comes from your readings and conversations, and you can review, edit or delete it at any time from My story. Deleting a reading removes it for good.",
-  letture_cta: "Manage what is remembered",
-  ai_titolo: "How the AI is used",
-  ai_testo: "An AI interprets the cards in the context of your question and your words. In readings about two people, the other person's surname never reaches the AI. The AI does not know the future, and no reading is a prediction.",
+export const privacy: typeof Base = {
+  meta_titolo: "Método y privacidad",
+  meta_descrizione: "Qué se guarda, por qué y cómo decides tú: lecturas, memoria, estadísticas y cookies.",
+  eyebrow: "Método y privacidad",
+  titolo: "Místico no tiene por qué significar opaco.",
+  intro: "Qué se guarda, por qué y cómo decides tú. Las mismas reglas se aplican a todas las páginas de TAROTS chat.",
 
-  custode_titolo: "Data controller",
-  custode_testo: "The data controller for the personal data collected by TAROTS chat is Andrea Taini.",
-  partner_titolo: "Sharing data with partners",
-  partner_testo: "You can choose whether to authorise sharing your data with our partners. This choice is separate from the cookie choice and you can change it at any time from this page.",
-  partner_si: "I authorise",
-  partner_no: "I do not authorise",
-  partner_stato_si: "You have authorised sharing your data with partners.",
-  partner_stato_no: "You have not authorised sharing your data with partners.",
-  stat_titolo: "Usage statistics",
-  stat_anonime: "We measure anonymously how the site is used: pages visited, where the visit comes from (search engine, social network, campaign), device and browser type, approximate country and city. No cookies, and nothing is stored in your browser. Your IP address is only used at the moment of the visit, to estimate country and city and to compute a fingerprint that changes every day: it is never stored.",
-  stat_account: "If you have an account and are signed in, your visits are linked to your account, based on our legitimate interest in understanding how to improve the service (for example which channel new members come from and what leads to a purchase). You can object at any time from your account: from then on visits are no longer linked, and the link with past ones is deleted.",
-  stat_esteso: "If you accept in the cookie banner (“It's fine”), we also recognise your browser when you come back on later days, with a random identifier. If you decline or change your mind, the identifier is forgotten by our servers too.",
-  stat_conservazione: "Detailed visits and events are kept for 25 months; after that only anonymous daily totals remain. Automated analyses and exports only use aggregated data.",
-  stat_geo: "IP geolocation:",
-  cookie_titolo: "Your cookie choice",
-  cookie_si: "I accept",
-  cookie_no: "I do not accept",
-  cookie_stato_si: "You have accepted: your browser is recognised when you come back.",
-  cookie_stato_no: "You have not accepted: visits stay anonymous and the browser identifier has been forgotten.",
+  letture_titolo: "Tus lecturas y tu memoria",
+  letture_testo: "Las lecturas se guardan en tu cuenta para que puedas volver a ellas. Lo que recuerda tu lector procede de tus lecturas y conversaciones, y puedes revisarlo, editarlo o borrarlo en cualquier momento desde Mi historia. Borrar una lectura la elimina para siempre.",
+  letture_cta: "Gestionar lo que se recuerda",
+  ai_titolo: "Cómo se usa la IA",
+  ai_testo: "Una IA interpreta las cartas en el contexto de tu pregunta y de tus palabras. En las lecturas sobre dos personas, el apellido de la otra persona nunca llega a la IA. La IA no conoce el futuro y ninguna lectura es una predicción.",
+
+  custode_titolo: "Responsable del tratamiento",
+  custode_testo: "El responsable del tratamiento de los datos personales recogidos por TAROTS chat es Andrea Taini.",
+  partner_titolo: "Compartir datos con socios",
+  partner_testo: "Puedes elegir si autorizas que se compartan tus datos con nuestros socios. Esta elección es independiente de la de las cookies y puedes cambiarla en cualquier momento desde esta página.",
+  partner_si: "Lo autorizo",
+  partner_no: "No lo autorizo",
+  partner_stato_si: "Has autorizado que se compartan tus datos con socios.",
+  partner_stato_no: "No has autorizado que se compartan tus datos con socios.",
+  stat_titolo: "Estadísticas de uso",
+  stat_anonime: "Medimos de forma anónima cómo se usa el sitio: páginas visitadas, de dónde llega la visita (buscador, red social, campaña), tipo de dispositivo y de navegador, país y ciudad aproximados. Sin cookies y sin guardar nada en tu navegador. Tu dirección IP solo se usa en el momento de la visita, para estimar el país y la ciudad y para calcular una huella que cambia cada día: nunca se guarda.",
+  stat_account: "Si tienes una cuenta y has iniciado sesión, tus visitas se vinculan a tu cuenta, sobre la base de nuestro interés legítimo en entender cómo mejorar el servicio (por ejemplo, de qué canal llegan los nuevos miembros y qué lleva a una compra). Puedes oponerte en cualquier momento desde tu cuenta: a partir de entonces las visitas dejan de vincularse y se borra el vínculo con las anteriores.",
+  stat_esteso: "Si aceptas en el aviso de cookies («It's fine»), también reconocemos tu navegador cuando vuelves en días posteriores, con un identificador aleatorio. Si lo rechazas o cambias de opinión, nuestros servidores también olvidan el identificador.",
+  stat_conservazione: "Las visitas y los eventos detallados se conservan durante 25 meses; después solo quedan totales diarios anónimos. Los análisis automáticos y las exportaciones solo usan datos agregados.",
+  stat_geo: "Geolocalización por IP:",
+  cookie_titolo: "Tu elección sobre las cookies",
+  cookie_si: "Acepto",
+  cookie_no: "No acepto",
+  cookie_stato_si: "Has aceptado: tu navegador se reconoce cuando vuelves.",
+  cookie_stato_no: "No has aceptado: las visitas siguen siendo anónimas y el identificador del navegador se ha olvidado.",
 };

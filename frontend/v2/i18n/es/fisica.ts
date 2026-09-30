@@ -1,34 +1,35 @@
-/* COPIA DELL'INGLESE — da tradurre. Rigenerata da copia-inglese.mjs finché questa riga resta qui. */
-/* Physical Tarot mode: the user draws with their own deck, places the cards, and the reader interprets. */
+/* Le proprie carte: si pesca con il proprio mazzo, si posano le carte, il lettore interpreta. */
 
-export const fisica = {
-  meta_titolo: "Read your physical cards",
-  meta_descrizione: "Draw the cards with your own Tarot deck, place them in a spread, and receive a guided interpretation.",
-  eyebrow: "Physical Tarot mode",
-  titolo: "Your hands draw the cards. The reader helps you hear the pattern.",
-  intro: "Choose the spread you used, name the cards you actually drew, then add your question. Nothing is drawn again: the reading starts from your table.",
+import type { fisica as Base } from "../en/fisica";
 
-  passo_1: "1 · Place the cards",
-  stesa_titolo: "Which spread did you lay out?",
-  cambia_stesa: "Choose another spread",
-  posiziona: "Touch each position and name the card you found there.",
-  aggiungi: "Name",
-  modifica: "Change",
-  mancano: "{n} positions still to name",
-  manca_una: "One position still to name",
-  pronte: "Every card is in its place.",
+export const fisica: typeof Base = {
+  meta_titolo: "Lee tus cartas físicas",
+  meta_descrizione: "Saca las cartas con tu propio mazo de Tarot, colócalas en una tirada y recibe una interpretación guiada.",
+  eyebrow: "Modo Tarot físico",
+  titolo: "Tus manos sacan las cartas. El lector te ayuda a escuchar el conjunto.",
+  intro: "Elige la tirada que has usado, indica las cartas que realmente te han salido y luego añade tu pregunta. No se vuelve a sacar nada: la lectura parte de tu mesa.",
 
-  passo_2: "2 · Give it a question",
-  domanda_titolo: "What should the cards help you examine?",
-  domanda_segnaposto: "Write your question in your own words…",
-  domanda_testo: "Your physical draw remains yours. The interpretation begins when you name what you want to understand.",
-  interpreta: "Interpret my cards",
-  serve_account: "Interpreting your own cards needs a free account: your table and question are kept while you sign in.",
-  entra: "Sign in to continue",
+  passo_1: "1 · Coloca las cartas",
+  stesa_titolo: "¿Qué tirada has dispuesto?",
+  cambia_stesa: "Elegir otra tirada",
+  posiziona: "Toca cada posición e indica la carta que has encontrado en ella.",
+  aggiungi: "Indicar",
+  modifica: "Cambiar",
+  mancano: "Faltan {n} posiciones por indicar",
+  manca_una: "Falta una posición por indicar",
+  pronte: "Cada carta está en su lugar.",
 
-  seme_titolo: "{posizione}: which suit?",
-  carta_titolo: "{posizione}: which card?",
-  semi: { maggiori: "Major Arcana", bastoni: "Wands", coppe: "Cups", spade: "Swords", dischi: "Disks" },
-  conferma: "Place this card",
-  gia_posata: "already on the table",
+  passo_2: "2 · Dale una pregunta",
+  domanda_titolo: "¿Qué quieres que las cartas te ayuden a examinar?",
+  domanda_segnaposto: "Escribe tu pregunta con tus propias palabras…",
+  domanda_testo: "Tu tirada física sigue siendo tuya. La interpretación empieza cuando nombras lo que quieres entender.",
+  interpreta: "Interpretar mis cartas",
+  serve_account: "Para interpretar tus propias cartas necesitas una cuenta gratuita: tu mesa y tu pregunta se conservan mientras inicias sesión.",
+  entra: "Inicia sesión para continuar",
+
+  seme_titolo: "{posizione}: ¿qué palo?",
+  carta_titolo: "{posizione}: ¿qué carta?",
+  semi: { maggiori: "Arcanos Mayores", bastoni: "Bastos", coppe: "Copas", spade: "Espadas", dischi: "Discos" },
+  conferma: "Colocar esta carta",
+  gia_posata: "ya está sobre la mesa",
 };

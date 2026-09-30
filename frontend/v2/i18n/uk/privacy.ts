@@ -1,37 +1,38 @@
-/* COPIA DELL'INGLESE — da tradurre. Rigenerata da copia-inglese.mjs finché questa riga resta qui. */
-/* Method & privacy. The legal content is the site's own (same controller, same choices, same statistics policy);
- * the V2 adds what the reader remembers and how the AI is used, in plain words. */
+/* Metodo e privacy: i contenuti legali del sito (stesso titolare, stesse scelte, stesse statistiche), più che cosa
+ * ricorda il lettore e come si usa l'AI. */
 
-export const privacy = {
-  meta_titolo: "Method & privacy",
-  meta_descrizione: "What is kept, why, and how you decide: readings, memory, statistics and cookies.",
-  eyebrow: "Method & privacy",
-  titolo: "Mystical does not have to mean opaque.",
-  intro: "What is kept, why, and how you decide. The same rules apply to every page of TAROTS chat.",
+import type { privacy as Base } from "../en/privacy";
 
-  letture_titolo: "Your readings and your memory",
-  letture_testo: "Readings are kept in your account so you can return to them. What your reader remembers comes from your readings and conversations, and you can review, edit or delete it at any time from My story. Deleting a reading removes it for good.",
-  letture_cta: "Manage what is remembered",
-  ai_titolo: "How the AI is used",
-  ai_testo: "An AI interprets the cards in the context of your question and your words. In readings about two people, the other person's surname never reaches the AI. The AI does not know the future, and no reading is a prediction.",
+export const privacy: typeof Base = {
+  meta_titolo: "Метод і приватність",
+  meta_descrizione: "Що зберігається, навіщо і як вирішуєш ти: читання, пам'ять, статистика і cookie.",
+  eyebrow: "Метод і приватність",
+  titolo: "Містичне не мусить бути непрозорим.",
+  intro: "Що зберігається, навіщо і як вирішуєш ти. Ті самі правила діють на кожній сторінці TAROTS chat.",
 
-  custode_titolo: "Data controller",
-  custode_testo: "The data controller for the personal data collected by TAROTS chat is Andrea Taini.",
-  partner_titolo: "Sharing data with partners",
-  partner_testo: "You can choose whether to authorise sharing your data with our partners. This choice is separate from the cookie choice and you can change it at any time from this page.",
-  partner_si: "I authorise",
-  partner_no: "I do not authorise",
-  partner_stato_si: "You have authorised sharing your data with partners.",
-  partner_stato_no: "You have not authorised sharing your data with partners.",
-  stat_titolo: "Usage statistics",
-  stat_anonime: "We measure anonymously how the site is used: pages visited, where the visit comes from (search engine, social network, campaign), device and browser type, approximate country and city. No cookies, and nothing is stored in your browser. Your IP address is only used at the moment of the visit, to estimate country and city and to compute a fingerprint that changes every day: it is never stored.",
-  stat_account: "If you have an account and are signed in, your visits are linked to your account, based on our legitimate interest in understanding how to improve the service (for example which channel new members come from and what leads to a purchase). You can object at any time from your account: from then on visits are no longer linked, and the link with past ones is deleted.",
-  stat_esteso: "If you accept in the cookie banner (“It's fine”), we also recognise your browser when you come back on later days, with a random identifier. If you decline or change your mind, the identifier is forgotten by our servers too.",
-  stat_conservazione: "Detailed visits and events are kept for 25 months; after that only anonymous daily totals remain. Automated analyses and exports only use aggregated data.",
-  stat_geo: "IP geolocation:",
-  cookie_titolo: "Your cookie choice",
-  cookie_si: "I accept",
-  cookie_no: "I do not accept",
-  cookie_stato_si: "You have accepted: your browser is recognised when you come back.",
-  cookie_stato_no: "You have not accepted: visits stay anonymous and the browser identifier has been forgotten.",
+  letture_titolo: "Твої читання і твоя пам'ять",
+  letture_testo: "Читання зберігаються у твоєму обліковому записі, щоб до них можна було повернутися. Те, що пам'ятає твій читач, походить із твоїх читань і розмов, і ти можеш будь-коли переглянути, змінити або видалити це в розділі «Моя історія». Видалене читання зникає назавжди.",
+  letture_cta: "Керувати тим, що запам'ятовується",
+  ai_titolo: "Як використовується ШІ",
+  ai_testo: "ШІ тлумачить карти в контексті твого питання і твоїх слів. У читаннях про двох людей прізвище іншої людини ніколи не потрапляє до ШІ. ШІ не знає майбутнього, і жодне читання не є передбаченням.",
+
+  custode_titolo: "Контролер даних",
+  custode_testo: "Контролером персональних даних, які збирає TAROTS chat, є Andrea Taini.",
+  partner_titolo: "Передавання даних партнерам",
+  partner_testo: "Ти можеш вирішити, чи дозволяєш передавати свої дані нашим партнерам. Цей вибір не залежить від вибору щодо cookie, і його можна будь-коли змінити на цій сторінці.",
+  partner_si: "Дозволяю",
+  partner_no: "Не дозволяю",
+  partner_stato_si: "Передавання твоїх даних партнерам дозволено.",
+  partner_stato_no: "Передавання твоїх даних партнерам не дозволено.",
+  stat_titolo: "Статистика використання",
+  stat_anonime: "Ми анонімно вимірюємо, як використовується сайт: відвідані сторінки, звідки прийшов візит (пошукова система, соціальна мережа, кампанія), тип пристрою і браузера, приблизні країна й місто. Жодних cookie, і нічого не зберігається у твоєму браузері. Твоя IP-адреса використовується лише в момент візиту, щоб оцінити країну й місто та обчислити відбиток, який змінюється щодня: вона ніколи не зберігається.",
+  stat_account: "Якщо в тебе є обліковий запис і вхід виконано, твої візити пов'язуються з ним на підставі нашого законного інтересу зрозуміти, як покращити сервіс (наприклад, з якого каналу приходять нові учасники і що веде до покупки). Ти можеш будь-коли заперечити це у своєму обліковому записі: відтоді візити більше не пов'язуються, а зв'язок із минулими видаляється.",
+  stat_esteso: "Якщо ти погодишся в банері cookie («Гаразд»), ми також впізнаватимемо твій браузер, коли ти повертаєшся в інші дні, за допомогою випадкового ідентифікатора. Якщо ти відмовишся або передумаєш, наші сервери теж забудуть цей ідентифікатор.",
+  stat_conservazione: "Детальні дані про візити й події зберігаються 25 місяців; після цього лишаються тільки анонімні щоденні підсумки. Автоматизовані аналізи й експорти використовують лише узагальнені дані.",
+  stat_geo: "Геолокація за IP:",
+  cookie_titolo: "Твій вибір щодо cookie",
+  cookie_si: "Приймаю",
+  cookie_no: "Не приймаю",
+  cookie_stato_si: "Згоду надано: твій браузер впізнається, коли ти повертаєшся.",
+  cookie_stato_no: "Згоди не надано: візити лишаються анонімними, а ідентифікатор браузера забуто.",
 };

@@ -1,17 +1,18 @@
-/* COPIA DELL'INGLESE — da tradurre. Rigenerata da copia-inglese.mjs finché questa riga resta qui. */
-/* A shared reading: the door for whoever receives the link. */
+/* Una lettura condivisa: la porta d'ingresso di chi riceve il link. */
 
-export const condivisa = {
-  eyebrow: "A reading someone shared with you",
-  titolo_predefinito: "A question, the cards, and what they opened.",
-  nota: "Shared from a personal Tarot reading. The name of whoever shared it is never shown.",
-  domanda: "The question",
-  l_interpretazione: "The interpretation",
-  invito_titolo: "Your own question is waiting.",
-  invito_testo: "Take part in the ritual yourself: your first reading is free and needs no account. If you create one, whoever sent you this link receives {n} free readings.",
-  inizia: "Start your free reading",
-  iscriviti: "Create a free account",
-  giorno: "Or draw today's card",
-  non_trovata_titolo: "This reading is no longer shared.",
-  non_trovata_testo: "Whoever shared it may have turned the link off. You can still begin your own reading.",
+import type { condivisa as Base } from "../en/condivisa";
+
+export const condivisa: typeof Base = {
+  eyebrow: "Una lectura que alguien ha compartido contigo",
+  titolo_predefinito: "Una pregunta, las cartas y lo que abrieron.",
+  nota: "Compartida desde una lectura personal de Tarot. El nombre de quien la compartió nunca se muestra.",
+  domanda: "La pregunta",
+  l_interpretazione: "La interpretación",
+  invito_titolo: "Tu propia pregunta te espera.",
+  invito_testo: "Participa tú también en el ritual: tu primera lectura es gratis y no necesita cuenta. Si creas una, quien te envió este enlace recibe {n} lecturas gratis.",
+  inizia: "Empieza tu lectura gratis",
+  iscriviti: "Crear una cuenta gratuita",
+  giorno: "O saca la carta de hoy",
+  non_trovata_titolo: "Esta lectura ya no está compartida.",
+  non_trovata_testo: "Quien la compartió puede haber desactivado el enlace. Aun así, puedes empezar tu propia lectura.",
 };

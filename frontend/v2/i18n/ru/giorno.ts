@@ -1,20 +1,21 @@
-/* COPIA DELL'INGLESE — da tradurre. Rigenerata da copia-inglese.mjs finché questa riga resta qui. */
-/* The card of the day. */
+/* La carta del giorno. */
 
-export const giorno = {
-  meta_titolo: "Card of the day",
-  meta_descrizione: "A Thoth Tarot card for today, free and without an account: a small encounter and a prompt for reflection.",
-  eyebrow: "Card of the day",
-  titolo: "A small encounter, available without an account.",
-  intro: "One card for today, the same for everyone until midnight (UTC). Take the image as a reflective prompt, not a promise.",
-  intro_dentro: "Your own card for today, free. Turn it when you are ready: it counts your days in a row.",
-  di_tutti: "Today's card",
-  tua: "Your card for today",
-  gira: "Turn the card",
-  serie: { uno: "1 day in a row", molti: "{n} days in a row" },
-  domanda: "If something specific is asking for attention, bring it into a reading.",
-  cta: "Ask a fuller question",
-  significato: "The full meaning of {carta}",
-  personale: "With a free account, the card is drawn for you each day, and your streak keeps the practice alive.",
-  entra: "Sign in",
+import type { giorno as Base } from "../en/giorno";
+
+export const giorno: typeof Base = {
+  meta_titolo: "Карта дня",
+  meta_descrizione: "Карта Таро Тота на сегодня, бесплатно и без аккаунта: небольшая встреча и повод для размышления.",
+  eyebrow: "Карта дня",
+  titolo: "Небольшая встреча, доступная без аккаунта.",
+  intro: "Одна карта на сегодня, общая для всех до полуночи (UTC). Воспринимай образ как повод для размышления, а не как обещание.",
+  intro_dentro: "Твоя личная карта на сегодня, бесплатно. Переверни её, когда будешь готов: она считает дни подряд.",
+  di_tutti: "Карта сегодняшнего дня",
+  tua: "Твоя карта на сегодня",
+  gira: "Перевернуть карту",
+  serie: { uno: "1 день подряд", molti: "Дней подряд: {n}" },
+  domanda: "Если что-то конкретное просит внимания, принеси это в расклад.",
+  cta: "Задать более полный вопрос",
+  significato: "Полное значение карты «{carta}»",
+  personale: "С бесплатным аккаунтом карта вытягивается лично для тебя каждый день, а серия дней поддерживает практику.",
+  entra: "Войти",
 };

@@ -226,7 +226,7 @@ a.difference:first-child:hover { background: #1d7f7e; }
 .final::after { content: "✦"; position: absolute; inset: auto 5% -4rem auto; color: rgba(214,182,109,.25); font: 15rem/1 var(--serif); }
 
 /* ---- footer ---- */
-.site-footer { display: grid; grid-template-columns: 1.5fr repeat(3, 1fr); gap: 2rem; padding: 3.5rem var(--gutter); padding-bottom: max(3.5rem, calc(env(safe-area-inset-bottom) + 5.5rem)); color: #d7c7db; background: var(--plum-deep); }
+.site-footer { display: grid; grid-template-columns: 1.5fr repeat(3, 1fr); gap: 2rem; padding: 3.5rem var(--gutter); color: #d7c7db; background: var(--plum-deep); }
 .site-footer h2 { margin: 0 0 .75rem; color: #fff5e4; font: 400 1.05rem var(--serif); }
 .site-footer p, .site-footer li { color: #bbaec1; font-size: .84rem; }
 .site-footer ul { list-style: none; margin: 0; padding: 0; }
@@ -467,4 +467,107 @@ button.chip, a.chip { cursor: pointer; }
 .md-figura img { display: block; }
 .md-didascalia { display: block; margin-top: .5rem; color: var(--ink-soft); font-size: .85rem; line-height: 1.5; text-align: center; }
 u { text-decoration-color: var(--brass); text-underline-offset: 3px; }
+/* ---- la barra dell'oracolo (v8.5): fissa in fondo, a tutta larghezza, su ogni pagina ------------------------- */
+body { padding-bottom: var(--oracolo-h, 0px); }
+.oracolo { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: grid; }
+.oracolo-barra { display: grid; grid-template-columns: auto 1fr auto; align-items: end; gap: .6rem; padding: .6rem var(--gutter); padding-bottom: max(.6rem, env(safe-area-inset-bottom)); padding-left: max(var(--gutter), env(safe-area-inset-left)); padding-right: max(var(--gutter), env(safe-area-inset-right)); color: #f6ecdd; background: rgba(32,16,38,.97); border-top: 2px solid var(--brass); box-shadow: 0 -10px 28px rgba(32,16,38,.22); backdrop-filter: blur(10px); }
+.oracolo-barra textarea { min-height: 44px; max-height: 7.5rem; resize: none; padding: .6rem .75rem; border: 1px solid rgba(214,182,109,.4); border-radius: 3px; color: #fff7e8; background: rgba(255,255,255,.07); font: 400 1rem/1.4 var(--sans); field-sizing: content; }
+.oracolo-barra textarea::placeholder { color: #c2b4c8; }
+.oracolo-barra textarea:focus-visible { outline: 2px solid var(--brass-pale); outline-offset: 1px; }
+.oracolo-segno, .oracolo-apri { position: relative; display: grid; place-items: center; width: 44px; height: 44px; color: var(--brass-pale); font-family: var(--serif); font-size: 1.15rem; }
+.oracolo-apri { border: 1px solid rgba(214,182,109,.55); border-radius: 50%; background: none; }
+.oracolo-apri[aria-expanded="true"] { background: rgba(214,182,109,.18); }
+.oracolo-apri .dot { position: absolute; top: 2px; right: 2px; width: 10px; height: 10px; border-radius: 50%; background: var(--verdigris); box-shadow: 0 0 0 2px var(--plum-deep); }
+.oracolo-invia { min-height: 44px; }
+.oracolo-invia-icona { display: none; font-size: 1.2rem; }
+.oracolo-pannello { justify-self: end; width: min(440px, 100%); max-height: min(60dvh, 520px); display: flex; flex-direction: column; margin-right: max(var(--gutter), env(safe-area-inset-right)); color: #f6ecdd; background: var(--plum-deep); border-top: 3px solid var(--brass); box-shadow: 0 -18px 44px rgba(32,16,38,.35); }
+.cookie { bottom: calc(var(--oracolo-h, 0px) + max(1rem, env(safe-area-inset-bottom))); }
+.shop-bar { bottom: calc(var(--oracolo-h, 0px) + .75rem); }
+@media (max-width: 560px) {
+  .oracolo-barra { gap: .45rem; padding-top: .5rem; }
+  .oracolo-invia { width: 44px; padding: 0; }
+  .oracolo-invia-testo { display: none; }
+  .oracolo-invia-icona { display: inline; }
+  .oracolo-pannello { width: 100%; margin-right: 0; max-height: 55dvh; }
+}
+/* ---- impaginazione più compatta (v8.5, punti 4A–4P): un solo CSS, niente pagine separate per il telefono ---------- */
+/* A capo: titoli bilanciati (niente parola sola sull'ultima riga), paragrafi senza orfane dove il browser lo sa fare. */
+.display, .section-title, .declaration h3, .subhero .display, h1, h2, h3, .eyebrow, .orbit-note, .memory-card p { text-wrap: balance; }
+p, li, .section-intro, .lede, .faq-item p, .message { text-wrap: pretty; }
+
+/* Anche sul computer: temi, rito e percorso respirano meno. */
+.section-head { margin-bottom: 2rem; }
+.topic { min-height: 128px; }
+.ritual-steps { margin-top: 1.6rem; }
+.funnel-steps { margin-top: 1.8rem; }
+.funnel-step { min-height: 136px; }
+.difference { min-height: 190px; }
+.difference span { margin-bottom: 1.6rem; }
+
+@media (max-width: 760px) {
+  /* 4A — le bande e le aperture delle pagine */
+  .band { padding-block: 2.25rem; }
+  .band-tight { padding-block: 1.5rem; }
+  .subhero { padding: 2rem var(--gutter) 1.4rem; }
+  .subhero-compact { padding-block: 1.6rem 1.2rem; }
+  .section-head { margin-bottom: 1.2rem; }
+  .section-head > a { margin-top: .8rem; }
+  .section-intro { margin-block: .6rem 0; font-size: 1rem; }
+  .eyebrow { margin-bottom: .6rem; }
+
+  /* 4B — l'eroe: meno spazio sotto le chiamate all'azione */
+  .hero { padding-bottom: 1.5rem; }
+  .hero-copy .lede { margin: 1rem 0 1.2rem; font-size: 1.02rem; }
+  .minor-cta { margin-top: .6rem; }
+  .trust-strip { margin-top: 1.4rem; padding-top: .9rem; }
+  .ritual-object { min-height: 260px; }
+  .orbit-note { max-width: 180px; padding: .75rem .9rem; font-size: .85rem; }
+
+  /* 4C–4E — la dimostrazione: domanda e carte compatte, messaggi più stretti, anteprima più bassa */
+  .demo-copy, .demo-ritual { padding: 1.1rem; }
+  .chat-thread { margin-top: 1rem; gap: .6rem; }
+  .message { max-width: 94%; padding: .6rem .75rem; font-size: .88rem; }
+  .ritual-preview { min-height: 190px; }
+  .ritual-preview .card-back { width: 84px; }
+  .ritual-preview .card-back:nth-child(1) { transform: translate(-44px, 6px) rotate(-12deg); }
+  .ritual-preview .card-back:nth-child(3) { transform: translate(44px, 8px) rotate(12deg); }
+
+  /* 4F–4G — i temi: bottoni bassi, simbolo e testo sulla stessa riga */
+  .topic { min-height: 0; flex-direction: row; justify-content: start; align-items: center; gap: .6rem; padding: .7rem .85rem; }
+  .topic-icon { font-size: 1.45rem; }
+
+  /* 4H–4I — il rito: due passi per riga, numero e titolo in riga, la descrizione sotto */
+  .ritual-steps { grid-template-columns: 1fr 1fr; gap: 1rem .9rem; margin-top: 1.2rem; }
+  .ritual-step { padding: .65rem 0 0; }
+  .ritual-step span { display: inline; margin: 0 .35rem 0 0; font-size: 1.1rem; }
+  .ritual-step b { font-weight: 700; }
+  .ritual-step p { margin-top: .3rem; font-size: .84rem; }
+  .declaration { margin-top: 1.6rem; padding: 1.2rem; gap: 1rem; }
+  .declaration-facts li { padding: .7rem 0; }
+
+  /* 4J — la memoria */
+  .memory-card { padding: 1.4rem; box-shadow: 9px 9px 0 rgba(178,131,54,.35); }
+  .memory-card .memory-label { margin-bottom: 1rem; }
+  .memory-card p { font-size: 1.2rem; }
+  .memory-list { margin: 1rem 0 1.2rem; }
+  .memory-list li { padding: .6rem 0; }
+
+  /* 4K–4L — le differenze: spazi minori, simbolo centrato */
+  .difference { min-height: 0; padding: 1rem 1.1rem; }
+  .difference span { margin-bottom: .5rem; text-align: center; }
+  .difference h3 { font-size: 1.15rem; }
+
+  /* 4M–4P — mazzi, fisico, percorso, diario, domande frequenti, piede */
+  .funnel-steps { margin-top: 1.2rem; }
+  .funnel-step { min-height: 0; padding: 1rem; }
+  .faq { gap: 1.2rem; }
+  .faq-item summary { padding: .85rem 2rem .85rem 0; font-size: 1rem; }
+  .site-footer { gap: 1.4rem; padding: 2.2rem var(--gutter); padding-bottom: max(2.2rem, env(safe-area-inset-bottom)); }
+  .shop-object { padding: 1.1rem; }
+  .memory-entry { padding: .8rem 0; }
+}
+@media (max-width: 430px) {
+  .ritual-steps { grid-template-columns: 1fr 1fr; }
+  .topic-grid { grid-template-columns: 1fr 1fr; }
+}
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }

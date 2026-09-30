@@ -1,6 +1,6 @@
-/* COPIA DELL'INGLESE — da tradurre. Rigenerata da copia-inglese.mjs finché questa riga resta qui. */
-/* English: the base of every V2 dictionary. */
+/* Українська: tradotto. */
 
+import type { en } from "../en";
 import { blog } from "./blog";
 import { carte } from "./carte";
 import { comune } from "./comune";
@@ -17,4 +17,4 @@ import { profilo } from "./profilo";
 import { stese } from "./stese";
 import { storia } from "./storia";
 
-export const en = { comune, home, lettura, fisica, storia, condivisa, carte, giorno, stese, mazzi, negozio, prezzi, blog, profilo, privacy };
+export const uk: typeof en = { comune, home, lettura, fisica, storia, condivisa, carte, giorno, stese, mazzi, negozio, prezzi, blog, profilo, privacy };
