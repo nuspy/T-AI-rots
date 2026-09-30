@@ -110,10 +110,9 @@ class GestoreOrdini:
         self._session = session
         self._provider = provider or provider_pagamenti()
 
-    async def apri(
-        self, user_id: int, voci: List[VoceCarrello], *, ritorno: str,
-        indirizzo: Optional[IndirizzoSpedizione] = None,
-    ) -> tuple[Ordine, str]:
+    async def preventivo(self, voci: List[VoceCarrello]) -> RisultatoCarrello:
+        """Quanto costa un carrello, con gli stessi controlli e lo stesso calcolo dell'apertura: il negozio lo
+        mostra prima di pagare (anche a chi non ha ancora un account). Non scrive niente."""
         deck_ids = list({v.deck_id for v in voci})
         decks = {
             d.id: d for d in (await self._session.execute(select(Deck).where(Deck.id.in_(deck_ids)))).scalars()
@@ -121,17 +120,23 @@ class GestoreOrdini:
         for deck_id in deck_ids:
             if deck_id not in decks or not decks[deck_id].attivo_ora:
                 raise CarrelloNonValido(f"mazzo non disponibile: {deck_id}")
+        offerte_righe = (
+            await self._session.execute(select(OffertaMazzo).where(OffertaMazzo.deck_id.in_(deck_ids)))
+        ).scalars()
+        offerte = {o.deck_id: o for o in offerte_righe}
+        return calcola_carrello(voci, decks, offerte)
+
+    async def apri(
+        self, user_id: int, voci: List[VoceCarrello], *, ritorno: str,
+        indirizzo: Optional[IndirizzoSpedizione] = None,
+    ) -> tuple[Ordine, str]:
         richiede_indirizzo = any(v.tipo == "fisico" for v in voci)
         if richiede_indirizzo and (indirizzo is None or indirizzo.user_id != user_id):
             raise CarrelloNonValido("serve un indirizzo di spedizione per il mazzo fisico")
         if not richiede_indirizzo:
             indirizzo = None  # arrivato per errore col carrello sbagliato: non si registra su un ordine che non spedisce
-        offerte_righe = (
-            await self._session.execute(select(OffertaMazzo).where(OffertaMazzo.deck_id.in_(deck_ids)))
-        ).scalars()
-        offerte = {o.deck_id: o for o in offerte_righe}
 
-        risultato = calcola_carrello(voci, decks, offerte)
+        risultato = await self.preventivo(voci)
 
         ordine = Ordine(
             user_id=user_id, status="aperto", provider=self._provider.name,

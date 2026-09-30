@@ -17,6 +17,7 @@ import { AttribuzioneCondivisione } from "@/app/(sito)/componenti/attribuzione";
 import { RiscattoInvitoAutomatico } from "@/app/(sito)/componenti/riscatto-invito";
 import { SITE_URL } from "@/lib/condivisione";
 import { AUTH_DISATTIVATA, SessioneDiSviluppo, SessioneKeycloak } from "@/lib/sessione";
+import { ProviderCarrello } from "@/v2/lib/carrello";
 import { ProviderLinguaV2, type Lingua } from "@/v2/lib/lingua";
 import { R } from "@/v2/lib/percorsi";
 import { BannerCookieV2 } from "./banner-cookie";
@@ -60,9 +61,11 @@ export function ProvidersV2({ children, linguaIniziale }: { children: React.Reac
 
   const globali = (
     <OsservatoreV2>
-      <DockLettore />
-      <BannerCookieV2 />
-      {children}
+      <ProviderCarrello>
+        <DockLettore />
+        <BannerCookieV2 />
+        {children}
+      </ProviderCarrello>
     </OsservatoreV2>
   );
 

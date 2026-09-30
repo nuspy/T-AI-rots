@@ -759,10 +759,25 @@ export const disdici = (token: string | null) =>
 export const mieiMazzi = (token: string | null) =>
   chiama<{ deck_ids: number[] }>(token, "/me/decks");
 
+/* `url` nullo e `pagamento_attivo` falso: i pagamenti non sono ancora attivi, l'ordine resta registrato in attesa. */
 export const apriOrdine = (token: string | null, voci: VoceCarrelloInvio[], ritorno?: string, indirizzoId?: string) =>
-  chiama<{ url: string } & Ordine>(
+  chiama<{ url: string | null; pagamento_attivo?: boolean } & Ordine>(
     token, "/orders", { method: "POST", body: { voci, ritorno, indirizzo_id: indirizzoId } },
   );
+
+/** Il prezzo di un carrello secondo il server (righe, sconto per mazzo, sconto a scaglioni, totale): anche senza
+ *  account, nulla viene scritto. Un formato che il mazzo non offre risponde 422. */
+export interface Preventivo {
+  righe: { deck_id: number; tipo: TipoVoceOrdine; quantita: number; prezzo_pieno_unitario: number; prezzo_finale_unitario: number }[];
+  subtotale: number;
+  scaglione_percentuale: number;
+  sconto_scaglioni: number;
+  totale: number;
+  richiede_indirizzo: boolean;
+  pagamento_attivo: boolean;
+}
+export const preventivoCarrello = (voci: VoceCarrelloInvio[]) =>
+  chiama<Preventivo>(null, "/shop/quote", { method: "POST", body: { voci } });
 
 export const elencaOrdini = (token: string | null) =>
   chiama<{ ordini: Ordine[] }>(token, "/me/orders");

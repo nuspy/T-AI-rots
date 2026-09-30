@@ -90,4 +90,12 @@ export const comune = {
   e500_titolo: "The ritual was interrupted.",
   e500_testo: "An unexpected error stopped the page. You can try again, or continue from one of these.",
   e_home: "Back to the beginning",
+  testata_crediti: "Credits",
+  testata_crediti_tip: "Credits: see the prices and buy",
+  testata_crediti_tip_n: "You have {n}: buy more",
+  testata_crediti_n: { uno: "1 credit", molti: "{n} credits" },
+  testata_carrello: "Cart",
+  testata_carrello_tip: "Your cart",
+  testata_carrello_tip_n: "Your cart: {n} items",
+  testata_profilo: "Account",
 };

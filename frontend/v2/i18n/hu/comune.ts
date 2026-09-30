@@ -88,4 +88,12 @@ export const comune: typeof Base = {
   e500_titolo: "A rituálé megszakadt.",
   e500_testo: "Egy váratlan hiba megállította az oldalt. Próbáld újra, vagy folytasd innen.",
   e_home: "Vissza a kezdethez",
+  testata_crediti: "Kreditek",
+  testata_crediti_tip: "Kreditek: árak és vásárlás",
+  testata_crediti_tip_n: "{n} van: vásárolj még",
+  testata_crediti_n: { uno: "1 kredit", molti: "{n} kredit" },
+  testata_carrello: "Kosár",
+  testata_carrello_tip: "A kosarad",
+  testata_carrello_tip_n: "A kosarad: {n} tétel",
+  testata_profilo: "Fiók",
 };

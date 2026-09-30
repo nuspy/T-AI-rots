@@ -7,12 +7,14 @@ import { useEffect, useId, useRef } from "react";
 import { useLingua } from "@/v2/lib/lingua";
 
 export function Modale({
-  aperta, titolo, onChiudi, children,
+  aperta, titolo, onChiudi, children, larga = false,
 }: {
   aperta: boolean;
   titolo: string;
   onChiudi: () => void;
   children: React.ReactNode;
+  /** Per contenuti ampi (le carte di un mazzo): quasi tutta la larghezza dello schermo. */
+  larga?: boolean;
 }) {
   const { t } = useLingua();
   const id = useId();
@@ -51,7 +53,7 @@ export function Modale({
   if (!aperta) return null;
   return (
     <div className="dialog-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onChiudi(); }}>
-      <div className="dialog" role="dialog" aria-modal="true" aria-labelledby={id} ref={riquadro} tabIndex={-1}>
+      <div className={larga ? "dialog dialog-wide" : "dialog"} role="dialog" aria-modal="true" aria-labelledby={id} ref={riquadro} tabIndex={-1}>
         <button type="button" className="dialog-close" aria-label={t.comune.chiudi} onClick={onChiudi}>✕</button>
         <h2 id={id}>{titolo}</h2>
         {children}

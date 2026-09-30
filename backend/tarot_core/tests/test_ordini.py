@@ -197,3 +197,55 @@ async def test_i_miei_mazzi_include_uno_sbloccato_da_un_ordine_pagato(client, se
 
     r2 = await client.get("/me/decks")
     assert mazzo.id in r2.json()["deck_ids"]
+
+
+# ---- preventivo pubblico e pagamenti disattivati (v8.5) -------------------------------------------------------
+
+
+async def test_il_preventivo_si_calcola_senza_account_e_non_scrive_niente(client, session):
+    from tarot_core.domain.ordini_models import Ordine
+
+    a = Deck(nome="A", slug="prev-a", attivo=True, prezzo_stampa=990, prezzo_fisico=3900)
+    b = Deck(nome="B", slug="prev-b", attivo=True, prezzo_stampa=1000)
+    session.add_all([a, b])
+    await session.commit()
+    client.identita.principal = None
+    r = await client.post("/shop/quote", json={"voci": [
+        {"deck_id": a.id, "tipo": "fisico"}, {"deck_id": a.id, "tipo": "pdf"}, {"deck_id": b.id, "tipo": "pdf", "quantita": 2},
+    ]})
+    assert r.status_code == 200, r.text
+    q = r.json()
+    assert q["subtotale"] == 3900 + 990 + 2000 and q["scaglione_percentuale"] == 10
+    assert q["totale"] == q["subtotale"] - q["sconto_scaglioni"] and q["richiede_indirizzo"] is True
+    assert [x["prezzo_finale_unitario"] for x in q["righe"]] == [3900, 990, 1000]
+    assert (await session.execute(select(func.count()).select_from(Ordine))).scalar_one() == 0
+    # un formato che il mazzo non offre
+    assert (await client.post("/shop/quote", json={"voci": [{"deck_id": b.id, "tipo": "fisico"}]})).status_code == 422
+
+
+@pytest.fixture
+def pagamenti_disattivati(monkeypatch):
+    from tarot_core.settings import get_settings
+
+    monkeypatch.setenv("TAROT_BILLING_PROVIDER", "disattivato")
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+
+
+async def test_con_i_pagamenti_disattivati_l_ordine_si_registra_in_attesa(client, session, pagamenti_disattivati):
+    await _accredita(session, client.identita.principal)
+    mazzo = Deck(nome="Da stampare", slug="da-stampare", attivo=True, prezzo_stampa=990)
+    session.add(mazzo)
+    await session.commit()
+    q = (await client.post("/shop/quote", json={"voci": [{"deck_id": mazzo.id, "tipo": "pdf"}]})).json()
+    assert q["pagamento_attivo"] is False
+    r = await client.post("/orders", json={"voci": [{"deck_id": mazzo.id, "tipo": "pdf"}], "ritorno": "/v2/cart"})
+    assert r.status_code == 201, r.text
+    dati = r.json()
+    assert dati["url"] is None and dati["pagamento_attivo"] is False
+    assert dati["status"] == "aperto" and dati["importo_totale"] == 990
+    elenco = (await client.get("/me/orders")).json()
+    assert any(o["id"] == dati["id"] and o["status"] == "aperto" for o in elenco["ordini"])
+    # il PDF non si scarica finché l'ordine non è pagato
+    assert (await client.get(f"/me/orders/{dati['id']}/pdf/{mazzo.id}")).status_code == 403

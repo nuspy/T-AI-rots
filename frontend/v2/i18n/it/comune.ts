@@ -88,4 +88,12 @@ export const comune: typeof Base = {
   e500_titolo: "Il rito si è interrotto.",
   e500_testo: "Un errore imprevisto ha fermato la pagina. Puoi riprovare, oppure continuare da uno di questi punti.",
   e_home: "Torna all'inizio",
+  testata_crediti: "Crediti",
+  testata_crediti_tip: "Crediti: guarda i prezzi e acquista",
+  testata_crediti_tip_n: "Hai {n}: acquistane altri",
+  testata_crediti_n: { uno: "1 credito", molti: "{n} crediti" },
+  testata_carrello: "Carrello",
+  testata_carrello_tip: "Il tuo carrello",
+  testata_carrello_tip_n: "Il tuo carrello: {n} articoli",
+  testata_profilo: "Account",
 };

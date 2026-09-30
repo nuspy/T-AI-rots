@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from ...analytics import eventi as analytics
 from ...auth.dependencies import CurrentUser, DbSession
+from ...billing.pagamenti import provider_pagamenti
 from ...billing.ordini import CarrelloNonValido, GestoreOrdini, VoceCarrello
 from ...billing.pagamenti import PagamentiNonDisponibili
 from ...domain import deck_repositories, indirizzi_repositories
@@ -57,6 +58,29 @@ def _ordine_json(o: Ordine) -> Dict[str, Any]:
     }
 
 
+@router.post("/shop/quote")
+async def preventivo(payload: CarrelloIn, session: DbSession) -> Dict[str, Any]:
+    """Il prezzo di un carrello — righe, sconto per-mazzo, sconto a scaglioni, totale — senza account e senza
+    scrivere niente: il negozio lo mostra mentre si compone il carrello. `pagamento_attivo` dice se «Completa
+    l'ordine» porterà a pagare o registrerà l'ordine in attesa."""
+    voci = [VoceCarrello(deck_id=v.deck_id, tipo=v.tipo, quantita=v.quantita) for v in payload.voci]
+    try:
+        r = await GestoreOrdini(session).preventivo(voci)
+    except CarrelloNonValido as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {
+        "righe": [
+            {"deck_id": x.voce.deck_id, "tipo": x.voce.tipo, "quantita": x.voce.quantita,
+             "prezzo_pieno_unitario": x.prezzo_pieno_unitario, "prezzo_finale_unitario": x.prezzo_finale_unitario}
+            for x in r.righe
+        ],
+        "subtotale": r.subtotale, "scaglione_percentuale": r.scaglione_percentuale,
+        "sconto_scaglioni": r.sconto_scaglioni, "totale": r.totale,
+        "richiede_indirizzo": any(v.tipo == "fisico" for v in voci),
+        "pagamento_attivo": provider_pagamenti().name != "disattivato",
+    }
+
+
 @router.get("/me/decks")
 async def i_miei_mazzi(user: CurrentUser, session: DbSession) -> Dict[str, Any]:
     """Quali mazzi `user` può già leggere — il negozio lo usa per proporre «Aggiungi al carrello»
@@ -92,7 +116,8 @@ async def apri_ordine(payload: CarrelloIn, user: CurrentUser, session: DbSession
         valuta=ordine.valuta, proprieta={"tipo": "ordine", "voci": len(voci)},
     )
     await session.commit()
-    return {"url": url, **_ordine_json(ordine)}
+    # Senza fornitore l'ordine resta registrato in attesa di pagamento: nessun indirizzo a cui andare.
+    return {"url": url or None, "pagamento_attivo": bool(url), **_ordine_json(ordine)}
 
 
 @router.get("/me/orders")

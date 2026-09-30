@@ -20,6 +20,7 @@ export const R = {
   mazzo: (slug: string) => `${V2}/decks/${encodeURIComponent(slug)}`,
   voto: `${V2}/vote`,
   negozio: `${V2}/shop`,
+  carrello: `${V2}/cart`,
   prezzi: `${V2}/pricing`,
   esplora: `${V2}/explore`,
   blog: `${V2}/blog`,

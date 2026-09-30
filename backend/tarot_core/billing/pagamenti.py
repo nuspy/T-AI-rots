@@ -210,6 +210,12 @@ class PagamentiDisattivati:
             "disponibili a breve."
         )
 
+    def url_di_pagamento_ordine(self, ordine: "Ordine", *, ritorno: str) -> str:
+        """Nessun indirizzo di pagamento: l'ordine resta registrato e «aperto» (in attesa di pagamento), così il
+        negozio funziona fino in fondo — carrello, prezzi, sconti, indirizzo, riepilogo — e l'operatore vede in
+        console chi avrebbe comprato cosa. Stringa vuota = «il pagamento non è attivo»: `shop.py` lo dice."""
+        return ""
+
     def verifica(self, corpo: bytes, intestazioni: Mapping[str, str]) -> EventoPagamento:
         raise FirmaNonValida("nessun fornitore di pagamento configurato")
 
