@@ -12,7 +12,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/leggi", "/letture", "/profilo", "/s/", "/admin", "/*?q=", "/*?ritorno="],
+      /* La v2 (`/v2`, `/it/v2`) è un'anteprima non indicizzata: fuori, finché non si decide se sostituisce il sito. */
+      disallow: ["/leggi", "/letture", "/profilo", "/s/", "/admin", "/v2", "/it/v2", "/*?q=", "/*?ritorno="],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,

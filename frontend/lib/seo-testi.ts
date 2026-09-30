@@ -5,8 +5,9 @@
  * `skills/tarots-blog-publisher/references/keywords.md`; ogni pagina ha **una** parola chiave principale e non
  * la divide con un'altra (niente cannibalizzazione).
  *
- * Nessuna affermazione che il prodotto non sostenga: la carta del giorno è gratuita, le letture si pagano con
- * crediti o abbonamento; il mazzo è in preparazione e non ha ancora un prezzo. */
+ * Nessuna affermazione che il prodotto non sostenga: la carta del giorno è gratuita; la prima lettura si prova
+ * senza account (rituale intero, anteprima del responso) e l'iscrizione gratuita la sblocca e regala altre letture
+ * (quante, lo decide la console: nessun numero scritto qui); poi crediti o abbonamento. */
 
 import type { Carta, Stesa } from "./api";
 import { NOME_MARCHIO } from "./marchio";
@@ -59,7 +60,7 @@ export const HOME = {
         },
         {
           d: "Is the tarot reading free?",
-          r: "The card of the day is free. Readings use credits or a subscription; see the pricing page for the packages.",
+          r: "You can try a first reading for free, without an account: you take part in the whole ritual and see a preview of the answer. A free account unlocks the full interpretation and adds free readings. After that, readings use credits or a subscription, and the card of the day is always free.",
         },
         {
           d: "What is the difference between the Thoth Tarot and the Rider-Waite tarot?",
@@ -81,7 +82,7 @@ export const HOME = {
         },
         {
           d: "La lettura dei tarocchi è gratuita?",
-          r: "La carta del giorno è gratuita. Le letture si pagano con crediti o abbonamento: i pacchetti sono nella pagina dei prezzi.",
+          r: "La prima lettura si prova gratis, senza account: fai tutto il rituale e vedi un'anteprima del responso. L'iscrizione, gratuita, sblocca l'interpretazione completa e aggiunge letture in regalo. Poi le letture si pagano con crediti o abbonamento; la carta del giorno è sempre gratuita.",
         },
         {
           d: "Che differenza c'è fra il Tarocco di Thoth e i tarocchi Rider-Waite?",

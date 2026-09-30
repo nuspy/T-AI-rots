@@ -121,7 +121,7 @@ export const hu: Dizionario = {
   home_rigore_2:
     "A paklit még a választásod előtt megkeverjük és kriptográfiai hash-sel lezárjuk: a jóslás végén ellenőrizheted, hogy a választásod után egyetlen kártyát sem cseréltek ki.",
   home_avvertenza:
-    "Mesterséges intelligenciával készült jóslás, ezoterikus szempontból következetes és szigorú. Nem bizonyosság: a legvalószínűbb jövőt mutatja. Nincs tudományos bizonyíték arra, hogy a tarotjóslatok érvényesek lennének.",
+    "Mesterséges intelligenciával készült jóslás, ezoterikus szempontból következetes és szigorú. Az elmélkedés eszköze, nem jóslat: egyetlen jövő sem garantált, és nincs tudományos bizonyíték arra, hogy a tarotjóslatok érvényesek lennének.",
 
   carte_sottotitolo: "A Thoth-tarot 78 kártyája megfeleléseikkel és több szintű jelentésükkel.",
   filtri: {

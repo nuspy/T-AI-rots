@@ -136,7 +136,7 @@ export const it = {
   home_rigore_2:
     "Il mazzo è mescolato e sigillato con un hash crittografico prima che tu scelga: a fine lettura puoi verificare che nessuna carta sia stata cambiata dopo la tua scelta.",
   home_avvertenza:
-    "Una lettura AI, coerente e rigorosa sul piano esoterico. Non è una certezza: mostra il più probabile dei futuri. Non esiste alcuna base scientifica che dimostri la validità delle previsioni dei tarocchi.",
+    "Una lettura AI, coerente e rigorosa sul piano esoterico. È uno strumento per riflettere, non una previsione: nessun futuro è garantito, e non esiste alcuna base scientifica che dimostri la validità delle previsioni dei tarocchi.",
 
   /* le carte */
   carte_sottotitolo: "Le 78 carte del Tarocco di Thoth con le loro attribuzioni e i significati sui diversi livelli.",

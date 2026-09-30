@@ -23,7 +23,7 @@ The site is published in English (canonical) and Italian (under /it). Card and s
 - [RSS feed](${SITE_URL}/blog/feed.xml)
 
 ## Service
-- [Pricing](${SITE_URL}/pricing): the card of the day is free; readings use credits.
+- [Pricing](${SITE_URL}/pricing): the card of the day is free; a first reading can be tried without an account (full ritual, preview of the answer), a free account unlocks it and adds free readings; after that, readings use credits or a subscription.
 - [Sitemap](${SITE_URL}/sitemap.xml)
 
 ## Optional

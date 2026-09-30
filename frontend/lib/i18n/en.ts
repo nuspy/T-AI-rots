@@ -123,7 +123,7 @@ export const en: Dizionario = {
   home_rigore_2:
     "The deck is shuffled and sealed with a cryptographic hash before you choose: at the end of the reading you can verify that no card was changed after your choice.",
   home_avvertenza:
-    "An AI reading, coherent and rigorous on the esoteric level. It is not a certainty: it shows the most probable of futures. There is no scientific evidence that tarot predictions are valid.",
+    "An AI reading, coherent and rigorous on the esoteric level. It is a tool for reflection, not a prediction: no future is guaranteed, and there is no scientific evidence that tarot predictions are valid.",
 
   carte_sottotitolo: "The 78 cards of the Thoth Tarot with their attributions and meanings on several levels.",
   filtri: {
