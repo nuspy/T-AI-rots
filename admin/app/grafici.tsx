@@ -290,6 +290,8 @@ export function Barre({
   barre,
   unita,
   colonneTabella,
+  onScegli,
+  formato,
 }: {
   titolo: string;
   descrizione?: string;
@@ -297,7 +299,12 @@ export function Barre({
   unita: string;
   /** Le colonne in più della tabella: quello che il grafico non mostra. */
   colonneTabella?: { titolo: string; valori: string[] }[];
+  /** Il tocco su una barra (drill-down): senza, le etichette sono testo. */
+  onScegli?: (chiave: string) => void;
+  /** Come si scrivono i valori (predefinito: numero intero). */
+  formato?: (n: number) => string;
 }) {
+  const scrivi = formato ?? ((n: number) => numeri.format(n));
   const [tabella, setTabella] = useState(false);
   const massimo = Math.max(1, ...barre.map((b) => b.valore ?? 0));
 
@@ -329,7 +336,7 @@ export function Barre({
               {barre.map((b, i) => (
                 <tr key={b.chiave}>
                   <td>{b.etichetta}</td>
-                  <td className={stili.numero}>{b.valore === null ? "—" : numeri.format(b.valore)}</td>
+                  <td className={stili.numero}>{b.valore === null ? "—" : scrivi(b.valore)}</td>
                   {colonneTabella?.map((c) => <td key={c.titolo} className={stili.numero}>{c.valori[i]}</td>)}
                 </tr>
               ))}
@@ -340,12 +347,19 @@ export function Barre({
         <ul className={stili.barre}>
           {barre.map((b) => (
             <li key={b.chiave} className={stili.barraRiga} title={b.dettaglio}>
-              <span className={stili.barraEtichetta}>{b.etichetta}</span>
+              {onScegli ? (
+                <button type="button" className={stili.barraScelta} onClick={() => onScegli(b.chiave)}
+                  aria-label={`${b.etichetta}: approfondisci`}>
+                  {b.etichetta}
+                </button>
+              ) : (
+                <span className={stili.barraEtichetta}>{b.etichetta}</span>
+              )}
               <span className={stili.barraTraccia}>
                 {b.valore !== null && (
                   <span className={stili.barra} style={{ width: `${(b.valore / massimo) * 100}%` }} />
                 )}
-                <span className={stili.barraValore}>{b.valore === null ? "—" : numeri.format(b.valore)}</span>
+                <span className={stili.barraValore}>{b.valore === null ? "—" : scrivi(b.valore)}</span>
               </span>
               {b.dettaglio && <span className={stili.barraDettaglio}>{b.dettaglio}</span>}
             </li>

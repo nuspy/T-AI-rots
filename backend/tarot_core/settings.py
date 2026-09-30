@@ -175,6 +175,16 @@ class Settings(BaseSettings):
     #: Mesi di conservazione di sessioni ed eventi grezzi (poi resta il riepilogo giornaliero).
     analytics_ritenzione_mesi: int = 25
 
+    #: La posta in uscita del backend (v8: il rapporto settimanale degli analytics). Stalwart, lo
+    #: stesso server e mittente di Keycloak. Senza host il rapporto non parte (e lo dice).
+    smtp_host: str = ""
+    smtp_porta: int = 465
+    #: SMTPS implicito (465). Falso: STARTTLS (587).
+    smtp_ssl: bool = True
+    smtp_utente: str = ""
+    smtp_password: str = ""
+    smtp_mittente: str = ""
+
     cors_origins: List[str] = Field(
         default_factory=lambda: ["http://localhost:3000", "http://localhost:3001"]
     )

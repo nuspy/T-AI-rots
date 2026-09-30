@@ -255,7 +255,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: tarots-api:v8
+          image: tarots-api:v8.1
           imagePullPolicy: IfNotPresent
           # Il CMD dell'immagine applica le migrazioni e poi serve.
           env:
@@ -297,6 +297,15 @@ spec:
             - {name: TAROT_WEBSUB_HUB, value: "https://pubsubhubbub.appspot.com/"}
             - {name: TAROT_SEARCH_CONSOLE_PROPRIETA, value: "sc-domain:tarots.chat"}
             - {name: TAROT_SEARCH_CONSOLE_CREDENZIALI, value: /segreti/search-console/credentials.json}
+            # Analytics (v8, lanterna): paese e città dal file DB-IP scaricato nell'immagine.
+            - {name: TAROT_ANALYTICS_GEO, value: /opt/geo/citta.mmdb}
+            # Posta in uscita (rapporto analytics, «Invia ora» dalla console): lo Stalwart di Keycloak.
+            - {name: TAROT_SMTP_HOST, value: mail.tadamoo.com}
+            - {name: TAROT_SMTP_PORTA, value: "465"}
+            - {name: TAROT_SMTP_UTENTE, value: "noreply@tarots.chat"}
+            - {name: TAROT_SMTP_MITTENTE, value: "noreply@tarots.chat"}
+            - name: TAROT_SMTP_PASSWORD
+              valueFrom: {secretKeyRef: {name: tarots-secrets, key: smtp-password}}
           volumeMounts:
             - {name: search-console, mountPath: /segreti/search-console, readOnly: true}
           # Ripiego per lo sviluppo locale o per un impianto senza ancora un fornitore in console: le chiavi sono le
@@ -371,7 +380,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: notifica
-              image: tarots-api:v8
+              image: tarots-api:v8.1
               imagePullPolicy: IfNotPresent
               command: ["python", "-m", "tarot_core.tools.notifica_motori"]
               env:
@@ -401,6 +410,106 @@ spec:
             - name: search-console
               secret: {secretName: tarots-search-console, optional: true}
 ---
+# Analytics (v8, lanterna): ogni notte alle 3:30 il riepilogo giornaliero anonimo degli ultimi tre
+# giorni e la pulizia del dettaglio oltre i 25 mesi. Prova a mano:
+#   kubectl -n tarots create job --from=cronjob/tarots-analytics-notte prova-analytics
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: tarots-analytics-notte
+  namespace: tarots
+  labels: {app: tarots, component: analytics-notte}
+spec:
+  schedule: "30 3 * * *"
+  timeZone: Europe/Rome
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels: {app: tarots, component: analytics-notte}
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: analytics
+              image: tarots-api:v8.1
+              imagePullPolicy: IfNotPresent
+              command: ["python", "-m", "tarot_core.tools.analytics_notte"]
+              env:
+                - name: TAROT_DATABASE_URL
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: database-url}}
+                - {name: TAROT_ENVIRONMENT, value: prod}
+                - {name: TAROT_AUTH_DISABLED, value: "false"}
+                - {name: TAROT_BILLING_PROVIDER, value: disattivato}
+                - {name: TAROT_TRACING_ENABLED, value: "false"}
+                # Richiesti dal controllo di produzione delle impostazioni, anche se qui non servono.
+                - name: TAROT_CONDIVISIONE_SALE
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale}}
+                - name: TAROT_LLM_PROVIDER_KEY
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: llm-provider-key}}
+              resources:
+                requests: {cpu: 50m, memory: 128Mi}
+                limits: {memory: 512Mi}
+---
+# Analytics (v8): il rapporto settimanale per email, lunedì alle 0:30 (la settimana lun-dom appena
+# conclusa). Destinatari e interpretazione AI si scelgono in console. Prova a mano:
+#   kubectl -n tarots create job --from=cronjob/tarots-rapporto-settimanale prova-rapporto
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: tarots-rapporto-settimanale
+  namespace: tarots
+  labels: {app: tarots, component: rapporto-settimanale}
+spec:
+  schedule: "30 0 * * 1"
+  timeZone: Europe/Rome
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      # Un solo tentativo: un rapporto rimandato due volte arriverebbe doppio a chi l'ha già ricevuto.
+      backoffLimit: 0
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels: {app: tarots, component: rapporto-settimanale}
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: rapporto
+              image: tarots-api:v8.1
+              imagePullPolicy: IfNotPresent
+              command: ["python", "-m", "tarot_core.tools.rapporto_settimanale"]
+              env:
+                - name: TAROT_DATABASE_URL
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: database-url}}
+                - {name: TAROT_ENVIRONMENT, value: prod}
+                - {name: TAROT_AUTH_DISABLED, value: "false"}
+                - {name: TAROT_BILLING_PROVIDER, value: disattivato}
+                - {name: TAROT_TRACING_ENABLED, value: "false"}
+                - {name: TAROT_WEB_PUBLIC_URL, value: "https://tarots.chat"}
+                - name: TAROT_CONDIVISIONE_SALE
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale}}
+                # Serve a decifrare la chiave del fornitore LLM (interpretazione AI nel rapporto).
+                - name: TAROT_LLM_PROVIDER_KEY
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: llm-provider-key}}
+                - {name: TAROT_SMTP_HOST, value: mail.tadamoo.com}
+                - {name: TAROT_SMTP_PORTA, value: "465"}
+                - {name: TAROT_SMTP_UTENTE, value: "noreply@tarots.chat"}
+                - {name: TAROT_SMTP_MITTENTE, value: "noreply@tarots.chat"}
+                - name: TAROT_SMTP_PASSWORD
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: smtp-password}}
+              envFrom:
+                - secretRef: {name: tarots-llm, optional: true}
+              resources:
+                requests: {cpu: 50m, memory: 128Mi}
+                limits: {memory: 512Mi}
+---
 # -------------------------------------------------------------------- web ---
 apiVersion: apps/v1
 kind: Deployment
@@ -420,7 +529,7 @@ spec:
         - name: web
           # Gli indirizzi pubblici (API, Keycloak) sono cotti nella build:
           # vedi le --build-arg in deploy/k8s/LEGGIMI.md.
-          image: tarots-web:v8
+          image: tarots-web:v8.1
           imagePullPolicy: IfNotPresent
           env:
             # Il server di Next legge le anteprime delle letture condivise

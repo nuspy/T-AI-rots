@@ -77,6 +77,9 @@ class Compito(str, Enum):
     #: La chat proattiva (v6, fase E): apre da sola una conversazione basandosi sulle memorie, e
     #: propone letture sul tema in corso. Testo libero + un campo di proposta strutturato.
     CHAT_PROATTIVA = "chat_proattiva"
+    #: L'interpretazione dei dati degli analytics (v8): su richiesta dalla console, mai durante una
+    #: lettura. Riceve solo aggregati già calcolati (fatti numerati), mai dati di singole persone.
+    ANALISI_DATI = "analisi_dati"
 
     @property
     def label(self) -> str:
@@ -99,6 +102,7 @@ _ETICHETTE: Dict[Compito, str] = {
     Compito.EMBEDDING: "Vettorizzazione per la memoria (RAG)",
     Compito.MEMORIA_ESTRAZIONE: "Estrazione della memoria da una lettura conclusa",
     Compito.CHAT_PROATTIVA: "Chat proattiva basata sulla memoria",
+    Compito.ANALISI_DATI: "Interpretazione dei dati (analytics)",
 }
 
 _DESCRIZIONI: Dict[Compito, str] = {
@@ -154,6 +158,11 @@ _DESCRIZIONI: Dict[Compito, str] = {
         "Apre o continua una conversazione con un utente già loggato, basandosi sulle sue memorie, "
         "e può proporre una lettura sul tema in corso. Non è la sintesi di una lettura: è un "
         "compagno che tiene viva l'interazione, con un tono più leggero e diretto."
+    ),
+    Compito.ANALISI_DATI: (
+        "Legge i fatti numerati di una sezione degli analytics (traffico, utenti, ricavi…) e li mette "
+        "in relazione: collegamenti, ipotesi, azioni con la loro metrica. Conta il ragionamento più "
+        "della velocità: un modello forte, anche col ragionamento acceso. Riceve solo aggregati."
     ),
 }
 

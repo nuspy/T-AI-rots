@@ -132,8 +132,26 @@ raccolta in produzione prima del resto). Fasi:
   acquisto (webhook e coupon gratuito), coupon, invito, voto, carta del giorno. `lettura_fase` dal
   client, `data-an` su piano, carrello e CTA d'iscrizione. Opposizione dal profilo
   (`GET/PUT /me/statistiche`). **Da rilasciare** (primo rilascio).
-- F3 motore di query + rollup + Traffico/Utenti; F4 imbuti, coorti, ricavi, esploratore; F5 export;
-  F6 interpretazione AI; F7 email domenicale; F8 Colab — da fare (secondo rilascio).
+- **F3-F4 interrogazioni e console — fatto.** Catalogo dichiarato (`analytics/catalogo.py`: visite,
+  eventi, utenti, letture, acquisti, ordini, riepilogo; niente SQL libero, soglia k per le dimensioni
+  personali, timeout 10 s), imbuti (lettura, iscrizione, acquisto, negozio) e coorti (letture, ritorni,
+  spesa), riepilogo notturno e pulizia (`tools/analytics_notte.py`, CronJob 3:30). Console
+  `admin/app/analytics/`: Traffico, Utenti, Imbuti, Ricavi (con coorti), Esploratore con drill-down,
+  stato nell'indirizzo.
+- **F5 export — fatto.** Vista corrente in CSV/XLSX, collezioni (traffico, utenti, ricavi, letture,
+  rapporto) in Excel con un foglio per tabella.
+- **F6 interpretazione AI — fatto.** Compito `analisi_dati` (modello scelto in Modelli), fatti numerati
+  calcolati lato server (variazioni e significatività, quote e contributi, anomalie, imbuti, coorti),
+  risposta verificata numero per numero, storico con giudizio e «azione adottata» che rientra
+  nell'analisi successiva, contesto del business in Impostazioni. Pannello in ogni pagina.
+- **F7 rapporto settimanale — fatto.** Lunedì 0:30 (CronJob), destinatari in console, AI facoltativa
+  (solo voci verificate), anteprima, invio manuale, registro. SMTP Stalwart di Keycloak.
+- **F8 Colab — fatto.** Token con scadenza e ambiti (solo impronta nel DB), export JSON con soglia k,
+  import firmato HMAC, notebook precompilato da scaricare, pagina Studi.
+- **Da fare prima del secondo rilascio**: prova a vista della console a 360 px e 1280 px (rimandata
+  per memoria del PC impegnata), deploy di API/sito/console col manifest completo (CronJob notturno e
+  settimanale), destinatari del rapporto. I risultati importati da Colab non entrano ancora come fatti
+  nell'interpretazione AI.
 
 ## 4. Statistiche di ingresso (traffico)
 

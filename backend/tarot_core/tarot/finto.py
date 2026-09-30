@@ -100,6 +100,26 @@ class ModelloFinto:
                 if scritto else "Ciao. Come stai oggi? C'è qualcosa che ti gira per la testa?"
             )
             return json.dumps({"messaggio": messaggio, "proposta": None}, ensure_ascii=False)
+        if compito == "analisi_dati":
+            # Cita i primi fatti del prompt e ne riusa i numeri così come sono: la verifica deve
+            # passare. Un test che vuole il caso contrario lo ottiene con un numero inventato.
+            fatti = re.findall(r"^\[(M\d+)\] \(([^)]*)\) (.+)$", utente, re.M)
+            if not fatti:
+                return json.dumps({"sintesi": "Nessun dato nel periodo.", "osservazioni": []}, ensure_ascii=False)
+            primo_id, sezione, testo = fatti[0]
+            ids = [f[0] for f in fatti[:3]]
+            return json.dumps({
+                "sintesi": f"Nel periodo: {testo}",
+                "osservazioni": [{"titolo": f"Il dato principale di {sezione}", "testo": testo,
+                                  "importanza": "alta", "fatti": [primo_id]}],
+                "collegamenti": [{"testo": "I primi fatti della sezione si muovono insieme.", "fatti": ids}],
+                "ipotesi": [{"testo": "La variazione dipende dal canale principale.", "confidenza": "media",
+                             "verifica": "Confrontare i canali nel periodo successivo.", "fatti": ids[:1]}],
+                "azioni": [{"testo": "Rafforzare il canale che porta più visite.", "impatto": "medio",
+                            "sforzo": "basso", "metrica": "sessioni dal canale", "fatti": ids[:1]}],
+                "dati_mancanti": ["Il costo delle campagne."],
+                "avvertenze": ["Periodo breve."],
+            }, ensure_ascii=False)
         if compito == "giudizio":
             return json.dumps({"esito": "ok", "violazioni": []})
         if compito == "interpretazione":

@@ -391,15 +391,24 @@ export async function scaricaReport(
   tipo: TipoReport,
   giorni: number,
 ): Promise<string> {
-  const risposta = await fetch(`${API}/admin/reports/${tipo}.csv?giorni=${giorni}`, {
-    headers: intestazioni(t),
+  return scaricaFile(t, `/admin/reports/${tipo}.csv?giorni=${giorni}`, {}, `${tipo}-${giorni}g.csv`);
+}
+
+/** Come `scaricaReport`, per qualunque file dell'API (anche con POST e corpo JSON). */
+export async function scaricaFile(
+  t: string,
+  percorso: string,
+  opzioni: RequestInit = {},
+  nomeRipiego = "file",
+): Promise<string> {
+  const risposta = await fetch(`${API}${percorso}`, {
+    ...opzioni,
+    headers: { ...intestazioni(t), "Content-Type": "application/json", ...(opzioni.headers ?? {}) },
   });
   if (!risposta.ok) await errore(risposta);
 
   const disposizione = risposta.headers.get("Content-Disposition") ?? "";
-  const nome =
-    /filename="?([^";]+)"?/.exec(disposizione)?.[1] ??
-    `${tipo}-${giorni}g.csv`;
+  const nome = /filename="?([^";]+)"?/.exec(disposizione)?.[1] ?? nomeRipiego;
 
   const indirizzo = URL.createObjectURL(await risposta.blob());
   try {

@@ -206,6 +206,30 @@
   white-space: nowrap;
 }
 
+/* L'etichetta toccabile del drill-down: sembra un collegamento, si tocca come un bottone. */
+.barraScelta {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: var(--bordo, currentColor);
+  text-underline-offset: 3px;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barraScelta:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
 .barraTraccia {
   display: flex;
   align-items: center;
