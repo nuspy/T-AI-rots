@@ -255,7 +255,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: tarots-api:v6
+          image: tarots-api:v7
           imagePullPolicy: IfNotPresent
           # Il CMD dell'immagine applica le migrazioni e poi serve.
           env:
@@ -349,7 +349,7 @@ spec:
         - name: web
           # Gli indirizzi pubblici (API, Keycloak) sono cotti nella build:
           # vedi le --build-arg in deploy/k8s/LEGGIMI.md.
-          image: tarots-web:v6
+          image: tarots-web:v7
           imagePullPolicy: IfNotPresent
           env:
             # Il server di Next legge le anteprime delle letture condivise
@@ -400,7 +400,7 @@ spec:
         - name: admin
           # La console, costruita con basePath /admin e client tarot-admin
           # (vedi le --build-arg in deploy/k8s/LEGGIMI.md).
-          image: tarots-admin:v6
+          image: tarots-admin:v7
           imagePullPolicy: IfNotPresent
           ports:
             - {name: http, containerPort: 3000}
