@@ -1,8 +1,10 @@
 "use client";
 
 import ReactMarkdown, { type Components } from "react-markdown";
+import remarkDirective from "remark-directive";
 import remarkGfm from "remark-gfm";
 import { API } from "@/lib/api";
+import { direttiveBlog } from "@/lib/direttive-blog";
 import type { Riferimento } from "@/lib/blog";
 import stili from "./blog.module.css";
 
@@ -15,6 +17,8 @@ import stili from "./blog.module.css";
  * sbagliato sparisce in silenzio, ed è meglio accorgersene prima di pubblicare. */
 
 const SCORCIATOIA = /\[\[(carta|stesa|articolo):([a-z0-9-]+)\]\]/g;
+/* Un video su una riga da sola: sul sito un riquadro YouTube o Vimeo; qui un segnaposto col suo indirizzo. */
+const VIDEO = /^[ \t]*\[\[video:(youtube|vimeo):([A-Za-z0-9_-]{6,20})\]\][ \t]*$/gm;
 
 export interface Catalogo {
   carte: Riferimento[];
@@ -27,7 +31,9 @@ function conRiferimenti(testo: string, catalogo: Catalogo): string {
     carta: new Map(catalogo.carte.map((c) => [c.id, c.nome])),
     stesa: new Map(catalogo.stese.map((s) => [s.id, s.nome])),
   };
-  return testo.replace(SCORCIATOIA, (_m, tipo: "carta" | "stesa" | "articolo", id: string) => {
+  const conVideo = testo.replace(VIDEO, (_m, fonte: string, id: string) =>
+    `[▶ video ${fonte === "vimeo" ? "Vimeo" : "YouTube"} · ${id}](${fonte === "vimeo" ? `https://vimeo.com/${id}` : `https://www.youtube.com/watch?v=${id}`})`);
+  return conVideo.replace(SCORCIATOIA, (_m, tipo: "carta" | "stesa" | "articolo", id: string) => {
     const nome = tipo === "articolo" ? id : nomi[tipo].get(id);
     const etichetta = nome ? `${tipo} · ${nome}` : `${tipo} · ${id} (non esiste)`;
     return `[${etichetta.replace(/[[\]]/g, "")}](#rif-${nome ? "ok" : "no"})`;
@@ -59,11 +65,12 @@ const componenti: Components = {
       </a>
     );
   },
-  img: ({ src, alt }) => {
+  img: ({ src, alt, title }) => {
     const s = typeof src === "string" ? sorgente(src) : null;
     if (!s) return null;
     // eslint-disable-next-line @next/next/no-img-element -- anteprima di un'immagine di misura sconosciuta
-    return <img src={s} alt={alt ?? ""} />;
+    const immagine = <img src={s} alt={alt ?? ""} />;
+    return title ? <span className="md-figura">{immagine}<span className="md-didascalia">{title}</span></span> : immagine;
   },
   table: ({ children }) => (
     <div className={stili.tabellaAnteprima}>
@@ -88,7 +95,7 @@ export function Anteprima({
       <h1 className={stili.anteprimaTitolo}>{titolo || "Senza titolo"}</h1>
       {sottotitolo && <p className={stili.anteprimaSotto}>{sottotitolo}</p>}
       {testo.trim() ? (
-        <ReactMarkdown remarkPlugins={[remarkGfm]} components={componenti}>
+        <ReactMarkdown remarkPlugins={[remarkGfm, remarkDirective, direttiveBlog]} components={componenti}>
           {conRiferimenti(testo, catalogo)}
         </ReactMarkdown>
       ) : (

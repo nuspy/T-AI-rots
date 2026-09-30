@@ -7,8 +7,10 @@
 
 import { Fragment } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
+import remarkDirective from "remark-directive";
 import remarkGfm from "remark-gfm";
 import { urlMedia } from "@/lib/blog";
+import { direttiveBlog } from "@/v2/lib/direttive-blog";
 import { R, inV2 } from "@/v2/lib/percorsi";
 import LinkV2 from "./link";
 import stili from "./blog.module.css";
@@ -22,7 +24,10 @@ export interface Riferimenti {
 
 const BLOCCO = /^[ \t]*\[\[(carta|card|stesa|spread|articolo|post):([a-z0-9-]+)\]\][ \t]*$/;
 const IN_LINEA = /\[\[(carta|card|stesa|spread|articolo|post):([a-z0-9-]+)\]\]/g;
-const BLOCCO_VIDEO = /^[ \t]*\[\[video:youtube:([A-Za-z0-9_-]{6,20})\]\][ \t]*$/;
+/* Un video su una riga da sola: YouTube (in modalità «nocookie») o Vimeo (con `dnt=1`, senza tracciamento). */
+const BLOCCO_VIDEO = /^[ \t]*\[\[video:(youtube|vimeo):([A-Za-z0-9_-]{6,20})\]\][ \t]*$/;
+const urlVideo = (fonte: string, id: string) =>
+  fonte === "vimeo" ? `https://player.vimeo.com/video/${id}?dnt=1` : `https://www.youtube-nocookie.com/embed/${id}`;
 
 type Tipo = "carta" | "stesa" | "articolo";
 const CANONICO: Record<string, Tipo> = { carta: "carta", card: "carta", stesa: "stesa", spread: "stesa", articolo: "articolo", post: "articolo" };
@@ -48,12 +53,15 @@ const componenti: Components = {
     if (href.startsWith("#")) return <a href={href}>{children}</a>;
     return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>;
   },
-  img: ({ src, alt }) => {
+  img: ({ src, alt, title }) => {
     const s = typeof src === "string" ? src : "";
     if (!(s.startsWith("/") || s.startsWith("https://"))) return null;
     const url = s.startsWith("/blog/media/") ? (urlMedia(s) ?? s) : s;
     // eslint-disable-next-line @next/next/no-img-element -- immagini di un articolo, di misure sconosciute
-    return <img src={url} alt={alt ?? ""} loading="lazy" />;
+    const immagine = <img src={url} alt={alt ?? ""} loading="lazy" />;
+    /* Il titolo dell'immagine (`![alt](url "didascalia")`) diventa la didascalia. `span` e non `figure`: l'immagine
+     * sta dentro un paragrafo, dove un `figure` non è permesso. */
+    return title ? <span className="md-figura">{immagine}<span className="md-didascalia">{title}</span></span> : immagine;
   },
   table: ({ children }) => <div className={stili.tabella}><table>{children}</table></div>,
 };
@@ -64,7 +72,7 @@ export function BlogMarkdownV2({ testo, riferimenti, etichette }: { testo: strin
   const chiudi = () => { if (corrente.length) pezzi.push({ md: corrente.join("\n") }); corrente = []; };
   for (const riga of testo.split("\n")) {
     const v = BLOCCO_VIDEO.exec(riga);
-    if (v) { chiudi(); pezzi.push({ video: v[1] }); continue; }
+    if (v) { chiudi(); pezzi.push({ video: urlVideo(v[1], v[2]) }); continue; }
     const m = BLOCCO.exec(riga);
     const tipo = m ? CANONICO[m[1]] : undefined;
     const nome = m && tipo ? nomeDi(tipo, m[2], riferimenti) : undefined;
@@ -77,10 +85,10 @@ export function BlogMarkdownV2({ testo, riferimenti, etichette }: { testo: strin
     <div className={stili.testo} dir="auto">
       {pezzi.map((p, i) =>
         "md" in p ? (
-          <ReactMarkdown key={i} remarkPlugins={[remarkGfm]} components={componenti}>{inLinea(p.md, riferimenti)}</ReactMarkdown>
+          <ReactMarkdown key={i} remarkPlugins={[remarkGfm, remarkDirective, direttiveBlog]} components={componenti}>{inLinea(p.md, riferimenti)}</ReactMarkdown>
         ) : "video" in p ? (
           <div key={i} className={stili.video}>
-            <iframe src={`https://www.youtube-nocookie.com/embed/${p.video}`} title="Video" loading="lazy"
+            <iframe src={p.video} title="Video" loading="lazy"
               allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               referrerPolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-presentation" allowFullScreen />
           </div>

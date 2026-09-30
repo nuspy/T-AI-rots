@@ -251,7 +251,11 @@ async def guida(chiave: ChiaveVerificata = Depends(richiede("blog:write", "blog:
         "immagini": [
             "Nel testo: ![testo alternativo](/blog/media/<id>.webp), su una riga da sola, dove l'immagine serve al discorso.",
             "Ogni immagine caricata riceve da sola la sua miniatura per gli elenchi (campo `mini`): non va caricata a parte.",
-            "Video: [[video:youtube:ID]] su una riga da sola.",
+            "Didascalia: nel titolo dell'immagine, ![alt](/blog/media/<id>.webp \"la didascalia\").",
+            "Video: [[video:youtube:ID]] o [[video:vimeo:ID]] su una riga da sola.",
+            "Testo ricco, con misura: :text[frase]{color=brass|plum|verdigris|muted size=small|large|title}, "
+            ":underline[frase] (anche in italiano: :testo[…]{colore=ottone dimensione=grande}, :sottolineato[…]). "
+            "Solo questi valori: il resto si ignora, e nessun HTML viene eseguito.",
         ],
     }
 

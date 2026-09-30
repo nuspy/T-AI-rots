@@ -84,10 +84,17 @@ python scripts/tarots_blog.py catalog --grep tower   # link shortcuts for cards 
   `references/image-generation.md`: Seedream 5.0, 2K, 4:3, a subject different from the cover) and upload it with `python scripts/tarots_blog.py upload picture.png`, then paste
   it into the body as ordinary Markdown: `![alt text](url)`. One is normally enough, not one per paragraph. State
   the decision either way in the step 9 report.
-- **Inline video**: a line on its own with `[[video:youtube:VIDEO_ID]]` embeds that YouTube video (11-character id
-  from its URL, e.g. `dQw4w9WgXcQ`). No other video host is supported — the site doesn't run its own video
-  hosting, and embedding an existing upload is lighter than building one. Use only a real, relevant, existing video
-  (a tradition's own explainer, a museum/library recording) — never invent one.
+- **Inline video**: a line on its own with `[[video:youtube:VIDEO_ID]]` (11-character id from the URL, e.g.
+  `dQw4w9WgXcQ`) or `[[video:vimeo:VIDEO_ID]]` (the number in the Vimeo URL) embeds that video. No other host —
+  the site doesn't run its own video hosting. Use only a real, relevant, existing video (a tradition's own
+  explainer, a museum/library recording) — never invent one.
+- **Image captions**: put the caption in the image title — `![alt text](url "The caption under the picture")`.
+  Alt describes the picture for who can't see it; the caption says why it is there.
+- **Rich text (sparingly)**: `:text[a phrase]{color=brass}` / `{color=plum}` / `{color=verdigris}` /
+  `{color=muted}`, `:text[bigger]{size=large}` (`small`, `large`, `title`), both together
+  `:text[…]{color=plum size=large}`, and `:underline[…]`. Only these values exist (the site's palette): anything
+  else is ignored, and no HTML ever runs. One or two highlights per article at most — emphasis that is everywhere
+  is emphasis nowhere; `**bold**` is still the default.
 - Voice: warm and precise, reflective rather than prophetic. Tarot is a tool for reflection here: no promises about
   the future, no health, legal, money or "he will/won't love you" verdicts, no fear-mongering. For relationship
   topics offer questions and perspectives, never a verdict on a person or a couple.

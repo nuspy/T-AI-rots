@@ -528,6 +528,34 @@ function Modulo({ iniziale }: { iniziale: Articolo | null }) {
                 <button type="button" className={stili.strumento} title="Collegamento" onClick={() => avvolgi("[", "](https://)", "testo del link")}>
                   Link
                 </button>
+                <button type="button" className={stili.strumento} title="Sottolineato" onClick={() => avvolgi(":sottolineato[", "]", "sottolineato")}>
+                  <u>S</u>
+                </button>
+                <select
+                  className={stili.strumento} aria-label="Colore del testo" value=""
+                  title="Colore del testo: solo quelli del sito"
+                  onChange={(e) => { if (e.target.value) avvolgi(":testo[", `]{colore=${e.target.value}}`, "testo colorato"); }}
+                >
+                  <option value="">Colore…</option>
+                  <option value="ottone">ottone</option>
+                  <option value="prugna">prugna</option>
+                  <option value="verderame">verderame</option>
+                  <option value="tenue">tenue</option>
+                </select>
+                <select
+                  className={stili.strumento} aria-label="Dimensione del testo" value=""
+                  title="Dimensione del testo"
+                  onChange={(e) => { if (e.target.value) avvolgi(":testo[", `]{dimensione=${e.target.value}}`, "testo"); }}
+                >
+                  <option value="">Dimensione…</option>
+                  <option value="piccolo">piccolo</option>
+                  <option value="grande">grande</option>
+                  <option value="titolo">come un titolo</option>
+                </select>
+                <button type="button" className={stili.strumento} title="Video YouTube o Vimeo, su una riga da sola: sostituisci l'id"
+                  onClick={() => inserisci("[[video:youtube:ID-DEL-VIDEO]]")}>
+                  Video
+                </button>
                 <button
                   type="button"
                   className={stili.strumento}
@@ -610,7 +638,7 @@ function Modulo({ iniziale }: { iniziale: Articolo | null }) {
                   maxLength={200000}
                   spellCheck
                   onChange={(e) => imposta("testo", e.target.value)}
-                  placeholder="Scrivi qui. ## per un titolo di sezione, **grassetto**, *corsivo*, - per gli elenchi."
+                  placeholder="Scrivi qui. ## per un titolo di sezione, **grassetto**, *corsivo*, - per gli elenchi, :testo[parole]{colore=ottone} per il colore, ![alt](url &quot;didascalia&quot;) per un'immagine con didascalia."
                 />
               </label>
               <p className={stili.contatori}>

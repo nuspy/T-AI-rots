@@ -66,6 +66,17 @@ def test_l_estratto_mette_il_nome_al_posto_delle_scorciatoie():
     assert b.estratto(testo, 200) == "Determinazione e direzione: . Guida: e ."
 
 
+def test_il_testo_ricco_e_i_video_non_finiscono_negli_estratti():
+    testo = (
+        "Un :testo[titolo in ottone]{colore=ottone dimensione=grande} e :text[plum]{color=plum}, "
+        ":sottolineato[sotto] e :underline[under].\n\n[[video:vimeo:123456789]]\n\n[[video:youtube:dQw4w9WgXcQ]]\n\n"
+        "![Una carta](/blog/media/x.webp \"La didascalia\") Alle 10:30, :pericolo[resta]."
+    )
+    assert b.testo_semplice(testo) == (
+        "Un titolo in ottone e plum, sotto e under. Alle 10:30, :pericolo[resta]."
+    )
+
+
 def test_l_estratto_taglia_a_fine_parola():
     testo = "Una frase abbastanza lunga da dover essere tagliata prima della fine, senza spezzare le parole a metà."
     e = b.estratto(testo, 40)

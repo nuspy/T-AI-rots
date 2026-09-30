@@ -455,4 +455,16 @@ button.chip, a.chip { cursor: pointer; }
 .cart-line .stepper { justify-self: start; }
 @media (max-width: 560px) { .site-header { gap: .4rem; } .header-actions { gap: .2rem; } }
 @media (max-width: 430px) { .hdr-icon { min-width: 44px; padding-inline: .1rem; } .hdr-icon .hdr-label { font-size: .58rem; } .brand-name { display: none; } .header-actions .button { padding-inline: .6rem; } }
+/* ---- testo ricco del blog (v8.5): solo la tavolozza (v2/lib/direttive-blog.ts) ---------------------------------- */
+.md-colore-ottone { color: #8a6424; }
+.md-colore-prugna { color: var(--plum); }
+.md-colore-verderame { color: var(--verdigris); }
+.md-colore-tenue { color: var(--ink-soft); }
+.md-dim-piccolo { font-size: .875em; }
+.md-dim-grande { font-size: 1.25em; line-height: 1.45; }
+.md-dim-titolo { font-family: var(--serif); font-size: 1.6em; line-height: 1.3; }
+.md-figura { display: block; margin: 1.5rem 0; }
+.md-figura img { display: block; }
+.md-didascalia { display: block; margin-top: .5rem; color: var(--ink-soft); font-size: .85rem; line-height: 1.5; text-align: center; }
+u { text-decoration-color: var(--brass); text-underline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }

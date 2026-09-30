@@ -192,3 +192,15 @@ a {
   white-space: nowrap;
   border: 0;
 }
+
+/* Il testo ricco del blog (v8.5), come sul sito: solo la tavolozza (lib/direttive-blog.ts). */
+.md-colore-ottone { color: #8a6424; }
+.md-colore-prugna { color: #3c1846; }
+.md-colore-verderame { color: #19706f; }
+.md-colore-tenue { color: #55455d; }
+.md-dim-piccolo { font-size: .875em; }
+.md-dim-grande { font-size: 1.25em; line-height: 1.45; }
+.md-dim-titolo { font-size: 1.6em; line-height: 1.3; }
+.md-figura { display: block; margin: 1.25rem 0; }
+.md-figura img { display: block; }
+.md-didascalia { display: block; margin-top: .4rem; font-size: .85rem; opacity: .8; text-align: center; }

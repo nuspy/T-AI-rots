@@ -71,6 +71,12 @@ def tempo_lettura(testo: str) -> int:
     return max(1, math.ceil(parole / _PAROLE_AL_MINUTO))
 
 
+#: Un video su una riga da sola (YouTube o Vimeo): nessun testo da leggere negli estratti.
+_VIDEO = re.compile(r"\[\[video:(?:youtube|vimeo):[A-Za-z0-9_-]+\]\]")
+#: Il testo ricco (v8.5, `frontend/v2/lib/direttive-blog.ts`): negli estratti e nei controlli SEO resta solo il contenuto.
+_DIRETTIVA = re.compile(r":(?:testo|text|sottolineato|underline)\[([^\]]*)\](?:\{[^}]*\})?")
+
+
 def _senza_scorciatoie(testo: str, nomi: Optional[Callable[[str, str], Optional[str]]] = None) -> str:
     """Toglie le scorciatoie; con `nomi(tipo, id)` le sostituisce con il nome («La Stella») invece di lasciare
     un buco («Vedi  e .») negli estratti."""
@@ -82,6 +88,8 @@ def _senza_scorciatoie(testo: str, nomi: Optional[Callable[[str, str], Optional[
 def testo_semplice(markdown: str, nomi: Optional[Callable[[str, str], Optional[str]]] = None) -> str:
     """Il testo senza Markdown né scorciatoie: per gli estratti e le descrizioni."""
     t = _senza_scorciatoie(markdown or "", nomi)
+    t = _VIDEO.sub(" ", t)
+    t = _DIRETTIVA.sub(r"\1", t)
     t = re.sub(r"```.*?```", " ", t, flags=re.S)
     t = re.sub(r"`([^`]*)`", r"\1", t)
     t = re.sub(r"!\[[^\]]*\]\([^)]*\)", " ", t)
