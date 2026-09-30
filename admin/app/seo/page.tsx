@@ -1,22 +1,25 @@
 "use client";
 
 /* Notifica ai motori di ricerca (v8). Ogni notte a mezzanotte (ora italiana) un CronJob annuncia gli
- * articoli del blog pubblicati o modificati dall'ultimo giro: IndexNow (Bing, Yandex…), Search
- * Console (Google: la sitemap da rileggere) e WebSub (il feed RSS). Qui si vede cosa è configurato,
- * cosa è partito, e si può anticipare il giro senza aspettare la notte. */
+ * articoli del blog pubblicati o modificati dall'ultimo giro, le pagine della sitemap mai annunciate (home,
+ * carte, stese…) e la carta del giorno: IndexNow (Bing, Yandex…), Search Console (Google: la sitemap da
+ * rileggere) e WebSub (il feed RSS). Qui si vede cosa è configurato, cosa è partito, si può anticipare il giro
+ * e, dopo un cambiamento dei contenuti, annunciare tutte le pagine. */
 
 import { quandoCompleto } from "@/lib/formato";
-import { inviaOraAiMotori, notificheMotori, type Canale, type StatoCanale } from "@/lib/seo";
+import { inviaOraAiMotori, notificheMotori, type Canale, type StatoCanale, type VoceEsito } from "@/lib/seo";
 import { useAzione, useDati } from "@/lib/usa";
 import comuni from "../comuni.module.css";
 
-const NOMI: Record<Canale, string> = {
+const NOMI: Record<VoceEsito, string> = {
   indexnow: "IndexNow (Bing, Yandex…)",
   search_console: "Search Console (Google)",
   websub: "WebSub (feed RSS)",
+  sitemap: "Sitemap del sito",
 };
 
 const CANALI: Canale[] = ["indexnow", "search_console", "websub"];
+const VOCI_ESITO: VoceEsito[] = ["sitemap", ...CANALI];
 
 const CLASSE_STATO: Record<StatoCanale, string> = {
   ok: comuni.positivo,
@@ -30,8 +33,8 @@ export default function NotificaMotori() {
   const elenco = useDati(notificheMotori);
   const { esegui, inCorso, errore } = useAzione();
 
-  const inviaOra = async () => {
-    if (await esegui((t) => inviaOraAiMotori(t))) elenco.ricarica();
+  const inviaOra = async (tutte = false) => {
+    if (await esegui((t) => inviaOraAiMotori(t, tutte))) elenco.ricarica();
   };
 
   return (
@@ -41,12 +44,19 @@ export default function NotificaMotori() {
           <h1 className={comuni.titolo}>Motori di ricerca</h1>
           <p className={comuni.sottotitolo}>
             Ogni notte a mezzanotte si annunciano ai motori di ricerca gli articoli del blog pubblicati o modificati
-            dall&apos;ultimo invio. Un canale non configurato si salta senza fermare gli altri.
+            dall&apos;ultimo invio, le pagine del sito mai annunciate (home, carte, stese, anche in una lingua nuova) e
+            la carta del giorno. Un canale non configurato si salta senza fermare gli altri. Dopo aver cambiato i
+            testi di carte, stese o home, «Annuncia tutte le pagine» le ripropone tutte.
           </p>
         </div>
-        <button className={comuni.primaria} onClick={inviaOra} disabled={inCorso}>
-          {inCorso ? "Invio in corso…" : "Invia ora"}
-        </button>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+          <button className={comuni.primaria} onClick={() => inviaOra()} disabled={inCorso}>
+            {inCorso ? "Invio in corso…" : "Invia ora"}
+          </button>
+          <button className={comuni.secondaria} onClick={() => inviaOra(true)} disabled={inCorso}>
+            Annuncia tutte le pagine
+          </button>
+        </div>
       </div>
 
       {(elenco.errore || errore) && (
@@ -93,7 +103,7 @@ export default function NotificaMotori() {
                     <span className={comuni.stato}>{invio.manuale ? "manuale" : "notturno"}</span>
                   </p>
                   <ul style={{ listStyle: "none", margin: "0 0 0.5rem", padding: 0, display: "grid", gap: "0.25rem" }}>
-                    {CANALI.map((c) => {
+                    {VOCI_ESITO.map((c) => {
                       const esito = invio.esiti[c];
                       if (!esito) return null;
                       return (
@@ -106,7 +116,7 @@ export default function NotificaMotori() {
                   </ul>
                   {invio.url.length > 0 ? (
                     <details>
-                      <summary>{invio.url.length === 1 ? "1 articolo annunciato" : `${invio.url.length} articoli annunciati`}</summary>
+                      <summary>{invio.url.length === 1 ? "1 pagina annunciata" : `${invio.url.length} pagine annunciate`}</summary>
                       <ul style={{ margin: "0.5rem 0 0", paddingLeft: "1.25rem" }}>
                         {invio.url.map((u) => (
                           <li key={u} className={comuni.mono} style={{ overflowWrap: "anywhere" }}>
@@ -116,7 +126,7 @@ export default function NotificaMotori() {
                       </ul>
                     </details>
                   ) : (
-                    <p style={{ margin: 0 }}>Nessun articolo nuovo o modificato dal giro precedente.</p>
+                    <p style={{ margin: 0 }}>Nessuna pagina nuova o modificata dal giro precedente.</p>
                   )}
                 </li>
               ))}

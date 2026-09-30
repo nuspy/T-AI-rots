@@ -27,12 +27,16 @@ async def elenco(session: DbSession, limite: int = Query(default=30, ge=1, le=20
 
 
 @router.post("/notifiche", status_code=201)
-async def invia_ora(user: CurrentUser, session: DbSession) -> Dict[str, Any]:
-    """Lo stesso giro del CronJob notturno, subito: annuncia ciò che è cambiato dall'ultimo invio."""
-    riga = await notifiche_motori.esegui(session, manuale=True)
+async def invia_ora(
+    user: CurrentUser, session: DbSession,
+    tutte: bool = Query(default=False, description="Tutte le pagine della sitemap, non solo le nuove."),
+) -> Dict[str, Any]:
+    """Lo stesso giro del CronJob notturno, subito: annuncia ciò che è cambiato dall'ultimo invio. Con `tutte`
+    annuncia l'intera sitemap (dopo un cambiamento dei contenuti di carte, stese, home)."""
+    riga = await notifiche_motori.esegui(session, manuale=True, tutte=tutte)
     await AuditRepository(session).record(
         action="seo.notifica_motori", actor_id=user.id, target_type="notifiche_motori", target_id=str(riga.id),
-        after={"url": len(riga.url), "riuscita": riga.riuscita},
+        after={"url": len(riga.url), "riuscita": riga.riuscita, "tutte": tutte},
     )
     await session.commit()
     return notifiche_motori.riga_json(riga)

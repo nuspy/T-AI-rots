@@ -1,4 +1,4 @@
-"""Annunciare ai motori di ricerca gli articoli del blog nuovi o aggiornati (v8).
+"""Annunciare ai motori di ricerca le pagine nuove o cambiate: articoli del blog, home, carte, stese (v8).
 
 Gira una volta al giorno, a mezzanotte (CronJob `tarots-notifica-motori`, vedi
 `tools/notifica_motori.py`), o a mano dalla console. Decisione dell'operatore: niente notifica a ogni
@@ -14,14 +14,25 @@ si salta, uno che fallisce non ferma gli altri.
 
 La finestra parte dall'esecuzione precedente, non da "ieri a mezzanotte": un CronJob saltato o in
 ritardo non deve far perdere articoli.
+
+**Le pagine che non sono articoli** (home, carte, stese, prezzi, sezioni ed etichette del blog, nelle lingue
+pubbliche) vengono dalla sitemap del sito stesso, così gli indirizzi sono sempre quelli veri anche quando il
+frontend li cambia. Si annuncia:
+- ogni indirizzo della sitemap **mai annunciato prima** (al primo giro tutte le pagine; poi solo quelle nuove, per
+  esempio una lingua aggiunta);
+- **ogni giorno** la carta del giorno (il suo contenuto cambia ogni giorno);
+- l'**indice del blog** della lingua in cui è uscito o cambiato un articolo;
+- **tutte** le pagine quando lo chiede l'operatore dalla console («Annuncia tutte le pagine»), dopo un
+  cambiamento dei contenuti. IndexNow chiede di annunciare solo ciò che cambia: niente annuncio totale a ogni giro.
 """
 from __future__ import annotations
 
 import asyncio
 import logging
 import os
+import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Set
 from urllib.parse import urlparse
 
 from sqlalchemy import and_, or_, select
@@ -40,12 +51,51 @@ CANALI = ("indexnow", "search_console", "websub")
 #: Alla prima esecuzione non c'è un "precedente": si guarda un giorno indietro.
 PRIMA_FINESTRA = timedelta(days=1)
 
+#: Le pagine che cambiano ogni giorno: si annunciano a ogni giro (la parte del percorso dopo la lingua).
+GIORNALIERE = ("/card-of-the-day", "/carta-del-giorno")
+#: Il tetto di IndexNow per una richiesta.
+MAX_URL = 10_000
+
 
 def url_articolo(sito: str, slug: str, lingua: str) -> str:
     """L'indirizzo pubblico di un articolo: l'inglese alla radice, l'italiano sotto `/it` (come
     `urlPubblico` del frontend)."""
     prefisso = "/it" if lingua == "it" else ""
     return f"{sito.rstrip('/')}{prefisso}/blog/{slug}"
+
+
+def leggi_sitemap(sito: str) -> List[str]:
+    """Gli indirizzi della sitemap pubblica (`<sito>/sitemap.xml`). Solo quelli dello stesso sito."""
+    import httpx
+
+    risposta = httpx.get(f"{sito.rstrip('/')}/sitemap.xml", timeout=30, follow_redirects=False)
+    risposta.raise_for_status()
+    host = urlparse(sito).netloc
+    radice = ET.fromstring(risposta.content)
+    return [
+        (el.text or "").strip() for el in radice.iter()
+        if el.tag.endswith("}loc") or el.tag == "loc"
+        if urlparse((el.text or "").strip()).netloc == host
+    ]
+
+
+def _e_giornaliera(url: str) -> bool:
+    percorso = urlparse(url).path.rstrip("/")
+    return any(percorso.endswith(g) for g in GIORNALIERE)
+
+
+def _indice_blog(sito: str, url_articolo_: str) -> str:
+    """L'indice del blog della lingua di un articolo: `/blog` o `/it/blog`."""
+    percorso = urlparse(url_articolo_).path
+    prefisso = percorso[: percorso.index("/blog/")]
+    return f"{sito.rstrip('/')}{prefisso}/blog"
+
+
+async def gia_annunciati(session: AsyncSession) -> Set[str]:
+    visti: Set[str] = set()
+    for (urls,) in (await session.execute(select(NotificaMotori.url))).all():
+        visti.update(urls or [])
+    return visti
 
 
 def _saltato(motivo: str) -> Dict[str, str]:
@@ -159,18 +209,35 @@ async def novita(session: AsyncSession, da: datetime, adesso: datetime) -> List[
     return [url_articolo(sito, slug, lingua) for slug, lingua in (await session.execute(q)).all()]
 
 
-async def esegui(session: AsyncSession, *, manuale: bool = False) -> NotificaMotori:
+async def esegui(session: AsyncSession, *, manuale: bool = False, tutte: bool = False) -> NotificaMotori:
     """Un giro completo: raccoglie le novità, le annuncia sui canali configurati, registra l'esito.
-    Senza novità non parte nulla (ma il giro si registra, così la console mostra che è girato)."""
+    Senza novità non parte nulla (ma il giro si registra, così la console mostra che è girato).
+    `tutte`: annuncia tutta la sitemap, non solo il nuovo (a mano, dopo un cambiamento dei contenuti)."""
     adesso = utcnow()
+    sito = get_settings().web_public_url
     precedente = await ultima(session)
     da = precedente.created_at if precedente else adesso - PRIMA_FINESTRA
-    urls = await novita(session, da, adesso)
+    articoli = await novita(session, da, adesso)
+
+    esiti: Dict[str, Dict[str, str]] = {}
+    try:
+        mappa = await asyncio.to_thread(leggi_sitemap, sito)
+    except Exception as exc:  # noqa: BLE001 — senza sitemap si annunciano comunque gli articoli
+        logger.warning("Notifica ai motori: sitemap non letta (%s)", exc)
+        mappa = []
+        esiti["sitemap"] = {"stato": "errore", "dettaglio": f"sitemap non letta: {type(exc).__name__}: {exc}"[:500]}
+    if tutte:
+        pagine = mappa
+    else:
+        visti = await gia_annunciati(session)
+        pagine = [u for u in mappa if u not in visti or _e_giornaliera(u)]
+        pagine += sorted({_indice_blog(sito, u) for u in articoli})
+    urls = list(dict.fromkeys(articoli + pagine))[:MAX_URL]
 
     if urls:
-        esiti = {nome: await _canale(nome, urls) for nome in CANALI}
+        esiti.update({nome: await _canale(nome, urls) for nome in CANALI})
     else:
-        esiti = {nome: _saltato("nessun articolo nuovo o aggiornato") for nome in CANALI}
+        esiti.update({nome: _saltato("nessuna pagina nuova o aggiornata") for nome in CANALI})
 
     # `created_at` = `adesso`, non l'ora dell'inserimento: è l'inizio della finestra del giro dopo, e
     # deve coincidere con la fine di questa, altrimenti un articolo pubblicato nel mezzo si perde.
@@ -181,7 +248,8 @@ async def esegui(session: AsyncSession, *, manuale: bool = False) -> NotificaMot
     )
     session.add(riga)
     await session.commit()
-    logger.info("Notifica ai motori: %d indirizzi, esiti %s", len(urls), {k: v["stato"] for k, v in esiti.items()})
+    logger.info("Notifica ai motori: %d indirizzi (%d articoli), esiti %s", len(urls), len(articoli),
+                {k: v["stato"] for k, v in esiti.items()})
     return riga
 
 

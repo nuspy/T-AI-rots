@@ -4,6 +4,8 @@
 import { chiamata } from "./api";
 
 export type Canale = "indexnow" | "search_console" | "websub";
+/* Negli esiti c'è anche `sitemap`, solo quando non si è potuta leggere (allora si annunciano solo gli articoli). */
+export type VoceEsito = Canale | "sitemap";
 export type StatoCanale = "ok" | "errore" | "saltato";
 
 export interface ConfigurazioneCanale {
@@ -22,12 +24,13 @@ export interface InvioMotori {
   finestra_da: string;
   manuale: boolean;
   url: string[];
-  esiti: Partial<Record<Canale, EsitoCanale>>;
+  esiti: Partial<Record<VoceEsito, EsitoCanale>>;
   riuscita: boolean;
 }
 
 export const notificheMotori = (t: string) =>
   chiamata<{ canali: Record<Canale, ConfigurazioneCanale>; invii: InvioMotori[] }>(t, "/admin/seo/notifiche");
 
-export const inviaOraAiMotori = (t: string) =>
-  chiamata<InvioMotori>(t, "/admin/seo/notifiche", { method: "POST" });
+/* `tutte`: tutta la sitemap (home, carte, stese…), non solo ciò che è nuovo: dopo un cambiamento dei contenuti. */
+export const inviaOraAiMotori = (t: string, tutte = false) =>
+  chiamata<InvioMotori>(t, `/admin/seo/notifiche${tutte ? "?tutte=true" : ""}`, { method: "POST" });

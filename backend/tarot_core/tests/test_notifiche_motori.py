@@ -10,6 +10,7 @@ import pytest
 from tarot_core.domain.base import utcnow
 from tarot_core.domain.seo_models import NotificaMotori
 from tarot_core.settings import get_settings
+from tarot_core.tarot.notifiche_motori import leggi_sitemap as leggi_sitemap_vera
 from tarot_core.tarot.notifiche_motori import url_articolo
 
 from .conftest import richiede_database
@@ -37,6 +38,16 @@ def configura(monkeypatch):
         get_settings.cache_clear()
     yield _configura
     get_settings.cache_clear()
+
+
+@pytest.fixture(autouse=True)
+def sitemap(monkeypatch):
+    """La sitemap del sito, finta: nessuna richiesta di rete. Il test ci mette gli indirizzi che vuole."""
+    from tarot_core.tarot import notifiche_motori
+
+    indirizzi: list = []
+    monkeypatch.setattr(notifiche_motori, "leggi_sitemap", lambda sito: list(indirizzi))
+    return indirizzi
 
 
 @pytest.fixture
@@ -78,7 +89,8 @@ async def test_si_annunciano_solo_gli_articoli_pubblici_e_indicizzabili(admin, c
     assert r.status_code == 201, r.text
     giro = r.json()
 
-    atteso = [f"https://tarots.chat/blog/{pubblico['slug']}"]
+    # l'articolo e l'indice del blog della sua lingua
+    atteso = [f"https://tarots.chat/blog/{pubblico['slug']}", "https://tarots.chat/blog"]
     assert giro["url"] == atteso
     assert indexnow_finto == atteso
     assert giro["esiti"]["indexnow"]["stato"] == "ok"
@@ -139,3 +151,60 @@ async def test_l_elenco_mostra_la_configurazione_e_gli_invii(admin, configura, i
     assert "https://tarots.chat/abc123.txt" in dati["canali"]["indexnow"]["dettaglio"]
     assert dati["canali"]["search_console"]["configurato"] is False
     assert len(dati["invii"]) == 1
+
+
+SITO = "https://tarots.chat"
+MAPPA = [f"{SITO}/", f"{SITO}/it", f"{SITO}/cards/the-star", f"{SITO}/it/carte/la-stella",
+         f"{SITO}/spreads/celtic-cross", f"{SITO}/card-of-the-day", f"{SITO}/it/carta-del-giorno"]
+
+
+async def test_home_carte_e_stese_si_annunciano_la_prima_volta_poi_solo_le_nuove_e_la_carta_del_giorno(
+    admin, configura, indexnow_finto, sitemap,
+):
+    configura(indexnow_chiave="abc123", web_public_url=SITO)
+    sitemap.extend(MAPPA)
+    primo = (await admin.post("/admin/seo/notifiche")).json()
+    assert primo["url"] == MAPPA and primo["riuscita"] is True
+
+    # il giorno dopo: niente di nuovo, tranne la carta del giorno (cambia ogni giorno)
+    secondo = (await admin.post("/admin/seo/notifiche")).json()
+    assert secondo["url"] == [f"{SITO}/card-of-the-day", f"{SITO}/it/carta-del-giorno"]
+
+    # una pagina nuova (per esempio una lingua aggiunta) si annuncia da sola
+    sitemap.append(f"{SITO}/es/cartas/la-estrella")
+    terzo = (await admin.post("/admin/seo/notifiche")).json()
+    assert f"{SITO}/es/cartas/la-estrella" in terzo["url"] and f"{SITO}/cards/the-star" not in terzo["url"]
+
+
+async def test_dalla_console_si_annunciano_tutte_le_pagine(admin, configura, indexnow_finto, sitemap):
+    configura(indexnow_chiave="abc123", web_public_url=SITO)
+    sitemap.extend(MAPPA)
+    await admin.post("/admin/seo/notifiche")
+    indexnow_finto.clear()
+    tutte = (await admin.post("/admin/seo/notifiche?tutte=true")).json()
+    assert tutte["url"] == MAPPA and indexnow_finto == MAPPA
+
+
+async def test_senza_sitemap_si_annunciano_comunque_gli_articoli(admin, configura, indexnow_finto, monkeypatch):
+    from tarot_core.tarot import notifiche_motori
+
+    def giu(sito):
+        raise OSError("sito irraggiungibile")
+
+    monkeypatch.setattr(notifiche_motori, "leggi_sitemap", giu)
+    configura(indexnow_chiave="abc123", web_public_url=SITO)
+    art = await _articolo(admin, "La Luna")
+    giro = (await admin.post("/admin/seo/notifiche")).json()
+    assert f"{SITO}/blog/{art['slug']}" in giro["url"]
+    assert giro["esiti"]["sitemap"]["stato"] == "errore" and "irraggiungibile" in giro["esiti"]["sitemap"]["dettaglio"]
+    assert giro["esiti"]["indexnow"]["stato"] == "ok" and giro["riuscita"] is False
+
+
+def test_la_sitemap_si_legge_solo_per_il_sito_stesso(monkeypatch):
+    import httpx
+
+    xml = (b'<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+           b'<url><loc>https://tarots.chat/</loc></url><url><loc>https://altro.example/x</loc></url>'
+           b'<url><loc>https://tarots.chat/cards/the-star</loc></url></urlset>')
+    monkeypatch.setattr(httpx, "get", lambda url, **k: httpx.Response(200, content=xml, request=httpx.Request("GET", url)))
+    assert leggi_sitemap_vera("https://tarots.chat") == ["https://tarots.chat/", "https://tarots.chat/cards/the-star"]
