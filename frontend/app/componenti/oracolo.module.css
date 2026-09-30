@@ -1,6 +1,9 @@
-/* L'invito "fammi una domanda" (v6, Fase F): due ancoraggi, stesso contenuto. */
+/* L'Oracolo (v8): un solo widget ancorato al fondo pagina, sempre visibile — sostituisce sia il
+ * lanciatore a bolla della chat proattiva (v6, Fase E) sia il banner "Ask something" (v6/v7).
+ * Stesso ancoraggio del vecchio invito, con lo storico dei turni (solo per chi ha fatto login)
+ * mostrato sopra la barra d'invio invece che in un pannello modale separato. */
 
-.invito {
+.oracolo {
   position: fixed;
   left: max(16px, env(safe-area-inset-left));
   right: max(16px, env(safe-area-inset-right));
@@ -15,16 +18,15 @@
   box-shadow: var(--bagliore);
 }
 
-/* v7: ancorato in basso invece che in alto/a 1/3 pagina, sia in home sia altrove. Le due classi
- * restano separate (stesso principio del resto del file) anche se oggi coincidono, così una
- * futura differenza fra le due varianti non richiede di reintrodurle da zero. */
+/* Ancorato in basso sia in home sia altrove. Le due classi restano separate (una futura differenza
+ * fra le due varianti non richiede di reintrodurle da zero). */
 .inHome,
 .altrove {
   bottom: max(16px, env(safe-area-inset-bottom));
 }
 
 /* Sotto agli 860px la testata mostra la barra di navigazione fissa in basso (vedi
- * testata.module.css, stessa soglia): il banner deve stare sopra di lei, non sovrapporla. */
+ * testata.module.css, stessa soglia): il widget deve stare sopra di lei, non sovrapporla. */
 @media (max-width: 860px) {
   .inHome,
   .altrove {
@@ -62,6 +64,42 @@
   line-height: 1.4;
 }
 
+/* La cronologia (solo per chi ha fatto login, quando esiste): sopra la barra d'invio, non un
+ * pannello a parte — niente più aperto/chiuso al click. */
+.storico {
+  max-height: 240px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.turno {
+  max-width: 88%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  line-height: 1.5;
+  font-size: 14.5px;
+}
+
+.turnoAi {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--bordo);
+}
+
+.turnoUtente {
+  align-self: flex-end;
+  background: rgba(216, 180, 90, 0.16);
+  border: 1px solid var(--bordo-forte);
+}
+
+.proposta {
+  align-self: flex-start;
+  margin-top: -2px;
+}
+
 .modulo {
   display: flex;
   flex-direction: column;
@@ -85,5 +123,9 @@
 
   .campo {
     flex: 1;
+  }
+
+  .invia {
+    min-width: 44px;
   }
 }

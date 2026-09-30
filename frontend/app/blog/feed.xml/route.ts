@@ -1,11 +1,13 @@
-/* Il feed RSS del blog: gli ultimi trenta articoli pubblicati nella lingua dell'indirizzo (`/blog/feed.xml` è
- * inglese, `/it/blog/feed.xml` italiano). Si scrive a ogni richiesta (l'elenco cambia e in fase di build l'API non
- * c'è). Il testo di ogni voce è l'estratto, non l'articolo intero: chi vuole leggere viene sul sito. */
+/* Il feed RSS del blog: gli ultimi trenta articoli pubblicati, in qualunque lingua dell'indirizzo (v8:
+ * gli articoli sono solo in inglese e si vedono a prescindere dalla lingua dell'interfaccia, `/blog/feed.xml`
+ * e `/it/blog/feed.xml` elencano la stessa lista). Si scrive a ogni richiesta (l'elenco cambia e in fase di
+ * build l'API non c'è). Il testo di ogni voce è l'estratto, non l'articolo intero: chi vuole leggere viene
+ * sul sito. Ogni voce collega all'indirizzo vero dell'articolo (la sua lingua), non a quello del feed. */
 
 import { urlMedia, type ArticoloBreve, type ElencoArticoli } from "@/lib/blog";
 import { SITE_URL } from "@/lib/condivisione";
 import { linguaPagina } from "@/lib/lingua-server";
-import type { LinguaPubblica } from "@/lib/percorsi";
+import { linguaPubblica } from "@/lib/percorsi";
 import { BLOG } from "@/lib/seo-testi";
 import { urlPubblico } from "@/lib/seo";
 import { leggiDalServer } from "@/lib/server-api";
@@ -13,8 +15,8 @@ import { leggiDalServer } from "@/lib/server-api";
 const esci = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" })[c] as string);
 
-function voce(a: ArticoloBreve, lingua: LinguaPubblica): string {
-  const url = urlPubblico(lingua, `/blog/${a.slug}`);
+function voce(a: ArticoloBreve): string {
+  const url = urlPubblico(linguaPubblica(a.lang), `/blog/${a.slug}`);
   const immagine = urlMedia(a.immagine?.url);
   return [
     "<item>",
@@ -33,7 +35,7 @@ function voce(a: ArticoloBreve, lingua: LinguaPubblica): string {
 
 export async function GET() {
   const lingua = await linguaPagina();
-  const elenco = await leggiDalServer<ElencoArticoli>(`/blog/posts?per_pagina=30&lang=${lingua}`, { secondi: 60 });
+  const elenco = await leggiDalServer<ElencoArticoli>("/blog/posts?per_pagina=30", { secondi: 60 });
   const articoli = elenco?.articoli ?? [];
   const ultimo = articoli.find((a) => a.pubblicato_il)?.pubblicato_il;
   const xml = [
@@ -46,7 +48,7 @@ export async function GET() {
     `<language>${lingua === "it" ? "it" : "en"}</language>`,
     `<image><url>${SITE_URL}/marchio/logo-256.webp</url><title>${esci(BLOG.feedTitolo(lingua))}</title><link>${esci(urlPubblico(lingua, "/blog"))}</link></image>`,
     ultimo ? `<lastBuildDate>${new Date(ultimo).toUTCString()}</lastBuildDate>` : "",
-    ...articoli.map((a) => voce(a, lingua)),
+    ...articoli.map((a) => voce(a)),
     "</channel></rss>",
   ].join("");
   return new Response(xml, {

@@ -42,6 +42,18 @@ export function alternative(
   return { canonical: url[corrente] ?? url.en ?? url.it, languages: lingue };
 }
 
+/**
+ * Canonical di una pagina il cui contenuto (non solo l'interfaccia) è sempre in inglese, a
+ * prescindere dalla lingua dell'indirizzo: l'elenco degli articoli del blog, una sezione o
+ * un'etichetta che li raccoglie. Niente `hreflang` — non è una traduzione, è la stessa pagina
+ * letta con un'interfaccia diversa — e in italiano il canonical punta alla versione inglese, per
+ * non far indicizzare due indirizzi con lo stesso contenuto (v8: gli articoli non si filtrano più
+ * per lingua, si vedono qualunque lingua sia scelta).
+ */
+export function soloInglese(lingua: LinguaPubblica, interno: string): NonNullable<Metadata["alternates"]> {
+  return { canonical: urlPubblico("en", interno) };
+}
+
 /** Le informazioni di apertura per i social (Open Graph) e per X: un solo posto, per non dimenticarne pezzi. */
 export function anteprima(
   lingua: LinguaPubblica,
