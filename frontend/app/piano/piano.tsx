@@ -211,7 +211,8 @@ function Offerta({
       ) : (
         <p className={stili.nota}>{piano.limiti.letture_al_giorno ? t.letture_al_giorno(piano.limiti.letture_al_giorno) : t.carta_giorno_gratuita}</p>
       )}
-      <button className={evidente ? "bottone" : "bottone-secondario"} disabled={inCorso || (attuale && !pacchetto)} onClick={compra}>
+      <button className={evidente ? "bottone" : "bottone-secondario"} disabled={inCorso || (attuale && !pacchetto)} onClick={compra}
+        data-an="piano_scelto" data-an-piano={piano.slug}>
         {attuale && !pacchetto ? t.il_tuo_piano : pacchetto ? t.acquista : gratuito ? t.scegli : t.abbonati}
       </button>
       {errore && <p className={stili.errore}>{errore}</p>}

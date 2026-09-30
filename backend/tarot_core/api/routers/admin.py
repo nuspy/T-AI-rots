@@ -18,6 +18,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
+from lanterna.rete import ip_client
 from pydantic import BaseModel, Field
 from sqlalchemy import Date, cast, distinct, func, select
 
@@ -43,7 +44,7 @@ router = APIRouter(
 def _contesto(user, request: Request) -> ContestoAmministrativo:
     return ContestoAmministrativo(
         user,
-        ip=request.client.host if request.client else None,
+        ip=ip_client(request),
         correlation_id=getattr(request.state, "correlation_id", None),
     )
 
@@ -232,7 +233,7 @@ async def modifica_piano(
     await AuditRepository(session).record(
         action="plan.update", actor_id=user.id, target_type="plan", target_id=slug,
         before=prima, after=_piano_admin_json(piano),
-        ip=request.client.host if request.client else None,
+        ip=ip_client(request),
     )
     await session.commit()
     return _piano_admin_json(piano)

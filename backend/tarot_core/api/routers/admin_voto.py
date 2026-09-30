@@ -13,6 +13,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from lanterna.rete import ip_client
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
@@ -30,7 +31,7 @@ router = APIRouter(prefix="/admin/voto", tags=["voto"], dependencies=[Depends(re
 
 
 def _ip(request: Request) -> Optional[str]:
-    return request.client.host if request.client else None
+    return ip_client(request)
 
 
 def _candidato_json(c: DeckCandidate, conteggi: Dict[uuid.UUID, int]) -> Dict[str, Any]:

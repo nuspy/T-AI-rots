@@ -29,6 +29,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
+from ...analytics import eventi as analytics
 from ...auth.dependencies import CurrentUser, DbSession, require_role
 from ...billing import offerte
 from ...billing.credits import RegistroCrediti
@@ -278,6 +279,10 @@ async def apri_checkout(
     if sconto is not None and sconto.finale == 0:
         # Un pacchetto azzerato dal coupon: niente da pagare, quindi nessun fornitore. I crediti sono già dati.
         checkout = await GestorePagamenti(session).apri_gratis(user.id, piano, sconto)
+        await analytics.evento(
+            session, analytics.ACQUISTO, utente_id=user.id, valore_centesimi=0, valuta=checkout.currency,
+            proprieta={"tipo": "crediti", "piano": piano.slug, "annuale": False, "coupon": True},
+        )
         await session.commit()
         torna = payload.ritorno or ritorno
         return {
@@ -297,6 +302,12 @@ async def apri_checkout(
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc),
         ) from exc
+    await analytics.evento(
+        session, analytics.CHECKOUT_AVVIATO, utente_id=user.id, valore_centesimi=checkout.importo,
+        valuta=checkout.currency,
+        proprieta={"tipo": "crediti" if piano.pacchetto else "abbonamento", "piano": piano.slug, "annuale": annuale,
+                   "coupon": sconto is not None},
+    )
     await session.commit()
     return {
         "checkout_id": str(checkout.id), "url": url, "importo": checkout.importo, "sconto": checkout.sconto,
@@ -369,6 +380,7 @@ async def riscatta_codice(payload: RiscattoCodice, user: CurrentUser, session: D
     await AuditRepository(session).record(
         actor_id=user.id, action="coupon.redeem", target_type="coupon", target_id=coupon.code, after={"crediti": crediti},
     )
+    await analytics.evento(session, analytics.COUPON_RISCATTATO, utente_id=user.id, proprieta={"crediti": crediti})
     await session.commit()
     return {"crediti": crediti, "saldo": await RegistroCrediti(session).saldo(user.id)}
 

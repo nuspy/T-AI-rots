@@ -112,7 +112,28 @@ piuttosto che coesistere con essa; da chiarire con l'operatore prima di scrivere
 # Backlog v8 — Analytics e statistiche
 
 Registrato verbatim dalle istruzioni dell'operatore (2026-09-29), dettate durante l'implementazione
-di v7. **In coda dopo v7**: non ancora pianificato in fasi, non ancora esplorato nel codice.
+di v7.
+
+**Stato (2026-09-30)**: progettato insieme all'operatore (piano «lanterna»: raccoglitore nostro,
+visite dei registrati legate all'account per legittimo interesse con informativa, libreria
+`lanterna` in `E:\Projects\lanterna`, paese e città da DB-IP, Colab con notebook scaricato,
+raccolta in produzione prima del resto). Fasi:
+
+- **F0 fondamenta — fatto.** Libreria (schema congelato v1, impronta giornaliera, canali, UA, geo),
+  tabelle `an_*` via `domain/analytics_models.py` e migrazione `2556daf22909`, `ip_client` unico
+  (`lanterna.rete`) nei router admin, consenso e condivisioni al posto di `request.client.host`,
+  Dockerfile (lanterna + DB-IP con `GEO_MESE`), LEGGIMI.
+- **F1 raccolta traffico + privacy — fatto.** `POST /e` e `/e/dimentica` (`api/routers/analytics.py`),
+  osservatore JS `lanterna-osservatore` montato in `providers.tsx` (entrambi i rami), livello esteso
+  acceso da «It's fine», sezione «Statistiche di utilizzo» nell'informativa (it/en/hu),
+  `docs/privacy/lia-analytics.md`.
+- **F2 eventi di business e attribuzione — fatto.** Eventi lato server (`analytics/eventi.py`):
+  registrazione, lettura aperta/completata/crisi/cancellata/feedback/condivisa, checkout avviato,
+  acquisto (webhook e coupon gratuito), coupon, invito, voto, carta del giorno. `lettura_fase` dal
+  client, `data-an` su piano, carrello e CTA d'iscrizione. Opposizione dal profilo
+  (`GET/PUT /me/statistiche`). **Da rilasciare** (primo rilascio).
+- F3 motore di query + rollup + Traffico/Utenti; F4 imbuti, coorti, ricavi, esploratore; F5 export;
+  F6 interpretazione AI; F7 email domenicale; F8 Colab — da fare (secondo rilascio).
 
 ## 4. Statistiche di ingresso (traffico)
 

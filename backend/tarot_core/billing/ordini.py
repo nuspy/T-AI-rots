@@ -207,6 +207,17 @@ class GestoreOrdini:
                 # Da qui in poi il registro ordini (Fase B6) segue la spedizione; per ora c'è solo il
                 # primo stato, che dice «sì, questa riga va evasa».
                 riga.stato_evasione = riga.stato_evasione or "in_attesa"
+        from ..analytics import eventi as analytics
+
+        await analytics.evento(
+            self._session, analytics.ACQUISTO, utente_id=ordine.user_id,
+            valore_centesimi=ordine.importo_totale, valuta=ordine.valuta,
+            proprieta={
+                "tipo": "ordine",
+                "digitali": sum(1 for r in ordine.righe if r.tipo == "digitale"),
+                "fisici": sum(1 for r in ordine.righe if r.tipo == "fisico"),
+            },
+        )
         await self._session.flush()
         return "ordine pagato"
 

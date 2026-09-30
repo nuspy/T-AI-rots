@@ -12,6 +12,7 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
+from ...analytics import eventi as analytics
 from ...auth.dependencies import CurrentUser, DbSession
 from ...billing.ordini import CarrelloNonValido, GestoreOrdini, VoceCarrello
 from ...billing.pagamenti import PagamentiNonDisponibili
@@ -86,6 +87,10 @@ async def apri_ordine(payload: CarrelloIn, user: CurrentUser, session: DbSession
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except PagamentiNonDisponibili as exc:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
+    await analytics.evento(
+        session, analytics.CHECKOUT_AVVIATO, utente_id=user.id, valore_centesimi=ordine.importo_totale,
+        valuta=ordine.valuta, proprieta={"tipo": "ordine", "voci": len(voci)},
+    )
     await session.commit()
     return {"url": url, **_ordine_json(ordine)}
 

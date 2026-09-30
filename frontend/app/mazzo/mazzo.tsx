@@ -354,7 +354,8 @@ function SchedaMazzo({
                   {scontato && <s className={stili.nota}>{euro(mazzo.prezzo_digitale, mazzo.valuta, locale)}</s>}{" "}
                   {euro(prezzoDigitale!, mazzo.valuta, locale)}
                 </span>
-                <button type="button" className="bottone-secondario" onClick={() => onAggiungi(mazzo, "digitale")}>
+                <button type="button" className="bottone-secondario" onClick={() => onAggiungi(mazzo, "digitale")}
+                  data-an="carrello_aggiunto" data-an-mazzo={mazzo.slug} data-an-tipo="digitale">
                   {t.negozio_aggiungi}
                 </button>
               </div>
@@ -374,7 +375,8 @@ function SchedaMazzo({
               <div className={stili.rigaPrezzo}>
                 <span>{t.negozio_pdf}</span>
                 <span>{euro(mazzo.prezzo_stampa, mazzo.valuta, locale)}</span>
-                <button type="button" className="bottone-secondario" onClick={() => onAggiungi(mazzo, "pdf")}>
+                <button type="button" className="bottone-secondario" onClick={() => onAggiungi(mazzo, "pdf")}
+                  data-an="carrello_aggiunto" data-an-mazzo={mazzo.slug} data-an-tipo="pdf">
                   {t.negozio_aggiungi}
                 </button>
               </div>
@@ -383,7 +385,8 @@ function SchedaMazzo({
               <div className={stili.rigaPrezzo}>
                 <span>{t.negozio_fisico}</span>
                 <span>{euro(mazzo.prezzo_fisico, mazzo.valuta, locale)}</span>
-                <button type="button" className="bottone-secondario" onClick={() => onAggiungi(mazzo, "fisico")}>
+                <button type="button" className="bottone-secondario" onClick={() => onAggiungi(mazzo, "fisico")}
+                  data-an="carrello_aggiunto" data-an-mazzo={mazzo.slug} data-an-tipo="fisico">
                   {t.negozio_aggiungi}
                 </button>
               </div>

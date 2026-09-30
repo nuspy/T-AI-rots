@@ -30,6 +30,7 @@ from datetime import timedelta
 from typing import Any, Dict
 
 from fastapi import APIRouter, HTTPException, Request, Response
+from lanterna.rete import ip_client
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -52,22 +53,12 @@ router = APIRouter(tags=["condivisione"])
 
 
 def _indirizzo(request: Request) -> str:
-    """L'indirizzo di chi chiama, anche dietro i proxy.
-
-    Dietro NPM e il gateway il socket è quello del proxy. `X-Real-IP` lo scrive NPM
-    (sovrascrivendo ciò che manda il client) ed è la fonte più fidata; in mancanza si
-    prende l'**ultimo** indirizzo di `X-Forwarded-For`, quello aggiunto dal proxy più
-    vicino, non il primo, che può essere scritto da chi chiama. Fuori dai proxy (in
+    """L'indirizzo di chi chiama, anche dietro i proxy (`lanterna.rete.ip_client`: prima
+    `X-Real-IP` scritto da NPM, poi l'ultimo di `X-Forwarded-For`). Fuori dai proxy (in
     sviluppo) contano solo le intestazioni che un client può falsificare: il confronto
     «stessa rete» si aggira, ma in sviluppo non protegge niente.
     """
-    reale = request.headers.get("x-real-ip", "").strip()
-    if reale:
-        return reale
-    inoltrato = request.headers.get("x-forwarded-for", "")
-    if inoltrato:
-        return inoltrato.split(",")[-1].strip()
-    return request.client.host if request.client else "sconosciuto"
+    return ip_client(request) or "sconosciuto"
 
 
 def _impronte(request: Request, visitor: str) -> tuple:

@@ -362,6 +362,17 @@ class GestorePagamenti:
         checkout.status = "pagato"
         checkout.completed_at = utcnow()
 
+        from ..analytics import eventi as analytics
+
+        await analytics.evento(
+            self._session, analytics.ACQUISTO, utente_id=checkout.user_id,
+            valore_centesimi=checkout.importo, valuta=checkout.currency,
+            proprieta={
+                "tipo": "crediti" if checkout.plan.pacchetto else "abbonamento", "piano": checkout.plan.slug,
+                "annuale": checkout.annuale, "coupon": checkout.coupon_id is not None,
+            },
+        )
+
         from .offerte import registra_uso
 
         await registra_uso(self._session, checkout)       # l'uso del coupon si conta a pagamento avvenuto

@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from lanterna.rete import ip_client
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
@@ -34,7 +35,7 @@ TETTO_PREZZO = 1_000_000  # centesimi: diecimila euro, oltre è un refuso
 
 
 def _ip(request: Request) -> Optional[str]:
-    return request.client.host if request.client else None
+    return ip_client(request)
 
 
 class MazzoNuovo(BaseModel):

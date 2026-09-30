@@ -152,6 +152,10 @@ async def current_user(
             anon_id = request.cookies.get(COOKIE_ANONIMO)
             if anon_id:
                 await ReadingRepository(session).reclama_anonima(anon_id, utente)
+            # Analytics (v8): la riga di attribuzione e l'evento. Non sollevano mai.
+            from ..analytics.eventi import registrazione
+
+            await registrazione(session, utente.id)
             await session.commit()
         return utente
     except PermissionError as exc:

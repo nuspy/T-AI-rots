@@ -25,7 +25,7 @@ export function CtaIscrizione({ compatta = false }: { compatta?: boolean }) {
           {t.cta_iscrizione_testo(impostazioni.dati.crediti_iscrizione, impostazioni.dati.crediti_invito)}
         </p>
       </div>
-      <button className="bottone" onClick={sessione.registrati}>
+      <button className="bottone" onClick={sessione.registrati} data-an="cta_iscrizione" data-an-dove={compatta ? "compatta" : "riquadro"}>
         {t.registrati}
       </button>
     </div>

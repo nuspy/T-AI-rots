@@ -43,6 +43,7 @@ from ...billing.quote import COSTO_LETTURA, ContatoreQuote
 from ...domain import deck_repositories, memoria_repositories
 from ...domain.base import utcnow
 from ...domain.models import InterviewTurn, Reading, User
+from ...analytics import eventi as analytics
 from ...domain.repositories import AuditRepository, ReadingRepository
 from ...domain.share_models import ShareImage
 from ...domain.session import SessionFactory
@@ -437,6 +438,7 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
         await AuditRepository(session).record(
             action="reading.crisis", actor_id=user.id, target_type="user", target_id=str(user.id),
         )
+        await analytics.evento(session, analytics.LETTURA_CRISI, utente_id=user.id, proprieta={"fase": "apertura"})
         await session.commit()
         return {"crisi": True, "messaggio": in_lingua(AIUTO, lang)}
 
@@ -500,6 +502,10 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
     # (402, rollback qui sopra) non si ricorda niente; in ramo crisi si è già usciti.
     if persone is not None and payload.ricorda_partner:
         user.partner_ricordato = dict(persone["partner"])
+    await analytics.evento(session, analytics.LETTURA_APERTA, utente_id=user.id, proprieta={
+        "stesa": stesa["id"], "categoria": categoria, "consumo": consumo, "lingua": lang,
+        "manuale": assegnazioni_manuali is not None, "mazzo": payload.deck_id or "predefinito",
+    })
     await session.commit()
 
     return {
@@ -563,6 +569,9 @@ async def apri_anonima(
         consumo="anonimo", lang=lang, status="intervista",
     )
     session.add(lettura)
+    await analytics.evento(session, analytics.LETTURA_APERTA, proprieta={
+        "stesa": stesa["id"], "categoria": "standard", "consumo": "anonimo", "lingua": lang,
+    })
     await session.commit()
 
     # `SameSite`: in produzione frontend e API sono due domini diversi (tarots.chat, fx.tadamoo.com)
@@ -692,6 +701,9 @@ async def _chiudi_per_crisi(session, user: Optional[User], lettura: Reading) -> 
     await AuditRepository(session).record(
         action="reading.crisis", actor_id=user.id if user else None,
         target_type="reading", target_id=str(lettura.id),
+    )
+    await analytics.evento(
+        session, analytics.LETTURA_CRISI, utente_id=user.id if user else None, proprieta={"fase": "intervista"},
     )
     await session.commit()
     return {"completa": False, "crisi": True, "messaggio": in_lingua(AIUTO, lettura.lang)}
@@ -1022,6 +1034,10 @@ async def sintesi(
                     target_type="reading", target_id=str(reading_id),
                     after={"violazioni": verdetto.violazioni},
                 )
+            await analytics.evento(s, analytics.LETTURA_COMPLETATA, utente_id=user.id if user else None, proprieta={
+                "stesa": stesa["id"], "categoria": categoria, "guardia": esito, "anonima": is_anonimo,
+                "lingua": lang,
+            })
             await s.commit()
             saldo = await RegistroCrediti(s).saldo(user.id) if user else None
             chiusura = _chiusura(r, saldo)
@@ -1095,6 +1111,7 @@ async def cancella(reading_id: uuid.UUID, user: CurrentUser, session: DbSession)
     await AuditRepository(session).record(
         action="reading.delete", actor_id=user.id, target_type="reading", target_id=str(reading_id),
     )
+    await analytics.evento(session, analytics.LETTURA_CANCELLATA, utente_id=user.id)
     await session.commit()
 
 
@@ -1110,6 +1127,7 @@ async def diario(
     lettura.feedback = payload.esito
     lettura.feedback_note = payload.nota
     lettura.feedback_at = utcnow()
+    await analytics.evento(session, analytics.LETTURA_FEEDBACK, utente_id=user.id, proprieta={"esito": payload.esito})
     await session.commit()
     return {"feedback": lettura.feedback}
 
@@ -1137,5 +1155,6 @@ async def condividi(
     else:
         lettura.share_token = None
         await session.execute(delete(ShareImage).where(ShareImage.reading_id == lettura.id))
+    await analytics.evento(session, analytics.LETTURA_CONDIVISA, utente_id=user.id, proprieta={"attiva": payload.attiva})
     await session.commit()
     return {"share_token": lettura.share_token, "share_text": lettura.share_text}

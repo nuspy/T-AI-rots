@@ -219,14 +219,21 @@ Nuovo tag nelle `docker build` (sul server) e in `tarots.yaml`, poi
 migrazioni all'avvio. Il server di tadamoo è carico: build e import in
 containerd durano da minuti a un'ora, una immagine alla volta.
 
-**Contesto di build dell'API (v8)**: `deploy/Dockerfile.backend` installa `seo-notify`, un progetto
-separato (in locale `E:\Projects\seo-notify`, non su PyPI), che deve stare **accanto a `backend/`**
-nel contesto di build. Il tar dei sorgenti si prepara così:
+**Contesto di build (v8)**: `deploy/Dockerfile.backend` installa `seo-notify` e `lanterna`
+(analytics), progetti separati (in locale `E:\Projects\seo-notify` e `E:\Projects\lanterna`, non su
+PyPI) che devono stare **accanto a `backend/`** nel contesto di build; `deploy/Dockerfile.next` usa
+`lanterna/js` (l'osservatore delle pagine del sito). Il tar dei sorgenti si prepara così:
 
 ```bash
 tar --exclude=.git --exclude=node_modules --exclude=.venv --exclude=.next --exclude=__pycache__ \
-  -czf tarots-src.tar.gz backend frontend admin deploy -C /e/Projects seo-notify
+  --exclude='*.mmdb' \
+  -czf tarots-src.tar.gz backend frontend admin deploy -C /e/Projects seo-notify lanterna
 ```
+
+L'immagine dell'API scarica in build DB-IP City Lite (paese e città dall'IP, ~130 MB): passare
+`--build-arg GEO_MESE=$(date +%Y-%m)` alla `docker build` dell'API, così il file si aggiorna una volta
+al mese e resta in cache per le altre build. Licenza CC BY 4.0: l'attribuzione a DB-IP è
+nell'informativa privacy.
 
 ## Notifica ai motori di ricerca (v8)
 

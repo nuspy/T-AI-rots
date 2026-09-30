@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from lanterna.rete import ip_client
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy.exc import IntegrityError
 
@@ -29,7 +30,7 @@ router = APIRouter(prefix="/admin", tags=["fornitori-llm"], dependencies=[Depend
 
 
 def _ip(request: Request) -> Optional[str]:
-    return request.client.host if request.client else None
+    return ip_client(request)
 
 
 class FornitoreNuovo(BaseModel):

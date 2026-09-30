@@ -13,6 +13,7 @@ from fastapi import APIRouter, HTTPException, Request, Response, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
+from ...analytics import eventi as analytics
 from ...auth.dependencies import CurrentUser, DbSession
 from ...billing.credits import RegistroCrediti
 from ...domain import deck_repositories, indirizzi_repositories, memoria_repositories
@@ -114,6 +115,37 @@ async def profilo(user: CurrentUser, session: DbSession) -> Dict[str, Any]:
     return await _profilo_json(user, session)
 
 
+class PreferenzaStatistiche(BaseModel):
+    opposizione: bool
+
+
+@router.get("/statistiche")
+async def preferenza_statistiche(user: CurrentUser, session: DbSession) -> Dict[str, bool]:
+    """Il legame fra le visite e l'account (v8, analytics): attivo salvo opposizione (art. 21)."""
+    from lanterna.eventi import opposizione
+
+    from ...domain.analytics_models import TABELLE
+
+    return {"opposizione": await opposizione(session, TABELLE, user.id)}
+
+
+@router.put("/statistiche")
+async def modifica_statistiche(payload: PreferenzaStatistiche, user: CurrentUser, session: DbSession) -> Dict[str, bool]:
+    """Opposizione o ritiro dell'opposizione. Con l'opposizione il legame con le visite passate si
+    cancella subito (restano solo conteggi anonimi); ritirarla non lo ricrea."""
+    from lanterna.eventi import imposta_opposizione
+
+    from ...domain.analytics_models import TABELLE
+
+    await imposta_opposizione(session, TABELLE, user.id, payload.opposizione)
+    await AuditRepository(session).record(
+        action="analytics.opposizione", actor_id=user.id, target_type="user", target_id=str(user.id),
+        after={"opposizione": payload.opposizione},
+    )
+    await session.commit()
+    return {"opposizione": payload.opposizione}
+
+
 @router.patch("/profile")
 async def modifica(payload: ModificaProfilo, user: CurrentUser, session: DbSession) -> Dict[str, Any]:
     if payload.birth_date is not None:
@@ -201,6 +233,7 @@ async def riscatta(payload: Invito, user: CurrentUser, session: DbSession) -> Di
     await AuditRepository(session).record(
         action="referral.redeem", actor_id=user.id, target_type="user", target_id=str(invitante.id),
     )
+    await analytics.evento(session, analytics.INVITO_RISCATTATO, utente_id=user.id)
     await session.commit()
     return {"crediti": totale_invitato, "saldo": await registro.saldo(user.id)}
 
@@ -232,6 +265,8 @@ async def carta_del_giorno(user: CurrentUser, session: DbSession) -> Dict[str, A
             testo=carta["rovescio"] if rovescio else carta["dritto"], created_at=utcnow(),
         )
         session.add(riga)
+        # Solo la prima apertura del giorno: le successive rileggono la stessa carta.
+        await analytics.evento(session, analytics.CARTA_DEL_GIORNO, utente_id=user.id)
         try:
             await session.commit()
         except Exception:  # noqa: BLE001 - corsa sull'unicità: rileggiamo

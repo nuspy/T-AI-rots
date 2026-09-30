@@ -164,6 +164,17 @@ class Settings(BaseSettings):
     #: L'hub WebSub a cui annunciare il feed RSS del blog. Vuoto: WebSub si salta.
     websub_hub: str = ""
 
+    #: Analytics (v8, libreria `lanterna`). Spenti: nessuna raccolta, l'endpoint risponde 204 e
+    #: scarta tutto.
+    analytics_attivi: bool = True
+    #: Il file .mmdb di DB-IP City Lite (scaricato nell'immagine). Vuoto o assente: niente paese e
+    #: città, il resto funziona.
+    analytics_geo: str = ""
+    #: Il dominio pubblico del sito, per riconoscere i referrer interni.
+    analytics_dominio: str = "tarots.chat"
+    #: Mesi di conservazione di sessioni ed eventi grezzi (poi resta il riepilogo giornaliero).
+    analytics_ritenzione_mesi: int = 25
+
     cors_origins: List[str] = Field(
         default_factory=lambda: ["http://localhost:3000", "http://localhost:3001"]
     )

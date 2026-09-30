@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from ...analytics import eventi as analytics
 from ...auth.dependencies import CurrentUser, DbSession
 from ...domain import voting_repositories
 from ...domain.repositories import AuditRepository
@@ -119,6 +120,7 @@ async def vota(candidate_id: uuid.UUID, user: CurrentUser, session: DbSession) -
     if candidate_id not in {c.id for c in candidati}:
         raise HTTPException(status_code=404, detail="Candidato non trovato in questa tornata")
     await voting_repositories.vota(session, round_id=tornata.id, candidate_id=candidate_id, user_id=user.id)
+    await analytics.evento(session, analytics.VOTO_MAZZO, utente_id=user.id)
     await session.commit()
     return {"esito": "ok"}
 

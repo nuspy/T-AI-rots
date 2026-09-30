@@ -8,7 +8,7 @@ import {
   aggiornaProfilo, cancellaPartner, caricaAvatar, creaIndirizzo, elencaIndirizzi, elencaMazzi,
   elencaMemorie, elencaMieiMazzi, elencaOrdini,
   eliminaIndirizzo, eliminaMemoria, eliminaMemorieSelezionate, eliminaTutteLeMemorie,
-  euro, impostazioniPubbliche, leggiProfilo, modificaIndirizzo, modificaMemoria, riscattaInvito, togliAvatar,
+  euro, impostaPreferenzaStatistiche, impostazioniPubbliche, leggiPreferenzaStatistiche, leggiProfilo, modificaIndirizzo, modificaMemoria, riscattaInvito, togliAvatar,
   type Genere, type Indirizzo, type IndirizzoInvio, type Memoria, type Ordine,
 } from "@/lib/api";
 import { urlMedia } from "@/lib/blog";
@@ -18,6 +18,7 @@ import { useSessione, AUTH_DISATTIVATA } from "@/lib/sessione";
 import { URL_ACCOUNT, leggiStato2fa } from "@/lib/sicurezza";
 import { useAzione, useCarica } from "@/lib/usa";
 import { BottonePdf } from "../componenti/bottone-pdf";
+import Link from "../componenti/link";
 import { Carta } from "../componenti/carta";
 import { CampiGenere } from "../componenti/campi-genere";
 import { Modale } from "../componenti/modale";
@@ -389,7 +390,38 @@ function Profilo() {
       <SezioneOrdini />
       <SezioneIndirizzi />
       <SezioneMemoria />
+      <SezioneStatistiche />
     </>
+  );
+}
+
+/* L'opposizione al legame fra visite e account (v8, analytics; art. 21 GDPR). La casella dice ciò
+ * che l'utente controlla — «non collegare» — e l'effetto è immediato anche sul passato. */
+function SezioneStatistiche() {
+  const { t } = useLingua();
+  const preferenza = useCarica(leggiPreferenzaStatistiche);
+  const { esegui, inCorso, errore } = useAzione();
+  if (!preferenza.dati) return null;
+  return (
+    <section className={`pannello ${stili.scheda} ${stili.sezione}`} aria-labelledby="profilo-statistiche">
+      <h2 id="profilo-statistiche" className={stili.sezioneTitolo}>{t.prof_stat_titolo}</h2>
+      <p className={stili.nota}>
+        {t.prof_stat_testo} <Link href="/privacy">{t.privacy_titolo}</Link>
+      </p>
+      <label className={stili.casellaProfilo}>
+        <input
+          type="checkbox"
+          checked={preferenza.dati.opposizione}
+          disabled={inCorso}
+          onChange={async (e) => {
+            await esegui((tok) => impostaPreferenzaStatistiche(tok, e.target.checked));
+            preferenza.ricarica();
+          }}
+        />
+        {t.prof_stat_opponi}
+      </label>
+      {errore && <p className={stili.avviso}>{errore}</p>}
+    </section>
   );
 }
 

@@ -67,6 +67,19 @@ export default function PaginaPrivacy() {
           </p>
         )}
       </section>
+
+      {/* Gli analytics (v8, libreria `lanterna`): cosa si misura, su quale base, per quanto. */}
+      <section className={`pannello ${stili.scheda} ${stili.sezione}`} aria-labelledby="privacy-statistiche">
+        <h2 id="privacy-statistiche" className={stili.sezioneTitolo}>{t.privacy_statistiche_titolo}</h2>
+        <p className={stili.nota}>{t.privacy_statistiche_anonime}</p>
+        <p className={stili.nota}>{t.privacy_statistiche_account}</p>
+        <p className={stili.nota}>{t.privacy_statistiche_esteso}</p>
+        <p className={stili.nota}>{t.privacy_statistiche_conservazione}</p>
+        <p className={stili.nota}>
+          {t.privacy_statistiche_geo}{" "}
+          <a href="https://db-ip.com" rel="noopener" target="_blank">IP Geolocation by DB-IP</a> (CC BY 4.0)
+        </p>
+      </section>
     </Involucro>
   );
 }

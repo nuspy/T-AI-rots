@@ -35,7 +35,10 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
     NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=${NEXT_PUBLIC_KEYCLOAK_CLIENT_ID}
 
 WORKDIR /src
-COPY ${APP}/package.json ${APP}/package-lock.json ./
+# `lanterna-osservatore` (analytics, v8) è un pacchetto locale, `file:../../lanterna/js` dal sito:
+# da /src il percorso arriva a /lanterna/js. `.npmrc` (install-links) lo copia in node_modules.
+COPY lanterna/js /lanterna/js
+COPY ${APP}/package.json ${APP}/package-lock.json ${APP}/.npmrc* ./
 RUN npm ci --no-audit --no-fund
 COPY ${APP}/ ./
 # Il client di Keycloak ha un nome per interfaccia: se non lo si passa, lo si

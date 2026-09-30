@@ -83,7 +83,7 @@ export function Responso({
       {finito && anonimo && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
           <div className={stili.azioniCentro}>
-            <button className="bottone" onClick={onRegistrati}>{t.anteprima_registrati}</button>
+            <button className="bottone" onClick={onRegistrati} data-an="cta_iscrizione" data-an-dove="anteprima">{t.anteprima_registrati}</button>
           </div>
         </motion.div>
       )}

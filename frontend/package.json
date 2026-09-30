@@ -12,6 +12,7 @@
   "dependencies": {
     "@types/three": "^0.186.0",
     "framer-motion": "^12.23.0",
+    "lanterna-osservatore": "file:../../lanterna/js",
     "next": "16.3.5",
     "oidc-client-ts": "^3.5.0",
     "react": "19.2.8",

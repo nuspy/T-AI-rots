@@ -9,6 +9,7 @@ import { AUTH_DISATTIVATA, SessioneDiSviluppo, SessioneKeycloak } from "@/lib/se
 import { AttribuzioneCondivisione } from "./componenti/attribuzione";
 import { BannerCookie } from "./componenti/banner-cookie";
 import { Oracolo } from "./componenti/oracolo";
+import { OsservatorePagine } from "./componenti/osservatore";
 import { Promemoria2fa } from "./componenti/promemoria-2fa";
 import { RiscattoInvitoAutomatico } from "./componenti/riscatto-invito";
 
@@ -77,7 +78,12 @@ export function Providers({ children, linguaIniziale }: { children: React.ReactN
   if (!config) {
     return (
       <ProviderLingua iniziale={linguaIniziale}>
-        <SessioneDiSviluppo>{children}</SessioneDiSviluppo>
+        <SessioneDiSviluppo>
+          <OsservatorePagine>
+            <BannerCookie />
+            {children}
+          </OsservatorePagine>
+        </SessioneDiSviluppo>
       </ProviderLingua>
     );
   }
@@ -86,12 +92,14 @@ export function Providers({ children, linguaIniziale }: { children: React.ReactN
     <AuthProvider {...config}>
       <ProviderLingua iniziale={linguaIniziale}>
         <SessioneKeycloak>
-          <AttribuzioneCondivisione />
-          <RiscattoInvitoAutomatico />
-          <Promemoria2fa />
-          <Oracolo />
-          <BannerCookie />
-          {children}
+          <OsservatorePagine>
+            <AttribuzioneCondivisione />
+            <RiscattoInvitoAutomatico />
+            <Promemoria2fa />
+            <Oracolo />
+            <BannerCookie />
+            {children}
+          </OsservatorePagine>
         </SessioneKeycloak>
       </ProviderLingua>
     </AuthProvider>

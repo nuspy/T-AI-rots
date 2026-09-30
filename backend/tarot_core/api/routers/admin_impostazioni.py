@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from lanterna.rete import ip_client
 from pydantic import BaseModel, Field
 
 from ...auth.dependencies import CurrentUser, DbSession, require_role
@@ -22,7 +23,7 @@ router = APIRouter(prefix="/admin", tags=["impostazioni"], dependencies=[Depends
 
 
 def _ip(request: Request) -> Optional[str]:
-    return request.client.host if request.client else None
+    return ip_client(request)
 
 
 class ImpostazioniModifica(BaseModel):

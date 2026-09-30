@@ -7,6 +7,7 @@
 
 import { useState } from "react";
 import { leggiConsenso, registraConsenso } from "@/lib/api";
+import { impostaConsensoAnalytics } from "@/lib/analytics";
 import { useLingua } from "@/lib/lingua";
 import { useSessione } from "@/lib/sessione";
 import { useCarica } from "@/lib/usa";
@@ -30,6 +31,7 @@ export function BannerCookie() {
       // con il token se c'è, `null` altrimenti — `credentials: "include"` fa viaggiare/ricevere
       // il cookie in entrambi i casi.
       await registraConsenso(sessione.token, "cookie", valore);
+      impostaConsensoAnalytics(valore);
       setNascosto(true);
     } finally {
       setInCorso(false);

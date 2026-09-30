@@ -24,6 +24,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
+import { useTraccia } from "lanterna-osservatore/react";
 import {
   ErroreApi,
   aggiornaProfilo,
@@ -146,6 +147,14 @@ export function Lettura() {
     [stese.dati, categoria],
   );
   const speciale = categoria !== "standard";
+
+  /* Analytics (v8): ogni fase raggiunta è un passo dell'imbuto della lettura. Solo la fase e il
+   * tipo, mai la domanda né le carte. */
+  const traccia = useTraccia();
+  useEffect(() => {
+    // Solo a sessione pronta: prima «autenticata» vale falso per tutti e la stessa fase uscirebbe due volte.
+    if (sessione.pronta) traccia("lettura_fase", { fase, categoria, anonima: !sessione.autenticata });
+  }, [traccia, fase, categoria, sessione.pronta, sessione.autenticata]);
 
   /* Il modulo si precompila una volta dal partner ricordato nel profilo. */
   const precompilato = useRef(false);

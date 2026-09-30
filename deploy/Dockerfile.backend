@@ -23,6 +23,16 @@ RUN pip install -r requirements.txt
 COPY seo-notify /opt/seo-notify
 RUN pip install "/opt/seo-notify[search-console]"
 
+# `lanterna` (analytics, v8): stesso schema di `seo-notify`, progetto separato accanto a `backend/`.
+COPY lanterna /opt/lanterna
+RUN pip install "/opt/lanterna[fastapi,xlsx]"
+
+# Paese e città dall'IP: DB-IP City Lite (CC BY 4.0, ~130 MB), mese corrente o precedente. Il
+# livello resta in cache finché `GEO_MESE` non cambia: lo script di build passa il mese corrente,
+# così l'immagine si aggiorna una volta al mese. Non fatale: senza file mancano solo paese e città.
+ARG GEO_MESE=nessuno
+RUN echo "geo $GEO_MESE" && python -m lanterna.geo /opt/geo/citta.mmdb
+
 COPY backend/alembic.ini ./
 COPY backend/tarot_core ./tarot_core
 # I guardrail sono dati, letti da `data/guards` all'avvio. La base di

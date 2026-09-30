@@ -919,6 +919,14 @@ export const registraConsenso = (token: string | null, tipo: TipoConsenso, valor
     body: { tipo, valore, versione_informativa: VERSIONE_INFORMATIVA },
   });
 
+/* ---- statistiche di utilizzo (v8): opposizione al legame visite-account ---- */
+
+export const leggiPreferenzaStatistiche = (token: string | null) =>
+  chiama<{ opposizione: boolean }>(token, "/me/statistiche");
+
+export const impostaPreferenzaStatistiche = (token: string | null, opposizione: boolean) =>
+  chiama<{ opposizione: boolean }>(token, "/me/statistiche", { method: "PUT", body: { opposizione } });
+
 /* ---- vota il prossimo mazzo (v7, Fase K) ---- */
 
 export interface CampioneVoto {

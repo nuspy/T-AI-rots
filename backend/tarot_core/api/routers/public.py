@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import Response
+from lanterna.rete import ip_client
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
@@ -143,7 +144,7 @@ async def registra_consenso(
     await consent_repositories.registra(
         session, user_id=user.id if user else None, anon_id=anon_id,
         tipo=payload.tipo, valore=payload.valore, versione_informativa=payload.versione_informativa,
-        ip=request.client.host if request.client else None,
+        ip=ip_client(request),
     )
     await session.commit()
     return {"esito": "ok"}
