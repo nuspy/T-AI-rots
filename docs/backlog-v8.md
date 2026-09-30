@@ -76,8 +76,19 @@ così da poterlo riusare in altri progetti.
    codice né in un endpoint modificabile da console (stesso principio già seguito per le chiavi LLM,
    vedi `deploy/k8s/LEGGIMI.md`).
 
-**Non ancora implementato**: solo ricerca e proposta fatte, nessun codice scritto. Manca la conferma
-dell'operatore su nome/posizione del progetto separato prima di crearlo.
+**Fatto (2026-09-30)**: il progetto separato esiste — `E:\Projects\seo-notify` (repository git locale
+proprio, non ancora un remote GitHub: quella scelta resta dell'operatore), pacchetto Python
+`seo_notify` con i tre canali (`ClientIndexNow`, `notifica_hub`, `sottometti_sitemap`), zero
+dipendenze per IndexNow/WebSub, extra opzionale `[search-console]` per quello. 9/9 test verdi
+(mockati, nessuna chiamata di rete reale nei test). README con esempi d'uso.
+
+**Non ancora fatto, di proposito**: il collegamento dentro T-AI-rots (`admin_blog.py`, quando un
+articolo passa a "pubblicato") non è stato scritto — collegarlo significa introdurre vere chiamate
+di rete verso servizi esterni nel percorso di pubblicazione dell'app in produzione, e questo va
+rivisto dall'operatore prima di essere attivato, non deciso in autonomia durante la notte. Mancano
+anche: nome/decisione se pubblicare `seo-notify` come repository GitHub proprio; le credenziali
+(chiave IndexNow, service account Search Console) che andrebbero in un Secret k8s quando si deciderà
+di attivarlo.
 
 ## 3. Oracolo: widget ancorato in fondo pagina (dal backlog dettato il 2026-09-29)
 
