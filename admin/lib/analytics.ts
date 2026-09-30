@@ -186,7 +186,7 @@ export const scriviImpostazioni = (t: string, contesto_ai: string) =>
 
 export interface StatoRapporto {
   smtp_configurato: boolean;
-  opzioni: { ai: boolean };
+  opzioni: { ai: boolean; avvisi: boolean };
   prossima_settimana: { da: string; a: string };
   destinatari: { id: number; email: string; attivo: boolean }[];
   invii: {
@@ -200,8 +200,8 @@ export const aggiungiDestinatario = (t: string, email: string) =>
   chiamata<{ email: string }>(t, "/admin/analytics/rapporto/destinatari", { method: "POST", body: JSON.stringify({ email }) });
 export const togliDestinatario = (t: string, id: number) =>
   chiamata<void>(t, `/admin/analytics/rapporto/destinatari/${id}`, { method: "DELETE" });
-export const opzioniRapporto = (t: string, ai: boolean) =>
-  chiamata<{ ai: boolean }>(t, "/admin/analytics/rapporto/opzioni", { method: "PUT", body: JSON.stringify({ ai }) });
+export const opzioniRapporto = (t: string, o: { ai: boolean; avvisi: boolean }) =>
+  chiamata<{ ai: boolean; avvisi: boolean }>(t, "/admin/analytics/rapporto/opzioni", { method: "PUT", body: JSON.stringify(o) });
 export const inviaRapporto = (t: string) =>
   chiamata<{ riuscito: boolean; dettaglio: string }>(t, "/admin/analytics/rapporto/invia", { method: "POST" });
 
@@ -235,3 +235,60 @@ export const togliRisultato = (t: string, id: string) =>
   chiamata<void>(t, `/admin/analytics/studi/risultati/${id}`, { method: "DELETE" });
 export const scaricaNotebook = (t: string, collezione: string, giorni: number) =>
   scaricaFile(t, `/admin/analytics/studi/notebook.ipynb?collezione=${collezione}&giorni=${giorni}`, {}, `tarots-${collezione}.ipynb`);
+
+/* ---- annotazioni, obiettivi, avvisi, tempo reale ---- */
+
+export type TipoAnnotazione = "campagna" | "rilascio" | "contenuto" | "prezzo" | "esterno" | "altro";
+
+export interface Annotazione {
+  id: number;
+  giorno: string;
+  fine: string | null;
+  tipo: TipoAnnotazione;
+  titolo: string;
+  nota: string | null;
+}
+
+export const elencaAnnotazioni = (t: string, da?: string, a?: string) =>
+  chiamata<Annotazione[]>(t, `/admin/analytics/annotazioni${da && a ? `?da=${da}&a=${a}` : ""}`);
+export const creaAnnotazione = (t: string, n: Omit<Annotazione, "id">) =>
+  chiamata<Annotazione>(t, "/admin/analytics/annotazioni", { method: "POST", body: JSON.stringify(n) });
+export const togliAnnotazione = (t: string, id: number) =>
+  chiamata<void>(t, `/admin/analytics/annotazioni/${id}`, { method: "DELETE" });
+
+export interface RisultatoObiettivo {
+  id: number;
+  nome: string;
+  tipo: "evento" | "pagina";
+  valore: string;
+  proprieta: Record<string, string>;
+  completamenti: number;
+  sessioni: number;
+  utenti: number;
+  tasso: number | null;
+  sessioni_totali: number;
+  sessioni_prima: number | null;
+  tasso_prima: number | null;
+}
+
+export const risultatiObiettivi = (t: string, giorni: number) =>
+  chiamata<{ da: string; a: string; obiettivi: RisultatoObiettivo[] }>(t, `/admin/analytics/obiettivi?giorni=${giorni}`);
+export const creaObiettivo = (t: string, o: { nome: string; tipo: "evento" | "pagina"; valore: string; proprieta: Record<string, string> }) =>
+  chiamata<{ nome: string }>(t, "/admin/analytics/obiettivi", { method: "POST", body: JSON.stringify(o) });
+export const togliObiettivo = (t: string, id: number) =>
+  chiamata<void>(t, `/admin/analytics/obiettivi/${id}`, { method: "DELETE" });
+
+export const controllaAvvisi = (t: string) =>
+  chiamata<{ giorno: string; avvisi: { metrica: string; tipo: string; testo: string }[] }>(t, "/admin/analytics/avvisi");
+
+export interface TempoReale {
+  minuti: number;
+  sessioni_attive: number;
+  pagine: { valore: string; sessioni: number }[];
+  canali: { valore: string; sessioni: number }[];
+  paesi: { valore: string; sessioni: number }[];
+  dispositivi: { valore: string; sessioni: number }[];
+  pagine_per_minuto: { minuto: string; pagine: number }[];
+}
+
+export const tempoReale = (t: string) => chiamata<TempoReale>(t, "/admin/analytics/tempo-reale");

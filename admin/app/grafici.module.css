@@ -303,3 +303,15 @@
     grid-column: 1;
   }
 }
+
+/* Le annotazioni del calendario: tratteggio sottile e un rombo nell'inchiostro tenue, non nel colore
+ * della serie (non sono dati). */
+.segnoLinea {
+  stroke: var(--inchiostro-tenue);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.segno {
+  fill: var(--inchiostro-tenue);
+}

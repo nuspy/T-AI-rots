@@ -21,7 +21,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import DBAPIError
 
-from ...analytics import ai, catalogo, imbuti, rapporto, viste
+from ...analytics import ai, annotazioni, avvisi, catalogo, imbuti, obiettivi, rapporto, viste
 from ...auth.dependencies import CurrentUser, DbSession, require_role
 from ...domain.analytics_models import TABELLE
 
@@ -256,6 +256,7 @@ async def togli_destinatario(destinatario_id: int, session: DbSession) -> Respon
 
 class OpzioniRapporto(BaseModel):
     ai: bool = False
+    avvisi: bool = True
 
 
 @router.put("/rapporto/opzioni")
@@ -343,6 +344,93 @@ async def scarica_notebook(
                            titolo=f"TAROTS chat — {etichetta}", giorni=giorni)
     return Response(content=testo.encode("utf-8"), media_type="application/x-ipynb+json",
                     headers={"Content-Disposition": f'attachment; filename="tarots-{collezione}.ipynb"'})
+
+
+# ---- annotazioni, obiettivi, avvisi, tempo reale ------------------------------------------------
+
+TIPI_ANNOTAZIONE = ("campagna", "rilascio", "contenuto", "prezzo", "esterno", "altro")
+
+
+class NuovaAnnotazione(BaseModel):
+    giorno: date
+    fine: Optional[date] = None
+    tipo: Literal["campagna", "rilascio", "contenuto", "prezzo", "esterno", "altro"] = "altro"
+    titolo: str = Field(min_length=1, max_length=200)
+    nota: Optional[str] = Field(default=None, max_length=1000)
+
+
+def _annotazione_json(x) -> Dict[str, Any]:
+    return {"id": x["id"], "giorno": x["giorno"].isoformat(), "fine": x["fine"].isoformat() if x["fine"] else None,
+            "tipo": x["tipo"], "titolo": x["titolo"], "nota": x["nota"]}
+
+
+@router.get("/annotazioni")
+async def elenco_annotazioni(session: DbSession, da: Optional[date] = None, a: Optional[date] = None) -> List[Dict[str, Any]]:
+    return [_annotazione_json(x) for x in await annotazioni.nel_periodo(session, da, a)]
+
+
+@router.post("/annotazioni", status_code=201)
+async def crea_annotazione(n: NuovaAnnotazione, user: CurrentUser, session: DbSession) -> Dict[str, Any]:
+    if n.fine is not None and n.fine < n.giorno:
+        raise HTTPException(status_code=422, detail="La fine viene prima dell'inizio")
+    t = TABELLE.annotazioni
+    riga = (await session.execute(
+        pg_insert(t).values(**n.model_dump(), creato_da=user.id).returning(*t.c)
+    )).mappings().one()
+    await session.commit()
+    return _annotazione_json(riga)
+
+
+@router.delete("/annotazioni/{annotazione_id}", status_code=204)
+async def togli_annotazione(annotazione_id: int, session: DbSession) -> Response:
+    await session.execute(delete(TABELLE.annotazioni).where(TABELLE.annotazioni.c.id == annotazione_id))
+    await session.commit()
+    return Response(status_code=204)
+
+
+class NuovoObiettivo(BaseModel):
+    nome: str = Field(min_length=1, max_length=120)
+    tipo: Literal["evento", "pagina"]
+    valore: str = Field(min_length=1, max_length=500)
+    proprieta: Dict[str, str] = Field(default_factory=dict)
+
+
+@router.get("/obiettivi")
+async def elenco_obiettivi(session: DbSession, giorni: int = Query(default=30, ge=1, le=366)) -> Dict[str, Any]:
+    """Gli obiettivi con i risultati del periodo e del periodo precedente."""
+    return await obiettivi.risultati(session, giorni)
+
+
+@router.post("/obiettivi", status_code=201)
+async def crea_obiettivo(n: NuovoObiettivo, session: DbSession) -> Dict[str, Any]:
+    if n.tipo == "pagina" and not all(p.strip().startswith("/") for p in n.valore.split(",")):
+        raise HTTPException(status_code=422, detail="Una pagina è un percorso che comincia con / (più d'uno separati da virgola)")
+    if n.tipo == "evento" and not n.valore.replace("_", "").isalnum():
+        raise HTTPException(status_code=422, detail="Il nome di un evento ha solo lettere minuscole, cifre e _")
+    await session.execute(pg_insert(TABELLE.obiettivi).values(**n.model_dump()))
+    await session.commit()
+    return {"nome": n.nome}
+
+
+@router.delete("/obiettivi/{obiettivo_id}", status_code=204)
+async def togli_obiettivo(obiettivo_id: int, session: DbSession) -> Response:
+    await session.execute(delete(TABELLE.obiettivi).where(TABELLE.obiettivi.c.id == obiettivo_id))
+    await session.commit()
+    return Response(status_code=204)
+
+
+@router.get("/avvisi")
+async def controlla_avvisi(session: DbSession) -> Dict[str, Any]:
+    """Cosa direbbe stanotte l'avviso su ieri, senza inviare nulla."""
+    ieri, trovati = await avvisi.controlla(session)
+    return {"giorno": ieri.isoformat(), "avvisi": [{"metrica": a.metrica, "tipo": a.tipo, "testo": a.testo()} for a in trovati]}
+
+
+@router.get("/tempo-reale")
+async def tempo_reale(session: DbSession) -> Dict[str, Any]:
+    from lanterna.tempo_reale import adesso
+
+    return await adesso(session, TABELLE, minuti=5)
 
 
 @router.get("/collezioni/{nome}.xlsx")

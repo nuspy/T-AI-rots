@@ -120,17 +120,28 @@ export interface Punto {
   valore: number;
 }
 
+/** Un segno sul calendario (annotazione): la chiave del punto (il giorno) e cosa è successo. */
+export interface Segno {
+  chiave: string;
+  testo: string;
+}
+
 export function Colonne({
   titolo,
   descrizione,
   punti,
   unita,
+  segni = [],
 }: {
   titolo: string;
   descrizione?: string;
   punti: Punto[];
   unita: string;
+  /** Giorni annotati: una linea tratteggiata e un rombo, il testo nel suggerimento e in tabella. */
+  segni?: Segno[];
 }) {
+  const perChiave = new Map<string, string[]>();
+  for (const s of segni) perChiave.set(s.chiave, [...(perChiave.get(s.chiave) ?? []), s.testo]);
   const [contenitore, larghezza] = useLarghezza<HTMLDivElement>();
   const [scelto, setScelto] = useState<number | null>(null);
   const [tabella, setTabella] = useState(false);
@@ -160,6 +171,7 @@ export function Colonne({
         <div>
           <div className={stili.titolo}>{titolo}</div>
           {descrizione && <div className={stili.descrizione}>{descrizione}</div>}
+          {perChiave.size > 0 && <div className={stili.descrizione}>◆ giorni in calendario (campagne, rilasci…)</div>}
         </div>
         <button className={stili.comandoTabella} onClick={() => setTabella((v) => !v)} aria-pressed={tabella}>
           {tabella ? "Grafico" : "Tabella"}
@@ -170,11 +182,17 @@ export function Colonne({
         <div className={stili.contenitoreTabella}>
           <table className={stili.tabella}>
             <thead>
-              <tr><th>Giorno</th><th className={stili.numero}>{unita}</th></tr>
+              <tr>
+                <th>Giorno</th><th className={stili.numero}>{unita}</th>
+                {perChiave.size > 0 && <th>In calendario</th>}
+              </tr>
             </thead>
             <tbody>
               {punti.map((p) => (
-                <tr key={p.chiave}><td>{p.etichetta}</td><td className={stili.numero}>{numeri.format(p.valore)}</td></tr>
+                <tr key={p.chiave}>
+                  <td>{p.etichetta}</td><td className={stili.numero}>{numeri.format(p.valore)}</td>
+                  {perChiave.size > 0 && <td>{(perChiave.get(p.chiave) ?? []).join("; ")}</td>}
+                </tr>
               ))}
             </tbody>
           </table>
@@ -216,8 +234,15 @@ export function Colonne({
                 // Estremità arrotondata in cima, squadrata sulla base.
                 const percorso = h <= 0 ? "" : `M${x0},${base} V${cimaColonna + raggio} Q${x0},${cimaColonna} ${x0 + raggio},${cimaColonna} H${x0 + spessore - raggio} Q${x0 + spessore},${cimaColonna} ${x0 + spessore},${cimaColonna + raggio} V${base} Z`;
                 const etichettata = p.valore > 0 && (i === indiceMassimo || i === ultimo);
+                const segnato = perChiave.has(p.chiave);
                 return (
                   <g key={p.chiave}>
+                    {segnato && (
+                      <>
+                        <line x1={centro} x2={centro} y1={margine.sopra} y2={base} className={stili.segnoLinea} />
+                        <path d={`M${centro},${margine.sopra - 7} l5,5 l-5,5 l-5,-5 Z`} className={stili.segno} />
+                      </>
+                    )}
                     {percorso && (
                       <path d={percorso} className={scelto === i ? stili.colonnaAccesa : stili.colonna} />
                     )}
@@ -265,6 +290,7 @@ export function Colonne({
             >
               <strong>{numeri.format(corrente.valore)}</strong>
               <span>{unita} · {corrente.etichetta}</span>
+              {perChiave.has(corrente.chiave) && <span>◆ {(perChiave.get(corrente.chiave) ?? []).join("; ")}</span>}
             </div>
           )}
         </div>

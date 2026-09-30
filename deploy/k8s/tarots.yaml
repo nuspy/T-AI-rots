@@ -446,11 +446,19 @@ spec:
                 - {name: TAROT_AUTH_DISABLED, value: "false"}
                 - {name: TAROT_BILLING_PROVIDER, value: disattivato}
                 - {name: TAROT_TRACING_ENABLED, value: "false"}
+                - {name: TAROT_WEB_PUBLIC_URL, value: "https://tarots.chat"}
                 # Richiesti dal controllo di produzione delle impostazioni, anche se qui non servono.
                 - name: TAROT_CONDIVISIONE_SALE
                   valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale}}
                 - name: TAROT_LLM_PROVIDER_KEY
                   valueFrom: {secretKeyRef: {name: tarots-secrets, key: llm-provider-key}}
+                # Gli avvisi automatici (email quando ieri esce dal normale).
+                - {name: TAROT_SMTP_HOST, value: mail.tadamoo.com}
+                - {name: TAROT_SMTP_PORTA, value: "465"}
+                - {name: TAROT_SMTP_UTENTE, value: "noreply@tarots.chat"}
+                - {name: TAROT_SMTP_MITTENTE, value: "noreply@tarots.chat"}
+                - name: TAROT_SMTP_PASSWORD
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: smtp-password}}
               resources:
                 requests: {cpu: 50m, memory: 128Mi}
                 limits: {memory: 512Mi}

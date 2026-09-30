@@ -1,12 +1,14 @@
 "use client";
 
-/* Impostazioni degli analytics (v8): il contesto che l'interpretazione AI riceve a ogni analisi.
- * Più è concreto (obiettivi, campagne in corso, cambi recenti al sito), più le analisi sono utili. */
+/* Impostazioni degli analytics (v8): il contesto che l'interpretazione AI riceve a ogni analisi, il
+ * calendario delle annotazioni e gli obiettivi. Il contesto: più è concreto (obiettivi, campagne in corso,
+ * cambi recenti al sito), più le analisi sono utili. */
 
 import { useState } from "react";
 import { leggiImpostazioni, scriviImpostazioni } from "@/lib/analytics";
 import { useAzione, useDati } from "@/lib/usa";
 import comuni from "../../comuni.module.css";
+import { Calendario, Obiettivi } from "./calendario-obiettivi";
 
 export default function ImpostazioniAnalytics() {
   const impostazioni = useDati(leggiImpostazioni);
@@ -48,6 +50,8 @@ export default function ImpostazioniAnalytics() {
           {salvato && <span role="status">Salvato.</span>}
         </div>
       </section>
+      <Calendario />
+      <Obiettivi />
     </>
   );
 }

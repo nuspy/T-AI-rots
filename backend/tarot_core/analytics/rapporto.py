@@ -26,7 +26,7 @@ from sqlalchemy.dialects.postgresql import insert
 
 from ..domain.analytics_models import TABELLE
 from ..settings import get_settings
-from . import catalogo, imbuti, viste
+from . import annotazioni, catalogo, imbuti, obiettivi, viste
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ def config_smtp() -> posta.ConfigSmtp:
 async def opzioni(session) -> Dict[str, Any]:
     t = TABELLE.impostazioni
     valore = (await session.execute(select(t.c.valore).where(t.c.chiave == CHIAVE_OPZIONI))).scalar()
-    return {"ai": False, **(valore or {})}
+    return {"ai": False, "avvisi": True, **(valore or {})}
 
 
 async def scrivi_opzioni(session, valori: Dict[str, Any]) -> None:
@@ -133,8 +133,20 @@ async def componi_rapporto(session, da: date, a: date, *, con_ai: bool = False, 
         posta.tabella_html("Pagine più viste", ["Pagina", "Viste"], pagine),
         posta.tabella_html(f"Imbuto: {etichetta_imbuto}", ["Passo", "Visite", "Dal primo"], righe_imbuto),
     ]
+    risultati_obiettivi = (await obiettivi.nel_periodo(session, da, a))["obiettivi"]
+    if risultati_obiettivi:
+        blocchi.insert(1, posta.tabella_html(
+            "Obiettivi", ["Obiettivo", "Sessioni", "Quota", "Settimana prima"],
+            [[o["nome"], str(o["sessioni"]), scrivi(o["tasso"], "percento") if o["tasso"] is not None else "—",
+              str(o["sessioni_prima"]) if o["sessioni_prima"] is not None else "—"] for o in risultati_obiettivi],
+        ))
+    calendario = await annotazioni.nel_periodo(session, da, a)
+    if calendario:
+        voci = "".join(f"<li>{html.escape(annotazioni.descrivi(x))}</li>" for x in calendario)
+        blocchi.insert(1, f'<h2 style="font-size:16px;margin:24px 0 8px">In calendario</h2><ul>{voci}</ul>')
     testo = [f"TAROTS chat — settimana dal {da.isoformat()} al {a.isoformat()}", ""]
     testo += [f"{r[0]}: {r[1]} (prima {r[2]}, {r[3]})" for r in kpi]
+    testo += [f"In calendario: {annotazioni.descrivi(x)}" for x in calendario]
 
     sintesi_ai = None
     if con_ai and provider is not None:

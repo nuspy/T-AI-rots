@@ -11,8 +11,9 @@ import comuni from "../comuni.module.css";
 import { Barre, Colonne, Tessera } from "../grafici";
 import grafici from "../grafici.module.css";
 import stili from "../statistiche.module.css";
-import { FiltriPeriodo, barreDa, etichettaPeriodo, formatta, serie, useApprofondisci, usePeriodo, useRisultato } from "./comuni";
+import { FiltriPeriodo, barreDa, etichettaPeriodo, formatta, serie, useApprofondisci, usePeriodo, useRisultato, useSegni } from "./comuni";
 import { BottoniEsporta } from "./esporta";
+import { RiquadroObiettivi } from "./obiettivi";
 import { PannelloAI } from "./pannello-ai";
 
 const MISURE = ["sessioni", "visitatori", "pagine", "tasso_coinvolgimento", "tempo_medio", "utenti"];
@@ -20,6 +21,7 @@ const MISURE_RITORNI = ["sessioni_di_ritorno", "giorni_tra_visite", "sessioni_es
 
 export default function Traffico() {
   const { giorni, da, a, imposta } = usePeriodo();
+  const segni = useSegni(da, a);
   const approfondisci = useApprofondisci(giorni);
   const base = { da, a };
 
@@ -95,7 +97,7 @@ export default function Traffico() {
               nota="media, per chi torna" />
           </div>
 
-          <Colonne
+          <Colonne segni={segni}
             titolo="Sessioni al giorno"
             descrizione={`${etichettaPeriodo(giorni)}, giorni italiani, giorni senza visite compresi.`}
             unita="sessioni"
@@ -127,6 +129,7 @@ export default function Traffico() {
           </div>
         </div>
       )}
+      <RiquadroObiettivi giorni={giorni} />
       <BottoniEsporta collezione="traffico" giorni={giorni} />
       <PannelloAI sezione="traffico" titolo="Traffico" giorni={giorni} />
     </>

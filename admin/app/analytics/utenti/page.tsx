@@ -11,7 +11,7 @@ import comuni from "../../comuni.module.css";
 import { Barre, Colonne, Tessera } from "../../grafici";
 import grafici from "../../grafici.module.css";
 import stili from "../../statistiche.module.css";
-import { FiltriPeriodo, barreDa, etichettaPeriodo, formatta, serie, useApprofondisci, usePeriodo, useRisultato } from "../comuni";
+import { FiltriPeriodo, barreDa, etichettaPeriodo, formatta, serie, useApprofondisci, usePeriodo, useRisultato, useSegni } from "../comuni";
 import { BottoniEsporta } from "../esporta";
 import { PannelloAI } from "../pannello-ai";
 
@@ -19,6 +19,7 @@ const FASCE = ["<18", "18-24", "25-34", "35-44", "45-54", "55-64", "65+", "(n.d.
 
 export default function Utenti() {
   const { giorni, da, a, imposta } = usePeriodo();
+  const segni = useSegni(da, a);
   const approfondisci = useApprofondisci(giorni);
   const base = { da, a, sorgente: "utenti" };
 
@@ -80,7 +81,7 @@ export default function Utenti() {
               formato={(n) => formatta(n, "decimale")} nota="media, solo per chi ha accettato i cookie" />
           </div>
 
-          <Colonne titolo="Iscritti al giorno" descrizione={`${etichettaPeriodo(giorni)}, giorni italiani.`}
+          <Colonne segni={segni} titolo="Iscritti al giorno" descrizione={`${etichettaPeriodo(giorni)}, giorni italiani.`}
             unita="iscritti" punti={serie(andamento.dati?.righe, "utenti", da, a)} />
 
           <div className={stili.coppie}>

@@ -27,7 +27,7 @@ from sqlalchemy.dialects.postgresql import insert
 from ..domain.analytics_models import TABELLE
 from ..llm.base import GenerationError
 from ..tarot.llm import genera_json, richiesta
-from . import catalogo, imbuti, viste
+from . import annotazioni, catalogo, imbuti, obiettivi, viste
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +85,14 @@ async def _da_coorti(session, fatti: Fatti, tipo: str) -> None:
 
 
 async def raccogli_fatti(session, sezione: str, da: date, a: date, vista: Optional[Interrogazione] = None) -> Fatti:
+    if sezione not in SEZIONI:
+        raise ValueError(f"sezione sconosciuta: {sezione}")
     fatti = Fatti()
+    # Prima il calendario e gli obiettivi: pochi fatti, il contesto più utile, e non devono cadere
+    # sotto il tetto dei fatti quando le tabelle sono tante.
+    await annotazioni.come_fatti(session, fatti, da, a)
+    if sezione in ("traffico", "ricavi", "panoramica"):
+        await obiettivi.come_fatti(session, fatti, da, a)
     if sezione == "traffico":
         await _da_collezione(session, fatti, "traffico", da, a)
         await _da_imbuto(session, fatti, "iscrizione", da, a)
@@ -115,9 +122,7 @@ async def raccogli_fatti(session, sezione: str, da: date, a: date, vista: Option
         q = _con_confronto(vista.model_copy(update={"da": da, "a": a}))
         r = await esegui(session, catalogo.CATALOGO, q, fuso=FUSO, k_minimo=K_MINIMO)
         da_risultato(fatti, catalogo.CATALOGO[q.sorgente].etichetta, r, righe_max=12)
-        return fatti  # una vista dell'Esploratore parla solo di sé
-    else:
-        raise ValueError(f"sezione sconosciuta: {sezione}")
+        return fatti  # una vista dell'Esploratore parla solo di sé (più il calendario)
     await _da_studi(session, fatti)
     return fatti
 

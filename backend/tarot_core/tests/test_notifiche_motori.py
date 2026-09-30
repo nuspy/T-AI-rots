@@ -92,8 +92,11 @@ async def test_si_annunciano_solo_gli_articoli_pubblici_e_indicizzabili(admin, c
 async def test_senza_novita_dall_ultimo_giro_non_parte_nulla(admin, session, configura, indexnow_finto):
     configura(indexnow_chiave="abc123")
     await _articolo(admin, "Già annunciato")
-    # Un giro precedente appena fatto: la finestra parte da lì, e l'articolo è più vecchio.
-    session.add(NotificaMotori(finestra_da=utcnow() - timedelta(days=1), url=[], esiti={}, created_at=utcnow()))
+    # Un giro precedente appena fatto: la finestra parte da lì, e l'articolo è più vecchio. Un secondo di
+    # margine: le date dell'articolo le scrive in parte il database (`now()`), questa Python, e i due
+    # orologi a pari istante possono differire di qualche millisecondo (il test falliva a intermittenza).
+    session.add(NotificaMotori(finestra_da=utcnow() - timedelta(days=1), url=[], esiti={},
+                               created_at=utcnow() + timedelta(seconds=1)))
     await session.commit()
 
     giro = (await admin.post("/admin/seo/notifiche")).json()

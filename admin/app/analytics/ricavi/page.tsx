@@ -14,7 +14,7 @@ import comuni from "../../comuni.module.css";
 import { Barre, Colonne, Tessera, percento } from "../../grafici";
 import grafici from "../../grafici.module.css";
 import stili from "../../statistiche.module.css";
-import { FiltriPeriodo, barreDa, etichettaPeriodo, formatta, serie, useApprofondisci, usePeriodo, useRisultato } from "../comuni";
+import { FiltriPeriodo, barreDa, etichettaPeriodo, formatta, serie, useApprofondisci, usePeriodo, useRisultato, useSegni } from "../comuni";
 import { BottoniEsporta } from "../esporta";
 import { PannelloAI } from "../pannello-ai";
 
@@ -28,6 +28,7 @@ const TIPI_COORTE: Record<string, string> = {
 
 export default function Ricavi() {
   const { giorni, da, a, imposta } = usePeriodo();
+  const segni = useSegni(da, a);
   const approfondisci = useApprofondisci(giorni);
   const acquisti = useRisultato({ da, a, sorgente: "acquisti", misure: ["ricavi", "acquisti", "clienti", "valore_medio", "sconti"], confronto: "precedente" });
   const ordini = useRisultato({ da, a, sorgente: "ordini", misure: ["ricavi", "ordini", "clienti"], confronto: "precedente" });
@@ -89,7 +90,7 @@ export default function Ricavi() {
               formato={euro} meglio="giu" />
           </div>
 
-          <Colonne titolo="Ricavi al giorno (€)" descrizione={`${etichettaPeriodo(giorni)}, pacchetti, abbonamenti e negozio insieme.`}
+          <Colonne segni={segni} titolo="Ricavi al giorno (€)" descrizione={`${etichettaPeriodo(giorni)}, pacchetti, abbonamenti e negozio insieme.`}
             unita="€" punti={punti} />
 
           <div className={stili.coppie}>

@@ -12,10 +12,10 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
-import { interroga, type Filtro, type Formato, type Interrogazione, type Risultato } from "@/lib/analytics";
+import { elencaAnnotazioni, interroga, type Filtro, type Formato, type Interrogazione, type Risultato } from "@/lib/analytics";
 import { useDati } from "@/lib/usa";
 import comuni from "../comuni.module.css";
-import { compatto, percento, type Punto } from "../grafici";
+import { compatto, percento, type Punto, type Segno } from "../grafici";
 
 export const PERIODI = [7, 30, 90, 365];
 
@@ -155,6 +155,7 @@ export function useApprofondisci(giorni: number) {
 
 const SCHEDE = [
   { href: "/analytics", etichetta: "Traffico" },
+  { href: "/analytics/adesso", etichetta: "Adesso" },
   { href: "/analytics/utenti", etichetta: "Utenti" },
   { href: "/analytics/imbuti", etichetta: "Imbuti" },
   { href: "/analytics/ricavi", etichetta: "Ricavi" },
@@ -197,3 +198,15 @@ export function barreDa(r: Risultato | null | undefined, dimensione: string, mis
   }));
 }
 
+
+/** Le annotazioni del periodo come segni per i grafici giornalieri (un periodo segna ogni suo giorno). */
+export function useSegni(da: string, a: string): Segno[] {
+  const annotazioni = useDati(useCallback((t: string) => elencaAnnotazioni(t, da, a), [da, a]), [da, a]);
+  const segni: Segno[] = [];
+  for (const x of annotazioni.dati ?? []) {
+    const inizio = x.giorno < da ? da : x.giorno;
+    const fine = (x.fine ?? x.giorno) > a ? a : (x.fine ?? x.giorno);
+    for (let g = inizio; g <= fine; g = giorniPrima(g, -1)) segni.push({ chiave: g, testo: x.titolo });
+  }
+  return segni;
+}

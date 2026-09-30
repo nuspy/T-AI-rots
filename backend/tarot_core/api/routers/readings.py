@@ -988,6 +988,11 @@ async def sintesi(
                 raise GenerationError("responso vuoto")
         except Exception as exc:  # noqa: BLE001 - errori del fornitore e di rete
             logger.warning("Sintesi non generata: %s", exc)
+            # Analytics (v8): gli errori del modello alimentano l'avviso notturno.
+            async with fabbrica() as s:
+                await analytics.evento(s, analytics.LETTURA_ERRORE, utente_id=user.id if user else None,
+                                       proprieta={"stesa": stesa["id"], "categoria": categoria})
+                await s.commit()
             yield _sse("errore", {"messaggio": in_lingua(RESPONSO_NON_GENERATO, lang)})
             return
 

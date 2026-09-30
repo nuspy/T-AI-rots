@@ -276,7 +276,9 @@ Console: **Analytics** (Traffico, Utenti, Imbuti, Ricavi, Esploratore, Rapporti,
 - **Paese e città**: il file `/opt/geo/citta.mmdb` è nell'immagine (build con `GEO_MESE`, vedi
   «Aggiornare»); `TAROT_ANALYTICS_GEO` lo indica. Senza file mancano solo paese e città.
 - **Giro notturno** (`tarots-analytics-notte`, 3:30): riepilogo giornaliero anonimo degli ultimi tre
-  giorni (idempotente) e cancellazione di sessioni ed eventi oltre i 25 mesi.
+  giorni (idempotente), cancellazione di sessioni ed eventi oltre i 25 mesi, e **avvisi**: se ieri
+  visite, iscrizioni, letture, acquisti o errori del modello escono dal normale dei 28 giorni prima,
+  un'email ai destinatari del rapporto (si spegne in console → Analytics → Rapporti).
   Prova: `kubectl -n tarots create job --from=cronjob/tarots-analytics-notte prova-analytics`.
 - **Rapporto settimanale** (`tarots-rapporto-settimanale`, lunedì 0:30): email a chi è in elenco in
   console → Analytics → Rapporti, via Stalwart (`mail.tadamoo.com:465`, `noreply@tarots.chat`, la

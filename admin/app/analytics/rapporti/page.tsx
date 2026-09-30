@@ -5,7 +5,7 @@
 
 import { useCallback, useState } from "react";
 import {
-  aggiungiDestinatario, anteprimaRapporto, inviaRapporto, opzioniRapporto, statoRapporto, togliDestinatario,
+  aggiungiDestinatario, anteprimaRapporto, controllaAvvisi, inviaRapporto, opzioniRapporto, statoRapporto, togliDestinatario,
 } from "@/lib/analytics";
 import { quandoCompleto } from "@/lib/formato";
 import { useAzione, useDati } from "@/lib/usa";
@@ -84,12 +84,26 @@ export default function Rapporti() {
           </section>
 
           <section className={comuni.riquadro} aria-labelledby="titolo-opzioni">
-            <h2 id="titolo-opzioni" className={comuni.riquadroTitolo}>Interpretazione AI nel rapporto</h2>
+            <h2 id="titolo-opzioni" className={comuni.riquadroTitolo}>Opzioni</h2>
             <label className={comuni.riga} style={{ alignItems: "center", minHeight: 48 }}>
               <input type="checkbox" checked={s.opzioni.ai} disabled={inCorso} style={{ width: 24, height: 24 }}
-                onChange={(e) => agisci((t) => opzioniRapporto(t, e.target.checked))} />
-              <span>Aggiungi la lettura dei dati del modello (una chiamata a settimana; solo le voci verificate)</span>
+                onChange={(e) => agisci((t) => opzioniRapporto(t, { ...s.opzioni, ai: e.target.checked }))} />
+              <span>Nel rapporto, la lettura dei dati del modello (una chiamata a settimana; solo le voci verificate)</span>
             </label>
+            <label className={comuni.riga} style={{ alignItems: "center", minHeight: 48 }}>
+              <input type="checkbox" checked={s.opzioni.avvisi} disabled={inCorso} style={{ width: 24, height: 24 }}
+                onChange={(e) => agisci((t) => opzioniRapporto(t, { ...s.opzioni, avvisi: e.target.checked }))} />
+              <span>
+                Avvisi automatici: ogni notte, se ieri visite, iscrizioni, letture, acquisti o errori del modello escono dal
+                normale dei 28 giorni prima, un&apos;email agli stessi destinatari
+              </span>
+            </label>
+            <button className={comuni.secondaria} disabled={inCorso} onClick={async () => {
+              const r = await esegui((t) => controllaAvvisi(t));
+              if (r) setEsito(r.avvisi.length ? `Ieri (${r.giorno}): ${r.avvisi.map((a) => a.testo).join(" ")}` : `Ieri (${r.giorno}) tutto nel normale.`);
+            }}>
+              Controlla ieri adesso (senza inviare)
+            </button>
           </section>
 
           <section className={comuni.riquadro} aria-labelledby="titolo-anteprima">
@@ -119,7 +133,7 @@ export default function Rapporti() {
                 <tbody>
                   {s.invii.map((i) => (
                     <tr key={i.id}>
-                      <td>{quandoCompleto(i.creato_il)}{i.manuale ? " · a mano" : ""}</td>
+                      <td>{quandoCompleto(i.creato_il)}{i.manuale ? " · a mano" : ""}{i.tipo === "avviso" ? " · avviso" : ""}</td>
                       <td>{i.da} – {i.a}</td>
                       <td><span className={`${comuni.stato} ${i.riuscito ? comuni.positivo : comuni.negativo}`}>{i.riuscito ? "inviato" : "non inviato"}</span></td>
                       <td style={{ overflowWrap: "anywhere" }}>{i.dettaglio}</td>

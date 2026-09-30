@@ -155,8 +155,14 @@ raccolta in produzione prima del resto). Fasi:
   fra le visite (dove riconoscibili), paese degli iscritti e «dopo quante visite si iscrivono»,
   revoca del consenso cookie dalla pagina Privacy, risultati di Colab come fatti per l'AI, eventi
   della chat proattiva, sezione Analytics nel LEGGIMI, confronto coi prodotti commerciali
-  (`docs/ricerca-analytics.md`, punto 8). Proposte facoltative da decidere: annotazioni sui grafici,
-  avvisi automatici, parole chiave dalla Search Console, obiettivi configurabili, tempo reale.
+  (`docs/ricerca-analytics.md`, punto 8).
+- **Extra scelti dall'operatore (2026-09-30) — fatti.** Calendario delle annotazioni (◆ sui grafici,
+  nel rapporto e fra i primi fatti dell'AI); avvisi automatici notturni (visite, iscrizioni, letture
+  aperte e completate, acquisti, errori del modello nel responso — nuovo evento `lettura_errore` —
+  confrontati con la mediana dei 28 giorni prima, email agli stessi destinatari del rapporto,
+  interruttore in Rapporti); obiettivi configurabili (pagina o evento con proprietà; nel Traffico, nel
+  rapporto e nell'AI); pagina «Adesso» in tempo reale. Schema lanterna v3 (migrazione `9d4b2f7e1a55`).
+  Resta fuori: parole chiave dalla Search Console (serve il service account).
 
 ## 4. Statistiche di ingresso (traffico)
 

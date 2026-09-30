@@ -4,7 +4,8 @@
 
 Lo lancia il CronJob `tarots-analytics-notte` (vedi `deploy/k8s/tarots.yaml`). Riepiloga gli ultimi
 tre giorni conclusi (idempotente: un giro saltato si recupera la notte dopo), poi cancella sessioni ed
-eventi oltre la conservazione e i sali giornalieri scaduti.
+eventi oltre la conservazione e i sali giornalieri scaduti. Infine controlla se ieri qualche metrica
+vitale è uscita dal normale e, se sì, avvisa per email (`analytics/avvisi.py`).
 """
 from __future__ import annotations
 
@@ -15,6 +16,7 @@ import sys
 
 from lanterna.giornaliero import notte
 
+from ..analytics.avvisi import controlla_e_avvisa
 from ..analytics.configurazione import configurazione
 from ..domain.analytics_models import TABELLE
 from ..domain.session import dispose_engine, get_session_factory
@@ -24,8 +26,12 @@ async def _giro(giorni: int) -> None:
     try:
         async with get_session_factory()() as sessione:
             resoconto = await notte(sessione, TABELLE, configurazione(), giorni=giorni)
+            # Dopo il riepilogo: ieri è uscito dal normale? (email solo se sì e se gli avvisi sono accesi)
+            avviso = await controlla_e_avvisa(sessione)
         for chiave, valore in resoconto.items():
             print(f"{chiave}: {valore}")
+        print(f"avvisi per {avviso['giorno']}: {avviso['avvisi'] or 'nessuno'}"
+              + (f" — {avviso.get('dettaglio')}" if avviso.get("dettaglio") else ""))
     finally:
         await dispose_engine()
 
