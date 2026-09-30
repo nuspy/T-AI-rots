@@ -17,7 +17,7 @@ import type { Riferimenti } from "../componenti/blog-markdown";
 import { VistaArticolo } from "./vista-articolo";
 
 async function leggiArticolo(slug: string) {
-  return leggiDalServer<ArticoloBlog>(`/blog/posts/${encodeURIComponent(slug)}`, { secondi: 10 });
+  return leggiDalServer<ArticoloBlog>(`/blog/posts/${encodeURIComponent(slug)}`, { secondi: 10, obbligatorio: true });
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

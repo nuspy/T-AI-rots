@@ -19,7 +19,7 @@ import { JsonLd } from "../../componenti/json-ld";
 import { SchedaStesa } from "./scheda";
 
 async function leggiStesa(id: string, lingua: string) {
-  return leggiDalServer<Stesa>(`/spreads/${encodeURIComponent(id)}?lang=${lingua}`);
+  return leggiDalServer<Stesa>(`/spreads/${encodeURIComponent(id)}?lang=${lingua}`, { obbligatorio: true });
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {

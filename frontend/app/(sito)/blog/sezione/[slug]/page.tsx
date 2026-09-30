@@ -22,7 +22,7 @@ type Parametri = { params: Promise<{ slug: string }>; searchParams: Promise<{ pa
 const numeroPagina = (v?: string) => Math.max(1, Math.min(1000, parseInt(v ?? "1", 10) || 1));
 
 const leggiSezione = (slug: string, lingua: string) =>
-  leggiDalServer<DettaglioSezione>(`/blog/sections/${encodeURIComponent(slug)}?lang=${lingua}`);
+  leggiDalServer<DettaglioSezione>(`/blog/sections/${encodeURIComponent(slug)}?lang=${lingua}`, { obbligatorio: true });
 
 /* Niente `lang`: gli articoli sono solo in inglese e si vedono in qualunque lingua dell'interfaccia (v8). */
 const leggiArticoli = (slug: string, pagina: number) =>

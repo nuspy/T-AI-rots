@@ -19,7 +19,7 @@ import { JsonLd } from "../../componenti/json-ld";
 import { SchedaCarta } from "./scheda";
 
 async function leggiCarta(id: string, lingua: string) {
-  return leggiDalServer<Carta>(`/cards/${encodeURIComponent(id)}?lang=${lingua}`);
+  return leggiDalServer<Carta>(`/cards/${encodeURIComponent(id)}?lang=${lingua}`, { obbligatorio: true });
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {

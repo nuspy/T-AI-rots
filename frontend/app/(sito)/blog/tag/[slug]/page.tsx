@@ -27,7 +27,7 @@ export async function generateMetadata({ params, searchParams }: Parametri): Pro
   const { slug } = await params;
   const pagina = numeroPagina((await searchParams).pagina);
   const lingua = await linguaPagina();
-  const tutte = (await leggiDalServer<EtichettaConConteggio[]>("/blog/tags")) ?? [];
+  const tutte = (await leggiDalServer<EtichettaConConteggio[]>("/blog/tags", { obbligatorio: true })) ?? [];
   const e = tutte.find((x) => x.slug === slug);
   if (!e) return { title: lingua === "it" ? "Etichetta non trovata" : "Tag not found", robots: { index: false, follow: false } };
   const elenco = await leggiArticoli(slug, pagina);
@@ -54,7 +54,7 @@ export default async function PaginaEtichetta({ params, searchParams }: Parametr
   const pagina = numeroPagina((await searchParams).pagina);
   const lingua = await linguaPagina();
   const [etichette, albero, elenco] = await Promise.all([
-    leggiDalServer<EtichettaConConteggio[]>("/blog/tags"),
+    leggiDalServer<EtichettaConConteggio[]>("/blog/tags", { obbligatorio: true }),
     leggiDalServer<NodoSezione[]>("/blog/sections"),
     leggiArticoli(slug, pagina),
   ]);
