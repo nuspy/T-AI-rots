@@ -14,7 +14,7 @@ import { f } from "@/v2/i18n";
 import { ImmagineCarta } from "@/v2/componenti/carta";
 import { Dichiarazione } from "@/v2/componenti/dichiarazione";
 import LinkV2 from "@/v2/componenti/link";
-import { articoli, useMazzi } from "@/v2/lib/dati";
+import { P, articoli, useMazzi } from "@/v2/lib/dati";
 import { useLingua } from "@/v2/lib/lingua";
 import { R, indirizzoV2 } from "@/v2/lib/percorsi";
 import { useCarica } from "@/v2/lib/usa";
@@ -26,9 +26,9 @@ export function Home() {
   const traccia = useTraccia();
   const [domanda, setDomanda] = useState("");
   const [avviso, setAvviso] = useState(false);
-  const omaggi = useCarica(impostazioniPubbliche, [], { pubblico: true });
+  const omaggi = useCarica(impostazioniPubbliche, [], { pubblico: true, iniziale: P.impostazioni() });
   const mazzi = useMazzi();
-  const diario = useCarica(() => articoli(lingua, { per_pagina: 3 }), [lingua], { pubblico: true });
+  const diario = useCarica(() => articoli(lingua, { per_pagina: 3 }), [lingua], { pubblico: true, iniziale: P.articoli(lingua, { per_pagina: 3 }) });
 
   /* Chi arriva da un invito porta il codice nell'indirizzo: si ricorda fino alla registrazione. */
   useEffect(() => {

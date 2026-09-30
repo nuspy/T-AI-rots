@@ -8,11 +8,11 @@
 import type { Metadata } from "next";
 import { linguaPagina } from "@/lib/lingua-server";
 import { NOME_MARCHIO } from "@/lib/marchio";
-import { Cosmo } from "./(sito)/componenti/cosmo";
-import { classiFont } from "./(sito)/fonts";
-import NonTrovata from "./(sito)/not-found";
-import { Providers } from "./(sito)/providers";
-import "./(sito)/globals.css";
+import { Cosmo } from "./(old)/old/componenti/cosmo";
+import { classiFont } from "./(old)/old/fonts";
+import NonTrovata from "./(old)/old/not-found";
+import { Providers } from "./(old)/old/providers";
+import "./(old)/old/globals.css";
 
 export const metadata: Metadata = {
   title: `404 | ${NOME_MARCHIO}`,

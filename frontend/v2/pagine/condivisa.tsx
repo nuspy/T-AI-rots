@@ -9,7 +9,7 @@
 
 import { ProviderMazzoAttivo } from "@/lib/mazzo-attivo";
 import { useEffect } from "react";
-import { Markdown } from "@/app/(sito)/componenti/markdown";
+import { Markdown } from "@/lib/markdown";
 import { impostazioniPubbliche, leggiCondivisa, registraVisita } from "@/lib/api";
 import { CREDITI_ISCRIZIONE, idVisitatore, ricordaOrigine } from "@/lib/condivisione";
 import { comeLingua } from "@/lib/i18n/lingue";
@@ -20,6 +20,7 @@ import { f } from "@/v2/i18n";
 import LinkV2 from "@/v2/componenti/link";
 import { Tavolo, type Posata } from "@/v2/lettura/tavolo";
 import stili from "@/v2/lettura/lettura.module.css";
+import { P } from "@/v2/lib/dati";
 import { LinguaNomi, useLingua } from "@/v2/lib/lingua";
 import { R } from "@/v2/lib/percorsi";
 import { useCarica } from "@/v2/lib/usa";
@@ -40,8 +41,8 @@ export function Condivisa({ token }: { token: string }) {
   const { t, lingua } = useLingua();
   const c = t.condivisa;
   const sessione = useSessione();
-  const l = useCarica(() => leggiCondivisa(token), [token], { pubblico: true });
-  const omaggi = useCarica(impostazioniPubbliche, [], { pubblico: true });
+  const l = useCarica(() => leggiCondivisa(token), [token], { pubblico: true, iniziale: P.condivisa(token) });
+  const omaggi = useCarica(impostazioniPubbliche, [], { pubblico: true, iniziale: P.impostazioni() });
   const esiste = !!l.dati;
 
   useEffect(() => {

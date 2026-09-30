@@ -1,73 +1,47 @@
-/* Gli indirizzi della v2, in un posto solo. Tutti sotto `/v2`: nessun collegamento della v2 porta al sito (v1)
- * quando la v2 ha la pagina corrispondente (specifica v2, §2). In italiano gli stessi indirizzi portano il
- * prefisso `/it` (`/it/v2/read`): lo aggiunge `LinkV2` quando la pagina è stata aperta così. */
+/* Gli indirizzi della v2, in un posto solo. Dalla v8.5 la v2 è il sito: stanno alla radice, coi nomi delle cartelle
+ * (`/cards`, `/daily-card`, `/blog/sezione/…`). Quello che si vede cambia con la lingua (`/it/carte`,
+ * `/card-of-the-day`): la traduzione la fa `lib/indirizzi.ts`, e qui la usano `LinkV2` e le navigazioni. */
 
-export const V2 = "/v2";
+import { interno, normalizza, pubblico } from "@/lib/indirizzi";
 
 export const R = {
-  home: V2,
-  leggi: `${V2}/read`,
-  fisica: `${V2}/physical-reading`,
-  storia: `${V2}/my-story`,
-  lettura: (id: string) => `${V2}/my-story/${encodeURIComponent(id)}`,
-  condivisa: (token: string) => `${V2}/shared/${encodeURIComponent(token)}`,
-  giorno: `${V2}/daily-card`,
-  carte: `${V2}/cards`,
-  carta: (id: string) => `${V2}/cards/${encodeURIComponent(id)}`,
-  stese: `${V2}/spreads`,
-  stesa: (id: string) => `${V2}/spreads/${encodeURIComponent(id)}`,
-  mazzi: `${V2}/decks`,
-  mazzo: (slug: string) => `${V2}/decks/${encodeURIComponent(slug)}`,
-  voto: `${V2}/vote`,
-  negozio: `${V2}/shop`,
-  carrello: `${V2}/cart`,
-  prezzi: `${V2}/pricing`,
-  esplora: `${V2}/explore`,
-  blog: `${V2}/blog`,
-  articolo: (slug: string) => `${V2}/blog/${encodeURIComponent(slug)}`,
-  blogSezione: (slug: string) => `${V2}/blog/section/${encodeURIComponent(slug)}`,
-  blogTag: (slug: string) => `${V2}/blog/tag/${encodeURIComponent(slug)}`,
-  profilo: `${V2}/profile`,
-  privacy: `${V2}/privacy`,
+  home: "/",
+  leggi: "/read",
+  fisica: "/physical-reading",
+  storia: "/my-story",
+  lettura: (id: string) => `/my-story/${encodeURIComponent(id)}`,
+  condivise: "/shared",
+  condivisa: (token: string) => `/shared/${encodeURIComponent(token)}`,
+  giorno: "/daily-card",
+  carte: "/cards",
+  carta: (id: string) => `/cards/${encodeURIComponent(id)}`,
+  stese: "/spreads",
+  stesa: (id: string) => `/spreads/${encodeURIComponent(id)}`,
+  mazzi: "/decks",
+  mazzo: (slug: string) => `/decks/${encodeURIComponent(slug)}`,
+  voto: "/vote",
+  negozio: "/shop",
+  carrello: "/cart",
+  prezzi: "/pricing",
+  esplora: "/explore",
+  blog: "/blog",
+  articolo: (slug: string) => `/blog/${encodeURIComponent(slug)}`,
+  blogSezione: (slug: string) => `/blog/sezione/${encodeURIComponent(slug)}`,
+  blogTag: (slug: string) => `/blog/tag/${encodeURIComponent(slug)}`,
+  profilo: "/profile",
+  privacy: "/privacy",
 } as const;
 
-/** Un indirizzo della v2 con il prefisso italiano, se serve. Gli indirizzi esterni o fuori dalla v2 non
- *  cambiano. */
-export function indirizzoV2(interno: string, prefissoIt: boolean): string {
-  if (!prefissoIt || !(interno === V2 || interno.startsWith(`${V2}/`) || interno.startsWith(`${V2}?`))) return interno;
-  return `/it${interno}`;
+/** Un indirizzo interno della v2 → quello che si vede: in italiano (`/it/carte/…`) se la pagina è stata aperta così,
+ *  altrimenti in inglese (`/card-of-the-day`). Esterni e ancore non cambiano. */
+export function indirizzoV2(indirizzo: string, prefissoIt: boolean): string {
+  return pubblico(prefissoIt ? "it" : "en", indirizzo);
 }
 
-/* Le sezioni del sito (in italiano e in inglese) → le pagine corrispondenti della v2. */
-const DAL_SITO: [RegExp, string][] = [
-  [/^\/(carte|cards)(\/|$)/, `${V2}/cards$2`],
-  [/^\/(stese|spreads)(\/|$)/, `${V2}/spreads$2`],
-  [/^\/blog\/sezione\//, `${V2}/blog/section/`],
-  [/^\/blog\/tag\//, `${V2}/blog/tag/`],
-  [/^\/blog(\/|$)/, `${V2}/blog$1`],
-  [/^\/leggi(\/|$)/, `${V2}/read$1`],
-  [/^\/interpreta(\/|$)/, `${V2}/physical-reading$1`],
-  [/^\/(carta-del-giorno|card-of-the-day)(\/|$)/, `${V2}/daily-card$2`],
-  [/^\/(piano|pricing)(\/|$)/, `${V2}/pricing$2`],
-  [/^\/(mazzo|deck)(\/|$)/, `${V2}/shop$2`],
-  [/^\/vota-mazzo(\/|$)/, `${V2}/vote$1`],
-  [/^\/letture(\/|$)/, `${V2}/my-story$1`],
-  [/^\/profilo(\/|$)/, `${V2}/profile$1`],
-  [/^\/privacy(\/|$)/, `${V2}/privacy$1`],
-  [/^\/s\//, `${V2}/shared/`],
-];
+/** Un indirizzo del sito scritto coi nomi della v1 (in un articolo del blog, per esempio: `/carte/maj-17`, `/leggi`)
+ *  → quello interno della v2. Esterni, ancore e indirizzi già della v2 non cambiano. */
+export const inV2 = (href: string): string => normalizza(href.startsWith("/it/") ? href.slice(3) : href === "/it" ? "/" : href);
 
-/** Un indirizzo interno del sito (scritto in un articolo del blog, per esempio) → quello della v2, perché nessun
- *  collegamento della v2 porti al sito quando la v2 ha la pagina (specifica v2, §2). Esterni e ancore non cambiano;
- *  un indirizzo del sito senza corrispondente resta com'è. */
-export function inV2(href: string): string {
-  if (!href.startsWith("/") || href.startsWith("//") || href === V2 || href.startsWith(`${V2}/`)) return href;
-  const p = href === "/it" ? "/" : href.startsWith("/it/") ? href.slice(3) : href;
-  if (p === "/" || p.startsWith("/?")) return `${V2}${p.slice(1)}`;
-  for (const [da, a] of DAL_SITO) if (da.test(p)) return p.replace(da, a);
-  return href;
-}
-
-/** Il percorso senza il prefisso `/it`: per sapere in che sezione si è. */
-export const senzaPrefisso = (percorso: string) =>
-  percorso === "/it" ? "/" : percorso.startsWith("/it/") ? percorso.slice(3) : percorso;
+/** Il percorso interno di un indirizzo visibile (`/it/carte/la-stella` → `/cards/la-stella`): per sapere in che
+ *  sezione si è, in qualunque lingua. */
+export const senzaPrefisso = (percorso: string) => interno(percorso);

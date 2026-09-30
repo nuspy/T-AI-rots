@@ -17,21 +17,21 @@ import LinkV2 from "@/v2/componenti/link";
 import { useLingua } from "@/v2/lib/lingua";
 import { R, indirizzoV2 } from "@/v2/lib/percorsi";
 import { useAzione, useCarica } from "@/v2/lib/usa";
-import { useConto, usePiani } from "@/v2/lib/dati";
+import { P, useConto, usePiani } from "@/v2/lib/dati";
 
 export function Prezzi() {
   return <Suspense fallback={null}><Contenuto /></Suspense>;
 }
 
 /* Un ritorno accettato solo dentro la v2. */
-const dentroV2 = (r: string | null) => !!r && /^\/(it\/)?v2(\/|\?|$)/.test(r);
+const dentroV2 = (r: string | null) => !!r && r.startsWith("/") && !r.startsWith("//") && !/^\/old(\/|\?|$)/.test(r);
 
 function Contenuto() {
   const { t, locale } = useLingua();
   const k = t.prezzi;
   const sessione = useSessione();
   const piani = usePiani();
-  const omaggi = useCarica(impostazioniPubbliche, [], { pubblico: true });
+  const omaggi = useCarica(impostazioniPubbliche, [], { pubblico: true, iniziale: P.impostazioni() });
   const conto = useConto();
   const movimenti = useCarica(leggiMovimenti);
   const [codice, setCodice] = useState<string | null>(null);

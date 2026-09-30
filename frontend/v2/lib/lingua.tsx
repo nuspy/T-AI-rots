@@ -3,7 +3,7 @@
 /* La lingua della v2: stesse quindici lingue del sito, dizionario suo (`v2/i18n`).
  *
  * Chi decide la lingua, nell'ordine:
- *  1. l'indirizzo, se comincia con `/it/v2`: è italiano (salvo una scelta salvata che non sia né italiano né
+ *  1. l'indirizzo, se comincia con `/it`: è italiano (salvo una scelta salvata che non sia né italiano né
  *     inglese, per esempio l'ungherese — come nel sito);
  *  2. la scelta salvata nel browser (la chiave `lingua`, la stessa del sito: chi l'ha scelta di là la ritrova);
  *  3. la lingua del browser;
@@ -42,7 +42,7 @@ const CHIAVE = "lingua";
 export const conPrefissoIt = (percorso: string) => percorso === "/it" || percorso.startsWith("/it/");
 
 export function ProviderLinguaV2({ children, iniziale = PREDEFINITA }: { children: React.ReactNode; iniziale?: Lingua }) {
-  const percorso = usePathname() ?? "/v2";
+  const percorso = usePathname() ?? "/";
   const prefissoIt = conPrefissoIt(percorso);
   const [salvata, setSalvata] = useState<Lingua | null>(null);
   const [rilevata, setRilevata] = useState<Lingua | null>(null);

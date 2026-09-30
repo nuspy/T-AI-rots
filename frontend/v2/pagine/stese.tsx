@@ -9,7 +9,7 @@ import { f, plurale } from "@/v2/i18n";
 import LinkV2 from "@/v2/componenti/link";
 import { MiniaturaStesa } from "@/v2/lettura/miniatura";
 import { Tavolo } from "@/v2/lettura/tavolo";
-import { linguaContenuti } from "@/v2/lib/dati";
+import { P, linguaContenuti } from "@/v2/lib/dati";
 import { useLingua } from "@/v2/lib/lingua";
 import { R } from "@/v2/lib/percorsi";
 import { useCarica } from "@/v2/lib/usa";
@@ -35,7 +35,7 @@ function Tessera({ stesa }: { stesa: Stesa }) {
 export function ElencoStese() {
   const { t, lingua } = useLingua();
   const k = t.stese;
-  const stese = useCarica(() => elencaStese(undefined, linguaContenuti(lingua)), [lingua], { pubblico: true });
+  const stese = useCarica(() => elencaStese(undefined, linguaContenuti(lingua)), [lingua], { pubblico: true, iniziale: P.stese(lingua) });
   const per = (c: Categoria) => (stese.dati ?? []).filter((s) => s.categoria === c);
   const gruppo = (c: Categoria, titolo: string, testo: string) => (
     <section className="band band-tight" aria-labelledby={`stese-${c}`}>
@@ -75,7 +75,7 @@ export function ElencoStese() {
 export function SchedaStesa({ id }: { id: string }) {
   const { t, lingua } = useLingua();
   const k = t.stese;
-  const stese = useCarica(() => elencaStese(undefined, linguaContenuti(lingua)), [lingua], { pubblico: true });
+  const stese = useCarica(() => elencaStese(undefined, linguaContenuti(lingua)), [lingua], { pubblico: true, iniziale: P.stese(lingua) });
   if (stese.errore) return <section className="band band-tight"><p className="error">{stese.errore}</p></section>;
   if (!stese.dati) return <section className="band band-tight"><p className="muted">{t.comune.carica}</p></section>;
   const s = stese.dati.find((x) => x.id === id || x.slug === id || Object.values(x.slugs ?? {}).includes(id));

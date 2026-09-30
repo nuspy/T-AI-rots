@@ -10,7 +10,7 @@ import { ADMIN_URL, useSessione } from "@/lib/sessione";
 import { LINGUE, comeLingua, f, plurale } from "@/v2/i18n";
 import { useCarrello } from "@/v2/lib/carrello";
 import { useLingua } from "@/v2/lib/lingua";
-import { R, senzaPrefisso } from "@/v2/lib/percorsi";
+import { R, indirizzoV2, senzaPrefisso } from "@/v2/lib/percorsi";
 import LinkV2 from "./link";
 import { useConto } from "@/v2/lib/dati";
 
@@ -52,8 +52,11 @@ export function SelettoreLingua() {
     const l = comeLingua(valore);
     if (!l) return;
     imposta(l);
-    /* Un indirizzo `/it/v2/…` dice «italiano»: scegliendo un'altra lingua si toglie il prefisso. */
-    if (prefissoIt && l !== "it") router.replace(`${senzaPrefisso(percorso)}${window.location.search}`);
+    /* Un indirizzo `/it/…` dice «italiano»: scegliendo un'altra lingua si va all'indirizzo inglese della stessa
+     * pagina, scegliendo l'italiano a quello italiano (`/cards/x` → `/it/carte/x`). */
+    const qui = `${senzaPrefisso(percorso)}${window.location.search}`;
+    if (prefissoIt && l !== "it") router.replace(indirizzoV2(qui, false));
+    else if (!prefissoIt && l === "it") router.replace(indirizzoV2(qui, true));
   };
   return (
     <label className="lang-select">

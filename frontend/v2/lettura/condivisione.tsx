@@ -9,7 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTraccia } from "lanterna-osservatore/react";
 import { MISURA_FINALE, componiImmagineV2 } from "./immagine-condivisione";
-import { FONDO_CANALE, Logo } from "@/app/(sito)/leggi/loghi";
+import { FONDO_CANALE, Logo } from "@/lib/loghi";
 import {
   caricaImmagineCondivisione, condividiLettura, leggiCondivisa, leggiProfilo, registraClicCondivisione,
   type CanaleCondivisione, type Condivisioni, type LetturaCondivisa,

@@ -10,7 +10,7 @@ import { useSessione } from "@/lib/sessione";
 import { f, plurale } from "@/v2/i18n";
 import { CartaV2 } from "@/v2/componenti/carta";
 import LinkV2 from "@/v2/componenti/link";
-import { linguaContenuti } from "@/v2/lib/dati";
+import { P, linguaContenuti } from "@/v2/lib/dati";
 import { useLingua } from "@/v2/lib/lingua";
 import { R } from "@/v2/lib/percorsi";
 import { useCarica } from "@/v2/lib/usa";
@@ -18,7 +18,7 @@ import { nomeDi } from "./carte";
 
 export function Giorno() {
   const sessione = useSessione();
-  if (!sessione.pronta) return null;
+  /* Finché la sessione non è pronta (e sul server) si vede la carta di tutti: l'HTML esce con la carta di oggi. */
   return sessione.autenticata ? <Personale /> : <PerTutti />;
 }
 
@@ -26,7 +26,7 @@ function PerTutti() {
   const { t, lingua } = useLingua();
   const k = t.giorno;
   const sessione = useSessione();
-  const oggi = useCarica(() => cartaDiOggi(linguaContenuti(lingua)), [lingua], { pubblico: true });
+  const oggi = useCarica(() => cartaDiOggi(linguaContenuti(lingua)), [lingua], { pubblico: true, iniziale: P.oggi(lingua) });
   if (oggi.errore) return <section className="band band-tight"><p className="error">{oggi.errore}</p></section>;
   if (!oggi.dati) return <section className="band band-tight"><p className="muted">{t.comune.carica}</p></section>;
   const c = oggi.dati.carta;

@@ -474,6 +474,10 @@ async function chiama<T>(
 
 /* ---- pubblico ---- */
 
+/** Una lettura pubblica qualunque, per percorso (le pagine della v2 la usano con `usePubblico`, che prende i dati
+ *  già letti dal server quando il percorso è lo stesso). */
+export const leggiApi = <T>(percorso: string) => chiama<T>(null, percorso);
+
 export const elencaStese = (categoria?: Categoria, lang?: string) => {
   const p = new URLSearchParams();
   if (categoria) p.set("categoria", categoria);

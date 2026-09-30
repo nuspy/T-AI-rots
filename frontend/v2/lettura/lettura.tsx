@@ -29,7 +29,7 @@ import { dizionarioPronto, f, plurale } from "@/v2/i18n";
 import { Dichiarazione } from "@/v2/componenti/dichiarazione";
 import LinkV2 from "@/v2/componenti/link";
 import { Modale } from "@/v2/componenti/modale";
-import { linguaContenuti, useConto, useMazzi } from "@/v2/lib/dati";
+import { P, linguaContenuti, useConto, useMazzi } from "@/v2/lib/dati";
 import { LinguaNomi, useLingua } from "@/v2/lib/lingua";
 import { R, indirizzoV2 } from "@/v2/lib/percorsi";
 import { useCarica } from "@/v2/lib/usa";
@@ -68,12 +68,12 @@ export function LetturaV2() {
   const osservatore = useOsservatore();
   const idIniziale = parametri.get("id");
 
-  const stese = useCarica(() => elencaStese(undefined, linguaContenuti(lingua)), [lingua], { pubblico: true });
+  const stese = useCarica(() => elencaStese(undefined, linguaContenuti(lingua)), [lingua], { pubblico: true, iniziale: P.stese(lingua) });
   const conto = useConto();
   const profilo = useCarica(leggiProfilo);
   const mazzi = useMazzi();
   const posseduti = useCarica(mieiMazzi);
-  const omaggi = useCarica(impostazioniPubbliche, [], { pubblico: true });
+  const omaggi = useCarica(impostazioniPubbliche, [], { pubblico: true, iniziale: P.impostazioni() });
   const cartaParam = parametri.get("card");
   const carte = useCarica(
     () => (cartaParam ? elencaCarte(linguaContenuti(lingua)) : Promise.resolve([])), [cartaParam, lingua], { pubblico: true },

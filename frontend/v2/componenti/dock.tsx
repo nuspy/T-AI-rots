@@ -2,7 +2,7 @@
 
 /* Il dock del lettore: l'ingresso conversazionale che resta con te fra le pagine (specifica v2, §6-7).
  *
- * Chi non ha fatto l'accesso scrive la sua domanda e comincia la lettura gratuita (`/v2/read?question=…`): è il
+ * Chi non ha fatto l'accesso scrive la sua domanda e comincia la lettura gratuita (`/read?question=…`): è il
  * percorso anonimo già esistente e già limitato (una lettura per browser), non una chat libera senza account —
  * aprire l'inferenza a chiunque sarebbe un costo e un abuso senza limite.
  *
@@ -35,7 +35,7 @@ const leggiMuto = () => {
   }
 };
 
-const NASCOSTO = [R.leggi, R.fisica, `${R.home}/shared`];
+const NASCOSTO = [R.leggi, R.fisica, R.condivise];
 
 export function DockLettore() {
   const { t, prefissoIt } = useLingua();

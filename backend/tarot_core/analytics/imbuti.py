@@ -18,8 +18,10 @@ from . import eventi as ev
 
 Per = Literal["sessione", "utente"]
 
-_LEGGI = ("/leggi",)
-_LEGGI_V2 = ("/v2/read", "/it/v2/read")
+# v8.5: la v1 vive sotto /old; i percorsi di prima restano per lo storico.
+_LEGGI = ("/leggi", "/old/leggi", "/old/it/leggi")
+_LEGGI_V2 = ("/read", "/it/read", "/v2/read", "/it/v2/read")
+_PREZZI_V2 = ("/pricing", "/it/piano", "/v2/pricing", "/it/v2/pricing")
 
 IMBUTI: Dict[str, Tuple[str, Per, List[Passo]]] = {
     "lettura": (
@@ -70,8 +72,8 @@ IMBUTI: Dict[str, Tuple[str, Per, List[Passo]]] = {
         "v2 · Prezzi → acquisto (iscritti)",
         "utente",
         [
-            Passo("page_view", "Apre i prezzi (v2)", percorsi=("/v2/pricing", "/it/v2/pricing")),
-            Passo("piano_scelto", "Sceglie un piano", percorsi=("/v2/pricing", "/it/v2/pricing")),
+            Passo("page_view", "Apre i prezzi (v2)", percorsi=_PREZZI_V2),
+            Passo("piano_scelto", "Sceglie un piano", percorsi=_PREZZI_V2),
             Passo(ev.CHECKOUT_AVVIATO, "Va al pagamento"),
             Passo(ev.ACQUISTO, "Paga"),
         ],
@@ -80,7 +82,7 @@ IMBUTI: Dict[str, Tuple[str, Per, List[Passo]]] = {
         "Negozio → ordine (iscritti)",
         "utente",
         [
-            Passo("page_view", "Apre il mazzo", percorsi=("/deck", "/it/mazzo")),
+            Passo("page_view", "Apre il mazzo", percorsi=("/deck", "/it/mazzo", "/shop", "/it/shop", "/decks", "/it/decks")),
             Passo("carrello_aggiunto", "Aggiunge al carrello"),
             Passo(ev.CHECKOUT_AVVIATO, "Va al pagamento", {"tipo": "ordine"}),
             Passo(ev.ACQUISTO, "Paga", {"tipo": "ordine"}),

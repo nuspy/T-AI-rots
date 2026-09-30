@@ -6,7 +6,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Markdown } from "@/app/(sito)/componenti/markdown";
+import { Markdown } from "@/lib/markdown";
 import { f } from "@/v2/i18n";
 import LinkV2 from "@/v2/componenti/link";
 import { useLingua } from "@/v2/lib/lingua";

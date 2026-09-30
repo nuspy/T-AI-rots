@@ -13,7 +13,7 @@ import { useCarrello } from "@/v2/lib/carrello";
 import { useLingua } from "@/v2/lib/lingua";
 import { R, indirizzoV2 } from "@/v2/lib/percorsi";
 import { useCarica } from "@/v2/lib/usa";
-import { useMazzi } from "@/v2/lib/dati";
+import { P, useMazzi } from "@/v2/lib/dati";
 
 /* Le immagini di un mazzo: il predefinito (Thoth) nella cartella piatta, gli altri nella propria. */
 const cartellaDi = (m: Mazzo) => (m.predefinito ? null : m.slug);
@@ -121,7 +121,7 @@ export function SchedaMazzo({ slug }: { slug: string }) {
 export function RiepilogoVoto() {
   const { t } = useLingua();
   const k = t.mazzi;
-  const riepilogo = useCarica(votoHome, [], { pubblico: true });
+  const riepilogo = useCarica(votoHome, [], { pubblico: true, iniziale: P.voto() });
   const r = riepilogo.dati?.risultato_recente;
   if (!r || r.candidati.length === 0) return null;
   return (

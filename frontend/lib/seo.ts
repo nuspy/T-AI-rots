@@ -6,7 +6,7 @@
 import type { Metadata } from "next";
 import { SITE_URL } from "./condivisione";
 import { NOME_MARCHIO } from "./marchio";
-import { indirizzo, type LinguaPubblica } from "./percorsi";
+import { pubblico, type LinguaPubblica } from "./indirizzi";
 
 /** L'immagine di anteprima di tutte le pagine che non ne hanno una loro (1200 × 630, generata da `tools/prepara_logo.py`). */
 export const IMMAGINE_PREDEFINITA = {
@@ -16,8 +16,10 @@ export const IMMAGINE_PREDEFINITA = {
   alt: `${NOME_MARCHIO}: Thoth tarot readings, guided by AI`,
 } as const;
 
-/** L'indirizzo assoluto di una pagina interna, nella lingua: `urlPubblico("en", "/carte/the-star")` → `https://…/cards/the-star`. */
-export const urlPubblico = (lingua: LinguaPubblica, interno: string): string => `${SITE_URL}${indirizzo(lingua, interno)}`;
+/** L'indirizzo assoluto di una pagina interna, nella lingua: `urlPubblico("it", "/cards/the-star")` →
+ *  `https://…/it/carte/the-star`. Accetta anche i nomi della v1 (`/carte/…`): le pagine sotto `/old` dichiarano come
+ *  canonica la pagina corrispondente del sito. */
+export const urlPubblico = (lingua: LinguaPubblica, interno: string): string => `${SITE_URL}${pubblico(lingua, interno)}`;
 
 /**
  * Canonical e lingue alternative di una pagina. `interni` porta l'indirizzo interno in ciascuna lingua in cui la

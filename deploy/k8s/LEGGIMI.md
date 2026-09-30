@@ -351,6 +351,21 @@ kubectl -n tarots rollout restart deploy/tarots-api deploy/tarots-keycloak
 Prova a mano del CronJob: `kubectl -n tarots create job --from=cronjob/tarots-backup prova-backup`, poi
 `kubectl -n tarots logs job/prova-backup`.
 
+## La v2 è il sito (v8.5)
+
+La v2 sta alla radice (`app/(v2)`), la v1 sotto `/old` (`app/(old)/old`, `noindex` + `X-Robots-Tag`). Indirizzi
+già indicizzati invariati (`/cards/…`, `/it/carte/…`, `/spreads`, `/it/stese`, `/pricing`, `/it/piano`,
+`/card-of-the-day`, `/it/carta-del-giorno`, `/blog/…`, `/blog/sezione/…`); pagine nuove coi nomi della v2 (`/read`,
+`/my-story`, `/decks`, `/shop`, `/cart`, `/shared/…`, `/physical-reading`, `/explore`, `/vote`, `/profile`, anche
+sotto `/it`). Mappa in `frontend/lib/indirizzi.ts`, reindirizzamenti 308 nel proxy. Il ritorno di Keycloak è `/`
+per il sito e `/old` per la v1 (il client accetta già `/*`). Prova dopo il rilascio:
+
+```bash
+for u in / /it /cards /it/carte /card-of-the-day /leggi /s/x /v2/cards /deck /carte/maj-17 /old; do
+  printf "%-16s " "$u"; curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" "https://tarots.chat$u"; done
+curl -sI https://tarots.chat/old | grep -i x-robots   # noindex, nofollow
+```
+
 ## Console di Keycloak
 
 Non è pubblica. Da un terminale sul server:

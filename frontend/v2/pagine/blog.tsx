@@ -8,18 +8,19 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Carta, Stesa } from "@/lib/api";
 import { dataLeggibile, urlMedia, type ArticoloBreve, type NodoSezione } from "@/lib/blog";
-import { SITE_URL } from "@/lib/condivisione";
 import { f, plurale } from "@/v2/i18n";
 import { BlogMarkdownV2, type Riferimenti } from "@/v2/componenti/blog-markdown";
 import { ImmagineCarta } from "@/v2/componenti/carta";
 import LinkV2 from "@/v2/componenti/link";
-import { articoli, articolo, etichette, sezione, sezioni } from "@/v2/lib/dati";
+import { P, PER_PAGINA_BLOG, articoli, articolo, etichette, sezione, sezioni } from "@/v2/lib/dati";
+import { linguaPubblica } from "@/lib/indirizzi";
+import { urlPubblico } from "@/lib/seo";
 import { useLingua } from "@/v2/lib/lingua";
 import { R, indirizzoV2 } from "@/v2/lib/percorsi";
 import { useCarica } from "@/v2/lib/usa";
 import { nomeDi } from "./carte";
 
-const PER_PAGINA = 12;
+const PER_PAGINA = PER_PAGINA_BLOG;
 
 export function Tessera({ a, grande = false }: { a: ArticoloBreve; grande?: boolean }) {
   const { t } = useLingua();
@@ -71,8 +72,8 @@ function Albero({ nodi, corrente }: { nodi: NodoSezione[]; corrente?: string }) 
 
 function Laterale({ corrente }: { corrente?: string }) {
   const { t } = useLingua();
-  const albero = useCarica(sezioni, [], { pubblico: true });
-  const tag = useCarica(etichette, [], { pubblico: true });
+  const albero = useCarica(sezioni, [], { pubblico: true, iniziale: P.sezioni() });
+  const tag = useCarica(etichette, [], { pubblico: true, iniziale: P.etichette() });
   return (
     <aside className="story-sidebar" aria-label={t.blog.sezioni}>
       <h2>{t.blog.sezioni}</h2>
@@ -111,8 +112,8 @@ function DiarioContenuto() {
   const q = parametri.get("q") ?? "";
   const pagina = Math.max(1, Number(parametri.get("page") ?? 1) || 1);
   const [testo, setTesto] = useState(q);
-  const elenco = useCarica(() => articoli(lingua, { q, pagina, per_pagina: PER_PAGINA }), [lingua, q, pagina], { pubblico: true });
-  const evidenza = useCarica(() => (q || pagina > 1 ? Promise.resolve(null) : articoli(lingua, { evidenza: "true", per_pagina: 1 })), [lingua, q, pagina], { pubblico: true });
+  const elenco = useCarica(() => articoli(lingua, { q, pagina, per_pagina: PER_PAGINA }), [lingua, q, pagina], { pubblico: true, iniziale: P.articoli(lingua, { q, pagina, per_pagina: PER_PAGINA }) });
+  const evidenza = useCarica(() => (q || pagina > 1 ? Promise.resolve(null) : articoli(lingua, { evidenza: "true", per_pagina: 1 })), [lingua, q, pagina], { pubblico: true, iniziale: q || pagina > 1 ? null : P.articoli(lingua, { evidenza: "true", per_pagina: 1 }) });
   const primo = evidenza.dati?.articoli[0] ?? null;
   const lista = (elenco.dati?.articoli ?? []).filter((a) => a.slug !== primo?.slug);
 
@@ -157,8 +158,8 @@ function SezioneContenuto({ slug }: { slug: string }) {
   const b = t.blog;
   const parametri = useSearchParams();
   const pagina = Math.max(1, Number(parametri.get("page") ?? 1) || 1);
-  const s = useCarica(() => sezione(slug, lingua), [slug, lingua], { pubblico: true });
-  const elenco = useCarica(() => articoli(lingua, { sezione: slug, pagina, per_pagina: PER_PAGINA }), [slug, lingua, pagina], { pubblico: true });
+  const s = useCarica(() => sezione(slug, lingua), [slug, lingua], { pubblico: true, iniziale: P.sezione(slug, lingua) });
+  const elenco = useCarica(() => articoli(lingua, { sezione: slug, pagina, per_pagina: PER_PAGINA }), [slug, lingua, pagina], { pubblico: true, iniziale: P.articoli(lingua, { sezione: slug, pagina, per_pagina: PER_PAGINA }) });
   if (s.errore) return <section className="band band-tight"><p className="notice">{b.vuoto}</p></section>;
   if (!s.dati) return <section className="band band-tight"><p className="muted">{t.comune.carica}</p></section>;
   const d = s.dati;
@@ -221,8 +222,8 @@ function EtichettaContenuto({ slug }: { slug: string }) {
   const b = t.blog;
   const parametri = useSearchParams();
   const pagina = Math.max(1, Number(parametri.get("page") ?? 1) || 1);
-  const tag = useCarica(etichette, [], { pubblico: true });
-  const elenco = useCarica(() => articoli(lingua, { tag: slug, pagina, per_pagina: PER_PAGINA }), [slug, lingua, pagina], { pubblico: true });
+  const tag = useCarica(etichette, [], { pubblico: true, iniziale: P.etichette() });
+  const elenco = useCarica(() => articoli(lingua, { tag: slug, pagina, per_pagina: PER_PAGINA }), [slug, lingua, pagina], { pubblico: true, iniziale: P.articoli(lingua, { tag: slug, pagina, per_pagina: PER_PAGINA }) });
   const nome = tag.dati?.find((e) => e.slug === slug)?.nome ?? slug;
   const lista = elenco.dati?.articoli ?? [];
   return (
@@ -252,7 +253,7 @@ function forme(id: string, slugs: Record<string, string>) {
 export function ArticoloDiario({ slug }: { slug: string }) {
   const { t, locale } = useLingua();
   const b = t.blog;
-  const a = useCarica(() => articolo(slug), [slug], { pubblico: true });
+  const a = useCarica(() => articolo(slug), [slug], { pubblico: true, iniziale: P.articolo(slug) });
   const [copiato, setCopiato] = useState(false);
   if (a.errore) {
     return (
@@ -271,7 +272,7 @@ export function ArticoloDiario({ slug }: { slug: string }) {
     idCarte: Object.fromEntries(x.collegamenti.carte.flatMap((c) => forme(c.id, c.slugs).map((k) => [k, c.id]))),
   };
   const immagine = urlMedia(x.immagine?.url);
-  const url = `${SITE_URL}${R.articolo(x.slug)}`;
+  const url = urlPubblico(linguaPubblica(x.lang), R.articolo(x.slug));
   const condividi = async () => {
     if (navigator.share) { try { await navigator.share({ title: x.titolo, url }); return; } catch { /* annullato */ } }
     try { await navigator.clipboard.writeText(url); setCopiato(true); } catch { /* niente */ }
@@ -348,7 +349,7 @@ export function ArticoloDiario({ slug }: { slug: string }) {
 export function Esplora() {
   const { t, lingua } = useLingua();
   const b = t.blog;
-  const diario = useCarica(() => articoli(lingua, { per_pagina: 3 }), [lingua], { pubblico: true });
+  const diario = useCarica(() => articoli(lingua, { per_pagina: 3 }), [lingua], { pubblico: true, iniziale: P.articoli(lingua, { per_pagina: 3 }) });
   const dove: Record<string, string> = { diario: R.blog, carte: R.carte, stese: R.stese, mazzi: R.mazzi, giorno: R.giorno, fisica: R.fisica };
   return (
     <>

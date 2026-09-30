@@ -1,10 +1,10 @@
 "use client";
 
-/* I provider della v2: accesso (lo stesso client Keycloak del sito, con il ritorno sotto `/v2`), lingua v2,
+/* I provider della v2: accesso (lo stesso client Keycloak della v1, col ritorno alla radice), lingua v2,
  * sessione, analytics, e i pezzi globali (il dock del lettore, il banner dei cookie, il promemoria della 2FA).
  *
- * Il ritorno dell'accesso sta sotto `/v2`: la pagina che riceve il codice deve essere una pagina della v2, perché
- * è il suo `AuthProvider` a riscattarlo. Il client Keycloak accetta ogni indirizzo del sito (`/*`). I token stanno
+ * Il ritorno dell'accesso è la home: la pagina che riceve il codice deve essere una pagina della v2, perché è il suo
+ * `AuthProvider` a riscattarlo (la v1 sotto `/old` ha il suo ritorno, `/old`). Il client Keycloak accetta ogni indirizzo del sito (`/*`). I token stanno
  * nello stesso `localStorage` del sito (stessa autorità, stesso client): chi è entrato di là è dentro anche qui.
  *
  * L'attribuzione delle condivisioni e il riscatto automatico degli inviti sono quelli del sito: non hanno testi né
@@ -13,8 +13,8 @@
 import { useMemo } from "react";
 import { AuthProvider } from "react-oidc-context";
 import { WebStorageStateStore } from "oidc-client-ts";
-import { AttribuzioneCondivisione } from "@/app/(sito)/componenti/attribuzione";
-import { RiscattoInvitoAutomatico } from "@/app/(sito)/componenti/riscatto-invito";
+import { AttribuzioneCondivisione } from "@/lib/attribuzione";
+import { RiscattoInvitoAutomatico } from "@/lib/riscatto-invito";
 import { SITE_URL } from "@/lib/condivisione";
 import { AUTH_DISATTIVATA, SessioneDiSviluppo, SessioneKeycloak } from "@/lib/sessione";
 import { ProviderCarrello } from "@/v2/lib/carrello";
@@ -30,11 +30,11 @@ const authority = `${
 }/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM ?? "tarots"}`;
 
 /* Dopo l'accesso: via `code` e `state` dall'indirizzo, e di nuovo dove si era (una lettura a metà, il profilo).
- * Solo indirizzi della v2: un `ritorno` che porta fuori finisce sulla home della v2. */
+ * Solo indirizzi del sito: un `ritorno` che porta fuori (un altro dominio, la v1 sotto `/old`) resta qui. */
 function onSigninCallback(user: unknown): void {
   const stato = (user as { state?: { ritorno?: string } } | undefined)?.state;
   const r = stato?.ritorno;
-  const dentro = typeof r === "string" && /^\/(it\/)?v2(\/|\?|$)/.test(r);
+  const dentro = typeof r === "string" && r.startsWith("/") && !r.startsWith("//") && !/^\/old(\/|\?|$)/.test(r);
   window.history.replaceState({}, document.title, dentro ? r : window.location.pathname);
 }
 

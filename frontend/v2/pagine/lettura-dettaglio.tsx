@@ -6,7 +6,7 @@
 import { ProviderMazzoAttivo } from "@/lib/mazzo-attivo";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Markdown } from "@/app/(sito)/componenti/markdown";
+import { Markdown } from "@/lib/markdown";
 import { annotaLettura, cancellaLettura, leggiLettura, type Compatibilita, type PersoneLettura } from "@/lib/api";
 import { comeLingua } from "@/lib/i18n/lingue";
 import { nomeCarta, nomeStesa } from "@/lib/i18n/nomi";

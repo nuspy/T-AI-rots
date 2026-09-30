@@ -10,7 +10,7 @@ import { aggiornaProfilo, leggiProfilo } from "@/lib/api";
 import { leggiStato2fa } from "@/lib/sicurezza";
 import { useSessione } from "@/lib/sessione";
 import { useLingua } from "@/v2/lib/lingua";
-import { senzaPrefisso } from "@/v2/lib/percorsi";
+import { R, senzaPrefisso } from "@/v2/lib/percorsi";
 import { Modale } from "./modale";
 
 const CHIAVE = "tarots.promemoria2fa";
@@ -41,7 +41,7 @@ export function Promemoria2faV2() {
   const { autenticata, token } = sessione;
 
   useEffect(() => {
-    if (!autenticata || !token || controllato.current || percorso.startsWith("/v2/shared")) return;
+    if (!autenticata || !token || controllato.current || percorso.startsWith(`${R.condivise}/`)) return;
     controllato.current = true;
     if (giaMostrato()) return;
     void (async () => {

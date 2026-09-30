@@ -14,8 +14,8 @@ import { comeLingua, nomeCarta, nomeStesa, type Lingua } from "@/lib/i18n";
 import { percorsoCarta } from "@/lib/mazzo-attivo";
 import { LATO_SIMBOLO, PERCORSI_SIMBOLI, simboloDi } from "@/lib/simboli";
 import { sintesiDelResponso } from "@/lib/sintesi";
-import { paragrafo, type G } from "@/app/(sito)/leggi/immagine-condivisione";
-import { SCALA_CARTE, larghezzaBase } from "@/app/(sito)/leggi/tavolo";
+import { paragrafo, type G } from "@/lib/immagine-condivisione";
+import { SCALA_CARTE, larghezzaBase } from "@/lib/geometria-tavolo";
 
 export const MISURA = { w: 800, h: 600 };
 export const MISURA_FINALE = { w: 400, h: 300 };

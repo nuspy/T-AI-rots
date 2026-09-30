@@ -11,7 +11,7 @@ import { nomeCarta } from "@/lib/i18n/nomi";
 import { f } from "@/v2/i18n";
 import { ImmagineCarta } from "@/v2/componenti/carta";
 import LinkV2 from "@/v2/componenti/link";
-import { articoliSu, linguaContenuti } from "@/v2/lib/dati";
+import { P, articoliSu, linguaContenuti } from "@/v2/lib/dati";
 import { useLingua } from "@/v2/lib/lingua";
 import { R } from "@/v2/lib/percorsi";
 import { useCarica } from "@/v2/lib/usa";
@@ -24,7 +24,7 @@ export const nomeDi = (c: Carta, lingua: string) =>
 export function Biblioteca() {
   const { t, lingua } = useLingua();
   const k = t.carte;
-  const carte = useCarica(() => elencaCarte(linguaContenuti(lingua)), [lingua], { pubblico: true });
+  const carte = useCarica(() => elencaCarte(linguaContenuti(lingua)), [lingua], { pubblico: true, iniziale: P.carte(lingua) });
   const [filtro, setFiltro] = useState<(typeof FILTRI)[number]>("tutte");
   const visibili = (carte.dati ?? []).filter((c) =>
     filtro === "tutte" ? true : filtro === "maggiori" ? c.arcano === "maggiore" : c.seme === filtro);
@@ -52,9 +52,9 @@ export function Biblioteca() {
 export function SchedaCarta({ id }: { id: string }) {
   const { t, lingua } = useLingua();
   const k = t.carte;
-  const carta = useCarica(() => leggiCarta(id, linguaContenuti(lingua)), [id, lingua], { pubblico: true });
-  const tutte = useCarica(() => elencaCarte(linguaContenuti(lingua)), [lingua], { pubblico: true });
-  const articoli = useCarica(() => (carta.dati ? articoliSu("carta", carta.dati.id) : Promise.resolve([])), [carta.dati?.id], { pubblico: true });
+  const carta = useCarica(() => leggiCarta(id, linguaContenuti(lingua)), [id, lingua], { pubblico: true, iniziale: P.carta(id, lingua) });
+  const tutte = useCarica(() => elencaCarte(linguaContenuti(lingua)), [lingua], { pubblico: true, iniziale: P.carte(lingua) });
+  const articoli = useCarica(() => (carta.dati ? articoliSu("carta", carta.dati.id) : Promise.resolve([])), [carta.dati?.id], { pubblico: true, iniziale: carta.dati ? P.articoliSu("carta", carta.dati.id) : null });
 
   if (carta.errore) {
     return (

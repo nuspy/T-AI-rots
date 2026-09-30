@@ -6,7 +6,7 @@
  * vive in «La mia storia» (dove la specifica v2 la vuole visibile), e l'invito porta alla v2. */
 
 import { useState } from "react";
-import { scaricaBlob } from "@/app/(sito)/profilo/bigliettino-invito";
+import { scaricaBlob } from "@/lib/bigliettino-invito";
 import { componiBigliettinoV2 } from "@/v2/lettura/immagine-condivisione";
 import {
   aggiornaProfilo, cancellaPartner, caricaAvatar, creaIndirizzo, elencaIndirizzi, elencaMieiMazzi, elencaOrdini, eliminaIndirizzo, euro, impostaPreferenzaStatistiche, impostazioniPubbliche, leggiPreferenzaStatistiche, leggiProfilo, modificaIndirizzo, riscattaInvito, togliAvatar, type Genere, type Indirizzo, type IndirizzoInvio, type Ordine,
@@ -24,7 +24,7 @@ import { useLingua } from "@/v2/lib/lingua";
 import { R } from "@/v2/lib/percorsi";
 import { useAzione, useCarica } from "@/v2/lib/usa";
 import { BottonePdfV2 } from "./negozio";
-import { useMazzi } from "@/v2/lib/dati";
+import { P, useMazzi } from "@/v2/lib/dati";
 
 function Sezione({ id, titolo, children }: { id: string; titolo: string; children: React.ReactNode }) {
   return (
@@ -59,7 +59,7 @@ function Dentro() {
   const stato2fa = useCarica(leggiStato2fa);
   const tutti = useMazzi();
   const miei = useCarica(elencaMieiMazzi);
-  const omaggi = useCarica(impostazioniPubbliche, [], { pubblico: true });
+  const omaggi = useCarica(impostazioniPubbliche, [], { pubblico: true, iniziale: P.impostazioni() });
   const [nascita, setNascita] = useState<string | null>(null);
   const [genere, setGenere] = useState<Genere | "" | null>(null);
   const [genereAltro, setGenereAltro] = useState<string | null>(null);
