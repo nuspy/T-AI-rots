@@ -12,6 +12,11 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
+# Il client PostgreSQL alla versione del server (18), per il backup sul NAS e il ripristino dalla console
+# (v8.3): `pg_dump` e `pg_restore` di Debian sono più vecchi e rifiutano un server più nuovo. Dal repository
+# ufficiale PGDG, verificato con la sua chiave.
+RUN apt-get update  && apt-get install -y --no-install-recommends curl ca-certificates  && install -d /usr/share/postgresql-common/pgdg  && curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc  && . /etc/os-release  && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt ${VERSION_CODENAME}-pgdg main" > /etc/apt/sources.list.d/pgdg.list  && apt-get update  && apt-get install -y --no-install-recommends postgresql-client-18  && apt-get purge -y curl && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+
 # Dipendenze prima del codice: cambiano di rado, e così il livello resta in
 # cache fra una build e l'altra.
 COPY backend/requirements.txt ./

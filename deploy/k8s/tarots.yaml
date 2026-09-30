@@ -306,8 +306,15 @@ spec:
             - {name: TAROT_SMTP_MITTENTE, value: "noreply@tarots.chat"}
             - name: TAROT_SMTP_PASSWORD
               valueFrom: {secretKeyRef: {name: tarots-secrets, key: smtp-password}}
+            # Backup sul NAS (v8.3): la console prova il collegamento, lancia un backup e ripristina. La credenziale
+            # sta nel Secret `tarots-backup` (vedi LEGGIMI.md, "Backup sul NAS"): la chiave SSH come file, oppure una
+            # password. Facoltativo: senza, la console dice che manca.
+            - {name: TAROT_BACKUP_CHIAVE_SSH, value: /etc/tarots-backup/ssh-key}
+            - name: TAROT_BACKUP_PASSWORD
+              valueFrom: {secretKeyRef: {name: tarots-backup, key: password, optional: true}}
           volumeMounts:
             - {name: search-console, mountPath: /segreti/search-console, readOnly: true}
+            - {name: backup-nas, mountPath: /etc/tarots-backup, readOnly: true}
           # Ripiego per lo sviluppo locale o per un impianto senza ancora un fornitore in console: le chiavi sono le
           # variabili TAROT_*, per esempio:
           #   kubectl -n tarots create secret generic tarots-llm \
@@ -334,11 +341,15 @@ spec:
           resources:
             requests: {cpu: 100m, memory: 256Mi}
             limits: {memory: 1Gi}
+      # Il processo gira come utente 1000: il gruppo gli lascia leggere la chiave del NAS (0440), nessun altro.
+      securityContext: {fsGroup: 1000}
       volumes:
         # Il JSON del service account Google per la Search Console. Facoltativo: senza il Secret il
         # canale Google si salta (vedi LEGGIMI.md, "Notifica ai motori di ricerca").
         - name: search-console
           secret: {secretName: tarots-search-console, optional: true}
+        - name: backup-nas
+          secret: {secretName: tarots-backup, optional: true, defaultMode: 0440}
 ---
 apiVersion: v1
 kind: Service
@@ -613,3 +624,66 @@ spec:
   selector: {app: tarots, component: admin}
   ports:
     - {name: http, port: 3000, targetPort: 3000}
+---
+# Backup del database sul NAS (v8.3): ogni notte alle 2:30 (ora italiana) `pg_dump` del database `tarots` intero
+# (app, schema keycloak, immagini) → SFTP sul NAS nella tailnet, sette copie. Destinazione e accensione dalla
+# console (Backup); la credenziale nel Secret `tarots-backup`. Se fallisce: Job fallito ed email di avviso.
+# Prova a mano: kubectl -n tarots create job --from=cronjob/tarots-backup prova-backup
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: tarots-backup
+  namespace: tarots
+  labels: {app: tarots, component: backup}
+spec:
+  schedule: "30 2 * * *"
+  timeZone: Europe/Rome
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 3600
+      template:
+        metadata:
+          labels: {app: tarots, component: backup}
+        spec:
+          restartPolicy: Never
+          securityContext: {fsGroup: 1000}
+          containers:
+            - name: backup
+              image: tarots-api:v8.3
+              imagePullPolicy: IfNotPresent
+              command: ["python", "-m", "tarot_core.tools.backup_db"]
+              env:
+                - name: TAROT_DATABASE_URL
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: database-url}}
+                - {name: TAROT_ENVIRONMENT, value: prod}
+                - {name: TAROT_AUTH_DISABLED, value: "false"}
+                - {name: TAROT_BILLING_PROVIDER, value: disattivato}
+                - {name: TAROT_TRACING_ENABLED, value: "false"}
+                - {name: TAROT_WEB_PUBLIC_URL, value: "https://tarots.chat"}
+                # Richiesti dal controllo di produzione delle impostazioni, anche se qui non servono.
+                - name: TAROT_CONDIVISIONE_SALE
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale}}
+                - name: TAROT_LLM_PROVIDER_KEY
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: llm-provider-key}}
+                - {name: TAROT_BACKUP_CHIAVE_SSH, value: /etc/tarots-backup/ssh-key}
+                - name: TAROT_BACKUP_PASSWORD
+                  valueFrom: {secretKeyRef: {name: tarots-backup, key: password, optional: true}}
+                # L'avviso email quando il backup fallisce (ai destinatari del rapporto analytics).
+                - {name: TAROT_SMTP_HOST, value: mail.tadamoo.com}
+                - {name: TAROT_SMTP_PORTA, value: "465"}
+                - {name: TAROT_SMTP_UTENTE, value: "noreply@tarots.chat"}
+                - {name: TAROT_SMTP_MITTENTE, value: "noreply@tarots.chat"}
+                - name: TAROT_SMTP_PASSWORD
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: smtp-password}}
+              volumeMounts:
+                - {name: backup-nas, mountPath: /etc/tarots-backup, readOnly: true}
+              resources:
+                requests: {cpu: 50m, memory: 128Mi}
+                limits: {memory: 1Gi}
+          volumes:
+            - name: backup-nas
+              secret: {secretName: tarots-backup, optional: true, defaultMode: 0440}

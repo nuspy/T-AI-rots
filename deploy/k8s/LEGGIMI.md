@@ -295,6 +295,62 @@ Console: **Analytics** (Traffico, Utenti, Imbuti, Ricavi, Esploratore, Rapporti,
   dei cookie (livello esteso) si cambia dal banner o dalla pagina Privacy. Base giuridica e bilanciamento
   in `docs/privacy/lia-analytics.md`.
 
+## Backup sul NAS (v8.3)
+
+Il CronJob `tarots-backup` (stessa immagine dell'API, che porta `pg_dump`/`pg_restore` 18) ogni notte alle 2:30,
+ora italiana, salva il database `tarots` **intero** — l'app, lo schema `keycloak` (utenti, accessi), le immagini
+del blog e delle condivisioni (sono nel database) — con `pg_dump -Fc`, e lo carica via SFTP sul NAS di casa
+(nella tailnet: il pod raggiunge `100.84.254.116:9222`, verificato il 30/9). Accanto a ogni copia c'è il suo
+`.sha256`. Si tengono le **sette** più recenti (si cambia in console); le più vecchie si cancellano solo dopo un
+caricamento riuscito e verificato. Se il backup fallisce: Job fallito ed email ai destinatari del rapporto
+analytics. Tutto il resto — destinazione, accensione, prova, «Esegui ora», copie, storico, ripristino — dalla
+console, pagina **Backup**.
+
+**Prima volta.**
+
+1. Una chiave SSH solo per il backup (non quella personale), e la sua parte pubblica sul NAS:
+
+   ```bash
+   # sul server
+   ssh-keygen -t ed25519 -N "" -C tarots-backup -f /root/tarots-backup
+   ssh -p 9222 nuspy@100.84.254.116 'mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys' < /root/tarots-backup.pub
+   ssh -p 9222 nuspy@100.84.254.116 'mkdir -p /Volume1/backup/tarots'   # per esempio: la cartella che si sceglierà in console
+   kubectl -n tarots create secret generic tarots-backup --from-file=ssh-key=/root/tarots-backup
+   shred -u /root/tarots-backup
+   kubectl -n tarots rollout restart deploy/tarots-api
+   ```
+
+   In alternativa alla chiave, una password: `--from-literal=password=…` al posto di `--from-file`. Il Secret è
+   facoltativo per l'API e per il CronJob: senza, la console dice che manca la credenziale.
+
+2. Console → **Backup**: host `100.84.254.116`, porta `9222`, utente, cartella. **Prova**: collega, crea la
+   cartella se manca, scrive e cancella un file di prova e mostra la chiave dell'host (`SHA256:…`). Confrontarla
+   con quella del NAS (`ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` sul NAS) e premere **Fidati di questa
+   chiave**: da lì ogni backup controlla che il NAS sia lui, e con un'altra chiave non parte niente.
+3. Accendere il backup notturno e premere **Esegui ora**: la copia compare nell'elenco.
+
+**Ripristino dalla console.** Scegliere una copia, scrivere `tarots` per confermare. La console fa prima una
+**copia di sicurezza** del database attuale (`tarots-sicurezza-…`, se ne tengono tre; se non riesce, non
+ripristina niente), poi scarica la copia, la confronta con il suo `.sha256` e la ripristina con
+`pg_restore --clean --if-exists --single-transaction`: o tutto o niente. Alla fine:
+
+```bash
+kubectl -n tarots rollout restart deploy/tarots-api deploy/tarots-keycloak
+```
+
+**Ripristino a mano** (se la console non è raggiungibile), dal server:
+
+```bash
+scp -P 9222 nuspy@100.84.254.116:/Volume1/backup/tarots/tarots-AAAAMMGG-HHMMSS.dump /root/
+kubectl -n tarots cp /root/tarots-AAAAMMGG-HHMMSS.dump $(kubectl -n tarots get pod -l component=api -o name | head -1 | cut -d/ -f2):/tmp/r.dump
+kubectl -n tarots exec deploy/tarots-api -- sh -c 'python -m tarot_core.tools.backup_db --ora'   # copia di sicurezza prima
+kubectl -n tarots exec deploy/tarots-api -- sh -c 'eval $(python -c "from sqlalchemy.engine import make_url; import os; u=make_url(os.environ[\"TAROT_DATABASE_URL\"]); print(f\"export PGHOST={u.host} PGPORT={u.port or 5432} PGUSER={u.username} PGPASSWORD={u.password} PGDATABASE={u.database}\")"); PGOPTIONS="-c lock_timeout=60000" pg_restore --clean --if-exists --single-transaction --no-owner --no-acl -d "$PGDATABASE" /tmp/r.dump && rm /tmp/r.dump'
+kubectl -n tarots rollout restart deploy/tarots-api deploy/tarots-keycloak
+```
+
+Prova a mano del CronJob: `kubectl -n tarots create job --from=cronjob/tarots-backup prova-backup`, poi
+`kubectl -n tarots logs job/prova-backup`.
+
 ## Console di Keycloak
 
 Non è pubblica. Da un terminale sul server:

@@ -21,7 +21,7 @@ from ..observability.tracing import (
 )
 from ..settings import get_settings
 from .routers import (
-    admin, admin_analytics, admin_blog, admin_impostazioni, admin_llm, admin_mazzi, admin_offerte, admin_ordini, admin_seo, admin_voto,
+    admin, admin_analytics, admin_blog, admin_impostazioni, admin_llm, admin_mazzi, admin_offerte, admin_ordini, admin_seo, admin_voto, admin_backup,
     analytics, analytics_colab, billing, blog, chat, condivisione, profile, public, readings, rest_blog, shop, voto,
 )
 
@@ -171,6 +171,7 @@ def create_app() -> FastAPI:
     app.include_router(voto.router)
     app.include_router(admin_voto.router)
     app.include_router(admin_seo.router)
+    app.include_router(admin_backup.router)
     app.include_router(analytics.router)
     app.include_router(admin_analytics.router)
     app.include_router(analytics_colab.router)

@@ -21,6 +21,7 @@ const SEZIONI = [
   { href: "/report", etichetta: "Report" },
   { href: "/registro", etichetta: "Registro" },
   { href: "/modelli", etichetta: "Modelli" },
+  { href: "/backup", etichetta: "Backup" },
   { href: "/impostazioni", etichetta: "Impostazioni" },
 ];
 

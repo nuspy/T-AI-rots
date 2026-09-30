@@ -185,6 +185,15 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_mittente: str = ""
 
+    #: Il backup notturno sul NAS (v8.3). La destinazione si sceglie dalla console; la credenziale per entrarci
+    #: no: la monta un Secret (la chiave SSH privata in questo file, oppure una password). Mai nel database, che
+    #: finisce proprio sul NAS.
+    backup_chiave_ssh: str = "/etc/tarots-backup/ssh-key"
+    backup_password: str = ""
+    #: I programmi del client PostgreSQL, alla versione del server (l'immagine dell'API porta il 18).
+    backup_pg_dump: str = "pg_dump"
+    backup_pg_restore: str = "pg_restore"
+
     cors_origins: List[str] = Field(
         default_factory=lambda: ["http://localhost:3000", "http://localhost:3001"]
     )

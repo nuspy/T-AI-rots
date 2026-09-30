@@ -5,10 +5,11 @@ all'altra per nome, e SQLAlchemy risolve quei nomi solo fra le tabelle che ha
 visto. Caricarne uno solo produce `NoReferencedTableError` al primo uso.
 """
 from . import (  # noqa: F401
-    analytics_models, base, billing_models, blog_models, chat_models, config_models, consent_models, deck_models,
+    analytics_models, backup_models, base, billing_models, blog_models, chat_models, config_models, consent_models, deck_models,
     deck_upload_models, memory_models, models, ordini_models, seo_models, share_models, voting_models,
 )
 
+from .backup_models import BackupEsecuzione, ImpostazioniBackup
 from .base import Base, OwnedMixin, TimestampMixin, utcnow
 from .billing_models import Coupon, CouponRedemption, CreditEntry, PaymentCheckout, PaymentEvent, Plan, Subscription
 from .blog_models import (
@@ -28,6 +29,8 @@ from .voting_models import DeckCandidate, DeckSuggestion, DeckVote, VotingRound
 
 __all__ = [
     "AuditLog",
+    "BackupEsecuzione",
+    "ImpostazioniBackup",
     "Base",
     "ApiKey",
     "BlogPost",
