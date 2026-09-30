@@ -6,7 +6,8 @@
  * vive in «La mia storia» (dove la specifica v2 la vuole visibile), e l'invito porta alla v2. */
 
 import { useState } from "react";
-import { componiBigliettino, scaricaBlob } from "@/app/(sito)/profilo/bigliettino-invito";
+import { scaricaBlob } from "@/app/(sito)/profilo/bigliettino-invito";
+import { componiBigliettinoV2 } from "@/v2/lettura/immagine-condivisione";
 import {
   aggiornaProfilo, cancellaPartner, caricaAvatar, creaIndirizzo, elencaIndirizzi, elencaMieiMazzi, elencaOrdini, eliminaIndirizzo, euro, impostaPreferenzaStatistiche, impostazioniPubbliche, leggiPreferenzaStatistiche, leggiProfilo, modificaIndirizzo, riscattaInvito, togliAvatar, type Genere, type Indirizzo, type IndirizzoInvio, type Ordine,
 } from "@/lib/api";
@@ -174,7 +175,7 @@ function Dentro() {
               setScaricando(true);
               try {
                 const omaggio = omaggi.dati ? f(k.bigliettino_omaggio, { n: omaggi.dati.crediti_invito }) : "";
-                const blob = await componiBigliettino(p.referral_code, k.bigliettino_claim, omaggio, locale);
+                const blob = await componiBigliettinoV2(p.referral_code, k.bigliettino_claim, omaggio, locale);
                 if (blob) scaricaBlob(blob, `tarots-chat-invite-${p.referral_code}.png`);
               } finally { setScaricando(false); }
             }}>{k.bigliettino}</button>

@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTraccia } from "lanterna-osservatore/react";
-import { MISURA_FINALE, componiImmagine } from "@/app/(sito)/leggi/immagine-condivisione";
+import { MISURA_FINALE, componiImmagineV2 } from "./immagine-condivisione";
 import { FONDO_CANALE, Logo } from "@/app/(sito)/leggi/loghi";
 import {
   caricaImmagineCondivisione, condividiLettura, leggiCondivisa, leggiProfilo, registraClicCondivisione,
@@ -77,7 +77,7 @@ function Contenuto({ id, onChiudi }: Props) {
     if (!r?.share_token) { setStato("errore"); return; }
     try {
       const pubblica = await leggiCondivisa(r.share_token);
-      const png = await componiImmagine(pubblica);
+      const png = await componiImmagineV2(pubblica);
       if (vecchia()) return;
       if (!png) { setStato("errore"); return; }
       const webp = await ultimi.current.esegui((tok) => caricaImmagineCondivisione(tok, id, png));
