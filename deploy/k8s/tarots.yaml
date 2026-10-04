@@ -164,7 +164,7 @@ spec:
           # deploy/keycloak/Dockerfile: Keycloak 26 già costruito per Postgres,
           # health e percorso /auth. Costruito sul server, senza registry.
           # v5: il tema `tarots` nello stile della v2 (login, registrazione, 2FA, pulsanti social).
-          image: tarots-keycloak:v6
+          image: tarots-keycloak:v7
           imagePullPolicy: IfNotPresent
           # `start` (produzione), non `start-dev`: database vero, HTTPS dietro proxy.
           args: ["start", "--optimized", "--import-realm"]
@@ -822,7 +822,7 @@ spec:
         - name: web
           # Gli indirizzi pubblici (API, Keycloak) sono cotti nella build:
           # vedi le --build-arg in deploy/k8s/LEGGIMI.md.
-          image: tarots-web:v9.0
+          image: tarots-web:v9.1
           imagePullPolicy: IfNotPresent
           env:
             # Il server di Next legge le anteprime delle letture condivise
@@ -873,7 +873,7 @@ spec:
         - name: admin
           # La console, costruita con basePath /admin e client tarot-admin
           # (vedi le --build-arg in deploy/k8s/LEGGIMI.md).
-          image: tarots-admin:v9.0
+          image: tarots-admin:v9.1
           imagePullPolicy: IfNotPresent
           ports:
             - {name: http, containerPort: 3000}

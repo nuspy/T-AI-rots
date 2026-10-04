@@ -93,12 +93,16 @@ function useRipresaSessione(auth: AuthContextProps): boolean {
   useEffect(() => {
     if (!riprendibile || !tokenRinnovo || inCorso.current === tokenRinnovo) return;
     inCorso.current = tokenRinnovo;
+    /* `react-oidc-context` non rifiuta la promessa quando il rinnovo fallisce: mette l'errore in `auth.error` e
+     * restituisce `null`. Va trattato come un fallimento, altrimenti la ripresa resta «in corso» per sempre: niente
+     * «Entra» e niente profilo nella testata (successo dopo il rilascio v9, con i token di prima rifiutati). */
+    const fallita = () => {
+      setFallitaPer(tokenRinnovo);
+      return auth.removeUser();
+    };
     auth
       .signinSilent()
-      .catch(() => {
-        setFallitaPer(tokenRinnovo);
-        return auth.removeUser();
-      })
+      .then((utente) => (utente ? undefined : fallita()), fallita)
       .catch(() => undefined);
   }, [riprendibile, tokenRinnovo, auth]);
 

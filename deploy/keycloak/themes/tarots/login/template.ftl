@@ -2,7 +2,7 @@
   Il guscio di ogni pagina di accesso (login, registrazione, password dimenticata e da aggiornare, 2FA, errori,
   info) nello stile della v2 del sito: testata prugna col marchio «✦ TAROTS chat», foglio di carta chiara al centro,
   piede prugna. Riscrive solo il layout di `keycloak.v2`: le pagine (login.ftl, register.ftl, login-otp.ftl, …)
-  restano quelle del tema di base, con il loro markup PatternFly, ridisegnato da css/styles.css.
+  restano quelle del tema di base, con il loro markup PatternFly, ridisegnato da css/tarots-v7.css.
 
   La firma della macro (`registrationLayout bodyClass displayInfo displayMessage displayRequiredFields`) e le sezioni
   annidate (header, show-username, form, info, socialProviders) sono quelle di keycloak.v2 26.0: le pagine di base
@@ -149,9 +149,11 @@
                     <span class="${properties.kcInputRequiredClass!}">*</span> ${msg("requiredFields")}
                 </p>
             </#if>
+            <#-- Niente riga «Email: … Non sei tu? Cambia» dei passi dopo il primo (password, codice della 2FA): decisione
+                 dell'operatore del 28/9, ribadita il 5/10 («richiesta inutile dell'email»). La macro `username` resta
+                 qui sopra, non usata, per riallineare il guscio a keycloak.v2 senza cercarla. -->
             <div class="${properties.kcFormClass} t-chi">
                 <#nested "show-username">
-                <@username />
             </div>
         </#if>
 

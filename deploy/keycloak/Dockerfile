@@ -5,7 +5,7 @@
 # tutto quel tempo. Qui le opzioni di build sono fissate nell'immagine e il pod
 # parte con `start --optimized`.
 #
-#   docker build -f deploy/keycloak/Dockerfile -t tarots-keycloak:v6 deploy/keycloak
+#   docker build -f deploy/keycloak/Dockerfile -t tarots-keycloak:v7 deploy/keycloak
 #
 # Il tema (themes/tarots) è dentro l'immagine: ogni modifica al tema vuol dire un tag nuovo, qui e in
 # deploy/k8s/tarots.yaml.

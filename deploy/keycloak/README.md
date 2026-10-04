@@ -45,7 +45,7 @@ l'interfaccia, marchio «✦ TAROTS chat».
   versione maggiore** va riconfrontato con il `template.ftl` di `keycloak.v2` di quella versione.
 - `login/social-providers.ftl` — i pulsanti «Continua con …», uno per riga, con l'icona del provider. Keycloak passa
   solo i provider **accesi**: si accendono dalla console («Accesso con i social»), senza ricostruire l'immagine.
-- `login/resources/css/styles.css` — ridisegna il markup PatternFly 5 delle pagine (token globali e variabili dei
+- `login/resources/css/tarots-v7.css` — ridisegna il markup PatternFly 5 delle pagine (token globali e variabili dei
   componenti) e il guscio. Mobile-first, verificato a 360, 390 e 1280 px (nessuno scroll orizzontale, bersagli ≥44px).
 - `login/resources/fonts/` — i caratteri serviti dal tema (OFL), non da Google Fonts: la pagina d'accesso non manda
   l'IP di chi entra a terzi.
