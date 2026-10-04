@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>TAROTS chat</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>tarots</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(FLUTTER_BUILD_NAME)</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<!-- Le lingue dell'app (le stesse quindici del sito): iOS mostra la lingua giusta nei dialoghi di sistema. -->
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>it</string>
+		<string>hu</string>
+		<string>de</string>
+		<string>ru</string>
+		<string>uk</string>
+		<string>fr</string>
+		<string>es</string>
+		<string>pt</string>
+		<string>ro</string>
+		<string>pl</string>
+		<string>zh</string>
+		<string>hi</string>
+		<string>ko</string>
+		<string>ar</string>
+	</array>
+	<!-- Il ritorno dall'accesso con Keycloak (flutter_appauth): chat.tarots.app:/oauth2redirect; e il ritorno da un
+	     pagamento aperto nel browser (Fase 8): chat.tarots.app://ritorno/<percorso>?checkout=<id>. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>chat.tarots.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>chat.tarots.app</string>
+			</array>
+		</dict>
+	</array>
+	<!-- I collegamenti del sito aprono l'app (go_router), con gli Universal Links: Associated Domains in
+	     Runner.entitlements (applinks:tarots.chat) e /.well-known/apple-app-site-association su tarots.chat, scritto
+	     dal sito coi valori della console (Fase 10). Il ritorno da un pagamento con carta resta il deep link
+	     chat.tarots.app://ritorno/… (sopra): un reindirizzamento dopo il pagamento non apre gli Universal Links. -->
+	<key>FlutterDeepLinkingEnabled</key>
+	<true/>
+	<!-- L'immagine del profilo (image_picker): dalla libreria o dalla fotocamera, solo quando la si sceglie. -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>To choose the picture of your TAROTS chat profile.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>To take the picture of your TAROTS chat profile.</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<!-- Lo sviluppo con l'API sul PC (http nella rete locale); in produzione tutto è https. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<!-- Firebase Analytics: spento finché non c'è il consenso «google_analytics» (lo accende l'app), niente schermate
+	     automatiche (le manda l'app col percorso del sito), niente segnali pubblicitari; AdSupport non è collegato,
+	     quindi niente IDFA. -->
+	<key>FIREBASE_ANALYTICS_COLLECTION_ENABLED</key>
+	<false/>
+	<key>FirebaseAutomaticScreenReportingEnabled</key>
+	<false/>
+	<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS</key>
+	<false/>
+	<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_USER_DATA</key>
+	<false/>
+	<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_STORAGE</key>
+	<false/>
+	<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_ANALYTICS_STORAGE</key>
+	<false/>
+	<!-- Fase 9, le notifiche: nessun token FCM finché la persona non le accende (l'app chiama setAutoInitEnabled dopo
+	     il sì, e solo allora chiede il permesso); le notifiche remote anche con l'app in secondo piano. -->
+	<key>FirebaseMessagingAutoInitEnabled</key>
+	<false/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneClassName</key>
+					<string>UIWindowScene</string>
+					<key>UISceneConfigurationName</key>
+					<string>flutter</string>
+					<key>UISceneDelegateClassName</key>
+					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+					<key>UISceneStoryboardFile</key>
+					<string>Main</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<!-- iPhone in verticale (la versione mobile del sito è disegnata così); iPad in tutte le orientazioni, come Apple
+	     chiede per Split View e Slide Over. Vedi lib/main.dart. -->
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleLightContent</string>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<true/>
+</dict>
+</plist>

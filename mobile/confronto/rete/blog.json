@@ -1,0 +1,1428 @@
+{
+ "GET /me/profile": {
+  "stato": 200,
+  "json": {
+   "id": 3,
+   "email": "sviluppo@localhost",
+   "display_name": "Utente di sviluppo",
+   "locale": "it",
+   "birth_date": "1974-07-05",
+   "gender": "uomo",
+   "gender_custom": null,
+   "is_trans": false,
+   "promemoria_2fa": true,
+   "nome_pubblico": null,
+   "nome_mostrato": "Utente",
+   "registro_linguistico": "quotidiano",
+   "mazzo_predefinito_id": null,
+   "avatar": null,
+   "nome": null,
+   "cognome": null,
+   "posizione": null,
+   "dati_social": {},
+   "importa_social": true,
+   "rileva_posizione": true,
+   "partner_ricordato": null,
+   "relazioni": {
+    "completo": true,
+    "mancanti": []
+   },
+   "referral_code": "DRER3KFW",
+   "invitato": false,
+   "condivisioni": {
+    "verificate": 0,
+    "premi": 0,
+    "prossimo_tra": 5,
+    "iscrizioni": 0,
+    "soglia": 5,
+    "crediti_iscrizione": 5
+   },
+   "carta_anima": {
+    "id": "maj-06",
+    "arcano": "maggiore",
+    "numero": 6,
+    "numero_romano": "VI",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Lovers",
+    "titolo_thoth": null,
+    "nome_it": "Gli Amanti",
+    "lettera_ebraica": {
+     "nome": "Zain",
+     "glifo": "ז",
+     "valore": 7
+    },
+    "elemento": "aria",
+    "astrologia": "Gemelli",
+    "parole_chiave": [
+     "scelta",
+     "unione",
+     "dualità",
+     "amore",
+     "analisi"
+    ],
+    "colori": [
+     "#FF8C00",
+     "#D8BFD8"
+    ],
+    "nomi": {
+     "en": "The Lovers",
+     "hu": "A Szerelmesek",
+     "ru": "Влюблённые",
+     "uk": "Закохані",
+     "es": "Los Amantes"
+    },
+    "lang": "it",
+    "nome": "Gli Amanti",
+    "slug": "gli-amanti",
+    "slugs": {
+     "it": "gli-amanti",
+     "en": "the-lovers"
+    },
+    "percorso": 17,
+    "collega": [
+     "Binah",
+     "Tiphareth"
+    ],
+    "sefira": null,
+    "significati": {
+     "essoterico": "Amore, attrazione, scelte importanti fra alternative. Indica relazioni, alleanze e decisioni che richiedono un coinvolgimento profondo.",
+     "psicologico": "Rappresenta l'incontro degli opposti interiori e il momento della scelta consapevole; anche la tensione fra ragione e desiderio.",
+     "iniziatico": "Percorso 17 da Binah a Tiphareth, lettera Zain (la spada, 7) e Gemelli, segno d'Aria di Mercurio: la spada che divide per rendere possibile l'unione. È l'avvio del Matrimonio Chimico, l'incontro dei principi opposti che dovranno fondersi.",
+     "ombra": "Mal dignificati indicano indecisione, infedeltà, idealizzazione, o scelte che dividono la persona contro se stessa."
+    },
+    "dritto": "Una scelta va fatta con cuore e mente allineati; un'unione o un'alleanza significativa è possibile.",
+    "rovescio": "Divisione interiore, conflitto di valori, rapporti sbilanciati, oppure paura di scegliere che lascia tutto in sospeso.",
+    "ambiti": {
+     "amore": "Attrazione forte, legame significativo; oppure un bivio sentimentale che richiede sincerità.",
+     "lavoro": "Partnership e collaborazioni; decisioni fra due strade da ponderare con analisi e integrità.",
+     "spirito": "L'unione degli opposti come via: prima l'analisi che distingue, poi la sintesi che unisce."
+    },
+    "nota_crowley": "Crowley ne fa la prima fase delle nozze alchemiche: un re moro e una regina bianca sono uniti da una figura incappucciata sotto un Cupido che scocca la freccia, e l'opera iniziata qui si compirà nell'Arte (XIV)."
+   },
+   "carta_anno": {
+    "id": "maj-00",
+    "arcano": "maggiore",
+    "numero": 0,
+    "numero_romano": "0",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Fool",
+    "titolo_thoth": null,
+    "nome_it": "Il Matto",
+    "lettera_ebraica": {
+     "nome": "Aleph",
+     "glifo": "א",
+     "valore": 1
+    },
+    "elemento": "aria",
+    "astrologia": "Aria",
+    "parole_chiave": [
+     "potenziale puro",
+     "libertà",
+     "inizio",
+     "innocenza divina",
+     "salto nell'ignoto"
+    ],
+    "colori": [
+     "#FFF8A6",
+     "#87CEEB"
+    ],
+    "nomi": {
+     "en": "The Fool",
+     "hu": "A Bolond",
+     "ru": "Дурак",
+     "uk": "Блазень",
+     "es": "El Loco"
+    },
+    "lang": "it",
+    "nome": "Il Matto",
+    "slug": "il-matto",
+    "slugs": {
+     "it": "il-matto",
+     "en": "the-fool"
+    },
+    "percorso": 11,
+    "collega": [
+     "Kether",
+     "Chokmah"
+    ],
+    "sefira": null,
+    "significati": {
+     "essoterico": "Un inizio che nasce senza calcolo, da un impulso spontaneo e fiducioso. Annuncia idee originali, viaggi, imprevisti e la disponibilità a lasciare il noto per seguire un'ispirazione che non sa ancora dove porta.",
+     "psicologico": "È la parte della psiche che non si identifica con ruoli e aspettative, lo spazio vuoto da cui nasce ogni creatività. Chiede di tollerare l'incertezza invece di colmarla subito con piani rigidi.",
+     "iniziatico": "Percorso 11 da Kether a Chokmah, lettera Aleph (il bue, valore 1) e Aria elementare: il primo moto dello Zero verso la manifestazione. È il soffio che precede ogni forma, il Nulla che si scopre fecondo e diventa Due.",
+     "ombra": "Mal dignificato diventa leggerezza irresponsabile, fuga, stravaganza priva di radici: un'azione che disperde l'energia invece di fondarla."
+    },
+    "dritto": "La situazione chiede un salto di fiducia: conta l'apertura, non la garanzia del risultato. Momento propizio per cominciare qualcosa di davvero nuovo, restando leggeri e curiosi.",
+    "rovescio": "L'impulso al nuovo è trattenuto dalla paura oppure si sfoga in scelte impulsive e disordinate. Occorre distinguere la libertà autentica dall'evasione e dall'incoscienza.",
+    "ambiti": {
+     "amore": "Un incontro inatteso o un modo più libero e giocoso di vivere il legame; scarso desiderio di vincoli e definizioni.",
+     "lavoro": "Idee originali, cambi di rotta, progetti avviati per intuizione; da sostenere con un minimo di concretezza e di scadenze.",
+     "spirito": "Invito a lasciar cadere le certezze acquisite e a ritrovare lo stupore che precede ogni conoscenza."
+    },
+    "nota_crowley": "Crowley vede nel Matto l'Uomo Verde della primavera e il Dioniso fanciullo, cornuto e ridente, circondato da tigre, coccodrillo, colomba e grappoli d'uva dentro un vortice a spirale: non un folle, ma lo Spirito prima della creazione."
+   }
+  }
+ },
+ "GET /eta-minima": {
+  "stato": 200,
+  "json": {
+   "anni": 16
+  }
+ },
+ "GET /me/billing": {
+  "stato": 200,
+  "json": {
+   "abbonamento": {
+    "id": "60673449-38ec-4df0-97f3-818a6af82e5b",
+    "piano": "free",
+    "nome": "Free",
+    "stato": "attivo",
+    "provider": "interno",
+    "store": false,
+    "gestione_store": null,
+    "gratuito": true,
+    "annuale": false,
+    "prova": false,
+    "periodo_inizio": "2026-10-04T00:46:53.381026+02:00",
+    "periodo_fine": "2026-11-02T23:46:53.381026+01:00",
+    "disdetto_il": null,
+    "rinnovo_automatico": true,
+    "listino": 0,
+    "importo_periodo": null,
+    "sconto_ricorrente": 0,
+    "prossimo_rinnovo": 0,
+    "valuta": "EUR",
+    "fattura_aperta": false,
+    "pagamento_fallito_il": null,
+    "fine_tolleranza": null,
+    "piano_successivo": null,
+    "coupon": null
+   },
+   "diritti": {
+    "piano": "free",
+    "nome": "Gratuito",
+    "limiti": {
+     "letture_al_giorno": 0
+    },
+    "concessioni": {},
+    "predefiniti": false
+   },
+   "saldo": 1000,
+   "uso": {
+    "letture_al_giorno": {
+     "usati": 0,
+     "limite": 0,
+     "restanti": 0
+    }
+   },
+   "limiti_attivi": true,
+   "letture_comprese": false,
+   "prova": {
+    "idonea": true,
+    "motivo": null
+   }
+  }
+ },
+ "GET /impostazioni-pubbliche": {
+  "stato": 200,
+  "json": {
+   "crediti_iscrizione": 3,
+   "crediti_invito": 5,
+   "commissione_referral_percentuale": 20
+  }
+ },
+ "GET /abbonamenti/pubblico": {
+  "stato": 200,
+  "json": {
+   "banner_prova": true,
+   "prova_disponibile": true,
+   "giorni_prova": 14,
+   "sconto_prova": 50,
+   "sconto_rinnovo": 20,
+   "condoni_per_periodo": 2,
+   "giorni_promemoria_prova": 2,
+   "giorni_tolleranza": 7
+  }
+ },
+ "GET /decks": {
+  "stato": 200,
+  "json": [
+   {
+    "id": 1,
+    "slug": "thoth",
+    "nome": "Thoth Tarot",
+    "descrizione": null,
+    "nomi": {
+     "en": "Thoth Tarot",
+     "es": "Tarot de Thoth",
+     "hu": "Thoth Tarot",
+     "it": "Tarocchi di Thoth",
+     "ru": "Таро Тота",
+     "uk": "Таро Тота"
+    },
+    "descrizioni": {},
+    "predefinito": true,
+    "attivo": true,
+    "attivo_ora": true,
+    "attivazione_da": null,
+    "attivazione_fino": null,
+    "prezzo_digitale": null,
+    "prezzo_stampa": 990,
+    "prezzo_fisico": 3900,
+    "richiede_spedizione": true,
+    "valuta": "EUR",
+    "rank": 0,
+    "immagini_versione": null,
+    "prezzo_digitale_scontato": null,
+    "prezzo_stampa_scontato": null,
+    "prezzo_fisico_scontato": null,
+    "offerta_attiva": false,
+    "offerta_formati": [],
+    "offerta_valido_dal": null,
+    "offerta_valido_fino": null
+   }
+  ]
+ },
+ "GET /blog/nove": {
+  "stato": 200,
+  "json": {
+   "recenti": [
+    {
+     "slug": "wheel-of-fortune-tarot-card-meaning-thoth",
+     "titolo": "The Wheel of Fortune Tarot Card Meaning in the Thoth Deck",
+     "sottotitolo": "Kaph, Jupiter and path 21: why Crowley just calls it Fortune, and what changes when the wheel turns.",
+     "estratto": "The wheel of fortune tarot card meaning changes the moment you open a Thoth deck, because Aleister Crowley and Frieda Harris did not call it that. On card X of the Major Arcana, Crowley's title is simply Fortune. The…",
+     "immagine": null,
+     "sezione": {
+      "slug": "thoth-tarot",
+      "nome": "Thoth Tarot"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:44.976868+02:00",
+     "aggiornato_il": "2026-10-03T15:57:44.975811+02:00",
+     "tempo_lettura": 6,
+     "tags": [
+      {
+       "slug": "major-arcana",
+       "nome": "major arcana"
+      },
+      {
+       "slug": "tarot-card-meanings",
+       "nome": "tarot card meanings"
+      },
+      {
+       "slug": "thoth-tarot",
+       "nome": "thoth tarot"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "how-to-read-the-celtic-cross-tarot-spread",
+     "titolo": "How to Read the Celtic Cross Tarot Spread",
+     "sottotitolo": "Ten positions, one clear order: what each card in the Celtic Cross actually answers.",
+     "estratto": "If you want to know how to read the Celtic Cross tarot spread, the short answer is: in a fixed order, because each of its ten positions asks a different question, and reading them out of order is the single most common…",
+     "immagine": null,
+     "sezione": {
+      "slug": "learn-tarot",
+      "nome": "Learn Tarot"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:44.298779+02:00",
+     "aggiornato_il": "2026-10-03T15:57:44.298332+02:00",
+     "tempo_lettura": 6,
+     "tags": [
+      {
+       "slug": "how-to",
+       "nome": "how-to"
+      },
+      {
+       "slug": "tarot-card-meanings",
+       "nome": "tarot card meanings"
+      },
+      {
+       "slug": "tarot-spreads",
+       "nome": "tarot spreads"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "thoth-tarot-vs-rider-waite",
+     "titolo": "Thoth Tarot vs Rider-Waite: What's the Difference",
+     "sottotitolo": "Two decks built for two different jobs: one to be read at a glance, the other to be studied for years.",
+     "estratto": "If you have only ever seen the Rider-Waite-Smith deck, the Thoth tarot can feel like a different language. The figures are less literal, the colors are sharper, and every card carries a small cluster of correspondences…",
+     "immagine": null,
+     "sezione": {
+      "slug": "thoth-tarot",
+      "nome": "Thoth Tarot"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:43.091373+02:00",
+     "aggiornato_il": "2026-10-03T15:57:43.090374+02:00",
+     "tempo_lettura": 5,
+     "tags": [
+      {
+       "slug": "rider-waite",
+       "nome": "rider-waite"
+      },
+      {
+       "slug": "tarot-decks",
+       "nome": "tarot decks"
+      },
+      {
+       "slug": "thoth-tarot",
+       "nome": "thoth tarot"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "how-to-read-tarot-cards",
+     "titolo": "How to Read Tarot Cards: A Beginner's Guide",
+     "sottotitolo": "Suits, positions and one simple three-card spread to get you reading with real instinct, not memorized definitions.",
+     "estratto": "A deck of seventy-eight cards looks intimidating the first time you spread it out on a table. Learning how to read tarot cards is less about memorizing seventy-eight definitions and more about learning a small number of…",
+     "immagine": null,
+     "sezione": {
+      "slug": "learn-tarot",
+      "nome": "Learn Tarot"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:42.271791+02:00",
+     "aggiornato_il": "2026-10-03T15:57:42.270330+02:00",
+     "tempo_lettura": 5,
+     "tags": [
+      {
+       "slug": "learn-tarot",
+       "nome": "learn tarot"
+      },
+      {
+       "slug": "tarot-for-beginners",
+       "nome": "tarot for beginners"
+      },
+      {
+       "slug": "tarot-spreads",
+       "nome": "tarot spreads"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "golden-dawn-tarot-correspondences",
+     "titolo": "Golden Dawn Tarot Correspondences Explained",
+     "sottotitolo": "How Hebrew letters, astrology and the Tree of Life turn every Thoth tarot card into four systems read as one.",
+     "estratto": "Open the Book of Thoth to any minor arcana card and you will find a small paragraph of attributions before the meaning ever gets explained: a Hebrew letter, a planet or zodiac sign, a path on the Tree of Life. These…",
+     "immagine": null,
+     "sezione": {
+      "slug": "symbolism",
+      "nome": "Symbolism"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:41.283633+02:00",
+     "aggiornato_il": "2026-10-03T15:57:41.282676+02:00",
+     "tempo_lettura": 4,
+     "tags": [
+      {
+       "slug": "golden-dawn",
+       "nome": "golden dawn"
+      },
+      {
+       "slug": "qabalah",
+       "nome": "qabalah"
+      },
+      {
+       "slug": "tarot-symbolism",
+       "nome": "tarot symbolism"
+      },
+      {
+       "slug": "thoth-tarot",
+       "nome": "thoth tarot"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "how-to-journal-your-tarot-reading",
+     "titolo": "How to Journal Your Tarot Reading",
+     "sottotitolo": "A simple template and habit that turns single spreads into a record you can actually learn from.",
+     "estratto": "A reading you never write down is a reading you will half-remember by next week. Learning how to journal your tarot reading turns a single spread into a record you can actually return to — to check whether a card's…",
+     "immagine": null,
+     "sezione": {
+      "slug": "tarot-journal",
+      "nome": "Tarot Journal"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:39.691102+02:00",
+     "aggiornato_il": "2026-10-03T15:57:39.690184+02:00",
+     "tempo_lettura": 4,
+     "tags": [
+      {
+       "slug": "tarot-for-beginners",
+       "nome": "tarot for beginners"
+      },
+      {
+       "slug": "tarot-journal",
+       "nome": "tarot journal"
+      },
+      {
+       "slug": "tarot-practice",
+       "nome": "tarot practice"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    }
+   ],
+   "scelti": [
+    {
+     "slug": "scorpio-season-tarot-reading-thoth-guide",
+     "titolo": "Scorpio Season Tarot Reading: A Thoth Guide to Shadow Work and Transformation",
+     "sottotitolo": "How to read Death, Lust and the hidden currents of October–November with the Thoth Tarot.",
+     "estratto": "Scorpio Season Tarot Reading: A Thoth Guide to Shadow Work and Transformation Scorpio season is the tarot reader's favourite time for deep work. From late October through November, the sun moves through the sign of the…",
+     "immagine": null,
+     "sezione": null,
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:24.637248+02:00",
+     "aggiornato_il": "2026-10-03T15:57:24.636799+02:00",
+     "tempo_lettura": 6,
+     "tags": [
+      {
+       "slug": "major-arcana",
+       "nome": "major arcana"
+      },
+      {
+       "slug": "seasonal",
+       "nome": "seasonal"
+      },
+      {
+       "slug": "shadow-work",
+       "nome": "shadow work"
+      },
+      {
+       "slug": "thoth-tarot",
+       "nome": "thoth tarot"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "ai-tarot-vs-human-reader",
+     "titolo": "AI Tarot vs Human Reader: How to Choose",
+     "sottotitolo": "Consistency and availability versus felt presence and intuition: what each actually offers, and neither replaces your own judgment.",
+     "estratto": "The comparison of AI tarot vs human reader usually gets framed as a competition, as if one has to replace the other. That framing misses what each is actually good at. An AI reading and a human reading solve different…",
+     "immagine": null,
+     "sezione": {
+      "slug": "spirituality",
+      "nome": "Spirituality"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:27.301394+02:00",
+     "aggiornato_il": "2026-10-03T15:57:27.300499+02:00",
+     "tempo_lettura": 4,
+     "tags": [
+      {
+       "slug": "ai-tarot",
+       "nome": "ai tarot"
+      },
+      {
+       "slug": "tarot-ethics",
+       "nome": "tarot ethics"
+      },
+      {
+       "slug": "tarot-practice",
+       "nome": "tarot practice"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "tarot-spreads-for-shadow-work",
+     "titolo": "Tarot Spreads for Shadow Work",
+     "sottotitolo": "A three-position spread and a four-card pattern spread for looking at what you usually avoid.",
+     "estratto": "Shadow work is the practice of looking directly at the parts of yourself you'd rather not look at — the reactions you don't like, the patterns you keep repeating, the things you avoid admitting even to yourself. Good…",
+     "immagine": null,
+     "sezione": {
+      "slug": "spirituality",
+      "nome": "Spirituality"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:39.094026+02:00",
+     "aggiornato_il": "2026-10-03T15:57:39.093015+02:00",
+     "tempo_lettura": 4,
+     "tags": [
+      {
+       "slug": "shadow-work",
+       "nome": "shadow work"
+      },
+      {
+       "slug": "tarot-journal",
+       "nome": "tarot journal"
+      },
+      {
+       "slug": "tarot-spreads",
+       "nome": "tarot spreads"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "autumn-equinox-tarot-reading-thoth-guide",
+     "titolo": "Autumn Equinox Tarot Reading: A Seasonal Guide",
+     "sottotitolo": null,
+     "estratto": "What Is the Autumn Equinox Tarot Reading? The autumn equinox tarot reading is a seasonal practice that uses the balance of day and night on September 22–23 as a mirror for your own life. In the Thoth deck, this moment…",
+     "immagine": null,
+     "sezione": {
+      "slug": "spirituality",
+      "nome": "Spirituality"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:31.397389+02:00",
+     "aggiornato_il": "2026-10-03T15:57:31.396499+02:00",
+     "tempo_lettura": 6,
+     "tags": [
+      {
+       "slug": "major-arcana",
+       "nome": "major arcana"
+      },
+      {
+       "slug": "seasonal",
+       "nome": "seasonal"
+      },
+      {
+       "slug": "tarot-spreads",
+       "nome": "tarot spreads"
+      },
+      {
+       "slug": "thoth-tarot",
+       "nome": "thoth tarot"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "the-tower-tarot-card-meaning-thoth-deck",
+     "titolo": "The Tower Tarot Card Meaning in the Thoth Deck",
+     "sottotitolo": null,
+     "estratto": "The Tower Tarot Card Meaning Thoth Deck: Crowley's Vision of Divine Destruction The tower tarot card meaning thoth deck interpretation reveals one of the most powerful and misunderstood Major Arcana in all of tarot. In…",
+     "immagine": null,
+     "sezione": {
+      "slug": "thoth-tarot",
+      "nome": "Thoth Tarot"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:23.242761+02:00",
+     "aggiornato_il": "2026-10-03T15:57:23.241930+02:00",
+     "tempo_lettura": 6,
+     "tags": [
+      {
+       "slug": "major-arcana",
+       "nome": "major arcana"
+      },
+      {
+       "slug": "tarot-card-meanings",
+       "nome": "tarot card meanings"
+      },
+      {
+       "slug": "thoth-tarot",
+       "nome": "thoth tarot"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "lady-frieda-harris-thoth-tarot-artwork",
+     "titolo": "Lady Frieda Harris and the Thoth Tarot Artwork",
+     "sottotitolo": "Five years, 78 paintings, and a visual language of Golden Dawn doctrine that took decades to reach print.",
+     "estratto": "Lady Frieda Harris Thoth artwork is often credited as a footnote to Aleister Crowley's name, but the paintings themselves tell a different story. Harris spent roughly five years, from 1938 to 1943, painting all 78 cards…",
+     "immagine": null,
+     "sezione": {
+      "slug": "thoth-tarot",
+      "nome": "Thoth Tarot"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:26.510125+02:00",
+     "aggiornato_il": "2026-10-03T15:57:26.509245+02:00",
+     "tempo_lettura": 4,
+     "tags": [
+      {
+       "slug": "book-of-thoth",
+       "nome": "book of thoth"
+      },
+      {
+       "slug": "lady-frieda-harris",
+       "nome": "lady frieda harris"
+      },
+      {
+       "slug": "tarot-decks",
+       "nome": "tarot decks"
+      },
+      {
+       "slug": "thoth-tarot",
+       "nome": "thoth tarot"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "tarot-spreads-for-career-decisions",
+     "titolo": "Tarot Spreads for Career Decisions",
+     "sottotitolo": "A four-card spread for a specific choice, and when to use the wider Horseshoe instead.",
+     "estratto": "A career question rarely wants a yes-or-no answer. \"Should I take the job\" is really several smaller questions bundled together — what am I actually afraid of, what am I not seeing about the current situation, what…",
+     "immagine": null,
+     "sezione": {
+      "slug": "career",
+      "nome": "Career"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:32.011798+02:00",
+     "aggiornato_il": "2026-10-03T15:57:32.011044+02:00",
+     "tempo_lettura": 4,
+     "tags": [
+      {
+       "slug": "career",
+       "nome": "career"
+      },
+      {
+       "slug": "tarot-spreads",
+       "nome": "tarot spreads"
+      },
+      {
+       "slug": "work",
+       "nome": "work"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "the-sun-tarot-card-meaning-thoth-deck",
+     "titolo": "The Sun Tarot Card Meaning in the Thoth Deck",
+     "sottotitolo": null,
+     "estratto": "The Sun Tarot Card Meaning Thoth Deck: Crowley's Vision of Light The sun tarot card meaning thoth deck interpretation reveals one of the most radiant and positive cards in all of Major Arcana. In the Thoth deck, painted…",
+     "immagine": null,
+     "sezione": {
+      "slug": "thoth-tarot",
+      "nome": "Thoth Tarot"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:19.966893+02:00",
+     "aggiornato_il": "2026-10-03T15:57:19.964459+02:00",
+     "tempo_lettura": 7,
+     "tags": [
+      {
+       "slug": "major-arcana",
+       "nome": "major arcana"
+      },
+      {
+       "slug": "tarot-card-meanings",
+       "nome": "tarot card meanings"
+      },
+      {
+       "slug": "thoth-tarot",
+       "nome": "thoth tarot"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "is-ai-tarot-accurate",
+     "titolo": "Is AI Tarot Accurate?",
+     "sottotitolo": "Separating what tarot accuracy can mean from what an AI reader can actually get right or wrong.",
+     "estratto": "Is AI tarot accurate? is really two different questions wearing one sentence. The first is about the cards: does an AI system draw and read them the same way a trained human reader would, following the same…",
+     "immagine": null,
+     "sezione": {
+      "slug": "learn-tarot",
+      "nome": "Learn Tarot"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:35.390431+02:00",
+     "aggiornato_il": "2026-10-03T15:57:35.388856+02:00",
+     "tempo_lettura": 5,
+     "tags": [
+      {
+       "slug": "ai-tarot",
+       "nome": "ai tarot"
+      },
+      {
+       "slug": "learn-tarot",
+       "nome": "learn tarot"
+      },
+      {
+       "slug": "tarot-ethics",
+       "nome": "tarot ethics"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "five-of-cups-tarot-meaning-grief-and-what-remains",
+     "titolo": "Five of Cups Tarot Meaning: Grief and What Remains",
+     "sottotitolo": null,
+     "estratto": "The Five of Cups is the card of what we lose and of what remains standing behind us. Grief and what remains Three cups are spilled, two still stand. In love A bridge leads home.",
+     "immagine": {
+      "url": "/blog/media/58a22226-d59b-4373-8e38-e5dbc5b78468.webp",
+      "mini": "/blog/media/58a22226-d59b-4373-8e38-e5dbc5b78468-mini.webp",
+      "alt": "A lone figure on a stone bridge in the rain, three glasses overturned and two still standing"
+     },
+     "sezione": null,
+     "autore": {
+      "id": null,
+      "nome": "Redazione",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-09-30T20:02:00.936045+02:00",
+     "aggiornato_il": "2026-09-30T20:03:46.626880+02:00",
+     "tempo_lettura": 1,
+     "tags": [
+      {
+       "slug": "cups",
+       "nome": "Cups"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    }
+   ]
+  }
+ },
+ "GET /impostazioni-chat": {
+  "stato": 200,
+  "json": {
+   "proattiva_minuti_inattivita": 0,
+   "proattiva_max_per_visita": 3
+  }
+ },
+ "GET /consenso": {
+  "stato": 200,
+  "json": {
+   "statistiche": "rifiutato",
+   "google_analytics": "rifiutato"
+  }
+ },
+ "PATCH /me/profile": {
+  "stato": 200,
+  "json": {
+   "id": 3,
+   "email": "sviluppo@localhost",
+   "display_name": "Utente di sviluppo",
+   "locale": "it",
+   "birth_date": "1974-07-05",
+   "gender": "uomo",
+   "gender_custom": null,
+   "is_trans": false,
+   "promemoria_2fa": true,
+   "nome_pubblico": null,
+   "nome_mostrato": "Utente",
+   "registro_linguistico": "quotidiano",
+   "mazzo_predefinito_id": null,
+   "avatar": null,
+   "nome": null,
+   "cognome": null,
+   "posizione": null,
+   "dati_social": {},
+   "importa_social": true,
+   "rileva_posizione": true,
+   "partner_ricordato": null,
+   "relazioni": {
+    "completo": true,
+    "mancanti": []
+   },
+   "referral_code": "DRER3KFW",
+   "invitato": false,
+   "condivisioni": {
+    "verificate": 0,
+    "premi": 0,
+    "prossimo_tra": 5,
+    "iscrizioni": 0,
+    "soglia": 5,
+    "crediti_iscrizione": 5
+   },
+   "carta_anima": {
+    "id": "maj-06",
+    "arcano": "maggiore",
+    "numero": 6,
+    "numero_romano": "VI",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Lovers",
+    "titolo_thoth": null,
+    "nome_it": "Gli Amanti",
+    "lettera_ebraica": {
+     "nome": "Zain",
+     "glifo": "ז",
+     "valore": 7
+    },
+    "elemento": "aria",
+    "astrologia": "Gemelli",
+    "parole_chiave": [
+     "scelta",
+     "unione",
+     "dualità",
+     "amore",
+     "analisi"
+    ],
+    "colori": [
+     "#FF8C00",
+     "#D8BFD8"
+    ],
+    "nomi": {
+     "en": "The Lovers",
+     "hu": "A Szerelmesek",
+     "ru": "Влюблённые",
+     "uk": "Закохані",
+     "es": "Los Amantes"
+    },
+    "lang": "it",
+    "nome": "Gli Amanti",
+    "slug": "gli-amanti",
+    "slugs": {
+     "it": "gli-amanti",
+     "en": "the-lovers"
+    },
+    "percorso": 17,
+    "collega": [
+     "Binah",
+     "Tiphareth"
+    ],
+    "sefira": null,
+    "significati": {
+     "essoterico": "Amore, attrazione, scelte importanti fra alternative. Indica relazioni, alleanze e decisioni che richiedono un coinvolgimento profondo.",
+     "psicologico": "Rappresenta l'incontro degli opposti interiori e il momento della scelta consapevole; anche la tensione fra ragione e desiderio.",
+     "iniziatico": "Percorso 17 da Binah a Tiphareth, lettera Zain (la spada, 7) e Gemelli, segno d'Aria di Mercurio: la spada che divide per rendere possibile l'unione. È l'avvio del Matrimonio Chimico, l'incontro dei principi opposti che dovranno fondersi.",
+     "ombra": "Mal dignificati indicano indecisione, infedeltà, idealizzazione, o scelte che dividono la persona contro se stessa."
+    },
+    "dritto": "Una scelta va fatta con cuore e mente allineati; un'unione o un'alleanza significativa è possibile.",
+    "rovescio": "Divisione interiore, conflitto di valori, rapporti sbilanciati, oppure paura di scegliere che lascia tutto in sospeso.",
+    "ambiti": {
+     "amore": "Attrazione forte, legame significativo; oppure un bivio sentimentale che richiede sincerità.",
+     "lavoro": "Partnership e collaborazioni; decisioni fra due strade da ponderare con analisi e integrità.",
+     "spirito": "L'unione degli opposti come via: prima l'analisi che distingue, poi la sintesi che unisce."
+    },
+    "nota_crowley": "Crowley ne fa la prima fase delle nozze alchemiche: un re moro e una regina bianca sono uniti da una figura incappucciata sotto un Cupido che scocca la freccia, e l'opera iniziata qui si compirà nell'Arte (XIV)."
+   },
+   "carta_anno": {
+    "id": "maj-00",
+    "arcano": "maggiore",
+    "numero": 0,
+    "numero_romano": "0",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Fool",
+    "titolo_thoth": null,
+    "nome_it": "Il Matto",
+    "lettera_ebraica": {
+     "nome": "Aleph",
+     "glifo": "א",
+     "valore": 1
+    },
+    "elemento": "aria",
+    "astrologia": "Aria",
+    "parole_chiave": [
+     "potenziale puro",
+     "libertà",
+     "inizio",
+     "innocenza divina",
+     "salto nell'ignoto"
+    ],
+    "colori": [
+     "#FFF8A6",
+     "#87CEEB"
+    ],
+    "nomi": {
+     "en": "The Fool",
+     "hu": "A Bolond",
+     "ru": "Дурак",
+     "uk": "Блазень",
+     "es": "El Loco"
+    },
+    "lang": "it",
+    "nome": "Il Matto",
+    "slug": "il-matto",
+    "slugs": {
+     "it": "il-matto",
+     "en": "the-fool"
+    },
+    "percorso": 11,
+    "collega": [
+     "Kether",
+     "Chokmah"
+    ],
+    "sefira": null,
+    "significati": {
+     "essoterico": "Un inizio che nasce senza calcolo, da un impulso spontaneo e fiducioso. Annuncia idee originali, viaggi, imprevisti e la disponibilità a lasciare il noto per seguire un'ispirazione che non sa ancora dove porta.",
+     "psicologico": "È la parte della psiche che non si identifica con ruoli e aspettative, lo spazio vuoto da cui nasce ogni creatività. Chiede di tollerare l'incertezza invece di colmarla subito con piani rigidi.",
+     "iniziatico": "Percorso 11 da Kether a Chokmah, lettera Aleph (il bue, valore 1) e Aria elementare: il primo moto dello Zero verso la manifestazione. È il soffio che precede ogni forma, il Nulla che si scopre fecondo e diventa Due.",
+     "ombra": "Mal dignificato diventa leggerezza irresponsabile, fuga, stravaganza priva di radici: un'azione che disperde l'energia invece di fondarla."
+    },
+    "dritto": "La situazione chiede un salto di fiducia: conta l'apertura, non la garanzia del risultato. Momento propizio per cominciare qualcosa di davvero nuovo, restando leggeri e curiosi.",
+    "rovescio": "L'impulso al nuovo è trattenuto dalla paura oppure si sfoga in scelte impulsive e disordinate. Occorre distinguere la libertà autentica dall'evasione e dall'incoscienza.",
+    "ambiti": {
+     "amore": "Un incontro inatteso o un modo più libero e giocoso di vivere il legame; scarso desiderio di vincoli e definizioni.",
+     "lavoro": "Idee originali, cambi di rotta, progetti avviati per intuizione; da sostenere con un minimo di concretezza e di scadenze.",
+     "spirito": "Invito a lasciar cadere le certezze acquisite e a ritrovare lo stupore che precede ogni conoscenza."
+    },
+    "nota_crowley": "Crowley vede nel Matto l'Uomo Verde della primavera e il Dioniso fanciullo, cornuto e ridente, circondato da tigre, coccodrillo, colomba e grappoli d'uva dentro un vortice a spirale: non un folle, ma lo Spirito prima della creazione."
+   }
+  }
+ },
+ "GET /chat/proattiva": {
+  "stato": 200,
+  "json": {
+   "turni": []
+  }
+ },
+ "POST /chat/proattiva/avvio": {
+  "stato": 201,
+  "json": {
+   "turno": null
+  }
+ },
+ "GET /blog/posts": {
+  "stato": 200,
+  "json": {
+   "totale": 0,
+   "pagina": 1,
+   "per_pagina": 1,
+   "pagine": 1,
+   "articoli": []
+  }
+ },
+ "GET /blog/sections": {
+  "stato": 200,
+  "json": [
+   {
+    "id": 18,
+    "slug": "tarot",
+    "nome": "Tarot",
+    "descrizione": "The cards, the spreads and the articles: everything you need to understand and read the tarot.",
+    "tipo": "contenitore",
+    "filtro": null,
+    "immagine": null,
+    "n_articoli": 0,
+    "n_elementi": null,
+    "figli": [
+     {
+      "id": 19,
+      "slug": "major-arcana",
+      "nome": "Major Arcana",
+      "descrizione": "The twenty-two cards of the great themes, from The Fool to The Universe.",
+      "tipo": "carte",
+      "filtro": {
+       "arcano": "maggiore"
+      },
+      "immagine": null,
+      "n_articoli": 0,
+      "n_elementi": 22,
+      "figli": []
+     },
+     {
+      "id": 20,
+      "slug": "minor-arcana",
+      "nome": "Minor Arcana",
+      "descrizione": "The fifty-six cards of everyday life, divided into four suits.",
+      "tipo": "contenitore",
+      "filtro": null,
+      "immagine": null,
+      "n_articoli": 0,
+      "n_elementi": null,
+      "figli": [
+       {
+        "id": 21,
+        "slug": "wands",
+        "nome": "Wands",
+        "descrizione": "Fire: will, energy, initiative.",
+        "tipo": "carte",
+        "filtro": {
+         "seme": "bastoni"
+        },
+        "immagine": null,
+        "n_articoli": 0,
+        "n_elementi": 14,
+        "figli": []
+       },
+       {
+        "id": 22,
+        "slug": "cups",
+        "nome": "Cups",
+        "descrizione": "Water: emotions, relationships, intuition.",
+        "tipo": "carte",
+        "filtro": {
+         "seme": "coppe"
+        },
+        "immagine": null,
+        "n_articoli": 0,
+        "n_elementi": 14,
+        "figli": []
+       },
+       {
+        "id": 23,
+        "slug": "swords",
+        "nome": "Swords",
+        "descrizione": "Air: thought, speech, conflict.",
+        "tipo": "carte",
+        "filtro": {
+         "seme": "spade"
+        },
+        "immagine": null,
+        "n_articoli": 0,
+        "n_elementi": 14,
+        "figli": []
+       },
+       {
+        "id": 24,
+        "slug": "disks",
+        "nome": "Disks",
+        "descrizione": "Earth: work, money, the body.",
+        "tipo": "carte",
+        "filtro": {
+         "seme": "dischi"
+        },
+        "immagine": null,
+        "n_articoli": 0,
+        "n_elementi": 14,
+        "figli": []
+       }
+      ]
+     },
+     {
+      "id": 25,
+      "slug": "learn-tarot",
+      "nome": "Learn Tarot",
+      "descrizione": "How the tarot works and how to read it: guides to get started.",
+      "tipo": "articoli",
+      "filtro": null,
+      "immagine": null,
+      "n_articoli": 4,
+      "n_elementi": null,
+      "figli": [
+       {
+        "id": 26,
+        "slug": "tarot-spreads",
+        "nome": "Tarot Spreads",
+        "descrizione": "The layouts for placing the cards, with the meaning of every position.",
+        "tipo": "stese",
+        "filtro": null,
+        "immagine": null,
+        "n_articoli": 0,
+        "n_elementi": 19,
+        "figli": []
+       }
+      ]
+     },
+     {
+      "id": 27,
+      "slug": "tarot-journal",
+      "nome": "Tarot Journal",
+      "descrizione": "Keeping a journal of your readings: practice, examples, prompts.",
+      "tipo": "articoli",
+      "filtro": null,
+      "immagine": null,
+      "n_articoli": 2,
+      "n_elementi": null,
+      "figli": []
+     },
+     {
+      "id": 28,
+      "slug": "articles",
+      "nome": "Articles",
+      "descrizione": "In-depth pieces by theme.",
+      "tipo": "contenitore",
+      "filtro": null,
+      "immagine": null,
+      "n_articoli": 0,
+      "n_elementi": null,
+      "figli": [
+       {
+        "id": 29,
+        "slug": "love",
+        "nome": "Love",
+        "descrizione": "Love read through the cards.",
+        "tipo": "articoli",
+        "filtro": null,
+        "immagine": null,
+        "n_articoli": 1,
+        "n_elementi": null,
+        "figli": []
+       },
+       {
+        "id": 30,
+        "slug": "relationships",
+        "nome": "Relationships",
+        "descrizione": "Couples, family, friendships.",
+        "tipo": "articoli",
+        "filtro": null,
+        "immagine": null,
+        "n_articoli": 1,
+        "n_elementi": null,
+        "figli": []
+       },
+       {
+        "id": 31,
+        "slug": "career",
+        "nome": "Career",
+        "descrizione": "Work, choices, money.",
+        "tipo": "articoli",
+        "filtro": null,
+        "immagine": null,
+        "n_articoli": 1,
+        "n_elementi": null,
+        "figli": []
+       },
+       {
+        "id": 32,
+        "slug": "spirituality",
+        "nome": "Spirituality",
+        "descrizione": "Inner work and practice.",
+        "tipo": "articoli",
+        "filtro": null,
+        "immagine": null,
+        "n_articoli": 4,
+        "n_elementi": null,
+        "figli": []
+       },
+       {
+        "id": 33,
+        "slug": "symbolism",
+        "nome": "Symbolism",
+        "descrizione": "The language of images.",
+        "tipo": "articoli",
+        "filtro": null,
+        "immagine": null,
+        "n_articoli": 2,
+        "n_elementi": null,
+        "figli": []
+       },
+       {
+        "id": 34,
+        "slug": "thoth-tarot",
+        "nome": "Thoth Tarot",
+        "descrizione": "Crowley and Harris's deck: doctrine, Golden Dawn and Qabalah correspondences, history.",
+        "tipo": "articoli",
+        "filtro": null,
+        "immagine": null,
+        "n_articoli": 8,
+        "n_elementi": null,
+        "figli": []
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "GET /blog/tags": {
+  "stato": 200,
+  "json": [
+   {
+    "slug": "thoth-tarot",
+    "nome": "thoth tarot",
+    "n": 14
+   },
+   {
+    "slug": "major-arcana",
+    "nome": "major arcana",
+    "n": 10
+   },
+   {
+    "slug": "tarot-card-meanings",
+    "nome": "tarot card meanings",
+    "n": 8
+   },
+   {
+    "slug": "tarot-spreads",
+    "nome": "tarot spreads",
+    "n": 8
+   },
+   {
+    "slug": "learn-tarot",
+    "nome": "learn tarot",
+    "n": 3
+   },
+   {
+    "slug": "seasonal",
+    "nome": "seasonal",
+    "n": 3
+   },
+   {
+    "slug": "tarot-for-beginners",
+    "nome": "tarot for beginners",
+    "n": 3
+   },
+   {
+    "slug": "tarot-journal",
+    "nome": "tarot journal",
+    "n": 3
+   },
+   {
+    "slug": "ai-tarot",
+    "nome": "ai tarot",
+    "n": 2
+   },
+   {
+    "slug": "book-of-thoth",
+    "nome": "book of thoth",
+    "n": 2
+   },
+   {
+    "slug": "lady-frieda-harris",
+    "nome": "lady frieda harris",
+    "n": 2
+   },
+   {
+    "slug": "love",
+    "nome": "love",
+    "n": 2
+   },
+   {
+    "slug": "qabalah",
+    "nome": "qabalah",
+    "n": 2
+   },
+   {
+    "slug": "shadow-work",
+    "nome": "shadow work",
+    "n": 2
+   },
+   {
+    "slug": "tarot-decks",
+    "nome": "tarot decks",
+    "n": 2
+   },
+   {
+    "slug": "tarot-ethics",
+    "nome": "tarot ethics",
+    "n": 2
+   },
+   {
+    "slug": "tarot-practice",
+    "nome": "tarot practice",
+    "n": 2
+   },
+   {
+    "slug": "tarot-symbolism",
+    "nome": "tarot symbolism",
+    "n": 2
+   },
+   {
+    "slug": "cups",
+    "nome": "Cups",
+    "n": 1
+   },
+   {
+    "slug": "aleister-crowley",
+    "nome": "aleister crowley",
+    "n": 1
+   },
+   {
+    "slug": "career",
+    "nome": "career",
+    "n": 1
+   },
+   {
+    "slug": "golden-dawn",
+    "nome": "golden dawn",
+    "n": 1
+   },
+   {
+    "slug": "how-to",
+    "nome": "how-to",
+    "n": 1
+   },
+   {
+    "slug": "relationships",
+    "nome": "relationships",
+    "n": 1
+   },
+   {
+    "slug": "rider-waite",
+    "nome": "rider-waite",
+    "n": 1
+   },
+   {
+    "slug": "spirituality",
+    "nome": "spirituality",
+    "n": 1
+   },
+   {
+    "slug": "work",
+    "nome": "work",
+    "n": 1
+   }
+  ]
+ }
+}

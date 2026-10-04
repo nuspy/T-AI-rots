@@ -1,0 +1,10 @@
+# I modelli (lib/modelli/) leggono il JSON dell'API così com'è: campi in snake_case (`nome_thoth`), proprietà Dart in
+# camelCase (`nomeThoth`). Codice generato con `dart run build_runner build`.
+targets:
+  $default:
+    builders:
+      json_serializable:
+        options:
+          field_rename: snake
+          explicit_to_json: true
+          include_if_null: false

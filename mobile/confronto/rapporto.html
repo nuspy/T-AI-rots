@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confronto sito e app</title>
+<style>
+:root { --carta: #f4efe5; --inchiostro: #20162b; --prugna: #3c1846; --ottone: #b28336; }
+body { margin: 0; padding: 16px; background: var(--carta); color: var(--inchiostro); font: 16px/1.6 system-ui, sans-serif; }
+h1 { font-family: Georgia, serif; font-weight: 400; color: var(--prugna); }
+section { margin: 24px 0; padding-top: 12px; border-top: 2px solid var(--ottone); }
+h2 { font-size: 1.1rem; }
+.coppia { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+figure { margin: 0; min-width: 0; } figcaption { font-size: .85rem; color: #55455d; }
+img { max-width: 100%; height: auto; border: 1px solid rgba(60,24,70,.2); background: #fff; }
+.nota { max-width: 70ch; }
+@media (max-width: 560px) { .coppia { grid-template-columns: 1fr; } }
+</style></head><body>
+<h1>Il sito e l'app, affiancati</h1>
+<p class="nota">A sinistra il sito locale in Edge, a destra l'app nei golden test, alle stesse misure (1 px = 1 punto),
+con gli stessi dati: le risposte dell'API che i golden leggono dalle fixture il sito le riceve uguali (Playwright).
+Nel sito è nascosto il banner dei consensi (l'app li chiede al primo avvio). Le pagine sono intere: la barra
+dell'oracolo, ferma in fondo allo schermo, nel sito compare a metà cattura e nell'app in fondo.
+Testata del sito che esce dalla riga (320–430 px, 15 lingue): nessuna.</p>
+<ul class="nota"><li>Home</li><li>Carta del giorno</li><li>Le carte</li><li>Una carta</li><li>Le stese</li><li>Una stesa</li><li>I mazzi</li><li>Un mazzo</li><li>Vota il prossimo mazzo</li><li>Il negozio</li><li>La pagina che non c&#x27;è</li><li>Il carrello (il PDF del Thoth)</li><li>Il rito: preparazione</li><li>Il rito: intervista</li><li>Il rito: scelta</li><li>Il rito: completata</li><li>La mia storia</li><li>Una lettura della storia</li><li>Una lettura condivisa</li><li>Le proprie carte</li><li>Il profilo</li><li>Il profilo con un abbonamento dello store</li><li>Metodo e privacy</li><li>Eliminare l&#x27;account</li><li>I prezzi</li><li>I prezzi con un codice sconto</li><li>La prova gratuita</li><li>Il diario</li><li>Una sezione del diario</li><li>Un articolo</li><li>Esplora</li></ul>
+<section><h2>Home — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/home_360.png"><img src="catture/sito/home_360.png" alt="sito Home — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/home_360.png"><img src="catture/app/home_360.png" alt="app Home — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Home — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/home_390.png"><img src="catture/sito/home_390.png" alt="sito Home — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/home_390.png"><img src="catture/app/home_390.png" alt="app Home — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Home — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/home_1024.png"><img src="catture/sito/home_1024.png" alt="sito Home — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/home_1024.png"><img src="catture/app/home_1024.png" alt="app Home — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Carta del giorno — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/giorno_360.png"><img src="catture/sito/giorno_360.png" alt="sito Carta del giorno — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/giorno_360.png"><img src="catture/app/giorno_360.png" alt="app Carta del giorno — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Carta del giorno — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/giorno_390.png"><img src="catture/sito/giorno_390.png" alt="sito Carta del giorno — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/giorno_390.png"><img src="catture/app/giorno_390.png" alt="app Carta del giorno — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Carta del giorno — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/giorno_1024.png"><img src="catture/sito/giorno_1024.png" alt="sito Carta del giorno — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/giorno_1024.png"><img src="catture/app/giorno_1024.png" alt="app Carta del giorno — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Le carte — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/carte_360.png"><img src="catture/sito/carte_360.png" alt="sito Le carte — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/carte_360.png"><img src="catture/app/carte_360.png" alt="app Le carte — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Le carte — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/carte_390.png"><img src="catture/sito/carte_390.png" alt="sito Le carte — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/carte_390.png"><img src="catture/app/carte_390.png" alt="app Le carte — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Le carte — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/carte_1024.png"><img src="catture/sito/carte_1024.png" alt="sito Le carte — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/carte_1024.png"><img src="catture/app/carte_1024.png" alt="app Le carte — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Una carta — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/carta_360.png"><img src="catture/sito/carta_360.png" alt="sito Una carta — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/carta_360.png"><img src="catture/app/carta_360.png" alt="app Una carta — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Una carta — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/carta_390.png"><img src="catture/sito/carta_390.png" alt="sito Una carta — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/carta_390.png"><img src="catture/app/carta_390.png" alt="app Una carta — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Una carta — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/carta_1024.png"><img src="catture/sito/carta_1024.png" alt="sito Una carta — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/carta_1024.png"><img src="catture/app/carta_1024.png" alt="app Una carta — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Le stese — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/stese_360.png"><img src="catture/sito/stese_360.png" alt="sito Le stese — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/stese_360.png"><img src="catture/app/stese_360.png" alt="app Le stese — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Le stese — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/stese_390.png"><img src="catture/sito/stese_390.png" alt="sito Le stese — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/stese_390.png"><img src="catture/app/stese_390.png" alt="app Le stese — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Le stese — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/stese_1024.png"><img src="catture/sito/stese_1024.png" alt="sito Le stese — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/stese_1024.png"><img src="catture/app/stese_1024.png" alt="app Le stese — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Una stesa — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/stesa_360.png"><img src="catture/sito/stesa_360.png" alt="sito Una stesa — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/stesa_360.png"><img src="catture/app/stesa_360.png" alt="app Una stesa — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Una stesa — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/stesa_390.png"><img src="catture/sito/stesa_390.png" alt="sito Una stesa — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/stesa_390.png"><img src="catture/app/stesa_390.png" alt="app Una stesa — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Una stesa — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/stesa_1024.png"><img src="catture/sito/stesa_1024.png" alt="sito Una stesa — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/stesa_1024.png"><img src="catture/app/stesa_1024.png" alt="app Una stesa — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>I mazzi — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/mazzi_360.png"><img src="catture/sito/mazzi_360.png" alt="sito I mazzi — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/mazzi_360.png"><img src="catture/app/mazzi_360.png" alt="app I mazzi — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>I mazzi — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/mazzi_390.png"><img src="catture/sito/mazzi_390.png" alt="sito I mazzi — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/mazzi_390.png"><img src="catture/app/mazzi_390.png" alt="app I mazzi — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>I mazzi — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/mazzi_1024.png"><img src="catture/sito/mazzi_1024.png" alt="sito I mazzi — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/mazzi_1024.png"><img src="catture/app/mazzi_1024.png" alt="app I mazzi — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Un mazzo — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/mazzo_360.png"><img src="catture/sito/mazzo_360.png" alt="sito Un mazzo — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/mazzo_360.png"><img src="catture/app/mazzo_360.png" alt="app Un mazzo — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Un mazzo — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/mazzo_390.png"><img src="catture/sito/mazzo_390.png" alt="sito Un mazzo — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/mazzo_390.png"><img src="catture/app/mazzo_390.png" alt="app Un mazzo — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Un mazzo — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/mazzo_1024.png"><img src="catture/sito/mazzo_1024.png" alt="sito Un mazzo — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/mazzo_1024.png"><img src="catture/app/mazzo_1024.png" alt="app Un mazzo — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Vota il prossimo mazzo — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/voto_360.png"><img src="catture/sito/voto_360.png" alt="sito Vota il prossimo mazzo — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/voto_360.png"><img src="catture/app/voto_360.png" alt="app Vota il prossimo mazzo — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Vota il prossimo mazzo — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/voto_390.png"><img src="catture/sito/voto_390.png" alt="sito Vota il prossimo mazzo — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/voto_390.png"><img src="catture/app/voto_390.png" alt="app Vota il prossimo mazzo — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Vota il prossimo mazzo — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/voto_1024.png"><img src="catture/sito/voto_1024.png" alt="sito Vota il prossimo mazzo — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/voto_1024.png"><img src="catture/app/voto_1024.png" alt="app Vota il prossimo mazzo — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il negozio — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/negozio_360.png"><img src="catture/sito/negozio_360.png" alt="sito Il negozio — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/negozio_360.png"><img src="catture/app/negozio_360.png" alt="app Il negozio — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il negozio — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/negozio_390.png"><img src="catture/sito/negozio_390.png" alt="sito Il negozio — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/negozio_390.png"><img src="catture/app/negozio_390.png" alt="app Il negozio — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il negozio — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/negozio_1024.png"><img src="catture/sito/negozio_1024.png" alt="sito Il negozio — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/negozio_1024.png"><img src="catture/app/negozio_1024.png" alt="app Il negozio — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>La pagina che non c&#x27;è — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/pagina_404_360.png"><img src="catture/sito/pagina_404_360.png" alt="sito La pagina che non c&#x27;è — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/pagina_404_360.png"><img src="catture/app/pagina_404_360.png" alt="app La pagina che non c&#x27;è — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>La pagina che non c&#x27;è — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/pagina_404_390.png"><img src="catture/sito/pagina_404_390.png" alt="sito La pagina che non c&#x27;è — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/pagina_404_390.png"><img src="catture/app/pagina_404_390.png" alt="app La pagina che non c&#x27;è — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>La pagina che non c&#x27;è — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/pagina_404_1024.png"><img src="catture/sito/pagina_404_1024.png" alt="sito La pagina che non c&#x27;è — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/pagina_404_1024.png"><img src="catture/app/pagina_404_1024.png" alt="app La pagina che non c&#x27;è — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il carrello (il PDF del Thoth) — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/carrello_360.png"><img src="catture/sito/carrello_360.png" alt="sito Il carrello (il PDF del Thoth) — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/carrello_360.png"><img src="catture/app/carrello_360.png" alt="app Il carrello (il PDF del Thoth) — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il carrello (il PDF del Thoth) — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/carrello_390.png"><img src="catture/sito/carrello_390.png" alt="sito Il carrello (il PDF del Thoth) — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/carrello_390.png"><img src="catture/app/carrello_390.png" alt="app Il carrello (il PDF del Thoth) — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il carrello (il PDF del Thoth) — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/carrello_1024.png"><img src="catture/sito/carrello_1024.png" alt="sito Il carrello (il PDF del Thoth) — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/carrello_1024.png"><img src="catture/app/carrello_1024.png" alt="app Il carrello (il PDF del Thoth) — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il rito: preparazione — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/lettura_preparazione_360.png"><img src="catture/sito/lettura_preparazione_360.png" alt="sito Il rito: preparazione — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/lettura_preparazione_360.png"><img src="catture/app/lettura_preparazione_360.png" alt="app Il rito: preparazione — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il rito: preparazione — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/lettura_preparazione_390.png"><img src="catture/sito/lettura_preparazione_390.png" alt="sito Il rito: preparazione — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/lettura_preparazione_390.png"><img src="catture/app/lettura_preparazione_390.png" alt="app Il rito: preparazione — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il rito: preparazione — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/lettura_preparazione_1024.png"><img src="catture/sito/lettura_preparazione_1024.png" alt="sito Il rito: preparazione — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/lettura_preparazione_1024.png"><img src="catture/app/lettura_preparazione_1024.png" alt="app Il rito: preparazione — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il rito: intervista — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/lettura_intervista_360.png"><img src="catture/sito/lettura_intervista_360.png" alt="sito Il rito: intervista — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/lettura_intervista_360.png"><img src="catture/app/lettura_intervista_360.png" alt="app Il rito: intervista — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il rito: intervista — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/lettura_intervista_390.png"><img src="catture/sito/lettura_intervista_390.png" alt="sito Il rito: intervista — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/lettura_intervista_390.png"><img src="catture/app/lettura_intervista_390.png" alt="app Il rito: intervista — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il rito: intervista — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/lettura_intervista_1024.png"><img src="catture/sito/lettura_intervista_1024.png" alt="sito Il rito: intervista — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/lettura_intervista_1024.png"><img src="catture/app/lettura_intervista_1024.png" alt="app Il rito: intervista — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il rito: scelta — 360 px</h2><p class="nota">Sul telefono la scelta delle carte è nel dialogo scuro: nel sito si apre con «Open the ritual».</p><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/lettura_scelta_360.png"><img src="catture/sito/lettura_scelta_360.png" alt="sito Il rito: scelta — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/lettura_scelta_360.png"><img src="catture/app/lettura_scelta_360.png" alt="app Il rito: scelta — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il rito: scelta — 390 px</h2><p class="nota">Sul telefono la scelta delle carte è nel dialogo scuro: nel sito si apre con «Open the ritual».</p><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/lettura_scelta_390.png"><img src="catture/sito/lettura_scelta_390.png" alt="sito Il rito: scelta — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/lettura_scelta_390.png"><img src="catture/app/lettura_scelta_390.png" alt="app Il rito: scelta — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il rito: scelta — 1024 px</h2><p class="nota">Sul telefono la scelta delle carte è nel dialogo scuro: nel sito si apre con «Open the ritual».</p><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/lettura_scelta_1024.png"><img src="catture/sito/lettura_scelta_1024.png" alt="sito Il rito: scelta — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/lettura_scelta_1024.png"><img src="catture/app/lettura_scelta_1024.png" alt="app Il rito: scelta — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il rito: completata — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/lettura_completata_360.png"><img src="catture/sito/lettura_completata_360.png" alt="sito Il rito: completata — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/lettura_completata_360.png"><img src="catture/app/lettura_completata_360.png" alt="app Il rito: completata — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il rito: completata — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/lettura_completata_390.png"><img src="catture/sito/lettura_completata_390.png" alt="sito Il rito: completata — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/lettura_completata_390.png"><img src="catture/app/lettura_completata_390.png" alt="app Il rito: completata — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il rito: completata — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/lettura_completata_1024.png"><img src="catture/sito/lettura_completata_1024.png" alt="sito Il rito: completata — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/lettura_completata_1024.png"><img src="catture/app/lettura_completata_1024.png" alt="app Il rito: completata — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>La mia storia — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/storia_360.png"><img src="catture/sito/storia_360.png" alt="sito La mia storia — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/storia_360.png"><img src="catture/app/storia_360.png" alt="app La mia storia — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>La mia storia — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/storia_390.png"><img src="catture/sito/storia_390.png" alt="sito La mia storia — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/storia_390.png"><img src="catture/app/storia_390.png" alt="app La mia storia — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>La mia storia — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/storia_1024.png"><img src="catture/sito/storia_1024.png" alt="sito La mia storia — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/storia_1024.png"><img src="catture/app/storia_1024.png" alt="app La mia storia — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Una lettura della storia — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/storia_lettura_360.png"><img src="catture/sito/storia_lettura_360.png" alt="sito Una lettura della storia — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/storia_lettura_360.png"><img src="catture/app/storia_lettura_360.png" alt="app Una lettura della storia — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Una lettura della storia — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/storia_lettura_390.png"><img src="catture/sito/storia_lettura_390.png" alt="sito Una lettura della storia — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/storia_lettura_390.png"><img src="catture/app/storia_lettura_390.png" alt="app Una lettura della storia — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Una lettura della storia — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/storia_lettura_1024.png"><img src="catture/sito/storia_lettura_1024.png" alt="sito Una lettura della storia — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/storia_lettura_1024.png"><img src="catture/app/storia_lettura_1024.png" alt="app Una lettura della storia — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Una lettura condivisa — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/condivisa_360.png"><img src="catture/sito/condivisa_360.png" alt="sito Una lettura condivisa — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/condivisa_360.png"><img src="catture/app/condivisa_360.png" alt="app Una lettura condivisa — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Una lettura condivisa — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/condivisa_390.png"><img src="catture/sito/condivisa_390.png" alt="sito Una lettura condivisa — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/condivisa_390.png"><img src="catture/app/condivisa_390.png" alt="app Una lettura condivisa — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Una lettura condivisa — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/condivisa_1024.png"><img src="catture/sito/condivisa_1024.png" alt="sito Una lettura condivisa — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/condivisa_1024.png"><img src="catture/app/condivisa_1024.png" alt="app Una lettura condivisa — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Le proprie carte — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/fisica_360.png"><img src="catture/sito/fisica_360.png" alt="sito Le proprie carte — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/fisica_360.png"><img src="catture/app/fisica_360.png" alt="app Le proprie carte — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Le proprie carte — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/fisica_390.png"><img src="catture/sito/fisica_390.png" alt="sito Le proprie carte — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/fisica_390.png"><img src="catture/app/fisica_390.png" alt="app Le proprie carte — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Le proprie carte — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/fisica_1024.png"><img src="catture/sito/fisica_1024.png" alt="sito Le proprie carte — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/fisica_1024.png"><img src="catture/app/fisica_1024.png" alt="app Le proprie carte — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il profilo — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/profilo_360.png"><img src="catture/sito/profilo_360.png" alt="sito Il profilo — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/profilo_360.png"><img src="catture/app/profilo_360.png" alt="app Il profilo — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il profilo — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/profilo_390.png"><img src="catture/sito/profilo_390.png" alt="sito Il profilo — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/profilo_390.png"><img src="catture/app/profilo_390.png" alt="app Il profilo — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il profilo — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/profilo_1024.png"><img src="catture/sito/profilo_1024.png" alt="sito Il profilo — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/profilo_1024.png"><img src="catture/app/profilo_1024.png" alt="app Il profilo — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il profilo con un abbonamento dello store — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/profilo_store_390.png"><img src="catture/sito/profilo_store_390.png" alt="sito Il profilo con un abbonamento dello store — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/profilo_store_390.png"><img src="catture/app/profilo_store_390.png" alt="app Il profilo con un abbonamento dello store — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Metodo e privacy — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/privacy_360.png"><img src="catture/sito/privacy_360.png" alt="sito Metodo e privacy — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/privacy_360.png"><img src="catture/app/privacy_360.png" alt="app Metodo e privacy — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Metodo e privacy — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/privacy_390.png"><img src="catture/sito/privacy_390.png" alt="sito Metodo e privacy — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/privacy_390.png"><img src="catture/app/privacy_390.png" alt="app Metodo e privacy — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Metodo e privacy — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/privacy_1024.png"><img src="catture/sito/privacy_1024.png" alt="sito Metodo e privacy — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/privacy_1024.png"><img src="catture/app/privacy_1024.png" alt="app Metodo e privacy — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Eliminare l&#x27;account — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/elimina_360.png"><img src="catture/sito/elimina_360.png" alt="sito Eliminare l&#x27;account — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/elimina_360.png"><img src="catture/app/elimina_360.png" alt="app Eliminare l&#x27;account — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Eliminare l&#x27;account — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/elimina_390.png"><img src="catture/sito/elimina_390.png" alt="sito Eliminare l&#x27;account — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/elimina_390.png"><img src="catture/app/elimina_390.png" alt="app Eliminare l&#x27;account — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Eliminare l&#x27;account — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/elimina_1024.png"><img src="catture/sito/elimina_1024.png" alt="sito Eliminare l&#x27;account — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/elimina_1024.png"><img src="catture/app/elimina_1024.png" alt="app Eliminare l&#x27;account — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>I prezzi — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/prezzi_360.png"><img src="catture/sito/prezzi_360.png" alt="sito I prezzi — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/prezzi_360.png"><img src="catture/app/prezzi_360.png" alt="app I prezzi — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>I prezzi — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/prezzi_390.png"><img src="catture/sito/prezzi_390.png" alt="sito I prezzi — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/prezzi_390.png"><img src="catture/app/prezzi_390.png" alt="app I prezzi — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>I prezzi — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/prezzi_1024.png"><img src="catture/sito/prezzi_1024.png" alt="sito I prezzi — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/prezzi_1024.png"><img src="catture/app/prezzi_1024.png" alt="app I prezzi — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>I prezzi con un codice sconto — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/prezzi_coupon_360.png"><img src="catture/sito/prezzi_coupon_360.png" alt="sito I prezzi con un codice sconto — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/prezzi_coupon_360.png"><img src="catture/app/prezzi_coupon_360.png" alt="app I prezzi con un codice sconto — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>I prezzi con un codice sconto — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/prezzi_coupon_390.png"><img src="catture/sito/prezzi_coupon_390.png" alt="sito I prezzi con un codice sconto — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/prezzi_coupon_390.png"><img src="catture/app/prezzi_coupon_390.png" alt="app I prezzi con un codice sconto — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>I prezzi con un codice sconto — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/prezzi_coupon_1024.png"><img src="catture/sito/prezzi_coupon_1024.png" alt="sito I prezzi con un codice sconto — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/prezzi_coupon_1024.png"><img src="catture/app/prezzi_coupon_1024.png" alt="app I prezzi con un codice sconto — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>La prova gratuita — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/prova_360.png"><img src="catture/sito/prova_360.png" alt="sito La prova gratuita — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/prova_360.png"><img src="catture/app/prova_360.png" alt="app La prova gratuita — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>La prova gratuita — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/prova_390.png"><img src="catture/sito/prova_390.png" alt="sito La prova gratuita — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/prova_390.png"><img src="catture/app/prova_390.png" alt="app La prova gratuita — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>La prova gratuita — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/prova_1024.png"><img src="catture/sito/prova_1024.png" alt="sito La prova gratuita — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/prova_1024.png"><img src="catture/app/prova_1024.png" alt="app La prova gratuita — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il diario — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/blog_360.png"><img src="catture/sito/blog_360.png" alt="sito Il diario — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/blog_360.png"><img src="catture/app/blog_360.png" alt="app Il diario — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il diario — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/blog_390.png"><img src="catture/sito/blog_390.png" alt="sito Il diario — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/blog_390.png"><img src="catture/app/blog_390.png" alt="app Il diario — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Il diario — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/blog_1024.png"><img src="catture/sito/blog_1024.png" alt="sito Il diario — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/blog_1024.png"><img src="catture/app/blog_1024.png" alt="app Il diario — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Una sezione del diario — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/blog_sezione_360.png"><img src="catture/sito/blog_sezione_360.png" alt="sito Una sezione del diario — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/blog_sezione_360.png"><img src="catture/app/blog_sezione_360.png" alt="app Una sezione del diario — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Una sezione del diario — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/blog_sezione_390.png"><img src="catture/sito/blog_sezione_390.png" alt="sito Una sezione del diario — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/blog_sezione_390.png"><img src="catture/app/blog_sezione_390.png" alt="app Una sezione del diario — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Una sezione del diario — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/blog_sezione_1024.png"><img src="catture/sito/blog_sezione_1024.png" alt="sito Una sezione del diario — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/blog_sezione_1024.png"><img src="catture/app/blog_sezione_1024.png" alt="app Una sezione del diario — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Un articolo — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/articolo_360.png"><img src="catture/sito/articolo_360.png" alt="sito Un articolo — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/articolo_360.png"><img src="catture/app/articolo_360.png" alt="app Un articolo — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Un articolo — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/articolo_390.png"><img src="catture/sito/articolo_390.png" alt="sito Un articolo — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/articolo_390.png"><img src="catture/app/articolo_390.png" alt="app Un articolo — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Un articolo — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/articolo_1024.png"><img src="catture/sito/articolo_1024.png" alt="sito Un articolo — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/articolo_1024.png"><img src="catture/app/articolo_1024.png" alt="app Un articolo — 1024 px" loading="lazy"></a></figure>
+</div></section><section><h2>Esplora — 360 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/esplora_360.png"><img src="catture/sito/esplora_360.png" alt="sito Esplora — 360 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/esplora_360.png"><img src="catture/app/esplora_360.png" alt="app Esplora — 360 px" loading="lazy"></a></figure>
+</div></section><section><h2>Esplora — 390 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/esplora_390.png"><img src="catture/sito/esplora_390.png" alt="sito Esplora — 390 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/esplora_390.png"><img src="catture/app/esplora_390.png" alt="app Esplora — 390 px" loading="lazy"></a></figure>
+</div></section><section><h2>Esplora — 1024 px</h2><div class="coppia">
+<figure><figcaption>Sito (Edge)</figcaption><a href="catture/sito/esplora_1024.png"><img src="catture/sito/esplora_1024.png" alt="sito Esplora — 1024 px" loading="lazy"></a></figure>
+<figure><figcaption>App (Flutter)</figcaption><a href="catture/app/esplora_1024.png"><img src="catture/app/esplora_1024.png" alt="app Esplora — 1024 px" loading="lazy"></a></figure>
+</div></section>
+</body></html>

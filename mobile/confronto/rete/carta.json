@@ -1,0 +1,4295 @@
+{
+ "GET /me/profile": {
+  "stato": 200,
+  "json": {
+   "id": 3,
+   "email": "sviluppo@localhost",
+   "display_name": "Utente di sviluppo",
+   "locale": "it",
+   "birth_date": "1974-07-05",
+   "gender": "uomo",
+   "gender_custom": null,
+   "is_trans": false,
+   "promemoria_2fa": true,
+   "nome_pubblico": null,
+   "nome_mostrato": "Utente",
+   "registro_linguistico": "quotidiano",
+   "mazzo_predefinito_id": null,
+   "avatar": null,
+   "nome": null,
+   "cognome": null,
+   "posizione": null,
+   "dati_social": {},
+   "importa_social": true,
+   "rileva_posizione": true,
+   "partner_ricordato": null,
+   "relazioni": {
+    "completo": true,
+    "mancanti": []
+   },
+   "referral_code": "DRER3KFW",
+   "invitato": false,
+   "condivisioni": {
+    "verificate": 0,
+    "premi": 0,
+    "prossimo_tra": 5,
+    "iscrizioni": 0,
+    "soglia": 5,
+    "crediti_iscrizione": 5
+   },
+   "carta_anima": {
+    "id": "maj-06",
+    "arcano": "maggiore",
+    "numero": 6,
+    "numero_romano": "VI",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Lovers",
+    "titolo_thoth": null,
+    "nome_it": "Gli Amanti",
+    "lettera_ebraica": {
+     "nome": "Zain",
+     "glifo": "ז",
+     "valore": 7
+    },
+    "elemento": "aria",
+    "astrologia": "Gemelli",
+    "parole_chiave": [
+     "scelta",
+     "unione",
+     "dualità",
+     "amore",
+     "analisi"
+    ],
+    "colori": [
+     "#FF8C00",
+     "#D8BFD8"
+    ],
+    "nomi": {
+     "en": "The Lovers",
+     "hu": "A Szerelmesek",
+     "ru": "Влюблённые",
+     "uk": "Закохані",
+     "es": "Los Amantes"
+    },
+    "lang": "it",
+    "nome": "Gli Amanti",
+    "slug": "gli-amanti",
+    "slugs": {
+     "it": "gli-amanti",
+     "en": "the-lovers"
+    },
+    "percorso": 17,
+    "collega": [
+     "Binah",
+     "Tiphareth"
+    ],
+    "sefira": null,
+    "significati": {
+     "essoterico": "Amore, attrazione, scelte importanti fra alternative. Indica relazioni, alleanze e decisioni che richiedono un coinvolgimento profondo.",
+     "psicologico": "Rappresenta l'incontro degli opposti interiori e il momento della scelta consapevole; anche la tensione fra ragione e desiderio.",
+     "iniziatico": "Percorso 17 da Binah a Tiphareth, lettera Zain (la spada, 7) e Gemelli, segno d'Aria di Mercurio: la spada che divide per rendere possibile l'unione. È l'avvio del Matrimonio Chimico, l'incontro dei principi opposti che dovranno fondersi.",
+     "ombra": "Mal dignificati indicano indecisione, infedeltà, idealizzazione, o scelte che dividono la persona contro se stessa."
+    },
+    "dritto": "Una scelta va fatta con cuore e mente allineati; un'unione o un'alleanza significativa è possibile.",
+    "rovescio": "Divisione interiore, conflitto di valori, rapporti sbilanciati, oppure paura di scegliere che lascia tutto in sospeso.",
+    "ambiti": {
+     "amore": "Attrazione forte, legame significativo; oppure un bivio sentimentale che richiede sincerità.",
+     "lavoro": "Partnership e collaborazioni; decisioni fra due strade da ponderare con analisi e integrità.",
+     "spirito": "L'unione degli opposti come via: prima l'analisi che distingue, poi la sintesi che unisce."
+    },
+    "nota_crowley": "Crowley ne fa la prima fase delle nozze alchemiche: un re moro e una regina bianca sono uniti da una figura incappucciata sotto un Cupido che scocca la freccia, e l'opera iniziata qui si compirà nell'Arte (XIV)."
+   },
+   "carta_anno": {
+    "id": "maj-00",
+    "arcano": "maggiore",
+    "numero": 0,
+    "numero_romano": "0",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Fool",
+    "titolo_thoth": null,
+    "nome_it": "Il Matto",
+    "lettera_ebraica": {
+     "nome": "Aleph",
+     "glifo": "א",
+     "valore": 1
+    },
+    "elemento": "aria",
+    "astrologia": "Aria",
+    "parole_chiave": [
+     "potenziale puro",
+     "libertà",
+     "inizio",
+     "innocenza divina",
+     "salto nell'ignoto"
+    ],
+    "colori": [
+     "#FFF8A6",
+     "#87CEEB"
+    ],
+    "nomi": {
+     "en": "The Fool",
+     "hu": "A Bolond",
+     "ru": "Дурак",
+     "uk": "Блазень",
+     "es": "El Loco"
+    },
+    "lang": "it",
+    "nome": "Il Matto",
+    "slug": "il-matto",
+    "slugs": {
+     "it": "il-matto",
+     "en": "the-fool"
+    },
+    "percorso": 11,
+    "collega": [
+     "Kether",
+     "Chokmah"
+    ],
+    "sefira": null,
+    "significati": {
+     "essoterico": "Un inizio che nasce senza calcolo, da un impulso spontaneo e fiducioso. Annuncia idee originali, viaggi, imprevisti e la disponibilità a lasciare il noto per seguire un'ispirazione che non sa ancora dove porta.",
+     "psicologico": "È la parte della psiche che non si identifica con ruoli e aspettative, lo spazio vuoto da cui nasce ogni creatività. Chiede di tollerare l'incertezza invece di colmarla subito con piani rigidi.",
+     "iniziatico": "Percorso 11 da Kether a Chokmah, lettera Aleph (il bue, valore 1) e Aria elementare: il primo moto dello Zero verso la manifestazione. È il soffio che precede ogni forma, il Nulla che si scopre fecondo e diventa Due.",
+     "ombra": "Mal dignificato diventa leggerezza irresponsabile, fuga, stravaganza priva di radici: un'azione che disperde l'energia invece di fondarla."
+    },
+    "dritto": "La situazione chiede un salto di fiducia: conta l'apertura, non la garanzia del risultato. Momento propizio per cominciare qualcosa di davvero nuovo, restando leggeri e curiosi.",
+    "rovescio": "L'impulso al nuovo è trattenuto dalla paura oppure si sfoga in scelte impulsive e disordinate. Occorre distinguere la libertà autentica dall'evasione e dall'incoscienza.",
+    "ambiti": {
+     "amore": "Un incontro inatteso o un modo più libero e giocoso di vivere il legame; scarso desiderio di vincoli e definizioni.",
+     "lavoro": "Idee originali, cambi di rotta, progetti avviati per intuizione; da sostenere con un minimo di concretezza e di scadenze.",
+     "spirito": "Invito a lasciar cadere le certezze acquisite e a ritrovare lo stupore che precede ogni conoscenza."
+    },
+    "nota_crowley": "Crowley vede nel Matto l'Uomo Verde della primavera e il Dioniso fanciullo, cornuto e ridente, circondato da tigre, coccodrillo, colomba e grappoli d'uva dentro un vortice a spirale: non un folle, ma lo Spirito prima della creazione."
+   }
+  }
+ },
+ "GET /eta-minima": {
+  "stato": 200,
+  "json": {
+   "anni": 16
+  }
+ },
+ "GET /me/billing": {
+  "stato": 200,
+  "json": {
+   "abbonamento": {
+    "id": "ed665d90-2a52-4ff6-ba5c-e716bb4e2073",
+    "piano": "free",
+    "nome": "Gratuito",
+    "stato": "attivo",
+    "periodo_inizio": "2026-09-26T20:52:12.532955+02:00",
+    "periodo_fine": "2026-10-26T19:52:12.532955+01:00",
+    "disdetto_il": null
+   },
+   "diritti": {
+    "piano": "free",
+    "nome": "Gratuito",
+    "limiti": {
+     "letture_al_giorno": 0
+    },
+    "concessioni": {},
+    "predefiniti": false
+   },
+   "saldo": 988,
+   "uso": {
+    "letture_al_giorno": {
+     "usati": 0,
+     "limite": 0,
+     "restanti": 0
+    }
+   },
+   "limiti_attivi": true
+  }
+ },
+ "GET /impostazioni-pubbliche": {
+  "stato": 200,
+  "json": {
+   "crediti_iscrizione": 3,
+   "crediti_invito": 5,
+   "commissione_referral_percentuale": 20
+  }
+ },
+ "GET /abbonamenti/pubblico": {
+  "stato": 200,
+  "json": {
+   "banner_prova": false,
+   "prova_disponibile": true
+  }
+ },
+ "GET /decks": {
+  "stato": 200,
+  "json": [
+   {
+    "id": 1,
+    "slug": "thoth",
+    "nome": "Thoth Tarot",
+    "descrizione": null,
+    "nomi": {
+     "en": "Thoth Tarot",
+     "es": "Tarot de Thoth",
+     "hu": "Thoth Tarot",
+     "it": "Tarocchi di Thoth",
+     "ru": "Таро Тота",
+     "uk": "Таро Тота"
+    },
+    "descrizioni": {},
+    "predefinito": true,
+    "attivo": true,
+    "attivo_ora": true,
+    "attivazione_da": null,
+    "attivazione_fino": null,
+    "prezzo_digitale": null,
+    "prezzo_stampa": 990,
+    "prezzo_fisico": 3900,
+    "richiede_spedizione": true,
+    "valuta": "EUR",
+    "rank": 0,
+    "immagini_versione": null,
+    "prezzo_digitale_scontato": null,
+    "prezzo_stampa_scontato": null,
+    "prezzo_fisico_scontato": null,
+    "offerta_attiva": false,
+    "offerta_formati": [],
+    "offerta_valido_dal": null,
+    "offerta_valido_fino": null
+   }
+  ]
+ },
+ "GET /blog/nove": {
+  "stato": 200,
+  "json": {
+   "recenti": [
+    {
+     "slug": "wheel-of-fortune-tarot-card-meaning-thoth",
+     "titolo": "The Wheel of Fortune Tarot Card Meaning in the Thoth Deck",
+     "sottotitolo": "Kaph, Jupiter and path 21: why Crowley just calls it Fortune, and what changes when the wheel turns.",
+     "estratto": "The wheel of fortune tarot card meaning changes the moment you open a Thoth deck, because Aleister Crowley and Frieda Harris did not call it that. On card X of the Major Arcana, Crowley's title is simply Fortune. The…",
+     "immagine": null,
+     "sezione": {
+      "slug": "thoth-tarot",
+      "nome": "Thoth Tarot"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:44.976868+02:00",
+     "aggiornato_il": "2026-10-03T15:57:44.975811+02:00",
+     "tempo_lettura": 6,
+     "tags": [
+      {
+       "slug": "major-arcana",
+       "nome": "major arcana"
+      },
+      {
+       "slug": "tarot-card-meanings",
+       "nome": "tarot card meanings"
+      },
+      {
+       "slug": "thoth-tarot",
+       "nome": "thoth tarot"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "how-to-read-the-celtic-cross-tarot-spread",
+     "titolo": "How to Read the Celtic Cross Tarot Spread",
+     "sottotitolo": "Ten positions, one clear order: what each card in the Celtic Cross actually answers.",
+     "estratto": "If you want to know how to read the Celtic Cross tarot spread, the short answer is: in a fixed order, because each of its ten positions asks a different question, and reading them out of order is the single most common…",
+     "immagine": null,
+     "sezione": {
+      "slug": "learn-tarot",
+      "nome": "Learn Tarot"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:44.298779+02:00",
+     "aggiornato_il": "2026-10-03T15:57:44.298332+02:00",
+     "tempo_lettura": 6,
+     "tags": [
+      {
+       "slug": "how-to",
+       "nome": "how-to"
+      },
+      {
+       "slug": "tarot-card-meanings",
+       "nome": "tarot card meanings"
+      },
+      {
+       "slug": "tarot-spreads",
+       "nome": "tarot spreads"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "thoth-tarot-vs-rider-waite",
+     "titolo": "Thoth Tarot vs Rider-Waite: What's the Difference",
+     "sottotitolo": "Two decks built for two different jobs: one to be read at a glance, the other to be studied for years.",
+     "estratto": "If you have only ever seen the Rider-Waite-Smith deck, the Thoth tarot can feel like a different language. The figures are less literal, the colors are sharper, and every card carries a small cluster of correspondences…",
+     "immagine": null,
+     "sezione": {
+      "slug": "thoth-tarot",
+      "nome": "Thoth Tarot"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:43.091373+02:00",
+     "aggiornato_il": "2026-10-03T15:57:43.090374+02:00",
+     "tempo_lettura": 5,
+     "tags": [
+      {
+       "slug": "rider-waite",
+       "nome": "rider-waite"
+      },
+      {
+       "slug": "tarot-decks",
+       "nome": "tarot decks"
+      },
+      {
+       "slug": "thoth-tarot",
+       "nome": "thoth tarot"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    }
+   ],
+   "scelti": [
+    {
+     "slug": "five-of-cups-tarot-meaning-grief-and-what-remains",
+     "titolo": "Five of Cups Tarot Meaning: Grief and What Remains",
+     "sottotitolo": null,
+     "estratto": "The Five of Cups is the card of what we lose and of what remains standing behind us. Grief and what remains Three cups are spilled, two still stand. In love A bridge leads home.",
+     "immagine": {
+      "url": "/blog/media/58a22226-d59b-4373-8e38-e5dbc5b78468.webp",
+      "mini": "/blog/media/58a22226-d59b-4373-8e38-e5dbc5b78468-mini.webp",
+      "alt": "A lone figure on a stone bridge in the rain, three glasses overturned and two still standing"
+     },
+     "sezione": null,
+     "autore": {
+      "id": null,
+      "nome": "Redazione",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-09-30T20:02:00.936045+02:00",
+     "aggiornato_il": "2026-09-30T20:03:46.626880+02:00",
+     "tempo_lettura": 1,
+     "tags": [
+      {
+       "slug": "cups",
+       "nome": "Cups"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "three-card-tarot-spread-how-to-read",
+     "titolo": "Three Card Tarot Spread: How to Read It",
+     "sottotitolo": "Past, present, future or situation, obstacle, advice: choosing a framing and reading the cards together, not one at a time.",
+     "estratto": "The three card tarot spread is the first layout most readers learn, and for good reason: three positions are enough to hold a real question without overwhelming a beginner with a dozen cards to weave together. It…",
+     "immagine": null,
+     "sezione": {
+      "slug": "learn-tarot",
+      "nome": "Learn Tarot"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:27.939613+02:00",
+     "aggiornato_il": "2026-10-03T15:57:27.938337+02:00",
+     "tempo_lettura": 4,
+     "tags": [
+      {
+       "slug": "learn-tarot",
+       "nome": "learn tarot"
+      },
+      {
+       "slug": "tarot-for-beginners",
+       "nome": "tarot for beginners"
+      },
+      {
+       "slug": "tarot-spreads",
+       "nome": "tarot spreads"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "the-star-tarot-card-meaning-thoth-deck",
+     "titolo": "The Star Tarot Card Meaning in the Thoth Deck",
+     "sottotitolo": "Why card XVII is hope after collapse, not before it: Heh, Aquarius and the path between Chokmah and Tiphareth.",
+     "estratto": "The Star tarot card meaning in the Thoth deck centers on something quieter than most Major Arcana: hope that has survived a collapse. Card XVII follows The Tower in the deck's sequence, and Crowley and Harris painted it…",
+     "immagine": null,
+     "sezione": {
+      "slug": "spirituality",
+      "nome": "Spirituality"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:28.964365+02:00",
+     "aggiornato_il": "2026-10-03T15:57:28.963226+02:00",
+     "tempo_lettura": 4,
+     "tags": [
+      {
+       "slug": "major-arcana",
+       "nome": "major arcana"
+      },
+      {
+       "slug": "spirituality",
+       "nome": "spirituality"
+      },
+      {
+       "slug": "tarot-card-meanings",
+       "nome": "tarot card meanings"
+      },
+      {
+       "slug": "thoth-tarot",
+       "nome": "thoth tarot"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "how-to-read-tarot-cards",
+     "titolo": "How to Read Tarot Cards: A Beginner's Guide",
+     "sottotitolo": "Suits, positions and one simple three-card spread to get you reading with real instinct, not memorized definitions.",
+     "estratto": "A deck of seventy-eight cards looks intimidating the first time you spread it out on a table. Learning how to read tarot cards is less about memorizing seventy-eight definitions and more about learning a small number of…",
+     "immagine": null,
+     "sezione": {
+      "slug": "learn-tarot",
+      "nome": "Learn Tarot"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:42.271791+02:00",
+     "aggiornato_il": "2026-10-03T15:57:42.270330+02:00",
+     "tempo_lettura": 5,
+     "tags": [
+      {
+       "slug": "learn-tarot",
+       "nome": "learn tarot"
+      },
+      {
+       "slug": "tarot-for-beginners",
+       "nome": "tarot for beginners"
+      },
+      {
+       "slug": "tarot-spreads",
+       "nome": "tarot spreads"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "tarot-tree-of-life",
+     "titolo": "Tarot Tree of Life: A Qabalah Primer",
+     "sottotitolo": "The ten spheres, three columns and twenty-two paths that map the entire major arcana.",
+     "estratto": "Ten circles, twenty-two connecting lines, three columns. The tarot Tree of Life is exactly this diagram — the Qabalistic map the Golden Dawn used to organize the entire major arcana. Where a separate look at Hebrew…",
+     "immagine": null,
+     "sezione": {
+      "slug": "symbolism",
+      "nome": "Symbolism"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:33.967858+02:00",
+     "aggiornato_il": "2026-10-03T15:57:33.967422+02:00",
+     "tempo_lettura": 4,
+     "tags": [
+      {
+       "slug": "major-arcana",
+       "nome": "major arcana"
+      },
+      {
+       "slug": "qabalah",
+       "nome": "qabalah"
+      },
+      {
+       "slug": "tarot-symbolism",
+       "nome": "tarot symbolism"
+      },
+      {
+       "slug": "thoth-tarot",
+       "nome": "thoth tarot"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "scorpio-season-tarot-reading-thoth-guide",
+     "titolo": "Scorpio Season Tarot Reading: A Thoth Guide to Shadow Work and Transformation",
+     "sottotitolo": "How to read Death, Lust and the hidden currents of October–November with the Thoth Tarot.",
+     "estratto": "Scorpio Season Tarot Reading: A Thoth Guide to Shadow Work and Transformation Scorpio season is the tarot reader's favourite time for deep work. From late October through November, the sun moves through the sign of the…",
+     "immagine": null,
+     "sezione": null,
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:24.637248+02:00",
+     "aggiornato_il": "2026-10-03T15:57:24.636799+02:00",
+     "tempo_lettura": 6,
+     "tags": [
+      {
+       "slug": "major-arcana",
+       "nome": "major arcana"
+      },
+      {
+       "slug": "seasonal",
+       "nome": "seasonal"
+      },
+      {
+       "slug": "shadow-work",
+       "nome": "shadow work"
+      },
+      {
+       "slug": "thoth-tarot",
+       "nome": "thoth tarot"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    }
+   ]
+  }
+ },
+ "GET /impostazioni-chat": {
+  "stato": 200,
+  "json": {
+   "proattiva_minuti_inattivita": 0,
+   "proattiva_max_per_visita": 3
+  }
+ },
+ "GET /consenso": {
+  "stato": 200,
+  "json": {
+   "statistiche": "rifiutato",
+   "google_analytics": "rifiutato"
+  }
+ },
+ "PATCH /me/profile": {
+  "stato": 200,
+  "json": {
+   "id": 3,
+   "email": "sviluppo@localhost",
+   "display_name": "Utente di sviluppo",
+   "locale": "it",
+   "birth_date": "1974-07-05",
+   "gender": "uomo",
+   "gender_custom": null,
+   "is_trans": false,
+   "promemoria_2fa": true,
+   "nome_pubblico": null,
+   "nome_mostrato": "Utente",
+   "registro_linguistico": "quotidiano",
+   "mazzo_predefinito_id": null,
+   "avatar": null,
+   "nome": null,
+   "cognome": null,
+   "posizione": null,
+   "dati_social": {},
+   "importa_social": true,
+   "rileva_posizione": true,
+   "partner_ricordato": null,
+   "relazioni": {
+    "completo": true,
+    "mancanti": []
+   },
+   "referral_code": "DRER3KFW",
+   "invitato": false,
+   "condivisioni": {
+    "verificate": 0,
+    "premi": 0,
+    "prossimo_tra": 5,
+    "iscrizioni": 0,
+    "soglia": 5,
+    "crediti_iscrizione": 5
+   },
+   "carta_anima": {
+    "id": "maj-06",
+    "arcano": "maggiore",
+    "numero": 6,
+    "numero_romano": "VI",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Lovers",
+    "titolo_thoth": null,
+    "nome_it": "Gli Amanti",
+    "lettera_ebraica": {
+     "nome": "Zain",
+     "glifo": "ז",
+     "valore": 7
+    },
+    "elemento": "aria",
+    "astrologia": "Gemelli",
+    "parole_chiave": [
+     "scelta",
+     "unione",
+     "dualità",
+     "amore",
+     "analisi"
+    ],
+    "colori": [
+     "#FF8C00",
+     "#D8BFD8"
+    ],
+    "nomi": {
+     "en": "The Lovers",
+     "hu": "A Szerelmesek",
+     "ru": "Влюблённые",
+     "uk": "Закохані",
+     "es": "Los Amantes"
+    },
+    "lang": "it",
+    "nome": "Gli Amanti",
+    "slug": "gli-amanti",
+    "slugs": {
+     "it": "gli-amanti",
+     "en": "the-lovers"
+    },
+    "percorso": 17,
+    "collega": [
+     "Binah",
+     "Tiphareth"
+    ],
+    "sefira": null,
+    "significati": {
+     "essoterico": "Amore, attrazione, scelte importanti fra alternative. Indica relazioni, alleanze e decisioni che richiedono un coinvolgimento profondo.",
+     "psicologico": "Rappresenta l'incontro degli opposti interiori e il momento della scelta consapevole; anche la tensione fra ragione e desiderio.",
+     "iniziatico": "Percorso 17 da Binah a Tiphareth, lettera Zain (la spada, 7) e Gemelli, segno d'Aria di Mercurio: la spada che divide per rendere possibile l'unione. È l'avvio del Matrimonio Chimico, l'incontro dei principi opposti che dovranno fondersi.",
+     "ombra": "Mal dignificati indicano indecisione, infedeltà, idealizzazione, o scelte che dividono la persona contro se stessa."
+    },
+    "dritto": "Una scelta va fatta con cuore e mente allineati; un'unione o un'alleanza significativa è possibile.",
+    "rovescio": "Divisione interiore, conflitto di valori, rapporti sbilanciati, oppure paura di scegliere che lascia tutto in sospeso.",
+    "ambiti": {
+     "amore": "Attrazione forte, legame significativo; oppure un bivio sentimentale che richiede sincerità.",
+     "lavoro": "Partnership e collaborazioni; decisioni fra due strade da ponderare con analisi e integrità.",
+     "spirito": "L'unione degli opposti come via: prima l'analisi che distingue, poi la sintesi che unisce."
+    },
+    "nota_crowley": "Crowley ne fa la prima fase delle nozze alchemiche: un re moro e una regina bianca sono uniti da una figura incappucciata sotto un Cupido che scocca la freccia, e l'opera iniziata qui si compirà nell'Arte (XIV)."
+   },
+   "carta_anno": {
+    "id": "maj-00",
+    "arcano": "maggiore",
+    "numero": 0,
+    "numero_romano": "0",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Fool",
+    "titolo_thoth": null,
+    "nome_it": "Il Matto",
+    "lettera_ebraica": {
+     "nome": "Aleph",
+     "glifo": "א",
+     "valore": 1
+    },
+    "elemento": "aria",
+    "astrologia": "Aria",
+    "parole_chiave": [
+     "potenziale puro",
+     "libertà",
+     "inizio",
+     "innocenza divina",
+     "salto nell'ignoto"
+    ],
+    "colori": [
+     "#FFF8A6",
+     "#87CEEB"
+    ],
+    "nomi": {
+     "en": "The Fool",
+     "hu": "A Bolond",
+     "ru": "Дурак",
+     "uk": "Блазень",
+     "es": "El Loco"
+    },
+    "lang": "it",
+    "nome": "Il Matto",
+    "slug": "il-matto",
+    "slugs": {
+     "it": "il-matto",
+     "en": "the-fool"
+    },
+    "percorso": 11,
+    "collega": [
+     "Kether",
+     "Chokmah"
+    ],
+    "sefira": null,
+    "significati": {
+     "essoterico": "Un inizio che nasce senza calcolo, da un impulso spontaneo e fiducioso. Annuncia idee originali, viaggi, imprevisti e la disponibilità a lasciare il noto per seguire un'ispirazione che non sa ancora dove porta.",
+     "psicologico": "È la parte della psiche che non si identifica con ruoli e aspettative, lo spazio vuoto da cui nasce ogni creatività. Chiede di tollerare l'incertezza invece di colmarla subito con piani rigidi.",
+     "iniziatico": "Percorso 11 da Kether a Chokmah, lettera Aleph (il bue, valore 1) e Aria elementare: il primo moto dello Zero verso la manifestazione. È il soffio che precede ogni forma, il Nulla che si scopre fecondo e diventa Due.",
+     "ombra": "Mal dignificato diventa leggerezza irresponsabile, fuga, stravaganza priva di radici: un'azione che disperde l'energia invece di fondarla."
+    },
+    "dritto": "La situazione chiede un salto di fiducia: conta l'apertura, non la garanzia del risultato. Momento propizio per cominciare qualcosa di davvero nuovo, restando leggeri e curiosi.",
+    "rovescio": "L'impulso al nuovo è trattenuto dalla paura oppure si sfoga in scelte impulsive e disordinate. Occorre distinguere la libertà autentica dall'evasione e dall'incoscienza.",
+    "ambiti": {
+     "amore": "Un incontro inatteso o un modo più libero e giocoso di vivere il legame; scarso desiderio di vincoli e definizioni.",
+     "lavoro": "Idee originali, cambi di rotta, progetti avviati per intuizione; da sostenere con un minimo di concretezza e di scadenze.",
+     "spirito": "Invito a lasciar cadere le certezze acquisite e a ritrovare lo stupore che precede ogni conoscenza."
+    },
+    "nota_crowley": "Crowley vede nel Matto l'Uomo Verde della primavera e il Dioniso fanciullo, cornuto e ridente, circondato da tigre, coccodrillo, colomba e grappoli d'uva dentro un vortice a spirale: non un folle, ma lo Spirito prima della creazione."
+   }
+  }
+ },
+ "GET /chat/proattiva": {
+  "stato": 200,
+  "json": {
+   "turni": []
+  }
+ },
+ "POST /chat/proattiva/avvio": {
+  "stato": 201,
+  "json": {
+   "turno": null
+  }
+ },
+ "GET /cards/the-star": {
+  "stato": 200,
+  "json": {
+   "id": "maj-17",
+   "arcano": "maggiore",
+   "numero": 17,
+   "numero_romano": "XVII",
+   "seme": null,
+   "rango": null,
+   "nome_thoth": "The Star",
+   "titolo_thoth": null,
+   "nome_it": "La Stella",
+   "lettera_ebraica": {
+    "nome": "He",
+    "glifo": "ה",
+    "valore": 5
+   },
+   "elemento": "aria",
+   "astrologia": "Aquarius",
+   "parole_chiave": [
+    "hope",
+    "inspiration",
+    "healing",
+    "openness",
+    "trust"
+   ],
+   "colori": [
+    "#8F00FF",
+    "#87CEEB"
+   ],
+   "nomi": {
+    "en": "The Star",
+    "hu": "A Csillag",
+    "ru": "Звезда",
+    "uk": "Зірка",
+    "es": "La Estrella"
+   },
+   "lang": "en",
+   "nome": "The Star",
+   "slug": "the-star",
+   "slugs": {
+    "it": "la-stella",
+    "en": "the-star"
+   },
+   "elemento_label": "Air",
+   "seme_label": null,
+   "rango_label": null,
+   "arcano_label": "Major Arcana",
+   "percorso": 28,
+   "collega": [
+    "Netzach",
+    "Yesod"
+   ],
+   "sefira": null,
+   "significati": {
+    "essoterico": "Hope, renewal, inspiration. It points to healing after a crisis, trust in the future and unexpected help.",
+    "psicologico": "The ability to reconnect with a wider vision; the trust that is born from having crossed the dark.",
+    "iniziatico": "Path 28 from Netzach to Yesod, the letter He (the window, 5) and Aquarius, fixed air: the window from which infinity can be glimpsed. Nuit pours out the waters of life and reminds us that every man and every woman is a star.",
+    "ombra": "Ill-dignified, it signals illusion, disappointment, sterile idealism, hopes that have no roots."
+   },
+   "dritto": "Well-founded hope and inspiration: the direction is right. A time of healing, renewal and trust.",
+   "rovescio": "Trust lost, vision clouded; you need to find your way back to your most authentic ideals.",
+   "ambiti": {
+    "amore": "Sincere love, openness and mutual trust; the healing of emotional wounds.",
+    "lavoro": "Inspiration, creativity, long-term vision; future-oriented projects.",
+    "spirito": "Recognising yourself as a star: divine individuality in an infinite cosmos."
+   },
+   "nota_crowley": "Following the correction 'Tzaddi is not the Star', Crowley assigns the letter He to the Star; the figure is Nuit pouring water from two cups, one of gold and one of silver, beneath the seven-pointed star of Babalon."
+  }
+ },
+ "GET /cards": {
+  "stato": 200,
+  "json": [
+   {
+    "id": "maj-00",
+    "arcano": "maggiore",
+    "numero": 0,
+    "numero_romano": "0",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Fool",
+    "titolo_thoth": null,
+    "nome_it": "Il Matto",
+    "lettera_ebraica": {
+     "nome": "Aleph",
+     "glifo": "א",
+     "valore": 1
+    },
+    "elemento": "aria",
+    "astrologia": "Air",
+    "parole_chiave": [
+     "pure potential",
+     "freedom",
+     "new beginnings",
+     "divine innocence",
+     "leap into the unknown"
+    ],
+    "colori": [
+     "#FFF8A6",
+     "#87CEEB"
+    ],
+    "nomi": {
+     "en": "The Fool",
+     "hu": "A Bolond",
+     "ru": "Дурак",
+     "uk": "Блазень",
+     "es": "El Loco"
+    },
+    "lang": "en",
+    "nome": "The Fool",
+    "slug": "the-fool",
+    "slugs": {
+     "it": "il-matto",
+     "en": "the-fool"
+    },
+    "elemento_label": "Air",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-01",
+    "arcano": "maggiore",
+    "numero": 1,
+    "numero_romano": "I",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Magus",
+    "titolo_thoth": null,
+    "nome_it": "Il Mago",
+    "lettera_ebraica": {
+     "nome": "Beth",
+     "glifo": "ב",
+     "valore": 2
+    },
+    "elemento": "spirito",
+    "astrologia": "Mercury",
+    "parole_chiave": [
+     "will",
+     "skill",
+     "creative word",
+     "communication",
+     "tools"
+    ],
+    "colori": [
+     "#FFE135",
+     "#7B3F9E"
+    ],
+    "nomi": {
+     "en": "The Magus",
+     "hu": "A Mágus",
+     "ru": "Маг",
+     "uk": "Маг",
+     "es": "El Mago"
+    },
+    "lang": "en",
+    "nome": "The Magus",
+    "slug": "the-magus",
+    "slugs": {
+     "it": "il-mago",
+     "en": "the-magus"
+    },
+    "elemento_label": "Spirit",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-02",
+    "arcano": "maggiore",
+    "numero": 2,
+    "numero_romano": "II",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Priestess",
+    "titolo_thoth": null,
+    "nome_it": "La Sacerdotessa",
+    "lettera_ebraica": {
+     "nome": "Gimel",
+     "glifo": "ג",
+     "valore": 3
+    },
+    "elemento": "spirito",
+    "astrologia": "Moon",
+    "parole_chiave": [
+     "intuition",
+     "mystery",
+     "purity",
+     "waiting",
+     "inner knowledge"
+    ],
+    "colori": [
+     "#0047AB",
+     "#C0C0C0"
+    ],
+    "nomi": {
+     "en": "The Priestess",
+     "hu": "A Főpapnő",
+     "ru": "Жрица",
+     "uk": "Жриця",
+     "es": "La Sacerdotisa"
+    },
+    "lang": "en",
+    "nome": "The Priestess",
+    "slug": "the-priestess",
+    "slugs": {
+     "it": "la-sacerdotessa",
+     "en": "the-priestess"
+    },
+    "elemento_label": "Spirit",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-03",
+    "arcano": "maggiore",
+    "numero": 3,
+    "numero_romano": "III",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Empress",
+    "titolo_thoth": null,
+    "nome_it": "L'Imperatrice",
+    "lettera_ebraica": {
+     "nome": "Daleth",
+     "glifo": "ד",
+     "valore": 4
+    },
+    "elemento": "spirito",
+    "astrologia": "Venus",
+    "parole_chiave": [
+     "fertility",
+     "love",
+     "beauty",
+     "abundance",
+     "nature"
+    ],
+    "colori": [
+     "#50C878",
+     "#87CEEB"
+    ],
+    "nomi": {
+     "en": "The Empress",
+     "hu": "A Császárné",
+     "ru": "Императрица",
+     "uk": "Імператриця",
+     "es": "La Emperatriz"
+    },
+    "lang": "en",
+    "nome": "The Empress",
+    "slug": "the-empress",
+    "slugs": {
+     "it": "l-imperatrice",
+     "en": "the-empress"
+    },
+    "elemento_label": "Spirit",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-04",
+    "arcano": "maggiore",
+    "numero": 4,
+    "numero_romano": "IV",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Emperor",
+    "titolo_thoth": null,
+    "nome_it": "L'Imperatore",
+    "lettera_ebraica": {
+     "nome": "Tzaddi",
+     "glifo": "צ",
+     "valore": 90
+    },
+    "elemento": "fuoco",
+    "astrologia": "Aries",
+    "parole_chiave": [
+     "authority",
+     "structure",
+     "initiative",
+     "power",
+     "order"
+    ],
+    "colori": [
+     "#FF2400",
+     "#B22222"
+    ],
+    "nomi": {
+     "en": "The Emperor",
+     "hu": "A Császár",
+     "ru": "Император",
+     "uk": "Імператор",
+     "es": "El Emperador"
+    },
+    "lang": "en",
+    "nome": "The Emperor",
+    "slug": "the-emperor",
+    "slugs": {
+     "it": "l-imperatore",
+     "en": "the-emperor"
+    },
+    "elemento_label": "Fire",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-05",
+    "arcano": "maggiore",
+    "numero": 5,
+    "numero_romano": "V",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Hierophant",
+    "titolo_thoth": null,
+    "nome_it": "Il Ierofante",
+    "lettera_ebraica": {
+     "nome": "Vau",
+     "glifo": "ו",
+     "valore": 6
+    },
+    "elemento": "terra",
+    "astrologia": "Taurus",
+    "parole_chiave": [
+     "teaching",
+     "tradition",
+     "revelation",
+     "initiation",
+     "perseverance"
+    ],
+    "colori": [
+     "#E2582C",
+     "#2E1A47"
+    ],
+    "nomi": {
+     "en": "The Hierophant",
+     "hu": "A Főpap",
+     "ru": "Иерофант",
+     "uk": "Ієрофант",
+     "es": "El Hierofante"
+    },
+    "lang": "en",
+    "nome": "The Hierophant",
+    "slug": "the-hierophant",
+    "slugs": {
+     "it": "il-ierofante",
+     "en": "the-hierophant"
+    },
+    "elemento_label": "Earth",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-06",
+    "arcano": "maggiore",
+    "numero": 6,
+    "numero_romano": "VI",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Lovers",
+    "titolo_thoth": null,
+    "nome_it": "Gli Amanti",
+    "lettera_ebraica": {
+     "nome": "Zain",
+     "glifo": "ז",
+     "valore": 7
+    },
+    "elemento": "aria",
+    "astrologia": "Gemini",
+    "parole_chiave": [
+     "choice",
+     "union",
+     "duality",
+     "love",
+     "analysis"
+    ],
+    "colori": [
+     "#FF8C00",
+     "#D8BFD8"
+    ],
+    "nomi": {
+     "en": "The Lovers",
+     "hu": "A Szerelmesek",
+     "ru": "Влюблённые",
+     "uk": "Закохані",
+     "es": "Los Amantes"
+    },
+    "lang": "en",
+    "nome": "The Lovers",
+    "slug": "the-lovers",
+    "slugs": {
+     "it": "gli-amanti",
+     "en": "the-lovers"
+    },
+    "elemento_label": "Air",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-07",
+    "arcano": "maggiore",
+    "numero": 7,
+    "numero_romano": "VII",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Chariot",
+    "titolo_thoth": null,
+    "nome_it": "Il Carro",
+    "lettera_ebraica": {
+     "nome": "Cheth",
+     "glifo": "ח",
+     "valore": 8
+    },
+    "elemento": "acqua",
+    "astrologia": "Cancer",
+    "parole_chiave": [
+     "advance",
+     "victory",
+     "protection",
+     "disciplined will",
+     "the Grail"
+    ],
+    "colori": [
+     "#FFBF00",
+     "#800000"
+    ],
+    "nomi": {
+     "en": "The Chariot",
+     "hu": "A Szekér",
+     "ru": "Колесница",
+     "uk": "Колісниця",
+     "es": "El Carro"
+    },
+    "lang": "en",
+    "nome": "The Chariot",
+    "slug": "the-chariot",
+    "slugs": {
+     "it": "il-carro",
+     "en": "the-chariot"
+    },
+    "elemento_label": "Water",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-08",
+    "arcano": "maggiore",
+    "numero": 8,
+    "numero_romano": "VIII",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "Adjustment",
+    "titolo_thoth": null,
+    "nome_it": "Regolazione",
+    "lettera_ebraica": {
+     "nome": "Lamed",
+     "glifo": "ל",
+     "valore": 30
+    },
+    "elemento": "aria",
+    "astrologia": "Libra",
+    "parole_chiave": [
+     "balance",
+     "justice",
+     "compensation",
+     "truth",
+     "karma"
+    ],
+    "colori": [
+     "#50C878",
+     "#1E90FF"
+    ],
+    "nomi": {
+     "en": "Adjustment",
+     "hu": "Kiigazítás",
+     "ru": "Регулирование",
+     "uk": "Регулювання",
+     "es": "El Ajuste"
+    },
+    "lang": "en",
+    "nome": "Adjustment",
+    "slug": "adjustment",
+    "slugs": {
+     "it": "regolazione",
+     "en": "adjustment"
+    },
+    "elemento_label": "Air",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-09",
+    "arcano": "maggiore",
+    "numero": 9,
+    "numero_romano": "IX",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Hermit",
+    "titolo_thoth": null,
+    "nome_it": "L'Eremita",
+    "lettera_ebraica": {
+     "nome": "Yod",
+     "glifo": "י",
+     "valore": 10
+    },
+    "elemento": "terra",
+    "astrologia": "Virgo",
+    "parole_chiave": [
+     "wisdom",
+     "solitude",
+     "inner search",
+     "secret light",
+     "prudence"
+    ],
+    "colori": [
+     "#9ACD32",
+     "#708090"
+    ],
+    "nomi": {
+     "en": "The Hermit",
+     "hu": "A Remete",
+     "ru": "Отшельник",
+     "uk": "Відлюдник",
+     "es": "El Ermitaño"
+    },
+    "lang": "en",
+    "nome": "The Hermit",
+    "slug": "the-hermit",
+    "slugs": {
+     "it": "l-eremita",
+     "en": "the-hermit"
+    },
+    "elemento_label": "Earth",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-10",
+    "arcano": "maggiore",
+    "numero": 10,
+    "numero_romano": "X",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "Fortune",
+    "titolo_thoth": null,
+    "nome_it": "Fortuna",
+    "lettera_ebraica": {
+     "nome": "Kaph",
+     "glifo": "כ",
+     "valore": 20
+    },
+    "elemento": "spirito",
+    "astrologia": "Jupiter",
+    "parole_chiave": [
+     "change",
+     "cycle",
+     "luck",
+     "destiny",
+     "movement"
+    ],
+    "colori": [
+     "#8F00FF",
+     "#0000CD"
+    ],
+    "nomi": {
+     "en": "Fortune",
+     "hu": "Szerencse",
+     "ru": "Фортуна",
+     "uk": "Фортуна",
+     "es": "La Fortuna"
+    },
+    "lang": "en",
+    "nome": "Fortune",
+    "slug": "fortune",
+    "slugs": {
+     "it": "fortuna",
+     "en": "fortune"
+    },
+    "elemento_label": "Spirit",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-11",
+    "arcano": "maggiore",
+    "numero": 11,
+    "numero_romano": "XI",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "Lust",
+    "titolo_thoth": null,
+    "nome_it": "Lussuria",
+    "lettera_ebraica": {
+     "nome": "Teth",
+     "glifo": "ט",
+     "valore": 9
+    },
+    "elemento": "fuoco",
+    "astrologia": "Leo",
+    "parole_chiave": [
+     "life force",
+     "passion",
+     "courage",
+     "ecstasy",
+     "integration"
+    ],
+    "colori": [
+     "#DFFF00",
+     "#4B0082"
+    ],
+    "nomi": {
+     "en": "Lust",
+     "hu": "Vágy",
+     "ru": "Вожделение",
+     "uk": "Хіть",
+     "es": "La Lujuria"
+    },
+    "lang": "en",
+    "nome": "Lust",
+    "slug": "lust",
+    "slugs": {
+     "it": "lussuria",
+     "en": "lust"
+    },
+    "elemento_label": "Fire",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-12",
+    "arcano": "maggiore",
+    "numero": 12,
+    "numero_romano": "XII",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Hanged Man",
+    "titolo_thoth": null,
+    "nome_it": "L'Appeso",
+    "lettera_ebraica": {
+     "nome": "Mem",
+     "glifo": "מ",
+     "valore": 40
+    },
+    "elemento": "acqua",
+    "astrologia": "Water",
+    "parole_chiave": [
+     "sacrifice",
+     "surrender",
+     "suspension",
+     "reversal",
+     "redemption"
+    ],
+    "colori": [
+     "#00338D",
+     "#2E8B57"
+    ],
+    "nomi": {
+     "en": "The Hanged Man",
+     "hu": "Az Akasztott",
+     "ru": "Повешенный",
+     "uk": "Повішений",
+     "es": "El Colgado"
+    },
+    "lang": "en",
+    "nome": "The Hanged Man",
+    "slug": "the-hanged-man",
+    "slugs": {
+     "it": "l-appeso",
+     "en": "the-hanged-man"
+    },
+    "elemento_label": "Water",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-13",
+    "arcano": "maggiore",
+    "numero": 13,
+    "numero_romano": "XIII",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "Death",
+    "titolo_thoth": null,
+    "nome_it": "Morte",
+    "lettera_ebraica": {
+     "nome": "Nun",
+     "glifo": "נ",
+     "valore": 50
+    },
+    "elemento": "acqua",
+    "astrologia": "Scorpio",
+    "parole_chiave": [
+     "transformation",
+     "ending",
+     "rebirth",
+     "putrefaction",
+     "renewal"
+    ],
+    "colori": [
+     "#008B8B",
+     "#6F4E37"
+    ],
+    "nomi": {
+     "en": "Death",
+     "hu": "Halál",
+     "ru": "Смерть",
+     "uk": "Смерть",
+     "es": "La Muerte"
+    },
+    "lang": "en",
+    "nome": "Death",
+    "slug": "death",
+    "slugs": {
+     "it": "morte",
+     "en": "death"
+    },
+    "elemento_label": "Water",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-14",
+    "arcano": "maggiore",
+    "numero": 14,
+    "numero_romano": "XIV",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "Art",
+    "titolo_thoth": null,
+    "nome_it": "Arte",
+    "lettera_ebraica": {
+     "nome": "Samekh",
+     "glifo": "ס",
+     "valore": 60
+    },
+    "elemento": "fuoco",
+    "astrologia": "Sagittarius",
+    "parole_chiave": [
+     "alchemy",
+     "synthesis",
+     "temperance",
+     "integration",
+     "aspiration"
+    ],
+    "colori": [
+     "#1F51FF",
+     "#FFD700"
+    ],
+    "nomi": {
+     "en": "Art",
+     "hu": "Művészet",
+     "ru": "Искусство",
+     "uk": "Мистецтво",
+     "es": "El Arte"
+    },
+    "lang": "en",
+    "nome": "Art",
+    "slug": "art",
+    "slugs": {
+     "it": "arte",
+     "en": "art"
+    },
+    "elemento_label": "Fire",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-15",
+    "arcano": "maggiore",
+    "numero": 15,
+    "numero_romano": "XV",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Devil",
+    "titolo_thoth": null,
+    "nome_it": "Il Diavolo",
+    "lettera_ebraica": {
+     "nome": "Ayin",
+     "glifo": "ע",
+     "valore": 70
+    },
+    "elemento": "terra",
+    "astrologia": "Capricorn",
+    "parole_chiave": [
+     "creative energy",
+     "matter",
+     "ambition",
+     "bondage",
+     "desire"
+    ],
+    "colori": [
+     "#3B1F6B",
+     "#1C1C1C"
+    ],
+    "nomi": {
+     "en": "The Devil",
+     "hu": "Az Ördög",
+     "ru": "Дьявол",
+     "uk": "Диявол",
+     "es": "El Diablo"
+    },
+    "lang": "en",
+    "nome": "The Devil",
+    "slug": "the-devil",
+    "slugs": {
+     "it": "il-diavolo",
+     "en": "the-devil"
+    },
+    "elemento_label": "Earth",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-16",
+    "arcano": "maggiore",
+    "numero": 16,
+    "numero_romano": "XVI",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Tower",
+    "titolo_thoth": null,
+    "nome_it": "La Torre",
+    "lettera_ebraica": {
+     "nome": "Pe",
+     "glifo": "פ",
+     "valore": 80
+    },
+    "elemento": "spirito",
+    "astrologia": "Mars",
+    "parole_chiave": [
+     "destruction",
+     "awakening",
+     "liberation",
+     "crisis",
+     "purification"
+    ],
+    "colori": [
+     "#FF0000",
+     "#C1121F"
+    ],
+    "nomi": {
+     "en": "The Tower",
+     "hu": "A Torony",
+     "ru": "Башня",
+     "uk": "Вежа",
+     "es": "La Torre"
+    },
+    "lang": "en",
+    "nome": "The Tower",
+    "slug": "the-tower",
+    "slugs": {
+     "it": "la-torre",
+     "en": "the-tower"
+    },
+    "elemento_label": "Spirit",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-17",
+    "arcano": "maggiore",
+    "numero": 17,
+    "numero_romano": "XVII",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Star",
+    "titolo_thoth": null,
+    "nome_it": "La Stella",
+    "lettera_ebraica": {
+     "nome": "He",
+     "glifo": "ה",
+     "valore": 5
+    },
+    "elemento": "aria",
+    "astrologia": "Aquarius",
+    "parole_chiave": [
+     "hope",
+     "inspiration",
+     "healing",
+     "openness",
+     "trust"
+    ],
+    "colori": [
+     "#8F00FF",
+     "#87CEEB"
+    ],
+    "nomi": {
+     "en": "The Star",
+     "hu": "A Csillag",
+     "ru": "Звезда",
+     "uk": "Зірка",
+     "es": "La Estrella"
+    },
+    "lang": "en",
+    "nome": "The Star",
+    "slug": "the-star",
+    "slugs": {
+     "it": "la-stella",
+     "en": "the-star"
+    },
+    "elemento_label": "Air",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-18",
+    "arcano": "maggiore",
+    "numero": 18,
+    "numero_romano": "XVIII",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Moon",
+    "titolo_thoth": null,
+    "nome_it": "La Luna",
+    "lettera_ebraica": {
+     "nome": "Qoph",
+     "glifo": "ק",
+     "valore": 100
+    },
+    "elemento": "acqua",
+    "astrologia": "Pisces",
+    "parole_chiave": [
+     "illusion",
+     "the unconscious",
+     "fear",
+     "threshold",
+     "passage"
+    ],
+    "colori": [
+     "#8B0A50",
+     "#E0C589"
+    ],
+    "nomi": {
+     "en": "The Moon",
+     "hu": "A Hold",
+     "ru": "Луна",
+     "uk": "Місяць",
+     "es": "La Luna"
+    },
+    "lang": "en",
+    "nome": "The Moon",
+    "slug": "the-moon",
+    "slugs": {
+     "it": "la-luna",
+     "en": "the-moon"
+    },
+    "elemento_label": "Water",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-19",
+    "arcano": "maggiore",
+    "numero": 19,
+    "numero_romano": "XIX",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Sun",
+    "titolo_thoth": null,
+    "nome_it": "Il Sole",
+    "lettera_ebraica": {
+     "nome": "Resh",
+     "glifo": "ר",
+     "valore": 200
+    },
+    "elemento": "spirito",
+    "astrologia": "Sun",
+    "parole_chiave": [
+     "joy",
+     "vitality",
+     "success",
+     "clarity",
+     "freedom"
+    ],
+    "colori": [
+     "#FFA500",
+     "#FFD700"
+    ],
+    "nomi": {
+     "en": "The Sun",
+     "hu": "A Nap",
+     "ru": "Солнце",
+     "uk": "Сонце",
+     "es": "El Sol"
+    },
+    "lang": "en",
+    "nome": "The Sun",
+    "slug": "the-sun",
+    "slugs": {
+     "it": "il-sole",
+     "en": "the-sun"
+    },
+    "elemento_label": "Spirit",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-20",
+    "arcano": "maggiore",
+    "numero": 20,
+    "numero_romano": "XX",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Aeon",
+    "titolo_thoth": null,
+    "nome_it": "L'Eone",
+    "lettera_ebraica": {
+     "nome": "Shin",
+     "glifo": "ש",
+     "valore": 300
+    },
+    "elemento": "fuoco",
+    "astrologia": "Fire/Spirit",
+    "parole_chiave": [
+     "renewal",
+     "awakening",
+     "turning point",
+     "new era",
+     "decision"
+    ],
+    "colori": [
+     "#FF4500",
+     "#E34234"
+    ],
+    "nomi": {
+     "en": "The Aeon",
+     "hu": "Az Éon",
+     "ru": "Эон",
+     "uk": "Еон",
+     "es": "El Eón"
+    },
+    "lang": "en",
+    "nome": "The Aeon",
+    "slug": "the-aeon",
+    "slugs": {
+     "it": "l-eone",
+     "en": "the-aeon"
+    },
+    "elemento_label": "Fire",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "maj-21",
+    "arcano": "maggiore",
+    "numero": 21,
+    "numero_romano": "XXI",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Universe",
+    "titolo_thoth": null,
+    "nome_it": "L'Universo",
+    "lettera_ebraica": {
+     "nome": "Tau",
+     "glifo": "ת",
+     "valore": 400
+    },
+    "elemento": "terra",
+    "astrologia": "Saturn/Earth",
+    "parole_chiave": [
+     "completion",
+     "wholeness",
+     "synthesis",
+     "fulfilment",
+     "the dance"
+    ],
+    "colori": [
+     "#2A0A5E",
+     "#1C1C1C"
+    ],
+    "nomi": {
+     "en": "The Universe",
+     "hu": "Az Univerzum",
+     "ru": "Вселенная",
+     "uk": "Всесвіт",
+     "es": "El Universo"
+    },
+    "lang": "en",
+    "nome": "The Universe",
+    "slug": "the-universe",
+    "slugs": {
+     "it": "l-universo",
+     "en": "the-universe"
+    },
+    "elemento_label": "Earth",
+    "seme_label": null,
+    "rango_label": null,
+    "arcano_label": "Major Arcana"
+   },
+   {
+    "id": "bastoni-01",
+    "arcano": "minore",
+    "numero": 1,
+    "numero_romano": null,
+    "seme": "bastoni",
+    "rango": "asso",
+    "nome_thoth": "Ace of Wands",
+    "titolo_thoth": "Root of the Powers of Fire",
+    "nome_it": "Asso di Bastoni",
+    "lettera_ebraica": null,
+    "elemento": "fuoco",
+    "astrologia": "Root of Fire",
+    "parole_chiave": [
+     "primal energy",
+     "will",
+     "inspiration",
+     "creation",
+     "impulse"
+    ],
+    "colori": [
+     "#F5F3E7",
+     "#D2461E"
+    ],
+    "nomi": {
+     "en": "Ace of Wands — Root of the Powers of Fire",
+     "hu": "Pálcák Ásza",
+     "ru": "Туз Жезлов",
+     "uk": "Туз Жезлів",
+     "es": "As de Bastos"
+    },
+    "lang": "en",
+    "nome": "Ace of Wands — Root of the Powers of Fire",
+    "slug": "ace-of-wands",
+    "slugs": {
+     "it": "asso-di-bastoni",
+     "en": "ace-of-wands"
+    },
+    "elemento_label": "Fire",
+    "seme_label": "Wands",
+    "rango_label": "Ace",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "bastoni-02",
+    "arcano": "minore",
+    "numero": 2,
+    "numero_romano": null,
+    "seme": "bastoni",
+    "rango": "due",
+    "nome_thoth": "Two of Wands",
+    "titolo_thoth": "Dominion",
+    "nome_it": "Due di Bastoni — Dominio",
+    "lettera_ebraica": null,
+    "elemento": "fuoco",
+    "astrologia": "Mars in Aries",
+    "parole_chiave": [
+     "dominion",
+     "boldness",
+     "will",
+     "conquest",
+     "initiative"
+    ],
+    "colori": [
+     "#8A8D8F",
+     "#D2461E"
+    ],
+    "nomi": {
+     "en": "Two of Wands — Dominion",
+     "hu": "Pálcák Kettese — Uralom",
+     "ru": "Двойка Жезлов — Владычество",
+     "uk": "Двійка Жезлів — Панування",
+     "es": "Dos de Bastos — Dominio"
+    },
+    "lang": "en",
+    "nome": "Two of Wands — Dominion",
+    "slug": "two-of-wands",
+    "slugs": {
+     "it": "due-di-bastoni-dominio",
+     "en": "two-of-wands"
+    },
+    "elemento_label": "Fire",
+    "seme_label": "Wands",
+    "rango_label": "Two",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "bastoni-03",
+    "arcano": "minore",
+    "numero": 3,
+    "numero_romano": null,
+    "seme": "bastoni",
+    "rango": "tre",
+    "nome_thoth": "Three of Wands",
+    "titolo_thoth": "Virtue",
+    "nome_it": "Tre di Bastoni — Virtù",
+    "lettera_ebraica": null,
+    "elemento": "fuoco",
+    "astrologia": "Sun in Aries",
+    "parole_chiave": [
+     "virtue",
+     "integrity",
+     "first successes",
+     "confidence",
+     "nobility"
+    ],
+    "colori": [
+     "#1A1A1A",
+     "#D2461E"
+    ],
+    "nomi": {
+     "en": "Three of Wands — Virtue",
+     "hu": "Pálcák Hármasa — Erény",
+     "ru": "Тройка Жезлов — Добродетель",
+     "uk": "Трійка Жезлів — Чеснота",
+     "es": "Tres de Bastos — Virtud"
+    },
+    "lang": "en",
+    "nome": "Three of Wands — Virtue",
+    "slug": "three-of-wands",
+    "slugs": {
+     "it": "tre-di-bastoni-virtu",
+     "en": "three-of-wands"
+    },
+    "elemento_label": "Fire",
+    "seme_label": "Wands",
+    "rango_label": "Three",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "bastoni-04",
+    "arcano": "minore",
+    "numero": 4,
+    "numero_romano": null,
+    "seme": "bastoni",
+    "rango": "quattro",
+    "nome_thoth": "Four of Wands",
+    "titolo_thoth": "Completion",
+    "nome_it": "Quattro di Bastoni — Compimento",
+    "lettera_ebraica": null,
+    "elemento": "fuoco",
+    "astrologia": "Venus in Aries",
+    "parole_chiave": [
+     "completion",
+     "stability",
+     "harmony",
+     "celebration",
+     "order"
+    ],
+    "colori": [
+     "#1F4E9A",
+     "#D2461E"
+    ],
+    "nomi": {
+     "en": "Four of Wands — Completion",
+     "hu": "Pálcák Négyese — Beteljesülés",
+     "ru": "Четвёрка Жезлов — Завершение",
+     "uk": "Четвірка Жезлів — Завершення",
+     "es": "Cuatro de Bastos — Culminación"
+    },
+    "lang": "en",
+    "nome": "Four of Wands — Completion",
+    "slug": "four-of-wands",
+    "slugs": {
+     "it": "quattro-di-bastoni-compimento",
+     "en": "four-of-wands"
+    },
+    "elemento_label": "Fire",
+    "seme_label": "Wands",
+    "rango_label": "Four",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "bastoni-05",
+    "arcano": "minore",
+    "numero": 5,
+    "numero_romano": null,
+    "seme": "bastoni",
+    "rango": "cinque",
+    "nome_thoth": "Five of Wands",
+    "titolo_thoth": "Strife",
+    "nome_it": "Cinque di Bastoni — Contesa",
+    "lettera_ebraica": null,
+    "elemento": "fuoco",
+    "astrologia": "Saturn in Leo",
+    "parole_chiave": [
+     "strife",
+     "conflict",
+     "effort",
+     "competition",
+     "obstacle"
+    ],
+    "colori": [
+     "#C8102E",
+     "#D2461E"
+    ],
+    "nomi": {
+     "en": "Five of Wands — Strife",
+     "hu": "Pálcák Ötöse — Viszály",
+     "ru": "Пятёрка Жезлов — Борьба",
+     "uk": "П'ятірка Жезлів — Боротьба",
+     "es": "Cinco de Bastos — Lucha"
+    },
+    "lang": "en",
+    "nome": "Five of Wands — Strife",
+    "slug": "five-of-wands",
+    "slugs": {
+     "it": "cinque-di-bastoni-contesa",
+     "en": "five-of-wands"
+    },
+    "elemento_label": "Fire",
+    "seme_label": "Wands",
+    "rango_label": "Five",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "bastoni-06",
+    "arcano": "minore",
+    "numero": 6,
+    "numero_romano": null,
+    "seme": "bastoni",
+    "rango": "sei",
+    "nome_thoth": "Six of Wands",
+    "titolo_thoth": "Victory",
+    "nome_it": "Sei di Bastoni — Vittoria",
+    "lettera_ebraica": null,
+    "elemento": "fuoco",
+    "astrologia": "Jupiter in Leo",
+    "parole_chiave": [
+     "victory",
+     "recognition",
+     "success",
+     "confidence",
+     "triumph"
+    ],
+    "colori": [
+     "#E6B422",
+     "#D2461E"
+    ],
+    "nomi": {
+     "en": "Six of Wands — Victory",
+     "hu": "Pálcák Hatosa — Győzelem",
+     "ru": "Шестёрка Жезлов — Победа",
+     "uk": "Шістка Жезлів — Перемога",
+     "es": "Seis de Bastos — Victoria"
+    },
+    "lang": "en",
+    "nome": "Six of Wands — Victory",
+    "slug": "six-of-wands",
+    "slugs": {
+     "it": "sei-di-bastoni-vittoria",
+     "en": "six-of-wands"
+    },
+    "elemento_label": "Fire",
+    "seme_label": "Wands",
+    "rango_label": "Six",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "bastoni-07",
+    "arcano": "minore",
+    "numero": 7,
+    "numero_romano": null,
+    "seme": "bastoni",
+    "rango": "sette",
+    "nome_thoth": "Seven of Wands",
+    "titolo_thoth": "Valour",
+    "nome_it": "Sette di Bastoni — Valore",
+    "lettera_ebraica": null,
+    "elemento": "fuoco",
+    "astrologia": "Mars in Leo",
+    "parole_chiave": [
+     "valour",
+     "courage",
+     "resistance",
+     "challenge",
+     "defence"
+    ],
+    "colori": [
+     "#2E8B57",
+     "#D2461E"
+    ],
+    "nomi": {
+     "en": "Seven of Wands — Valour",
+     "hu": "Pálcák Hetese — Vitézség",
+     "ru": "Семёрка Жезлов — Доблесть",
+     "uk": "Сімка Жезлів — Доблесть",
+     "es": "Siete de Bastos — Valor"
+    },
+    "lang": "en",
+    "nome": "Seven of Wands — Valour",
+    "slug": "seven-of-wands",
+    "slugs": {
+     "it": "sette-di-bastoni-valore",
+     "en": "seven-of-wands"
+    },
+    "elemento_label": "Fire",
+    "seme_label": "Wands",
+    "rango_label": "Seven",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "bastoni-08",
+    "arcano": "minore",
+    "numero": 8,
+    "numero_romano": null,
+    "seme": "bastoni",
+    "rango": "otto",
+    "nome_thoth": "Eight of Wands",
+    "titolo_thoth": "Swiftness",
+    "nome_it": "Otto di Bastoni — Rapidità",
+    "lettera_ebraica": null,
+    "elemento": "fuoco",
+    "astrologia": "Mercury in Sagittarius",
+    "parole_chiave": [
+     "swiftness",
+     "communication",
+     "momentum",
+     "movement",
+     "news"
+    ],
+    "colori": [
+     "#E07B24",
+     "#D2461E"
+    ],
+    "nomi": {
+     "en": "Eight of Wands — Swiftness",
+     "hu": "Pálcák Nyolcasa — Gyorsaság",
+     "ru": "Восьмёрка Жезлов — Стремительность",
+     "uk": "Вісімка Жезлів — Швидкість",
+     "es": "Ocho de Bastos — Rapidez"
+    },
+    "lang": "en",
+    "nome": "Eight of Wands — Swiftness",
+    "slug": "eight-of-wands",
+    "slugs": {
+     "it": "otto-di-bastoni-rapidita",
+     "en": "eight-of-wands"
+    },
+    "elemento_label": "Fire",
+    "seme_label": "Wands",
+    "rango_label": "Eight",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "bastoni-09",
+    "arcano": "minore",
+    "numero": 9,
+    "numero_romano": null,
+    "seme": "bastoni",
+    "rango": "nove",
+    "nome_thoth": "Nine of Wands",
+    "titolo_thoth": "Strength",
+    "nome_it": "Nove di Bastoni — Forza",
+    "lettera_ebraica": null,
+    "elemento": "fuoco",
+    "astrologia": "Moon in Sagittarius",
+    "parole_chiave": [
+     "strength",
+     "health",
+     "endurance",
+     "recharging",
+     "perseverance"
+    ],
+    "colori": [
+     "#6A3D9A",
+     "#D2461E"
+    ],
+    "nomi": {
+     "en": "Nine of Wands — Strength",
+     "hu": "Pálcák Kilencese — Erő",
+     "ru": "Девятка Жезлов — Сила",
+     "uk": "Дев'ятка Жезлів — Сила",
+     "es": "Nueve de Bastos — Fuerza"
+    },
+    "lang": "en",
+    "nome": "Nine of Wands — Strength",
+    "slug": "nine-of-wands",
+    "slugs": {
+     "it": "nove-di-bastoni-forza",
+     "en": "nine-of-wands"
+    },
+    "elemento_label": "Fire",
+    "seme_label": "Wands",
+    "rango_label": "Nine",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "bastoni-10",
+    "arcano": "minore",
+    "numero": 10,
+    "numero_romano": null,
+    "seme": "bastoni",
+    "rango": "dieci",
+    "nome_thoth": "Ten of Wands",
+    "titolo_thoth": "Oppression",
+    "nome_it": "Dieci di Bastoni — Oppressione",
+    "lettera_ebraica": null,
+    "elemento": "fuoco",
+    "astrologia": "Saturn in Sagittarius",
+    "parole_chiave": [
+     "oppression",
+     "burden",
+     "overload",
+     "obstinacy",
+     "exhaustion"
+    ],
+    "colori": [
+     "#9C8A3E",
+     "#D2461E"
+    ],
+    "nomi": {
+     "en": "Ten of Wands — Oppression",
+     "hu": "Pálcák Tízese — Elnyomás",
+     "ru": "Десятка Жезлов — Угнетение",
+     "uk": "Десятка Жезлів — Гніт",
+     "es": "Diez de Bastos — Opresión"
+    },
+    "lang": "en",
+    "nome": "Ten of Wands — Oppression",
+    "slug": "ten-of-wands",
+    "slugs": {
+     "it": "dieci-di-bastoni-oppressione",
+     "en": "ten-of-wands"
+    },
+    "elemento_label": "Fire",
+    "seme_label": "Wands",
+    "rango_label": "Ten",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "bastoni-cavaliere",
+    "arcano": "minore",
+    "numero": null,
+    "numero_romano": null,
+    "seme": "bastoni",
+    "rango": "cavaliere",
+    "nome_thoth": "Knight of Wands",
+    "titolo_thoth": null,
+    "nome_it": "Cavaliere di Bastoni",
+    "lettera_ebraica": null,
+    "elemento": "fuoco",
+    "astrologia": "21° Scorpio – 20° Sagittarius",
+    "parole_chiave": [
+     "impetus",
+     "boldness",
+     "action",
+     "generosity",
+     "flame"
+    ],
+    "colori": [
+     "#FF7F24",
+     "#D2461E"
+    ],
+    "nomi": {
+     "en": "Knight of Wands",
+     "hu": "Pálcák Lovagja",
+     "ru": "Рыцарь Жезлов",
+     "uk": "Лицар Жезлів",
+     "es": "Caballero de Bastos"
+    },
+    "lang": "en",
+    "nome": "Knight of Wands",
+    "slug": "knight-of-wands",
+    "slugs": {
+     "it": "cavaliere-di-bastoni",
+     "en": "knight-of-wands"
+    },
+    "elemento_label": "Fire",
+    "seme_label": "Wands",
+    "rango_label": "Knight",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "bastoni-regina",
+    "arcano": "minore",
+    "numero": null,
+    "numero_romano": null,
+    "seme": "bastoni",
+    "rango": "regina",
+    "nome_thoth": "Queen of Wands",
+    "titolo_thoth": null,
+    "nome_it": "Regina di Bastoni",
+    "lettera_ebraica": null,
+    "elemento": "fuoco",
+    "astrologia": "21° Pisces – 20° Aries",
+    "parole_chiave": [
+     "magnetism",
+     "confidence",
+     "royalty",
+     "warmth",
+     "autonomy"
+    ],
+    "colori": [
+     "#4682B4",
+     "#D2461E"
+    ],
+    "nomi": {
+     "en": "Queen of Wands",
+     "hu": "Pálcák Királynője",
+     "ru": "Королева Жезлов",
+     "uk": "Королева Жезлів",
+     "es": "Reina de Bastos"
+    },
+    "lang": "en",
+    "nome": "Queen of Wands",
+    "slug": "queen-of-wands",
+    "slugs": {
+     "it": "regina-di-bastoni",
+     "en": "queen-of-wands"
+    },
+    "elemento_label": "Fire",
+    "seme_label": "Wands",
+    "rango_label": "Queen",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "bastoni-principe",
+    "arcano": "minore",
+    "numero": null,
+    "numero_romano": null,
+    "seme": "bastoni",
+    "rango": "principe",
+    "nome_thoth": "Prince of Wands",
+    "titolo_thoth": null,
+    "nome_it": "Principe di Bastoni",
+    "lettera_ebraica": null,
+    "elemento": "fuoco",
+    "astrologia": "21° Cancer – 20° Leo",
+    "parole_chiave": [
+     "dynamism",
+     "nobility",
+     "drive",
+     "pride",
+     "generosity"
+    ],
+    "colori": [
+     "#F0E68C",
+     "#D2461E"
+    ],
+    "nomi": {
+     "en": "Prince of Wands",
+     "hu": "Pálcák Hercege",
+     "ru": "Принц Жезлов",
+     "uk": "Принц Жезлів",
+     "es": "Príncipe de Bastos"
+    },
+    "lang": "en",
+    "nome": "Prince of Wands",
+    "slug": "prince-of-wands",
+    "slugs": {
+     "it": "principe-di-bastoni",
+     "en": "prince-of-wands"
+    },
+    "elemento_label": "Fire",
+    "seme_label": "Wands",
+    "rango_label": "Prince",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "bastoni-principessa",
+    "arcano": "minore",
+    "numero": null,
+    "numero_romano": null,
+    "seme": "bastoni",
+    "rango": "principessa",
+    "nome_thoth": "Princess of Wands",
+    "titolo_thoth": null,
+    "nome_it": "Principessa di Bastoni",
+    "lettera_ebraica": null,
+    "elemento": "fuoco",
+    "astrologia": "Celestial quadrant of Cancer, Leo, Virgo; throne of the Ace",
+    "parole_chiave": [
+     "enthusiasm",
+     "boldness",
+     "spontaneity",
+     "inspiration",
+     "transformation"
+    ],
+    "colori": [
+     "#8B6F47",
+     "#D2461E"
+    ],
+    "nomi": {
+     "en": "Princess of Wands",
+     "hu": "Pálcák Hercegnője",
+     "ru": "Принцесса Жезлов",
+     "uk": "Принцеса Жезлів",
+     "es": "Princesa de Bastos"
+    },
+    "lang": "en",
+    "nome": "Princess of Wands",
+    "slug": "princess-of-wands",
+    "slugs": {
+     "it": "principessa-di-bastoni",
+     "en": "princess-of-wands"
+    },
+    "elemento_label": "Fire",
+    "seme_label": "Wands",
+    "rango_label": "Princess",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "coppe-01",
+    "arcano": "minore",
+    "numero": 1,
+    "numero_romano": null,
+    "seme": "coppe",
+    "rango": "asso",
+    "nome_thoth": "Ace of Cups",
+    "titolo_thoth": "Root of the Powers of Water",
+    "nome_it": "Asso di Coppe",
+    "lettera_ebraica": null,
+    "elemento": "acqua",
+    "astrologia": "Root of Water",
+    "parole_chiave": [
+     "budding love",
+     "receptivity",
+     "grace",
+     "emotional fertility",
+     "openness"
+    ],
+    "colori": [
+     "#F5F3E7",
+     "#1E6FB0"
+    ],
+    "nomi": {
+     "en": "Ace of Cups — Root of the Powers of Water",
+     "hu": "Kelyhek Ásza",
+     "ru": "Туз Кубков",
+     "uk": "Туз Кубків",
+     "es": "As de Copas"
+    },
+    "lang": "en",
+    "nome": "Ace of Cups — Root of the Powers of Water",
+    "slug": "ace-of-cups",
+    "slugs": {
+     "it": "asso-di-coppe",
+     "en": "ace-of-cups"
+    },
+    "elemento_label": "Water",
+    "seme_label": "Cups",
+    "rango_label": "Ace",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "coppe-02",
+    "arcano": "minore",
+    "numero": 2,
+    "numero_romano": null,
+    "seme": "coppe",
+    "rango": "due",
+    "nome_thoth": "Two of Cups",
+    "titolo_thoth": "Love",
+    "nome_it": "Due di Coppe — Amore",
+    "lettera_ebraica": null,
+    "elemento": "acqua",
+    "astrologia": "Venus in Cancer",
+    "parole_chiave": [
+     "love",
+     "union",
+     "reciprocity",
+     "harmony",
+     "attraction"
+    ],
+    "colori": [
+     "#8A8D8F",
+     "#1E6FB0"
+    ],
+    "nomi": {
+     "en": "Two of Cups — Love",
+     "hu": "Kelyhek Kettese — Szerelem",
+     "ru": "Двойка Кубков — Любовь",
+     "uk": "Двійка Кубків — Любов",
+     "es": "Dos de Copas — Amor"
+    },
+    "lang": "en",
+    "nome": "Two of Cups — Love",
+    "slug": "two-of-cups",
+    "slugs": {
+     "it": "due-di-coppe-amore",
+     "en": "two-of-cups"
+    },
+    "elemento_label": "Water",
+    "seme_label": "Cups",
+    "rango_label": "Two",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "coppe-03",
+    "arcano": "minore",
+    "numero": 3,
+    "numero_romano": null,
+    "seme": "coppe",
+    "rango": "tre",
+    "nome_thoth": "Three of Cups",
+    "titolo_thoth": "Abundance",
+    "nome_it": "Tre di Coppe — Abbondanza",
+    "lettera_ebraica": null,
+    "elemento": "acqua",
+    "astrologia": "Mercury in Cancer",
+    "parole_chiave": [
+     "abundance",
+     "celebration",
+     "fertility",
+     "shared joy",
+     "grace"
+    ],
+    "colori": [
+     "#1A1A1A",
+     "#1E6FB0"
+    ],
+    "nomi": {
+     "en": "Three of Cups — Abundance",
+     "hu": "Kelyhek Hármasa — Bőség",
+     "ru": "Тройка Кубков — Изобилие",
+     "uk": "Трійка Кубків — Достаток",
+     "es": "Tres de Copas — Abundancia"
+    },
+    "lang": "en",
+    "nome": "Three of Cups — Abundance",
+    "slug": "three-of-cups",
+    "slugs": {
+     "it": "tre-di-coppe-abbondanza",
+     "en": "three-of-cups"
+    },
+    "elemento_label": "Water",
+    "seme_label": "Cups",
+    "rango_label": "Three",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "coppe-04",
+    "arcano": "minore",
+    "numero": 4,
+    "numero_romano": null,
+    "seme": "coppe",
+    "rango": "quattro",
+    "nome_thoth": "Four of Cups",
+    "titolo_thoth": "Luxury",
+    "nome_it": "Quattro di Coppe — Lusso",
+    "lettera_ebraica": null,
+    "elemento": "acqua",
+    "astrologia": "Moon in Cancer",
+    "parole_chiave": [
+     "luxury",
+     "comfort",
+     "emotional stability",
+     "contentment",
+     "inertia"
+    ],
+    "colori": [
+     "#1F4E9A",
+     "#1E6FB0"
+    ],
+    "nomi": {
+     "en": "Four of Cups — Luxury",
+     "hu": "Kelyhek Négyese — Fényűzés",
+     "ru": "Четвёрка Кубков — Роскошь",
+     "uk": "Четвірка Кубків — Розкіш",
+     "es": "Cuatro de Copas — Lujo"
+    },
+    "lang": "en",
+    "nome": "Four of Cups — Luxury",
+    "slug": "four-of-cups",
+    "slugs": {
+     "it": "quattro-di-coppe-lusso",
+     "en": "four-of-cups"
+    },
+    "elemento_label": "Water",
+    "seme_label": "Cups",
+    "rango_label": "Four",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "coppe-05",
+    "arcano": "minore",
+    "numero": 5,
+    "numero_romano": null,
+    "seme": "coppe",
+    "rango": "cinque",
+    "nome_thoth": "Five of Cups",
+    "titolo_thoth": "Disappointment",
+    "nome_it": "Cinque di Coppe — Delusione",
+    "lettera_ebraica": null,
+    "elemento": "acqua",
+    "astrologia": "Mars in Scorpio",
+    "parole_chiave": [
+     "disappointment",
+     "loss",
+     "regret",
+     "frustration",
+     "grief"
+    ],
+    "colori": [
+     "#C8102E",
+     "#1E6FB0"
+    ],
+    "nomi": {
+     "en": "Five of Cups — Disappointment",
+     "hu": "Kelyhek Ötöse — Csalódás",
+     "ru": "Пятёрка Кубков — Разочарование",
+     "uk": "П'ятірка Кубків — Розчарування",
+     "es": "Cinco de Copas — Decepción"
+    },
+    "lang": "en",
+    "nome": "Five of Cups — Disappointment",
+    "slug": "five-of-cups",
+    "slugs": {
+     "it": "cinque-di-coppe-delusione",
+     "en": "five-of-cups"
+    },
+    "elemento_label": "Water",
+    "seme_label": "Cups",
+    "rango_label": "Five",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "coppe-06",
+    "arcano": "minore",
+    "numero": 6,
+    "numero_romano": null,
+    "seme": "coppe",
+    "rango": "sei",
+    "nome_thoth": "Six of Cups",
+    "titolo_thoth": "Pleasure",
+    "nome_it": "Sei di Coppe — Piacere",
+    "lettera_ebraica": null,
+    "elemento": "acqua",
+    "astrologia": "Sun in Scorpio",
+    "parole_chiave": [
+     "pleasure",
+     "wellbeing",
+     "harmony",
+     "joy",
+     "fertility"
+    ],
+    "colori": [
+     "#E6B422",
+     "#1E6FB0"
+    ],
+    "nomi": {
+     "en": "Six of Cups — Pleasure",
+     "hu": "Kelyhek Hatosa — Öröm",
+     "ru": "Шестёрка Кубков — Удовольствие",
+     "uk": "Шістка Кубків — Насолода",
+     "es": "Seis de Copas — Placer"
+    },
+    "lang": "en",
+    "nome": "Six of Cups — Pleasure",
+    "slug": "six-of-cups",
+    "slugs": {
+     "it": "sei-di-coppe-piacere",
+     "en": "six-of-cups"
+    },
+    "elemento_label": "Water",
+    "seme_label": "Cups",
+    "rango_label": "Six",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "coppe-07",
+    "arcano": "minore",
+    "numero": 7,
+    "numero_romano": null,
+    "seme": "coppe",
+    "rango": "sette",
+    "nome_thoth": "Seven of Cups",
+    "titolo_thoth": "Debauch",
+    "nome_it": "Sette di Coppe — Dissolutezza",
+    "lettera_ebraica": null,
+    "elemento": "acqua",
+    "astrologia": "Venus in Scorpio",
+    "parole_chiave": [
+     "debauch",
+     "illusion",
+     "excess",
+     "temptation",
+     "self-deception"
+    ],
+    "colori": [
+     "#2E8B57",
+     "#1E6FB0"
+    ],
+    "nomi": {
+     "en": "Seven of Cups — Debauch",
+     "hu": "Kelyhek Hetese — Kicsapongás",
+     "ru": "Семёрка Кубков — Разврат",
+     "uk": "Сімка Кубків — Розпуста",
+     "es": "Siete de Copas — Libertinaje"
+    },
+    "lang": "en",
+    "nome": "Seven of Cups — Debauch",
+    "slug": "seven-of-cups",
+    "slugs": {
+     "it": "sette-di-coppe-dissolutezza",
+     "en": "seven-of-cups"
+    },
+    "elemento_label": "Water",
+    "seme_label": "Cups",
+    "rango_label": "Seven",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "coppe-08",
+    "arcano": "minore",
+    "numero": 8,
+    "numero_romano": null,
+    "seme": "coppe",
+    "rango": "otto",
+    "nome_thoth": "Eight of Cups",
+    "titolo_thoth": "Indolence",
+    "nome_it": "Otto di Coppe — Indolenza",
+    "lettera_ebraica": null,
+    "elemento": "acqua",
+    "astrologia": "Saturn in Pisces",
+    "parole_chiave": [
+     "indolence",
+     "exhaustion",
+     "abandonment",
+     "disinvestment",
+     "stagnation"
+    ],
+    "colori": [
+     "#E07B24",
+     "#1E6FB0"
+    ],
+    "nomi": {
+     "en": "Eight of Cups — Indolence",
+     "hu": "Kelyhek Nyolcasa — Tunyaság",
+     "ru": "Восьмёрка Кубков — Праздность",
+     "uk": "Вісімка Кубків — Лінощі",
+     "es": "Ocho de Copas — Indolencia"
+    },
+    "lang": "en",
+    "nome": "Eight of Cups — Indolence",
+    "slug": "eight-of-cups",
+    "slugs": {
+     "it": "otto-di-coppe-indolenza",
+     "en": "eight-of-cups"
+    },
+    "elemento_label": "Water",
+    "seme_label": "Cups",
+    "rango_label": "Eight",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "coppe-09",
+    "arcano": "minore",
+    "numero": 9,
+    "numero_romano": null,
+    "seme": "coppe",
+    "rango": "nove",
+    "nome_thoth": "Nine of Cups",
+    "titolo_thoth": "Happiness",
+    "nome_it": "Nove di Coppe — Felicità",
+    "lettera_ebraica": null,
+    "elemento": "acqua",
+    "astrologia": "Jupiter in Pisces",
+    "parole_chiave": [
+     "happiness",
+     "satisfaction",
+     "wish fulfilled",
+     "wellbeing",
+     "gratitude"
+    ],
+    "colori": [
+     "#6A3D9A",
+     "#1E6FB0"
+    ],
+    "nomi": {
+     "en": "Nine of Cups — Happiness",
+     "hu": "Kelyhek Kilencese — Boldogság",
+     "ru": "Девятка Кубков — Счастье",
+     "uk": "Дев'ятка Кубків — Щастя",
+     "es": "Nueve de Copas — Felicidad"
+    },
+    "lang": "en",
+    "nome": "Nine of Cups — Happiness",
+    "slug": "nine-of-cups",
+    "slugs": {
+     "it": "nove-di-coppe-felicita",
+     "en": "nine-of-cups"
+    },
+    "elemento_label": "Water",
+    "seme_label": "Cups",
+    "rango_label": "Nine",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "coppe-10",
+    "arcano": "minore",
+    "numero": 10,
+    "numero_romano": null,
+    "seme": "coppe",
+    "rango": "dieci",
+    "nome_thoth": "Ten of Cups",
+    "titolo_thoth": "Satiety",
+    "nome_it": "Dieci di Coppe — Sazietà",
+    "lettera_ebraica": null,
+    "elemento": "acqua",
+    "astrologia": "Mars in Pisces",
+    "parole_chiave": [
+     "satiety",
+     "completion",
+     "fullness",
+     "culmination",
+     "turning point"
+    ],
+    "colori": [
+     "#9C8A3E",
+     "#1E6FB0"
+    ],
+    "nomi": {
+     "en": "Ten of Cups — Satiety",
+     "hu": "Kelyhek Tízese — Jóllakottság",
+     "ru": "Десятка Кубков — Пресыщение",
+     "uk": "Десятка Кубків — Пересичення",
+     "es": "Diez de Copas — Saciedad"
+    },
+    "lang": "en",
+    "nome": "Ten of Cups — Satiety",
+    "slug": "ten-of-cups",
+    "slugs": {
+     "it": "dieci-di-coppe-sazieta",
+     "en": "ten-of-cups"
+    },
+    "elemento_label": "Water",
+    "seme_label": "Cups",
+    "rango_label": "Ten",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "coppe-cavaliere",
+    "arcano": "minore",
+    "numero": null,
+    "numero_romano": null,
+    "seme": "coppe",
+    "rango": "cavaliere",
+    "nome_thoth": "Knight of Cups",
+    "titolo_thoth": null,
+    "nome_it": "Cavaliere di Coppe",
+    "lettera_ebraica": null,
+    "elemento": "acqua",
+    "astrologia": "21° Aquarius – 20° Pisces",
+    "parole_chiave": [
+     "idealism",
+     "romance",
+     "grace",
+     "sensitivity",
+     "inspiration"
+    ],
+    "colori": [
+     "#FF7F24",
+     "#1E6FB0"
+    ],
+    "nomi": {
+     "en": "Knight of Cups",
+     "hu": "Kelyhek Lovagja",
+     "ru": "Рыцарь Кубков",
+     "uk": "Лицар Кубків",
+     "es": "Caballero de Copas"
+    },
+    "lang": "en",
+    "nome": "Knight of Cups",
+    "slug": "knight-of-cups",
+    "slugs": {
+     "it": "cavaliere-di-coppe",
+     "en": "knight-of-cups"
+    },
+    "elemento_label": "Water",
+    "seme_label": "Cups",
+    "rango_label": "Knight",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "coppe-regina",
+    "arcano": "minore",
+    "numero": null,
+    "numero_romano": null,
+    "seme": "coppe",
+    "rango": "regina",
+    "nome_thoth": "Queen of Cups",
+    "titolo_thoth": null,
+    "nome_it": "Regina di Coppe",
+    "lettera_ebraica": null,
+    "elemento": "acqua",
+    "astrologia": "21° Gemini – 20° Cancer",
+    "parole_chiave": [
+     "reflection",
+     "intuition",
+     "sensitivity",
+     "dream",
+     "empathy"
+    ],
+    "colori": [
+     "#4682B4",
+     "#1E6FB0"
+    ],
+    "nomi": {
+     "en": "Queen of Cups",
+     "hu": "Kelyhek Királynője",
+     "ru": "Королева Кубков",
+     "uk": "Королева Кубків",
+     "es": "Reina de Copas"
+    },
+    "lang": "en",
+    "nome": "Queen of Cups",
+    "slug": "queen-of-cups",
+    "slugs": {
+     "it": "regina-di-coppe",
+     "en": "queen-of-cups"
+    },
+    "elemento_label": "Water",
+    "seme_label": "Cups",
+    "rango_label": "Queen",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "coppe-principe",
+    "arcano": "minore",
+    "numero": null,
+    "numero_romano": null,
+    "seme": "coppe",
+    "rango": "principe",
+    "nome_thoth": "Prince of Cups",
+    "titolo_thoth": null,
+    "nome_it": "Principe di Coppe",
+    "lettera_ebraica": null,
+    "elemento": "acqua",
+    "astrologia": "21° Libra – 20° Scorpio",
+    "parole_chiave": [
+     "secret passion",
+     "intensity",
+     "creativity",
+     "reserve",
+     "depth"
+    ],
+    "colori": [
+     "#F0E68C",
+     "#1E6FB0"
+    ],
+    "nomi": {
+     "en": "Prince of Cups",
+     "hu": "Kelyhek Hercege",
+     "ru": "Принц Кубков",
+     "uk": "Принц Кубків",
+     "es": "Príncipe de Copas"
+    },
+    "lang": "en",
+    "nome": "Prince of Cups",
+    "slug": "prince-of-cups",
+    "slugs": {
+     "it": "principe-di-coppe",
+     "en": "prince-of-cups"
+    },
+    "elemento_label": "Water",
+    "seme_label": "Cups",
+    "rango_label": "Prince",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "coppe-principessa",
+    "arcano": "minore",
+    "numero": null,
+    "numero_romano": null,
+    "seme": "coppe",
+    "rango": "principessa",
+    "nome_thoth": "Princess of Cups",
+    "titolo_thoth": null,
+    "nome_it": "Principessa di Coppe",
+    "lettera_ebraica": null,
+    "elemento": "acqua",
+    "astrologia": "Celestial quadrant of Libra, Scorpio, Sagittarius; throne of the Ace",
+    "parole_chiave": [
+     "sweetness",
+     "imagination",
+     "sensitivity",
+     "dream",
+     "gentleness"
+    ],
+    "colori": [
+     "#8B6F47",
+     "#1E6FB0"
+    ],
+    "nomi": {
+     "en": "Princess of Cups",
+     "hu": "Kelyhek Hercegnője",
+     "ru": "Принцесса Кубков",
+     "uk": "Принцеса Кубків",
+     "es": "Princesa de Copas"
+    },
+    "lang": "en",
+    "nome": "Princess of Cups",
+    "slug": "princess-of-cups",
+    "slugs": {
+     "it": "principessa-di-coppe",
+     "en": "princess-of-cups"
+    },
+    "elemento_label": "Water",
+    "seme_label": "Cups",
+    "rango_label": "Princess",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "spade-01",
+    "arcano": "minore",
+    "numero": 1,
+    "numero_romano": null,
+    "seme": "spade",
+    "rango": "asso",
+    "nome_thoth": "Ace of Swords",
+    "titolo_thoth": "Root of the Powers of Air",
+    "nome_it": "Asso di Spade",
+    "lettera_ebraica": null,
+    "elemento": "aria",
+    "astrologia": "Root of Air",
+    "parole_chiave": [
+     "clarity",
+     "intellect",
+     "truth",
+     "decision",
+     "invocation"
+    ],
+    "colori": [
+     "#F5F3E7",
+     "#D9C23A"
+    ],
+    "nomi": {
+     "en": "Ace of Swords — Root of the Powers of Air",
+     "hu": "Kardok Ásza",
+     "ru": "Туз Мечей",
+     "uk": "Туз Мечів",
+     "es": "As de Espadas"
+    },
+    "lang": "en",
+    "nome": "Ace of Swords — Root of the Powers of Air",
+    "slug": "ace-of-swords",
+    "slugs": {
+     "it": "asso-di-spade",
+     "en": "ace-of-swords"
+    },
+    "elemento_label": "Air",
+    "seme_label": "Swords",
+    "rango_label": "Ace",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "spade-02",
+    "arcano": "minore",
+    "numero": 2,
+    "numero_romano": null,
+    "seme": "spade",
+    "rango": "due",
+    "nome_thoth": "Two of Swords",
+    "titolo_thoth": "Peace",
+    "nome_it": "Due di Spade — Pace",
+    "lettera_ebraica": null,
+    "elemento": "aria",
+    "astrologia": "Moon in Libra",
+    "parole_chiave": [
+     "peace",
+     "balance",
+     "inner truce",
+     "harmony",
+     "reconciliation"
+    ],
+    "colori": [
+     "#8A8D8F",
+     "#D9C23A"
+    ],
+    "nomi": {
+     "en": "Two of Swords — Peace",
+     "hu": "Kardok Kettese — Béke",
+     "ru": "Двойка Мечей — Мир",
+     "uk": "Двійка Мечів — Мир",
+     "es": "Dos de Espadas — Paz"
+    },
+    "lang": "en",
+    "nome": "Two of Swords — Peace",
+    "slug": "two-of-swords",
+    "slugs": {
+     "it": "due-di-spade-pace",
+     "en": "two-of-swords"
+    },
+    "elemento_label": "Air",
+    "seme_label": "Swords",
+    "rango_label": "Two",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "spade-03",
+    "arcano": "minore",
+    "numero": 3,
+    "numero_romano": null,
+    "seme": "spade",
+    "rango": "tre",
+    "nome_thoth": "Three of Swords",
+    "titolo_thoth": "Sorrow",
+    "nome_it": "Tre di Spade — Dolore",
+    "lettera_ebraica": null,
+    "elemento": "aria",
+    "astrologia": "Saturn in Libra",
+    "parole_chiave": [
+     "sorrow",
+     "separation",
+     "melancholy",
+     "wound",
+     "understanding"
+    ],
+    "colori": [
+     "#1A1A1A",
+     "#D9C23A"
+    ],
+    "nomi": {
+     "en": "Three of Swords — Sorrow",
+     "hu": "Kardok Hármasa — Bánat",
+     "ru": "Тройка Мечей — Печаль",
+     "uk": "Трійка Мечів — Смуток",
+     "es": "Tres de Espadas — Dolor"
+    },
+    "lang": "en",
+    "nome": "Three of Swords — Sorrow",
+    "slug": "three-of-swords",
+    "slugs": {
+     "it": "tre-di-spade-dolore",
+     "en": "three-of-swords"
+    },
+    "elemento_label": "Air",
+    "seme_label": "Swords",
+    "rango_label": "Three",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "spade-04",
+    "arcano": "minore",
+    "numero": 4,
+    "numero_romano": null,
+    "seme": "spade",
+    "rango": "quattro",
+    "nome_thoth": "Four of Swords",
+    "titolo_thoth": "Truce",
+    "nome_it": "Quattro di Spade — Tregua",
+    "lettera_ebraica": null,
+    "elemento": "aria",
+    "astrologia": "Jupiter in Libra",
+    "parole_chiave": [
+     "truce",
+     "rest",
+     "retreat",
+     "convalescence",
+     "compromise"
+    ],
+    "colori": [
+     "#1F4E9A",
+     "#D9C23A"
+    ],
+    "nomi": {
+     "en": "Four of Swords — Truce",
+     "hu": "Kardok Négyese — Fegyverszünet",
+     "ru": "Четвёрка Мечей — Перемирие",
+     "uk": "Четвірка Мечів — Перемир'я",
+     "es": "Cuatro de Espadas — Tregua"
+    },
+    "lang": "en",
+    "nome": "Four of Swords — Truce",
+    "slug": "four-of-swords",
+    "slugs": {
+     "it": "quattro-di-spade-tregua",
+     "en": "four-of-swords"
+    },
+    "elemento_label": "Air",
+    "seme_label": "Swords",
+    "rango_label": "Four",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "spade-05",
+    "arcano": "minore",
+    "numero": 5,
+    "numero_romano": null,
+    "seme": "spade",
+    "rango": "cinque",
+    "nome_thoth": "Five of Swords",
+    "titolo_thoth": "Defeat",
+    "nome_it": "Cinque di Spade — Sconfitta",
+    "lettera_ebraica": null,
+    "elemento": "aria",
+    "astrologia": "Venus in Aquarius",
+    "parole_chiave": [
+     "defeat",
+     "humiliation",
+     "loss",
+     "weakness",
+     "rout"
+    ],
+    "colori": [
+     "#C8102E",
+     "#D9C23A"
+    ],
+    "nomi": {
+     "en": "Five of Swords — Defeat",
+     "hu": "Kardok Ötöse — Vereség",
+     "ru": "Пятёрка Мечей — Поражение",
+     "uk": "П'ятірка Мечів — Поразка",
+     "es": "Cinco de Espadas — Derrota"
+    },
+    "lang": "en",
+    "nome": "Five of Swords — Defeat",
+    "slug": "five-of-swords",
+    "slugs": {
+     "it": "cinque-di-spade-sconfitta",
+     "en": "five-of-swords"
+    },
+    "elemento_label": "Air",
+    "seme_label": "Swords",
+    "rango_label": "Five",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "spade-06",
+    "arcano": "minore",
+    "numero": 6,
+    "numero_romano": null,
+    "seme": "spade",
+    "rango": "sei",
+    "nome_thoth": "Six of Swords",
+    "titolo_thoth": "Science",
+    "nome_it": "Sei di Spade — Scienza",
+    "lettera_ebraica": null,
+    "elemento": "aria",
+    "astrologia": "Mercury in Aquarius",
+    "parole_chiave": [
+     "science",
+     "intelligence",
+     "method",
+     "understanding",
+     "objectivity"
+    ],
+    "colori": [
+     "#E6B422",
+     "#D9C23A"
+    ],
+    "nomi": {
+     "en": "Six of Swords — Science",
+     "hu": "Kardok Hatosa — Tudomány",
+     "ru": "Шестёрка Мечей — Наука",
+     "uk": "Шістка Мечів — Наука",
+     "es": "Seis de Espadas — Ciencia"
+    },
+    "lang": "en",
+    "nome": "Six of Swords — Science",
+    "slug": "six-of-swords",
+    "slugs": {
+     "it": "sei-di-spade-scienza",
+     "en": "six-of-swords"
+    },
+    "elemento_label": "Air",
+    "seme_label": "Swords",
+    "rango_label": "Six",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "spade-07",
+    "arcano": "minore",
+    "numero": 7,
+    "numero_romano": null,
+    "seme": "spade",
+    "rango": "sette",
+    "nome_thoth": "Seven of Swords",
+    "titolo_thoth": "Futility",
+    "nome_it": "Sette di Spade — Futilità",
+    "lettera_ebraica": null,
+    "elemento": "aria",
+    "astrologia": "Moon in Aquarius",
+    "parole_chiave": [
+     "futility",
+     "instability",
+     "vain effort",
+     "compromise",
+     "cunning"
+    ],
+    "colori": [
+     "#2E8B57",
+     "#D9C23A"
+    ],
+    "nomi": {
+     "en": "Seven of Swords — Futility",
+     "hu": "Kardok Hetese — Hiábavalóság",
+     "ru": "Семёрка Мечей — Тщетность",
+     "uk": "Сімка Мечів — Марність",
+     "es": "Siete de Espadas — Futilidad"
+    },
+    "lang": "en",
+    "nome": "Seven of Swords — Futility",
+    "slug": "seven-of-swords",
+    "slugs": {
+     "it": "sette-di-spade-futilita",
+     "en": "seven-of-swords"
+    },
+    "elemento_label": "Air",
+    "seme_label": "Swords",
+    "rango_label": "Seven",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "spade-08",
+    "arcano": "minore",
+    "numero": 8,
+    "numero_romano": null,
+    "seme": "spade",
+    "rango": "otto",
+    "nome_thoth": "Eight of Swords",
+    "titolo_thoth": "Interference",
+    "nome_it": "Otto di Spade — Interferenza",
+    "lettera_ebraica": null,
+    "elemento": "aria",
+    "astrologia": "Jupiter in Gemini",
+    "parole_chiave": [
+     "interference",
+     "obstacle",
+     "indecision",
+     "scatter",
+     "restriction"
+    ],
+    "colori": [
+     "#E07B24",
+     "#D9C23A"
+    ],
+    "nomi": {
+     "en": "Eight of Swords — Interference",
+     "hu": "Kardok Nyolcasa — Beavatkozás",
+     "ru": "Восьмёрка Мечей — Вмешательство",
+     "uk": "Вісімка Мечів — Втручання",
+     "es": "Ocho de Espadas — Interferencia"
+    },
+    "lang": "en",
+    "nome": "Eight of Swords — Interference",
+    "slug": "eight-of-swords",
+    "slugs": {
+     "it": "otto-di-spade-interferenza",
+     "en": "eight-of-swords"
+    },
+    "elemento_label": "Air",
+    "seme_label": "Swords",
+    "rango_label": "Eight",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "spade-09",
+    "arcano": "minore",
+    "numero": 9,
+    "numero_romano": null,
+    "seme": "spade",
+    "rango": "nove",
+    "nome_thoth": "Nine of Swords",
+    "titolo_thoth": "Cruelty",
+    "nome_it": "Nove di Spade — Crudeltà",
+    "lettera_ebraica": null,
+    "elemento": "aria",
+    "astrologia": "Mars in Gemini",
+    "parole_chiave": [
+     "cruelty",
+     "anguish",
+     "obsession",
+     "fear",
+     "mental suffering"
+    ],
+    "colori": [
+     "#6A3D9A",
+     "#D9C23A"
+    ],
+    "nomi": {
+     "en": "Nine of Swords — Cruelty",
+     "hu": "Kardok Kilencese — Kegyetlenség",
+     "ru": "Девятка Мечей — Жестокость",
+     "uk": "Дев'ятка Мечів — Жорстокість",
+     "es": "Nueve de Espadas — Crueldad"
+    },
+    "lang": "en",
+    "nome": "Nine of Swords — Cruelty",
+    "slug": "nine-of-swords",
+    "slugs": {
+     "it": "nove-di-spade-crudelta",
+     "en": "nine-of-swords"
+    },
+    "elemento_label": "Air",
+    "seme_label": "Swords",
+    "rango_label": "Nine",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "spade-10",
+    "arcano": "minore",
+    "numero": 10,
+    "numero_romano": null,
+    "seme": "spade",
+    "rango": "dieci",
+    "nome_thoth": "Ten of Swords",
+    "titolo_thoth": "Ruin",
+    "nome_it": "Dieci di Spade — Rovina",
+    "lettera_ebraica": null,
+    "elemento": "aria",
+    "astrologia": "Sun in Gemini",
+    "parole_chiave": [
+     "ruin",
+     "ending",
+     "disintegration",
+     "collapse",
+     "liberation"
+    ],
+    "colori": [
+     "#9C8A3E",
+     "#D9C23A"
+    ],
+    "nomi": {
+     "en": "Ten of Swords — Ruin",
+     "hu": "Kardok Tízese — Romlás",
+     "ru": "Десятка Мечей — Крах",
+     "uk": "Десятка Мечів — Руйнування",
+     "es": "Diez de Espadas — Ruina"
+    },
+    "lang": "en",
+    "nome": "Ten of Swords — Ruin",
+    "slug": "ten-of-swords",
+    "slugs": {
+     "it": "dieci-di-spade-rovina",
+     "en": "ten-of-swords"
+    },
+    "elemento_label": "Air",
+    "seme_label": "Swords",
+    "rango_label": "Ten",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "spade-cavaliere",
+    "arcano": "minore",
+    "numero": null,
+    "numero_romano": null,
+    "seme": "spade",
+    "rango": "cavaliere",
+    "nome_thoth": "Knight of Swords",
+    "titolo_thoth": null,
+    "nome_it": "Cavaliere di Spade",
+    "lettera_ebraica": null,
+    "elemento": "aria",
+    "astrologia": "21° Taurus – 20° Gemini",
+    "parole_chiave": [
+     "attack",
+     "speed",
+     "intelligence",
+     "determination",
+     "impetuosity"
+    ],
+    "colori": [
+     "#FF7F24",
+     "#D9C23A"
+    ],
+    "nomi": {
+     "en": "Knight of Swords",
+     "hu": "Kardok Lovagja",
+     "ru": "Рыцарь Мечей",
+     "uk": "Лицар Мечів",
+     "es": "Caballero de Espadas"
+    },
+    "lang": "en",
+    "nome": "Knight of Swords",
+    "slug": "knight-of-swords",
+    "slugs": {
+     "it": "cavaliere-di-spade",
+     "en": "knight-of-swords"
+    },
+    "elemento_label": "Air",
+    "seme_label": "Swords",
+    "rango_label": "Knight",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "spade-regina",
+    "arcano": "minore",
+    "numero": null,
+    "numero_romano": null,
+    "seme": "spade",
+    "rango": "regina",
+    "nome_thoth": "Queen of Swords",
+    "titolo_thoth": null,
+    "nome_it": "Regina di Spade",
+    "lettera_ebraica": null,
+    "elemento": "aria",
+    "astrologia": "21° Virgo – 20° Libra",
+    "parole_chiave": [
+     "lucidity",
+     "observation",
+     "independence",
+     "judgement",
+     "sincerity"
+    ],
+    "colori": [
+     "#4682B4",
+     "#D9C23A"
+    ],
+    "nomi": {
+     "en": "Queen of Swords",
+     "hu": "Kardok Királynője",
+     "ru": "Королева Мечей",
+     "uk": "Королева Мечів",
+     "es": "Reina de Espadas"
+    },
+    "lang": "en",
+    "nome": "Queen of Swords",
+    "slug": "queen-of-swords",
+    "slugs": {
+     "it": "regina-di-spade",
+     "en": "queen-of-swords"
+    },
+    "elemento_label": "Air",
+    "seme_label": "Swords",
+    "rango_label": "Queen",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "spade-principe",
+    "arcano": "minore",
+    "numero": null,
+    "numero_romano": null,
+    "seme": "spade",
+    "rango": "principe",
+    "nome_thoth": "Prince of Swords",
+    "titolo_thoth": null,
+    "nome_it": "Principe di Spade",
+    "lettera_ebraica": null,
+    "elemento": "aria",
+    "astrologia": "21° Capricorn – 20° Aquarius",
+    "parole_chiave": [
+     "pure intellect",
+     "ideas",
+     "analysis",
+     "restlessness",
+     "planning"
+    ],
+    "colori": [
+     "#F0E68C",
+     "#D9C23A"
+    ],
+    "nomi": {
+     "en": "Prince of Swords",
+     "hu": "Kardok Hercege",
+     "ru": "Принц Мечей",
+     "uk": "Принц Мечів",
+     "es": "Príncipe de Espadas"
+    },
+    "lang": "en",
+    "nome": "Prince of Swords",
+    "slug": "prince-of-swords",
+    "slugs": {
+     "it": "principe-di-spade",
+     "en": "prince-of-swords"
+    },
+    "elemento_label": "Air",
+    "seme_label": "Swords",
+    "rango_label": "Prince",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "spade-principessa",
+    "arcano": "minore",
+    "numero": null,
+    "numero_romano": null,
+    "seme": "spade",
+    "rango": "principessa",
+    "nome_thoth": "Princess of Swords",
+    "titolo_thoth": null,
+    "nome_it": "Principessa di Spade",
+    "lettera_ebraica": null,
+    "elemento": "aria",
+    "astrologia": "Celestial quadrant of Capricorn, Aquarius, Pisces; throne of the Ace",
+    "parole_chiave": [
+     "vigilance",
+     "firmness",
+     "practical wisdom",
+     "defence",
+     "resolve"
+    ],
+    "colori": [
+     "#8B6F47",
+     "#D9C23A"
+    ],
+    "nomi": {
+     "en": "Princess of Swords",
+     "hu": "Kardok Hercegnője",
+     "ru": "Принцесса Мечей",
+     "uk": "Принцеса Мечів",
+     "es": "Princesa de Espadas"
+    },
+    "lang": "en",
+    "nome": "Princess of Swords",
+    "slug": "princess-of-swords",
+    "slugs": {
+     "it": "principessa-di-spade",
+     "en": "princess-of-swords"
+    },
+    "elemento_label": "Air",
+    "seme_label": "Swords",
+    "rango_label": "Princess",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "dischi-01",
+    "arcano": "minore",
+    "numero": 1,
+    "numero_romano": null,
+    "seme": "dischi",
+    "rango": "asso",
+    "nome_thoth": "Ace of Disks",
+    "titolo_thoth": "Root of the Powers of Earth",
+    "nome_it": "Asso di Dischi",
+    "lettera_ebraica": null,
+    "elemento": "terra",
+    "astrologia": "Root of Earth",
+    "parole_chiave": [
+     "matter",
+     "concrete opportunity",
+     "prosperity",
+     "the body",
+     "grounding"
+    ],
+    "colori": [
+     "#F5F3E7",
+     "#4A7C3A"
+    ],
+    "nomi": {
+     "en": "Ace of Disks — Root of the Powers of Earth",
+     "hu": "Korongok Ásza",
+     "ru": "Туз Дисков",
+     "uk": "Туз Дисків",
+     "es": "As de Discos"
+    },
+    "lang": "en",
+    "nome": "Ace of Disks — Root of the Powers of Earth",
+    "slug": "ace-of-disks",
+    "slugs": {
+     "it": "asso-di-dischi",
+     "en": "ace-of-disks"
+    },
+    "elemento_label": "Earth",
+    "seme_label": "Disks",
+    "rango_label": "Ace",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "dischi-02",
+    "arcano": "minore",
+    "numero": 2,
+    "numero_romano": null,
+    "seme": "dischi",
+    "rango": "due",
+    "nome_thoth": "Two of Disks",
+    "titolo_thoth": "Change",
+    "nome_it": "Due di Dischi — Cambiamento",
+    "lettera_ebraica": null,
+    "elemento": "terra",
+    "astrologia": "Jupiter in Capricorn",
+    "parole_chiave": [
+     "change",
+     "alternation",
+     "flexibility",
+     "dynamic balance",
+     "rhythm"
+    ],
+    "colori": [
+     "#8A8D8F",
+     "#4A7C3A"
+    ],
+    "nomi": {
+     "en": "Two of Disks — Change",
+     "hu": "Korongok Kettese — Változás",
+     "ru": "Двойка Дисков — Перемена",
+     "uk": "Двійка Дисків — Зміна",
+     "es": "Dos de Discos — Cambio"
+    },
+    "lang": "en",
+    "nome": "Two of Disks — Change",
+    "slug": "two-of-disks",
+    "slugs": {
+     "it": "due-di-dischi-cambiamento",
+     "en": "two-of-disks"
+    },
+    "elemento_label": "Earth",
+    "seme_label": "Disks",
+    "rango_label": "Two",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "dischi-03",
+    "arcano": "minore",
+    "numero": 3,
+    "numero_romano": null,
+    "seme": "dischi",
+    "rango": "tre",
+    "nome_thoth": "Three of Disks",
+    "titolo_thoth": "Works",
+    "nome_it": "Tre di Dischi — Opere",
+    "lettera_ebraica": null,
+    "elemento": "terra",
+    "astrologia": "Mars in Capricorn",
+    "parole_chiave": [
+     "work",
+     "building",
+     "competence",
+     "collaboration",
+     "concreteness"
+    ],
+    "colori": [
+     "#1A1A1A",
+     "#4A7C3A"
+    ],
+    "nomi": {
+     "en": "Three of Disks — Works",
+     "hu": "Korongok Hármasa — Művek",
+     "ru": "Тройка Дисков — Работа",
+     "uk": "Трійка Дисків — Праця",
+     "es": "Tres de Discos — Obras"
+    },
+    "lang": "en",
+    "nome": "Three of Disks — Works",
+    "slug": "three-of-disks",
+    "slugs": {
+     "it": "tre-di-dischi-opere",
+     "en": "three-of-disks"
+    },
+    "elemento_label": "Earth",
+    "seme_label": "Disks",
+    "rango_label": "Three",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "dischi-04",
+    "arcano": "minore",
+    "numero": 4,
+    "numero_romano": null,
+    "seme": "dischi",
+    "rango": "quattro",
+    "nome_thoth": "Four of Disks",
+    "titolo_thoth": "Power",
+    "nome_it": "Quattro di Dischi — Potere",
+    "lettera_ebraica": null,
+    "elemento": "terra",
+    "astrologia": "Sun in Capricorn",
+    "parole_chiave": [
+     "power",
+     "stability",
+     "security",
+     "law",
+     "defence"
+    ],
+    "colori": [
+     "#1F4E9A",
+     "#4A7C3A"
+    ],
+    "nomi": {
+     "en": "Four of Disks — Power",
+     "hu": "Korongok Négyese — Hatalom",
+     "ru": "Четвёрка Дисков — Власть",
+     "uk": "Четвірка Дисків — Влада",
+     "es": "Cuatro de Discos — Poder"
+    },
+    "lang": "en",
+    "nome": "Four of Disks — Power",
+    "slug": "four-of-disks",
+    "slugs": {
+     "it": "quattro-di-dischi-potere",
+     "en": "four-of-disks"
+    },
+    "elemento_label": "Earth",
+    "seme_label": "Disks",
+    "rango_label": "Four",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "dischi-05",
+    "arcano": "minore",
+    "numero": 5,
+    "numero_romano": null,
+    "seme": "dischi",
+    "rango": "cinque",
+    "nome_thoth": "Five of Disks",
+    "titolo_thoth": "Worry",
+    "nome_it": "Cinque di Dischi — Preoccupazione",
+    "lettera_ebraica": null,
+    "elemento": "terra",
+    "astrologia": "Mercury in Taurus",
+    "parole_chiave": [
+     "worry",
+     "anxiety",
+     "precariousness",
+     "tension",
+     "material difficulties"
+    ],
+    "colori": [
+     "#C8102E",
+     "#4A7C3A"
+    ],
+    "nomi": {
+     "en": "Five of Disks — Worry",
+     "hu": "Korongok Ötöse — Aggodalom",
+     "ru": "Пятёрка Дисков — Беспокойство",
+     "uk": "П'ятірка Дисків — Тривога",
+     "es": "Cinco de Discos — Preocupación"
+    },
+    "lang": "en",
+    "nome": "Five of Disks — Worry",
+    "slug": "five-of-disks",
+    "slugs": {
+     "it": "cinque-di-dischi-preoccupazione",
+     "en": "five-of-disks"
+    },
+    "elemento_label": "Earth",
+    "seme_label": "Disks",
+    "rango_label": "Five",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "dischi-06",
+    "arcano": "minore",
+    "numero": 6,
+    "numero_romano": null,
+    "seme": "dischi",
+    "rango": "sei",
+    "nome_thoth": "Six of Disks",
+    "titolo_thoth": "Success",
+    "nome_it": "Sei di Dischi — Successo",
+    "lettera_ebraica": null,
+    "elemento": "terra",
+    "astrologia": "Moon in Taurus",
+    "parole_chiave": [
+     "success",
+     "material harmony",
+     "prosperity",
+     "balance",
+     "generosity"
+    ],
+    "colori": [
+     "#E6B422",
+     "#4A7C3A"
+    ],
+    "nomi": {
+     "en": "Six of Disks — Success",
+     "hu": "Korongok Hatosa — Siker",
+     "ru": "Шестёрка Дисков — Успех",
+     "uk": "Шістка Дисків — Успіх",
+     "es": "Seis de Discos — Éxito"
+    },
+    "lang": "en",
+    "nome": "Six of Disks — Success",
+    "slug": "six-of-disks",
+    "slugs": {
+     "it": "sei-di-dischi-successo",
+     "en": "six-of-disks"
+    },
+    "elemento_label": "Earth",
+    "seme_label": "Disks",
+    "rango_label": "Six",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "dischi-07",
+    "arcano": "minore",
+    "numero": 7,
+    "numero_romano": null,
+    "seme": "dischi",
+    "rango": "sette",
+    "nome_thoth": "Seven of Disks",
+    "titolo_thoth": "Failure",
+    "nome_it": "Sette di Dischi — Fallimento",
+    "lettera_ebraica": null,
+    "elemento": "terra",
+    "astrologia": "Saturn in Taurus",
+    "parole_chiave": [
+     "failure",
+     "stagnation",
+     "waiting",
+     "frustration",
+     "missed harvest"
+    ],
+    "colori": [
+     "#2E8B57",
+     "#4A7C3A"
+    ],
+    "nomi": {
+     "en": "Seven of Disks — Failure",
+     "hu": "Korongok Hetese — Kudarc",
+     "ru": "Семёрка Дисков — Неудача",
+     "uk": "Сімка Дисків — Невдача",
+     "es": "Siete de Discos — Fracaso"
+    },
+    "lang": "en",
+    "nome": "Seven of Disks — Failure",
+    "slug": "seven-of-disks",
+    "slugs": {
+     "it": "sette-di-dischi-fallimento",
+     "en": "seven-of-disks"
+    },
+    "elemento_label": "Earth",
+    "seme_label": "Disks",
+    "rango_label": "Seven",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "dischi-08",
+    "arcano": "minore",
+    "numero": 8,
+    "numero_romano": null,
+    "seme": "dischi",
+    "rango": "otto",
+    "nome_thoth": "Eight of Disks",
+    "titolo_thoth": "Prudence",
+    "nome_it": "Otto di Dischi — Prudenza",
+    "lettera_ebraica": null,
+    "elemento": "terra",
+    "astrologia": "Sun in Virgo",
+    "parole_chiave": [
+     "prudence",
+     "patience",
+     "care",
+     "cultivation",
+     "method"
+    ],
+    "colori": [
+     "#E07B24",
+     "#4A7C3A"
+    ],
+    "nomi": {
+     "en": "Eight of Disks — Prudence",
+     "hu": "Korongok Nyolcasa — Körültekintés",
+     "ru": "Восьмёрка Дисков — Благоразумие",
+     "uk": "Вісімка Дисків — Розсудливість",
+     "es": "Ocho de Discos — Prudencia"
+    },
+    "lang": "en",
+    "nome": "Eight of Disks — Prudence",
+    "slug": "eight-of-disks",
+    "slugs": {
+     "it": "otto-di-dischi-prudenza",
+     "en": "eight-of-disks"
+    },
+    "elemento_label": "Earth",
+    "seme_label": "Disks",
+    "rango_label": "Eight",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "dischi-09",
+    "arcano": "minore",
+    "numero": 9,
+    "numero_romano": null,
+    "seme": "dischi",
+    "rango": "nove",
+    "nome_thoth": "Nine of Disks",
+    "titolo_thoth": "Gain",
+    "nome_it": "Nove di Dischi — Guadagno",
+    "lettera_ebraica": null,
+    "elemento": "terra",
+    "astrologia": "Venus in Virgo",
+    "parole_chiave": [
+     "gain",
+     "wellbeing",
+     "good fortune",
+     "prosperity",
+     "inheritance"
+    ],
+    "colori": [
+     "#6A3D9A",
+     "#4A7C3A"
+    ],
+    "nomi": {
+     "en": "Nine of Disks — Gain",
+     "hu": "Korongok Kilencese — Nyereség",
+     "ru": "Девятка Дисков — Приобретение",
+     "uk": "Дев'ятка Дисків — Здобуток",
+     "es": "Nueve de Discos — Ganancia"
+    },
+    "lang": "en",
+    "nome": "Nine of Disks — Gain",
+    "slug": "nine-of-disks",
+    "slugs": {
+     "it": "nove-di-dischi-guadagno",
+     "en": "nine-of-disks"
+    },
+    "elemento_label": "Earth",
+    "seme_label": "Disks",
+    "rango_label": "Nine",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "dischi-10",
+    "arcano": "minore",
+    "numero": 10,
+    "numero_romano": null,
+    "seme": "dischi",
+    "rango": "dieci",
+    "nome_thoth": "Ten of Disks",
+    "titolo_thoth": "Wealth",
+    "nome_it": "Dieci di Dischi — Ricchezza",
+    "lettera_ebraica": null,
+    "elemento": "terra",
+    "astrologia": "Mercury in Virgo",
+    "parole_chiave": [
+     "wealth",
+     "material completion",
+     "inheritance",
+     "family",
+     "lasting prosperity"
+    ],
+    "colori": [
+     "#9C8A3E",
+     "#4A7C3A"
+    ],
+    "nomi": {
+     "en": "Ten of Disks — Wealth",
+     "hu": "Korongok Tízese — Gazdagság",
+     "ru": "Десятка Дисков — Богатство",
+     "uk": "Десятка Дисків — Багатство",
+     "es": "Diez de Discos — Riqueza"
+    },
+    "lang": "en",
+    "nome": "Ten of Disks — Wealth",
+    "slug": "ten-of-disks",
+    "slugs": {
+     "it": "dieci-di-dischi-ricchezza",
+     "en": "ten-of-disks"
+    },
+    "elemento_label": "Earth",
+    "seme_label": "Disks",
+    "rango_label": "Ten",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "dischi-cavaliere",
+    "arcano": "minore",
+    "numero": null,
+    "numero_romano": null,
+    "seme": "dischi",
+    "rango": "cavaliere",
+    "nome_thoth": "Knight of Disks",
+    "titolo_thoth": null,
+    "nome_it": "Cavaliere di Dischi",
+    "lettera_ebraica": null,
+    "elemento": "terra",
+    "astrologia": "21° Leo – 20° Virgo",
+    "parole_chiave": [
+     "industriousness",
+     "patience",
+     "harvest",
+     "concreteness",
+     "perseverance"
+    ],
+    "colori": [
+     "#FF7F24",
+     "#4A7C3A"
+    ],
+    "nomi": {
+     "en": "Knight of Disks",
+     "hu": "Korongok Lovagja",
+     "ru": "Рыцарь Дисков",
+     "uk": "Лицар Дисків",
+     "es": "Caballero de Discos"
+    },
+    "lang": "en",
+    "nome": "Knight of Disks",
+    "slug": "knight-of-disks",
+    "slugs": {
+     "it": "cavaliere-di-dischi",
+     "en": "knight-of-disks"
+    },
+    "elemento_label": "Earth",
+    "seme_label": "Disks",
+    "rango_label": "Knight",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "dischi-regina",
+    "arcano": "minore",
+    "numero": null,
+    "numero_romano": null,
+    "seme": "dischi",
+    "rango": "regina",
+    "nome_thoth": "Queen of Disks",
+    "titolo_thoth": null,
+    "nome_it": "Regina di Dischi",
+    "lettera_ebraica": null,
+    "elemento": "terra",
+    "astrologia": "21° Sagittarius – 20° Capricorn",
+    "parole_chiave": [
+     "fertility",
+     "care",
+     "practical ambition",
+     "generosity",
+     "patience"
+    ],
+    "colori": [
+     "#4682B4",
+     "#4A7C3A"
+    ],
+    "nomi": {
+     "en": "Queen of Disks",
+     "hu": "Korongok Királynője",
+     "ru": "Королева Дисков",
+     "uk": "Королева Дисків",
+     "es": "Reina de Discos"
+    },
+    "lang": "en",
+    "nome": "Queen of Disks",
+    "slug": "queen-of-disks",
+    "slugs": {
+     "it": "regina-di-dischi",
+     "en": "queen-of-disks"
+    },
+    "elemento_label": "Earth",
+    "seme_label": "Disks",
+    "rango_label": "Queen",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "dischi-principe",
+    "arcano": "minore",
+    "numero": null,
+    "numero_romano": null,
+    "seme": "dischi",
+    "rango": "principe",
+    "nome_thoth": "Prince of Disks",
+    "titolo_thoth": null,
+    "nome_it": "Principe di Dischi",
+    "lettera_ebraica": null,
+    "elemento": "terra",
+    "astrologia": "21° Aries – 20° Taurus",
+    "parole_chiave": [
+     "competence",
+     "perseverance",
+     "building",
+     "reliability",
+     "practical energy"
+    ],
+    "colori": [
+     "#F0E68C",
+     "#4A7C3A"
+    ],
+    "nomi": {
+     "en": "Prince of Disks",
+     "hu": "Korongok Hercege",
+     "ru": "Принц Дисков",
+     "uk": "Принц Дисків",
+     "es": "Príncipe de Discos"
+    },
+    "lang": "en",
+    "nome": "Prince of Disks",
+    "slug": "prince-of-disks",
+    "slugs": {
+     "it": "principe-di-dischi",
+     "en": "prince-of-disks"
+    },
+    "elemento_label": "Earth",
+    "seme_label": "Disks",
+    "rango_label": "Prince",
+    "arcano_label": "Minor Arcana"
+   },
+   {
+    "id": "dischi-principessa",
+    "arcano": "minore",
+    "numero": null,
+    "numero_romano": null,
+    "seme": "dischi",
+    "rango": "principessa",
+    "nome_thoth": "Princess of Disks",
+    "titolo_thoth": null,
+    "nome_it": "Principessa di Dischi",
+    "lettera_ebraica": null,
+    "elemento": "terra",
+    "astrologia": "Celestial quadrant of Aries, Taurus, Gemini; throne of the Ace",
+    "parole_chiave": [
+     "gestation",
+     "fertility",
+     "promise",
+     "the body",
+     "transformation"
+    ],
+    "colori": [
+     "#8B6F47",
+     "#4A7C3A"
+    ],
+    "nomi": {
+     "en": "Princess of Disks",
+     "hu": "Korongok Hercegnője",
+     "ru": "Принцесса Дисков",
+     "uk": "Принцеса Дисків",
+     "es": "Princesa de Discos"
+    },
+    "lang": "en",
+    "nome": "Princess of Disks",
+    "slug": "princess-of-disks",
+    "slugs": {
+     "it": "principessa-di-dischi",
+     "en": "princess-of-disks"
+    },
+    "elemento_label": "Earth",
+    "seme_label": "Disks",
+    "rango_label": "Princess",
+    "arcano_label": "Minor Arcana"
+   }
+  ]
+ }
+}

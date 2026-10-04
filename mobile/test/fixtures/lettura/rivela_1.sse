@@ -1,0 +1,165 @@
+event: carta
+data: {"posizione": 1, "carta": {"id": "maj-06", "arcano": "maggiore", "numero": 6, "numero_romano": "VI", "seme": null, "rango": null, "nome_thoth": "The Lovers", "titolo_thoth": null, "nome_it": "Gli Amanti", "lettera_ebraica": {"nome": "Zain", "glifo": "ז", "valore": 7}, "elemento": "aria", "astrologia": "Gemelli", "parole_chiave": ["scelta", "unione", "dualità", "amore", "analisi"], "colori": ["#FF8C00", "#D8BFD8"], "nomi": {"en": "The Lovers", "hu": "A Szerelmesek", "ru": "Влюблённые", "uk": "Закохані", "es": "Los Amantes"}, "lang": "it", "nome": "Gli Amanti", "slug": "gli-amanti", "slugs": {"it": "gli-amanti", "en": "the-lovers"}}, "rovescio": true, "calcolata": false, "doppia_valenza": false, "dignita": {"elemento": "aria", "punteggio": 0, "giudizio": "neutra", "relazioni": []}}
+
+event: token
+data: {"testo": "Gli "}
+
+event: token
+data: {"testo": "Amanti "}
+
+event: token
+data: {"testo": "(The "}
+
+event: token
+data: {"testo": "Lovers), "}
+
+event: token
+data: {"testo": "rovesciata, "}
+
+event: token
+data: {"testo": "nella "}
+
+event: token
+data: {"testo": "posizione "}
+
+event: token
+data: {"testo": "«Passato», "}
+
+event: token
+data: {"testo": "porta "}
+
+event: token
+data: {"testo": "la "}
+
+event: token
+data: {"testo": "sua "}
+
+event: token
+data: {"testo": "energia "}
+
+event: token
+data: {"testo": "proprio "}
+
+event: token
+data: {"testo": "nel "}
+
+event: token
+data: {"testo": "punto "}
+
+event: token
+data: {"testo": "che "}
+
+event: token
+data: {"testo": "la "}
+
+event: token
+data: {"testo": "stesa "}
+
+event: token
+data: {"testo": "dedica "}
+
+event: token
+data: {"testo": "a "}
+
+event: token
+data: {"testo": "questo "}
+
+event: token
+data: {"testo": "aspetto "}
+
+event: token
+data: {"testo": "della "}
+
+event: token
+data: {"testo": "tua "}
+
+event: token
+data: {"testo": "domanda. "}
+
+event: token
+data: {"testo": "Il "}
+
+event: token
+data: {"testo": "suo "}
+
+event: token
+data: {"testo": "simbolo "}
+
+event: token
+data: {"testo": "invita "}
+
+event: token
+data: {"testo": "a "}
+
+event: token
+data: {"testo": "guardare "}
+
+event: token
+data: {"testo": "con "}
+
+event: token
+data: {"testo": "lucidità "}
+
+event: token
+data: {"testo": "ciò "}
+
+event: token
+data: {"testo": "che "}
+
+event: token
+data: {"testo": "si "}
+
+event: token
+data: {"testo": "sta "}
+
+event: token
+data: {"testo": "muovendo, "}
+
+event: token
+data: {"testo": "senza "}
+
+event: token
+data: {"testo": "fretta "}
+
+event: token
+data: {"testo": "di "}
+
+event: token
+data: {"testo": "concludere. "}
+
+event: token
+data: {"testo": "È "}
+
+event: token
+data: {"testo": "una "}
+
+event: token
+data: {"testo": "forza "}
+
+event: token
+data: {"testo": "da "}
+
+event: token
+data: {"testo": "riconoscere "}
+
+event: token
+data: {"testo": "e "}
+
+event: token
+data: {"testo": "da "}
+
+event: token
+data: {"testo": "orientare, "}
+
+event: token
+data: {"testo": "non "}
+
+event: token
+data: {"testo": "una "}
+
+event: token
+data: {"testo": "sentenza."}
+
+event: fine
+data: {"posizione": 1, "interpretazione": "Gli Amanti (The Lovers), rovesciata, nella posizione «Passato», porta la sua energia proprio nel punto che la stesa dedica a questo aspetto della tua domanda. Il suo simbolo invita a guardare con lucidità ciò che si sta muovendo, senza fretta di concludere. È una forza da riconoscere e da orientare, non una sentenza.", "ultima": false}
+

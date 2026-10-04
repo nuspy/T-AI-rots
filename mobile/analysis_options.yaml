@@ -1,0 +1,50 @@
+# L'analisi dell'app: severa. `flutter analyze` deve restare pulito (nessun avviso, nessuna informazione).
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    # Un valore di ritorno dimenticato o un tipo mancante sono errori veri, non suggerimenti.
+    missing_return: error
+    missing_required_param: error
+    invalid_annotation_target: ignore # freezed + json_key sui parametri dei costruttori
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    # Codice generato da altri: ARB → Dart (gen-l10n), freezed, json_serializable. I file scritti dagli script del
+    # sito (token.g.dart, liste.g.dart) restano nell'analisi: un loro errore deve vedersi qui, non alla build.
+    - lib/l10n/generato/**
+    - lib/modelli/*.g.dart
+    - "**/*.freezed.dart"
+
+linter:
+  rules:
+    - always_declare_return_types
+    - avoid_dynamic_calls
+    - avoid_print
+    - avoid_type_to_string
+    - avoid_void_async
+    - cancel_subscriptions
+    - close_sinks
+    - directives_ordering
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_final_fields
+    - prefer_final_locals
+    - prefer_single_quotes
+    - sort_child_properties_last
+    - test_types_in_equals
+    - throw_in_finally
+    - unawaited_futures
+    - unnecessary_lambdas
+    - unnecessary_parenthesis
+    - unnecessary_statements
+    - use_super_parameters
+
+formatter:
+  # Come il resto del progetto: righe fino a 120 colonne.
+  page_width: 120

@@ -1,0 +1,46 @@
+{
+  "piattaforma": "ios",
+  "paese": "US",
+  "prodotti": [
+    {
+      "product_id": "chat.tarots.oro.anno.prova",
+      "base_plan": null,
+      "tipo": "abbonamento",
+      "annuale": true,
+      "prova": true,
+      "piano": {
+        "slug": "mensile-oro",
+        "nome": "Monthly Gold",
+        "descrizione": "Ten readings a day, for those who consult the cards often.",
+        "tipo": "abbonamento",
+        "crediti": 0,
+        "limiti": {
+          "letture_al_giorno": 10
+        },
+        "livello": 20
+      }
+    },
+    {
+      "product_id": "chat.tarots.crediti.5",
+      "base_plan": null,
+      "tipo": "consumabile",
+      "annuale": false,
+      "prova": false,
+      "piano": {
+        "slug": "pacchetto-5",
+        "nome": "5 readings",
+        "descrizione": "Five readings, no expiry.",
+        "tipo": "pacchetto",
+        "crediti": 5,
+        "limiti": {},
+        "livello": 30
+      }
+    }
+  ],
+  "stripe": {
+    "modalita": "nascosto",
+    "avviso": "",
+    "mostra": false
+  },
+  "app_account_token": "0ebf8947-4105-407e-9196-50ff62ba39cc"
+}

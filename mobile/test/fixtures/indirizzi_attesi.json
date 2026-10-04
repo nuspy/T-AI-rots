@@ -1,0 +1,403 @@
+{
+ "risolvi": {
+  "/": {
+   "lingua": "en",
+   "interno": "/",
+   "pubblica": true,
+   "reindirizza": null
+  },
+  "/it": {
+   "lingua": "it",
+   "interno": "/",
+   "pubblica": true,
+   "reindirizza": null
+  },
+  "/it/": {
+   "lingua": "it",
+   "interno": "/",
+   "pubblica": true,
+   "reindirizza": null
+  },
+  "/cards": {
+   "lingua": "en",
+   "interno": "/cards",
+   "pubblica": true,
+   "reindirizza": null
+  },
+  "/cards/maj-17": {
+   "lingua": "en",
+   "interno": "/cards/maj-17",
+   "pubblica": true,
+   "reindirizza": null
+  },
+  "/it/carte/la-stella": {
+   "lingua": "it",
+   "interno": "/cards/la-stella",
+   "pubblica": true,
+   "reindirizza": null
+  },
+  "/carte/maj-17": {
+   "lingua": "it",
+   "interno": "/cards/maj-17",
+   "pubblica": true,
+   "reindirizza": "/it/carte/maj-17"
+  },
+  "/stese": {
+   "lingua": "it",
+   "interno": "/spreads",
+   "pubblica": true,
+   "reindirizza": "/it/stese"
+  },
+  "/piano": {
+   "lingua": "it",
+   "interno": "/pricing",
+   "pubblica": true,
+   "reindirizza": "/it/piano"
+  },
+  "/carta-del-giorno": {
+   "lingua": "it",
+   "interno": "/daily-card",
+   "pubblica": true,
+   "reindirizza": "/it/carta-del-giorno"
+  },
+  "/card-of-the-day": {
+   "lingua": "en",
+   "interno": "/daily-card",
+   "pubblica": true,
+   "reindirizza": null
+  },
+  "/it/carta-del-giorno": {
+   "lingua": "it",
+   "interno": "/daily-card",
+   "pubblica": true,
+   "reindirizza": null
+  },
+  "/daily-card": {
+   "lingua": "en",
+   "interno": "/daily-card",
+   "pubblica": true,
+   "reindirizza": "/card-of-the-day"
+  },
+  "/it/daily-card": {
+   "lingua": "it",
+   "interno": "/daily-card",
+   "pubblica": true,
+   "reindirizza": "/it/carta-del-giorno"
+  },
+  "/it/cards/x": {
+   "lingua": "it",
+   "interno": "/cards/x",
+   "pubblica": true,
+   "reindirizza": "/it/carte/x"
+  },
+  "/spreads/croce-celtica": {
+   "lingua": "en",
+   "interno": "/spreads/croce-celtica",
+   "pubblica": true,
+   "reindirizza": null
+  },
+  "/it/stese/croce-celtica": {
+   "lingua": "it",
+   "interno": "/spreads/croce-celtica",
+   "pubblica": true,
+   "reindirizza": null
+  },
+  "/pricing": {
+   "lingua": "en",
+   "interno": "/pricing",
+   "pubblica": true,
+   "reindirizza": null
+  },
+  "/it/piano": {
+   "lingua": "it",
+   "interno": "/pricing",
+   "pubblica": true,
+   "reindirizza": null
+  },
+  "/leggi": {
+   "lingua": "en",
+   "interno": "/read",
+   "pubblica": false,
+   "reindirizza": "/read"
+  },
+  "/letture": {
+   "lingua": "en",
+   "interno": "/my-story",
+   "pubblica": false,
+   "reindirizza": "/my-story"
+  },
+  "/letture/abc": {
+   "lingua": "en",
+   "interno": "/my-story/abc",
+   "pubblica": false,
+   "reindirizza": "/my-story/abc"
+  },
+  "/s/tok": {
+   "lingua": "en",
+   "interno": "/shared/tok",
+   "pubblica": false,
+   "reindirizza": "/shared/tok"
+  },
+  "/interpreta": {
+   "lingua": "en",
+   "interno": "/physical-reading",
+   "pubblica": true,
+   "reindirizza": "/physical-reading"
+  },
+  "/vota-mazzo": {
+   "lingua": "en",
+   "interno": "/vote",
+   "pubblica": true,
+   "reindirizza": "/vote"
+  },
+  "/deck": {
+   "lingua": "en",
+   "interno": "/decks",
+   "pubblica": true,
+   "reindirizza": "/decks"
+  },
+  "/mazzo": {
+   "lingua": "it",
+   "interno": "/decks",
+   "pubblica": true,
+   "reindirizza": "/it/decks"
+  },
+  "/mazzo/thoth": {
+   "lingua": "it",
+   "interno": "/decks/thoth",
+   "pubblica": true,
+   "reindirizza": "/it/decks/thoth"
+  },
+  "/it/mazzo/thoth": {
+   "lingua": "it",
+   "interno": "/decks/thoth",
+   "pubblica": true,
+   "reindirizza": "/it/decks/thoth"
+  },
+  "/profilo": {
+   "lingua": "en",
+   "interno": "/profile",
+   "pubblica": false,
+   "reindirizza": "/profile"
+  },
+  "/blog/section/x": {
+   "lingua": "en",
+   "interno": "/blog/sezione/x",
+   "pubblica": true,
+   "reindirizza": "/blog/sezione/x"
+  },
+  "/blog/sezione/x": {
+   "lingua": "en",
+   "interno": "/blog/sezione/x",
+   "pubblica": true,
+   "reindirizza": null
+  },
+  "/blog/tag/y": {
+   "lingua": "en",
+   "interno": "/blog/tag/y",
+   "pubblica": true,
+   "reindirizza": null
+  },
+  "/blog/articolo": {
+   "lingua": "en",
+   "interno": "/blog/articolo",
+   "pubblica": true,
+   "reindirizza": null
+  },
+  "/v2/cards/x": {
+   "lingua": "en",
+   "interno": "/cards/x",
+   "pubblica": true,
+   "reindirizza": "/cards/x"
+  },
+  "/it/v2/daily-card": {
+   "lingua": "it",
+   "interno": "/daily-card",
+   "pubblica": true,
+   "reindirizza": "/it/carta-del-giorno"
+  },
+  "/read": {
+   "lingua": "en",
+   "interno": "/read",
+   "pubblica": false,
+   "reindirizza": null
+  },
+  "/my-story/123": {
+   "lingua": "en",
+   "interno": "/my-story/123",
+   "pubblica": false,
+   "reindirizza": null
+  },
+  "/shared/tok": {
+   "lingua": "en",
+   "interno": "/shared/tok",
+   "pubblica": false,
+   "reindirizza": null
+  },
+  "/shop": {
+   "lingua": "en",
+   "interno": "/shop",
+   "pubblica": true,
+   "reindirizza": null
+  },
+  "/cart": {
+   "lingua": "en",
+   "interno": "/cart",
+   "pubblica": false,
+   "reindirizza": null
+  },
+  "/explore": {
+   "lingua": "en",
+   "interno": "/explore",
+   "pubblica": true,
+   "reindirizza": null
+  },
+  "/privacy": {
+   "lingua": "en",
+   "interno": "/privacy",
+   "pubblica": true,
+   "reindirizza": null
+  },
+  "/account/elimina": {
+   "lingua": "en",
+   "interno": "/account/elimina",
+   "pubblica": true,
+   "reindirizza": null
+  },
+  "/decks/thoth": {
+   "lingua": "en",
+   "interno": "/decks/thoth",
+   "pubblica": true,
+   "reindirizza": null
+  }
+ },
+ "interno": {
+  "/": "/",
+  "/it": "/",
+  "/it/": "/",
+  "/cards": "/cards",
+  "/cards/maj-17": "/cards/maj-17",
+  "/it/carte/la-stella": "/cards/la-stella",
+  "/carte/maj-17": "/cards/maj-17",
+  "/stese": "/spreads",
+  "/piano": "/pricing",
+  "/carta-del-giorno": "/daily-card",
+  "/card-of-the-day": "/daily-card",
+  "/it/carta-del-giorno": "/daily-card",
+  "/daily-card": "/daily-card",
+  "/it/daily-card": "/daily-card",
+  "/it/cards/x": "/cards/x",
+  "/spreads/croce-celtica": "/spreads/croce-celtica",
+  "/it/stese/croce-celtica": "/spreads/croce-celtica",
+  "/pricing": "/pricing",
+  "/it/piano": "/pricing",
+  "/leggi": "/read",
+  "/letture": "/my-story",
+  "/letture/abc": "/my-story/abc",
+  "/s/tok": "/shared/tok",
+  "/interpreta": "/physical-reading",
+  "/vota-mazzo": "/vote",
+  "/deck": "/decks",
+  "/mazzo": "/decks",
+  "/mazzo/thoth": "/decks/thoth",
+  "/it/mazzo/thoth": "/decks/thoth",
+  "/profilo": "/profile",
+  "/blog/section/x": "/blog/sezione/x",
+  "/blog/sezione/x": "/blog/sezione/x",
+  "/blog/tag/y": "/blog/tag/y",
+  "/blog/articolo": "/blog/articolo",
+  "/v2/cards/x": "/cards/x",
+  "/it/v2/daily-card": "/daily-card",
+  "/read": "/read",
+  "/my-story/123": "/my-story/123",
+  "/shared/tok": "/shared/tok",
+  "/shop": "/shop",
+  "/cart": "/cart",
+  "/explore": "/explore",
+  "/privacy": "/privacy",
+  "/account/elimina": "/account/elimina",
+  "/decks/thoth": "/decks/thoth"
+ },
+ "pubblico": {
+  "/": {
+   "en": "/",
+   "it": "/it"
+  },
+  "/cards": {
+   "en": "/cards",
+   "it": "/it/carte"
+  },
+  "/cards/maj-17?x=1#a": {
+   "en": "/cards/maj-17?x=1#a",
+   "it": "/it/carte/maj-17?x=1#a"
+  },
+  "/daily-card": {
+   "en": "/card-of-the-day",
+   "it": "/it/carta-del-giorno"
+  },
+  "/pricing?ritorno=/read": {
+   "en": "/pricing?ritorno=/read",
+   "it": "/it/piano?ritorno=/read"
+  },
+  "/spreads/x": {
+   "en": "/spreads/x",
+   "it": "/it/stese/x"
+  },
+  "/read?question=a": {
+   "en": "/read?question=a",
+   "it": "/it/read?question=a"
+  },
+  "/carte/maj-17": {
+   "en": "/cards/maj-17",
+   "it": "/it/carte/maj-17"
+  },
+  "/blog/section/x": {
+   "en": "/blog/sezione/x",
+   "it": "/it/blog/sezione/x"
+  },
+  "https://esterno.example/x": {
+   "en": "https://esterno.example/x",
+   "it": "https://esterno.example/x"
+  },
+  "#ancora": {
+   "en": "#ancora",
+   "it": "#ancora"
+  },
+  "//cdn.example/x": {
+   "en": "//cdn.example/x",
+   "it": "//cdn.example/x"
+  },
+  "/my-story": {
+   "en": "/my-story",
+   "it": "/it/my-story"
+  }
+ },
+ "normalizza": {
+  "/": "/",
+  "/cards": "/cards",
+  "/cards/maj-17?x=1#a": "/cards/maj-17?x=1#a",
+  "/daily-card": "/daily-card",
+  "/pricing?ritorno=/read": "/pricing?ritorno=/read",
+  "/spreads/x": "/spreads/x",
+  "/read?question=a": "/read?question=a",
+  "/carte/maj-17": "/cards/maj-17",
+  "/blog/section/x": "/blog/sezione/x",
+  "https://esterno.example/x": "https://esterno.example/x",
+  "#ancora": "#ancora",
+  "//cdn.example/x": "//cdn.example/x",
+  "/my-story": "/my-story"
+ },
+ "indicizzabile": {
+  "/": true,
+  "/cards": true,
+  "/cards/maj-17?x=1#a": true,
+  "/daily-card": true,
+  "/pricing?ritorno=/read": true,
+  "/spreads/x": true,
+  "/read?question=a": false,
+  "/carte/maj-17": true,
+  "/blog/section/x": true,
+  "//cdn.example/x": true,
+  "/my-story": false
+ }
+}

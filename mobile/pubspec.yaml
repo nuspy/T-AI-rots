@@ -1,0 +1,109 @@
+name: tarots
+description: "TAROTS chat: l'app Android e iOS, identica alla versione mobile del sito."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Material è un pacchetto a sé dalla 3.47 (go_router lo usa già): un solo Material in tutta l'app.
+  material_ui: ^1.5.0
+
+  # Stato e navigazione
+  flutter_riverpod: ^3.4.3
+  go_router: ^18.0.2
+
+  # Rete: client, cookie della lettura anonima (`tarots_anon`) su disco
+  dio: ^5.11.1
+  dio_cookie_manager: ^3.5.0
+  cookie_jar: ^4.0.9
+  path_provider: ^2.1.6
+
+  # Modelli scritti a mano, con il codice ripetitivo generato
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.12.0
+
+  # Testi, accesso, archivi locali
+  intl: ^0.20.3
+  flutter_appauth: ^12.1.0
+  flutter_secure_storage: ^11.2.0
+  shared_preferences: ^2.5.5
+
+  # Statistiche Google (spente finché non c'è il consenso e finché mancano i file di Firebase)
+  firebase_core: ^4.15.0
+  firebase_analytics: ^12.6.0
+
+  # Le icone della testata sono i tracciati SVG del sito, disegnati senza caricamenti asincroni
+  path_parsing: ^1.1.0
+
+  # Fase 8 — le schermate:
+  # il checkout web nel browser di sistema, i collegamenti esterni, le pagine degli store;
+  url_launcher: ^6.3.3
+  # il foglio di condivisione del telefono (l'immagine di una lettura, l'invito, l'archivio dei propri dati);
+  share_plus: ^13.3.1
+  # «Stampa in PDF» di una lettura: il PDF composto nell'app e la finestra di stampa/salvataggio del sistema;
+  printing: ^5.15.1
+  pdf: ^3.13.1
+  # il testo degli articoli del diario: il parser Markdown ufficiale di Dart (dart-lang/tools), disegnato dall'app
+  # con le regole del CSS del sito e le direttive di `frontend/v2/lib/direttive-blog.ts`;
+  markdown: ^7.3.1
+  # l'immagine del profilo, dalla galleria o dalla fotocamera;
+  image_picker: ^1.2.3
+  # il rintocco dell'oracolo (`/suoni/chime.wav` del sito).
+  audioplayers: ^6.8.1
+  in_app_purchase: ^3.3.1
+  in_app_purchase_android: ^0.5.3
+  in_app_purchase_storekit: ^0.4.13
+  in_app_purchase_platform_interface: ^1.4.1
+  firebase_messaging: ^16.7.0
+  flutter_local_notifications: ^22.3.1
+  flutter_timezone: ^5.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.16.1
+  freezed: ^4.0.2
+  json_serializable: ^6.14.1
+
+flutter:
+  uses-material-design: true
+  # Le classi dei testi (`lib/l10n/generato/`) dagli ARB: vedi l10n.yaml.
+  generate: true
+
+  assets:
+    - assets/fonts/OFL-DMSans.txt
+    - assets/fonts/OFL-LibreBaskerville.txt
+    # Il rintocco dell'oracolo: lo stesso file del sito (`frontend/public/suoni/chime.wav`).
+    - assets/suoni/chime.wav
+
+  # I due caratteri del sito (`frontend/app/(v2)/fonts.ts`): Libre Baskerville per i titoli e la voce del lettore,
+  # DM Sans per l'interfaccia. Istanze statiche dei pesi che il sito carica. Licenza SIL OFL 1.1 (assets/fonts/).
+  fonts:
+    - family: Libre Baskerville
+      fonts:
+        - asset: assets/fonts/LibreBaskerville-Regular.ttf
+        - asset: assets/fonts/LibreBaskerville-Italic.ttf
+          style: italic
+        - asset: assets/fonts/LibreBaskerville-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/LibreBaskerville-BoldItalic.ttf
+          weight: 700
+          style: italic
+    - family: DM Sans
+      fonts:
+        - asset: assets/fonts/DMSans-Regular.ttf
+        - asset: assets/fonts/DMSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/DMSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/DMSans-Bold.ttf
+          weight: 700

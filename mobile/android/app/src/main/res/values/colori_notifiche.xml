@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Il colore d'accento delle notifiche: la prugna del sito (la variabile plum di v2.css). -->
+    <color name="notifica">#3C1846</color>
+</resources>

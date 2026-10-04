@@ -1,0 +1,162 @@
+event: carta
+data: {"posizione": 3, "carta": {"id": "maj-21", "arcano": "maggiore", "numero": 21, "numero_romano": "XXI", "seme": null, "rango": null, "nome_thoth": "The Universe", "titolo_thoth": null, "nome_it": "L'Universo", "lettera_ebraica": {"nome": "Tau", "glifo": "ת", "valore": 400}, "elemento": "terra", "astrologia": "Saturno/Terra", "parole_chiave": ["compimento", "totalità", "sintesi", "realizzazione", "danza"], "colori": ["#2A0A5E", "#1C1C1C"], "nomi": {"en": "The Universe", "hu": "Az Univerzum", "ru": "Вселенная", "uk": "Всесвіт", "es": "El Universo"}, "lang": "it", "nome": "L'Universo", "slug": "l-universo", "slugs": {"it": "l-universo", "en": "the-universe"}}, "rovescio": false, "calcolata": false, "doppia_valenza": false, "dignita": {"elemento": "terra", "punteggio": 0, "giudizio": "neutra", "relazioni": [{"posizione": 2, "elemento": "fuoco", "relazione": "moderata"}]}}
+
+event: token
+data: {"testo": "L'Universo "}
+
+event: token
+data: {"testo": "(The "}
+
+event: token
+data: {"testo": "Universe), "}
+
+event: token
+data: {"testo": "dritta, "}
+
+event: token
+data: {"testo": "nella "}
+
+event: token
+data: {"testo": "posizione "}
+
+event: token
+data: {"testo": "«Futuro», "}
+
+event: token
+data: {"testo": "porta "}
+
+event: token
+data: {"testo": "la "}
+
+event: token
+data: {"testo": "sua "}
+
+event: token
+data: {"testo": "energia "}
+
+event: token
+data: {"testo": "proprio "}
+
+event: token
+data: {"testo": "nel "}
+
+event: token
+data: {"testo": "punto "}
+
+event: token
+data: {"testo": "che "}
+
+event: token
+data: {"testo": "la "}
+
+event: token
+data: {"testo": "stesa "}
+
+event: token
+data: {"testo": "dedica "}
+
+event: token
+data: {"testo": "a "}
+
+event: token
+data: {"testo": "questo "}
+
+event: token
+data: {"testo": "aspetto "}
+
+event: token
+data: {"testo": "della "}
+
+event: token
+data: {"testo": "tua "}
+
+event: token
+data: {"testo": "domanda. "}
+
+event: token
+data: {"testo": "Il "}
+
+event: token
+data: {"testo": "suo "}
+
+event: token
+data: {"testo": "simbolo "}
+
+event: token
+data: {"testo": "invita "}
+
+event: token
+data: {"testo": "a "}
+
+event: token
+data: {"testo": "guardare "}
+
+event: token
+data: {"testo": "con "}
+
+event: token
+data: {"testo": "lucidità "}
+
+event: token
+data: {"testo": "ciò "}
+
+event: token
+data: {"testo": "che "}
+
+event: token
+data: {"testo": "si "}
+
+event: token
+data: {"testo": "sta "}
+
+event: token
+data: {"testo": "muovendo, "}
+
+event: token
+data: {"testo": "senza "}
+
+event: token
+data: {"testo": "fretta "}
+
+event: token
+data: {"testo": "di "}
+
+event: token
+data: {"testo": "concludere. "}
+
+event: token
+data: {"testo": "È "}
+
+event: token
+data: {"testo": "una "}
+
+event: token
+data: {"testo": "forza "}
+
+event: token
+data: {"testo": "da "}
+
+event: token
+data: {"testo": "riconoscere "}
+
+event: token
+data: {"testo": "e "}
+
+event: token
+data: {"testo": "da "}
+
+event: token
+data: {"testo": "orientare, "}
+
+event: token
+data: {"testo": "non "}
+
+event: token
+data: {"testo": "una "}
+
+event: token
+data: {"testo": "sentenza."}
+
+event: fine
+data: {"posizione": 3, "interpretazione": "L'Universo (The Universe), dritta, nella posizione «Futuro», porta la sua energia proprio nel punto che la stesa dedica a questo aspetto della tua domanda. Il suo simbolo invita a guardare con lucidità ciò che si sta muovendo, senza fretta di concludere. È una forza da riconoscere e da orientare, non una sentenza.", "ultima": true}
+

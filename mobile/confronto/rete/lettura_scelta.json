@@ -1,0 +1,4595 @@
+{
+ "GET /me/profile": {
+  "stato": 200,
+  "json": {
+   "id": 3,
+   "email": "sviluppo@localhost",
+   "display_name": "Utente di sviluppo",
+   "locale": "it",
+   "birth_date": "1974-07-05",
+   "gender": "uomo",
+   "gender_custom": null,
+   "is_trans": false,
+   "promemoria_2fa": true,
+   "nome_pubblico": null,
+   "nome_mostrato": "Utente",
+   "registro_linguistico": "quotidiano",
+   "mazzo_predefinito_id": null,
+   "avatar": null,
+   "nome": null,
+   "cognome": null,
+   "posizione": null,
+   "dati_social": {},
+   "importa_social": true,
+   "rileva_posizione": true,
+   "partner_ricordato": null,
+   "relazioni": {
+    "completo": true,
+    "mancanti": []
+   },
+   "referral_code": "DRER3KFW",
+   "invitato": false,
+   "condivisioni": {
+    "verificate": 0,
+    "premi": 0,
+    "prossimo_tra": 5,
+    "iscrizioni": 0,
+    "soglia": 5,
+    "crediti_iscrizione": 5
+   },
+   "carta_anima": {
+    "id": "maj-06",
+    "arcano": "maggiore",
+    "numero": 6,
+    "numero_romano": "VI",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Lovers",
+    "titolo_thoth": null,
+    "nome_it": "Gli Amanti",
+    "lettera_ebraica": {
+     "nome": "Zain",
+     "glifo": "ז",
+     "valore": 7
+    },
+    "elemento": "aria",
+    "astrologia": "Gemelli",
+    "parole_chiave": [
+     "scelta",
+     "unione",
+     "dualità",
+     "amore",
+     "analisi"
+    ],
+    "colori": [
+     "#FF8C00",
+     "#D8BFD8"
+    ],
+    "nomi": {
+     "en": "The Lovers",
+     "hu": "A Szerelmesek",
+     "ru": "Влюблённые",
+     "uk": "Закохані",
+     "es": "Los Amantes"
+    },
+    "lang": "it",
+    "nome": "Gli Amanti",
+    "slug": "gli-amanti",
+    "slugs": {
+     "it": "gli-amanti",
+     "en": "the-lovers"
+    },
+    "percorso": 17,
+    "collega": [
+     "Binah",
+     "Tiphareth"
+    ],
+    "sefira": null,
+    "significati": {
+     "essoterico": "Amore, attrazione, scelte importanti fra alternative. Indica relazioni, alleanze e decisioni che richiedono un coinvolgimento profondo.",
+     "psicologico": "Rappresenta l'incontro degli opposti interiori e il momento della scelta consapevole; anche la tensione fra ragione e desiderio.",
+     "iniziatico": "Percorso 17 da Binah a Tiphareth, lettera Zain (la spada, 7) e Gemelli, segno d'Aria di Mercurio: la spada che divide per rendere possibile l'unione. È l'avvio del Matrimonio Chimico, l'incontro dei principi opposti che dovranno fondersi.",
+     "ombra": "Mal dignificati indicano indecisione, infedeltà, idealizzazione, o scelte che dividono la persona contro se stessa."
+    },
+    "dritto": "Una scelta va fatta con cuore e mente allineati; un'unione o un'alleanza significativa è possibile.",
+    "rovescio": "Divisione interiore, conflitto di valori, rapporti sbilanciati, oppure paura di scegliere che lascia tutto in sospeso.",
+    "ambiti": {
+     "amore": "Attrazione forte, legame significativo; oppure un bivio sentimentale che richiede sincerità.",
+     "lavoro": "Partnership e collaborazioni; decisioni fra due strade da ponderare con analisi e integrità.",
+     "spirito": "L'unione degli opposti come via: prima l'analisi che distingue, poi la sintesi che unisce."
+    },
+    "nota_crowley": "Crowley ne fa la prima fase delle nozze alchemiche: un re moro e una regina bianca sono uniti da una figura incappucciata sotto un Cupido che scocca la freccia, e l'opera iniziata qui si compirà nell'Arte (XIV)."
+   },
+   "carta_anno": {
+    "id": "maj-00",
+    "arcano": "maggiore",
+    "numero": 0,
+    "numero_romano": "0",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Fool",
+    "titolo_thoth": null,
+    "nome_it": "Il Matto",
+    "lettera_ebraica": {
+     "nome": "Aleph",
+     "glifo": "א",
+     "valore": 1
+    },
+    "elemento": "aria",
+    "astrologia": "Aria",
+    "parole_chiave": [
+     "potenziale puro",
+     "libertà",
+     "inizio",
+     "innocenza divina",
+     "salto nell'ignoto"
+    ],
+    "colori": [
+     "#FFF8A6",
+     "#87CEEB"
+    ],
+    "nomi": {
+     "en": "The Fool",
+     "hu": "A Bolond",
+     "ru": "Дурак",
+     "uk": "Блазень",
+     "es": "El Loco"
+    },
+    "lang": "it",
+    "nome": "Il Matto",
+    "slug": "il-matto",
+    "slugs": {
+     "it": "il-matto",
+     "en": "the-fool"
+    },
+    "percorso": 11,
+    "collega": [
+     "Kether",
+     "Chokmah"
+    ],
+    "sefira": null,
+    "significati": {
+     "essoterico": "Un inizio che nasce senza calcolo, da un impulso spontaneo e fiducioso. Annuncia idee originali, viaggi, imprevisti e la disponibilità a lasciare il noto per seguire un'ispirazione che non sa ancora dove porta.",
+     "psicologico": "È la parte della psiche che non si identifica con ruoli e aspettative, lo spazio vuoto da cui nasce ogni creatività. Chiede di tollerare l'incertezza invece di colmarla subito con piani rigidi.",
+     "iniziatico": "Percorso 11 da Kether a Chokmah, lettera Aleph (il bue, valore 1) e Aria elementare: il primo moto dello Zero verso la manifestazione. È il soffio che precede ogni forma, il Nulla che si scopre fecondo e diventa Due.",
+     "ombra": "Mal dignificato diventa leggerezza irresponsabile, fuga, stravaganza priva di radici: un'azione che disperde l'energia invece di fondarla."
+    },
+    "dritto": "La situazione chiede un salto di fiducia: conta l'apertura, non la garanzia del risultato. Momento propizio per cominciare qualcosa di davvero nuovo, restando leggeri e curiosi.",
+    "rovescio": "L'impulso al nuovo è trattenuto dalla paura oppure si sfoga in scelte impulsive e disordinate. Occorre distinguere la libertà autentica dall'evasione e dall'incoscienza.",
+    "ambiti": {
+     "amore": "Un incontro inatteso o un modo più libero e giocoso di vivere il legame; scarso desiderio di vincoli e definizioni.",
+     "lavoro": "Idee originali, cambi di rotta, progetti avviati per intuizione; da sostenere con un minimo di concretezza e di scadenze.",
+     "spirito": "Invito a lasciar cadere le certezze acquisite e a ritrovare lo stupore che precede ogni conoscenza."
+    },
+    "nota_crowley": "Crowley vede nel Matto l'Uomo Verde della primavera e il Dioniso fanciullo, cornuto e ridente, circondato da tigre, coccodrillo, colomba e grappoli d'uva dentro un vortice a spirale: non un folle, ma lo Spirito prima della creazione."
+   }
+  }
+ },
+ "GET /eta-minima": {
+  "stato": 200,
+  "json": {
+   "anni": 16
+  }
+ },
+ "GET /me/billing": {
+  "stato": 200,
+  "json": {
+   "abbonamento": {
+    "id": "ed665d90-2a52-4ff6-ba5c-e716bb4e2073",
+    "piano": "free",
+    "nome": "Gratuito",
+    "stato": "attivo",
+    "periodo_inizio": "2026-09-26T20:52:12.532955+02:00",
+    "periodo_fine": "2026-10-26T19:52:12.532955+01:00",
+    "disdetto_il": null
+   },
+   "diritti": {
+    "piano": "free",
+    "nome": "Gratuito",
+    "limiti": {
+     "letture_al_giorno": 0
+    },
+    "concessioni": {},
+    "predefiniti": false
+   },
+   "saldo": 988,
+   "uso": {
+    "letture_al_giorno": {
+     "usati": 0,
+     "limite": 0,
+     "restanti": 0
+    }
+   },
+   "limiti_attivi": true
+  }
+ },
+ "GET /impostazioni-pubbliche": {
+  "stato": 200,
+  "json": {
+   "crediti_iscrizione": 3,
+   "crediti_invito": 5,
+   "commissione_referral_percentuale": 20
+  }
+ },
+ "GET /abbonamenti/pubblico": {
+  "stato": 200,
+  "json": {
+   "banner_prova": false,
+   "prova_disponibile": true
+  }
+ },
+ "GET /decks": {
+  "stato": 200,
+  "json": [
+   {
+    "id": 1,
+    "slug": "thoth",
+    "nome": "Thoth Tarot",
+    "descrizione": null,
+    "nomi": {
+     "en": "Thoth Tarot",
+     "es": "Tarot de Thoth",
+     "hu": "Thoth Tarot",
+     "it": "Tarocchi di Thoth",
+     "ru": "Таро Тота",
+     "uk": "Таро Тота"
+    },
+    "descrizioni": {},
+    "predefinito": true,
+    "attivo": true,
+    "attivo_ora": true,
+    "attivazione_da": null,
+    "attivazione_fino": null,
+    "prezzo_digitale": null,
+    "prezzo_stampa": 990,
+    "prezzo_fisico": 3900,
+    "richiede_spedizione": true,
+    "valuta": "EUR",
+    "rank": 0,
+    "immagini_versione": null,
+    "prezzo_digitale_scontato": null,
+    "prezzo_stampa_scontato": null,
+    "prezzo_fisico_scontato": null,
+    "offerta_attiva": false,
+    "offerta_formati": [],
+    "offerta_valido_dal": null,
+    "offerta_valido_fino": null
+   }
+  ]
+ },
+ "GET /blog/nove": {
+  "stato": 200,
+  "json": {
+   "recenti": [
+    {
+     "slug": "wheel-of-fortune-tarot-card-meaning-thoth",
+     "titolo": "The Wheel of Fortune Tarot Card Meaning in the Thoth Deck",
+     "sottotitolo": "Kaph, Jupiter and path 21: why Crowley just calls it Fortune, and what changes when the wheel turns.",
+     "estratto": "The wheel of fortune tarot card meaning changes the moment you open a Thoth deck, because Aleister Crowley and Frieda Harris did not call it that. On card X of the Major Arcana, Crowley's title is simply Fortune. The…",
+     "immagine": null,
+     "sezione": {
+      "slug": "thoth-tarot",
+      "nome": "Thoth Tarot"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:44.976868+02:00",
+     "aggiornato_il": "2026-10-03T15:57:44.975811+02:00",
+     "tempo_lettura": 6,
+     "tags": [
+      {
+       "slug": "major-arcana",
+       "nome": "major arcana"
+      },
+      {
+       "slug": "tarot-card-meanings",
+       "nome": "tarot card meanings"
+      },
+      {
+       "slug": "thoth-tarot",
+       "nome": "thoth tarot"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "how-to-read-the-celtic-cross-tarot-spread",
+     "titolo": "How to Read the Celtic Cross Tarot Spread",
+     "sottotitolo": "Ten positions, one clear order: what each card in the Celtic Cross actually answers.",
+     "estratto": "If you want to know how to read the Celtic Cross tarot spread, the short answer is: in a fixed order, because each of its ten positions asks a different question, and reading them out of order is the single most common…",
+     "immagine": null,
+     "sezione": {
+      "slug": "learn-tarot",
+      "nome": "Learn Tarot"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:44.298779+02:00",
+     "aggiornato_il": "2026-10-03T15:57:44.298332+02:00",
+     "tempo_lettura": 6,
+     "tags": [
+      {
+       "slug": "how-to",
+       "nome": "how-to"
+      },
+      {
+       "slug": "tarot-card-meanings",
+       "nome": "tarot card meanings"
+      },
+      {
+       "slug": "tarot-spreads",
+       "nome": "tarot spreads"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "thoth-tarot-vs-rider-waite",
+     "titolo": "Thoth Tarot vs Rider-Waite: What's the Difference",
+     "sottotitolo": "Two decks built for two different jobs: one to be read at a glance, the other to be studied for years.",
+     "estratto": "If you have only ever seen the Rider-Waite-Smith deck, the Thoth tarot can feel like a different language. The figures are less literal, the colors are sharper, and every card carries a small cluster of correspondences…",
+     "immagine": null,
+     "sezione": {
+      "slug": "thoth-tarot",
+      "nome": "Thoth Tarot"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:43.091373+02:00",
+     "aggiornato_il": "2026-10-03T15:57:43.090374+02:00",
+     "tempo_lettura": 5,
+     "tags": [
+      {
+       "slug": "rider-waite",
+       "nome": "rider-waite"
+      },
+      {
+       "slug": "tarot-decks",
+       "nome": "tarot decks"
+      },
+      {
+       "slug": "thoth-tarot",
+       "nome": "thoth tarot"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    }
+   ],
+   "scelti": [
+    {
+     "slug": "five-of-cups-tarot-meaning-grief-and-what-remains",
+     "titolo": "Five of Cups Tarot Meaning: Grief and What Remains",
+     "sottotitolo": null,
+     "estratto": "The Five of Cups is the card of what we lose and of what remains standing behind us. Grief and what remains Three cups are spilled, two still stand. In love A bridge leads home.",
+     "immagine": {
+      "url": "/blog/media/58a22226-d59b-4373-8e38-e5dbc5b78468.webp",
+      "mini": "/blog/media/58a22226-d59b-4373-8e38-e5dbc5b78468-mini.webp",
+      "alt": "A lone figure on a stone bridge in the rain, three glasses overturned and two still standing"
+     },
+     "sezione": null,
+     "autore": {
+      "id": null,
+      "nome": "Redazione",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-09-30T20:02:00.936045+02:00",
+     "aggiornato_il": "2026-09-30T20:03:46.626880+02:00",
+     "tempo_lettura": 1,
+     "tags": [
+      {
+       "slug": "cups",
+       "nome": "Cups"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "three-card-tarot-spread-how-to-read",
+     "titolo": "Three Card Tarot Spread: How to Read It",
+     "sottotitolo": "Past, present, future or situation, obstacle, advice: choosing a framing and reading the cards together, not one at a time.",
+     "estratto": "The three card tarot spread is the first layout most readers learn, and for good reason: three positions are enough to hold a real question without overwhelming a beginner with a dozen cards to weave together. It…",
+     "immagine": null,
+     "sezione": {
+      "slug": "learn-tarot",
+      "nome": "Learn Tarot"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:27.939613+02:00",
+     "aggiornato_il": "2026-10-03T15:57:27.938337+02:00",
+     "tempo_lettura": 4,
+     "tags": [
+      {
+       "slug": "learn-tarot",
+       "nome": "learn tarot"
+      },
+      {
+       "slug": "tarot-for-beginners",
+       "nome": "tarot for beginners"
+      },
+      {
+       "slug": "tarot-spreads",
+       "nome": "tarot spreads"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "the-star-tarot-card-meaning-thoth-deck",
+     "titolo": "The Star Tarot Card Meaning in the Thoth Deck",
+     "sottotitolo": "Why card XVII is hope after collapse, not before it: Heh, Aquarius and the path between Chokmah and Tiphareth.",
+     "estratto": "The Star tarot card meaning in the Thoth deck centers on something quieter than most Major Arcana: hope that has survived a collapse. Card XVII follows The Tower in the deck's sequence, and Crowley and Harris painted it…",
+     "immagine": null,
+     "sezione": {
+      "slug": "spirituality",
+      "nome": "Spirituality"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:28.964365+02:00",
+     "aggiornato_il": "2026-10-03T15:57:28.963226+02:00",
+     "tempo_lettura": 4,
+     "tags": [
+      {
+       "slug": "major-arcana",
+       "nome": "major arcana"
+      },
+      {
+       "slug": "spirituality",
+       "nome": "spirituality"
+      },
+      {
+       "slug": "tarot-card-meanings",
+       "nome": "tarot card meanings"
+      },
+      {
+       "slug": "thoth-tarot",
+       "nome": "thoth tarot"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "how-to-read-tarot-cards",
+     "titolo": "How to Read Tarot Cards: A Beginner's Guide",
+     "sottotitolo": "Suits, positions and one simple three-card spread to get you reading with real instinct, not memorized definitions.",
+     "estratto": "A deck of seventy-eight cards looks intimidating the first time you spread it out on a table. Learning how to read tarot cards is less about memorizing seventy-eight definitions and more about learning a small number of…",
+     "immagine": null,
+     "sezione": {
+      "slug": "learn-tarot",
+      "nome": "Learn Tarot"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:42.271791+02:00",
+     "aggiornato_il": "2026-10-03T15:57:42.270330+02:00",
+     "tempo_lettura": 5,
+     "tags": [
+      {
+       "slug": "learn-tarot",
+       "nome": "learn tarot"
+      },
+      {
+       "slug": "tarot-for-beginners",
+       "nome": "tarot for beginners"
+      },
+      {
+       "slug": "tarot-spreads",
+       "nome": "tarot spreads"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "tarot-tree-of-life",
+     "titolo": "Tarot Tree of Life: A Qabalah Primer",
+     "sottotitolo": "The ten spheres, three columns and twenty-two paths that map the entire major arcana.",
+     "estratto": "Ten circles, twenty-two connecting lines, three columns. The tarot Tree of Life is exactly this diagram — the Qabalistic map the Golden Dawn used to organize the entire major arcana. Where a separate look at Hebrew…",
+     "immagine": null,
+     "sezione": {
+      "slug": "symbolism",
+      "nome": "Symbolism"
+     },
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:33.967858+02:00",
+     "aggiornato_il": "2026-10-03T15:57:33.967422+02:00",
+     "tempo_lettura": 4,
+     "tags": [
+      {
+       "slug": "major-arcana",
+       "nome": "major arcana"
+      },
+      {
+       "slug": "qabalah",
+       "nome": "qabalah"
+      },
+      {
+       "slug": "tarot-symbolism",
+       "nome": "tarot symbolism"
+      },
+      {
+       "slug": "thoth-tarot",
+       "nome": "thoth tarot"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    },
+    {
+     "slug": "scorpio-season-tarot-reading-thoth-guide",
+     "titolo": "Scorpio Season Tarot Reading: A Thoth Guide to Shadow Work and Transformation",
+     "sottotitolo": "How to read Death, Lust and the hidden currents of October–November with the Thoth Tarot.",
+     "estratto": "Scorpio Season Tarot Reading: A Thoth Guide to Shadow Work and Transformation Scorpio season is the tarot reader's favourite time for deep work. From late October through November, the sun moves through the sign of the…",
+     "immagine": null,
+     "sezione": null,
+     "autore": {
+      "id": 3,
+      "nome": "Utente",
+      "avatar": null
+     },
+     "pubblicato_il": "2026-10-03T15:57:24.637248+02:00",
+     "aggiornato_il": "2026-10-03T15:57:24.636799+02:00",
+     "tempo_lettura": 6,
+     "tags": [
+      {
+       "slug": "major-arcana",
+       "nome": "major arcana"
+      },
+      {
+       "slug": "seasonal",
+       "nome": "seasonal"
+      },
+      {
+       "slug": "shadow-work",
+       "nome": "shadow work"
+      },
+      {
+       "slug": "thoth-tarot",
+       "nome": "thoth tarot"
+      }
+     ],
+     "lang": "en",
+     "in_evidenza": false
+    }
+   ]
+  }
+ },
+ "GET /impostazioni-chat": {
+  "stato": 200,
+  "json": {
+   "proattiva_minuti_inattivita": 0,
+   "proattiva_max_per_visita": 3
+  }
+ },
+ "GET /consenso": {
+  "stato": 200,
+  "json": {
+   "statistiche": "rifiutato",
+   "google_analytics": "rifiutato"
+  }
+ },
+ "PATCH /me/profile": {
+  "stato": 200,
+  "json": {
+   "id": 3,
+   "email": "sviluppo@localhost",
+   "display_name": "Utente di sviluppo",
+   "locale": "it",
+   "birth_date": "1974-07-05",
+   "gender": "uomo",
+   "gender_custom": null,
+   "is_trans": false,
+   "promemoria_2fa": true,
+   "nome_pubblico": null,
+   "nome_mostrato": "Utente",
+   "registro_linguistico": "quotidiano",
+   "mazzo_predefinito_id": null,
+   "avatar": null,
+   "nome": null,
+   "cognome": null,
+   "posizione": null,
+   "dati_social": {},
+   "importa_social": true,
+   "rileva_posizione": true,
+   "partner_ricordato": null,
+   "relazioni": {
+    "completo": true,
+    "mancanti": []
+   },
+   "referral_code": "DRER3KFW",
+   "invitato": false,
+   "condivisioni": {
+    "verificate": 0,
+    "premi": 0,
+    "prossimo_tra": 5,
+    "iscrizioni": 0,
+    "soglia": 5,
+    "crediti_iscrizione": 5
+   },
+   "carta_anima": {
+    "id": "maj-06",
+    "arcano": "maggiore",
+    "numero": 6,
+    "numero_romano": "VI",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Lovers",
+    "titolo_thoth": null,
+    "nome_it": "Gli Amanti",
+    "lettera_ebraica": {
+     "nome": "Zain",
+     "glifo": "ז",
+     "valore": 7
+    },
+    "elemento": "aria",
+    "astrologia": "Gemelli",
+    "parole_chiave": [
+     "scelta",
+     "unione",
+     "dualità",
+     "amore",
+     "analisi"
+    ],
+    "colori": [
+     "#FF8C00",
+     "#D8BFD8"
+    ],
+    "nomi": {
+     "en": "The Lovers",
+     "hu": "A Szerelmesek",
+     "ru": "Влюблённые",
+     "uk": "Закохані",
+     "es": "Los Amantes"
+    },
+    "lang": "it",
+    "nome": "Gli Amanti",
+    "slug": "gli-amanti",
+    "slugs": {
+     "it": "gli-amanti",
+     "en": "the-lovers"
+    },
+    "percorso": 17,
+    "collega": [
+     "Binah",
+     "Tiphareth"
+    ],
+    "sefira": null,
+    "significati": {
+     "essoterico": "Amore, attrazione, scelte importanti fra alternative. Indica relazioni, alleanze e decisioni che richiedono un coinvolgimento profondo.",
+     "psicologico": "Rappresenta l'incontro degli opposti interiori e il momento della scelta consapevole; anche la tensione fra ragione e desiderio.",
+     "iniziatico": "Percorso 17 da Binah a Tiphareth, lettera Zain (la spada, 7) e Gemelli, segno d'Aria di Mercurio: la spada che divide per rendere possibile l'unione. È l'avvio del Matrimonio Chimico, l'incontro dei principi opposti che dovranno fondersi.",
+     "ombra": "Mal dignificati indicano indecisione, infedeltà, idealizzazione, o scelte che dividono la persona contro se stessa."
+    },
+    "dritto": "Una scelta va fatta con cuore e mente allineati; un'unione o un'alleanza significativa è possibile.",
+    "rovescio": "Divisione interiore, conflitto di valori, rapporti sbilanciati, oppure paura di scegliere che lascia tutto in sospeso.",
+    "ambiti": {
+     "amore": "Attrazione forte, legame significativo; oppure un bivio sentimentale che richiede sincerità.",
+     "lavoro": "Partnership e collaborazioni; decisioni fra due strade da ponderare con analisi e integrità.",
+     "spirito": "L'unione degli opposti come via: prima l'analisi che distingue, poi la sintesi che unisce."
+    },
+    "nota_crowley": "Crowley ne fa la prima fase delle nozze alchemiche: un re moro e una regina bianca sono uniti da una figura incappucciata sotto un Cupido che scocca la freccia, e l'opera iniziata qui si compirà nell'Arte (XIV)."
+   },
+   "carta_anno": {
+    "id": "maj-00",
+    "arcano": "maggiore",
+    "numero": 0,
+    "numero_romano": "0",
+    "seme": null,
+    "rango": null,
+    "nome_thoth": "The Fool",
+    "titolo_thoth": null,
+    "nome_it": "Il Matto",
+    "lettera_ebraica": {
+     "nome": "Aleph",
+     "glifo": "א",
+     "valore": 1
+    },
+    "elemento": "aria",
+    "astrologia": "Aria",
+    "parole_chiave": [
+     "potenziale puro",
+     "libertà",
+     "inizio",
+     "innocenza divina",
+     "salto nell'ignoto"
+    ],
+    "colori": [
+     "#FFF8A6",
+     "#87CEEB"
+    ],
+    "nomi": {
+     "en": "The Fool",
+     "hu": "A Bolond",
+     "ru": "Дурак",
+     "uk": "Блазень",
+     "es": "El Loco"
+    },
+    "lang": "it",
+    "nome": "Il Matto",
+    "slug": "il-matto",
+    "slugs": {
+     "it": "il-matto",
+     "en": "the-fool"
+    },
+    "percorso": 11,
+    "collega": [
+     "Kether",
+     "Chokmah"
+    ],
+    "sefira": null,
+    "significati": {
+     "essoterico": "Un inizio che nasce senza calcolo, da un impulso spontaneo e fiducioso. Annuncia idee originali, viaggi, imprevisti e la disponibilità a lasciare il noto per seguire un'ispirazione che non sa ancora dove porta.",
+     "psicologico": "È la parte della psiche che non si identifica con ruoli e aspettative, lo spazio vuoto da cui nasce ogni creatività. Chiede di tollerare l'incertezza invece di colmarla subito con piani rigidi.",
+     "iniziatico": "Percorso 11 da Kether a Chokmah, lettera Aleph (il bue, valore 1) e Aria elementare: il primo moto dello Zero verso la manifestazione. È il soffio che precede ogni forma, il Nulla che si scopre fecondo e diventa Due.",
+     "ombra": "Mal dignificato diventa leggerezza irresponsabile, fuga, stravaganza priva di radici: un'azione che disperde l'energia invece di fondarla."
+    },
+    "dritto": "La situazione chiede un salto di fiducia: conta l'apertura, non la garanzia del risultato. Momento propizio per cominciare qualcosa di davvero nuovo, restando leggeri e curiosi.",
+    "rovescio": "L'impulso al nuovo è trattenuto dalla paura oppure si sfoga in scelte impulsive e disordinate. Occorre distinguere la libertà autentica dall'evasione e dall'incoscienza.",
+    "ambiti": {
+     "amore": "Un incontro inatteso o un modo più libero e giocoso di vivere il legame; scarso desiderio di vincoli e definizioni.",
+     "lavoro": "Idee originali, cambi di rotta, progetti avviati per intuizione; da sostenere con un minimo di concretezza e di scadenze.",
+     "spirito": "Invito a lasciar cadere le certezze acquisite e a ritrovare lo stupore che precede ogni conoscenza."
+    },
+    "nota_crowley": "Crowley vede nel Matto l'Uomo Verde della primavera e il Dioniso fanciullo, cornuto e ridente, circondato da tigre, coccodrillo, colomba e grappoli d'uva dentro un vortice a spirale: non un folle, ma lo Spirito prima della creazione."
+   }
+  }
+ },
+ "GET /chat/proattiva": {
+  "stato": 200,
+  "json": {
+   "turni": []
+  }
+ },
+ "POST /chat/proattiva/avvio": {
+  "stato": 201,
+  "json": {
+   "turno": null
+  }
+ },
+ "GET /spreads": {
+  "stato": 200,
+  "json": [
+   {
+    "id": "tre-carte",
+    "nome": "Three-Card Spread",
+    "nome_en": "Three cards",
+    "mazzo": "maggiori",
+    "carte_da_scegliere": 3,
+    "origine": "The most widespread spread in the world: a timeline of three Major Arcana.",
+    "descrizione": "Past, present and future: the trajectory of the matter read through the archetypal forces of the 22 Major Arcana alone.",
+    "regole": [
+     "Read it from left to right like a story: the central card is the pivot and colours the other two.",
+     "Dignities are calculated along the line: the present card is modulated by the past and the future.",
+     "Three Major Arcana point to forces that exceed personal will: the advice concerns the attitude with which to go through them."
+    ],
+    "coppie": [
+     [
+      1,
+      3,
+      "Il confronto fra radice ed esito mostra se la questione evolve o ripete sé stessa."
+     ]
+    ],
+    "stile": null,
+    "larghezza": 0.16,
+    "larghezza_stretto": null,
+    "categoria": "standard",
+    "temi": [
+     "lavoro"
+    ],
+    "forma": "standard",
+    "posizioni": [
+     {
+      "n": 1,
+      "nome": "Past",
+      "nome_en": "Past",
+      "significato": "The forces that produced the situation and that still act as its root.",
+      "domanda": "Where does this situation come from?",
+      "x": 0.2,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Past",
+       "hu": "Múlt",
+       "ru": "Прошлое",
+       "uk": "Минуле",
+       "es": "Pasado"
+      }
+     },
+     {
+      "n": 2,
+      "nome": "Present",
+      "nome_en": "Present",
+      "significato": "The current knot: the dominant energy at this moment, what the querent is dealing with now.",
+      "domanda": "What is the heart of the matter right now?",
+      "x": 0.5,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Present",
+       "hu": "Jelen",
+       "ru": "Настоящее",
+       "uk": "Теперішнє",
+       "es": "Presente"
+      }
+     },
+     {
+      "n": 3,
+      "nome": "Future",
+      "nome_en": "Future",
+      "significato": "The most probable tendency if the forces in play continue without a change of course.",
+      "domanda": "Where is the situation heading?",
+      "x": 0.8,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Future",
+       "hu": "Jövő",
+       "ru": "Будущее",
+       "uk": "Майбутнє",
+       "es": "Futuro"
+      }
+     }
+    ],
+    "nomi": {
+     "en": "Three cards",
+     "hu": "Három kártya",
+     "ru": "Три карты",
+     "uk": "Три карти",
+     "es": "Tres cartas"
+    },
+    "sintesi_wirth": false,
+    "lang": "en",
+    "slug": "three-card",
+    "slugs": {
+     "it": "tre-carte",
+     "en": "three-card"
+    },
+    "mazzo_label": "The 22 Major Arcana",
+    "categoria_label": "Classic spread",
+    "stile_label": null
+   },
+   {
+    "id": "croce-semplice",
+    "nome": "Simple Cross (Wirth)",
+    "nome_en": "Simple cross (Wirth)",
+    "mazzo": "maggiori",
+    "carte_da_scegliere": 4,
+    "origine": "A method popularised by Oswald Wirth and a cornerstone of the Italian tradition: four Major Arcana and a calculated synthesis.",
+    "descrizione": "For, against, the why and the judge; at the centre the synthesis, which is not drawn but calculated by adding up the Arcana.",
+    "regole": [
+     "The fifth card is not chosen: it is the theosophical reduction of the sum of the numbers of cards 1–4 (the Fool counts as 0; if the sum is 0 it counts as 22, that is, the Fool).",
+     "If the synthesis Arcanum has already appeared in the spread, it carries a double weight: its message is reinforced and becomes the key to the reading.",
+     "The judge (4) is the answer; the synthesis (5) is its deeper meaning and tone."
+    ],
+    "coppie": [
+     [
+      1,
+      2,
+      "Favore e contrasto si leggono insieme: la loro tensione è il tema della domanda."
+     ],
+     [
+      3,
+      4,
+      "Il perché e il giudice formano l'asse verticale: dalla causa alla soluzione."
+     ]
+    ],
+    "stile": null,
+    "larghezza": 0.098,
+    "larghezza_stretto": null,
+    "categoria": "standard",
+    "temi": [
+     "lavoro"
+    ],
+    "forma": "standard",
+    "posizioni": [
+     {
+      "n": 1,
+      "nome": "For",
+      "nome_en": "For",
+      "significato": "What supports the querent: resources, allied forces, affirmation.",
+      "domanda": "What is working in your favour?",
+      "x": 0.2,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "For",
+       "hu": "Mellette",
+       "ru": "За",
+       "uk": "За",
+       "es": "A favor"
+      }
+     },
+     {
+      "n": 2,
+      "nome": "Against",
+      "nome_en": "Against",
+      "significato": "What opposes: obstacles, fears, negation.",
+      "domanda": "What stands in the way?",
+      "x": 0.8,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Against",
+       "hu": "Ellene",
+       "ru": "Против",
+       "uk": "Проти",
+       "es": "En contra"
+      }
+     },
+     {
+      "n": 3,
+      "nome": "The why",
+      "nome_en": "The why",
+      "significato": "The discussion: the deep cause of the question and the way the matter is developing.",
+      "domanda": "Why does the question arise now?",
+      "x": 0.5,
+      "y": 0.17,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "The why",
+       "hu": "Az ok",
+       "ru": "Почему",
+       "uk": "Чому",
+       "es": "El porqué"
+      }
+     },
+     {
+      "n": 4,
+      "nome": "The judge",
+      "nome_en": "The judge",
+      "significato": "The verdict: the cards' answer to the question, the indication that resolves the tension between for and against.",
+      "domanda": "What is the answer?",
+      "x": 0.5,
+      "y": 0.83,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "The judge",
+       "hu": "A bíró",
+       "ru": "Судья",
+       "uk": "Суддя",
+       "es": "El juez"
+      }
+     },
+     {
+      "n": 5,
+      "nome": "Synthesis",
+      "nome_en": "Synthesis",
+      "significato": "The synthesis: the Arcanum that sums up the whole spread. It is obtained by adding the numbers of the first four cards; if the total exceeds 22, its digits are added.",
+      "domanda": "What is the overall meaning?",
+      "x": 0.5,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": true,
+      "nomi": {
+       "en": "Synthesis",
+       "hu": "Szintézis",
+       "ru": "Синтез",
+       "uk": "Синтез",
+       "es": "Síntesis"
+      }
+     }
+    ],
+    "nomi": {
+     "en": "Simple cross (Wirth)",
+     "hu": "Egyszerű kereszt",
+     "ru": "Простой крест (Вирт)",
+     "uk": "Простий хрест (Вірт)",
+     "es": "Cruz simple (Wirth)"
+    },
+    "sintesi_wirth": true,
+    "lang": "en",
+    "slug": "simple-cross",
+    "slugs": {
+     "it": "croce-semplice",
+     "en": "simple-cross"
+    },
+    "mazzo_label": "The 22 Major Arcana",
+    "categoria_label": "Classic spread",
+    "stile_label": null
+   },
+   {
+    "id": "ferro-di-cavallo",
+    "nome": "Horseshoe Spread",
+    "nome_en": "Horseshoe",
+    "mazzo": "completo",
+    "carte_da_scegliere": 7,
+    "origine": "A traditional seven-card spread laid out in a V, widespread in European cartomancy for practical questions.",
+    "descrizione": "Seven cards in a horseshoe: from the past to the outcome, by way of what is hidden, the obstacles, the surroundings and the advice.",
+    "regole": [
+     "Card 4 is the apex: every reading of the horseshoe revolves around the obstacle.",
+     "A court card in position 5 usually points to a real person in the querent's surroundings.",
+     "Dignities are read along the arc: each card is modulated by its two neighbours."
+    ],
+    "coppie": [
+     [
+      1,
+      7,
+      "Le due punte del ferro: da dove si parte e dove si arriva."
+     ],
+     [
+      4,
+      6,
+      "Ostacolo e consiglio: il consiglio è la chiave per superare l'ostacolo."
+     ],
+     [
+      3,
+      5,
+      "Interno ed esterno: ciò che è nascosto in chi consulta e ciò che viene dagli altri."
+     ]
+    ],
+    "stile": null,
+    "larghezza": 0.1,
+    "larghezza_stretto": null,
+    "categoria": "standard",
+    "temi": [
+     "lavoro"
+    ],
+    "forma": "standard",
+    "posizioni": [
+     {
+      "n": 1,
+      "nome": "Past",
+      "nome_en": "Past",
+      "significato": "The events and choices that led up to this point.",
+      "domanda": "What prepared the situation?",
+      "x": 0.1,
+      "y": 0.24,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Past",
+       "hu": "Múlt",
+       "ru": "Прошлое",
+       "uk": "Минуле",
+       "es": "Pasado"
+      }
+     },
+     {
+      "n": 2,
+      "nome": "Present",
+      "nome_en": "Present",
+      "significato": "The current situation as it is lived.",
+      "domanda": "What is the situation like now?",
+      "x": 0.18,
+      "y": 0.54,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Present",
+       "hu": "Jelen",
+       "ru": "Настоящее",
+       "uk": "Теперішнє",
+       "es": "Presente"
+      }
+     },
+     {
+      "n": 3,
+      "nome": "Hidden influences",
+      "nome_en": "Hidden influences",
+      "significato": "What acts without being seen: unconscious factors, missing information.",
+      "domanda": "What can't be seen?",
+      "x": 0.32,
+      "y": 0.78,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Hidden influences",
+       "hu": "Rejtett hatások",
+       "ru": "Скрытые влияния",
+       "uk": "Приховані впливи",
+       "es": "Influencias ocultas"
+      }
+     },
+     {
+      "n": 4,
+      "nome": "Obstacles",
+      "nome_en": "Obstacles",
+      "significato": "The point of resistance: what holds back or must be crossed. It is the apex of the spread.",
+      "domanda": "What is the main obstacle?",
+      "x": 0.5,
+      "y": 0.88,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Obstacles",
+       "hu": "Akadályok",
+       "ru": "Препятствия",
+       "uk": "Перешкоди",
+       "es": "Obstáculos"
+      }
+     },
+     {
+      "n": 5,
+      "nome": "Surroundings",
+      "nome_en": "Surroundings",
+      "significato": "The people and outside circumstances: how others influence things.",
+      "domanda": "How do the surroundings affect it?",
+      "x": 0.68,
+      "y": 0.78,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Surroundings",
+       "hu": "Környezet",
+       "ru": "Окружение",
+       "uk": "Оточення",
+       "es": "Entorno"
+      }
+     },
+     {
+      "n": 6,
+      "nome": "Advice",
+      "nome_en": "Advice",
+      "significato": "The attitude or action the cards suggest.",
+      "domanda": "What is best to do?",
+      "x": 0.82,
+      "y": 0.54,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Advice",
+       "hu": "Tanács",
+       "ru": "Совет",
+       "uk": "Порада",
+       "es": "Consejo"
+      }
+     },
+     {
+      "n": 7,
+      "nome": "Outcome",
+      "nome_en": "Outcome",
+      "significato": "The most probable tendency if the advice is followed and the forces stay as they are.",
+      "domanda": "Where does it lead?",
+      "x": 0.9,
+      "y": 0.24,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Outcome",
+       "hu": "Kimenet",
+       "ru": "Исход",
+       "uk": "Результат",
+       "es": "Resultado"
+      }
+     }
+    ],
+    "nomi": {
+     "en": "Horseshoe",
+     "hu": "Patkó",
+     "ru": "Подкова",
+     "uk": "Підкова",
+     "es": "Herradura"
+    },
+    "sintesi_wirth": false,
+    "lang": "en",
+    "slug": "horseshoe",
+    "slugs": {
+     "it": "ferro-di-cavallo",
+     "en": "horseshoe"
+    },
+    "mazzo_label": "The full 78-card deck",
+    "categoria_label": "Classic spread",
+    "stile_label": null
+   },
+   {
+    "id": "croce-celtica",
+    "nome": "Celtic Cross",
+    "nome_en": "Celtic Cross",
+    "mazzo": "completo",
+    "carte_da_scegliere": 10,
+    "origine": "Published by A. E. Waite in 1910 and become the most famous spread of the modern tarot.",
+    "descrizione": "Ten cards: the cross describes the situation and its timing, the staff on the right describes the querent, the surroundings and the outcome.",
+    "regole": [
+     "The cross (1–6) describes the situation; the staff (7–10) describes the querent and the evolution.",
+     "Card 2 is never read as reversed in the strict sense: laid across the first, it is by nature what opposes or adds to the present.",
+     "Dignities are read along the lines: horizontal (3–1–6), vertical (5–1–4) and the staff (7–10).",
+     "The outcome (10) should be read together with the crown (5) and the attitude (7) before concluding."
+    ],
+    "coppie": [
+     [
+      1,
+      2,
+      "Presente e sfida sono il nodo: la seconda carta dice cosa il presente deve integrare."
+     ],
+     [
+      4,
+      5,
+      "Fondamento e corona: ciò che muove dal profondo e ciò che la coscienza desidera."
+     ],
+     [
+      3,
+      6,
+      "Passato recente e futuro prossimo: la linea del tempo attraverso il presente."
+     ],
+     [
+      5,
+      10,
+      "Se la corona e l'esito concordano, la meta cosciente è raggiungibile."
+     ],
+     [
+      7,
+      10,
+      "L'atteggiamento di chi consulta pesa direttamente sull'esito."
+     ]
+    ],
+    "stile": null,
+    "larghezza": 0.074,
+    "larghezza_stretto": null,
+    "categoria": "standard",
+    "temi": [
+     "lavoro"
+    ],
+    "forma": "standard",
+    "posizioni": [
+     {
+      "n": 1,
+      "nome": "The present",
+      "nome_en": "Present",
+      "significato": "The heart of the situation: what covers the querent.",
+      "domanda": "What is happening?",
+      "x": 0.3,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Present",
+       "hu": "A jelen",
+       "ru": "Настоящее",
+       "uk": "Теперішнє",
+       "es": "El presente"
+      }
+     },
+     {
+      "n": 2,
+      "nome": "The challenge",
+      "nome_en": "Challenge",
+      "significato": "What crosses the present: the obstacle or the force to be integrated. It is laid across the first card.",
+      "domanda": "What crosses your path?",
+      "x": 0.3,
+      "y": 0.5,
+      "rotazione": 90,
+      "calcolata": false,
+      "senza_rovescio": true,
+      "nomi": {
+       "en": "Challenge",
+       "hu": "A kihívás",
+       "ru": "Вызов",
+       "uk": "Виклик",
+       "es": "El desafío"
+      }
+     },
+     {
+      "n": 3,
+      "nome": "Recent past",
+      "nome_en": "Recent past",
+      "significato": "What is ending and receding, but still has an effect.",
+      "domanda": "What is passing?",
+      "x": 0.1,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Recent past",
+       "hu": "Közelmúlt",
+       "ru": "Недавнее прошлое",
+       "uk": "Недавнє минуле",
+       "es": "Pasado reciente"
+      }
+     },
+     {
+      "n": 4,
+      "nome": "The foundation",
+      "nome_en": "Foundation",
+      "significato": "What lies beneath: the unconscious root, the base on which everything rests.",
+      "domanda": "What does the situation rest on?",
+      "x": 0.3,
+      "y": 0.84,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Foundation",
+       "hu": "Az alap",
+       "ru": "Основа",
+       "uk": "Основа",
+       "es": "La base"
+      }
+     },
+     {
+      "n": 5,
+      "nome": "The crown",
+      "nome_en": "Crown",
+      "significato": "What lies above: the conscious goal, the best that can be obtained.",
+      "domanda": "What do you aspire to?",
+      "x": 0.3,
+      "y": 0.16,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Crown",
+       "hu": "A korona",
+       "ru": "Венец",
+       "uk": "Вінець",
+       "es": "La corona"
+      }
+     },
+     {
+      "n": 6,
+      "nome": "Near future",
+      "nome_en": "Near future",
+      "significato": "What is arriving in the coming weeks.",
+      "domanda": "What is approaching?",
+      "x": 0.5,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Near future",
+       "hu": "Közeli jövő",
+       "ru": "Ближайшее будущее",
+       "uk": "Найближче майбутнє",
+       "es": "Futuro próximo"
+      }
+     },
+     {
+      "n": 7,
+      "nome": "Your attitude",
+      "nome_en": "Self",
+      "significato": "How the querent stands in relation to the matter.",
+      "domanda": "How do you stand toward it?",
+      "x": 0.82,
+      "y": 0.86,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Self",
+       "hu": "A hozzáállás",
+       "ru": "Твоя позиция",
+       "uk": "Твоя позиція",
+       "es": "La actitud"
+      }
+     },
+     {
+      "n": 8,
+      "nome": "The surroundings",
+      "nome_en": "Environment",
+      "significato": "The people, the outside circumstances, the way others see the matter.",
+      "domanda": "What comes from outside?",
+      "x": 0.82,
+      "y": 0.62,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Environment",
+       "hu": "A környezet",
+       "ru": "Окружение",
+       "uk": "Оточення",
+       "es": "El entorno"
+      }
+     },
+     {
+      "n": 9,
+      "nome": "Hopes and fears",
+      "nome_en": "Hopes and fears",
+      "significato": "What is wished for and what is feared: often the same thing.",
+      "domanda": "What do you hope for, what do you fear?",
+      "x": 0.82,
+      "y": 0.38,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Hopes and fears",
+       "hu": "Remények és félelmek",
+       "ru": "Надежды и страхи",
+       "uk": "Надії та страхи",
+       "es": "Esperanzas y miedos"
+      }
+     },
+     {
+      "n": 10,
+      "nome": "The outcome",
+      "nome_en": "Outcome",
+      "significato": "The most probable tendency, a synthesis of all the forces in the field.",
+      "domanda": "Where does all this lead?",
+      "x": 0.82,
+      "y": 0.14,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Outcome",
+       "hu": "A kimenet",
+       "ru": "Исход",
+       "uk": "Результат",
+       "es": "El resultado"
+      }
+     }
+    ],
+    "nomi": {
+     "en": "Celtic Cross",
+     "hu": "Kelta kereszt",
+     "ru": "Кельтский крест",
+     "uk": "Кельтський хрест",
+     "es": "Cruz Celta"
+    },
+    "sintesi_wirth": false,
+    "lang": "en",
+    "slug": "celtic-cross",
+    "slugs": {
+     "it": "croce-celtica",
+     "en": "celtic-cross"
+    },
+    "mazzo_label": "The full 78-card deck",
+    "categoria_label": "Classic spread",
+    "stile_label": null
+   },
+   {
+    "id": "ruota-astrologica",
+    "nome": "Astrological Wheel",
+    "nome_en": "Astrological wheel",
+    "mazzo": "completo",
+    "carte_da_scegliere": 13,
+    "origine": "A twelve-house spread modelled on the birth chart, traditionally used for the year ahead; here with a significator at the centre.",
+    "descrizione": "One card for each of the twelve astrological houses and one at the centre as the dominant theme: a complete panorama of life.",
+    "regole": [
+     "The houses are read counter-clockwise starting from the Ascendant (House I, on the left).",
+     "A strong card in an angular house (I, IV, VII, X) weighs more than the others.",
+     "Opposite axes (I–VII, II–VIII, III–IX, IV–X, V–XI, VI–XII) are read as pairs.",
+     "The significator at the centre sets the tone for the whole wheel: the houses that agree with it describe the fields where the theme manifests.",
+     "Dignities are calculated around the ring: each house is modulated by its two neighbours; the significator stays neutral."
+    ],
+    "coppie": [
+     [
+      1,
+      7,
+      "L'asse Ascendente–Discendente: io e l'altro."
+     ],
+     [
+      4,
+      10,
+      "L'asse Fondo cielo–Medio cielo: radici e realizzazione."
+     ],
+     [
+      2,
+      8,
+      "L'asse delle risorse: ciò che è mio e ciò che è condiviso."
+     ],
+     [
+      5,
+      11,
+      "L'asse della creatività: il cuore personale e i progetti collettivi."
+     ]
+    ],
+    "stile": null,
+    "larghezza": 0.075,
+    "larghezza_stretto": null,
+    "categoria": "standard",
+    "temi": [],
+    "forma": "quadrata",
+    "posizioni": [
+     {
+      "n": 1,
+      "nome": "House I",
+      "nome_en": "House I",
+      "significato": "The self, the personality, appearance and the beginning of everything.",
+      "domanda": "What is happening in the field of House I?",
+      "x": 0.114,
+      "y": 0.604,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "House I",
+       "hu": "I. ház",
+       "ru": "Дом I",
+       "uk": "Дім I",
+       "es": "Casa I"
+      }
+     },
+     {
+      "n": 2,
+      "nome": "House II",
+      "nome_en": "House II",
+      "significato": "Money, possessions, values and personal resources.",
+      "domanda": "What is happening in the field of House II?",
+      "x": 0.217,
+      "y": 0.783,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "House II",
+       "hu": "II. ház",
+       "ru": "Дом II",
+       "uk": "Дім II",
+       "es": "Casa II"
+      }
+     },
+     {
+      "n": 3,
+      "nome": "House III",
+      "nome_en": "House III",
+      "significato": "Communication, siblings, short journeys, the nearby environment.",
+      "domanda": "What is happening in the field of House III?",
+      "x": 0.396,
+      "y": 0.886,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "House III",
+       "hu": "III. ház",
+       "ru": "Дом III",
+       "uk": "Дім III",
+       "es": "Casa III"
+      }
+     },
+     {
+      "n": 4,
+      "nome": "House IV",
+      "nome_en": "House IV",
+      "significato": "Home, the family of origin, roots and the end of things.",
+      "domanda": "What is happening in the field of House IV?",
+      "x": 0.604,
+      "y": 0.886,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "House IV",
+       "hu": "IV. ház",
+       "ru": "Дом IV",
+       "uk": "Дім IV",
+       "es": "Casa IV"
+      }
+     },
+     {
+      "n": 5,
+      "nome": "House V",
+      "nome_en": "House V",
+      "significato": "Love, pleasure, creativity, children, play.",
+      "domanda": "What is happening in the field of House V?",
+      "x": 0.783,
+      "y": 0.783,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "House V",
+       "hu": "V. ház",
+       "ru": "Дом V",
+       "uk": "Дім V",
+       "es": "Casa V"
+      }
+     },
+     {
+      "n": 6,
+      "nome": "House VI",
+      "nome_en": "House VI",
+      "significato": "Daily work, health as a habit, service.",
+      "domanda": "What is happening in the field of House VI?",
+      "x": 0.886,
+      "y": 0.604,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "House VI",
+       "hu": "VI. ház",
+       "ru": "Дом VI",
+       "uk": "Дім VI",
+       "es": "Casa VI"
+      }
+     },
+     {
+      "n": 7,
+      "nome": "House VII",
+      "nome_en": "House VII",
+      "significato": "The partner, marriage, business partners and declared opponents.",
+      "domanda": "What is happening in the field of House VII?",
+      "x": 0.886,
+      "y": 0.396,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "House VII",
+       "hu": "VII. ház",
+       "ru": "Дом VII",
+       "uk": "Дім VII",
+       "es": "Casa VII"
+      }
+     },
+     {
+      "n": 8,
+      "nome": "House VIII",
+      "nome_en": "House VIII",
+      "significato": "Transformations, crises, sexuality, inheritances and other people's assets.",
+      "domanda": "What is happening in the field of House VIII?",
+      "x": 0.783,
+      "y": 0.217,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "House VIII",
+       "hu": "VIII. ház",
+       "ru": "Дом VIII",
+       "uk": "Дім VIII",
+       "es": "Casa VIII"
+      }
+     },
+     {
+      "n": 9,
+      "nome": "House IX",
+      "nome_en": "House IX",
+      "significato": "Distant travel, spirituality, study, worldview.",
+      "domanda": "What is happening in the field of House IX?",
+      "x": 0.604,
+      "y": 0.114,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "House IX",
+       "hu": "IX. ház",
+       "ru": "Дом IX",
+       "uk": "Дім IX",
+       "es": "Casa IX"
+      }
+     },
+     {
+      "n": 10,
+      "nome": "House X",
+      "nome_en": "House X",
+      "significato": "Career, reputation, vocation and goals.",
+      "domanda": "What is happening in the field of House X?",
+      "x": 0.396,
+      "y": 0.114,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "House X",
+       "hu": "X. ház",
+       "ru": "Дом X",
+       "uk": "Дім X",
+       "es": "Casa X"
+      }
+     },
+     {
+      "n": 11,
+      "nome": "House XI",
+      "nome_en": "House XI",
+      "significato": "Friends, groups, projects and hopes.",
+      "domanda": "What is happening in the field of House XI?",
+      "x": 0.217,
+      "y": 0.217,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "House XI",
+       "hu": "XI. ház",
+       "ru": "Дом XI",
+       "uk": "Дім XI",
+       "es": "Casa XI"
+      }
+     },
+     {
+      "n": 12,
+      "nome": "House XII",
+      "nome_en": "House XII",
+      "significato": "The unconscious, hidden trials, retreats, what needs to be dissolved.",
+      "domanda": "What is happening in the field of House XII?",
+      "x": 0.114,
+      "y": 0.396,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "House XII",
+       "hu": "XII. ház",
+       "ru": "Дом XII",
+       "uk": "Дім XII",
+       "es": "Casa XII"
+      }
+     },
+     {
+      "n": 13,
+      "nome": "The significator",
+      "nome_en": "Significator",
+      "significato": "The centre of the wheel: the dominant theme of the year or the phase, the thread joining the twelve houses.",
+      "domanda": "What is the theme that unites everything?",
+      "x": 0.5,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Significator",
+       "hu": "A jelölő",
+       "ru": "Сигнификатор",
+       "uk": "Сигніфікатор",
+       "es": "El significador"
+      }
+     }
+    ],
+    "nomi": {
+     "en": "Astrological wheel",
+     "hu": "Asztrológiai kerék",
+     "ru": "Астрологическое колесо",
+     "uk": "Астрологічне колесо",
+     "es": "Rueda astrológica"
+    },
+    "sintesi_wirth": false,
+    "lang": "en",
+    "slug": "astrological-wheel",
+    "slugs": {
+     "it": "ruota-astrologica",
+     "en": "astrological-wheel"
+    },
+    "mazzo_label": "The full 78-card deck",
+    "categoria_label": "Classic spread",
+    "stile_label": null
+   },
+   {
+    "id": "compat-tre",
+    "nome": "Three-Card Compatibility Spread",
+    "nome_en": "Three-card compatibility",
+    "mazzo": "maggiori",
+    "carte_da_scegliere": 3,
+    "origine": "The basic relationship spread: one card for each person and one for the dynamic that arises between them.",
+    "descrizione": "You, the other person and the dynamic between you: the essential snapshot of a bond, read with the 22 Major Arcana.",
+    "regole": [
+     "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
+     "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
+     "The dynamic (3) is the synthesis: it is read last, in the light of the two people."
+    ],
+    "coppie": [
+     [
+      1,
+      2,
+      "Le due persone si leggono affiancate: somiglianza e differenza di energie sono il primo dato della compatibilità."
+     ],
+     [
+      1,
+      3,
+      "Il tuo ruolo e la dinamica mostrano quanto di te è in gioco nel legame."
+     ],
+     [
+      2,
+      3,
+      "Il ruolo dell'altra persona e la dinamica mostrano come il legame risponde a ciò che l'altra persona porta."
+     ]
+    ],
+    "stile": "tradizionale",
+    "larghezza": 0.14,
+    "larghezza_stretto": 0.16,
+    "categoria": "compatibilita",
+    "temi": [],
+    "forma": "standard",
+    "posizioni": [
+     {
+      "n": 1,
+      "nome": "You",
+      "nome_en": "You",
+      "significato": "Your role in the bond: how you present yourself, what energy you bring and how you see yourself.",
+      "domanda": "What energy do I bring to this bond?",
+      "x": 0.27,
+      "y": 0.28,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "tu",
+      "nomi": {
+       "en": "You",
+       "hu": "Te",
+       "ru": "Ты",
+       "uk": "Ти",
+       "es": "Tú"
+      }
+     },
+     {
+      "n": 2,
+      "nome": "The other person",
+      "nome_en": "The other person",
+      "significato": "The other person's role: what energy they bring and how you perceive them, without reading their mind.",
+      "domanda": "What energy does the other person bring?",
+      "x": 0.73,
+      "y": 0.28,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "partner",
+      "nomi": {
+       "en": "The other person",
+       "hu": "A másik személy",
+       "ru": "Другой человек",
+       "uk": "Інша людина",
+       "es": "La otra persona"
+      }
+     },
+     {
+      "n": 3,
+      "nome": "The dynamic",
+      "nome_en": "The dynamic",
+      "significato": "What is born between you: the general character of the bond, beyond the sum of the two people.",
+      "domanda": "What is happening between us?",
+      "x": 0.5,
+      "y": 0.72,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "The dynamic",
+       "hu": "A dinamika",
+       "ru": "Динамика",
+       "uk": "Динаміка",
+       "es": "La dinámica"
+      }
+     }
+    ],
+    "nomi": {
+     "en": "Three-card compatibility",
+     "hu": "Háromkártyás kompatibilitás",
+     "ru": "Совместимость на три карты",
+     "uk": "Сумісність на три карти",
+     "es": "Compatibilidad de tres cartas"
+    },
+    "sintesi_wirth": false,
+    "lang": "en",
+    "slug": "compatibility-three-card",
+    "slugs": {
+     "it": "compat-tre",
+     "en": "compatibility-three-card"
+    },
+    "mazzo_label": "The 22 Major Arcana",
+    "categoria_label": "Compatibility spread",
+    "stile_label": "Traditional"
+   },
+   {
+    "id": "compat-sette",
+    "nome": "Seven-Card Compatibility Spread",
+    "nome_en": "Seven-card compatibility",
+    "mazzo": "completo",
+    "carte_da_scegliere": 7,
+    "origine": "The most widespread compatibility spread: what each person is looking for, where you are alike and where you are not, and the three dimensions of affinity.",
+    "descrizione": "What you seek, what the other person seeks, similarities and differences, and then emotional, physical and mental compatibility.",
+    "regole": [
+     "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
+     "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
+     "The three compatibilities (5, 6, 7) correspond to the three planes, heart, body and mind, and are read as a whole."
+    ],
+    "coppie": [
+     [
+      1,
+      2,
+      "Ciò che cerca ciascuno si legge in confronto: la distanza fra i due desideri è il primo dato."
+     ],
+     [
+      3,
+      4,
+      "Somiglianze e differenze si leggono insieme: le une sostengono il legame, le altre lo mettono alla prova."
+     ],
+     [
+      5,
+      6,
+      "Emozione e corpo: quanto sentimento e attrazione vanno nella stessa direzione."
+     ],
+     [
+      6,
+      7,
+      "Corpo e mente: quanto l'intesa fisica è sostenuta da quella del dialogo."
+     ],
+     [
+      5,
+      7,
+      "Cuore e mente: se ciò che sentite e ciò che pensate si accordano."
+     ]
+    ],
+    "stile": "tradizionale",
+    "larghezza": 0.1,
+    "larghezza_stretto": 0.13,
+    "categoria": "compatibilita",
+    "temi": [],
+    "forma": "standard",
+    "posizioni": [
+     {
+      "n": 1,
+      "nome": "What you seek",
+      "nome_en": "What you seek",
+      "significato": "What you look for in a bond: the needs, wishes and expectations with which you present yourself.",
+      "domanda": "What am I looking for in this bond?",
+      "x": 0.2,
+      "y": 0.17,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "tu",
+      "nomi": {
+       "en": "What you seek",
+       "hu": "Amit keresel",
+       "ru": "Что ищешь ты",
+       "uk": "Що шукаєш ти",
+       "es": "Lo que buscas"
+      }
+     },
+     {
+      "n": 2,
+      "nome": "What the other person seeks",
+      "nome_en": "What the other person seeks",
+      "significato": "What the other person looks for in a bond, as it shows in their attitudes.",
+      "domanda": "What is the other person looking for?",
+      "x": 0.8,
+      "y": 0.17,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "partner",
+      "nomi": {
+       "en": "What the other person seeks",
+       "hu": "Amit a másik személy keres",
+       "ru": "Что ищет другой человек",
+       "uk": "Що шукає інша людина",
+       "es": "Lo que busca la otra persona"
+      }
+     },
+     {
+      "n": 3,
+      "nome": "Similarities",
+      "nome_en": "Similarities",
+      "significato": "The common ground: what you share and what makes it easy to understand each other.",
+      "domanda": "Where are we alike?",
+      "x": 0.36,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "Similarities",
+       "hu": "Hasonlóságok",
+       "ru": "Сходства",
+       "uk": "Схожості",
+       "es": "Semejanzas"
+      }
+     },
+     {
+      "n": 4,
+      "nome": "Differences",
+      "nome_en": "Differences",
+      "significato": "Where you diverge: the points where you need to meet halfway.",
+      "domanda": "Where are we different?",
+      "x": 0.64,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "Differences",
+       "hu": "Különbségek",
+       "ru": "Различия",
+       "uk": "Відмінності",
+       "es": "Diferencias"
+      }
+     },
+     {
+      "n": 5,
+      "nome": "Emotional compatibility",
+      "nome_en": "Emotional compatibility",
+      "significato": "How far your feelings and emotional needs are in tune.",
+      "domanda": "How do our feelings fit together?",
+      "x": 0.2,
+      "y": 0.83,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "Emotional compatibility",
+       "hu": "Érzelmi összhang",
+       "ru": "Эмоциональная совместимость",
+       "uk": "Емоційна сумісність",
+       "es": "Compatibilidad emocional"
+      }
+     },
+     {
+      "n": 6,
+      "nome": "Physical compatibility",
+      "nome_en": "Physical compatibility",
+      "significato": "The understanding of the bodies: attraction, presence, the way of being close.",
+      "domanda": "How is the understanding between our bodies?",
+      "x": 0.5,
+      "y": 0.83,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "Physical compatibility",
+       "hu": "Testi összhang",
+       "ru": "Физическая совместимость",
+       "uk": "Фізична сумісність",
+       "es": "Compatibilidad física"
+      }
+     },
+     {
+      "n": 7,
+      "nome": "Mental compatibility",
+      "nome_en": "Mental compatibility",
+      "significato": "The understanding of the minds: dialogue, values, mutual stimulation.",
+      "domanda": "How do our minds fit together?",
+      "x": 0.8,
+      "y": 0.83,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "Mental compatibility",
+       "hu": "Szellemi összhang",
+       "ru": "Ментальная совместимость",
+       "uk": "Ментальна сумісність",
+       "es": "Compatibilidad mental"
+      }
+     }
+    ],
+    "nomi": {
+     "en": "Seven-card compatibility",
+     "hu": "Hétkártyás kompatibilitás",
+     "ru": "Совместимость на семь карт",
+     "uk": "Сумісність на сім карт",
+     "es": "Compatibilidad de siete cartas"
+    },
+    "sintesi_wirth": false,
+    "lang": "en",
+    "slug": "compatibility-seven-card",
+    "slugs": {
+     "it": "compat-sette",
+     "en": "compatibility-seven-card"
+    },
+    "mazzo_label": "The full 78-card deck",
+    "categoria_label": "Compatibility spread",
+    "stile_label": "Traditional"
+   },
+   {
+    "id": "compat-nove",
+    "nome": "Nine-Card Compatibility Spread",
+    "nome_en": "Nine-card compatibility",
+    "mazzo": "completo",
+    "carte_da_scegliere": 9,
+    "origine": "A modern 3x3 grid spread: at the centre the energy of the bond, at the sides the contributions of the two people (top) and their hidden influences (middle), and below strengths, challenges and potential. Cards 1, 5 and 7 form the 'triangle of truth'.",
+    "descrizione": "A grid of nine cards: central energy, emotional compatibility, each person's contribution, strengths, challenges, long-term potential and the hidden influences.",
+    "regole": [
+     "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
+     "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
+     "Positions 1, 5 and 7 form the triangle of truth: read them together, like an arc: the present (1), the strength to cultivate (5), the destination (7)."
+    ],
+    "coppie": [
+     [
+      1,
+      5,
+      "Dal presente del legame alla sua forza: ciò che lo sostiene oggi."
+     ],
+     [
+      5,
+      7,
+      "Dalla forza al potenziale: come ciò che vi sostiene può portarvi lontano."
+     ],
+     [
+      1,
+      7,
+      "Il presente e la destinazione: se il legame va verso ciò che già mostra."
+     ],
+     [
+      3,
+      4,
+      "I due apporti a confronto: quanto ciascuno mette e come si incastrano."
+     ],
+     [
+      8,
+      9,
+      "Gli influssi nascosti a confronto: i due bagagli invisibili che il legame deve portare."
+     ]
+    ],
+    "stile": "moderna",
+    "larghezza": 0.1,
+    "larghezza_stretto": 0.13,
+    "categoria": "compatibilita",
+    "temi": [],
+    "forma": "standard",
+    "posizioni": [
+     {
+      "n": 1,
+      "nome": "Central energy",
+      "nome_en": "Core energy",
+      "significato": "The heart of the bond and the kind of relationship you are living.",
+      "domanda": "What is the heart of this bond?",
+      "x": 0.5,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "Core energy",
+       "hu": "Központi energia",
+       "ru": "Центральная энергия",
+       "uk": "Центральна енергія",
+       "es": "Energía central"
+      }
+     },
+     {
+      "n": 2,
+      "nome": "Emotional compatibility",
+      "nome_en": "Emotional compatibility",
+      "significato": "How your feelings and emotional needs line up.",
+      "domanda": "How do our feelings line up?",
+      "x": 0.5,
+      "y": 0.17,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "Emotional compatibility",
+       "hu": "Érzelmi összhang",
+       "ru": "Эмоциональная совместимость",
+       "uk": "Емоційна сумісність",
+       "es": "Compatibilidad emocional"
+      }
+     },
+     {
+      "n": 3,
+      "nome": "Your contribution",
+      "nome_en": "Your input",
+      "significato": "Your attitude, your intentions and the energy you put into the bond.",
+      "domanda": "What do I bring?",
+      "x": 0.2,
+      "y": 0.17,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "tu",
+      "nomi": {
+       "en": "Your input",
+       "hu": "A te hozzájárulásod",
+       "ru": "Твой вклад",
+       "uk": "Твій внесок",
+       "es": "Tu aporte"
+      }
+     },
+     {
+      "n": 4,
+      "nome": "The other person's contribution",
+      "nome_en": "The other person's input",
+      "significato": "The other person's emotional investment and role in the bond, as they show themselves.",
+      "domanda": "What does the other person bring?",
+      "x": 0.8,
+      "y": 0.17,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "partner",
+      "nomi": {
+       "en": "The other person's input",
+       "hu": "A másik személy hozzájárulása",
+       "ru": "Вклад другого человека",
+       "uk": "Внесок іншої людини",
+       "es": "El aporte de la otra persona"
+      }
+     },
+     {
+      "n": 5,
+      "nome": "Strengths",
+      "nome_en": "Strengths",
+      "significato": "The glue of the bond: what makes it work and grow.",
+      "domanda": "What holds us together?",
+      "x": 0.2,
+      "y": 0.83,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "Strengths",
+       "hu": "Erősségek",
+       "ru": "Сильные стороны",
+       "uk": "Сильні сторони",
+       "es": "Fortalezas"
+      }
+     },
+     {
+      "n": 6,
+      "nome": "Challenges",
+      "nome_en": "Challenges",
+      "significato": "The main points of friction and areas of conflict.",
+      "domanda": "Where are our difficulties?",
+      "x": 0.5,
+      "y": 0.83,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "Challenges",
+       "hu": "Kihívások",
+       "ru": "Трудности",
+       "uk": "Виклики",
+       "es": "Desafíos"
+      }
+     },
+     {
+      "n": 7,
+      "nome": "Long-term potential",
+      "nome_en": "Long-term potential",
+      "significato": "Where the bond can get to over time, if the forces stay as they are.",
+      "domanda": "Where can this bond get to?",
+      "x": 0.8,
+      "y": 0.83,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "Long-term potential",
+       "hu": "Hosszú távú lehetőség",
+       "ru": "Долгосрочный потенциал",
+       "uk": "Довгостроковий потенціал",
+       "es": "Potencial a largo plazo"
+      }
+     },
+     {
+      "n": 8,
+      "nome": "Hidden influence: you",
+      "nome_en": "Hidden influence: you",
+      "significato": "What acts in you beneath the surface: patterns, habits, baggage that weigh on the bond.",
+      "domanda": "What is acting in me without my noticing?",
+      "x": 0.2,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "tu",
+      "nomi": {
+       "en": "Hidden influence: you",
+       "hu": "Rejtett hatás: te",
+       "ru": "Скрытое влияние: ты",
+       "uk": "Прихований вплив: ти",
+       "es": "Influencia oculta: tú"
+      }
+     },
+     {
+      "n": 9,
+      "nome": "Hidden influence: the other person",
+      "nome_en": "Hidden influence: the other person",
+      "significato": "What acts in the other person beneath the surface, as a tendency: never a reading of their mind.",
+      "domanda": "What is acting beneath the surface in the other person?",
+      "x": 0.8,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "partner",
+      "nomi": {
+       "en": "Hidden influence: the other person",
+       "hu": "Rejtett hatás: a másik személy",
+       "ru": "Скрытое влияние: другой человек",
+       "uk": "Прихований вплив: інша людина",
+       "es": "Influencia oculta: la otra persona"
+      }
+     }
+    ],
+    "nomi": {
+     "en": "Nine-card compatibility",
+     "hu": "Kilenckártyás kompatibilitás (az igazság háromszöge)",
+     "ru": "Совместимость на девять карт",
+     "uk": "Сумісність на дев'ять карт",
+     "es": "Compatibilidad de nueve cartas"
+    },
+    "sintesi_wirth": false,
+    "lang": "en",
+    "slug": "compatibility-nine-card",
+    "slugs": {
+     "it": "compat-nove",
+     "en": "compatibility-nine-card"
+    },
+    "mazzo_label": "The full 78-card deck",
+    "categoria_label": "Compatibility spread",
+    "stile_label": "Modern"
+   },
+   {
+    "id": "compat-anime",
+    "nome": "Soulmate Spread (Kindred Souls)",
+    "nome_en": "Soulmates",
+    "mazzo": "maggiori",
+    "carte_da_scegliere": 7,
+    "origine": "The 'soulmate' spread, very popular online: it reads an encounter as a crossing of lessons, using the Major Arcana only.",
+    "descrizione": "Each person's lessons, why you met, what you mirror in each other, the karmic theme, the phase you are in and the potential over time.",
+    "regole": [
+     "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
+     "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
+     "It is a symbolic reading: themes and lessons are food for reflection, not a destiny."
+    ],
+    "coppie": [
+     [
+      1,
+      2,
+      "Le due lezioni si completano: leggile come due facce dello stesso incontro."
+     ],
+     [
+      3,
+      4,
+      "Il motivo dell'incontro e lo specchio: perché vi siete trovati e che cosa vi mostrate."
+     ],
+     [
+      5,
+      6,
+      "Il tema di fondo e la fase attuale: a che punto del filo vi trovate."
+     ]
+    ],
+    "stile": "tendenza",
+    "larghezza": 0.095,
+    "larghezza_stretto": 0.13,
+    "categoria": "compatibilita",
+    "temi": [],
+    "forma": "standard",
+    "posizioni": [
+     {
+      "n": 1,
+      "nome": "Your lesson",
+      "nome_en": "Your lesson",
+      "significato": "What this encounter asks you to learn.",
+      "domanda": "What do I need to learn from this encounter?",
+      "x": 0.2,
+      "y": 0.31,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "tu",
+      "nomi": {
+       "en": "Your lesson",
+       "hu": "A te leckéd",
+       "ru": "Твой урок",
+       "uk": "Твій урок",
+       "es": "Tu lección"
+      }
+     },
+     {
+      "n": 2,
+      "nome": "The other person's lesson",
+      "nome_en": "The other person's lesson",
+      "significato": "What this encounter seems to ask the other person to learn, as a tendency.",
+      "domanda": "What can the other person learn?",
+      "x": 0.8,
+      "y": 0.31,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "partner",
+      "nomi": {
+       "en": "The other person's lesson",
+       "hu": "A másik személy leckéje",
+       "ru": "Урок другого человека",
+       "uk": "Урок іншої людини",
+       "es": "La lección de la otra persona"
+      }
+     },
+     {
+      "n": 3,
+      "nome": "Why you met",
+      "nome_en": "Why you met",
+      "significato": "The meaning of the encounter: what drew you together.",
+      "domanda": "Why did we meet?",
+      "x": 0.5,
+      "y": 0.16,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "Why you met",
+       "hu": "Miért találkoztatok",
+       "ru": "Почему вы встретились",
+       "uk": "Чому ви зустрілися",
+       "es": "Por qué se encontraron"
+      }
+     },
+     {
+      "n": 4,
+      "nome": "What you mirror",
+      "nome_en": "What you mirror",
+      "significato": "What each reflects of the other: what you show one another.",
+      "domanda": "What do we mirror in each other?",
+      "x": 0.5,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "What you mirror",
+       "hu": "Amit tükröztök",
+       "ru": "Что вы отражаете",
+       "uk": "Що ви віддзеркалюєте",
+       "es": "Lo que reflejan"
+      }
+     },
+     {
+      "n": 5,
+      "nome": "The karmic theme",
+      "nome_en": "The karmic theme",
+      "significato": "The underlying theme the bond carries, like a thread that repeats.",
+      "domanda": "What is the underlying theme of this bond?",
+      "x": 0.2,
+      "y": 0.69,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "The karmic theme",
+       "hu": "A karmikus téma",
+       "ru": "Кармическая тема",
+       "uk": "Кармічна тема",
+       "es": "El tema kármico"
+      }
+     },
+     {
+      "n": 6,
+      "nome": "The current phase",
+      "nome_en": "The current stage",
+      "significato": "Where on the path you are now.",
+      "domanda": "Where are we now?",
+      "x": 0.8,
+      "y": 0.69,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "The current stage",
+       "hu": "A jelenlegi szakasz",
+       "ru": "Нынешний этап",
+       "uk": "Поточний етап",
+       "es": "La etapa actual"
+      }
+     },
+     {
+      "n": 7,
+      "nome": "Long-term potential",
+      "nome_en": "Long-term potential",
+      "significato": "Where the bond can take you over time if the forces stay as they are.",
+      "domanda": "Where can it take us over time?",
+      "x": 0.5,
+      "y": 0.84,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "Long-term potential",
+       "hu": "Hosszú távú lehetőség",
+       "ru": "Долгосрочный потенциал",
+       "uk": "Довгостроковий потенціал",
+       "es": "Potencial a largo plazo"
+      }
+     }
+    ],
+    "nomi": {
+     "en": "Soulmates",
+     "hu": "Lelki társak",
+     "ru": "Родственные души",
+     "uk": "Споріднені душі",
+     "es": "Almas afines"
+    },
+    "sintesi_wirth": false,
+    "lang": "en",
+    "slug": "soulmate-spread",
+    "slugs": {
+     "it": "compat-anime",
+     "en": "soulmate-spread"
+    },
+    "mazzo_label": "The 22 Major Arcana",
+    "categoria_label": "Compatibility spread",
+    "stile_label": "Trending"
+   },
+   {
+    "id": "coppia-croce",
+    "nome": "Couple's Cross",
+    "nome_en": "Couple's cross",
+    "mazzo": "maggiori",
+    "carte_da_scegliere": 5,
+    "origine": "A five-card cross in common use for relationship readings: the two people at the sides, roots, present and future on the vertical axis.",
+    "descrizione": "You and the other person at the sides; on the vertical axis the roots of the bond, the present and the future. Five Major Arcana, all chosen.",
+    "regole": [
+     "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
+     "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
+     "The vertical axis (3-4-5) is the story of the couple; the horizontal axis (1-4-2) is who lives it."
+    ],
+    "coppie": [
+     [
+      1,
+      2,
+      "Le due persone ai lati dell'asse: la relazione nasce dal loro incontro e si legge in confronto."
+     ],
+     [
+      3,
+      5,
+      "Radici e futuro: se il legame sta crescendo dalle sue fondamenta o si sta staccando da esse."
+     ]
+    ],
+    "stile": "tradizionale",
+    "larghezza": 0.1,
+    "larghezza_stretto": 0.13,
+    "categoria": "coppia",
+    "temi": [],
+    "forma": "standard",
+    "posizioni": [
+     {
+      "n": 1,
+      "nome": "You",
+      "nome_en": "You",
+      "significato": "Your role in the couple: how you are in the relationship and what part you bring.",
+      "domanda": "How am I in this relationship?",
+      "x": 0.2,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "tu",
+      "nomi": {
+       "en": "You",
+       "hu": "Te",
+       "ru": "Ты",
+       "uk": "Ти",
+       "es": "Tú"
+      }
+     },
+     {
+      "n": 2,
+      "nome": "The other person",
+      "nome_en": "The other person",
+      "significato": "The other person's role in the couple, how they show themselves and how you perceive it.",
+      "domanda": "What is the other person's role?",
+      "x": 0.8,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "partner",
+      "nomi": {
+       "en": "The other person",
+       "hu": "A másik személy",
+       "ru": "Другой человек",
+       "uk": "Інша людина",
+       "es": "La otra persona"
+      }
+     },
+     {
+      "n": 3,
+      "nome": "The roots",
+      "nome_en": "The roots",
+      "significato": "The foundations: how you met and what the bond rests on.",
+      "domanda": "What does our bond rest on?",
+      "x": 0.5,
+      "y": 0.17,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "The roots",
+       "hu": "A gyökerek",
+       "ru": "Корни",
+       "uk": "Коріння",
+       "es": "Las raíces"
+      }
+     },
+     {
+      "n": 4,
+      "nome": "The present",
+      "nome_en": "The present",
+      "significato": "The current state of the relationship and its dynamics.",
+      "domanda": "What is our relationship like today?",
+      "x": 0.5,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "The present",
+       "hu": "A jelen",
+       "ru": "Настоящее",
+       "uk": "Теперішнє",
+       "es": "El presente"
+      }
+     },
+     {
+      "n": 5,
+      "nome": "The future",
+      "nome_en": "The future",
+      "significato": "The direction the relationship is taking, if the forces stay as they are.",
+      "domanda": "Where is the relationship going?",
+      "x": 0.5,
+      "y": 0.83,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "The future",
+       "hu": "A jövő",
+       "ru": "Будущее",
+       "uk": "Майбутнє",
+       "es": "El futuro"
+      }
+     }
+    ],
+    "nomi": {
+     "en": "Couple's cross",
+     "hu": "A pár keresztje",
+     "ru": "Крест пары",
+     "uk": "Хрест пари",
+     "es": "Cruz de la pareja"
+    },
+    "sintesi_wirth": false,
+    "lang": "en",
+    "slug": "couple-cross",
+    "slugs": {
+     "it": "coppia-croce",
+     "en": "couple-cross"
+    },
+    "mazzo_label": "The 22 Major Arcana",
+    "categoria_label": "Relationship spread",
+    "stile_label": "Traditional"
+   },
+   {
+    "id": "coppia-stazione",
+    "nome": "Station for Two (Thoughts, Feelings, Actions)",
+    "nome_en": "Station for two",
+    "mazzo": "completo",
+    "carte_da_scegliere": 7,
+    "origine": "A symmetrical spread from the Italian tradition for relationships: the cards are read in mirrored pairs, and the central one last.",
+    "descrizione": "Each person's thoughts, feelings and actions, read in mirrored pairs; at the centre the current situation, which is uncovered last.",
+    "regole": [
+     "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
+     "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
+     "The cards are read in mirrored pairs (thoughts, feelings, actions) and compared with each other.",
+     "The current situation (7) sits at the centre, is uncovered last and sums up: it shows the nature of the bond and the obstacles between the people."
+    ],
+    "coppie": [
+     [
+      1,
+      2,
+      "I pensieri a confronto: ciò che pensi e ciò che sembra pensare l'altra persona."
+     ],
+     [
+      3,
+      4,
+      "I sentimenti a confronto: dove coincidono e dove divergono."
+     ],
+     [
+      5,
+      6,
+      "Le azioni a confronto: se ciò che fate va nella stessa direzione."
+     ],
+     [
+      3,
+      5,
+      "Il tuo sentire e il tuo fare: se sei coerente con ciò che provi."
+     ],
+     [
+      4,
+      6,
+      "Il sentire e il fare dell'altra persona, come tendenza."
+     ]
+    ],
+    "stile": "tradizionale",
+    "larghezza": 0.1,
+    "larghezza_stretto": 0.13,
+    "categoria": "coppia",
+    "temi": [],
+    "forma": "standard",
+    "posizioni": [
+     {
+      "n": 1,
+      "nome": "What you think of the other person",
+      "nome_en": "What you think of the other person",
+      "significato": "Your thoughts about the other person: how you see them and what idea you have formed of the relationship.",
+      "domanda": "What do I think of the other person?",
+      "x": 0.2,
+      "y": 0.17,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "tu",
+      "nomi": {
+       "en": "What you think of the other person",
+       "hu": "Amit gondolsz a másikról",
+       "ru": "Что ты думаешь о другом человеке",
+       "uk": "Що ти думаєш про іншу людину",
+       "es": "Lo que piensas de la otra persona"
+      }
+     },
+     {
+      "n": 2,
+      "nome": "What they think of you",
+      "nome_en": "What the other person thinks of you",
+      "significato": "How the other person seems to see you, as a tendency: never a reading of their mind.",
+      "domanda": "What do they seem to think of me?",
+      "x": 0.8,
+      "y": 0.17,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "partner",
+      "nomi": {
+       "en": "What the other person thinks of you",
+       "hu": "Amit a másik rólad gondol",
+       "ru": "Что другой человек думает о тебе",
+       "uk": "Що інша людина думає про тебе",
+       "es": "Lo que la otra persona piensa de ti"
+      }
+     },
+     {
+      "n": 3,
+      "nome": "What you feel",
+      "nome_en": "What you feel",
+      "significato": "Your feelings toward the other person and toward the relationship.",
+      "domanda": "What do I feel?",
+      "x": 0.2,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "tu",
+      "nomi": {
+       "en": "What you feel",
+       "hu": "Amit te érzel",
+       "ru": "Что чувствуешь ты",
+       "uk": "Що відчуваєш ти",
+       "es": "Lo que sientes tú"
+      }
+     },
+     {
+      "n": 4,
+      "nome": "What the other person feels",
+      "nome_en": "What the other person feels",
+      "significato": "The feelings the other person seems to experience, as a tendency.",
+      "domanda": "What does the other person seem to feel?",
+      "x": 0.8,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "partner",
+      "nomi": {
+       "en": "What the other person feels",
+       "hu": "Amit a másik érez",
+       "ru": "Что чувствует другой человек",
+       "uk": "Що відчуває інша людина",
+       "es": "Lo que siente la otra persona"
+      }
+     },
+     {
+      "n": 5,
+      "nome": "What you do",
+      "nome_en": "What you do",
+      "significato": "Your behaviour and actions in the relationship.",
+      "domanda": "What do I do?",
+      "x": 0.2,
+      "y": 0.83,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "tu",
+      "nomi": {
+       "en": "What you do",
+       "hu": "Amit te teszel",
+       "ru": "Что делаешь ты",
+       "uk": "Що робиш ти",
+       "es": "Lo que haces tú"
+      }
+     },
+     {
+      "n": 6,
+      "nome": "What the other person does",
+      "nome_en": "What the other person does",
+      "significato": "The other person's behaviour and actions, as they show themselves.",
+      "domanda": "What does the other person do?",
+      "x": 0.8,
+      "y": 0.83,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "partner",
+      "nomi": {
+       "en": "What the other person does",
+       "hu": "Amit a másik tesz",
+       "ru": "Что делает другой человек",
+       "uk": "Що робить інша людина",
+       "es": "Lo que hace la otra persona"
+      }
+     },
+     {
+      "n": 7,
+      "nome": "The current situation",
+      "nome_en": "The current situation",
+      "significato": "What is really going on between you, in the light of everything else: read last. It shows the nature of the bond and the obstacles.",
+      "domanda": "What is going on between us?",
+      "x": 0.5,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "The current situation",
+       "hu": "A jelenlegi helyzet",
+       "ru": "Текущая ситуация",
+       "uk": "Поточна ситуація",
+       "es": "La situación actual"
+      }
+     }
+    ],
+    "nomi": {
+     "en": "Station for two",
+     "hu": "Állomás kettőnek",
+     "ru": "Станция для двоих",
+     "uk": "Станція для двох",
+     "es": "Estación para dos"
+    },
+    "sintesi_wirth": false,
+    "lang": "en",
+    "slug": "station-for-two",
+    "slugs": {
+     "it": "coppia-stazione",
+     "en": "station-for-two"
+    },
+    "mazzo_label": "The full 78-card deck",
+    "categoria_label": "Relationship spread",
+    "stile_label": "Traditional"
+   },
+   {
+    "id": "coppia-sette",
+    "nome": "Seven-Card Relationship Spread",
+    "nome_en": "Seven-card relationship spread",
+    "mazzo": "completo",
+    "carte_da_scegliere": 7,
+    "origine": "The canonical 'relationship spread' of modern cartomancy: the two people, the bond, what works, what chafes, the advice and the outcome.",
+    "descrizione": "You, the other person, the bond; then a strength and a friction, the advice and the outcome if it is followed.",
+    "regole": [
+     "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
+     "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
+     "Strength (4) and friction (5) belong to neither of the two people: they belong to the bond."
+    ],
+    "coppie": [
+     [
+      1,
+      2,
+      "Le due persone a confronto: come ciascuno sta nella relazione."
+     ],
+     [
+      4,
+      5,
+      "Forza e attrito: ciò che sostiene e ciò che mette alla prova si leggono insieme."
+     ],
+     [
+      6,
+      7,
+      "Il consiglio e l'esito: la mossa e il suo probabile effetto."
+     ],
+     [
+      3,
+      7,
+      "Il legame e l'esito: se la traiettoria segue la natura del legame."
+     ]
+    ],
+    "stile": "moderna",
+    "larghezza": 0.1,
+    "larghezza_stretto": 0.13,
+    "categoria": "coppia",
+    "temi": [],
+    "forma": "standard",
+    "posizioni": [
+     {
+      "n": 1,
+      "nome": "You",
+      "nome_en": "You",
+      "significato": "Your current position in the relationship and the energy you bring.",
+      "domanda": "What is my position in the relationship?",
+      "x": 0.2,
+      "y": 0.17,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "tu",
+      "nomi": {
+       "en": "You",
+       "hu": "Te",
+       "ru": "Ты",
+       "uk": "Ти",
+       "es": "Tú"
+      }
+     },
+     {
+      "n": 2,
+      "nome": "The other person",
+      "nome_en": "The other person",
+      "significato": "The other person's position in the relationship and what they bring, as they show themselves.",
+      "domanda": "What is the other person's position?",
+      "x": 0.8,
+      "y": 0.17,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "partner",
+      "nomi": {
+       "en": "The other person",
+       "hu": "A másik személy",
+       "ru": "Другой человек",
+       "uk": "Інша людина",
+       "es": "La otra persona"
+      }
+     },
+     {
+      "n": 3,
+      "nome": "The bond",
+      "nome_en": "The bond",
+      "significato": "The shared field: the quality of the bond between you, beyond the two people.",
+      "domanda": "What is our bond like?",
+      "x": 0.5,
+      "y": 0.17,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "The bond",
+       "hu": "A kötelék",
+       "ru": "Связь",
+       "uk": "Зв'язок",
+       "es": "El vínculo"
+      }
+     },
+     {
+      "n": 4,
+      "nome": "Strength",
+      "nome_en": "Strength",
+      "significato": "What works and is worth preserving.",
+      "domanda": "What works between us?",
+      "x": 0.36,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "Strength",
+       "hu": "Erősség",
+       "ru": "Сильная сторона",
+       "uk": "Сильна сторона",
+       "es": "Punto fuerte"
+      }
+     },
+     {
+      "n": 5,
+      "nome": "Friction",
+      "nome_en": "Friction",
+      "significato": "The difficulty or repeating pattern that tests the relationship.",
+      "domanda": "What tests us?",
+      "x": 0.64,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "Friction",
+       "hu": "Súrlódás",
+       "ru": "Трения",
+       "uk": "Тертя",
+       "es": "Fricción"
+      }
+     },
+     {
+      "n": 6,
+      "nome": "Advice",
+      "nome_en": "Advice",
+      "significato": "The move suggested to the querent for the current phase of the relationship.",
+      "domanda": "What do the cards advise me?",
+      "x": 0.36,
+      "y": 0.83,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "Advice",
+       "hu": "Tanács",
+       "ru": "Совет",
+       "uk": "Порада",
+       "es": "Consejo"
+      }
+     },
+     {
+      "n": 7,
+      "nome": "Outcome",
+      "nome_en": "Outcome",
+      "significato": "The trajectory of the relationship if the advice is followed: a tendency, not a verdict.",
+      "domanda": "Where does the relationship lead if I follow the advice?",
+      "x": 0.64,
+      "y": 0.83,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "Outcome",
+       "hu": "Kimenet",
+       "ru": "Исход",
+       "uk": "Результат",
+       "es": "Resultado"
+      }
+     }
+    ],
+    "nomi": {
+     "en": "Seven-card relationship spread",
+     "hu": "Hétkártyás kapcsolati kirakás",
+     "ru": "Отношения на семь карт",
+     "uk": "Стосунки на сім карт",
+     "es": "Relación de siete cartas"
+    },
+    "sintesi_wirth": false,
+    "lang": "en",
+    "slug": "relationship-seven-card",
+    "slugs": {
+     "it": "coppia-sette",
+     "en": "relationship-seven-card"
+    },
+    "mazzo_label": "The full 78-card deck",
+    "categoria_label": "Relationship spread",
+    "stile_label": "Modern"
+   },
+   {
+    "id": "coppia-specchio",
+    "nome": "Relationship Mirror Spread",
+    "nome_en": "Mirror",
+    "mazzo": "completo",
+    "carte_da_scegliere": 8,
+    "origine": "The 'mirror': a modern spread for relationships already under way, which compares how you see each other and what you represent to one another.",
+    "descrizione": "How you see the other person and how they see themselves, what they represent to you and what you represent to them; in the middle the obstacles, then strengths and the probable result.",
+    "regole": [
+     "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
+     "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
+     "The obstacles (6) are at the centre, between the two mutual meanings: they are what stands in the middle."
+    ],
+    "coppie": [
+     [
+      2,
+      3,
+      "Come vedi l'altra persona e come l'altra persona si vede: se le due immagini coincidono, o quanto distano."
+     ],
+     [
+      4,
+      5,
+      "Ciò che ciascuno rappresenta per l'altro: la reciprocità del legame."
+     ],
+     [
+      6,
+      7,
+      "Ostacoli e forze: cosa separa e cosa unisce."
+     ],
+     [
+      7,
+      8,
+      "Le forze e l'esito: se ciò che vi sostiene porta dove le carte indicano."
+     ]
+    ],
+    "stile": "moderna",
+    "larghezza": 0.1,
+    "larghezza_stretto": 0.13,
+    "categoria": "coppia",
+    "temi": [],
+    "forma": "standard",
+    "posizioni": [
+     {
+      "n": 1,
+      "nome": "You",
+      "nome_en": "You",
+      "significato": "Who you are today in this relationship: your starting position.",
+      "domanda": "Who am I in this relationship?",
+      "x": 0.5,
+      "y": 0.17,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "tu",
+      "nomi": {
+       "en": "You",
+       "hu": "Te",
+       "ru": "Ты",
+       "uk": "Ти",
+       "es": "Tú"
+      }
+     },
+     {
+      "n": 2,
+      "nome": "How you see the other person",
+      "nome_en": "How you see the other person",
+      "significato": "Your perception of the other person: how you see them, through your own filters.",
+      "domanda": "How do I see the other person?",
+      "x": 0.2,
+      "y": 0.17,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "tu",
+      "nomi": {
+       "en": "How you see the other person",
+       "hu": "Ahogy a másikat látod",
+       "ru": "Как ты видишь другого человека",
+       "uk": "Як ти бачиш іншу людину",
+       "es": "Cómo ves a la otra persona"
+      }
+     },
+     {
+      "n": 3,
+      "nome": "How the other person sees themselves",
+      "nome_en": "How the other person sees themself",
+      "significato": "The image the other person seems to have of themselves, as a tendency.",
+      "domanda": "How does the other person seem to see themselves?",
+      "x": 0.8,
+      "y": 0.17,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "partner",
+      "nomi": {
+       "en": "How the other person sees themself",
+       "hu": "Ahogy a másik magát látja",
+       "ru": "Как другой человек видит себя",
+       "uk": "Як інша людина бачить себе",
+       "es": "Cómo se ve la otra persona"
+      }
+     },
+     {
+      "n": 4,
+      "nome": "What they represent to you",
+      "nome_en": "What the other person means to you",
+      "significato": "The place and meaning the other person has in your life.",
+      "domanda": "What do they represent to me?",
+      "x": 0.2,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "tu",
+      "nomi": {
+       "en": "What the other person means to you",
+       "hu": "Amit a másik neked jelent",
+       "ru": "Что другой человек значит для тебя",
+       "uk": "Що інша людина означає для тебе",
+       "es": "Lo que la otra persona significa para ti"
+      }
+     },
+     {
+      "n": 5,
+      "nome": "What you represent to them",
+      "nome_en": "What you mean to the other person",
+      "significato": "The place and meaning you seem to have for the other person, as a tendency.",
+      "domanda": "What do I represent to the other person?",
+      "x": 0.8,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "partner",
+      "nomi": {
+       "en": "What you mean to the other person",
+       "hu": "Amit te a másiknak jelentesz",
+       "ru": "Что ты значишь для другого человека",
+       "uk": "Що ти означаєш для іншої людини",
+       "es": "Lo que significas para la otra persona"
+      }
+     },
+     {
+      "n": 6,
+      "nome": "Obstacles",
+      "nome_en": "Obstacles",
+      "significato": "The difficulties standing between the two points of view: what creates distance.",
+      "domanda": "What separates us?",
+      "x": 0.5,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "Obstacles",
+       "hu": "Akadályok",
+       "ru": "Препятствия",
+       "uk": "Перешкоди",
+       "es": "Obstáculos"
+      }
+     },
+     {
+      "n": 7,
+      "nome": "Strengths",
+      "nome_en": "Strengths",
+      "significato": "The positive aspects of the bond that you can count on.",
+      "domanda": "What can we count on?",
+      "x": 0.36,
+      "y": 0.83,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "Strengths",
+       "hu": "Erősségek",
+       "ru": "Сильные стороны",
+       "uk": "Сильні сторони",
+       "es": "Fortalezas"
+      }
+     },
+     {
+      "n": 8,
+      "nome": "Probable result",
+      "nome_en": "Probable outcome",
+      "significato": "Where the relationship leads if the forces stay as they are: a tendency.",
+      "domanda": "Where does the relationship lead?",
+      "x": 0.64,
+      "y": 0.83,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "Probable outcome",
+       "hu": "Valószínű eredmény",
+       "ru": "Вероятный исход",
+       "uk": "Ймовірний результат",
+       "es": "Resultado probable"
+      }
+     }
+    ],
+    "nomi": {
+     "en": "Mirror",
+     "hu": "Tükör",
+     "ru": "Зеркало",
+     "uk": "Дзеркало",
+     "es": "Espejo"
+    },
+    "sintesi_wirth": false,
+    "lang": "en",
+    "slug": "mirror-spread",
+    "slugs": {
+     "it": "coppia-specchio",
+     "en": "mirror-spread"
+    },
+    "mazzo_label": "The full 78-card deck",
+    "categoria_label": "Relationship spread",
+    "stile_label": "Modern"
+   },
+   {
+    "id": "coppia-bivio",
+    "nome": "Crossroads Spread",
+    "nome_en": "Crossroads",
+    "mazzo": "completo",
+    "carte_da_scegliere": 8,
+    "origine": "The 'crossroads': a forked spread, widely used for moments of decision, with two roads starting from one point.",
+    "descrizione": "Where you are and what brought you here, then two roads: for each the energy, the challenge and the outcome. It is for understanding, not for making the cards choose.",
+    "regole": [
+     "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
+     "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
+     "The cards describe the two roads and do not choose between them: the decision stays with the couple.",
+     "Read starting from the past (2), then the present (1); then each road in full, from the energy to the outcome."
+    ],
+    "coppie": [
+     [
+      3,
+      6,
+      "Le due energie iniziali a confronto: come si presentano subito le due strade."
+     ],
+     [
+      4,
+      7,
+      "Le due sfide a confronto: quale costo porta ciascuna strada."
+     ],
+     [
+      5,
+      8,
+      "I due esiti a confronto: dove condurrebbero, come tendenze."
+     ]
+    ],
+    "stile": "tendenza",
+    "larghezza": 0.11,
+    "larghezza_stretto": 0.135,
+    "categoria": "coppia",
+    "temi": [],
+    "forma": "standard",
+    "posizioni": [
+     {
+      "n": 1,
+      "nome": "Where you are",
+      "nome_en": "Where you are",
+      "significato": "The point where the couple stands now, facing the choice.",
+      "domanda": "Where are we right now?",
+      "x": 0.3,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "Where you are",
+       "hu": "Hol tartotok",
+       "ru": "Где вы сейчас",
+       "uk": "Де ви зараз",
+       "es": "Dónde están"
+      }
+     },
+     {
+      "n": 2,
+      "nome": "What brought you here",
+      "nome_en": "What brought you here",
+      "significato": "The events and choices that brought the couple to this crossroads.",
+      "domanda": "What brought us here?",
+      "x": 0.1,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "coppia",
+      "nomi": {
+       "en": "What brought you here",
+       "hu": "Mi vezetett idáig",
+       "ru": "Что привело вас сюда",
+       "uk": "Що привело вас сюди",
+       "es": "Lo que los trajo aquí"
+      }
+     },
+     {
+      "n": 3,
+      "nome": "Road A: energy",
+      "nome_en": "Path A: energy",
+      "significato": "The energy that moves at once if the couple takes road A.",
+      "domanda": "What energy does road A have?",
+      "x": 0.5,
+      "y": 0.2,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "strada-a",
+      "nomi": {
+       "en": "Path A: energy",
+       "hu": "A. út: energia",
+       "ru": "Путь А: энергия",
+       "uk": "Шлях А: енергія",
+       "es": "Camino A: energía"
+      }
+     },
+     {
+      "n": 4,
+      "nome": "Road A: challenge",
+      "nome_en": "Path A: challenge",
+      "significato": "The main difficulty road A would bring.",
+      "domanda": "What challenge does road A bring?",
+      "x": 0.7,
+      "y": 0.2,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "strada-a",
+      "nomi": {
+       "en": "Path A: challenge",
+       "hu": "A. út: kihívás",
+       "ru": "Путь А: вызов",
+       "uk": "Шлях А: виклик",
+       "es": "Camino A: desafío"
+      }
+     },
+     {
+      "n": 5,
+      "nome": "Road A: outcome",
+      "nome_en": "Path A: outcome",
+      "significato": "Where road A leads, as a tendency.",
+      "domanda": "Where does road A lead?",
+      "x": 0.9,
+      "y": 0.2,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "strada-a",
+      "nomi": {
+       "en": "Path A: outcome",
+       "hu": "A. út: kimenet",
+       "ru": "Путь А: исход",
+       "uk": "Шлях А: результат",
+       "es": "Camino A: resultado"
+      }
+     },
+     {
+      "n": 6,
+      "nome": "Road B: energy",
+      "nome_en": "Path B: energy",
+      "significato": "The energy that moves at once if the couple takes road B.",
+      "domanda": "What energy does road B have?",
+      "x": 0.5,
+      "y": 0.8,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "strada-b",
+      "nomi": {
+       "en": "Path B: energy",
+       "hu": "B. út: energia",
+       "ru": "Путь Б: энергия",
+       "uk": "Шлях Б: енергія",
+       "es": "Camino B: energía"
+      }
+     },
+     {
+      "n": 7,
+      "nome": "Road B: challenge",
+      "nome_en": "Path B: challenge",
+      "significato": "The main difficulty road B would bring.",
+      "domanda": "What challenge does road B bring?",
+      "x": 0.7,
+      "y": 0.8,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "strada-b",
+      "nomi": {
+       "en": "Path B: challenge",
+       "hu": "B. út: kihívás",
+       "ru": "Путь Б: вызов",
+       "uk": "Шлях Б: виклик",
+       "es": "Camino B: desafío"
+      }
+     },
+     {
+      "n": 8,
+      "nome": "Road B: outcome",
+      "nome_en": "Path B: outcome",
+      "significato": "Where road B leads, as a tendency.",
+      "domanda": "Where does road B lead?",
+      "x": 0.9,
+      "y": 0.8,
+      "rotazione": 0,
+      "calcolata": false,
+      "soggetto": "strada-b",
+      "nomi": {
+       "en": "Path B: outcome",
+       "hu": "B. út: kimenet",
+       "ru": "Путь Б: исход",
+       "uk": "Шлях Б: результат",
+       "es": "Camino B: resultado"
+      }
+     }
+    ],
+    "nomi": {
+     "en": "Crossroads",
+     "hu": "Válaszút",
+     "ru": "Развилка",
+     "uk": "Роздоріжжя",
+     "es": "Encrucijada"
+    },
+    "sintesi_wirth": false,
+    "lang": "en",
+    "slug": "crossroads-spread",
+    "slugs": {
+     "it": "coppia-bivio",
+     "en": "crossroads-spread"
+    },
+    "mazzo_label": "The full 78-card deck",
+    "categoria_label": "Relationship spread",
+    "stile_label": "Trending"
+   },
+   {
+    "id": "lavoro-trattativa",
+    "nome": "Negotiation Spread",
+    "nome_en": "Negotiation",
+    "mazzo": "completo",
+    "carte_da_scegliere": 4,
+    "origine": "A recent four-card spread laid out in a row, popular on career-focused tarot sites (Elvi Tarot's \"Negotiation Prep\") to prepare for a negotiation: a salary, a contract, a proposal to a client.",
+    "descrizione": "Four cards in a row: the real value of what you bring, how the other side sees it, your leverage and the approach to take. It prepares you for the conversation; it does not predict its outcome.",
+    "regole": [
+     "Card 2 describes how the other side tends to see the querent, not what they think: it is a tendency to check in the conversation.",
+     "If card 1 is strong and card 2 weak, the issue is not value but its visibility: the advice works on how to show it.",
+     "A Major Arcanum in position 3 points to more leverage than the querent believes; the suit of card 4 sets the tone of the approach: Disks facts and figures, Cups the relationship, Swords clear arguments, Wands initiative.",
+     "The cards do not say how much to ask for or whether to sign: figures and clauses need someone who knows the case."
+    ],
+    "coppie": [
+     [
+      1,
+      2,
+      "Il valore e la sua immagine: la distanza fra le due carte è il terreno su cui si gioca la trattativa."
+     ],
+     [
+      3,
+      4,
+      "La leva e l'approccio: come usare il punto di forza senza irrigidire il confronto."
+     ]
+    ],
+    "stile": "tendenza",
+    "larghezza": 0.14,
+    "larghezza_stretto": 0.16,
+    "categoria": "lavoro",
+    "temi": [],
+    "forma": "standard",
+    "posizioni": [
+     {
+      "n": 1,
+      "nome": "Your value",
+      "nome_en": "Your value",
+      "significato": "What you really bring to the table: skills, results, the substance of your proposal.",
+      "domanda": "What is what I bring really worth?",
+      "x": 0.14,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Your value",
+       "hu": "A te értéked",
+       "ru": "Твоя ценность",
+       "uk": "Твоя цінність",
+       "es": "Tu valor"
+      }
+     },
+     {
+      "n": 2,
+      "nome": "How the other side sees you",
+      "nome_en": "How the other side sees you",
+      "significato": "The picture the other side tends to form of you and your proposal, as a tendency: never a reading of their mind.",
+      "domanda": "What picture of me and my proposal comes across?",
+      "x": 0.38,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "How the other side sees you",
+       "hu": "Ahogy a másik fél lát",
+       "ru": "Как тебя видит другая сторона",
+       "uk": "Як тебе бачить інша сторона",
+       "es": "Cómo te ve la otra parte"
+      }
+     },
+     {
+      "n": 3,
+      "nome": "Your leverage",
+      "nome_en": "Your leverage",
+      "significato": "The firmest strength you have in this negotiation: what you can rely on.",
+      "domanda": "What can I use as leverage?",
+      "x": 0.62,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Your leverage",
+       "hu": "Az ütőkártyád",
+       "ru": "Твой рычаг",
+       "uk": "Твій важіль",
+       "es": "Tu baza"
+      }
+     },
+     {
+      "n": 4,
+      "nome": "Your approach",
+      "nome_en": "Your approach",
+      "significato": "The way of conducting the negotiation the cards suggest: the tone, the timing, what to put first.",
+      "domanda": "How should I conduct the negotiation?",
+      "x": 0.86,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Your approach",
+       "hu": "A megközelítésed",
+       "ru": "Твой подход",
+       "uk": "Твій підхід",
+       "es": "Tu enfoque"
+      }
+     }
+    ],
+    "nomi": {
+     "en": "Negotiation",
+     "hu": "Tárgyalás",
+     "ru": "Переговоры",
+     "uk": "Переговори",
+     "es": "Negociación"
+    },
+    "sintesi_wirth": false,
+    "lang": "en",
+    "slug": "negotiation-spread",
+    "slugs": {
+     "it": "lavoro-trattativa",
+     "en": "negotiation-spread"
+    },
+    "mazzo_label": "The full 78-card deck",
+    "categoria_label": "Work and business spread",
+    "stile_label": "Trending"
+   },
+   {
+    "id": "lavoro-offerta",
+    "nome": "Job Offer Spread",
+    "nome_en": "Job offer",
+    "mazzo": "completo",
+    "carte_da_scegliere": 5,
+    "origine": "A recent five-card spread, common in online career tarot guides (for example Unmei Tarot's) to weigh a job offer or an interview: the role, the people, what it gives and what it costs.",
+    "descrizione": "Five cards in an arch to weigh an offer or an interview: what the role is really like, the people you would work with, what would help you grow, what it would cost you and where the first year leads.",
+    "regole": [
+     "The cards do not say whether the job will come: the employer decides, with candidates, budgets and timing that cannot be seen. They describe the role and what it would bring to the querent.",
+     "Cards 3 and 4 are read together, like the two pans of a scale.",
+     "A court card in position 2 usually points to a real person in the workplace (a manager, a colleague), as an energy and not as a judgement on that person.",
+     "Card 5 is a tendency, not a promise: the decision to accept stays with the querent."
+    ],
+    "coppie": [
+     [
+      3,
+      4,
+      "Ciò che il ruolo dà e ciò che costa: il bilancio vero dell'offerta."
+     ],
+     [
+      1,
+      2,
+      "Il ruolo e le persone: il lavoro com'è sulla carta e com'è vissuto ogni giorno."
+     ],
+     [
+      1,
+      5,
+      "Dal ruolo di oggi a dove porta: se la direzione è quella che chi consulta cerca."
+     ]
+    ],
+    "stile": "tendenza",
+    "larghezza": 0.12,
+    "larghezza_stretto": 0.14,
+    "categoria": "lavoro",
+    "temi": [],
+    "forma": "standard",
+    "posizioni": [
+     {
+      "n": 1,
+      "nome": "The role",
+      "nome_en": "The role",
+      "significato": "The real nature of the position, beyond the title and the job ad.",
+      "domanda": "What is this role really like?",
+      "x": 0.1,
+      "y": 0.66,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "The role",
+       "hu": "A szerep",
+       "ru": "Роль",
+       "uk": "Роль",
+       "es": "El puesto"
+      }
+     },
+     {
+      "n": 2,
+      "nome": "The people",
+      "nome_en": "The people",
+      "significato": "The team, the managers, the atmosphere: the people you would work with every day.",
+      "domanda": "What environment would I find?",
+      "x": 0.3,
+      "y": 0.44,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "The people",
+       "hu": "Az emberek",
+       "ru": "Люди",
+       "uk": "Люди",
+       "es": "Las personas"
+      }
+     },
+     {
+      "n": 3,
+      "nome": "What it gives you",
+      "nome_en": "What it gives you",
+      "significato": "The growth the role offers: skills, experience, possibilities.",
+      "domanda": "What would help me grow?",
+      "x": 0.5,
+      "y": 0.34,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "What it gives you",
+       "hu": "Amit ad",
+       "ru": "Что она даёт",
+       "uk": "Що вона дає",
+       "es": "Lo que te da"
+      }
+     },
+     {
+      "n": 4,
+      "nome": "What it costs you",
+      "nome_en": "What it costs you",
+      "significato": "The price of the role: time, energy, balance, what you would give up.",
+      "domanda": "What would it cost me?",
+      "x": 0.7,
+      "y": 0.44,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "What it costs you",
+       "hu": "Amibe kerül",
+       "ru": "Чего она стоит",
+       "uk": "Чого вона коштує",
+       "es": "Lo que te cuesta"
+      }
+     },
+     {
+      "n": 5,
+      "nome": "The first year",
+      "nome_en": "The first year",
+      "significato": "The most likely path over the first twelve months, if you accept and the forces stay as they are.",
+      "domanda": "Where would the first year take me?",
+      "x": 0.9,
+      "y": 0.66,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "The first year",
+       "hu": "Az első év",
+       "ru": "Первый год",
+       "uk": "Перший рік",
+       "es": "El primer año"
+      }
+     }
+    ],
+    "nomi": {
+     "en": "Job offer",
+     "hu": "Állásajánlat",
+     "ru": "Предложение о работе",
+     "uk": "Пропозиція роботи",
+     "es": "Oferta de trabajo"
+    },
+    "sintesi_wirth": false,
+    "lang": "en",
+    "slug": "job-offer-spread",
+    "slugs": {
+     "it": "lavoro-offerta",
+     "en": "job-offer-spread"
+    },
+    "mazzo_label": "The full 78-card deck",
+    "categoria_label": "Work and business spread",
+    "stile_label": "Trending"
+   },
+   {
+    "id": "lavoro-swot",
+    "nome": "SWOT Spread",
+    "nome_en": "SWOT",
+    "mazzo": "completo",
+    "carte_da_scegliere": 6,
+    "origine": "SWOT analysis (strengths, weaknesses, opportunities, threats) is a business planning tool from the 1960s that tarot readers turned into a spread. This is Priskha's \"SWOT Plus\" version (2015), with advice and a possible outcome.",
+    "descrizione": "A four-card matrix of strengths, weaknesses, opportunities and threats, with the advice and the possible outcome beside it. For a project, a business or a career choice.",
+    "regole": [
+     "Cards 1 and 2 speak of what depends on the querent, cards 3 and 4 of what comes from outside: do not mix the two levels.",
+     "The advice (5) grows out of the matrix: use the strengths to seize the opportunities, repair the weaknesses exposed to the threats.",
+     "The outcome (6) is the tendency if the advice is followed, not a verdict.",
+     "The cards do not replace the numbers: an economic or financial plan needs a professional."
+    ],
+    "coppie": [
+     [
+      1,
+      3,
+      "Forze e opportunità: dove ciò che si ha incontra ciò che il contesto offre. È il piano d'azione."
+     ],
+     [
+      2,
+      4,
+      "Debolezze e minacce: dove una fragilità interna incontra un rischio esterno. È ciò da proteggere."
+     ],
+     [
+      5,
+      6,
+      "Il consiglio e l'esito: dove porta la strada che le carte suggeriscono."
+     ]
+    ],
+    "stile": "moderna",
+    "larghezza": 0.1,
+    "larghezza_stretto": 0.12,
+    "categoria": "lavoro",
+    "temi": [],
+    "forma": "standard",
+    "posizioni": [
+     {
+      "n": 1,
+      "nome": "Strengths",
+      "nome_en": "Strengths",
+      "significato": "The inner qualities, of the querent or of the business, that support the project.",
+      "domanda": "What can I count on?",
+      "x": 0.14,
+      "y": 0.25,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Strengths",
+       "hu": "Erősségek",
+       "ru": "Сильные стороны",
+       "uk": "Сильні сторони",
+       "es": "Fortalezas"
+      }
+     },
+     {
+      "n": 2,
+      "nome": "Weaknesses",
+      "nome_en": "Weaknesses",
+      "significato": "The inner frailties that may hold things back: what is missing or needs strengthening.",
+      "domanda": "What weakens me?",
+      "x": 0.37,
+      "y": 0.25,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Weaknesses",
+       "hu": "Gyengeségek",
+       "ru": "Слабые стороны",
+       "uk": "Слабкі сторони",
+       "es": "Debilidades"
+      }
+     },
+     {
+      "n": 3,
+      "nome": "Opportunities",
+      "nome_en": "Opportunities",
+      "significato": "The favourable outside circumstances: what the context offers and can be seized.",
+      "domanda": "What does the context offer?",
+      "x": 0.14,
+      "y": 0.75,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Opportunities",
+       "hu": "Lehetőségek",
+       "ru": "Возможности",
+       "uk": "Можливості",
+       "es": "Oportunidades"
+      }
+     },
+     {
+      "n": 4,
+      "nome": "Threats",
+      "nome_en": "Threats",
+      "significato": "The outside factors that may get in the way: competition, timing, conditions.",
+      "domanda": "What could stand in the way?",
+      "x": 0.37,
+      "y": 0.75,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Threats",
+       "hu": "Veszélyek",
+       "ru": "Угрозы",
+       "uk": "Загрози",
+       "es": "Amenazas"
+      }
+     },
+     {
+      "n": 5,
+      "nome": "Advice",
+      "nome_en": "Advice",
+      "significato": "The attitude or action the cards suggest in light of the matrix.",
+      "domanda": "What is best to do?",
+      "x": 0.64,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Advice",
+       "hu": "Tanács",
+       "ru": "Совет",
+       "uk": "Порада",
+       "es": "Consejo"
+      }
+     },
+     {
+      "n": 6,
+      "nome": "Possible outcome",
+      "nome_en": "Possible outcome",
+      "significato": "The most likely tendency if the advice is followed and the forces stay as they are.",
+      "domanda": "Where does it lead?",
+      "x": 0.87,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Possible outcome",
+       "hu": "Lehetséges kimenet",
+       "ru": "Возможный исход",
+       "uk": "Можливий результат",
+       "es": "Resultado posible"
+      }
+     }
+    ],
+    "nomi": {
+     "en": "SWOT",
+     "hu": "SWOT-elemzés",
+     "ru": "SWOT-анализ",
+     "uk": "SWOT-аналіз",
+     "es": "Análisis DAFO"
+    },
+    "sintesi_wirth": false,
+    "lang": "en",
+    "slug": "swot-spread",
+    "slugs": {
+     "it": "lavoro-swot",
+     "en": "swot-spread"
+    },
+    "mazzo_label": "The full 78-card deck",
+    "categoria_label": "Work and business spread",
+    "stile_label": "Modern"
+   },
+   {
+    "id": "lavoro-restare-andare",
+    "nome": "Stay or Go Spread",
+    "nome_en": "Stay or go",
+    "mazzo": "completo",
+    "carte_da_scegliere": 7,
+    "origine": "A recent seven-card spread from online career guides (Unmei Tarot's \"Stay or Go\") for those thinking of leaving their job: the two roads are read as a mirror, with the fears and what each one offers. Here the last card is not a verdict but the key to the choice.",
+    "descrizione": "The real reason for the doubt, then two mirrored roads, staying and leaving, each with its fear and what it offers; finally what you don't see and the key to deciding.",
+    "regole": [
+     "The top row is the road of staying, the bottom row the road of leaving: they are read as a mirror, fear with fear and offer with offer.",
+     "The cards describe the two roads and do not choose between them: card 7 gives the criterion, the decision stays with the querent.",
+     "A Disks card in positions 4 or 5 speaks of material security; economic and contractual matters need someone who knows the case."
+    ],
+    "coppie": [
+     [
+      2,
+      3,
+      "I due timori a confronto: quale paura pesa davvero nella scelta."
+     ],
+     [
+      4,
+      5,
+      "Ciò che offrono le due strade, a confronto nello stesso arco di tempo."
+     ],
+     [
+      1,
+      7,
+      "Dal motivo vero alla chiave della scelta: se la decisione risponde al bisogno che l'ha fatta nascere."
+     ]
+    ],
+    "stile": "tendenza",
+    "larghezza": 0.1,
+    "larghezza_stretto": 0.12,
+    "categoria": "lavoro",
+    "temi": [],
+    "forma": "standard",
+    "posizioni": [
+     {
+      "n": 1,
+      "nome": "The real reason",
+      "nome_en": "The real reason",
+      "significato": "What truly drives the thought of leaving, beneath the stated reasons.",
+      "domanda": "Why am I really thinking about it?",
+      "x": 0.1,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "The real reason",
+       "hu": "A valódi ok",
+       "ru": "Настоящая причина",
+       "uk": "Справжня причина",
+       "es": "El motivo real"
+      }
+     },
+     {
+      "n": 2,
+      "nome": "The fear if you stay",
+      "nome_en": "The fear if you stay",
+      "significato": "What the querent fears will happen by staying.",
+      "domanda": "What do I fear if I stay?",
+      "x": 0.33,
+      "y": 0.17,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "The fear if you stay",
+       "hu": "A félelem, ha maradsz",
+       "ru": "Страх, если останешься",
+       "uk": "Страх, якщо залишишся",
+       "es": "El miedo si te quedas"
+      }
+     },
+     {
+      "n": 3,
+      "nome": "The fear if you go",
+      "nome_en": "The fear if you go",
+      "significato": "What the querent fears will happen by leaving.",
+      "domanda": "What do I fear if I go?",
+      "x": 0.33,
+      "y": 0.83,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "The fear if you go",
+       "hu": "A félelem, ha mész",
+       "ru": "Страх, если уйдёшь",
+       "uk": "Страх, якщо підеш",
+       "es": "El miedo si te vas"
+      }
+     },
+     {
+      "n": 4,
+      "nome": "What staying offers",
+      "nome_en": "What staying offers",
+      "significato": "What the current job can still give over the next six to twelve months.",
+      "domanda": "What does staying give me?",
+      "x": 0.56,
+      "y": 0.17,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "What staying offers",
+       "hu": "Amit a maradás kínál",
+       "ru": "Что даёт остаться",
+       "uk": "Що дає залишитися",
+       "es": "Lo que ofrece quedarse"
+      }
+     },
+     {
+      "n": 5,
+      "nome": "What leaving offers",
+      "nome_en": "What leaving offers",
+      "significato": "What a new road can open over the next six to twelve months.",
+      "domanda": "What does leaving give me?",
+      "x": 0.56,
+      "y": 0.83,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "What leaving offers",
+       "hu": "Amit a távozás kínál",
+       "ru": "Что даёт уйти",
+       "uk": "Що дає піти",
+       "es": "Lo que ofrece irse"
+      }
+     },
+     {
+      "n": 6,
+      "nome": "What you don't see",
+      "nome_en": "What you don't see",
+      "significato": "The overlooked factor that changes the weight of the choice.",
+      "domanda": "What am I not seeing?",
+      "x": 0.45,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "What you don't see",
+       "hu": "Amit nem látsz",
+       "ru": "Чего ты не видишь",
+       "uk": "Чого ти не бачиш",
+       "es": "Lo que no ves"
+      }
+     },
+     {
+      "n": 7,
+      "nome": "The key to the choice",
+      "nome_en": "The key to the choice",
+      "significato": "What really matters in deciding: not the decision, which stays with the querent, but the criterion for making it.",
+      "domanda": "What should I base the choice on?",
+      "x": 0.82,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "The key to the choice",
+       "hu": "A döntés kulcsa",
+       "ru": "Ключ к выбору",
+       "uk": "Ключ до вибору",
+       "es": "La clave de la elección"
+      }
+     }
+    ],
+    "nomi": {
+     "en": "Stay or go",
+     "hu": "Maradni vagy menni",
+     "ru": "Остаться или уйти",
+     "uk": "Залишитися чи піти",
+     "es": "Quedarse o irse"
+    },
+    "sintesi_wirth": false,
+    "lang": "en",
+    "slug": "stay-or-go-spread",
+    "slugs": {
+     "it": "lavoro-restare-andare",
+     "en": "stay-or-go-spread"
+    },
+    "mazzo_label": "The full 78-card deck",
+    "categoria_label": "Work and business spread",
+    "stile_label": "Trending"
+   },
+   {
+    "id": "lavoro-impresa",
+    "nome": "New Venture Spread",
+    "nome_en": "New venture",
+    "mazzo": "completo",
+    "carte_da_scegliere": 9,
+    "origine": "A modern nine-card spread for starting a business or a project, adapted from Labyrinthos' \"Aligning With Your Higher Purpose\" and Elvi Tarot's \"Business Idea Check\": the purpose at the centre and, around it, motivation, vision, offer, blind spot, customers, means and readiness.",
+    "descrizione": "A wheel of eight cards around your role in the venture: why you want it, what it can become, what you offer, what you underestimate, who you serve, how to serve them, what you need to start and how ready you are.",
+    "regole": [
+     "Card 1, at the centre, is the pivot: every card of the wheel is read in relation to the querent's role.",
+     "The blind spot (5) is not a sentence: it is what is worth looking at before investing time and money.",
+     "The cards read the calling and the moment; the business plan, permits and contracts need a professional."
+    ],
+    "coppie": [
+     [
+      2,
+      3,
+      "Motivazione e visione: se ciò che spinge porta davvero dove si vuole arrivare."
+     ],
+     [
+      4,
+      6,
+      "L'offerta e i clienti: se ciò che si offre risponde al bisogno di chi si vuole servire."
+     ],
+     [
+      5,
+      9,
+      "Il punto cieco e la preparazione: ciò che manca ancora prima di partire."
+     ],
+     [
+      7,
+      8,
+      "Come servire i clienti e che cosa serve per farlo: il piano concreto."
+     ]
+    ],
+    "stile": "moderna",
+    "larghezza": 0.085,
+    "larghezza_stretto": null,
+    "categoria": "lavoro",
+    "temi": [],
+    "forma": "quadrata",
+    "posizioni": [
+     {
+      "n": 1,
+      "nome": "Your role",
+      "nome_en": "Your role",
+      "significato": "The querent's place in the venture: the purpose and the energy that hold it up.",
+      "domanda": "What is my role in this venture?",
+      "x": 0.5,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Your role",
+       "hu": "A szereped",
+       "ru": "Твоя роль",
+       "uk": "Твоя роль",
+       "es": "Tu papel"
+      }
+     },
+     {
+      "n": 2,
+      "nome": "The motivation",
+      "nome_en": "The motivation",
+      "significato": "What really drives the start, beneath the stated reasons.",
+      "domanda": "Why do I want to start it?",
+      "x": 0.5,
+      "y": 0.13,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "The motivation",
+       "hu": "A motiváció",
+       "ru": "Мотивация",
+       "uk": "Мотивація",
+       "es": "La motivación"
+      }
+     },
+     {
+      "n": 3,
+      "nome": "The vision",
+      "nome_en": "The vision",
+      "significato": "What the venture can become if it grows according to its nature.",
+      "domanda": "What can it become?",
+      "x": 0.762,
+      "y": 0.238,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "The vision",
+       "hu": "A jövőkép",
+       "ru": "Видение",
+       "uk": "Бачення",
+       "es": "La visión"
+      }
+     },
+     {
+      "n": 4,
+      "nome": "The offer",
+      "nome_en": "The offer",
+      "significato": "What the venture gives its customers: the product, the service, the value.",
+      "domanda": "What do I offer?",
+      "x": 0.87,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "The offer",
+       "hu": "A kínálat",
+       "ru": "Предложение",
+       "uk": "Пропозиція",
+       "es": "La oferta"
+      }
+     },
+     {
+      "n": 5,
+      "nome": "The blind spot",
+      "nome_en": "The blind spot",
+      "significato": "What the querent underestimates or does not see yet.",
+      "domanda": "What am I underestimating?",
+      "x": 0.762,
+      "y": 0.762,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "The blind spot",
+       "hu": "A vakfolt",
+       "ru": "Слепое пятно",
+       "uk": "Сліпа пляма",
+       "es": "El punto ciego"
+      }
+     },
+     {
+      "n": 6,
+      "nome": "The customers",
+      "nome_en": "The customers",
+      "significato": "The people the venture speaks to and their real need.",
+      "domanda": "Who am I really speaking to?",
+      "x": 0.5,
+      "y": 0.87,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "The customers",
+       "hu": "Az ügyfelek",
+       "ru": "Клиенты",
+       "uk": "Клієнти",
+       "es": "Los clientes"
+      }
+     },
+     {
+      "n": 7,
+      "nome": "How to serve them",
+      "nome_en": "How to serve them",
+      "significato": "The way to reach those customers and answer their need.",
+      "domanda": "How can I serve them?",
+      "x": 0.238,
+      "y": 0.762,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "How to serve them",
+       "hu": "Hogyan szolgáld őket",
+       "ru": "Как им служить",
+       "uk": "Як їм служити",
+       "es": "Cómo servirles"
+      }
+     },
+     {
+      "n": 8,
+      "nome": "What you need to start",
+      "nome_en": "What you need to start",
+      "significato": "The means to bring together: skills, people, resources, time.",
+      "domanda": "What do I need to start?",
+      "x": 0.13,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "What you need to start",
+       "hu": "Ami az induláshoz kell",
+       "ru": "Что нужно для старта",
+       "uk": "Що потрібно для старту",
+       "es": "Lo que necesitas para empezar"
+      }
+     },
+     {
+      "n": 9,
+      "nome": "Readiness",
+      "nome_en": "Readiness",
+      "significato": "How ready the querent is to begin, and what is still missing.",
+      "domanda": "How ready am I?",
+      "x": 0.238,
+      "y": 0.238,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Readiness",
+       "hu": "A felkészültség",
+       "ru": "Готовность",
+       "uk": "Готовність",
+       "es": "La preparación"
+      }
+     }
+    ],
+    "nomi": {
+     "en": "New venture",
+     "hu": "Új vállalkozás",
+     "ru": "Новое дело",
+     "uk": "Нова справа",
+     "es": "Nuevo emprendimiento"
+    },
+    "sintesi_wirth": false,
+    "lang": "en",
+    "slug": "new-venture-spread",
+    "slugs": {
+     "it": "lavoro-impresa",
+     "en": "new-venture-spread"
+    },
+    "mazzo_label": "The full 78-card deck",
+    "categoria_label": "Work and business spread",
+    "stile_label": "Modern"
+   }
+  ]
+ },
+ "GET /me/readings/f2b57ff0-1519-49b6-a8a5-980ccbf3035d": {
+  "stato": 200,
+  "json": {
+   "id": "f2b57ff0-1519-49b6-a8a5-980ccbf3035d",
+   "spread_id": "tre-carte",
+   "stesa": "Tre carte",
+   "stesa_nomi": {
+    "en": "Three cards",
+    "hu": "Három kártya",
+    "ru": "Три карты",
+    "uk": "Три карти",
+    "es": "Tres cartas"
+   },
+   "categoria": "standard",
+   "stile": null,
+   "question": "Will my new project at work go well?",
+   "status": "scelta",
+   "lang": "en",
+   "consumo": "credito",
+   "created_at": "2026-10-04T00:48:02.363308+02:00",
+   "completed_at": "2026-10-04T00:48:25.082009+02:00",
+   "feedback": null,
+   "shared": false,
+   "manuale": false,
+   "mazzo": null,
+   "persone": null,
+   "compatibilita": null,
+   "context_summary": "Chi consulta chiede: «Will my new project at work go well?». Dal colloquio emerge una situazione in movimento, vissuta con partecipazione emotiva e il desiderio di vedere più chiaro.",
+   "interview": [
+    {
+     "ruolo": "oracolo",
+     "testo": "Da quanto tempo questa situazione è presente nella tua vita, e cosa l'ha messa in moto?",
+     "ordine": 1
+    },
+    {
+     "ruolo": "utente",
+     "testo": "It started last month with a small team.",
+     "ordine": 2
+    },
+    {
+     "ruolo": "oracolo",
+     "testo": "Chi sono le persone coinvolte, e che ruolo hanno per te?",
+     "ordine": 3
+    },
+    {
+     "ruolo": "utente",
+     "testo": "I want it to grow steadily.",
+     "ordine": 4
+    }
+   ],
+   "cards": [],
+   "slot_count": 22,
+   "picked_slots": [],
+   "commitment": "a057085f21bd14ccd9b7b572de00d9a010febefe41ed51ef819a191dcbc34c81",
+   "deck_salt": "e05ff585db284db01ef2448a75a18241",
+   "deck_state": [
+    {
+     "card": "maj-10",
+     "rovescio": true
+    },
+    {
+     "card": "maj-09",
+     "rovescio": true
+    },
+    {
+     "card": "maj-06",
+     "rovescio": true
+    },
+    {
+     "card": "maj-11",
+     "rovescio": true
+    },
+    {
+     "card": "maj-00",
+     "rovescio": true
+    },
+    {
+     "card": "maj-08",
+     "rovescio": true
+    },
+    {
+     "card": "maj-01",
+     "rovescio": false
+    },
+    {
+     "card": "maj-04",
+     "rovescio": false
+    },
+    {
+     "card": "maj-16",
+     "rovescio": false
+    },
+    {
+     "card": "maj-20",
+     "rovescio": false
+    },
+    {
+     "card": "maj-05",
+     "rovescio": false
+    },
+    {
+     "card": "maj-02",
+     "rovescio": true
+    },
+    {
+     "card": "maj-18",
+     "rovescio": false
+    },
+    {
+     "card": "maj-13",
+     "rovescio": true
+    },
+    {
+     "card": "maj-14",
+     "rovescio": false
+    },
+    {
+     "card": "maj-21",
+     "rovescio": false
+    },
+    {
+     "card": "maj-19",
+     "rovescio": true
+    },
+    {
+     "card": "maj-03",
+     "rovescio": false
+    },
+    {
+     "card": "maj-15",
+     "rovescio": false
+    },
+    {
+     "card": "maj-12",
+     "rovescio": false
+    },
+    {
+     "card": "maj-07",
+     "rovescio": true
+    },
+    {
+     "card": "maj-17",
+     "rovescio": true
+    }
+   ],
+   "synthesis": null,
+   "guard_outcome": "ok",
+   "share_token": null,
+   "share_text": null,
+   "feedback_note": null,
+   "disclaimer": "This is a tarot reading generated by an artificial intelligence, carried out with rigour and coherence according to the esoteric tradition of the Thoth Tarot. It is not a certainty: it describes the most probable of futures in the light of the forces the cards show now, and your choices can change it. There is no scientific evidence that tarot predictions are valid: use it as a mirror for reflection, not as a verdict.",
+   "dignita": {
+    "1": {
+     "elemento": "aria",
+     "punteggio": 1,
+     "giudizio": "ben dignificata",
+     "relazioni": [
+      {
+       "posizione": 2,
+       "elemento": "fuoco",
+       "relazione": "amica"
+      }
+     ]
+    },
+    "2": {
+     "elemento": "fuoco",
+     "punteggio": 1,
+     "giudizio": "ben dignificata",
+     "relazioni": [
+      {
+       "posizione": 1,
+       "elemento": "aria",
+       "relazione": "amica"
+      },
+      {
+       "posizione": 3,
+       "elemento": "terra",
+       "relazione": "moderata"
+      }
+     ]
+    },
+    "3": {
+     "elemento": "terra",
+     "punteggio": 0,
+     "giudizio": "neutra",
+     "relazioni": [
+      {
+       "posizione": 2,
+       "elemento": "fuoco",
+       "relazione": "moderata"
+      }
+     ]
+    }
+   },
+   "stesa_dati": {
+    "id": "tre-carte",
+    "nome": "Tre carte",
+    "nome_en": "Three cards",
+    "mazzo": "maggiori",
+    "carte_da_scegliere": 3,
+    "origine": "La stesa più diffusa al mondo: una linea temporale di tre Arcani maggiori.",
+    "descrizione": "Passato, presente e futuro: la traiettoria della questione letta attraverso le sole forze archetipiche dei 22 Arcani maggiori.",
+    "regole": [
+     "Si legge da sinistra a destra come un racconto: la carta centrale è il perno e colora le altre due.",
+     "Le dignità si calcolano sulla linea: la carta del presente è modulata da passato e futuro.",
+     "Tre Arcani maggiori indicano forze che superano la volontà personale: il consiglio verte sull'atteggiamento con cui attraversarle."
+    ],
+    "coppie": [
+     [
+      1,
+      3,
+      "Il confronto fra radice ed esito mostra se la questione evolve o ripete sé stessa."
+     ]
+    ],
+    "stile": null,
+    "larghezza": 0.16,
+    "larghezza_stretto": null,
+    "categoria": "standard",
+    "temi": [
+     "lavoro"
+    ],
+    "forma": "standard",
+    "posizioni": [
+     {
+      "n": 1,
+      "nome": "Passato",
+      "nome_en": "Past",
+      "significato": "Le forze che hanno generato la situazione e che ancora agiscono come radice.",
+      "domanda": "Da dove viene questa situazione?",
+      "x": 0.2,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Past",
+       "hu": "Múlt",
+       "ru": "Прошлое",
+       "uk": "Минуле",
+       "es": "Pasado"
+      }
+     },
+     {
+      "n": 2,
+      "nome": "Presente",
+      "nome_en": "Present",
+      "significato": "Il nodo attuale: l'energia dominante in questo momento, ciò con cui chi consulta si confronta ora.",
+      "domanda": "Qual è il cuore della questione adesso?",
+      "x": 0.5,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Present",
+       "hu": "Jelen",
+       "ru": "Настоящее",
+       "uk": "Теперішнє",
+       "es": "Presente"
+      }
+     },
+     {
+      "n": 3,
+      "nome": "Futuro",
+      "nome_en": "Future",
+      "significato": "La tendenza più probabile se le forze in gioco proseguono senza cambiamenti di rotta.",
+      "domanda": "Verso dove tende la situazione?",
+      "x": 0.8,
+      "y": 0.5,
+      "rotazione": 0,
+      "calcolata": false,
+      "nomi": {
+       "en": "Future",
+       "hu": "Jövő",
+       "ru": "Будущее",
+       "uk": "Майбутнє",
+       "es": "Futuro"
+      }
+     }
+    ],
+    "nomi": {
+     "en": "Three cards",
+     "hu": "Három kártya",
+     "ru": "Три карты",
+     "uk": "Три карти",
+     "es": "Tres cartas"
+    },
+    "sintesi_wirth": false,
+    "lang": "it",
+    "slug": "tre-carte",
+    "slugs": {
+     "it": "tre-carte",
+     "en": "three-card"
+    }
+   }
+  }
+ }
+}

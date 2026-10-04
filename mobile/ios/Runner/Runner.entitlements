@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Fase 9 e 10 (scritto, non ancora compilato). Le capacità dell'app, che vanno accese anche sull'App ID in Apple
+     Developer (Certificates, Identifiers & Profiles → chat.tarots.app): Push Notifications e Associated Domains.
+     - aps-environment: «development» per le build di prova; Codemagic/Xcode lo mettono a «production» con il profilo di
+       distribuzione (App Store e TestFlight).
+     - applinks: gli Universal Links di tarots.chat (il sito pubblica /.well-known/apple-app-site-association con Team
+       ID, bundle ID e percorsi dalla console → App mobili → iOS).
+     - webcredentials: le password salvate per tarots.chat proposte nella pagina d'accesso. -->
+<plist version="1.0">
+<dict>
+	<key>aps-environment</key>
+	<string>development</string>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:tarots.chat</string>
+		<string>webcredentials:tarots.chat</string>
+	</array>
+</dict>
+</plist>

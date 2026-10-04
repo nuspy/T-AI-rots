@@ -1,0 +1,4 @@
+# I golden test (test/golden/) dipendono dai caratteri di ripiego di Windows: altrove --exclude-tags golden.
+tags:
+  golden:
+    timeout: 5m

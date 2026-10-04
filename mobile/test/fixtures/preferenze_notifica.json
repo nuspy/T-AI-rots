@@ -1,0 +1,25 @@
+{
+  "carta_giorno": true,
+  "ora_carta": "08:30",
+  "silenzio": true,
+  "silenzio_dal": "22:00",
+  "silenzio_al": "08:00",
+  "promemoria": true,
+  "tetto_promozioni_settimana": 2,
+  "tetto_massimo": 2,
+  "promozioni": false,
+  "fuso_orario": "Europe/Rome",
+  "personalizzate": false,
+  "dispositivi": [
+    {
+      "id": 1,
+      "canale": "webpush",
+      "piattaforma": "web",
+      "attivo": true,
+      "lingua": "it",
+      "versione_app": null,
+      "registrato_il": "2026-10-03T08:00:00+00:00",
+      "ultimo_visto": "2026-10-04T08:00:00+00:00"
+    }
+  ]
+}

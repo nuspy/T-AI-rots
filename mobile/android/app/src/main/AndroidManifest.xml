@@ -1,0 +1,181 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- L'API, il sito (immagini delle carte) e Keycloak. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Niente identificativo pubblicitario: Firebase Analytics lo aggiungerebbe da sé (decisione: niente pubblicità
+         nell'app al lancio, niente AD_ID né IDFA). -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove"/>
+    <!-- Fase 9: le notifiche (Android 13+ chiede il permesso: l'app lo chiede solo dopo un sì, mai all'avvio). Il
+         permesso BILLING lo aggiunge la libreria di Google Play Billing. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+    <application
+        android:label="TAROTS chat"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="false">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:taskAffinity=""
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            <!-- Specifies an Android theme to apply to this Activity as soon as
+                 the Android process has started. This theme is visible to the user
+                 while the Flutter UI initializes. After that, this theme continues
+                 to determine the Window background behind the Flutter UI. -->
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme"
+              />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <!-- Fase 10: gli App Links. I collegamenti del sito aprono la stessa pagina nell'app (go_router ha gli stessi
+                 percorsi), anche il ritorno da un pagamento con carta (https://tarots.chat/pricing?checkout=…: lo
+                 schema chat.tarots.app è già del ritorno dell'accesso, flutter_appauth). Android verifica il dominio
+                 con https://tarots.chat/.well-known/assetlinks.json (package e impronte SHA-256 dalla console → App
+                 mobili → Android).
+                 SOLO le pagine dell'app: MAI /auth (Keycloak: il ritorno di Google passa di lì, e se lo prendesse
+                 l'app l'accesso si romperebbe), /api (il link «niente più promozioni» delle notifiche), /admin, /old.
+                 Lo stesso elenco sta in backend/tarot_core/domain/app_mobili_repositories.py (PERCORSI_APP). -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"/>
+                <data android:host="tarots.chat"/>
+                <data android:path="/"/>
+                <data android:path="/it"/>
+                <data android:pathPrefix="/it/"/>
+                <data android:pathPrefix="/read"/>
+                <data android:pathPrefix="/physical-reading"/>
+                <data android:pathPrefix="/my-story"/>
+                <data android:pathPrefix="/shared"/>
+                <data android:pathPrefix="/daily-card"/>
+                <data android:pathPrefix="/card-of-the-day"/>
+                <data android:pathPrefix="/cards"/>
+                <data android:pathPrefix="/spreads"/>
+                <data android:pathPrefix="/decks"/>
+                <data android:pathPrefix="/vote"/>
+                <data android:pathPrefix="/shop"/>
+                <data android:pathPrefix="/cart"/>
+                <data android:pathPrefix="/pricing"/>
+                <data android:pathPrefix="/explore"/>
+                <data android:pathPrefix="/trial"/>
+                <data android:pathPrefix="/blog"/>
+                <data android:pathPrefix="/profile"/>
+                <data android:pathPrefix="/privacy"/>
+                <data android:pathPrefix="/account/elimina"/>
+                <data android:pathPrefix="/carte"/>
+                <data android:pathPrefix="/stese"/>
+                <data android:pathPrefix="/piano"/>
+                <data android:pathPrefix="/carta-del-giorno"/>
+                <data android:pathPrefix="/mazzo"/>
+                <data android:pathPrefix="/deck"/>
+                <data android:pathPrefix="/leggi"/>
+                <data android:pathPrefix="/letture"/>
+                <data android:pathPrefix="/profilo"/>
+                <data android:pathPrefix="/s/"/>
+                <data android:pathPrefix="/interpreta"/>
+                <data android:pathPrefix="/vota-mazzo"/>
+            </intent-filter>
+            <!-- www.tarots.chat è un reindirizzamento permanente: non serve assetlinks.json (non si può verificare un
+                 dominio che reindirizza) e sta in un filtro senza autoVerify, così non fa fallire la verifica di
+                 tarots.chat sugli Android fino all'11 (dove un dominio non verificato la fa fallire tutta). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"/>
+                <data android:host="www.tarots.chat"/>
+                <data android:path="/"/>
+                <data android:path="/it"/>
+                <data android:pathPrefix="/it/"/>
+                <data android:pathPrefix="/read"/>
+                <data android:pathPrefix="/physical-reading"/>
+                <data android:pathPrefix="/my-story"/>
+                <data android:pathPrefix="/shared"/>
+                <data android:pathPrefix="/daily-card"/>
+                <data android:pathPrefix="/card-of-the-day"/>
+                <data android:pathPrefix="/cards"/>
+                <data android:pathPrefix="/spreads"/>
+                <data android:pathPrefix="/decks"/>
+                <data android:pathPrefix="/vote"/>
+                <data android:pathPrefix="/shop"/>
+                <data android:pathPrefix="/cart"/>
+                <data android:pathPrefix="/pricing"/>
+                <data android:pathPrefix="/explore"/>
+                <data android:pathPrefix="/trial"/>
+                <data android:pathPrefix="/blog"/>
+                <data android:pathPrefix="/profile"/>
+                <data android:pathPrefix="/privacy"/>
+                <data android:pathPrefix="/account/elimina"/>
+                <data android:pathPrefix="/carte"/>
+                <data android:pathPrefix="/stese"/>
+                <data android:pathPrefix="/piano"/>
+                <data android:pathPrefix="/carta-del-giorno"/>
+                <data android:pathPrefix="/mazzo"/>
+                <data android:pathPrefix="/deck"/>
+                <data android:pathPrefix="/leggi"/>
+                <data android:pathPrefix="/letture"/>
+                <data android:pathPrefix="/profilo"/>
+                <data android:pathPrefix="/s/"/>
+                <data android:pathPrefix="/interpreta"/>
+                <data android:pathPrefix="/vota-mazzo"/>
+            </intent-filter>
+        </activity>
+        <!-- Don't delete the meta-data below.
+             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+
+        <!-- Firebase Analytics: spento finché non c'è il consenso «google_analytics» (lo accende l'app con
+             setAnalyticsCollectionEnabled), niente schermate automatiche (le manda l'app col percorso del sito),
+             niente identificativo pubblicitario né personalizzazione degli annunci. -->
+        <meta-data android:name="firebase_analytics_collection_enabled" android:value="false"/>
+        <meta-data android:name="google_analytics_automatic_screen_reporting_enabled" android:value="false"/>
+        <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false"/>
+        <meta-data android:name="google_analytics_default_allow_ad_personalization_signals" android:value="false"/>
+        <meta-data android:name="google_analytics_default_allow_ad_user_data" android:value="false"/>
+        <meta-data android:name="google_analytics_default_allow_ad_storage" android:value="false"/>
+        <meta-data android:name="google_analytics_default_allow_analytics_storage" android:value="false"/>
+
+        <!-- Fase 9, le notifiche (Firebase Cloud Messaging): nessun token finché la persona non le accende (l'app
+             chiama setAutoInitEnabled(true) dopo il sì); il canale e l'icona di quelle che FCM mostra da sé con l'app
+             chiusa (i canali `servizio` e `promozioni` li crea l'app coi nomi nella sua lingua). -->
+        <meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false"/>
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="servizio"/>
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notifica"/>
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notifica"/>
+    </application>
+    <!-- Required to query activities that can process text, see:
+         https://developer.android.com/training/package-visibility and
+         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
+
+         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT"/>
+            <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- L'accesso con Keycloak apre il browser di sistema (Custom Tabs). -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <category android:name="android.intent.category.BROWSABLE"/>
+            <data android:scheme="https"/>
+        </intent>
+    </queries>
+</manifest>

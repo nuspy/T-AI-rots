@@ -1,0 +1,150 @@
+{
+  "piattaforma": "android",
+  "paese": "IT",
+  "prodotti": [
+    {
+      "product_id": "abbonamento_base",
+      "base_plan": "annuale",
+      "tipo": "abbonamento",
+      "annuale": true,
+      "prova": false,
+      "piano": {
+        "slug": "mensile-base",
+        "nome": "Monthly Basic",
+        "descrizione": "Three readings a day, every spread, unlimited history.",
+        "tipo": "abbonamento",
+        "crediti": 0,
+        "limiti": {
+          "letture_al_giorno": 3
+        },
+        "livello": 10
+      }
+    },
+    {
+      "product_id": "abbonamento_base",
+      "base_plan": "mensile",
+      "tipo": "abbonamento",
+      "annuale": false,
+      "prova": false,
+      "piano": {
+        "slug": "mensile-base",
+        "nome": "Monthly Basic",
+        "descrizione": "Three readings a day, every spread, unlimited history.",
+        "tipo": "abbonamento",
+        "crediti": 0,
+        "limiti": {
+          "letture_al_giorno": 3
+        },
+        "livello": 10
+      }
+    },
+    {
+      "product_id": "abbonamento_oro",
+      "base_plan": "annuale",
+      "tipo": "abbonamento",
+      "annuale": true,
+      "prova": false,
+      "piano": {
+        "slug": "mensile-oro",
+        "nome": "Monthly Gold",
+        "descrizione": "Ten readings a day, for those who consult the cards often.",
+        "tipo": "abbonamento",
+        "crediti": 0,
+        "limiti": {
+          "letture_al_giorno": 10
+        },
+        "livello": 20
+      }
+    },
+    {
+      "product_id": "abbonamento_oro",
+      "base_plan": "mensile",
+      "tipo": "abbonamento",
+      "annuale": false,
+      "prova": false,
+      "piano": {
+        "slug": "mensile-oro",
+        "nome": "Monthly Gold",
+        "descrizione": "Ten readings a day, for those who consult the cards often.",
+        "tipo": "abbonamento",
+        "crediti": 0,
+        "limiti": {
+          "letture_al_giorno": 10
+        },
+        "livello": 20
+      }
+    },
+    {
+      "product_id": "abbonamento_oro",
+      "base_plan": "prova",
+      "tipo": "abbonamento",
+      "annuale": true,
+      "prova": true,
+      "piano": {
+        "slug": "mensile-oro",
+        "nome": "Monthly Gold",
+        "descrizione": "Ten readings a day, for those who consult the cards often.",
+        "tipo": "abbonamento",
+        "crediti": 0,
+        "limiti": {
+          "letture_al_giorno": 10
+        },
+        "livello": 20
+      }
+    },
+    {
+      "product_id": "crediti_5",
+      "base_plan": null,
+      "tipo": "consumabile",
+      "annuale": false,
+      "prova": false,
+      "piano": {
+        "slug": "pacchetto-5",
+        "nome": "5 readings",
+        "descrizione": "Five readings, no expiry.",
+        "tipo": "pacchetto",
+        "crediti": 5,
+        "limiti": {},
+        "livello": 30
+      }
+    },
+    {
+      "product_id": "crediti_15",
+      "base_plan": null,
+      "tipo": "consumabile",
+      "annuale": false,
+      "prova": false,
+      "piano": {
+        "slug": "pacchetto-15",
+        "nome": "15 readings",
+        "descrizione": "Fifteen readings, no expiry. The most chosen.",
+        "tipo": "pacchetto",
+        "crediti": 15,
+        "limiti": {},
+        "livello": 31
+      }
+    },
+    {
+      "product_id": "crediti_50",
+      "base_plan": null,
+      "tipo": "consumabile",
+      "annuale": false,
+      "prova": false,
+      "piano": {
+        "slug": "pacchetto-50",
+        "nome": "50 readings",
+        "descrizione": "Fifty readings, no expiry.",
+        "tipo": "pacchetto",
+        "crediti": 50,
+        "limiti": {},
+        "livello": 32
+      }
+    }
+  ],
+  "stripe": {
+    "modalita": "scelta_utente",
+    "avviso": "",
+    "mostra": true
+  },
+  "app_account_token": "0ebf8947-4105-407e-9196-50ff62ba39cc"
+}

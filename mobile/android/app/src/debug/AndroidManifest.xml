@@ -1,0 +1,8 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Lo sviluppo: il collegamento con lo strumento di Flutter (hot reload) e l'API locale in http
+         (http://10.0.2.2:8100 dall'emulatore, http://192.168.1.91:8100 da un telefono in rete). Solo nella build di
+         debug: quella di rilascio parla solo https. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <application android:usesCleartextTraffic="true" tools:replace="android:usesCleartextTraffic"/>
+</manifest>

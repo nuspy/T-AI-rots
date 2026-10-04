@@ -1,0 +1,8 @@
+# I testi dell'app vengono dai dizionari della v2 del sito: frontend/scripts/genera-arb.mjs scrive gli ARB,
+# `flutter gen-l10n` (o `flutter pub get`) le classi Dart. Non si modificano gli ARB a mano.
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-dir: lib/l10n/generato
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false

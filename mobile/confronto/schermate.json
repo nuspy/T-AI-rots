@@ -1,0 +1,379 @@
+{
+ "comuni": {},
+ "schermate": [
+  {
+   "nome": "home",
+   "titolo": "Home",
+   "rotta": "/",
+   "golden": "home_{w}.png",
+   "rete": "confronto/rete/home.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "giorno",
+   "titolo": "Carta del giorno",
+   "rotta": "/daily-card",
+   "golden": "giorno_{w}.png",
+   "rete": "confronto/rete/giorno.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "carte",
+   "titolo": "Le carte",
+   "rotta": "/cards",
+   "golden": "carte_{w}.png",
+   "rete": "confronto/rete/carte.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "carta",
+   "titolo": "Una carta",
+   "rotta": "/cards/the-star",
+   "golden": "carta_{w}.png",
+   "rete": "confronto/rete/carta.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "stese",
+   "titolo": "Le stese",
+   "rotta": "/spreads",
+   "golden": "stese_{w}.png",
+   "rete": "confronto/rete/stese.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "stesa",
+   "titolo": "Una stesa",
+   "rotta": "/spreads/three-card",
+   "golden": "stesa_{w}.png",
+   "rete": "confronto/rete/stesa.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "mazzi",
+   "titolo": "I mazzi",
+   "rotta": "/decks",
+   "golden": "mazzi_{w}.png",
+   "rete": "confronto/rete/mazzi.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "mazzo",
+   "titolo": "Un mazzo",
+   "rotta": "/decks/thoth",
+   "golden": "mazzo_{w}.png",
+   "rete": "confronto/rete/mazzo.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "voto",
+   "titolo": "Vota il prossimo mazzo",
+   "rotta": "/vote",
+   "golden": "voto_{w}.png",
+   "rete": "confronto/rete/voto.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "negozio",
+   "titolo": "Il negozio",
+   "rotta": "/shop",
+   "golden": "negozio_{w}.png",
+   "rete": "confronto/rete/negozio.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "pagina_404",
+   "titolo": "La pagina che non c'è",
+   "rotta": "/non-esiste",
+   "golden": "pagina_404_{w}.png",
+   "rete": "confronto/rete/pagina_404.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "carrello",
+   "titolo": "Il carrello (il PDF del Thoth)",
+   "rotta": "/cart",
+   "golden": "carrello_{w}.png",
+   "rete": "confronto/rete/carrello.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ],
+   "storage": {
+    "tarots.v2.carrello": "[{\"deckId\":1,\"tipo\":\"pdf\",\"quantita\":1}]"
+   }
+  },
+  {
+   "nome": "lettura_preparazione",
+   "titolo": "Il rito: preparazione",
+   "rotta": "/read?spread=tre-carte",
+   "golden": "lettura_preparazione_{w}.png",
+   "rete": "confronto/rete/lettura_preparazione.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "lettura_intervista",
+   "titolo": "Il rito: intervista",
+   "rotta": "/read?id=f2b57ff0-1519-49b6-a8a5-980ccbf3035d",
+   "golden": "lettura_intervista_{w}.png",
+   "rete": "confronto/rete/lettura_intervista.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "lettura_scelta",
+   "titolo": "Il rito: scelta",
+   "rotta": "/read?id=f2b57ff0-1519-49b6-a8a5-980ccbf3035d",
+   "golden": "lettura_scelta_{w}.png",
+   "rete": "confronto/rete/lettura_scelta.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ],
+   "note": "Sul telefono la scelta delle carte è nel dialogo scuro: nel sito si apre con «Open the ritual»."
+  },
+  {
+   "nome": "lettura_completata",
+   "titolo": "Il rito: completata",
+   "rotta": "/read?id=f2b57ff0-1519-49b6-a8a5-980ccbf3035d",
+   "golden": "lettura_completata_{w}.png",
+   "rete": "confronto/rete/lettura_completata.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "storia",
+   "titolo": "La mia storia",
+   "rotta": "/my-story",
+   "golden": "storia_{w}.png",
+   "rete": "confronto/rete/storia.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "storia_lettura",
+   "titolo": "Una lettura della storia",
+   "rotta": "/my-story/5d487f6e-90c3-4e22-9ace-9846f245e594",
+   "golden": "storia_lettura_{w}.png",
+   "rete": "confronto/rete/storia_lettura.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "condivisa",
+   "titolo": "Una lettura condivisa",
+   "rotta": "/shared/VggWitVxx6ikgoa1S_ldRg",
+   "golden": "condivisa_{w}.png",
+   "rete": "confronto/rete/condivisa.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "fisica",
+   "titolo": "Le proprie carte",
+   "rotta": "/physical-reading",
+   "golden": "fisica_{w}.png",
+   "rete": "confronto/rete/fisica.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "profilo",
+   "titolo": "Il profilo",
+   "rotta": "/profile",
+   "golden": "profilo_{w}.png",
+   "rete": "confronto/rete/profilo.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "profilo_store",
+   "titolo": "Il profilo con un abbonamento dello store",
+   "rotta": "/profile",
+   "golden": "profilo_store_{w}.png",
+   "rete": "confronto/rete/profilo_store.json",
+   "misure": [
+    390
+   ]
+  },
+  {
+   "nome": "privacy",
+   "titolo": "Metodo e privacy",
+   "rotta": "/privacy",
+   "golden": "privacy_{w}.png",
+   "rete": "confronto/rete/privacy.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "elimina",
+   "titolo": "Eliminare l'account",
+   "rotta": "/account/elimina",
+   "golden": "elimina_{w}.png",
+   "rete": "confronto/rete/elimina.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "prezzi",
+   "titolo": "I prezzi",
+   "rotta": "/pricing",
+   "golden": "prezzi_{w}.png",
+   "rete": "confronto/rete/prezzi.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "prezzi_coupon",
+   "titolo": "I prezzi con un codice sconto",
+   "rotta": "/pricing?coupon=LUNA30",
+   "golden": "prezzi_coupon_{w}.png",
+   "rete": "confronto/rete/prezzi_coupon.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "prova",
+   "titolo": "La prova gratuita",
+   "rotta": "/trial",
+   "golden": "prova_{w}.png",
+   "rete": "confronto/rete/prova.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "blog",
+   "titolo": "Il diario",
+   "rotta": "/blog",
+   "golden": "blog_{w}.png",
+   "rete": "confronto/rete/blog.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "blog_sezione",
+   "titolo": "Una sezione del diario",
+   "rotta": "/blog/sezione/learn-tarot",
+   "golden": "blog_sezione_{w}.png",
+   "rete": "confronto/rete/blog_sezione.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "articolo",
+   "titolo": "Un articolo",
+   "rotta": "/blog/how-to-read-tarot-cards",
+   "golden": "articolo_{w}.png",
+   "rete": "confronto/rete/articolo.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  },
+  {
+   "nome": "esplora",
+   "titolo": "Esplora",
+   "rotta": "/explore",
+   "golden": "esplora_{w}.png",
+   "rete": "confronto/rete/esplora.json",
+   "misure": [
+    360,
+    390,
+    1024
+   ]
+  }
+ ]
+}
