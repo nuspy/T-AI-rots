@@ -1,0 +1,149 @@
+/* Advertisements: caselle, anteprima degli spazi (i sotto-tab stanno in `schede-comuni.module.css`). Mobile per
+ * primo: niente tabelle larghe, ogni scelta alta almeno 44px. */
+
+/* Una scelta sì/no: la casella grande e l'etichetta cliccabile per intero. */
+.casella {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  min-height: 44px;
+  padding: 0.6rem 0;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.casella input {
+  flex: none;
+  width: 1.3rem;
+  height: 1.3rem;
+  margin-top: 0.1rem;
+  accent-color: var(--rubrica);
+}
+
+.casella small {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--inchiostro-debole);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.casella + .casella {
+  border-top: 1px solid var(--filo);
+}
+
+.griglia {
+  display: grid;
+  gap: 0.25rem 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 48rem) {
+  .griglia {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.posizione {
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  padding: 0.75rem 0.9rem;
+}
+
+.posizioneTitolo {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* L'anteprima: una pagina disegnata, con gli spazi al loro posto. */
+.pagina {
+  display: grid;
+  gap: 0.4rem;
+  max-width: 22rem;
+  padding: 0.75rem;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+}
+
+.blocco,
+.chiusura,
+.spazio,
+.spazioSpento {
+  border-radius: 3px;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+
+.blocco {
+  background: var(--superficie-alta);
+  color: var(--inchiostro-tenue);
+  min-height: 2.2rem;
+}
+
+.chiusura {
+  border: 1px dashed var(--filo);
+  color: var(--inchiostro-debole);
+}
+
+.spazio {
+  border: 2px solid var(--rubrica);
+  color: var(--inchiostro);
+  font-weight: 600;
+}
+
+.spazioSpento {
+  border: 2px dashed var(--filo);
+  color: var(--inchiostro-debole);
+  text-decoration: line-through;
+}
+
+.elencoPagine {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.elencoPagine li {
+  border-top: 1px solid var(--filo);
+  padding-top: 0.6rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.elencoPagine strong {
+  display: block;
+}
+
+.elencoPagine span {
+  color: var(--inchiostro-tenue);
+}
+
+.azioni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.azioni button {
+  min-height: 44px;
+  height: auto;
+}
+
+.codice {
+  display: block;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+  font-family: var(--apparato);
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}

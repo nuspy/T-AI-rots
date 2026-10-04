@@ -5,6 +5,7 @@ import { elencoPagamenti, type StatoPagamento } from "@/lib/api";
 import { soldi } from "@/lib/formato";
 import { useDati } from "@/lib/usa";
 import stili from "../comuni.module.css";
+import { Fornitore } from "./fornitore";
 import { STATI, TabellaPagamenti } from "./tabella";
 
 /* I pagamenti, dal più recente.
@@ -32,22 +33,9 @@ export default function Pagamenti() {
 
   return (
     <>
-      <div className={stili.intestazione}>
-        <div>
-          <h1 className={stili.titolo}>Pagamenti</h1>
-          <p className={stili.sottotitolo}>
-            Ogni passaggio alla cassa, concluso o no. Gli importi sono quelli
-            del momento del pagamento: cambiare un prezzo in catalogo non li
-            tocca.
-          </p>
-        </div>
-      </div>
-
-      <p className={stili.avviso}>
-        <strong>Pagamenti simulati.</strong> Il fornitore configurato è quello
-        di prova (<code>mock</code>): nessuna carta viene addebitata, e
-        «pagato» significa che qualcuno ha premuto il pulsante di conferma
-        nella cassa finta. Gli incassi mostrati non sono denaro reale.
+      <Fornitore />
+      <p className={stili.riquadroNota}>
+        Gli importi sono quelli del momento del pagamento: cambiare un prezzo in catalogo non li tocca.
       </p>
 
       <div className={stili.filtri} role="group" aria-label="Stato del pagamento">

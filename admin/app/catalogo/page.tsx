@@ -9,6 +9,7 @@ import { useAzione, useDati } from "@/lib/usa";
 import comuni from "../comuni.module.css";
 import { Traduzioni, diverse, type Testi } from "../traduzioni";
 import stili from "./catalogo.module.css";
+import { CampiLimiti, LIMITI_NUOVI, limitiDaValori, testoLimiti, valoriLimiti, type ValoriLimiti } from "./limiti";
 
 /* Il catalogo: cosa si vende e a quanto.
  *
@@ -114,9 +115,7 @@ function Sezione({
 }
 
 function letture(piano: Piano): string {
-  const n = piano.limiti.letture_al_giorno;
-  if (n === undefined || n === null) return "—";
-  return n < 0 ? "illimitate" : `${n} al giorno`;
+  return testoLimiti(piano.limiti);
 }
 
 function SchedaPiano({ piano, ricarica }: { piano: Piano; ricarica: () => void }) {
@@ -243,6 +242,7 @@ function Modulo({
     piano.limiti.letture_al_giorno === undefined ? "" : String(piano.limiti.letture_al_giorno),
   );
   const [attivo, setAttivo] = useState(piano.attivo);
+  const [altri, setAltri] = useState<ValoriLimiti>(() => valoriLimiti(piano.limiti));
   const [rango, setRango] = useState(String(piano.rango));
   const [nomiT, setNomiT] = useState<Testi>(piano.nomi ?? {});
   const [descrizioniT, setDescrizioniT] = useState<Testi>(piano.descrizioni ?? {});
@@ -274,6 +274,12 @@ function Modulo({
           return setProblema("Le letture al giorno sono un intero da 0 in su, o −1 per illimitate.");
         }
         if (n !== piano.limiti.letture_al_giorno) corpo.letture_al_giorno = n;
+      }
+      const nuovi = limitiDaValori(altri);
+      if ("problema" in nuovi) return setProblema(nuovi.problema);
+      const prima = limitiDaValori(valoriLimiti(piano.limiti));
+      for (const l of LIMITI_NUOVI) {
+        if (!("limiti" in prima) || prima.limiti[l.chiave] !== nuovi.limiti[l.chiave]) corpo[l.chiave] = nuovi.limiti[l.chiave];
       }
     }
 
@@ -340,17 +346,20 @@ function Modulo({
       </div>
 
       <div className={comuni.riga}>
-        <label className={comuni.campo}>
-          <span className={comuni.campoEtichetta}>{pacchetto ? "Crediti" : "Crediti per periodo"}</span>
-          <input
-            className={comuni.ingresso}
-            type="number"
-            min={0}
-            step={1}
-            value={crediti}
-            onChange={(e) => setCrediti(e.target.value)}
-          />
-        </label>
+        {/* Un abbonamento dà letture comprese, non crediti (v9, Fase 2b): il campo resta solo se ne dà ancora. */}
+        {(pacchetto || (piano.crediti ?? 0) > 0) && (
+          <label className={comuni.campo}>
+            <span className={comuni.campoEtichetta}>{pacchetto ? "Crediti" : "Crediti per periodo (da azzerare)"}</span>
+            <input
+              className={comuni.ingresso}
+              type="number"
+              min={0}
+              step={1}
+              value={crediti}
+              onChange={(e) => setCrediti(e.target.value)}
+            />
+          </label>
+        )}
         {!pacchetto && (
           <label className={comuni.campo}>
             <span className={comuni.campoEtichetta}>Letture al giorno</span>
@@ -366,6 +375,7 @@ function Modulo({
           </label>
         )}
       </div>
+      {!pacchetto && <CampiLimiti valori={altri} onCambia={setAltri} />}
 
       <label className={comuni.campo}>
         <span className={comuni.campoEtichetta}>Ordine</span>
@@ -411,6 +421,7 @@ function NuovaOfferta({ chiudi, creata }: { chiudi: () => void; creata: () => vo
   const [annuale, setAnnuale] = useState("");
   const [crediti, setCrediti] = useState("");
   const [alGiorno, setAlGiorno] = useState("3");
+  const [altri, setAltri] = useState<ValoriLimiti>(() => valoriLimiti({}));
   const [rango, setRango] = useState("100");
   const [attivo, setAttivo] = useState(true);
   const [problema, setProblema] = useState<string | null>(null);
@@ -437,7 +448,9 @@ function NuovaOfferta({ chiudi, creata }: { chiudi: () => void; creata: () => vo
       const n = Number(alGiorno);
       if (!Number.isInteger(n) || n < -1) return setProblema("Le letture al giorno sono un intero da 0 in su, o −1 per illimitate.");
       corpo.letture_al_giorno = n;
-      if (crediti.trim() !== "") corpo.credits_per_period = Number(crediti) || 0;
+      const nuovi = limitiDaValori(altri);
+      if ("problema" in nuovi) return setProblema(nuovi.problema);
+      for (const l of LIMITI_NUOVI) if (nuovi.limiti[l.chiave] >= 0) corpo[l.chiave] = nuovi.limiti[l.chiave];
     }
     if ((await esegui((t) => creaPiano(t, corpo))) !== null) creata();
   };
@@ -510,18 +523,21 @@ function NuovaOfferta({ chiudi, creata }: { chiudi: () => void; creata: () => vo
           )}
         </div>
         <div className={comuni.riga}>
-          <label className={comuni.campo}>
-            <span className={comuni.campoEtichetta}>{pacchetto ? "Crediti" : "Crediti per periodo"}</span>
-            <input
-              className={comuni.ingresso}
-              type="number"
-              min={pacchetto ? 1 : 0}
-              step={1}
-              value={crediti}
-              required={pacchetto}
-              onChange={(e) => setCrediti(e.target.value)}
-            />
-          </label>
+          {/* Un abbonamento dà letture comprese, non crediti (v9, Fase 2b): i crediti si comprano coi pacchetti. */}
+          {pacchetto && (
+            <label className={comuni.campo}>
+              <span className={comuni.campoEtichetta}>Crediti</span>
+              <input
+                className={comuni.ingresso}
+                type="number"
+                min={1}
+                step={1}
+                value={crediti}
+                required
+                onChange={(e) => setCrediti(e.target.value)}
+              />
+            </label>
+          )}
           {!pacchetto && (
             <label className={comuni.campo}>
               <span className={comuni.campoEtichetta}>Letture al giorno</span>
@@ -541,6 +557,7 @@ function NuovaOfferta({ chiudi, creata }: { chiudi: () => void; creata: () => vo
             <input className={comuni.ingresso} type="number" min={0} step={1} value={rango} onChange={(e) => setRango(e.target.value)} />
           </label>
         </div>
+        {!pacchetto && <CampiLimiti valori={altri} onCambia={setAltri} />}
         <label className={stili.spunta}>
           <input type="checkbox" checked={attivo} onChange={(e) => setAttivo(e.target.checked)} />
           In vendita subito

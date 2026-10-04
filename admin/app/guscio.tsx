@@ -11,6 +11,7 @@ const SEZIONI = [
   { href: "/analytics", etichetta: "Analytics" },
   { href: "/utenti", etichetta: "Utenti" },
   { href: "/pagamenti", etichetta: "Pagamenti" },
+  { href: "/abbonamenti", etichetta: "Abbonamenti" },
   { href: "/catalogo", etichetta: "Catalogo" },
   { href: "/coupon", etichetta: "Coupon" },
   { href: "/mazzi", etichetta: "Mazzi" },
@@ -18,11 +19,19 @@ const SEZIONI = [
   { href: "/ordini", etichetta: "Ordini" },
   { href: "/blog", etichetta: "Blog" },
   { href: "/seo", etichetta: "SEO" },
+  { href: "/social", etichetta: "Social" },
+  { href: "/pubblicita", etichetta: "Advertisements" },
+  { href: "/notifiche", etichetta: "Notifications" },
   { href: "/report", etichetta: "Report" },
   { href: "/registro", etichetta: "Registro" },
   { href: "/modelli", etichetta: "Modelli" },
+  { href: "/costi", etichetta: "Costi" },
   { href: "/backup", etichetta: "Backup" },
+  { href: "/conservazione", etichetta: "Conservazione dati" },
   { href: "/impostazioni", etichetta: "Impostazioni" },
+  { href: "/accesso-social", etichetta: "Accesso con i social" },
+  { href: "/app-mobili", etichetta: "App mobili" },
+  { href: "/account", etichetta: "Account" },
 ];
 
 /* Una voce è attiva anche sulle sue pagine interne: dal dettaglio di un

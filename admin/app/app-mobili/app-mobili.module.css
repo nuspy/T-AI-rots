@@ -1,0 +1,194 @@
+/* App mobili e Account (v9, Fase 3). Mobile per primo: niente tabelle larghe (prodotti e regole sono schede
+ * impilate), ogni azione e ogni casella alte almeno 44px, i valori lunghi (URL, email) vanno a capo. */
+
+.azioni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  margin: 0.5rem 0 1.25rem;
+}
+
+.azioni button,
+.tocco {
+  min-height: 44px;
+  height: auto;
+}
+
+/* Una scelta sì/no: la casella grande e l'etichetta cliccabile per intero. */
+.casella {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  min-height: 44px;
+  padding: 0.6rem 0;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.casella input {
+  flex: none;
+  width: 1.3rem;
+  height: 1.3rem;
+  margin-top: 0.1rem;
+  accent-color: var(--rubrica);
+}
+
+.casella small {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--inchiostro-debole);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.copia {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.copiaValore {
+  font-family: var(--apparato);
+  font-size: 0.875rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+  overflow-wrap: anywhere;
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.passi {
+  margin: 0.25rem 0 1rem;
+  padding-left: 1.2rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--inchiostro-tenue);
+  max-width: 72ch;
+}
+
+.passi li + li {
+  margin-top: 0.3rem;
+}
+
+/* Nel testo resta in linea (un'altezza minima spezzerebbe la riga); da solo, su una riga sua, arriva a 44px. */
+.collegamentoEsterno {
+  color: var(--inchiostro);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+.collegamentoBlocco {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 44px;
+}
+
+.collegamentoEsterno:focus-visible {
+  outline: 2px solid var(--rubrica);
+  outline-offset: 2px;
+}
+
+.segreto {
+  border: 1px dashed var(--filo);
+  border-radius: var(--raggio);
+  padding: 0.75rem 0.9rem;
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.file {
+  font-size: 1rem;
+  min-height: 44px;
+  max-width: 100%;
+}
+
+/* L'esito di una verifica: segno, parola e frase. */
+.esito {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.15rem 0.6rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0.5rem 0 0;
+}
+
+.esitoSegno {
+  font-family: var(--apparato);
+  font-weight: 600;
+  grid-row: span 2;
+}
+
+.esitoTesto {
+  color: var(--inchiostro-tenue);
+  overflow-wrap: anywhere;
+}
+
+/* Prodotti e regole: una scheda per riga, impilate su ogni schermo. */
+.elenco {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.voce {
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  padding: 0.75rem 0.9rem;
+  display: grid;
+  /* La colonna non si allarga oltre lo schermo per un'etichetta lunga (a 390 px usciva di qualche pixel). */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.35rem;
+  font-size: 0.875rem;
+}
+
+.voceTitolo {
+  font-family: var(--apparato);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.voceRiga {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  align-items: center;
+  color: var(--inchiostro-tenue);
+}
+
+.voceAzioni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.voceAzioni button {
+  min-height: 44px;
+  height: auto;
+}
+
+.spenta {
+  opacity: 0.6;
+}
+
+/* Solo per i lettori di schermo. */
+.soloLettori {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

@@ -16,24 +16,16 @@ import { useAzione, useDati } from "@/lib/usa";
 import comuni from "../../comuni.module.css";
 import { TabellaPagamenti } from "../../pagamenti/tabella";
 import stili from "./dettaglio.module.css";
+import { AcquistiStore } from "./acquisti-store";
+import { Movimenti } from "./movimenti";
 
 /* Un utente, visto da chi amministra.
  *
  * Si vede il conto — saldo, abbonamento, movimenti, pagamenti — e quante
- * letture ha fatto, mai che cosa ha chiesto. Si può fare due cose soltanto:
- * sospendere l'account e rettificare il saldo. Entrambe finiscono nel
- * registro, con chi le ha fatte.
+ * letture ha fatto, mai che cosa ha chiesto. Si può sospendere l'account,
+ * regalare crediti, rettificare il saldo e stornare un incasso (`movimenti.tsx`).
+ * Tutto finisce nel registro, con chi l'ha fatto.
  */
-
-const MOTIVI: Record<string, string> = {
-  accredito_piano: "Rinnovo del piano",
-  acquisto: "Acquisto",
-  consumo: "Lettura",
-  rimborso: "Rimborso",
-  rettifica: "Rettifica manuale",
-  scadenza: "Scadenza",
-  omaggio: "Omaggio",
-};
 
 const STATI_LETTURA: Record<string, string> = {
   completata: "completate",
@@ -131,48 +123,11 @@ function Scheda({ utente, ricarica }: { utente: UtenteDettaglio; ricarica: () =>
         </div>
       </div>
 
+      <Anagrafica utente={utente} />
       <Regalo utente={utente} ricarica={ricarica} />
       <Rettifica utente={utente} ricarica={ricarica} />
 
-      <section className={stili.sezione}>
-        <h2 className={stili.sezioneTitolo}>Movimenti dei crediti</h2>
-        <p className={comuni.riquadroNota}>
-          Gli ultimi cinquanta, dal più recente. Il registro non si corregge:
-          un errore si ripara con una rettifica che lo compensa.
-        </p>
-        {utente.movimenti.length === 0 ? (
-          <div className={comuni.vuoto}>Nessun movimento.</div>
-        ) : (
-          <div className={comuni.contenitoreTabella}>
-            <table className={comuni.tabella}>
-              <thead>
-                <tr>
-                  <th>Quando</th>
-                  <th>Motivo</th>
-                  <th className={comuni.numero}>Crediti</th>
-                  <th>Nota</th>
-                  <th>Lettura</th>
-                </tr>
-              </thead>
-              <tbody>
-                {utente.movimenti.map((m, i) => (
-                  <tr key={`${m.quando}-${i}`}>
-                    <td className={comuni.mono}>{quandoCompleto(m.quando)}</td>
-                    <td>{MOTIVI[m.reason] ?? m.reason}</td>
-                    <td className={`${comuni.numero} ${m.delta > 0 ? comuni.positivo : comuni.negativo}`}>
-                      {m.delta > 0 ? `+${m.delta}` : `−${Math.abs(m.delta)}`}
-                    </td>
-                    <td>{m.note ?? <span className={comuni.campoAiuto}>—</span>}</td>
-                    {/* Solo l'identificativo: la lettura è dell'utente, e la
-                        console non la apre. */}
-                    <td className={comuni.mono}>{m.reading_id ? m.reading_id.slice(0, 8) : "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      <Movimenti utente={utente} ricarica={ricarica} />
 
       <section className={stili.sezione}>
         <h2 className={stili.sezioneTitolo}>Pagamenti</h2>
@@ -182,6 +137,8 @@ function Scheda({ utente, ricarica }: { utente: UtenteDettaglio; ricarica: () =>
           <TabellaPagamenti pagamenti={utente.pagamenti} senzaUtente />
         )}
       </section>
+
+      <AcquistiStore acquisti={utente.acquisti_store ?? []} />
     </>
   );
 }
@@ -398,6 +355,53 @@ function Regalo({ utente, ricarica }: { utente: UtenteDettaglio; ricarica: () =>
       </form>
       {errore && <p className={comuni.errore}>{errore}</p>}
       {esito && <p className={comuni.esito}>{esito}</p>}
+    </section>
+  );
+}
+
+/* La scheda anagrafica: ciò che la persona ha scritto o che è arrivato dai social (solo nei campi vuoti), con la
+ * provenienza di ciascun campo, e la posizione attuale (dal social o dall'IP all'accesso, o corretta a mano). */
+function Anagrafica({ utente }: { utente: UtenteDettaglio }) {
+  const a = utente.anagrafica;
+  if (!a) return null;
+  const campi = a.dati_social.campi ?? {};
+  const origine = (campo: string) => {
+    const voce = campi[campo];
+    if (!voce) return null;
+    return voce.da === "utente" ? "scritto dalla persona" : voce.da === "account" ? "dall'iscrizione" : `da ${voce.da}, ${giorno(voce.il)}`;
+  };
+  const righe: [string, string | null, string][] = [
+    ["Nome", a.nome, "nome"],
+    ["Cognome", a.cognome, "cognome"],
+    ["Data di nascita", a.nascita ? giorno(a.nascita) : null, "birth_date"],
+    ["Genere", a.genere === "altro" ? `altro (${a.genere_altro ?? ""})` : a.genere, "gender"],
+    ["Lingua", utente.locale, "locale"],
+  ];
+  const pos = a.posizione;
+  return (
+    <section className={stili.sezione}>
+      <h2 className={stili.sezioneTitolo}>Scheda anagrafica</h2>
+      <p className={comuni.riquadroNota}>
+        I social riempiono solo i campi vuoti, all&apos;accesso; la persona li corregge dal profilo.
+        {" "}Importazione dai social {a.importa_social ? "accesa" : "spenta"}, rilevamento della posizione {a.rileva_posizione ? "acceso" : "spento"}.
+        {a.dati_social.ultimo && <> Ultimo accesso con lettura dei social: {quandoCompleto(a.dati_social.ultimo.il)}{a.dati_social.ultimo.provider.length ? ` (${a.dati_social.ultimo.provider.join(", ")})` : ""}.</>}
+      </p>
+      <div className={comuni.contenitoreTabella}>
+        <table className={comuni.tabella}>
+          <thead><tr><th>Campo</th><th>Valore</th><th>Provenienza</th></tr></thead>
+          <tbody>
+            {righe.map(([etichetta, valore, campo]) => (
+              <tr key={campo}><td>{etichetta}</td><td>{valore || "—"}</td><td>{origine(campo) ?? "—"}</td></tr>
+            ))}
+            {campi.avatar && <tr><td>Immagine</td><td>foto del profilo social</td><td>{origine("avatar")}</td></tr>}
+            <tr>
+              <td>Posizione attuale</td>
+              <td>{pos ? [pos.citta, pos.paese].filter(Boolean).join(", ") : "—"}</td>
+              <td>{pos ? `${pos.fonte === "ip" ? "dall'IP" : pos.fonte === "utente" ? "corretta dalla persona" : `da ${pos.fonte}`}, ${giorno(pos.il)}` : "—"}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }

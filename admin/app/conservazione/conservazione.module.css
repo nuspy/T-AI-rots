@@ -1,0 +1,105 @@
+/* «Conservazione dati»: una scheda per voce, con i conteggi per età come barre orizzontali (si leggono anche a 360 px)
+ * e i comandi che vanno a capo sul telefono. */
+
+.voci {
+  display: grid;
+  gap: 0;
+}
+
+@media (min-width: 1100px) {
+  .voci {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1.25rem;
+  }
+}
+
+.testa {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.totale {
+  font-family: var(--display);
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.fasce {
+  list-style: none;
+  margin: 0.75rem 0 1rem;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.fasce li {
+  display: grid;
+  grid-template-columns: minmax(8.5rem, auto) minmax(0, 1fr) 4.5rem;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.8125rem;
+}
+
+.etichetta {
+  color: var(--inchiostro-tenue);
+}
+
+.barra {
+  display: block;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--filo-tenue, rgba(0, 0, 0, 0.06));
+  overflow: hidden;
+}
+
+.barra span {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  background: var(--rubrica);
+}
+
+.numero {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.comandi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.comandi label {
+  flex: 1 1 12rem;
+  margin-bottom: 0;
+}
+
+.comandi button {
+  min-height: 44px;
+}
+
+.anteprima {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--rubrica);
+  background: var(--superficie);
+}
+
+.anteprima p {
+  margin: 0 0 0.5rem;
+}
+
+@media (max-width: 420px) {
+  .fasce li {
+    grid-template-columns: minmax(0, 1fr) 4rem;
+  }
+
+  .barra {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}

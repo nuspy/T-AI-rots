@@ -5,6 +5,7 @@ import { AuthProvider } from "react-oidc-context";
 import { WebStorageStateStore } from "oidc-client-ts";
 import {
   AUTENTICAZIONE_SPENTA,
+  SCOPE_PERSISTENTE,
   SessioneDiSviluppo,
   SessioneOidc,
 } from "@/lib/sessione";
@@ -84,7 +85,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
             redirect_uri: `${window.location.origin}${BASE}/`,
             post_logout_redirect_uri: `${window.location.origin}${BASE}/`,
             response_type: "code",
-            scope: "openid profile email",
+            /* Login persistente fino al logout: token di rinnovo offline (vedi `SCOPE_PERSISTENTE`). */
+            scope: SCOPE_PERSISTENTE,
             /* Rinnovo silenzioso prima della scadenza: senza, una sessione
              * lunga in console si interrompe con un 401 a metà di una
              * modifica al catalogo. */

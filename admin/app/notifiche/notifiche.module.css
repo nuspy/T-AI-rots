@@ -1,0 +1,439 @@
+/* Notifications (v9, Fase 5). Mobile per primo: le campagne sono schede impilate (niente tabelle larghe), ogni
+ * pulsante e ogni casella alti almeno 44px, l'anteprima della notifica ha la misura di uno schermo di telefono. */
+
+.azioni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  margin: 0.5rem 0 1.25rem;
+}
+
+.azioni button,
+.azioni a,
+.tocco {
+  min-height: 44px;
+  height: auto;
+}
+
+.bottoneLink {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+/* ---- elenco delle campagne ---- */
+
+.elenco {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.scheda {
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  padding: 0.9rem 1rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.schedaTesta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 0.75rem;
+}
+
+.schedaNome {
+  font-weight: 600;
+  color: var(--inchiostro);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  /* Il nome è il bersaglio del tocco: alto quanto basta anche su una riga sola. */
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.schedaNome:hover,
+.schedaNome:focus-visible {
+  text-decoration: underline;
+}
+
+.schedaTesto {
+  margin: 0;
+  color: var(--inchiostro-tenue);
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+.numeri {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--inchiostro-tenue);
+}
+
+.numeri dt {
+  display: inline;
+}
+
+.numeri dd {
+  display: inline;
+  margin: 0 0 0 0.25rem;
+  font-family: var(--apparato);
+  font-variant-numeric: tabular-nums;
+  color: var(--inchiostro);
+}
+
+/* ---- l'editor ---- */
+
+.griglia {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 64rem) {
+  .griglia {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+    align-items: start;
+  }
+
+  .colonnaLaterale {
+    position: sticky;
+    top: 1rem;
+  }
+}
+
+.lingue {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.lingua,
+.linguaScelta {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: transparent;
+  color: var(--inchiostro-tenue);
+  font-size: 0.875rem;
+}
+
+.linguaScelta {
+  border-color: var(--rubrica);
+  color: var(--inchiostro);
+  background: var(--superficie-alta);
+}
+
+.lingua:focus-visible,
+.linguaScelta:focus-visible,
+.chip:focus-within {
+  outline: 2px solid var(--rubrica);
+  outline-offset: 2px;
+}
+
+.vuota {
+  font-size: 0.6875rem;
+  color: var(--inchiostro-debole);
+  margin-left: 0.3rem;
+}
+
+.contatore {
+  font-family: var(--apparato);
+  font-size: 0.75rem;
+  color: var(--inchiostro-debole);
+}
+
+.contatoreOltre {
+  color: var(--allarme);
+}
+
+/* Le scelte multiple del filtro (lingue, fasce, piattaforme): pulsanti alti 44px che vanno a capo. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.2rem 0 0.9rem;
+  padding: 0;
+  border: 0;
+}
+
+.chips legend {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--inchiostro-tenue);
+  margin-bottom: 0.35rem;
+  padding: 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--filo);
+  border-radius: 999px;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.chip input {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--rubrica);
+}
+
+.casella {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  min-height: 44px;
+  padding: 0.6rem 0;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.casella input {
+  flex: none;
+  width: 1.3rem;
+  height: 1.3rem;
+  margin-top: 0.1rem;
+  accent-color: var(--rubrica);
+}
+
+.casella small {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--inchiostro-debole);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+/* ---- l'anteprima: una notifica come la vede un telefono ---- */
+
+.telefono {
+  border: 1px solid var(--filo);
+  border-radius: 18px;
+  padding: 0.9rem;
+  background: var(--superficie-alta);
+  max-width: 22rem;
+}
+
+.notifica {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  gap: 0.2rem 0.65rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 14px;
+  background: var(--superficie);
+  border: 1px solid var(--filo-tenue);
+}
+
+.icona {
+  grid-row: span 3;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--rubrica);
+  color: var(--carta);
+  font-family: var(--display);
+  font-weight: 600;
+}
+
+.notificaApp {
+  font-size: 0.6875rem;
+  color: var(--inchiostro-debole);
+  letter-spacing: 0.02em;
+}
+
+.notificaTitolo {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  overflow-wrap: anywhere;
+}
+
+.notificaCorpo {
+  font-size: 0.875rem;
+  color: var(--inchiostro-tenue);
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notificaImmagine {
+  grid-column: 1 / -1;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-top: 0.4rem;
+  background: var(--filo-tenue);
+}
+
+.notificaAzione {
+  grid-column: 2;
+  font-size: 0.8125rem;
+  color: var(--rubrica);
+  margin-top: 0.2rem;
+}
+
+/* ---- conteggio dei destinatari ---- */
+
+.conteggio {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  margin: 0.5rem 0 0;
+}
+
+.conteggioGrande {
+  font-family: var(--display);
+  font-size: 2rem;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- statistiche ---- */
+
+.tessere {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.tessera {
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  padding: 0.75rem 0.9rem;
+}
+
+.tesseraValore {
+  font-family: var(--display);
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.tesseraNome {
+  font-size: 0.75rem;
+  color: var(--inchiostro-debole);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.barre {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.barra {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: center;
+  font-size: 0.8125rem;
+}
+
+.barraTraccia {
+  height: 0.6rem;
+  background: var(--filo-tenue);
+  border-radius: 999px;
+  overflow: hidden;
+  display: flex;
+}
+
+.barraConsegnati {
+  background: var(--quiete);
+}
+
+.barraAperti {
+  background: var(--rubrica);
+}
+
+.legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  font-size: 0.8125rem;
+  color: var(--inchiostro-tenue);
+  margin: 0 0 0.75rem;
+}
+
+.puntoConsegnati,
+.puntoAperti {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 2px;
+  margin-right: 0.35rem;
+  vertical-align: -1px;
+}
+
+.puntoConsegnati {
+  background: var(--quiete);
+}
+
+.puntoAperti {
+  background: var(--rubrica);
+}
+
+/* ---- impostazioni ---- */
+
+.passi {
+  margin: 0 0 1rem;
+  padding-left: 1.3rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.passi li + li {
+  margin-top: 0.45rem;
+}
+
+.chiave {
+  font-family: var(--apparato);
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+}
+
+.soloLettori {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scheda,
+  .lingua,
+  .linguaScelta {
+    transition: none;
+  }
+}

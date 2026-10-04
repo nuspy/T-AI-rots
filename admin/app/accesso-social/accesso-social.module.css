@@ -1,0 +1,266 @@
+/* «Accesso con i social»: una scheda per provider. Una colonna su telefono, due da 900px, tre da 1400px. Tutti i
+ * bersagli toccabili sono alti almeno 44px; la guida si apre a richiesta (progressive disclosure). */
+
+.elenco {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+@media (min-width: 900px) {
+  .elenco {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1400px) {
+  .elenco {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.scheda {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+  padding: 1rem 1.1rem 1.1rem;
+}
+
+.testa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.nome {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+/* Lo stato è scritto, non solo colorato: il colore aiuta, la parola informa. */
+.stato {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.15rem 0.6rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-family: var(--apparato);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.stato::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.statoAcceso {
+  color: var(--quiete);
+}
+
+.statoSpento {
+  color: var(--inchiostro-debole);
+}
+
+.statoNuovo {
+  color: var(--rubrica);
+}
+
+.nota,
+.notaForte {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--inchiostro-tenue);
+}
+
+.notaForte {
+  border-left: 3px solid var(--rubrica);
+  padding-left: 0.75rem;
+  color: var(--inchiostro);
+}
+
+.ritorno {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.ritornoRiga {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.uri {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--apparato);
+  font-size: 0.875rem;
+  /* Il campo resta di 16px su iOS (niente zoom al tocco): solo il testo dell'URI è più piccolo. */
+}
+
+.copia,
+.salva {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 1rem;
+  border-radius: var(--raggio);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.copia {
+  border: 1px solid var(--filo);
+  background: transparent;
+  color: var(--inchiostro);
+}
+
+.copia:hover {
+  border-color: var(--inchiostro-debole);
+}
+
+.salva {
+  align-self: flex-start;
+  border: 1px solid var(--rubrica);
+  background: var(--rubrica);
+  color: var(--carta);
+}
+
+.salva:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.salva:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.copia:focus-visible,
+.salva:focus-visible,
+.guida summary:focus-visible,
+.collegamento:focus-visible,
+.interruttore input:focus-visible {
+  outline: 2px solid var(--rubrica);
+  outline-offset: 2px;
+}
+
+.guida {
+  border-top: 1px solid var(--filo-tenue);
+  padding-top: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--inchiostro-tenue);
+}
+
+.guida summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+  color: var(--inchiostro);
+  font-weight: 500;
+}
+
+.guida ol {
+  margin: 0.25rem 0 0.75rem;
+  padding-left: 1.25rem;
+}
+
+.guida li + li {
+  margin-top: 0.35rem;
+}
+
+.collegamento {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 44px;
+  color: var(--rubrica);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.modulo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border-top: 1px solid var(--filo-tenue);
+  padding-top: 0.75rem;
+}
+
+.interruttore {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9375rem;
+}
+
+.interruttore input {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--rubrica);
+  flex: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .copia,
+  .salva {
+    transition: opacity 0.12s, border-color 0.12s;
+  }
+}
+
+/* L'account unico e gli account doppi: due pannelli a tutta larghezza, sopra e sotto l'elenco dei provider. */
+.unione {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+  padding: 1rem 1.1rem 1.1rem;
+}
+
+.doppio {
+  border-top: 1px solid var(--filo-tenue);
+  padding-top: 0.6rem;
+}
+
+.doppioEmail {
+  margin: 0 0 0.35rem;
+  font-size: 0.9375rem;
+  overflow-wrap: anywhere;
+}
+
+.doppioElenco {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.doppioElenco a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}

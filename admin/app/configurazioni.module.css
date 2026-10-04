@@ -1,0 +1,135 @@
+/* Le pagine delle configurazioni dalla console (v9, Fase 2c): Pagamenti → Stripe, Impostazioni → Posta in uscita e
+ * Dati del titolare, la credenziale del Backup. Mobile per primo: una colonna, pulsanti e scelte alti almeno 44px. */
+
+.voci {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .voci {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.voce {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.voce dt {
+  font-size: 0.875rem;
+  color: var(--inchiostro-debole);
+}
+
+.voce dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.eventi {
+  margin-top: 0.75rem;
+}
+
+.eventi summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.eventi ul {
+  margin: 0.25rem 0 0;
+  padding-left: 1.25rem;
+  font-family: var(--apparato);
+  font-size: 0.875rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+/* Il collegamento al sotto-tab «Stripe» e i pulsanti della configurazione: 44px per il tocco. */
+.vai {
+  display: inline-flex;
+  align-items: center;
+  height: auto;
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.tocco {
+  height: auto;
+  min-height: 44px;
+}
+
+.azioni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.scelte {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0.75rem;
+  padding: 0;
+  border: 0;
+}
+
+.scelta {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  min-height: 44px;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  cursor: pointer;
+}
+
+.scelta input {
+  margin-top: 0.2rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 auto;
+}
+
+.scelta span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  line-height: 1.4;
+}
+
+.scelta small {
+  color: var(--inchiostro-debole);
+  font-size: 0.8125rem;
+}
+
+.spiegazione {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--inchiostro-tenue);
+  max-width: 70ch;
+}
+
+.spiegazione strong {
+  color: var(--inchiostro);
+}
+
+.campi {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0 1rem;
+}
+
+@media (min-width: 720px) {
+  .campi {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

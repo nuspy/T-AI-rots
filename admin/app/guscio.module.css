@@ -118,6 +118,49 @@
   }
 }
 
+/* Sul telefono la testata va su due righe: marchio e uscita sopra, la navigazione sotto, a tutta larghezza e
+ * scorrevole al suo interno. Su una riga sola la navigazione si riduceva a larghezza zero (invisibile) e marchio
+ * più «Esci» o «Auth disattivata» allargavano la pagina oltre lo schermo (423px su 390). */
+@media (max-width: 48rem) {
+  .testata {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 56px;
+    column-gap: 0.75rem;
+    row-gap: 0;
+  }
+
+  .marchio {
+    order: 1;
+    min-width: 0;
+  }
+
+  .sviluppo,
+  .esci {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .navigazione {
+    order: 3;
+    flex: 1 0 100%;
+    margin-right: 0;
+    padding-bottom: 0.25rem;
+  }
+
+  .voce,
+  .voceAttiva {
+    height: 44px;
+  }
+}
+
+/* Sotto i 480px «· Console» lascia il posto all'uscita sulla stessa riga (il titolo della scheda lo dice già). */
+@media (max-width: 30rem) {
+  .marchio small {
+    display: none;
+  }
+}
+
 .esci {
   height: 40px;
   min-height: 40px;

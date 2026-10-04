@@ -20,6 +20,8 @@ export const salvaImpostazioniCrediti = (t: string, corpo: Partial<ImpostazioniC
 /* La chat proattiva (v6, Fase E): una sola manopola, il timer di inattività. */
 export interface ImpostazioniChat {
   proattiva_minuti_inattivita: number;
+  /** v8.5: aperture automatiche dell'oracolo per visita (0 = mai da solo). */
+  proattiva_max_per_visita: number;
 }
 
 export const impostazioniChat = (t: string) =>
@@ -31,15 +33,25 @@ export const salvaImpostazioniChat = (t: string, corpo: Partial<ImpostazioniChat
     body: JSON.stringify(corpo),
   });
 
-/* Login persistente (v6, Fase G): la durata massima della sessione, cambiata live su Keycloak. */
+/* Login persistente: la sessione offline di Keycloak, letta e cambiata direttamente lì. `inattivita_giorni`: dopo
+ * quanti giorni senza mai aprire il sito si deve rientrare; `durata_massima_giorni`: tetto assoluto, 0 = nessuno
+ * (dentro fino al logout). `null` quando Keycloak non risponde (il motivo è in `errore`). */
 export interface ImpostazioniSessione {
-  sso_session_max_lifespan_secondi: number;
+  keycloak_raggiungibile: boolean;
+  errore: string | null;
+  inattivita_giorni: number | null;
+  durata_massima_giorni: number | null;
+}
+
+export interface ImpostazioniSessioneModifica {
+  inattivita_giorni: number;
+  durata_massima_giorni: number;
 }
 
 export const impostazioniSessione = (t: string) =>
   chiamata<ImpostazioniSessione>(t, "/admin/impostazioni-sessione");
 
-export const salvaImpostazioniSessione = (t: string, corpo: ImpostazioniSessione) =>
+export const salvaImpostazioniSessione = (t: string, corpo: ImpostazioniSessioneModifica) =>
   chiamata<ImpostazioniSessione>(t, "/admin/impostazioni-sessione", {
     method: "PUT",
     body: JSON.stringify(corpo),

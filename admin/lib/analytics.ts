@@ -292,3 +292,39 @@ export interface TempoReale {
 }
 
 export const tempoReale = (t: string) => chiamata<TempoReale>(t, "/admin/analytics/tempo-reale");
+
+/* ---- uscite (v8.6): la pagina d'uscita e, per le letture, l'ultima azione ---- */
+
+export interface PaginaUscita {
+  pagina: string;
+  uscite: number;
+  uscite_unica_pagina: number;
+  visualizzazioni: number | null;
+  /** Uscite / visualizzazioni della pagina nel periodo. */
+  tasso_uscita: number | null;
+  /** Quota sul totale delle sessioni. */
+  quota: number | null;
+  lettura: boolean;
+}
+
+export interface AzioneUscita {
+  azione: string;
+  etichetta: string;
+  sessioni: number;
+  quota: number | null;
+}
+
+export interface EsitoUscite {
+  da: string;
+  a: string;
+  sessioni: number;
+  pagine: PaginaUscita[];
+  letture: {
+    sessioni: number;
+    azioni: AzioneUscita[];
+    per_pagina: { pagina: string; sessioni: number; azioni: AzioneUscita[] }[];
+  };
+}
+
+export const calcolaUscite = (t: string, r: { da: string; a: string; limite?: number }) =>
+  chiamata<EsitoUscite>(t, "/admin/analytics/uscite", { method: "POST", body: JSON.stringify(r) });

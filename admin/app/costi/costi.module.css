@@ -1,0 +1,87 @@
+/* La pagina «Costi».
+ *
+ * I numeri chiave in schede che vanno a capo da sole (una colonna sul telefono); le tabelle hanno poche colonne —
+ * il listino si sceglie con un filtro invece di affiancarne tre — e scorrono dentro il loro contenitore. */
+
+.schede {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.75rem;
+  margin: 0 0 1.75rem;
+}
+
+.scheda {
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+  padding: 0.9rem 1rem;
+}
+
+.schedaEtichetta {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--inchiostro-tenue);
+}
+
+.schedaValore {
+  margin: 0.25rem 0 0;
+  font-family: var(--apparato);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.5rem;
+  color: var(--inchiostro);
+}
+
+.schedaNota {
+  margin: 0.3rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--inchiostro-debole);
+}
+
+.sezione {
+  margin: 0 0 2rem;
+}
+
+.barra {
+  display: block;
+  height: 6px;
+  margin-top: 0.35rem;
+  background: var(--filo-tenue);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.barraPiena {
+  display: block;
+  height: 100%;
+  background: var(--rubrica);
+}
+
+.listini {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.moduloListino {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.azioni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .barraPiena {
+    transition: width 0.2s ease-out;
+  }
+}

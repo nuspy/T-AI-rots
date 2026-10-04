@@ -139,11 +139,19 @@ export interface Utente {
 }
 
 export interface Movimento {
+  /** L'id della riga del registro (v9): serve allo storno a mano. */
+  id: number | null;
   delta: number;
   reason: string;
   quando: string;
   note: string | null;
   reading_id: string | null;
+  /** Da dove arriva (web, android, ios, console, sistema) e chi ha incassato (stripe, google_play, app_store, mock, interno). */
+  canale?: string;
+  provider?: string;
+  /** L'incasso presso il fornitore (PaymentIntent, fattura, transazione dello store). */
+  riferimento?: string | null;
+  scade?: string | null;
 }
 
 export type StatoPagamento = "aperto" | "pagato" | "annullato" | "scaduto";
@@ -160,8 +168,36 @@ export interface Pagamento {
   /** Centesimi. */
   importo: number;
   valuta: string;
+  /** v9, Fase 4: un acquisto di prova degli store (tester, App Review): accredita ma non entra nei ricavi. */
+  sandbox?: boolean;
   creato: string | null;
   completato: string | null;
+}
+
+/** v9, Fase 4: un acquisto fatto in un'app (Google Play o App Store), come l'ha confermato lo store. */
+export interface AcquistoStore {
+  id: number;
+  piattaforma: "android" | "ios";
+  store: string;
+  product_id: string;
+  tipo: "consumabile" | "abbonamento";
+  transazione: string;
+  transazione_originale: string | null;
+  ordine: string | null;
+  stato: "in_attesa" | "accreditato" | "rimborsato" | "revocato" | "scaduto";
+  ambiente: "sandbox" | "production";
+  confermato: boolean;
+  prova: boolean;
+  /** Pagato anche se l'utente ha già un altro abbonamento: va detto all'utente di disdirlo nello store. */
+  doppio: boolean;
+  /** Centesimi nella valuta dello store, quando lo store lo dice (Apple sì, Google no). */
+  importo: number | null;
+  valuta: string | null;
+  paese: string | null;
+  acquistato_il: string | null;
+  scade_il: string | null;
+  revocato_il: string | null;
+  creato_il: string | null;
 }
 
 export interface UtenteDettaglio extends Omit<Utente, "piano"> {
@@ -174,6 +210,23 @@ export interface UtenteDettaglio extends Omit<Utente, "piano"> {
   letture: Record<string, number>;
   movimenti: Movimento[];
   pagamenti: Pagamento[];
+  /** v9, Fase 4: gli acquisti nelle app. */
+  acquisti_store?: AcquistoStore[];
+  /** La scheda anagrafica, con la provenienza dei campi presi dai social e la posizione attuale. */
+  anagrafica?: {
+    nome: string | null;
+    cognome: string | null;
+    nascita: string | null;
+    genere: string | null;
+    genere_altro: string | null;
+    posizione: { paese: string | null; citta: string | null; fonte: string | null; il: string | null } | null;
+    dati_social: {
+      campi?: Record<string, { da: string; il: string }>;
+      ultimo?: { il: string; provider: string[]; compilati: string[] };
+    };
+    importa_social: boolean;
+    rileva_posizione: boolean;
+  };
 }
 
 export interface Piano {
@@ -207,6 +260,10 @@ export interface ModificaPiano {
   credits_per_period?: number;
   /** −1 significa «illimitate». */
   letture_al_giorno?: number;
+  /** I limiti della Fase 2b (v9): −1 significa «nessun limite». */
+  letture_alla_settimana?: number;
+  letture_al_mese?: number;
+  letture_totali?: number;
   active?: boolean;
   /** L'ordine di presentazione: più basso, più in alto. */
   rank?: number;
@@ -225,6 +282,9 @@ export interface NuovoPiano {
   price_yearly?: number;
   credits_per_period?: number;
   letture_al_giorno?: number;
+  letture_alla_settimana?: number;
+  letture_al_mese?: number;
+  letture_totali?: number;
   rank?: number;
   active?: boolean;
 }
@@ -298,9 +358,57 @@ export interface CompitoAssegnato {
    * dalla console ha sempre un valore esplicito, mai `null` (il backlog vuole il reasoning
    * spento per default, non "eredita" per i compiti non ancora toccati). */
   ragiona_override: boolean | null;
+  /* Il livello di ragionamento scelto per il compito; `null` = eredita dal fornitore. */
+  livello: LivelloRagionamento | null;
+  /* Lo stato vero, calcolato dal servizio: il livello in uso (`null` per un fornitore di prima dei livelli), se il
+   * modello ragiona davvero e chi l'ha deciso. */
+  livello_effettivo: LivelloRagionamento | null;
+  livello_fornitore: LivelloRagionamento | null;
+  ragiona_effettivo: boolean;
+  /* `codice`: spento dal servizio qualunque scelta (l'embedding, l'aggiornamento breve della memoria). */
+  ragiona_origine: "compito" | "fornitore" | "parametri" | "codice" | "predefinito";
+  ragiona_spegnibile: boolean;
+  /* Il livello del compito quando non se ne sceglie uno (l'anteprima: `none`); `null` = eredita dal fornitore. */
+  livello_predefinito?: LivelloRagionamento | null;
+  /* Senza assegnazione usa il modello di questo compito invece del predefinito (l'anteprima: `sintesi`). */
+  segue?: string | null;
+  /* Lo schema JSON rigoroso in uso, e se il compito risponde in JSON (altrimenti non si offre). */
+  json_schema: boolean;
+  schema_possibile: boolean;
   in_uso: string;
   senza_filtri: boolean;
 }
+
+export type LivelloRagionamento = "none" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+
+/* I livelli nell'ordine della console, con il nome per chi non è tecnico. */
+export const LIVELLI_RAGIONAMENTO: { valore: LivelloRagionamento; nome: string }[] = [
+  { valore: "none", nome: "Nessuno (spento)" },
+  { valore: "minimal", nome: "Minimo" },
+  { valore: "low", nome: "Basso" },
+  { valore: "medium", nome: "Medio" },
+  { valore: "high", nome: "Alto" },
+  { valore: "xhigh", nome: "Molto alto" },
+  { valore: "max", nome: "Massimo" },
+];
+
+export const nomeLivello = (l: LivelloRagionamento | null | undefined) =>
+  LIVELLI_RAGIONAMENTO.find((x) => x.valore === l)?.nome ?? "—";
+
+/* Le impostazioni di un compito da scrivere. Ogni campo presente si scrive (`null` = torna al predefinito / eredita),
+ * ogni campo assente non si tocca. `modello` serve sempre: un compito senza assegnazione la riceve qui, sul fornitore
+ * che già usa. */
+export interface ModificaCompito {
+  modello: string;
+  livello?: LivelloRagionamento | null;
+  json_schema?: boolean | null;
+}
+
+export const aggiornaCompito = (t: string, compito: string, corpo: ModificaCompito) =>
+  chiamata<{ compiti: CompitoAssegnato[] }>(t, `/admin/models/${compito}`, {
+    method: "PUT",
+    body: JSON.stringify(corpo),
+  });
 
 /* ---- statistiche ---- */
 
@@ -340,7 +448,28 @@ export const rettificaCrediti = (
     body: JSON.stringify(corpo),
   });
 
+/* Lo storno a mano di un incasso (v9): toglie i crediti che aveva dato, con lo stesso riferimento del fornitore.
+ * Non rimborsa il denaro: quello si fa presso il fornitore. 409 se è già stornato. */
+export const stornaMovimento = (t: string, id: number, voce: number, motivo: string) =>
+  chiamata<{ saldo: number; delta: number }>(t, `/admin/users/${id}/credits/${voce}/storno`, {
+    method: "POST",
+    body: JSON.stringify({ motivo }),
+  });
+
 /* ---- pagamenti e catalogo ---- */
+
+export interface ConfigurazionePagamenti {
+  /** stripe, mock o disattivato. */
+  provider: string;
+  /** Solo se le chiavi ci sono, mai i valori. */
+  stripe: { chiave_segreta: boolean; segreto_webhook: boolean; modalita: "test" | "live" | null };
+  webhook_url: string;
+  eventi: string[];
+  schemi_app: string[];
+}
+
+export const configurazionePagamenti = (t: string) =>
+  chiamata<ConfigurazionePagamenti>(t, "/admin/payments/config");
 
 export const elencoPagamenti = (
   t: string,

@@ -1,0 +1,50 @@
+/* Le file di sotto-tab della console (`schede-comuni.tsx`). Mobile per primo: le schede vanno a capo invece di
+ * scorrere, e ognuna è alta almeno 44px. */
+
+.schede {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1.25rem;
+  padding: 0 0 0.75rem;
+  border-bottom: 1px solid var(--filo);
+}
+
+/* La seconda fila (dentro un fornitore): più leggera, senza la riga sotto. */
+.schedeInterne {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: -0.5rem 0 1.25rem;
+}
+
+.scheda,
+.schedaAttiva {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 1rem;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  color: var(--inchiostro-tenue);
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+.scheda:hover {
+  color: var(--inchiostro);
+  border-color: var(--inchiostro-debole);
+}
+
+.schedaAttiva {
+  background: var(--superficie-alta);
+  border-color: var(--rubrica);
+  color: var(--inchiostro);
+  font-weight: 500;
+}
+
+.scheda:focus-visible,
+.schedaAttiva:focus-visible {
+  outline: 2px solid var(--rubrica);
+  outline-offset: 2px;
+}

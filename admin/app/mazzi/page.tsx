@@ -1,9 +1,12 @@
 "use client";
 
-/* I mazzi in vendita (v5, Fase B): prezzi, finestra di attivazione stagionale, offerta a tempo.
- * L'artwork resta fuori da qui: file statici nel frontend, un mazzo nuovo richiede un build+deploy. */
+/* I mazzi in vendita (v5, Fase B): prezzi, finestra di attivazione stagionale, offerta a tempo, e le immagini.
+ * Le immagini (pulsante «Immagini» di ogni mazzo) hanno due strade separate: «Immagini del mazzo nel sito» (ZIP o
+ * cartella, online subito, `immagini.tsx`) e l'«Archivio ZIP da scaricare» (Fase I: lo ZIP conservato così com'è,
+ * da estrarre a mano nel frontend; non mette niente online). */
 
-import { useState } from "react";
+import { useId, useState } from "react";
+import { PannelloImmagini } from "./immagini";
 import {
   caricaArtwork, creaMazzo, eliminaArtwork, eliminaMazzo, elencoArtwork, impostaOfferta,
   mazzi as leggiMazzi, modificaMazzo, rimuoviOfferta, scaricaArtwork,
@@ -20,18 +23,40 @@ function soldi(centesimi: number | null, valuta = "EUR"): string {
 
 const VUOTO: NuovoMazzo = { slug: "", nome: "", prezzo_digitale: undefined };
 
+/* Lo slug: l'identificativo del mazzo negli indirizzi e nei file. Le stesse regole del server
+ * (`admin_mazzi.py::SLUG_MAZZO`): minuscole, cifre, trattini singoli fra le parole, da 2 a 40 caratteri. */
+const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+function problemaSlug(slug: string): string | null {
+  if (!slug) return null;
+  if (slug.length < 2 || slug.length > 40) return "Da 2 a 40 caratteri.";
+  if (/[A-Z]/.test(slug)) return "Solo lettere minuscole.";
+  if (!SLUG.test(slug)) return "Solo lettere minuscole senza accenti, numeri e trattini fra le parole (niente spazi, «_», trattini doppi o all'inizio/alla fine).";
+  return null;
+}
+
+/** Uno slug proposto dal nome: «Mazzo di Halloween 2026» → `mazzo-di-halloween-2026`. */
+function slugDa(nome: string): string {
+  return nome.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40).replace(/-+$/, "");
+}
+
 export default function Mazzi() {
   const { dati, errore, inCorso, ricarica } = useDati(leggiMazzi);
   const { esegui, inCorso: inAzione, errore: erroreAzione } = useAzione();
   const [nuovo, setNuovo] = useState<NuovoMazzo>(VUOTO);
+  /* Finché lo slug non si tocca a mano, segue il nome. */
+  const [slugAMano, setSlugAMano] = useState(false);
+  const aiutoSlug = useId();
+  const erroreSlug = problemaSlug(nuovo.slug.trim());
 
   const crea = async () => {
-    if (!nuovo.slug.trim() || !nuovo.nome.trim()) return;
+    if (!nuovo.slug.trim() || !nuovo.nome.trim() || erroreSlug) return;
     const fatto = await esegui((t) => creaMazzo(t, {
       ...nuovo, slug: nuovo.slug.trim(), nome: nuovo.nome.trim(),
       prezzo_digitale: nuovo.prezzo_digitale || undefined,
     }));
-    if (fatto) { setNuovo(VUOTO); ricarica(); }
+    if (fatto) { setNuovo(VUOTO); setSlugAMano(false); ricarica(); }
   };
 
   const salvaPrezzo = async (m: Mazzo, campo: "prezzo_digitale" | "prezzo_stampa" | "prezzo_fisico", testo: string) => {
@@ -54,9 +79,10 @@ export default function Mazzi() {
         <div>
           <h1 className={comuni.titolo}>Mazzi</h1>
           <p className={comuni.sottotitolo}>
-            Prezzi e disponibilità dei mazzi in vendita. La grafica non si carica qui: vive come file
-            nel frontend (un mazzo nuovo richiede un rilascio). Un mazzo già posseduto da qualcuno o
-            già usato in una lettura non si elimina: si disattiva.
+            Prezzi, disponibilità e immagini dei mazzi in vendita. Le immagini di un mazzo nuovo si caricano
+            dal pulsante «Immagini» (uno ZIP o una cartella con le 78 carte e il dorso) e sono online subito,
+            senza rilascio. Un mazzo già posseduto da qualcuno o già usato in una lettura non si elimina: si
+            disattiva.
           </p>
         </div>
       </div>
@@ -69,14 +95,27 @@ export default function Mazzi() {
         <h2 className={comuni.riquadroTitolo}>Nuovo mazzo</h2>
         <div className={comuni.riga}>
           <div className={comuni.campo}>
-            <label className={comuni.campoEtichetta} htmlFor="nuovo-slug">Slug</label>
-            <input id="nuovo-slug" className={comuni.ingresso} value={nuovo.slug}
-              onChange={(e) => setNuovo((n) => ({ ...n, slug: e.target.value }))} placeholder="halloween-2026" />
-          </div>
-          <div className={comuni.campo}>
             <label className={comuni.campoEtichetta} htmlFor="nuovo-nome">Nome</label>
             <input id="nuovo-nome" className={comuni.ingresso} value={nuovo.nome}
-              onChange={(e) => setNuovo((n) => ({ ...n, nome: e.target.value }))} placeholder="Mazzo di Halloween" />
+              onChange={(e) => {
+                const nome = e.target.value;
+                setNuovo((n) => ({ ...n, nome, slug: slugAMano ? n.slug : slugDa(nome) }));
+              }} placeholder="Mazzo di Halloween" />
+          </div>
+          <div className={comuni.campo}>
+            <label className={comuni.campoEtichetta} htmlFor="nuovo-slug">Slug (identificativo nell&apos;indirizzo)</label>
+            <input id="nuovo-slug" className={comuni.ingresso} value={nuovo.slug} maxLength={40}
+              autoCapitalize="none" autoCorrect="off" spellCheck={false} inputMode="url"
+              aria-invalid={erroreSlug ? true : undefined} aria-describedby={aiutoSlug}
+              onChange={(e) => { setSlugAMano(true); setNuovo((n) => ({ ...n, slug: e.target.value })); }}
+              placeholder="halloween-2026" />
+            <span id={aiutoSlug} className={comuni.campoAiuto}>
+              {erroreSlug && <strong className={comuni.negativo} role="alert">{erroreSlug} </strong>}
+              Lo slug è il nome del mazzo negli indirizzi e nei file: per esempio{" "}
+              <code>/decks/{nuovo.slug.trim() || "thoth"}</code> e <code>/cards/{nuovo.slug.trim() || "thoth"}/maj-00.webp</code>.
+              Solo lettere minuscole, numeri e trattini (es. <code>halloween-2026</code>). Si propone da solo dal nome.
+              Non si cambia dopo la creazione: indirizzi, letture e ordini già fatti lo usano.
+            </span>
           </div>
           <div className={comuni.campo}>
             <label className={comuni.campoEtichetta} htmlFor="nuovo-prezzo">Prezzo digitale (€)</label>
@@ -84,7 +123,7 @@ export default function Mazzi() {
               value={nuovo.prezzo_digitale ? nuovo.prezzo_digitale / 100 : ""}
               onChange={(e) => setNuovo((n) => ({ ...n, prezzo_digitale: e.target.value ? Math.round(Number(e.target.value) * 100) : undefined }))} />
           </div>
-          <button type="button" className={comuni.primaria} disabled={inAzione || !nuovo.slug.trim() || !nuovo.nome.trim()} onClick={crea}>
+          <button type="button" className={comuni.primaria} disabled={inAzione || !nuovo.slug.trim() || !nuovo.nome.trim() || Boolean(erroreSlug)} onClick={crea}>
             Crea
           </button>
         </div>
@@ -168,7 +207,8 @@ function RigaMazzo({
         <td>
           <strong>{mazzo.nome}</strong>{" "}
           {mazzo.predefinito && <span className={comuni.etichetta}>predefinito</span>}
-          <div className={comuni.mono}>{mazzo.slug}</div>
+          <div className={comuni.mono}>slug: {mazzo.slug}</div>
+          {mazzo.immagini_versione && <span className={comuni.etichetta}>immagini caricate</span>}
         </td>
         <td>
           <label>
@@ -207,9 +247,9 @@ function RigaMazzo({
             onClick={() => setDettagliAperti((a) => !a)}>
             Dettagli
           </button>{" "}
-          <button type="button" className={comuni.secondaria} disabled={bloccato}
+          <button type="button" className={comuni.secondaria} disabled={bloccato} aria-expanded={artworkAperto}
             onClick={() => setArtworkAperto((a) => !a)}>
-            Artwork
+            Immagini
           </button>
           {!mazzo.predefinito && (
             <button type="button" className={comuni.distruttiva} disabled={bloccato} onClick={onElimina}>Elimina</button>
@@ -260,6 +300,7 @@ function RigaMazzo({
       {artworkAperto && (
         <tr>
           <td colSpan={7}>
+            <PannelloImmagini slug={mazzo.slug} predefinito={mazzo.predefinito} />
             <PannelloArtwork slug={mazzo.slug} />
           </td>
         </tr>
@@ -295,17 +336,22 @@ function PannelloArtwork({ slug }: { slug: string }) {
   };
 
   return (
-    <div>
+    <details style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--filo)" }}>
+      <summary style={{ cursor: "pointer", minHeight: 44, display: "flex", alignItems: "center" }}>
+        Archivio ZIP da scaricare (vecchio metodo: installazione come file, serve un rilascio)
+      </summary>
       <p className={comuni.sottotitolo}>
-        Carica uno ZIP con tutte le 78 carte + il dorso (stesso nome file = id carta, come produce
-        <code> resize_cards.py</code>). Dopo il caricamento, scarica lo ZIP e estrailo in{" "}
-        <code>frontend/public/cards/{slug}/</code> prima del prossimo rilascio.
+        <strong>Non mette le immagini nel sito.</strong> Conserva lo ZIP così com&apos;è (78 carte + dorso, nome file =
+        id carta, come produce <code>resize_cards.py</code>), per riscaricarlo ed estrarlo a mano in{" "}
+        <code>frontend/public/cards/{slug}/</code> prima di un rilascio. Per mettere online il mazzo subito usa
+        «Immagini del mazzo nel sito», qui sopra. I file nel frontend, se ci sono, hanno la precedenza sulle immagini
+        caricate dalla console.
       </p>
       {(erroreLettura || errore) && <p className={comuni.errore}>{erroreLettura ?? errore}</p>}
       <div className={comuni.riga}>
-        <input type="file" accept=".zip" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-        <button type="button" className={comuni.primaria} disabled={!file || inCorso} onClick={carica}>
-          Carica
+        <input type="file" accept=".zip" aria-label="ZIP da conservare nell'archivio" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+        <button type="button" className={comuni.secondaria} disabled={!file || inCorso} onClick={carica}>
+          Conserva nell&apos;archivio
         </button>
       </div>
       {caricamento && <p>Caricamento…</p>}
@@ -325,7 +371,7 @@ function PannelloArtwork({ slug }: { slug: string }) {
           ))}
         </ul>
       )}
-    </div>
+    </details>
   );
 }
 

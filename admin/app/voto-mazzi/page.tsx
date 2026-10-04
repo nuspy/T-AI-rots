@@ -7,8 +7,9 @@
  * generare il mazzo reale di un candidato anche se non ha vinto. */
 
 import { useState } from "react";
+import { CarteEsempio } from "./carte-esempio";
 import {
-  accettaVincitori, candidatiDiTornata, caricaCampione, chiudiTornata, creaProposta, creaTornata,
+  accettaVincitori, candidatiDiTornata, chiudiTornata, creaProposta, creaTornata,
   eliminaCandidato, generaMazzoDaCandidato, modificaCandidato, proposteDisponibili,
   scartaSuggerimento, suggerimenti as leggiSuggerimenti, tornate as leggiTornate,
   trasformaSuggerimento,
@@ -30,10 +31,10 @@ export default function VotoMazzi() {
         <div>
           <h1 className={comuni.titolo}>Vota il prossimo mazzo</h1>
           <p className={comuni.sottotitolo}>
-            Una riserva di proposte (con le loro carte di prova), le tornate che ne scelgono alcune
-            con una scadenza dichiarata — si chiudono da sole, non serve un pulsante — e
-            l'accettazione dei vincitori. Un mazzo reale si può generare per qualunque candidato,
-            anche se non ha vinto.
+            Una riserva di proposte (ciascuna con fino a cinque carte d&apos;esempio, mostrate sulla pagina
+            pubblica del voto), le tornate che ne scelgono alcune con una scadenza dichiarata — si chiudono
+            da sole, non serve un pulsante — e l&apos;accettazione dei vincitori. Un mazzo reale si può
+            generare per qualunque candidato, anche se non ha vinto.
           </p>
         </div>
       </div>
@@ -337,23 +338,12 @@ function CorpoCandidato({
   const [modificaAperta, setModificaAperta] = useState(false);
   const [nome, setNome] = useState(candidato.nome);
   const [descrizione, setDescrizione] = useState(candidato.descrizione ?? "");
-  const [etichettaCampione, setEtichettaCampione] = useState("");
-  const [file, setFile] = useState<File | null>(null);
   const [mazzoGenerato, setMazzoGenerato] = useState<{ slug: string } | null>(null);
 
   const salva = async () => {
     if (!nome.trim()) return;
     if ((await esegui((t) => modificaCandidato(t, candidato.id, { nome: nome.trim(), descrizione: descrizione.trim() || undefined }))) !== null) {
       setModificaAperta(false);
-      onCambiata();
-    }
-  };
-
-  const carica = async () => {
-    if (!file || !etichettaCampione.trim()) return;
-    if ((await esegui((t) => caricaCampione(t, candidato.id, etichettaCampione.trim(), file))) !== null) {
-      setFile(null);
-      setEtichettaCampione("");
       onCambiata();
     }
   };
@@ -367,14 +357,7 @@ function CorpoCandidato({
     <div>
       <strong>{candidato.nome}</strong>
       {candidato.descrizione && <div className={comuni.riquadroNota}>{candidato.descrizione}</div>}
-      {candidato.campioni.length > 0 && (
-        <div className={comuni.riga} style={{ marginTop: 6 }}>
-          {candidato.campioni.map((camp, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={i} src={camp.url} alt={camp.etichetta ?? ""} width={60} style={{ borderRadius: 6 }} />
-          ))}
-        </div>
-      )}
+      <CarteEsempio candidato={candidato} onCambiata={onCambiata} bloccato={bloccato} />
       {errore && <p className={comuni.errore}>{errore}</p>}
       <div className={comuni.riga} style={{ marginTop: 8 }}>
         <button type="button" className={comuni.secondaria} disabled={bloccato} onClick={() => setModificaAperta((a) => !a)}>
@@ -402,14 +385,6 @@ function CorpoCandidato({
             <input className={comuni.ingresso} value={nome} onChange={(e) => setNome(e.target.value)} />
             <input className={comuni.ingresso} value={descrizione} onChange={(e) => setDescrizione(e.target.value)} placeholder="Descrizione" />
             <button type="button" className={comuni.primaria} disabled={inCorso || !nome.trim()} onClick={salva}>Salva</button>
-          </div>
-          <div className={comuni.riga} style={{ marginTop: 8 }}>
-            <input className={comuni.ingresso} value={etichettaCampione} onChange={(e) => setEtichettaCampione(e.target.value)}
-              placeholder="Etichetta della carta di prova (es. maj-06)" />
-            <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-            <button type="button" className={comuni.secondaria} disabled={inCorso || !file || !etichettaCampione.trim()} onClick={carica}>
-              Carica carta di prova
-            </button>
           </div>
         </div>
       )}

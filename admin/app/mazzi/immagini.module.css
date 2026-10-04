@@ -1,0 +1,145 @@
+/* Le immagini di un mazzo: due strade affiancate (ZIP, cartella) che vanno a capo su schermo stretto, una zona
+ * dove trascinare, la barra d'avanzamento e il riepilogo. Bersagli di almeno 44 px: la console si usa anche dal
+ * telefono. */
+
+.sezione {
+  display: grid;
+  gap: 0.9rem;
+  padding: 0.25rem 0 0.5rem;
+}
+
+.sezione + .sezione {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--filo);
+}
+
+.titolo {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1rem;
+  color: var(--inchiostro);
+}
+
+.strade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.75rem;
+}
+
+.strada {
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+  padding: 0.9rem;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: var(--superficie-alta);
+}
+
+.strada p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--inchiostro-tenue);
+}
+
+/* L'input vero resta accessibile (tastiera, lettori di schermo) ma invisibile: lo rappresenta l'etichetta-pulsante. */
+.nascosto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.pulsante {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 1rem;
+  border: 1px solid var(--rubrica);
+  border-radius: var(--raggio);
+  background: transparent;
+  color: var(--inchiostro);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.pulsante:hover {
+  background: var(--superficie);
+}
+
+.nascosto:focus-visible + .pulsante,
+.pulsante:focus-visible {
+  outline: 2px solid var(--rubrica);
+  outline-offset: 2px;
+}
+
+.nascosto:disabled + .pulsante {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.trascina {
+  display: grid;
+  place-items: center;
+  min-height: 5.5rem;
+  padding: 1rem;
+  border: 2px dashed var(--filo);
+  border-radius: var(--raggio);
+  color: var(--inchiostro-tenue);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.trascinaAttiva {
+  border-color: var(--rubrica);
+  color: var(--inchiostro);
+  background: var(--superficie);
+}
+
+.barra {
+  width: 100%;
+  height: 0.6rem;
+  accent-color: var(--rubrica);
+}
+
+.elenco {
+  margin: 0.25rem 0 0;
+  padding-left: 1.2rem;
+  max-height: 12rem;
+  overflow: auto;
+  font-family: var(--apparato);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.anteprime {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.anteprime img {
+  width: 54px;
+  height: 96px;
+  object-fit: cover;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+}
+
+.azioni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.azioni button {
+  min-height: 44px;
+}

@@ -4,63 +4,51 @@ import { useState } from "react";
 import { catalogo } from "@/lib/api";
 import { centesimiDa, importoPerCampo, quandoCompleto, soldi } from "@/lib/formato";
 import {
-  coupons, creaCoupon, eliminaCoupon, modificaCoupon, riscattiDi, valoreCoupon,
+  coupons, creaCoupon, durataCoupon, eliminaCoupon, modificaCoupon, riscattiDi, valoreCoupon,
   type Coupon, type ModificaCoupon, type NuovoCoupon, type Riscatto, type TipoCoupon,
 } from "@/lib/offerte";
 import { useAzione, useDati } from "@/lib/usa";
 import comuni from "../comuni.module.css";
 import stili from "./coupon.module.css";
+import { CifreResoconto, Copia, fineGiorno, inizioGiorno, validita } from "./pezzi";
+import { CampiRegole, CampoCampagna, SceltaPiani, regoleDaInviare, type Regole } from "./regole";
 
-/* Coupon di sconto e codici regalo.
+/* Coupon di sconto e codici regalo (la scheda «Coupon»; i lotti e le campagne hanno la loro).
  *
- * **Sconto** (percentuale o importo fisso): si applica al pagamento, sul primo pagamento; un abbonamento si rinnova a
- * prezzo pieno e non si può azzerare, un pacchetto sì (a zero i crediti arrivano subito, senza pagare).
- * **Codice regalo** (crediti): chi lo riscatta dal profilo riceve crediti senza pagare.
+ * **Sconto** (percentuale o importo fisso): si applica al pagamento. Su un abbonamento vale sul primo pagamento, sui
+ * primi N o per sempre (Fase 2d), e si somma o no allo sconto del rinnovo automatico e della prova: non cumulabile
+ * (di default) vale il più alto per l'utente. Un abbonamento non si azzera, un pacchetto sì (a zero i crediti arrivano
+ * subito, senza pagare). **Codice regalo** (crediti): chi lo riscatta dal profilo riceve crediti senza pagare.
  *
- * Un coupon già usato non si elimina né cambia valore — i conti passati devono restare leggibili —: si disattiva.
+ * Ogni coupon ha il suo link (`/pricing?coupon=CODICE`, `/it/piano?coupon=CODICE`): applica il codice da solo e lo
+ * conserva fino al pagamento, anche dopo la registrazione. Un coupon già usato non si elimina né cambia valore,
+ * durata o cumulo — i conti passati devono restare leggibili —: si disattiva.
  */
 
 const TIPI: Record<TipoCoupon, { nome: string; aiuto: string }> = {
-  percentuale: { nome: "Sconto in percentuale", aiuto: "Da 1 a 100. Sul primo pagamento." },
-  importo: { nome: "Sconto di un importo", aiuto: "In euro, sul primo pagamento. Non scende sotto zero." },
+  percentuale: { nome: "Sconto in percentuale", aiuto: "Da 1 a 100, sul listino." },
+  importo: { nome: "Sconto di un importo", aiuto: "In euro. Non scende sotto zero." },
   crediti: { nome: "Codice regalo in crediti", aiuto: "Chi lo riscatta riceve questi crediti, senza pagare." },
 };
 
-/* Una data «a giorno» → l'istante ISO: l'inizio del giorno per «dal», la fine per «fino». */
-const inizioGiorno = (d: string) => (d ? new Date(`${d}T00:00:00`).toISOString() : null);
-const fineGiorno = (d: string) => (d ? new Date(`${d}T23:59:59`).toISOString() : null);
 const perCampo = (iso: string | null) => {
   if (!iso) return "";
   const d = new Date(iso);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
-function validita(c: Coupon): string {
-  const dal = c.valido_dal ? new Date(c.valido_dal).toLocaleDateString("it-IT") : null;
-  const fino = c.valido_fino ? new Date(c.valido_fino).toLocaleDateString("it-IT") : null;
-  if (dal && fino) return `${dal} – ${fino}`;
-  if (fino) return `fino al ${fino}`;
-  if (dal) return `dal ${dal}`;
-  return "sempre";
-}
+/* I coupon singoli con le loro cifre (fuori dal componente: un'identità stabile, o `useDati` ricaricherebbe sempre). */
+const couponSingoli = (t: string) => coupons(t);
 
 export default function PaginaCoupon() {
-  const elenco = useDati(coupons);
+  const elenco = useDati(couponSingoli);
   const piani = useDati(catalogo);
   const [nuovo, setNuovo] = useState(false);
+  const scelte = (piani.dati ?? []).map((p) => ({ slug: p.slug, nome: p.nome }));
+  const campagne = [...new Set((elenco.dati ?? []).map((c) => c.campagna).filter((c): c is string => !!c))].sort();
 
   return (
     <>
-      <div className={comuni.intestazione}>
-        <div>
-          <h1 className={comuni.titolo}>Coupon e codici regalo</h1>
-          <p className={comuni.sottotitolo}>
-            Gli sconti si applicano al primo pagamento; i codici regalo danno crediti a chi li riscatta. Un coupon già
-            usato non si elimina: si disattiva.
-          </p>
-        </div>
-      </div>
-
       <div className={stili.comandi} style={{ marginBottom: "1.25rem" }}>
         <button className={comuni.primaria} type="button" aria-expanded={nuovo} onClick={() => setNuovo(!nuovo)}>
           {nuovo ? "Chiudi" : "Nuovo coupon"}
@@ -69,12 +57,10 @@ export default function PaginaCoupon() {
 
       {nuovo && (
         <NuovoCouponForm
-          piani={(piani.dati ?? []).map((p) => ({ slug: p.slug, nome: p.nome }))}
+          piani={scelte}
+          campagne={campagne}
           chiudi={() => setNuovo(false)}
-          creato={() => {
-            setNuovo(false);
-            elenco.ricarica();
-          }}
+          creato={() => elenco.ricarica()}
         />
       )}
 
@@ -87,7 +73,7 @@ export default function PaginaCoupon() {
       {elenco.dati && elenco.dati.length > 0 && (
         <ul className={`${stili.elenco} ${elenco.inCorso ? comuni.inRicarica : ""}`} aria-label="Coupon">
           {elenco.dati.map((c) => (
-            <Voce key={c.id} coupon={c} piani={(piani.dati ?? []).map((p) => ({ slug: p.slug, nome: p.nome }))} ricarica={elenco.ricarica} />
+            <Voce key={c.id} coupon={c} piani={scelte} campagne={campagne} ricarica={elenco.ricarica} />
           ))}
         </ul>
       )}
@@ -96,17 +82,17 @@ export default function PaginaCoupon() {
 }
 
 function Voce({
-  coupon: c, piani, ricarica,
+  coupon: c, piani, campagne, ricarica,
 }: {
   coupon: Coupon;
   piani: { slug: string; nome: string }[];
+  campagne: string[];
   ricarica: () => void;
 }) {
   const { esegui, inCorso, errore } = useAzione();
   const [modifica, setModifica] = useState(false);
   const [usi, setUsi] = useState<Riscatto[] | null>(null);
   const [conferma, setConferma] = useState(false);
-  const [copiato, setCopiato] = useState(false);
 
   const commuta = async () => {
     if (await esegui((t) => modificaCoupon(t, c.id, { attivo: !c.attivo }))) ricarica();
@@ -119,14 +105,6 @@ function Voce({
     const r = await esegui((t) => riscattiDi(t, c.id));
     if (r) setUsi(r.riscatti);
   };
-  const copia = async () => {
-    try {
-      await navigator.clipboard.writeText(c.codice);
-      setCopiato(true);
-    } catch {
-      setCopiato(false);
-    }
-  };
 
   const nomiPiani = c.piani.map((s) => piani.find((p) => p.slug === s)?.nome ?? s);
 
@@ -134,13 +112,19 @@ function Voce({
     <li className={c.attivo ? stili.voce : stili.voceSpenta}>
       <div className={stili.testata}>
         <div>
-          <strong className={stili.codice}>{c.codice}</strong>{" "}
-          <button type="button" className={stili.copia} onClick={copia} aria-label={`Copia il codice ${c.codice}`}>
-            {copiato ? "Copiato" : "Copia"}
-          </button>
+          <strong className={stili.codice}>{c.codice}</strong>
           <div className={comuni.mono}>{TIPI[c.tipo].nome}</div>
         </div>
         <div className={stili.valore}>{valoreCoupon(c, (n) => soldi(n))}</div>
+      </div>
+      <div className={stili.comandi}>
+        <Copia testo={c.codice} etichetta="Copia il codice" descrizione={`Copia il codice ${c.codice}`} />
+        {c.link && (
+          <>
+            <Copia testo={c.link.en} etichetta="Copia link" descrizione={`Copia il link che applica ${c.codice} (inglese)`} />
+            <Copia testo={c.link.it} etichetta="Link /it" descrizione={`Copia il link che applica ${c.codice} (italiano)`} />
+          </>
+        )}
       </div>
       {c.descrizione && <p className={stili.descrizione}>{c.descrizione}</p>}
       <dl className={stili.dati}>
@@ -155,6 +139,10 @@ function Voce({
           <>
             <dt>Vale per</dt>
             <dd>{nomiPiani.length ? nomiPiani.join(", ") : "tutte le offerte"}</dd>
+            <dt>Abbonamenti</dt>
+            <dd>{durataCoupon(c)}</dd>
+            <dt>Cumulo</dt>
+            <dd>{c.cumulabile ? "si somma a rinnovo e prova" : "non cumulabile: vale il più alto"}</dd>
             {c.solo_primo_acquisto && (
               <>
                 <dt>Condizione</dt>
@@ -163,14 +151,22 @@ function Voce({
             )}
           </>
         )}
+        {c.campagna && (
+          <>
+            <dt>Campagna</dt>
+            <dd>{c.campagna}</dd>
+          </>
+        )}
         <dt>Stato</dt>
         <dd className={c.attivo ? comuni.positivo : comuni.spento}>{c.attivo ? "attivo" : "disattivato"}</dd>
       </dl>
+      {c.resoconto && c.resoconto.riscatti + c.resoconto.rinnovi_scontati > 0 && <CifreResoconto r={c.resoconto} />}
 
       {modifica ? (
         <ModuloModifica
           coupon={c}
           piani={piani}
+          campagne={campagne}
           chiudi={() => setModifica(false)}
           salvato={() => {
             setModifica(false);
@@ -214,8 +210,8 @@ function Voce({
             <ul>
               {usi.map((u) => (
                 <li key={u.id}>
-                  <span>{u.email}</span>
-                  <span>{u.crediti ? `${u.crediti} crediti` : `sconto ${soldi(u.sconto)}`}</span>
+                  <span>{u.email}{u.rinnovo ? " · rinnovo" : ""}</span>
+                  <span>{u.crediti ? `${u.crediti} crediti` : `−${soldi(u.sconto)} · pagato ${soldi(u.importo)}`}</span>
                   <span>{quandoCompleto(u.quando)}</span>
                 </li>
               ))}
@@ -227,12 +223,14 @@ function Voce({
   );
 }
 
-/* Ciò che si può cambiare di un coupon: le regole d'uso. Il tipo e — dopo il primo uso — il valore restano com'erano. */
+/* Ciò che si può cambiare di un coupon: le regole d'uso e la campagna. Il tipo e — dopo il primo uso — valore, durata
+ * e cumulo restano com'erano. */
 function ModuloModifica({
-  coupon: c, piani, chiudi, salvato,
+  coupon: c, piani, campagne, chiudi, salvato,
 }: {
   coupon: Coupon;
   piani: { slug: string; nome: string }[];
+  campagne: string[];
   chiudi: () => void;
   salvato: () => void;
 }) {
@@ -245,6 +243,8 @@ function ModuloModifica({
   const [scelti, setScelti] = useState<string[]>(c.piani);
   const [primo, setPrimo] = useState(c.solo_primo_acquisto);
   const [valore, setValore] = useState(c.tipo === "importo" ? importoPerCampo(c.valore) : String(c.valore));
+  const [campagna, setCampagna] = useState(c.campagna ?? "");
+  const [regole, setRegole] = useState<Regole>({ durata: c.durata, periodi: String(c.periodi ?? 3), cumulabile: c.cumulabile });
   const [problema, setProblema] = useState<string | null>(null);
   const modificabile = c.riscatti === 0;
 
@@ -256,11 +256,17 @@ function ModuloModifica({
       valido_dal: inizioGiorno(dal),
       valido_fino: fineGiorno(fino),
       max_per_utente: Number(perUtente) || 1,
+      campagna: campagna.trim() || null,
     };
     corpo.max_riscatti = massimo.trim() === "" ? null : Number(massimo);        // vuoto: senza tetto
     if (c.tipo !== "crediti") {
       corpo.piani = scelti;
       corpo.solo_primo_acquisto = primo;
+      if (modificabile) {
+        const r = regoleDaInviare(regole);
+        if (!r) return setProblema("«Per N pagamenti» vuole un numero da 2 a 36.");
+        Object.assign(corpo, r);
+      }
     }
     if (modificabile) {
       const v = c.tipo === "importo" ? centesimiDa(valore) : Number(valore);
@@ -284,6 +290,7 @@ function ModuloModifica({
         <span className={comuni.campoEtichetta}>Descrizione</span>
         <input className={comuni.ingresso} value={descrizione} maxLength={500} onChange={(e) => setDescrizione(e.target.value)} />
       </label>
+      <CampoCampagna valore={campagna} cambia={setCampagna} suggerite={campagne} />
       <div className={comuni.riga}>
         <label className={comuni.campo}>
           <span className={comuni.campoEtichetta}>Valido dal</span>
@@ -307,6 +314,7 @@ function ModuloModifica({
       {c.tipo !== "crediti" && (
         <>
           <SceltaPiani piani={piani} scelti={scelti} cambia={setScelti} />
+          <CampiRegole regole={regole} cambia={setRegole} bloccate={!modificabile} />
           <label className={stili.spunta}>
             <input type="checkbox" checked={primo} onChange={(e) => setPrimo(e.target.checked)} />
             Solo sul primo acquisto
@@ -326,37 +334,11 @@ function ModuloModifica({
   );
 }
 
-function SceltaPiani({
-  piani, scelti, cambia,
-}: {
-  piani: { slug: string; nome: string }[];
-  scelti: string[];
-  cambia: (v: string[]) => void;
-}) {
-  return (
-    <fieldset className={stili.gruppo}>
-      <legend className={comuni.campoEtichetta}>Vale per</legend>
-      <div className={stili.sceltePiani}>
-        {piani.map((p) => (
-          <label key={p.slug} className={stili.spunta}>
-            <input
-              type="checkbox"
-              checked={scelti.includes(p.slug)}
-              onChange={(e) => cambia(e.target.checked ? [...scelti, p.slug] : scelti.filter((s) => s !== p.slug))}
-            />
-            {p.nome}
-          </label>
-        ))}
-      </div>
-      <span className={comuni.campoAiuto}>Nessuna spunta: tutte le offerte.</span>
-    </fieldset>
-  );
-}
-
 function NuovoCouponForm({
-  piani, chiudi, creato,
+  piani, campagne, chiudi, creato,
 }: {
   piani: { slug: string; nome: string }[];
+  campagne: string[];
   chiudi: () => void;
   creato: () => void;
 }) {
@@ -364,6 +346,7 @@ function NuovoCouponForm({
   const [tipo, setTipo] = useState<TipoCoupon>("percentuale");
   const [codice, setCodice] = useState("");
   const [descrizione, setDescrizione] = useState("");
+  const [campagna, setCampagna] = useState("");
   const [valore, setValore] = useState("");
   const [scelti, setScelti] = useState<string[]>([]);
   const [primo, setPrimo] = useState(false);
@@ -371,8 +354,9 @@ function NuovoCouponForm({
   const [fino, setFino] = useState("");
   const [massimo, setMassimo] = useState("");
   const [perUtente, setPerUtente] = useState("1");
+  const [regole, setRegole] = useState<Regole>({ durata: "una_volta", periodi: "3", cumulabile: false });
   const [problema, setProblema] = useState<string | null>(null);
-  const [nuovoCodice, setNuovoCodice] = useState<string | null>(null);
+  const [nuovo, setNuovo] = useState<Coupon | null>(null);
 
   const invia = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -384,16 +368,20 @@ function NuovoCouponForm({
     const corpo: NuovoCoupon = { tipo, valore: v, max_per_utente: Number(perUtente) || 1 };
     if (codice.trim()) corpo.code = codice.trim();
     if (descrizione.trim()) corpo.description = descrizione.trim();
+    if (campagna.trim()) corpo.campagna = campagna.trim();
     if (tipo !== "crediti") {
       corpo.piani = scelti;
       corpo.solo_primo_acquisto = primo;
+      const r = regoleDaInviare(regole);
+      if (!r) return setProblema("«Per N pagamenti» vuole un numero da 2 a 36.");
+      Object.assign(corpo, r);
     }
     if (dal) corpo.valido_dal = inizioGiorno(dal);
     if (fino) corpo.valido_fino = fineGiorno(fino);
     if (massimo.trim() !== "") corpo.max_riscatti = Number(massimo);
     const fatto = await esegui((t) => creaCoupon(t, corpo));
     if (fatto) {
-      setNuovoCodice(fatto.codice);
+      setNuovo(fatto);
       creato();
     }
   };
@@ -435,6 +423,7 @@ function NuovoCouponForm({
               className={comuni.ingresso}
               value={codice}
               maxLength={40}
+              autoCapitalize="characters"
               onChange={(e) => setCodice(e.target.value.toUpperCase())}
               placeholder="vuoto: lo scelgo io"
             />
@@ -445,6 +434,7 @@ function NuovoCouponForm({
           <span className={comuni.campoEtichetta}>Descrizione (solo per te)</span>
           <input className={comuni.ingresso} value={descrizione} maxLength={500} onChange={(e) => setDescrizione(e.target.value)} placeholder="es. Newsletter di ottobre" />
         </label>
+        <CampoCampagna valore={campagna} cambia={setCampagna} suggerite={campagne} />
         <div className={comuni.riga}>
           <label className={comuni.campo}>
             <span className={comuni.campoEtichetta}>Valido dal</span>
@@ -468,6 +458,7 @@ function NuovoCouponForm({
         {tipo !== "crediti" && (
           <>
             <SceltaPiani piani={piani} scelti={scelti} cambia={setScelti} />
+            <CampiRegole regole={regole} cambia={setRegole} />
             <label className={stili.spunta}>
               <input type="checkbox" checked={primo} onChange={(e) => setPrimo(e.target.checked)} />
               Solo sul primo acquisto
@@ -475,13 +466,18 @@ function NuovoCouponForm({
           </>
         )}
         {(problema || errore) && <p className={comuni.errore}>{problema ?? errore}</p>}
-        {nuovoCodice && <p className={comuni.esito}>Creato: {nuovoCodice}</p>}
+        {nuovo && (
+          <div className={comuni.esito} role="status">
+            Creato: <strong>{nuovo.codice}</strong>{" "}
+            {nuovo.link && <Copia testo={nuovo.link.en} etichetta="Copia link" descrizione={`Copia il link che applica ${nuovo.codice}`} />}
+          </div>
+        )}
         <div className={stili.comandi}>
           <button className={comuni.primaria} type="submit" disabled={inCorso}>
             Crea il coupon
           </button>
           <button className={comuni.secondaria} type="button" onClick={chiudi} disabled={inCorso}>
-            Annulla
+            Chiudi
           </button>
         </div>
       </form>

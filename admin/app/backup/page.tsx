@@ -3,12 +3,14 @@
 /* Backup del database sul NAS (v8.3). Ogni notte alle 2:30 un CronJob salva il database intero (app, Keycloak,
  * immagini) sul NAS via SFTP e tiene le ultime copie. Qui: dove va, la prova del collegamento (con la chiave del NAS
  * da accettare una volta), «Esegui ora», le copie presenti sul NAS, lo storico, e il ripristino di una copia — con
- * una copia di sicurezza fatta prima, e la conferma scritta. La credenziale del NAS sta in un Secret, mai qui. */
+ * una copia di sicurezza fatta prima, e la conferma scritta. La credenziale del NAS (chiave SSH o password) si carica
+ * qui (v9, Fase 2c), cifrata, e non si rilegge. */
 
 import { useEffect, useState } from "react";
 import {
-  copieBackup, eseguiBackup, provaBackup, ripristinaBackup, salvaImpostazioniBackup, statoBackup, statoRipristino,
-  type CopiaBackup, type EsitoProva, type EsecuzioneBackup, type StatoRipristino,
+  copieBackup, eseguiBackup, provaBackup, ripristinaBackup, salvaCredenzialeBackup, salvaImpostazioniBackup,
+  statoBackup, statoRipristino,
+  type CopiaBackup, type CredenzialeBackup, type EsitoProva, type EsecuzioneBackup, type StatoRipristino,
 } from "@/lib/backup";
 import { quandoCompleto } from "@/lib/formato";
 import { useAzione, useDati } from "@/lib/usa";
@@ -92,12 +94,6 @@ export default function Backup() {
         <>
           <section className={comuni.riquadro} aria-labelledby="titolo-destinazione">
             <h2 id="titolo-destinazione" className={comuni.riquadroTitolo}>Destinazione</h2>
-            {!stato.dati.credenziale.configurata && (
-              <p className={comuni.errore}>
-                Manca la credenziale del NAS: il Secret <span className={comuni.mono}>tarots-backup</span> (chiave SSH o
-                password) non è montato. Vedi deploy/k8s/LEGGIMI.md, «Backup sul NAS».
-              </p>
-            )}
             <form onSubmit={salva} className={comuni.riga} style={{ flexWrap: "wrap", alignItems: "flex-end" }}>
               <label className={comuni.campo}>
                 <span className={comuni.campoEtichetta}>Host</span>
@@ -111,14 +107,20 @@ export default function Backup() {
               </label>
               <label className={comuni.campo}>
                 <span className={comuni.campoEtichetta}>Utente</span>
-                <input className={comuni.ingresso} value={valori.utente} autoComplete="off"
+                <input className={comuni.ingresso} value={valori.utente} autoComplete="off" placeholder="nuspy"
                   onChange={(e) => setModulo({ ...valori, utente: e.target.value })} />
+                <span className={comuni.campoAiuto}>
+                  L&apos;utente del NAS per cui è installata la chiave SSH (qui: nuspy). root di solito non la accetta.
+                </span>
               </label>
               <label className={comuni.campo}>
                 <span className={comuni.campoEtichetta}>Cartella</span>
                 <input className={comuni.ingresso} value={valori.cartella} placeholder="/Volume1/backup/tarots"
                   onChange={(e) => setModulo({ ...valori, cartella: e.target.value })} />
-                <span className={comuni.campoAiuto}>Si crea da sola alla prima prova, se manca.</span>
+                <span className={comuni.campoAiuto}>
+                  Si crea da sola alla prima prova, se manca. Le maiuscole contano: /Volume1/backup/tarots non è
+                  /Volume1/Backup/Tarots.
+                </span>
               </label>
               <label className={comuni.campo}>
                 <span className={comuni.campoEtichetta}>Copie da tenere</span>
@@ -156,6 +158,8 @@ export default function Backup() {
             )}
           </section>
 
+          <Credenziale credenziale={stato.dati.credenziale} onCambiata={() => stato.ricarica()} />
+
           <Copie abilitato={!!imp?.impronta_host} onRipristino={() => stato.ricarica()} />
 
           <h2 className={comuni.riquadroTitolo} style={{ marginTop: "1.5rem" }}>Storico</h2>
@@ -180,6 +184,107 @@ export default function Backup() {
         </>
       )}
     </>
+  );
+}
+
+/* La credenziale per entrare nel NAS (v9, Fase 2c): la chiave SSH privata (dal file o incollata) o la password
+ * dell'utente del NAS. Si salva cifrata con la chiave master che sta solo sul server, e non si rilegge: della chiave
+ * si mostrano soltanto tipo e impronta. */
+function Credenziale({ credenziale, onCambiata }: { credenziale: CredenzialeBackup; onCambiata: () => void }) {
+  const { esegui, inCorso, errore } = useAzione();
+  const [chiave, setChiave] = useState("");
+  const [password, setPassword] = useState("");
+  const [nomeFile, setNomeFile] = useState<string | null>(null);
+  const [salvata, setSalvata] = useState(false);
+
+  const leggiFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 20_000) {
+      setNomeFile(`${file.name}: troppo grande per essere una chiave SSH`);
+      return;
+    }
+    setNomeFile(file.name);
+    setChiave(await file.text());
+    setSalvata(false);
+  };
+
+  const salva = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const r = await esegui((t) => salvaCredenzialeBackup(t, { chiave_ssh: chiave, password }));
+    if (r) {
+      setChiave("");
+      setPassword("");
+      setNomeFile(null);
+      setSalvata(true);
+      onCambiata();
+    }
+  };
+
+  const togli = async () => {
+    if (!window.confirm("Togliere dalla console chiave e password del NAS? Il backup userà il Secret del server, se c'è.")) return;
+    if (await esegui((t) => salvaCredenzialeBackup(t, { togli: true }))) onCambiata();
+  };
+
+  const origine = credenziale.origine === "console" ? "caricata da questa pagina"
+    : credenziale.origine === "server" ? "dal Secret del server (ripiego)" : null;
+
+  return (
+    <section className={comuni.riquadro} aria-labelledby="titolo-credenziale" style={{ marginTop: "1.5rem" }}>
+      <h2 id="titolo-credenziale" className={comuni.riquadroTitolo}>Credenziale del NAS</h2>
+      <p className={comuni.riquadroNota}>
+        Per entrare nel NAS serve una <b>chiave SSH privata</b> (un file di testo che comincia con «-----BEGIN OPENSSH
+        PRIVATE KEY-----», la cui metà pubblica è installata sul NAS per l&apos;utente qui sopra) oppure la password di
+        quell&apos;utente. Si salva cifrata: il backup che va sul NAS contiene solo testo illeggibile, non la chiave.
+      </p>
+      <p>
+        {credenziale.configurata ? (
+          <span className={`${comuni.stato} ${comuni.positivo}`}><span aria-hidden="true">✓ </span>impostata</span>
+        ) : (
+          <span className={`${comuni.stato} ${comuni.negativo}`}><span aria-hidden="true">○ </span>mancante: il backup non parte</span>
+        )}
+        {origine && <span className={comuni.campoAiuto}> · {origine}</span>}
+        {credenziale.chiave_tipo && (
+          <span className={comuni.campoAiuto} style={{ display: "block", overflowWrap: "anywhere" }}>
+            Chiave {credenziale.chiave_tipo}, impronta <span className={comuni.mono}>{credenziale.chiave_impronta}</span>
+            {credenziale.password ? " · c'è anche una password" : ""}
+          </span>
+        )}
+      </p>
+      <form onSubmit={salva}>
+        <label className={comuni.campo}>
+          <span className={comuni.campoEtichetta}>Chiave SSH privata: scegli il file…</span>
+          <input type="file" onChange={leggiFile} style={{ minHeight: 44 }} />
+          {nomeFile && <span className={comuni.campoAiuto}>{nomeFile}</span>}
+        </label>
+        <label className={comuni.campo}>
+          <span className={comuni.campoEtichetta}>…oppure incollala qui</span>
+          <textarea className={comuni.area} value={chiave} spellCheck={false} autoComplete="off"
+            onChange={(e) => { setChiave(e.target.value); setSalvata(false); }}
+            placeholder={"-----BEGIN OPENSSH PRIVATE KEY-----\n…\n-----END OPENSSH PRIVATE KEY-----"} />
+        </label>
+        <label className={comuni.campo}>
+          <span className={comuni.campoEtichetta}>Oppure la password dell&apos;utente del NAS</span>
+          <input className={comuni.ingresso} type="password" value={password} autoComplete="new-password"
+            onChange={(e) => { setPassword(e.target.value); setSalvata(false); }} />
+        </label>
+        <div className={comuni.riga} style={{ alignItems: "center" }}>
+          <button type="submit" className={comuni.primaria} style={{ minHeight: 44 }}
+            disabled={inCorso || (!chiave.trim() && !password)}>
+            Salva la credenziale
+          </button>
+          {credenziale.origine === "console" && (
+            <button type="button" className={comuni.secondaria} style={{ minHeight: 44 }} onClick={togli} disabled={inCorso}>
+              Togli la credenziale
+            </button>
+          )}
+        </div>
+      </form>
+      <div aria-live="polite">
+        {salvata && <p className={comuni.esito}>Credenziale salvata (cifrata). Ora «Prova il collegamento».</p>}
+        {errore && <p className={comuni.errore} role="alert">{errore}</p>}
+      </div>
+    </section>
   );
 }
 

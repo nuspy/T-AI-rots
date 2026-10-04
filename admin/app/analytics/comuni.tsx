@@ -158,10 +158,12 @@ const SCHEDE = [
   { href: "/analytics/adesso", etichetta: "Adesso" },
   { href: "/analytics/utenti", etichetta: "Utenti" },
   { href: "/analytics/imbuti", etichetta: "Imbuti" },
+  { href: "/analytics/uscite", etichetta: "Uscite" },
   { href: "/analytics/ricavi", etichetta: "Ricavi" },
   { href: "/analytics/esploratore", etichetta: "Esploratore" },
   { href: "/analytics/rapporti", etichetta: "Rapporti" },
   { href: "/analytics/studi", etichetta: "Studi (Colab)" },
+  { href: "/analytics/google", etichetta: "Google" },
   { href: "/analytics/impostazioni", etichetta: "Impostazioni" },
 ];
 

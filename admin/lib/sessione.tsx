@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useContext } from "react";
-import { useAuth } from "react-oidc-context";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useAuth, type AuthContextProps } from "react-oidc-context";
 
 /* Chi sta usando la console, detto in un modo che non dipende da Keycloak.
  *
@@ -76,13 +76,46 @@ function claimDelToken(token: string | undefined): Record<string, unknown> | und
   }
 }
 
+/* Lo scope del login persistente, lo stesso del sito (`frontend/lib/sessione.tsx`): con `offline_access` il
+ * token di rinnovo è offline, sopravvive alla chiusura del browser e al riavvio della macchina, e scade solo dopo
+ * l'inattività impostata in «Impostazioni → Login persistente» o con il logout, che lo revoca. Chi amministra da
+ * una postazione condivisa deve uscire con «Esci», non solo chiudere la scheda. */
+export const SCOPE_PERSISTENTE = "openid profile email offline_access";
+
+/* La ripresa all'apertura: con il token d'accesso scaduto ma un token di rinnovo ancora in `localStorage`, lo si
+ * usa una volta invece di mostrare di nuovo l'accesso (`react-oidc-context` da solo non ci prova). Se fallisce
+ * (revocato, scaduto) i token vecchi si buttano e compare la soglia d'accesso. Vero finché la ripresa è
+ * possibile o in corso: la console resta «in caricamento» invece di lampeggiare la soglia. */
+function useRipresaSessione(auth: AuthContextProps): boolean {
+  const tokenRinnovo = auth.user?.refresh_token ?? null;
+  const [fallitaPer, setFallitaPer] = useState<string | null>(null);
+  const inCorso = useRef<string | null>(null);
+  const riprendibile =
+    !auth.isLoading && !auth.isAuthenticated && !auth.activeNavigator && !!tokenRinnovo && tokenRinnovo !== fallitaPer;
+
+  useEffect(() => {
+    if (!riprendibile || !tokenRinnovo || inCorso.current === tokenRinnovo) return;
+    inCorso.current = tokenRinnovo;
+    auth
+      .signinSilent()
+      .catch(() => {
+        setFallitaPer(tokenRinnovo);
+        return auth.removeUser();
+      })
+      .catch(() => undefined);
+  }, [riprendibile, tokenRinnovo, auth]);
+
+  return riprendibile;
+}
+
 /** Traduce `useAuth` nella sessione. Va montato dentro l'`AuthProvider`. */
 export function SessioneOidc({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
+  const riprendendo = useRipresaSessione(auth);
   const profilo = auth.user?.profile;
 
   const sessione: Sessione = {
-    inCaricamento: auth.isLoading,
+    inCaricamento: auth.isLoading || riprendendo,
     autenticato: auth.isAuthenticated,
     token: auth.user?.access_token ?? null,
     chi: (profilo?.email ?? profilo?.name ?? null) as string | null,
@@ -96,11 +129,18 @@ export function SessioneOidc({ children }: { children: React.ReactNode }) {
         ...ruoliDi(claimDelToken(auth.user?.access_token)),
       ]),
     ],
+    /* La console è in italiano: anche la pagina di accesso di Keycloak. */
     entra: () => {
-      auth.signinRedirect().catch(() => undefined);
+      auth.signinRedirect({ extraQueryParams: { ui_locales: "it" } }).catch(() => undefined);
     },
+    /* Prima la revoca del token offline (chiudere la sessione del browser in Keycloak non lo invalida), poi il
+     * logout. Se la revoca non riesce si esce comunque. */
     esci: () => {
-      auth.signoutRedirect().catch(() => undefined);
+      auth
+        .revokeTokens(["refresh_token"])
+        .catch(() => undefined)
+        .then(() => auth.signoutRedirect())
+        .catch(() => undefined);
     },
   };
 

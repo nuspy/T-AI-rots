@@ -2,7 +2,7 @@
  * vincitori. Stesso principio dei mazzi (`mazzi.ts`): l'artwork resta un file separato, qui si
  * gestiscono solo la tornata e i suoi candidati. */
 
-import { chiamata } from "./api";
+import { API, chiamata } from "./api";
 
 export type StatoTornata = "aperta" | "chiusa";
 
@@ -16,9 +16,18 @@ export interface Tornata {
 }
 
 export interface CampioneCandidato {
+  media_id: string;
   etichetta: string | null;
+  /** Percorsi relativi dell'API (`/blog/media/…`): vanno preceduti da `API` (vedi `urlCampione`). */
   url: string;
+  mini: string;
 }
+
+/** Le carte d'esempio di un candidato: al massimo cinque (lo stesso tetto del server, `admin_voto.py`). */
+export const MAX_CAMPIONI = 5;
+
+/** L'indirizzo vero di un'immagine d'esempio: l'API risponde col percorso relativo. */
+export const urlCampione = (relativo: string) => `${API}${relativo}`;
 
 export interface Candidato {
   id: string;
@@ -60,12 +69,22 @@ export const modificaCandidato = (t: string, candidateId: string, corpo: { nome?
 export const eliminaCandidato = (t: string, candidateId: string) =>
   chiamata<void>(t, `/admin/voto/candidati/${candidateId}`, { method: "DELETE" });
 
-/** Il body è l'immagine grezza, non JSON — stesso pattern di `caricaArtwork` in `mazzi.ts`. */
-export const caricaCampione = (t: string, candidateId: string, etichetta: string, file: File) =>
-  chiamata<{ etichetta: string; url: string }>(
-    t, `/admin/voto/candidati/${candidateId}/campioni?etichetta=${encodeURIComponent(etichetta)}`,
+/** Il body è l'immagine grezza, non JSON — stesso pattern di `caricaArtwork` in `mazzi.ts`. Una per richiesta: la
+ * selezione multipla manda i file uno dopo l'altro. L'etichetta è facoltativa. */
+export const caricaCampione = (t: string, candidateId: string, file: File, etichetta?: string) =>
+  chiamata<CampioneCandidato>(
+    t, `/admin/voto/candidati/${candidateId}/campioni${etichetta ? `?etichetta=${encodeURIComponent(etichetta)}` : ""}`,
     { method: "POST", body: file, headers: { "Content-Type": file.type || "image/webp" } },
   );
+
+/** Il nuovo ordine delle carte d'esempio (gli id delle immagini, tutte quelle del candidato). */
+export const riordinaCampioni = (t: string, candidateId: string, ordine: string[]) =>
+  chiamata<CampioneCandidato[]>(t, `/admin/voto/candidati/${candidateId}/campioni`, {
+    method: "PUT", body: JSON.stringify({ ordine }),
+  });
+
+export const eliminaCampione = (t: string, candidateId: string, mediaId: string) =>
+  chiamata<void>(t, `/admin/voto/candidati/${candidateId}/campioni/${mediaId}`, { method: "DELETE" });
 
 export const accettaVincitori = (t: string, roundId: string, candidateIds: string[]) =>
   chiamata<{ deck_ids: string[]; tornata_chiusa: boolean }>(t, `/admin/voto/tornate/${roundId}/accetta`, {

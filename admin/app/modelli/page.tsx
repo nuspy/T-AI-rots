@@ -2,10 +2,15 @@
 
 import { useState } from "react";
 import {
+  aggiornaCompito,
   assegnaModello,
+  LIVELLI_RAGIONAMENTO,
   modelliECompiti,
+  nomeLivello,
   type CompitoAssegnato,
+  type LivelloRagionamento,
   type ModelloConfigurato,
+  type ModificaCompito,
 } from "@/lib/api";
 import {
   creaFornitore, eliminaFornitore, fornitori, modificaFornitore, provaFornitore,
@@ -20,9 +25,15 @@ import stili from "./modelli.module.css";
  * I fornitori si configurano qui: indirizzo, modello e chiave. La chiave non torna mai in chiaro — un fornitore
  * la porta solo per rispondere «ce l'ho» o «non ce l'ho» — e appena se ne aggiunge, modifica o elimina uno, il
  * servizio lo rilegge subito: nessun riavvio, nessuna variabile d'ambiente da toccare.
+ *
+ * Il ragionamento di ogni compito si legge com'è davvero: anche quello che il compito eredita dal fornitore, che
+ * prima non si vedeva (l'oracolo e la memoria ragionavano senza che la casella lo dicesse).
  */
 
 const RICADUTA = "";
+
+/* Un compito che ragiona perché lo eredita dal fornitore: è quello che costa senza che nessuno l'abbia scelto. */
+const ereditaAcceso = (c: CompitoAssegnato) => c.ragiona_effettivo && c.ragiona_origine === "fornitore";
 
 export default function Modelli() {
   const { dati, errore, inCorso, ricarica } = useDati(modelliECompiti);
@@ -39,15 +50,20 @@ export default function Modelli() {
     }
   };
 
-  const cambiaRagiona = async (compito: string, assegnato: string | null, ragiona: boolean) => {
-    if (!assegnato) return; // niente da sovrascrivere finché il compito ricade sul predefinito
-    if (await esegui((t) => assegnaModello(t, compito, assegnato, ragiona))) ricarica();
+  /* Una modifica alle impostazioni di un compito. Senza assegnazione propria il compito la riceve qui, sul fornitore
+   * che già usa, e il livello resta quello che era (eredita) se non è proprio il livello a cambiare. */
+  const aggiorna = async (c: CompitoAssegnato, campi: Omit<ModificaCompito, "modello">) => {
+    const corpo: ModificaCompito = { modello: c.assegnato ?? c.in_uso, ...campi };
+    if (!c.assegnato && !("livello" in campi)) corpo.livello = null;
+    if (await esegui((t) => aggiornaCompito(t, c.compito, corpo))) ricarica();
   };
 
   const ricaricaTutto = () => {
     ricarica();
     fornitoriDati.ricarica();
   };
+
+  const ereditati = dati?.compiti.filter(ereditaAcceso) ?? [];
 
   return (
     <>
@@ -83,6 +99,14 @@ export default function Modelli() {
           testi fissi, uguali per tutti. Solo per sviluppo e test.
         </p>
       )}
+      {ereditati.length > 0 && (
+        <div className={stili.allerta} role="status">
+          <strong>Attenzione: {ereditati.length === 1 ? "un compito ragiona" : `${ereditati.length} compiti ragionano`} senza che nessuno l&apos;abbia scelto.</strong>{" "}
+          Lo ereditano dal fornitore che usano, e ogni risposta costa molti più token (spesso dieci volte tanto):{" "}
+          {ereditati.map((c) => `${c.label} (da ${c.in_uso}, livello ${nomeLivello(c.livello_effettivo).toLowerCase()})`).join("; ")}.
+          Se non serve, scegli «Nessuno» nel loro menu del ragionamento.
+        </div>
+      )}
 
       {dati && (
         <div className={stili.compiti}>
@@ -93,7 +117,7 @@ export default function Modelli() {
               modelli={dati.modelli}
               bloccato={inAzione}
               onCambia={(scelto) => cambia(c.compito, scelto)}
-              onCambiaRagiona={(ragiona) => cambiaRagiona(c.compito, c.assegnato, ragiona)}
+              onAggiorna={(campi) => aggiorna(c, campi)}
             />
           ))}
         </div>
@@ -109,24 +133,35 @@ export default function Modelli() {
   );
 }
 
+/* Cosa dice la scheda sul ragionamento in uso, in parole. */
+function statoRagionamento(c: CompitoAssegnato): string {
+  const stato = c.ragiona_effettivo ? "acceso" : "spento";
+  const livello = c.ragiona_effettivo && c.livello_effettivo ? `, livello${nomeLivello(c.livello_effettivo).toLowerCase()}` : "";
+  if (c.ragiona_origine === "compito") return `${stato[0].toUpperCase()}${stato.slice(1)}${livello} — scelto per questo compito.`;
+  if (c.ragiona_origine === "parametri") return `${stato[0].toUpperCase()}${stato.slice(1)} — deciso dai parametri scritti a mano su questo compito.`;
+  if (c.ragiona_origine === "codice") return "Spento — lo decide il servizio: questa chiamata non ha bisogno di ragionare.";
+  if (c.ragiona_origine === "predefinito") return `${stato[0].toUpperCase()}${stato.slice(1)}${livello} — il predefinito di questo compito, finché non ne scegli un altro.`;
+  return `${stato[0].toUpperCase()}${stato.slice(1)}${livello} — ereditato dal fornitore ${c.in_uso}.`;
+}
+
 function Scheda({
   compito,
   modelli,
   bloccato,
   onCambia,
-  onCambiaRagiona,
+  onAggiorna,
 }: {
   compito: CompitoAssegnato;
   modelli: ModelloConfigurato[];
   bloccato: boolean;
   onCambia: (scelto: string) => void;
-  onCambiaRagiona: (ragiona: boolean) => void;
+  onAggiorna: (campi: Omit<ModificaCompito, "modello">) => void;
 }) {
   const id = `compito-${compito.compito}`;
-  const idRagiona = `${id}-ragiona`;
-  /* v7: senza un'assegnazione propria (ricade sul predefinito) non c'è una riga a cui
-   * agganciare l'override — bisogna prima scegliere un modello per questo compito. */
-  const puoRagionare = compito.assegnato != null;
+  const idLivello = `${id}-livello`;
+  const idStato = `${id}-stato`;
+  const nessunModello = modelli.length === 0;
+  const fornitoreLivello = compito.livello_fornitore ? nomeLivello(compito.livello_fornitore).toLowerCase() : null;
 
   return (
     <section className={stili.scheda}>
@@ -146,7 +181,7 @@ function Scheda({
         {/* Distinta da «assegnato al predefinito»: si comportano uguale oggi
             e diversamente domani, quando il predefinito cambia. */}
         <option value={RICADUTA}>
-          Nessuna scelta — segue il predefinito
+          {compito.segue ? `Nessuna scelta — usa il modello della ${compito.segue}` : "Nessuna scelta — segue il predefinito"}
         </option>
         {modelli.map((m) => (
           <option key={m.nome} value={m.nome}>
@@ -155,18 +190,41 @@ function Scheda({
         ))}
       </select>
 
-      <label className={stili.spuntaFornitore} htmlFor={idRagiona} title={
-        puoRagionare ? undefined : "Scegli prima un modello per questo compito"
-      }>
-        <input
-          id={idRagiona}
-          type="checkbox"
-          checked={compito.ragiona_override ?? false}
-          disabled={bloccato || !puoRagionare}
-          onChange={(e) => onCambiaRagiona(e.target.checked)}
-        />
-        Ragiona prima di rispondere
+      <label className={stili.etichetta} htmlFor={idLivello} style={{ marginTop: "0.8rem" }}>
+        Ragionamento
       </label>
+      <select
+        id={idLivello}
+        className={stili.scelta}
+        aria-describedby={idStato}
+        value={compito.livello ?? RICADUTA}
+        disabled={bloccato || nessunModello || compito.ragiona_origine === "codice"}
+        onChange={(e) => onAggiorna({ livello: (e.target.value || null) as LivelloRagionamento | null })}
+      >
+        <option value={RICADUTA}>
+          {compito.livello_predefinito
+            ? `Predefinito del compito (${nomeLivello(compito.livello_predefinito).toLowerCase()})`
+            : `Eredita dal fornitore${fornitoreLivello ? ` (${fornitoreLivello})` : ""}`}
+        </option>
+        {LIVELLI_RAGIONAMENTO.map((l) => (
+          <option key={l.valore} value={l.valore}>{l.nome}</option>
+        ))}
+      </select>
+      <p id={idStato} className={compito.ragiona_effettivo ? stili.statoAcceso : stili.inUso}>
+        {statoRagionamento(compito)}
+      </p>
+      {ereditaAcceso(compito) && (
+        <p className={stili.avviso}>
+          Ragiona perché lo eredita dal fornitore: costa di più senza che sia stato scelto. Se non serve, scegli «Nessuno».
+        </p>
+      )}
+      {!compito.ragiona_spegnibile && compito.ragiona_effettivo && (
+        <p className={stili.avviso}>
+          Questo fornitore non dice come spegnere il ragionamento: scegli un livello per il compito perché si spenga davvero.
+        </p>
+      )}
+
+      <AltreImpostazioni compito={compito} bloccato={bloccato || nessunModello} onAggiorna={onAggiorna} />
 
       <p className={stili.inUso}>
         In uso: <strong>{compito.in_uso}</strong>
@@ -180,6 +238,36 @@ function Scheda({
         )}
       </p>
     </section>
+  );
+}
+
+/* Lo schema JSON rigoroso: un'impostazione avanzata, chiusa finché non serve, solo per i compiti che rispondono in
+ * JSON. */
+function AltreImpostazioni({
+  compito: c, bloccato, onAggiorna,
+}: {
+  compito: CompitoAssegnato;
+  bloccato: boolean;
+  onAggiorna: (campi: Omit<ModificaCompito, "modello">) => void;
+}) {
+  if (!c.schema_possibile) return null;
+  return (
+    <details className={stili.altre}>
+      <summary className={stili.altreTitolo}>Altre impostazioni</summary>
+      <label className={stili.spuntaFornitore}>
+        <input
+          type="checkbox"
+          checked={c.json_schema}
+          disabled={bloccato}
+          onChange={(e) => onAggiorna({ json_schema: e.target.checked })}
+        />
+        Risposta vincolata a uno schema rigoroso
+      </label>
+      <p className={stili.aiuto}>
+        Il fornitore è obbligato a rispondere nella forma attesa, e una risposta malformata non può più arrivare. Da
+        provare: se il fornitore non lo accetta, il servizio torna da solo al formato di prima e se lo ricorda.
+      </p>
+    </details>
   );
 }
 
@@ -278,6 +366,8 @@ function VoceFornitore({
         <dd className={comuni.mono}>{f.model || "(quello caricato dal server)"}</dd>
         <dt>Chiave</dt>
         <dd>{f.has_key ? "impostata" : "nessuna"}</dd>
+        <dt>Ragionamento</dt>
+        <dd>{nomeLivello(f.livello_ragionamento)} (predefinito dei compiti che lo usano)</dd>
         <dt>Stato</dt>
         <dd className={f.attivo ? comuni.positivo : comuni.spento}>{f.attivo ? "attivo" : "disattivato"}</dd>
       </dl>
@@ -348,7 +438,7 @@ function ModuloFornitore({
   const [apiKey, setApiKey] = useState("");
   const [apiKeyTocca, setApiKeyTocca] = useState(false);
   const [descrizione, setDescrizione] = useState(f?.descrizione ?? "");
-  const [ragiona, setRagiona] = useState(f?.ragiona ?? false);
+  const [livello, setLivello] = useState<LivelloRagionamento>(f?.livello_ragionamento ?? "none");
   const [senzaFiltri, setSenzaFiltri] = useState(f?.senza_filtri ?? false);
   const [problema, setProblema] = useState<string | null>(null);
 
@@ -367,14 +457,14 @@ function ModuloFornitore({
     if (f) {
       const corpo: ModificaFornitore = {
         base_url: baseUrl.trim(), model: model.trim(), descrizione: descrizione.trim(),
-        ragiona, senza_filtri: senzaFiltri,
+        livello_ragionamento: livello, senza_filtri: senzaFiltri,
       };
       if (apiKeyTocca) corpo.api_key = apiKey;
       if (await esegui((t) => modificaFornitore(t, f.id, corpo))) salvato();
     } else {
       const corpo: NuovoFornitore = {
         nome: nome.trim(), tipo, base_url: baseUrl.trim(), model: model.trim(),
-        descrizione: descrizione.trim(), ragiona, senza_filtri: senzaFiltri,
+        descrizione: descrizione.trim(), livello_ragionamento: livello, senza_filtri: senzaFiltri,
         api_key: apiKey,
       };
       if (await esegui((t) => creaFornitore(t, corpo))) salvato();
@@ -432,9 +522,17 @@ function ModuloFornitore({
         <span className={comuni.campoEtichetta}>Descrizione (solo per te)</span>
         <input className={comuni.ingresso} value={descrizione} maxLength={200} onChange={(e) => setDescrizione(e.target.value)} />
       </label>
-      <label className={stili.spuntaFornitore}>
-        <input type="checkbox" checked={ragiona} onChange={(e) => setRagiona(e.target.checked)} />
-        Ragiona prima di rispondere (alza il tetto dei token nelle richieste strutturate)
+      <label className={comuni.campo}>
+        <span className={comuni.campoEtichetta}>Ragionamento predefinito</span>
+        <select className={comuni.selezione} value={livello} onChange={(e) => setLivello(e.target.value as LivelloRagionamento)}>
+          {LIVELLI_RAGIONAMENTO.map((l) => (
+            <option key={l.valore} value={l.valore}>{l.nome}</option>
+          ))}
+        </select>
+        <span className={comuni.campoAiuto}>
+          Quanto pensa il modello prima di rispondere, per i compiti che non scelgono da sé. Più ragionamento vuol dire
+          risposte più lente e molti più token pagati.
+        </span>
       </label>
       <label className={stili.spuntaFornitore}>
         <input type="checkbox" checked={senzaFiltri} onChange={(e) => setSenzaFiltri(e.target.checked)} />

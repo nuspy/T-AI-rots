@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
   /* `standalone`: la build porta con sé soltanto i moduli che usa davvero, e
    * l'immagine di produzione non deve installare node_modules da capo. */
   output: "standalone",
+  /* In sviluppo, le prove dal cellulare sulla rete di casa: Next accetta le richieste delle sue risorse solo dalle
+   * origini elencate. Senza effetto sulla build di produzione. */
+  allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "100.*.*.*"],
 };
 
 export default nextConfig;

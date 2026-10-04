@@ -1,0 +1,233 @@
+/* Account (v9, Fase 3): i servizi esterni, una scheda ciascuno, raggruppati per categoria. Mobile per primo: una
+ * colonna, i passi chiusi in un «details» (si aprono a richiesta), azioni alte almeno 44px. */
+
+.categoria {
+  margin: 0 0 1.75rem;
+}
+
+.categoriaTitolo {
+  font-family: var(--interfaccia);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--inchiostro-debole);
+  margin: 0 0 0.6rem;
+}
+
+.griglia {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 64rem) {
+  .griglia {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.scheda {
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.testa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem 0.75rem;
+}
+
+.nome {
+  font-family: var(--interfaccia);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Lo stato: segno e parola, con un bordo del colore dello stato. Il colore da solo non dice nulla. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-family: var(--apparato);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.errore {
+  color: var(--allarme);
+}
+
+.da_configurare {
+  color: var(--rubrica);
+}
+
+.configurato {
+  color: var(--inchiostro-tenue);
+}
+
+.verificato {
+  color: var(--quiete);
+}
+
+.manuale,
+.non_usato {
+  color: var(--inchiostro-debole);
+}
+
+.dettaglio {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--inchiostro-tenue);
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.9rem;
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--inchiostro-debole);
+  line-height: 1.45;
+}
+
+.passi {
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.passi summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+  color: var(--inchiostro);
+  font-weight: 500;
+}
+
+.passi summary:focus-visible {
+  outline: 2px solid var(--rubrica);
+  outline-offset: 2px;
+}
+
+.passi ol {
+  margin: 0 0 0.5rem;
+  padding-left: 1.2rem;
+  color: var(--inchiostro-tenue);
+}
+
+.passi li + li {
+  margin-top: 0.25rem;
+}
+
+.passi p {
+  margin: 0.4rem 0 0;
+  color: var(--inchiostro-tenue);
+  overflow-wrap: anywhere;
+}
+
+.azioni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 0.25rem;
+}
+
+.azioni button,
+.gestisci,
+.primoLink {
+  min-height: 44px;
+  height: auto;
+}
+
+.gestisci,
+.primoLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0 0.9rem;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--inchiostro);
+}
+
+.primoLink {
+  border-color: var(--rubrica);
+}
+
+.gestisci:hover,
+.primoLink:hover {
+  border-color: var(--inchiostro-debole);
+}
+
+.gestisci:focus-visible,
+.primoLink:focus-visible {
+  outline: 2px solid var(--rubrica);
+  outline-offset: 2px;
+}
+
+.esitoVerifica {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+/* Solo per i lettori di schermo. */
+.soloLettori {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Dove si imposta (v9, Fase 2c): la console per quasi tutto; il server solo per tre segreti. Il segno e la frase lo
+ * dicono, il bordo lo sottolinea. */
+.dove {
+  margin: 0;
+  padding: 0.35rem 0.6rem;
+  border-left: 3px solid var(--filo);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--inchiostro-tenue);
+  overflow-wrap: anywhere;
+}
+
+.dove a {
+  color: var(--inchiostro);
+  display: inline-block;
+  min-height: 24px;
+}
+
+.dove_console {
+  border-left-color: var(--quiete);
+}
+
+.dove_server {
+  border-left-color: var(--rubrica);
+  color: var(--inchiostro);
+  font-weight: 500;
+}

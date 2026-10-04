@@ -154,3 +154,43 @@
 .usi li:first-child {
   border-top: 0;
 }
+
+/* v9, Fase 2d: le cifre del resoconto (riscatti, incasso, sconto concesso…), a griglia che si stringe sul telefono. */
+.cifre {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 8.5rem), 1fr));
+  gap: 0.5rem 0.9rem;
+  margin: 0;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+}
+
+.cifre div {
+  min-width: 0;
+}
+
+.cifre dt {
+  font-size: 0.75rem;
+  color: var(--inchiostro-debole);
+}
+
+.cifre dd {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* Un lotto o una campagna: la stessa scheda dei coupon, con un titolo un po' più lungo. */
+.titoloScheda {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.15rem;
+  overflow-wrap: anywhere;
+}
+
+.totale {
+  margin: 0 0 1.25rem;
+}

@@ -53,6 +53,8 @@ const FILTRI: Record<"carte" | "stese", { valore: string; etichetta: string }[]>
   stese: [
     { valore: "", etichetta: "Tutte le stese" },
     { valore: "categoria:standard", etichetta: "Standard" },
+    { valore: "categoria:lavoro", etichetta: "Lavoro e affari" },
+    { valore: "tema:lavoro", etichetta: "Per il lavoro (lavoro e affari + standard adatte)" },
     { valore: "categoria:compatibilita", etichetta: "Compatibilità" },
     { valore: "categoria:coppia", etichetta: "Coppia" },
   ],

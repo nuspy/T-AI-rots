@@ -3,7 +3,7 @@
  * La chiave non torna mai in chiaro: `has_key` dice solo se c'è. Un fornitore nuovo o modificato è subito
  * assegnabile in «Modelli» (il backend rilegge l'elenco appena questa pagina scrive). */
 
-import { chiamata } from "./api";
+import { chiamata, type LivelloRagionamento } from "./api";
 
 export interface TipoFornitore {
   tipo: string;
@@ -25,6 +25,8 @@ export interface Fornitore {
   has_key: boolean;
   motore: string;
   ragiona: boolean;
+  /* Il livello di ragionamento predefinito, che i compiti ereditano. */
+  livello_ragionamento: LivelloRagionamento;
   parametri: Record<string, unknown>;
   senza_filtri: boolean;
   descrizione: string;
@@ -41,6 +43,7 @@ export interface NuovoFornitore {
   api_key?: string;
   motore?: string;
   ragiona?: boolean;
+  livello_ragionamento?: LivelloRagionamento;
   parametri?: Record<string, unknown>;
   senza_filtri?: boolean;
   descrizione?: string;

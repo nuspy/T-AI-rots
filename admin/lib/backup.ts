@@ -1,5 +1,5 @@
-/* Il backup del database sul NAS (v8.3): destinazione, prova del collegamento, backup subito, copie sul NAS, storico
- * e ripristino. La credenziale del NAS non passa mai di qui: sta in un Secret (vedi deploy/k8s/LEGGIMI.md). */
+/* Il backup del database sul NAS (v8.3): destinazione, credenziale (v9, Fase 2c: chiave SSH o password, si scrive e
+ * non si rilegge), prova del collegamento, backup subito, copie sul NAS, storico e ripristino. */
 
 import { chiamata } from "./api";
 
@@ -39,9 +39,20 @@ export interface StatoRipristino {
   finito: string | null;
 }
 
+/** La credenziale del NAS (v9, Fase 2c): dalla console (cifrata) o dal Secret montato. Mai il valore: della chiave
+ *  caricata in console solo tipo e impronta. */
+export interface CredenzialeBackup {
+  chiave_ssh: boolean;
+  password: boolean;
+  configurata: boolean;
+  origine: "console" | "server" | null;
+  chiave_tipo: string | null;
+  chiave_impronta: string | null;
+}
+
 export interface StatoBackup {
   impostazioni: ImpostazioniBackup;
-  credenziale: { chiave_ssh: boolean; password: boolean; configurata: boolean };
+  credenziale: CredenzialeBackup;
   esecuzioni: EsecuzioneBackup[];
   ripristino: StatoRipristino;
 }
@@ -55,6 +66,8 @@ export type EsitoProva =
 export const statoBackup = (t: string) => chiamata<StatoBackup>(t, "/admin/backup");
 export const salvaImpostazioniBackup = (t: string, v: Omit<ImpostazioniBackup, "impronta_host">) =>
   chiamata<ImpostazioniBackup>(t, "/admin/backup/impostazioni", { method: "PUT", body: JSON.stringify(v) });
+export const salvaCredenzialeBackup = (t: string, v: { chiave_ssh?: string; password?: string; togli?: boolean }) =>
+  chiamata<CredenzialeBackup>(t, "/admin/backup/credenziale", { method: "PUT", body: JSON.stringify(v) });
 export const provaBackup = (t: string, fidati = false) =>
   chiamata<EsitoProva>(t, "/admin/backup/prova", { method: "POST", body: JSON.stringify({ fidati }) });
 export const eseguiBackup = (t: string) => chiamata<{ avviato: boolean }>(t, "/admin/backup/esegui", { method: "POST" });

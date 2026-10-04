@@ -6,10 +6,13 @@
  * rileggere) e WebSub (il feed RSS). Qui si vede cosa è configurato, cosa è partito, si può anticipare il giro
  * e, dopo un cambiamento dei contenuti, annunciare tutte le pagine. */
 
+import { useState } from "react";
 import { quandoCompleto } from "@/lib/formato";
 import { inviaOraAiMotori, notificheMotori, type Canale, type StatoCanale, type VoceEsito } from "@/lib/seo";
 import { useAzione, useDati } from "@/lib/usa";
 import comuni from "../comuni.module.css";
+import { ConfiguraGoogle } from "../configura-google";
+import stili from "../integrazioni.module.css";
 
 const NOMI: Record<VoceEsito, string> = {
   indexnow: "IndexNow (Bing, Yandex…)",
@@ -32,6 +35,8 @@ const TESTO_STATO: Record<StatoCanale, string> = { ok: "inviato", errore: "error
 export default function NotificaMotori() {
   const elenco = useDati(notificheMotori);
   const { esegui, inCorso, errore } = useAzione();
+  /* v8.6: la procedura guidata di Google (service account, accesso, verifica), aperta da «Configura Google». */
+  const [google, setGoogle] = useState(false);
 
   const inviaOra = async (tutte = false) => {
     if (await esegui((t) => inviaOraAiMotori(t, tutte))) elenco.ricarica();
@@ -56,6 +61,10 @@ export default function NotificaMotori() {
           <button className={comuni.secondaria} onClick={() => inviaOra(true)} disabled={inCorso}>
             Annuncia tutte le pagine
           </button>
+          <button className={`${comuni.secondaria} ${stili.tocco}`} onClick={() => setGoogle((v) => !v)} aria-expanded={google}
+            aria-controls="configura-google">
+            {google ? "Chiudi Configura Google" : "Configura Google"}
+          </button>
         </div>
       </div>
 
@@ -63,6 +72,20 @@ export default function NotificaMotori() {
         <p className={comuni.errore} role="alert">{errore ?? elenco.errore}</p>
       )}
       {!elenco.dati && elenco.inCorso && <p className={comuni.caricamento}>Caricamento…</p>}
+
+      {google && (
+        <section id="configura-google" className={comuni.riquadro} aria-labelledby="titolo-google">
+          <h2 id="titolo-google" className={comuni.riquadroTitolo}>Configura Google</h2>
+          <p className={comuni.riquadroNota}>
+            Un service account di Google legge Search Console (l&apos;invio della sitemap) e GA4 (le statistiche nella
+            scheda Analytics → Google). Quattro passi; «Verifica» dice quale manca e come sistemarlo.
+          </p>
+          <ConfiguraGoogle onCambio={elenco.ricarica} />
+          <button className={`${comuni.secondaria} ${stili.tocco}`} style={{ marginTop: "1rem" }} onClick={() => setGoogle(false)}>
+            Chiudi
+          </button>
+        </section>
+      )}
 
       {elenco.dati && (
         <>
@@ -79,6 +102,15 @@ export default function NotificaMotori() {
                     </span>
                     <br />
                     <span className={comuni.mono} style={{ overflowWrap: "anywhere" }}>{conf.dettaglio}</span>
+                    {c === "search_console" && !conf.configurato && !google && (
+                      <>
+                        <br />
+                        <button className={`${comuni.primaria} ${stili.tocco}`} style={{ marginTop: "0.5rem" }}
+                          onClick={() => setGoogle(true)}>
+                          Configura Google
+                        </button>
+                      </>
+                    )}
                   </li>
                 );
               })}

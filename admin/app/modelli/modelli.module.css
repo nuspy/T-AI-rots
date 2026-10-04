@@ -200,3 +200,51 @@
   accent-color: var(--rubrica);
   flex: none;
 }
+
+/* Il riepilogo in testa: i compiti che ragionano per eredità. Bordo e testo d'allarme, e le parole a dirlo. */
+.allerta {
+  border: 1px solid var(--allarme);
+  border-left-width: 4px;
+  border-radius: var(--raggio);
+  padding: 0.8rem 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--inchiostro);
+  background: var(--superficie);
+}
+
+.statoAcceso {
+  margin: 0.4rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--inchiostro);
+  font-weight: 600;
+}
+
+.altre {
+  margin-top: 0.8rem;
+  border-top: 1px solid var(--filo-tenue);
+  padding-top: 0.4rem;
+}
+
+.altreTitolo {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--inchiostro-tenue);
+}
+
+.altreTitolo:focus-visible {
+  outline: 2px solid var(--rubrica);
+  outline-offset: 2px;
+}
+
+.aiuto {
+  margin: 0.3rem 0 0.8rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--inchiostro-debole);
+}

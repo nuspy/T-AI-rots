@@ -65,7 +65,10 @@ export function TabellaPagamenti({
                 <td>
                   <span className={`${stili.stato} ${stato.classe}`}>{stato.etichetta}</span>
                 </td>
-                <td className={stili.mono}>{p.fornitore}</td>
+                <td className={stili.mono}>
+                  {p.fornitore}
+                  {p.sandbox && <div className={stili.campoAiuto}>prova dello store: fuori dai ricavi</div>}
+                </td>
                 <td className={stili.mono}>{quandoCompleto(p.completato)}</td>
               </tr>
             );
