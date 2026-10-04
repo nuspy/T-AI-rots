@@ -175,7 +175,7 @@ export function Negozio() {
           <LinkV2 className="button button-brass" href={R.carrello}>{k.vai_carrello}</LinkV2>
         </div>
       )}
-      <div className="static-share" style={{ marginTop: "2.5rem" }}>
+      <div className="static-share" style={{ marginTop: ".9rem" }}>
         <p className="eyebrow">{k.ponte_titolo}</p>
         <q>{t.mazzi.slogan}</q>
         <p>{k.ponte_testo}</p>
@@ -274,7 +274,7 @@ function CarrelloContenuto() {
     </section>
     <section className="band band-tight">
       {esito && (
-        <div className={esito.buono ? "success" : "error"} role="status" style={{ marginBottom: "1.5rem" }}>
+        <div className={esito.buono ? "success" : "error"} role="status" style={{ marginBottom: ".5rem" }}>
           <p style={{ margin: 0 }}>{esito.testo}</p>
           {esito.pdf?.map((r) => (
             <BottonePdfV2 key={r.deck_id} ordineId={esito.ordine!} deckId={r.deck_id} nome={perId.get(r.deck_id)?.nome ?? ""} />

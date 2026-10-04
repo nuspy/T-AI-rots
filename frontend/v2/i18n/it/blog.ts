@@ -60,4 +60,11 @@ export const blog: typeof Base = {
     { chiave: "fisica", simbolo: "✋", titolo: "Le tue carte", testo: "Pesca con il tuo mazzo, leggi qui il disegno." },
   ],
   esplora_ultimi: "Dal diario",
+  nove_eyebrow: "Il Diario",
+  nove_titolo: "Dal Diario",
+  nove_ultimi: "Leggi gli ultimi articoli",
+  nove_attinenti: "Scelti per questa pagina",
+  a_caso: "Altro da leggere, scelto per te oggi",
+  nove_sezione: "Altro in {sezione}",
+  copyright: "© {anno} TAROTS chat (tarots.chat). Tutti i diritti riservati. È vietata la riproduzione, la distribuzione o l'adattamento, anche parziali, di questo articolo senza l'autorizzazione scritta del titolare.",
 };

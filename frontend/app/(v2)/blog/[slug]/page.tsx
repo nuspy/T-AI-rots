@@ -66,7 +66,7 @@ export default async function PaginaArticolo({ params }: { params: Promise<{ slu
   const la = linguaPubblica(a.lang);
   if (la !== lingua || a.slug !== slug) permanentRedirect(pubblico(la, `/blog/${a.slug}`));
 
-  const valori = await precarica([P.articolo(slug)], 10);
+  const valori = await precarica([P.articolo(slug), P.nove({ articolo: slug })], 10);
   const url = urlPubblico(la, `/blog/${a.slug}`);
   const immagine = urlMedia(a.immagine?.url);
   const dati = grafo(
@@ -89,6 +89,8 @@ export default async function PaginaArticolo({ params }: { params: Promise<{ slu
       author: { "@type": "Person", name: a.autore.nome },
       publisher: { "@id": `${SITE_URL}/#organization` },
       keywords: [a.seo_parola_chiave, ...a.parole_chiave].filter(Boolean).join(", ") || undefined,
+      ...(a.pubblicato_il ? { copyrightYear: Number(a.pubblicato_il.slice(0, 4)) } : {}),
+      copyrightHolder: { "@id": `${SITE_URL}/#organization` },
     },
   );
   return (

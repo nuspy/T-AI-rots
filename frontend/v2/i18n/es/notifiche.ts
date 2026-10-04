@@ -1,0 +1,37 @@
+/* Notificaciones (v9, fase 5): la sección «Notificaciones» del perfil y la invitación tras la carta del día. */
+
+import type { notifiche as Base } from "../en/notifiche";
+
+export const notifiche: typeof Base = {
+  titolo: "Notificaciones",
+  intro: "Un recordatorio discreto para tu carta del día y, si quieres, algún otro mensaje. Tú eliges qué y cuándo.",
+  stato_attive: "Las notificaciones están activadas en este navegador.",
+  stato_spente: "Las notificaciones están desactivadas en este navegador.",
+  attiva: "Activar las notificaciones aquí",
+  disattiva: "Desactivar en este navegador",
+  attivazione: "Activando…",
+  negato: "Tu navegador bloquea las notificaciones de este sitio. Permítelas en la configuración del sitio (el candado junto a la dirección) y vuelve a intentarlo.",
+  errore: "No ha funcionado. Inténtalo de nuevo en un momento.",
+  non_supportato: "Este navegador no puede recibir notificaciones del sitio.",
+  ios_titolo: "En iPhone y iPad",
+  ios_testo: "Safari muestra notificaciones solo del sitio añadido a la pantalla de inicio: toca Compartir, luego «Añadir a pantalla de inicio», abre TAROTS chat desde el nuevo icono y activa las notificaciones en tu perfil.",
+  altri: { uno: "Las notificaciones también están activadas en 1 dispositivo más.", molti: "Las notificaciones también están activadas en {n} dispositivos más." },
+  carta: "Carta del día",
+  carta_testo: "Un recordatorio por la mañana, si aún no has girado tu carta.",
+  ora: "Hora",
+  promemoria: "Recordatorios",
+  promemoria_testo: "Tu racha de días, el final de una prueba, un pago que arreglar.",
+  promozioni: "Ofertas y novedades",
+  promozioni_testo: "Como máximo {n} a la semana. Es la misma opción que «Promociones» en Privacidad y consentimientos.",
+  silenzio: "Horas de silencio",
+  silenzio_testo: "Ninguna notificación entre estas horas, según tu hora local.",
+  dalle: "Desde",
+  alle: "Hasta",
+  fuso: "Tu zona horaria: {fuso}. Se actualiza sola.",
+  salvato: "Guardado.",
+  invito_titolo: "¿Quieres que te la recordemos cada mañana?",
+  invito_testo: "Una notificación discreta cuando tu carta del día esté lista. Solo eso, y la desactivas cuando quieras.",
+  invito_si: "Sí, recuérdamela",
+  invito_no: "Ahora no",
+  invito_fatto: "Hecho: hasta mañana por la mañana.",
+};

@@ -5,21 +5,34 @@
  * più ampia: la carta come spunto, non come promessa. */
 
 import { useState } from "react";
-import { cartaDelGiorno, cartaDiOggi } from "@/lib/api";
+import { cartaDiOggi } from "@/lib/api";
+import { InvitoNotifiche } from "@/v2/componenti/notifiche";
+import { cartaDelGiornoLocale } from "@/v2/lib/notifiche";
 import { useSessione } from "@/lib/sessione";
 import { f, plurale } from "@/v2/i18n";
 import { CartaV2 } from "@/v2/componenti/carta";
 import LinkV2 from "@/v2/componenti/link";
+import { Pubblicita } from "@/v2/componenti/pubblicita";
 import { P, linguaContenuti } from "@/v2/lib/dati";
 import { useLingua } from "@/v2/lib/lingua";
 import { R } from "@/v2/lib/percorsi";
 import { useCarica } from "@/v2/lib/usa";
+import { DiarioNove } from "./blog";
 import { nomeDi } from "./carte";
 
 export function Giorno() {
   const sessione = useSessione();
   /* Finché la sessione non è pronta (e sul server) si vede la carta di tutti: l'HTML esce con la carta di oggi. */
-  return sessione.autenticata ? <Personale /> : <PerTutti />;
+  /* Gli spazi pubblicitari (spenti per default): la pagina è corta, il diario è metà del contenuto. A un terzo dopo
+   * la carta, a due terzi fra gli articoli recenti e quelli attinenti, alla fine dopo il diario. */
+  return (
+    <>
+      {sessione.autenticata ? <Personale /> : <PerTutti />}
+      <Pubblicita posizione="terzo" />
+      <DiarioNove inMezzo={<Pubblicita posizione="due_terzi" dentro />} />
+      <Pubblicita posizione="fine" />
+    </>
+  );
 }
 
 function PerTutti() {
@@ -59,7 +72,7 @@ function Personale() {
   const { t, lingua, locale } = useLingua();
   const k = t.giorno;
   const l = t.lettura;
-  const giorno = useCarica(cartaDelGiorno);
+  const giorno = useCarica(cartaDelGiornoLocale);
   const [girata, setGirata] = useState(false);
   if (giorno.errore) return <section className="band band-tight"><p className="error">{giorno.errore}</p></section>;
   const g = giorno.dati;
@@ -87,6 +100,7 @@ function Personale() {
               <LinkV2 className="button" href={`${R.leggi}?source=daily`}>{k.cta}</LinkV2>
               <LinkV2 className="button button-quiet" href={R.carta(g.carta.slug ?? g.carta.id)}>{f(k.significato, { carta: nome })}</LinkV2>
             </div>
+            <InvitoNotifiche />
           </>
         )}
       </div>

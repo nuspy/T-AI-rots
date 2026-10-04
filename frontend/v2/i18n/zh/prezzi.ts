@@ -41,7 +41,7 @@ export const prezzi = {
 
   codici: "Have a code?",
   codice_sconto: "Discount code",
-  codice_sconto_aiuto: "The discount applies to the first payment.",
+  codice_sconto_aiuto: "Each code says how long it lasts: the first payment, a few months, or every renewal.",
   codice_regalo: "Gift code",
   codice_regalo_aiuto: "A gift code adds readings right away, no payment.",
   applica: "Apply",
@@ -61,13 +61,41 @@ export const prezzi = {
     coupon_azzera_abbonamento: "This code cannot be applied to this subscription.",
     coupon_sconto: "This is a discount code: use it with an offer above.",
     coupon_regalo: "This is a gift code: redeem it below.",
+    coupon_non_cumulabile: "This code doesn't add to your other discounts, and the one you already have is higher.",
+    troppi_tentativi: "Too many wrong codes: try again in an hour.",
   } as Record<string, string>,
+
+  /* Codici sconto e link con il codice (v9, Fase 2d). */
+  coupon: {
+    applicato: "Code {codice} applied",
+    sconto_pacchetto: "{sconto} on packages",
+    durata_una_volta: "{sconto} on the first payment",
+    durata_periodi: "{sconto} on your first {n} payments",
+    durata_sempre: "{sconto} on every payment, renewals included",
+    cumulabile: "It adds to the automatic-renewal and trial discounts.",
+    non_cumulabile: "It doesn't add to other discounts: you always get the higher one.",
+    scade_oggi: "Expires today",
+    scade_tra: { uno: "Expires tomorrow", molti: "Expires in {n} days" },
+    risparmi: "You save {importo}",
+    /** The badge on a plan when the code's discount wins over the automatic-renewal one. */
+    badge: "{sconto} with your code",
+    vince_entrambi: "Code and automatic-renewal discount, combined.",
+    vince_coupon: "The code's discount is higher than the automatic-renewal one ({base}): it applies instead.",
+    vince_rinnovo: "Your automatic-renewal discount ({base}) is higher and the code doesn't add to it: you already pay the lower price.",
+    vince_prova: "The trial discount ({base}) is higher and the code doesn't add to it.",
+    poi: "Then {prezzo}.",
+    togli: "Remove the code",
+    nella_prova: "Code {codice}: the first payment after the trial is {prezzo} instead of {listino}.",
+    nella_prova_no: "Code {codice}: the trial discount is higher, so it stays.",
+    solo_stripe: "Codes work on card payments on the website; in the app, use the card (Stripe) button.",
+  },
 
   movimenti: "Recent activity",
   nessun_movimento: "No activity yet.",
   motivi: {
     accredito_piano: "Plan readings", acquisto: "Package purchased", consumo: "Reading", rimborso: "Refund",
     rettifica: "Adjustment", scadenza: "Expiry", omaggio: "Gift",
+    storno: "Payment reversed", storno_annullato: "Reversal cancelled",
   } as Record<string, string>,
 
   pagato_pacchetto: "Payment complete: the readings of «{nome}» are in your balance.",

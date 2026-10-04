@@ -8,6 +8,7 @@ import { useState } from "react";
 import { statoVotoMazzi, suggerisciTemaMazzo, votaMazzo, type CandidatoVoto } from "@/lib/api";
 import { useSessione } from "@/lib/sessione";
 import { f } from "@/v2/i18n";
+import { CampioniVoto } from "@/v2/componenti/campioni-voto";
 import { useLingua } from "@/v2/lib/lingua";
 import { R } from "@/v2/lib/percorsi";
 import { useAzione, useCarica } from "@/v2/lib/usa";
@@ -60,7 +61,7 @@ function Votazione() {
       {s.tornata ? (
         <>
           {mio && <p className="success" role="status">{k.voto_grazie}</p>}
-          <div className="pricing-grid" style={{ marginTop: "1.4rem" }}>
+          <div className="pricing-grid" style={{ marginTop: ".5rem" }}>
             {s.candidati.map((c) => <Candidato key={c.id} c={c} mio={mio} inCorso={inCorso} onVota={() => vota(c.id)} />)}
           </div>
           {mio && <p className="small muted">{k.voto_cambia}</p>}
@@ -69,7 +70,7 @@ function Votazione() {
       ) : <p className="notice">{k.voto_nessuna}</p>}
 
       {s.vincitori_precedenti && s.vincitori_precedenti.length > 0 && (
-        <div className="panel" style={{ marginTop: "2rem" }}>
+        <div className="panel" style={{ marginTop: ".7rem" }}>
           <h2>{k.voto_vincitori}</h2>
           <ul className="list-plain">
             {s.vincitori_precedenti.map((v) => (
@@ -91,15 +92,7 @@ function Candidato({ c, mio, inCorso, onVota }: { c: CandidatoVoto; mio: string 
     <article className={`plan ${qui ? "featured" : ""}`}>
       <h3>{c.nome}</h3>
       {c.descrizione && <p>{c.descrizione}</p>}
-      {c.campioni.some((x) => x.url) && (
-        <div className="button-row" style={{ margin: "1rem 0" }}>
-          {c.campioni.filter((x) => x.url).map((x, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={i} src={x.url as string} alt={x.etichetta ?? c.nome} width={96} height={170} loading="lazy"
-              style={{ width: 96, height: "auto", border: "2px solid #f5e6bf" }} />
-          ))}
-        </div>
-      )}
+      <CampioniVoto nome={c.nome} campioni={c.campioni} />
       {c.percentuale !== null && (
         <>
           <div className="stat-bar" aria-hidden="true"><span style={{ width: `${c.percentuale}%` }} /></div>
@@ -120,7 +113,7 @@ function Suggerisci() {
   const [testo, setTesto] = useState("");
   const [inviato, setInviato] = useState(false);
   return (
-    <div className="panel" style={{ marginTop: "2rem" }}>
+    <div className="panel" style={{ marginTop: ".7rem" }}>
       <h2>{k.suggerisci_titolo}</h2>
       <p className="small">{k.suggerisci_testo}</p>
       <label className="field">

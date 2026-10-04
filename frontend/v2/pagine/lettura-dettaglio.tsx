@@ -14,6 +14,7 @@ import { useSessione } from "@/lib/sessione";
 import { f } from "@/v2/i18n";
 import LinkV2 from "@/v2/componenti/link";
 import { Modale } from "@/v2/componenti/modale";
+import { CarteDaStampare, NotaStampa, PulsanteStampa } from "@/v2/componenti/stampa";
 import { PannelloCondivisione, urlCondivisioneV2 } from "@/v2/lettura/condivisione";
 import { Tavolo, type Posata } from "@/v2/lettura/tavolo";
 import stili from "@/v2/lettura/lettura.module.css";
@@ -90,7 +91,7 @@ export function DettaglioLettura({ id }: { id: string }) {
     <LinguaNomi valore={ll}>
       <section className="band band-tight">
         <LinkV2 className="button button-quiet button-small" href={R.storia}>← {s.indietro}</LinkV2>
-        <div className={stili.scena} style={{ marginTop: "1.4rem" }}>
+        <div className={stili.scena} style={{ marginTop: ".5rem" }}>
           <small>{nomeStesa(lt.stesa_dati, ll)} · {f(s.dettaglio_quando, { data: new Date(lt.created_at).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" }) })}</small>
           <q dir="auto">{lt.question}</q>
         </div>
@@ -109,12 +110,13 @@ export function DettaglioLettura({ id }: { id: string }) {
               ))}
             </div>
             {annotato && <p className="success" role="status">{s.esito_salvato}</p>}
-            <div className="button-row" style={{ marginTop: "1.2rem" }}>
+            <div className="button-row" style={{ marginTop: ".5rem" }}>
               {lt.status === "completata" && (
                 <button type="button" className="button button-small" onClick={() => setCondividendo(true)} data-an="share_started">{s.condividi}</button>
               )}
               <LinkV2 className="button button-quiet button-small" data-an="followup_started"
                 href={`${R.leggi}?question=${encodeURIComponent(lt.question)}&source=story`}>{s.riprendi_tema}</LinkV2>
+              {lt.status === "completata" && <PulsanteStampa etichetta={s.stampa_pdf} piccolo />}
               <button type="button" className="button button-danger button-small" onClick={() => setCancellando(true)}>{s.cancella}</button>
             </div>
             {lt.share_token && (
@@ -124,18 +126,20 @@ export function DettaglioLettura({ id }: { id: string }) {
             )}
             {lt.context_summary && (
               <>
-                <p className="eyebrow" style={{ marginTop: "1.4rem" }}>{s.il_quadro}</p>
+                <p className="eyebrow" style={{ marginTop: ".5rem" }}>{s.il_quadro}</p>
                 <p dir="auto" style={{ fontFamily: "var(--serif)" }}>{lt.context_summary}</p>
               </>
             )}
           </section>
         </div>
-        {lt.persone && <div style={{ marginTop: "1.2rem" }}><Persone persone={lt.persone} compat={lt.compatibilita} /></div>}
+        {lt.persone && <div style={{ marginTop: ".5rem" }}><Persone persone={lt.persone} compat={lt.compatibilita} /></div>}
+        <CarteDaStampare stesa={lt.stesa_dati} posate={posate} />
         {lt.synthesis && (
-          <section className={stili.responso} style={{ marginTop: "2rem" }} aria-labelledby="titolo-interpretazione">
+          <section className={stili.responso} style={{ marginTop: ".7rem" }} aria-labelledby="titolo-interpretazione">
             <h2 id="titolo-interpretazione">{s.l_interpretazione}</h2>
             <Markdown testo={lt.synthesis} className={stili.testo} />
             <p className={stili.avvertenza}>{lt.disclaimer}</p>
+            <NotaStampa anno={lt.created_at.slice(0, 4)} />
             {lt.commitment && (
               <details className={stili.verifica}>
                 <summary>{l.verifica}</summary>

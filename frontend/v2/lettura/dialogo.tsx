@@ -30,12 +30,15 @@ function Macchina({ testo }: { testo: string }) {
 }
 
 export function Dialogo({
-  battute, attesa, inputAttivo, onRispondi,
+  battute, attesa, inputAttivo, onRispondi, onBasta, puoiFermarti = false,
 }: {
   battute: Battuta[];
   attesa: boolean;
   inputAttivo: boolean;
   onRispondi: (testo: string) => void;
+  /** «Basta con le domande» (v8.5): chiude l'intervista; attivo solo dopo il minimo di domande. */
+  onBasta?: () => void;
+  puoiFermarti?: boolean;
 }) {
   const { t } = useLingua();
   const l = t.lettura;
@@ -117,7 +120,16 @@ export function Dialogo({
             aria-label={l.risposta_segnaposto}
             dir="auto" rows={2} maxLength={2000} disabled={attesa}
           />
-          <button className="button" type="submit" disabled={attesa || !testo.trim()}>{l.rispondi}</button>
+          {/* Subito sotto il campo: rispondere, o fermare le domande e passare al rito. */}
+          <div className={stili.rispostaAzioni}>
+            <button className="button" type="submit" disabled={attesa || !testo.trim()}>{l.rispondi}</button>
+            {onBasta && (
+              <button className="button button-quiet" type="button" onClick={onBasta} disabled={attesa || !puoiFermarti}
+                title={puoiFermarti ? undefined : l.basta_dopo} data-an="intervista_basta">
+                {l.basta_domande}
+              </button>
+            )}
+          </div>
         </form>
       )}
     </div>

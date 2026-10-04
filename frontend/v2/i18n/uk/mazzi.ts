@@ -60,4 +60,9 @@ export const mazzi: typeof Base = {
   suggerisci_invia: "Надіслати пропозицію",
   suggerisci_grazie: "Дякуємо: твою пропозицію отримано.",
   stampa_cta: "Надрукуй власне Таро",
+  /* the example cards of a candidate deck (up to five), enlargeable */
+  campioni_titolo: "Приклади карт колоди {mazzo}",
+  campione_ingrandisci: "Збільшити приклад карти {n} колоди {mazzo}",
+  campione_zoom: "{mazzo} · карта {n} з {tot}",
+  campione_chiudi: "Закрити збільшену карту",
 };

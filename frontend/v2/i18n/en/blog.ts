@@ -59,4 +59,11 @@ export const blog = {
     { chiave: "fisica", simbolo: "✋", titolo: "Your own cards", testo: "Draw with your deck, read the pattern here." },
   ],
   esplora_ultimi: "From the journal",
+  nove_eyebrow: "The Journal",
+  nove_titolo: "From the Journal",
+  nove_ultimi: "Read the latest posts",
+  nove_attinenti: "Chosen for this page",
+  a_caso: "More to read, picked for you today",
+  nove_sezione: "More in {sezione}",
+  copyright: "© {anno} TAROTS chat (tarots.chat). All rights reserved. No part of this article may be reproduced, distributed or adapted without the owner's written permission.",
 };

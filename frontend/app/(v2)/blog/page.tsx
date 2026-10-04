@@ -59,7 +59,10 @@ export default async function PaginaDiario({ searchParams }: Parametri) {
   const { q, pagina } = pulisci(await searchParams);
   const lingua = await linguaPagina();
   const p = percorsi(lingua, q, pagina);
-  const valori = await precarica([p.elenco, p.evidenza, P.sezioni(), P.etichette()]);
+  const valori = await precarica([
+    p.elenco, p.evidenza, P.sezioni(), P.etichette(),
+    !q && pagina === 1 ? P.nove({ recenti: PER_PAGINA_BLOG, scelti: 10 }) : null,
+  ]);
   const elenco = valori[p.elenco] as ElencoArticoli | undefined;
   const evidenza = p.evidenza ? (valori[p.evidenza] as ElencoArticoli | undefined) : undefined;
   const url = urlPubblico(lingua, "/blog");

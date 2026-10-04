@@ -59,7 +59,10 @@ export default async function PaginaSezione({ params, searchParams }: Parametri)
   const lingua = await linguaPagina();
   const sezione = await leggiSezione(slug, lingua);
   if (!sezione) notFound();
-  const valori = await precarica([P.sezione(slug, lingua), percorsoArticoli(slug, lingua, pagina), P.sezioni(), P.etichette()]);
+  const valori = await precarica([
+    P.sezione(slug, lingua), percorsoArticoli(slug, lingua, pagina), P.sezioni(), P.etichette(),
+    pagina === 1 ? P.nove({ sezione: slug, recenti: PER_PAGINA_BLOG, scelti: 10 }) : null,
+  ]);
   const url = urlPubblico(lingua, `/blog/sezione/${sezione.slug}`);
   const dati = grafo(
     briciole([

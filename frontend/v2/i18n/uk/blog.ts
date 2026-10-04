@@ -61,4 +61,11 @@ export const blog: typeof Base = {
     { chiave: "fisica", simbolo: "✋", titolo: "Твої власні карти", testo: "Тягни зі своєї колоди, а візерунок читай тут." },
   ],
   esplora_ultimi: "З журналу",
+  nove_eyebrow: "Щоденник",
+  nove_titolo: "Зі Щоденника",
+  nove_ultimi: "Читати останні записи",
+  nove_attinenti: "Дібрано для цієї сторінки",
+  a_caso: "Ще почитати — дібрано для тебе сьогодні",
+  nove_sezione: "Ще в розділі «{sezione}»",
+  copyright: "© {anno} TAROTS chat (tarots.chat). Усі права захищено. Відтворення, поширення чи переробка цієї статті, повністю або частково, без письмового дозволу правовласника заборонені.",
 };

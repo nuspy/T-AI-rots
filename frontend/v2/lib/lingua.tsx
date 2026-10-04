@@ -5,9 +5,13 @@
  * Chi decide la lingua, nell'ordine:
  *  1. l'indirizzo, se comincia con `/it`: è italiano (salvo una scelta salvata che non sia né italiano né
  *     inglese, per esempio l'ungherese — come nel sito);
- *  2. la scelta salvata nel browser (la chiave `lingua`, la stessa del sito: chi l'ha scelta di là la ritrova);
- *  3. la lingua del browser;
- *  4. quella con cui il server ha scritto la pagina.
+ *  2. la scelta salvata: il cookie `lingua` (4/10) e, per chi l'aveva scelta prima, la chiave `lingua` del
+ *     `localStorage` (la stessa del sito). Il cookie è tecnico: ricorda una preferenza chiesta dalla persona;
+ *  3. la lingua del browser, se è una delle lingue del sito;
+ *  4. il paese dell'IP (`/lingua-suggerita`, database geografico locale), solo se il browser non indica nessuna
+ *     lingua del sito;
+ *  5. quella con cui il server ha scritto la pagina.
+ * Per chi ha un account vale poi la lingua del profilo (`lingua-profilo.ts`, Fase 2d).
  * Le preferenze si leggono dopo il montaggio: sul server non ci sono, e leggerle durante il rendering darebbe due
  * alberi diversi fra server e browser.
  *
@@ -16,9 +20,9 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
-import { impostaLinguaMessaggi, impostaMessaggiErrore } from "@/lib/api";
+import { API, impostaLinguaMessaggi, impostaMessaggiErrore } from "@/lib/api";
 import {
-  PREDEFINITA, TRADOTTE, caricaDizionario, comeLingua, datiLingua, dizionarioPronto, linguaDelBrowser,
+  PREDEFINITA, TRADOTTE, caricaDizionario, comeLingua, datiLingua, dizionarioPronto,
   type Dizionario, type Lingua,
 } from "@/v2/i18n";
 
@@ -38,6 +42,25 @@ interface ContestoLingua {
 const Contesto = createContext<ContestoLingua | null>(null);
 const ContestoNomi = createContext<Lingua | null>(null);
 const CHIAVE = "lingua";
+const UN_ANNO = 365 * 24 * 60 * 60;
+
+function leggiCookie(): Lingua | null {
+  const m = document.cookie.match(/(?:^|;\s*)lingua=([a-z]{2})/);
+  return m ? comeLingua(m[1]) : null;
+}
+
+function scriviCookie(l: Lingua): void {
+  document.cookie = `${CHIAVE}=${l}; Path=/; Max-Age=${UN_ANNO}; SameSite=Lax`;
+}
+
+/* La prima lingua del browser che il sito ha, o nessuna (non l'inglese di ripiego: prima si guarda il paese). */
+function dalBrowser(preferite: readonly string[]): Lingua | null {
+  for (const p of preferite) {
+    const l = comeLingua(p);
+    if (l) return l;
+  }
+  return null;
+}
 
 export const conPrefissoIt = (percorso: string) => percorso === "/it" || percorso.startsWith("/it/");
 
@@ -48,15 +71,29 @@ export function ProviderLinguaV2({ children, iniziale = PREDEFINITA }: { childre
   const [rilevata, setRilevata] = useState<Lingua | null>(null);
 
   useEffect(() => {
-    let scelta: Lingua | null = null;
-    try {
-      scelta = comeLingua(window.localStorage.getItem(CHIAVE));
-    } catch {
-      /* archiviazione non disponibile: si va sulle preferenze del browser */
+    let scelta: Lingua | null = leggiCookie();
+    if (!scelta) {
+      try {
+        scelta = comeLingua(window.localStorage.getItem(CHIAVE));
+      } catch {
+        /* archiviazione non disponibile: si va sulle preferenze del browser */
+      }
     }
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSalvata(scelta);
-    setRilevata(linguaDelBrowser(navigator.languages?.length ? navigator.languages : [navigator.language]));
+    const browser = dalBrowser(navigator.languages?.length ? navigator.languages : [navigator.language]);
+    setRilevata(browser);
+    if (scelta || browser) return;
+    /* Né scelta né lingua del browser: l'ultimo indizio è il paese. Se non risponde, resta la lingua della pagina. */
+    let annullato = false;
+    void fetch(`${API}/lingua-suggerita`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { lingua?: string | null } | null) => {
+        const l = comeLingua(d?.lingua ?? null);
+        if (!annullato && l) setRilevata(l);
+      })
+      .catch(() => undefined);
+    return () => { annullato = true; };
   }, []);
 
   const lingua: Lingua = useMemo(() => {
@@ -89,10 +126,11 @@ export function ProviderLinguaV2({ children, iniziale = PREDEFINITA }: { childre
 
   const imposta = useCallback((l: Lingua) => {
     setSalvata(l);
+    scriviCookie(l);
     try {
       window.localStorage.setItem(CHIAVE, l);
     } catch {
-      /* vale per questa visita */
+      /* resta il cookie */
     }
   }, []);
 

@@ -58,4 +58,9 @@ export const mazzi: typeof Base = {
   suggerisci_invia: "Javaslat elküldése",
   suggerisci_grazie: "Köszönjük: megkaptuk a javaslatodat.",
   stampa_cta: "Nyomtasd ki a saját tarotkártyáidat",
+  /* the example cards of a candidate deck (up to five), enlargeable */
+  campioni_titolo: "{mazzo} mintakártyái",
+  campione_ingrandisci: "{mazzo} {n}. mintakártyájának nagyítása",
+  campione_zoom: "{mazzo} · {n}/{tot}. kártya",
+  campione_chiudi: "A nagyított kártya bezárása",
 };

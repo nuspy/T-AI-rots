@@ -2,16 +2,20 @@
 
 /* Il diario (il blog) nella v2: un grafo di contenuti, non una lista di post (specifica v2, §14). Ogni articolo
  * porta a una carta, una stesa, un mazzo, e infine a una domanda. I dati vengono dall'API del blog; ogni
- * collegamento resta dentro la v2. Include «Explore», il punto d'ingresso del grafo. */
+ * collegamento resta dentro la v2. Include «Explore», il punto d'ingresso del grafo.
+ *
+ * Gli spazi pubblicitari (spenti per default): negli elenchi fra i blocchi della colonna (`ConPubblicita`), prima del
+ * ponte verso la lettura; nell'articolo dentro il testo a un terzo e a due terzi, e alla fine prima del ponte. */
 
-import { Suspense, useState } from "react";
+import { Fragment, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { Carta, Stesa } from "@/lib/api";
+import { leggiApi, type Carta, type Stesa } from "@/lib/api";
 import { dataLeggibile, urlMedia, type ArticoloBreve, type NodoSezione } from "@/lib/blog";
 import { f, plurale } from "@/v2/i18n";
 import { BlogMarkdownV2, type Riferimenti } from "@/v2/componenti/blog-markdown";
 import { ImmagineCarta } from "@/v2/componenti/carta";
 import LinkV2 from "@/v2/componenti/link";
+import { ConPubblicita, Pubblicita, usePubblicitaVisibile } from "@/v2/componenti/pubblicita";
 import { P, PER_PAGINA_BLOG, articoli, articolo, etichette, sezione, sezioni } from "@/v2/lib/dati";
 import { linguaPubblica } from "@/lib/indirizzi";
 import { urlPubblico } from "@/lib/seo";
@@ -36,6 +40,61 @@ export function Tessera({ a, grande = false }: { a: ArticoloBreve; grande?: bool
   );
 }
 
+export interface Nove {
+  recenti: ArticoloBreve[];
+  scelti: ArticoloBreve[];
+}
+
+/** I nove articoli di ogni pagina (v8.5): i 3 più recenti, col link all'elenco in ordine cronologico, e 6 scelti
+ *  a caso fra quelli attinenti alla pagina, ciascuno col link alla sezione da cui viene. `vuoto` si mostra se il
+ *  diario non ha ancora articoli. */
+export function DiarioNove({
+  contesto = {}, eyebrow, titolo, vuoto = null, inMezzo = null,
+}: {
+  contesto?: { carta?: string; stesa?: string; sezione?: string; articolo?: string };
+  eyebrow?: string;
+  titolo?: string;
+  vuoto?: React.ReactNode;
+  /** Fra i recenti e gli attinenti: uno spazio pubblicitario nelle pagine corte, dove il diario è metà del contenuto. */
+  inMezzo?: React.ReactNode;
+}) {
+  const { t } = useLingua();
+  const b = t.blog;
+  const percorso = P.nove(contesto);
+  const nove = useCarica(() => leggiApi<Nove>(percorso), [percorso], { pubblico: true, iniziale: percorso });
+  const recenti = nove.dati?.recenti ?? [];
+  const scelti = nove.dati?.scelti ?? [];
+  if (!recenti.length && !scelti.length) return vuoto ? <>{vuoto}</> : null;
+  return (
+    <section className="band band-tight diario-nove" aria-labelledby="titolo-nove">
+      <div className="section-head">
+        <div>
+          <p className="eyebrow">{eyebrow ?? b.nove_eyebrow}</p>
+          <h2 id="titolo-nove" className="section-title">{titolo ?? b.nove_titolo}</h2>
+        </div>
+        <LinkV2 className="button button-quiet" href={R.blog}>{b.nove_ultimi}</LinkV2>
+      </div>
+      <div className="content-grid">{recenti.map((a) => <Tessera key={a.slug} a={a} />)}</div>
+      {scelti.length > 0 && inMezzo}
+      {scelti.length > 0 && (
+        <>
+          <h3 className="diario-nove-sotto">{b.nove_attinenti}</h3>
+          <div className="content-grid">
+            {scelti.map((a) => (
+              <div key={a.slug} className="diario-nove-voce">
+                <Tessera a={a} />
+                {a.sezione && (
+                  <LinkV2 className="inline small" href={R.blogSezione(a.sezione.slug)}>{f(b.nove_sezione, { sezione: a.sezione.nome })}</LinkV2>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
 function Pagine({ pagina, pagine, base, q }: { pagina: number; pagine: number; base: string; q?: string }) {
   const { t } = useLingua();
   if (pagine <= 1) return null;
@@ -55,15 +114,18 @@ function Pagine({ pagina, pagine, base, q }: { pagina: number; pagine: number; b
   );
 }
 
-function Albero({ nodi, corrente }: { nodi: NodoSezione[]; corrente?: string }) {
+/* Le sezioni come un piccolo albero (v8.5): ogni ramo collegato al padre da un tratto d'ottone, il numero degli
+ * articoli in una pastiglia, la sezione corrente in prugna. Voci alte 44px: si toccano bene anche sul telefono. */
+function Albero({ nodi, corrente, livello = 0 }: { nodi: NodoSezione[]; corrente?: string; livello?: number }) {
   return (
-    <ul className="list-plain tree">
+    <ul className={livello === 0 ? "albero-sezioni" : "albero-rami"}>
       {nodi.map((n) => (
         <li key={n.id}>
-          <LinkV2 href={R.blogSezione(n.slug)} aria-current={n.slug === corrente ? "page" : undefined}>
-            {n.nome} <small className="muted">({n.n_articoli})</small>
+          <LinkV2 className="albero-voce" href={R.blogSezione(n.slug)} aria-current={n.slug === corrente ? "page" : undefined}>
+            <span className="albero-nome">{n.nome}</span>
+            <span className="albero-conta">{n.n_articoli}</span>
           </LinkV2>
-          {n.figli.length > 0 && <Albero nodi={n.figli} corrente={corrente} />}
+          {n.figli.length > 0 && <Albero nodi={n.figli} corrente={corrente} livello={livello + 1} />}
         </li>
       ))}
     </ul>
@@ -75,25 +137,52 @@ function Laterale({ corrente }: { corrente?: string }) {
   const albero = useCarica(sezioni, [], { pubblico: true, iniziale: P.sezioni() });
   const tag = useCarica(etichette, [], { pubblico: true, iniziale: P.etichette() });
   return (
-    <aside className="story-sidebar" aria-label={t.blog.sezioni}>
-      <h2>{t.blog.sezioni}</h2>
-      {albero.dati && <Albero nodi={albero.dati} corrente={corrente} />}
+    <aside className="journal-aside" aria-label={t.blog.sezioni}>
+      <section className="sezioni-box" aria-labelledby="titolo-sezioni">
+        <h2 id="titolo-sezioni">{t.blog.sezioni}</h2>
+        {albero.dati && <Albero nodi={albero.dati} corrente={corrente} />}
+      </section>
       {(tag.dati ?? []).length > 0 && (
-        <>
-          <h2 style={{ marginTop: "1.6rem" }}>{t.blog.etichette}</h2>
+        <section className="sezioni-box" aria-labelledby="titolo-etichette">
+          <h2 id="titolo-etichette">{t.blog.etichette}</h2>
           <ul className="chips">
             {(tag.dati ?? []).slice(0, 24).map((e) => <li key={e.slug}><LinkV2 className="chip" href={R.blogTag(e.slug)}>{e.nome}</LinkV2></li>)}
           </ul>
-        </>
+        </section>
       )}
     </aside>
+  );
+}
+
+/** I 10 a caso delle pagine del Diario (v8.5): sotto gli ultimi articoli, solo in prima pagina, ognuno col link alla
+ *  sua sezione. Stessa scelta per tutta la giornata (la decide il server). */
+function SceltiACaso({ percorso }: { percorso: string }) {
+  const { t } = useLingua();
+  const b = t.blog;
+  const nove = useCarica(() => leggiApi<Nove>(percorso), [percorso], { pubblico: true, iniziale: percorso });
+  const scelti = nove.dati?.scelti ?? [];
+  if (!scelti.length) return null;
+  return (
+    <section className="journal-a-caso" aria-labelledby="titolo-a-caso">
+      <h2 id="titolo-a-caso" className="diario-nove-sotto">{b.a_caso}</h2>
+      <div className="journal-grid">
+        {scelti.map((a) => (
+          <div key={a.slug} className="diario-nove-voce">
+            <Tessera a={a} />
+            {a.sezione && (
+              <LinkV2 className="inline small" href={R.blogSezione(a.sezione.slug)}>{f(b.nove_sezione, { sezione: a.sezione.nome })}</LinkV2>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
 function Ponte() {
   const { t } = useLingua();
   return (
-    <div className="share-band" style={{ marginTop: "2.4rem" }}>
+    <div className="share-band" style={{ marginTop: ".85rem" }}>
       <div><p className="eyebrow">{t.blog.ponte_titolo}</p><p>{t.blog.ponte_testo}</p></div>
       <div><LinkV2 className="button button-brass" href={`${R.leggi}?source=journal`}>{t.blog.ponte_cta}</LinkV2></div>
     </div>
@@ -119,7 +208,7 @@ function DiarioContenuto() {
 
   return (
     <section className="band band-tight">
-      <form role="search" className="question-form" style={{ marginBottom: "2rem" }} onSubmit={(e) => {
+      <form role="search" className="question-form" style={{ marginBottom: ".7rem" }} onSubmit={(e) => {
         e.preventDefault();
         const pulito = testo.trim();
         router.push(indirizzoV2(pulito ? `${R.blog}?q=${encodeURIComponent(pulito)}` : R.blog, prefissoIt));
@@ -131,16 +220,22 @@ function DiarioContenuto() {
       <div className="story-grid journal-layout">
         <div>
           {q && elenco.dati && <p role="status">{f(plurale(elenco.dati.totale, b.risultati), { q })}</p>}
-          {primo && <div style={{ marginBottom: "1.2rem" }}><Tessera a={primo} grande /></div>}
           {elenco.errore && <p className="error">{elenco.errore}</p>}
           {elenco.dati && lista.length === 0 && !primo && <p className="notice">{q ? b.nessun_risultato : b.vuoto}</p>}
-          {lista.length > 0 && (
-            <>
-              {!q && <p className="eyebrow">{b.ultimi}</p>}
-              <div className="journal-grid">{lista.map((a) => <Tessera key={a.slug} a={a} />)}</div>
-            </>
-          )}
-          {elenco.dati && <Pagine pagina={pagina} pagine={elenco.dati.pagine} base={R.blog} q={q} />}
+          {/* Gli spazi pubblicitari (spenti per default) fra i blocchi presenti: in evidenza, ultimi, scelti a caso;
+              la fine prima del ponte verso la lettura. */}
+          <ConPubblicita dentro>
+            {primo && <div key="primo" style={{ marginBottom: ".5rem" }}><Tessera a={primo} grande /></div>}
+            {lista.length > 0 && (
+              <Fragment key="lista">
+                {!q && <p className="eyebrow">{b.ultimi}</p>}
+                <div className="journal-grid">{lista.map((a) => <Tessera key={a.slug} a={a} />)}</div>
+                {elenco.dati && <Pagine pagina={pagina} pagine={elenco.dati.pagine} base={R.blog} q={q} />}
+              </Fragment>
+            )}
+            {!q && pagina === 1 && <SceltiACaso key="caso" percorso={P.nove({ recenti: PER_PAGINA, scelti: 10 })} />}
+          </ConPubblicita>
+          {elenco.dati && lista.length === 0 && <Pagine pagina={pagina} pagine={elenco.dati.pagine} base={R.blog} q={q} />}
           <Ponte />
         </div>
         <Laterale />
@@ -176,34 +271,42 @@ function SezioneContenuto({ slug }: { slug: string }) {
       </section>
       <section className="band band-tight story-grid journal-layout">
         <div>
-          {d.figli.length > 0 && (<><p className="eyebrow">{b.sottosezioni}</p><Albero nodi={d.figli} /></>)}
-          {d.tipo === "carte" && (
-            <>
-              <p className="eyebrow" style={{ marginTop: "1.4rem" }}>{b.carte_sezione}</p>
-              <div className="cards-grid">
-                {(d.elementi as unknown as Carta[]).map((c) => (
-                  <LinkV2 key={c.id} className="card-tile" href={R.carta(c.slug ?? c.id)}>
-                    <ImmagineCarta id={c.id} alt="" mazzo={null} /><span>{nomeDi(c, lingua)}</span>
-                  </LinkV2>
-                ))}
-              </div>
-            </>
-          )}
-          {d.tipo === "stese" && (
-            <>
-              <p className="eyebrow" style={{ marginTop: "1.4rem" }}>{b.stese_sezione}</p>
-              <ul className="chips">
-                {(d.elementi as unknown as Stesa[]).map((x) => <li key={x.id}><LinkV2 className="chip" href={R.stesa(x.slug ?? x.id)}>{x.nome}</LinkV2></li>)}
-              </ul>
-            </>
-          )}
-          {lista.length > 0 && (
-            <>
-              <p className="eyebrow" style={{ marginTop: "1.8rem" }}>{b.articoli}</p>
-              <div className="journal-grid">{lista.map((a) => <Tessera key={a.slug} a={a} />)}</div>
-              {elenco.dati && <Pagine pagina={pagina} pagine={elenco.dati.pagine} base={R.blogSezione(slug)} />}
-            </>
-          )}
+          <ConPubblicita dentro>
+            {d.figli.length > 0 && (
+              <section key="figli" className="sezioni-box" aria-labelledby="titolo-sottosezioni">
+                <h2 id="titolo-sottosezioni">{b.sottosezioni}</h2>
+                <Albero nodi={d.figli} />
+              </section>
+            )}
+            {d.tipo === "carte" && (
+              <Fragment key="carte">
+                <p className="eyebrow" style={{ marginTop: ".5rem" }}>{b.carte_sezione}</p>
+                <div className="cards-grid">
+                  {(d.elementi as unknown as Carta[]).map((c) => (
+                    <LinkV2 key={c.id} className="card-tile" href={R.carta(c.slug ?? c.id)}>
+                      <ImmagineCarta id={c.id} alt="" mazzo={null} /><span>{nomeDi(c, lingua)}</span>
+                    </LinkV2>
+                  ))}
+                </div>
+              </Fragment>
+            )}
+            {d.tipo === "stese" && (
+              <Fragment key="stese">
+                <p className="eyebrow" style={{ marginTop: ".5rem" }}>{b.stese_sezione}</p>
+                <ul className="chips">
+                  {(d.elementi as unknown as Stesa[]).map((x) => <li key={x.id}><LinkV2 className="chip" href={R.stesa(x.slug ?? x.id)}>{x.nome}</LinkV2></li>)}
+                </ul>
+              </Fragment>
+            )}
+            {lista.length > 0 && (
+              <Fragment key="lista">
+                <p className="eyebrow" style={{ marginTop: ".65rem" }}>{b.articoli}</p>
+                <div className="journal-grid">{lista.map((a) => <Tessera key={a.slug} a={a} />)}</div>
+                {elenco.dati && <Pagine pagina={pagina} pagine={elenco.dati.pagine} base={R.blogSezione(slug)} />}
+              </Fragment>
+            )}
+            {pagina === 1 && <SceltiACaso key="caso" percorso={P.nove({ sezione: slug, recenti: PER_PAGINA, scelti: 10 })} />}
+          </ConPubblicita>
           {elenco.dati && lista.length === 0 && d.figli.length === 0 && d.tipo === "articoli" && <p className="notice">{b.vuoto}</p>}
           <Ponte />
         </div>
@@ -236,8 +339,13 @@ function EtichettaContenuto({ slug }: { slug: string }) {
       <section className="band band-tight story-grid journal-layout">
         <div>
           {elenco.dati && lista.length === 0 && <p className="notice">{b.vuoto}</p>}
-          <div className="journal-grid">{lista.map((a) => <Tessera key={a.slug} a={a} />)}</div>
-          {elenco.dati && <Pagine pagina={pagina} pagine={elenco.dati.pagine} base={R.blogTag(slug)} />}
+          <ConPubblicita dentro>
+            <Fragment key="lista">
+              <div className="journal-grid">{lista.map((a) => <Tessera key={a.slug} a={a} />)}</div>
+              {elenco.dati && <Pagine pagina={pagina} pagine={elenco.dati.pagine} base={R.blogTag(slug)} />}
+            </Fragment>
+            {pagina === 1 && <SceltiACaso key="caso" percorso={P.nove({ tag: slug, recenti: PER_PAGINA, scelti: 10 })} />}
+          </ConPubblicita>
           <Ponte />
         </div>
         <Laterale />
@@ -255,6 +363,8 @@ export function ArticoloDiario({ slug }: { slug: string }) {
   const b = t.blog;
   const a = useCarica(() => articolo(slug), [slug], { pubblico: true, iniziale: P.articolo(slug) });
   const [copiato, setCopiato] = useState(false);
+  /* Gli spazi pubblicitari dentro il testo (a un terzo e a due terzi): il testo si taglia solo se se ne vede uno. */
+  const conInserti = usePubblicitaVisibile(["terzo", "due_terzi"]);
   if (a.errore) {
     return (
       <section className="band band-tight">
@@ -297,19 +407,20 @@ export function ArticoloDiario({ slug }: { slug: string }) {
         {immagine && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={immagine} alt={x.immagine?.alt ?? ""} width={x.immagine?.larghezza ?? 1200} height={x.immagine?.altezza ?? 675}
-            style={{ display: "block", width: "100%", maxWidth: 960, height: "auto", marginBottom: "2rem" }} fetchPriority="high" />
+            style={{ display: "block", width: "100%", maxWidth: 960, height: "auto", marginBottom: ".7rem" }} fetchPriority="high" />
         )}
-        <BlogMarkdownV2 testo={x.testo} riferimenti={rif} etichette={{ carta: b.tipo_carta, stesa: b.tipo_stesa, articolo: b.tipo_articolo }} />
+        <BlogMarkdownV2 testo={x.testo} riferimenti={rif} etichette={{ carta: b.tipo_carta, stesa: b.tipo_stesa, articolo: b.tipo_articolo }}
+          inserti={conInserti ? { terzo: <Pubblicita posizione="terzo" dentro />, due_terzi: <Pubblicita posizione="due_terzi" dentro /> } : undefined} />
 
         {x.faq.length > 0 && (
-          <div className="faq-list" style={{ maxWidth: "68ch", marginTop: "2.4rem" }}>
+          <div className="faq-list" style={{ maxWidth: "68ch", marginTop: ".85rem" }}>
             <p className="eyebrow">{b.domande}</p>
             {x.faq.map((q) => <details key={q.domanda} className="faq-item"><summary>{q.domanda}</summary><p>{q.risposta}</p></details>)}
           </div>
         )}
 
         {(x.collegamenti.carte.length > 0 || x.collegamenti.stese.length > 0) && (
-          <div style={{ marginTop: "2.4rem" }}>
+          <div style={{ marginTop: ".85rem" }}>
             <p className="eyebrow">{b.si_parla_di}</p>
             <ul className="chips">
               {x.collegamenti.carte.map((c) => <li key={c.id}><LinkV2 className="chip" href={R.carta(c.id)}>✦ {c.nome}</LinkV2></li>)}
@@ -322,15 +433,16 @@ export function ArticoloDiario({ slug }: { slug: string }) {
             {x.tags.map((e) => <li key={e.slug}><LinkV2 className="chip" href={R.blogTag(e.slug)}>#{e.nome}</LinkV2></li>)}
           </ul>
         )}
-        <div className="button-row" style={{ marginTop: "1.6rem" }}>
+        <div className="button-row" style={{ marginTop: ".55rem" }}>
           <button type="button" className="button button-quiet button-small" onClick={condividi} data-an="share_started" data-an-cosa="articolo">
             {copiato ? b.copiato : b.condividi}
           </button>
         </div>
+        <Pubblicita posizione="fine" dentro />
         <Ponte />
 
         {x.correlati.length > 0 && (
-          <div style={{ marginTop: "3rem" }}>
+          <div style={{ marginTop: "1.05rem" }}>
             <p className="eyebrow">{b.correlati}</p>
             <div className="journal-grid">{x.correlati.slice(0, 3).map((y) => <Tessera key={y.slug} a={y} />)}</div>
           </div>
@@ -341,15 +453,18 @@ export function ArticoloDiario({ slug }: { slug: string }) {
             {x.successivo ? <LinkV2 className="inline" href={R.articolo(x.successivo.slug)} rel="next">{x.successivo.titolo} →</LinkV2> : <span />}
           </nav>
         )}
+        <p className="small muted articolo-copyright">
+          {f(b.copyright, { anno: (x.pubblicato_il ?? x.aggiornato_il ?? "").slice(0, 4) })}
+        </p>
       </section>
+      <DiarioNove contesto={{ articolo: x.slug }} />
     </article>
   );
 }
 
 export function Esplora() {
-  const { t, lingua } = useLingua();
+  const { t } = useLingua();
   const b = t.blog;
-  const diario = useCarica(() => articoli(lingua, { per_pagina: 3 }), [lingua], { pubblico: true, iniziale: P.articoli(lingua, { per_pagina: 3 }) });
   const dove: Record<string, string> = { diario: R.blog, carte: R.carte, stese: R.stese, mazzi: R.mazzi, giorno: R.giorno, fisica: R.fisica };
   return (
     <>
@@ -367,15 +482,10 @@ export function Esplora() {
           ))}
         </div>
       </section>
-      {(diario.dati?.articoli ?? []).length > 0 && (
-        <section className="band band-tight">
-          <div className="section-head">
-            <p className="eyebrow">{b.esplora_ultimi}</p>
-            <LinkV2 className="button button-quiet" href={R.blog}>{t.home.diario_cta}</LinkV2>
-          </div>
-          <div className="content-grid">{diario.dati!.articoli.map((a) => <Tessera key={a.slug} a={a} />)}</div>
-        </section>
-      )}
+      {/* Pagina corta come la carta del giorno: un terzo dopo le voci, due terzi dentro il diario, la fine dopo. */}
+      <Pubblicita posizione="terzo" />
+      <DiarioNove eyebrow={b.esplora_ultimi} inMezzo={<Pubblicita posizione="due_terzi" dentro />} />
+      <Pubblicita posizione="fine" />
     </>
   );
 }

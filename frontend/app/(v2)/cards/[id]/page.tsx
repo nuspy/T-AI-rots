@@ -44,7 +44,7 @@ export default async function PaginaCarta({ params }: { params: Promise<{ id: st
   if (!c) notFound();
   if (c.slug && id !== c.slug) permanentRedirect(pubblico(lingua, `/cards/${c.slug}`));
 
-  const valori = await precarica([P.carta(id, lingua), P.carte(lingua), P.articoliSu("carta", c.id)]);
+  const valori = await precarica([P.carta(id, lingua), P.carte(lingua), P.nove({ carta: c.id })]);
   const s = seoCarta(c);
   const url = urlPubblico(lingua, `/cards/${c.slug ?? c.id}`);
   const dati = grafo(

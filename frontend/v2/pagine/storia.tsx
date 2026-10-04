@@ -44,7 +44,7 @@ function StoriaFuori() {
           <p>{t.home.memoria_citazione}</p>
           <footer>{t.home.memoria_piede}</footer>
         </div>
-        <h2 style={{ marginTop: "2.6rem" }}>{s.fuori_titolo}</h2>
+        <h2 style={{ marginTop: ".9rem" }}>{s.fuori_titolo}</h2>
         <p className="section-intro">{s.fuori_testo}</p>
         <div className="button-row">
           <button type="button" className="button" onClick={() => sessione.entra(R.storia)}>{s.fuori_entra}</button>
@@ -66,7 +66,7 @@ function StoriaDentro() {
     <section className="band band-tight story-grid">
       <aside className="story-sidebar">
         <Memorie />
-        <h2 style={{ marginTop: "1.8rem" }}>{s.perche_titolo}</h2>
+        <h2 style={{ marginTop: ".65rem" }}>{s.perche_titolo}</h2>
         <p className="small">{s.perche_testo}</p>
       </aside>
       <section className="story-main" aria-labelledby="titolo-filo">
@@ -174,6 +174,7 @@ function Memorie() {
     <section aria-labelledby="titolo-memoria">
       <h2 id="titolo-memoria">{s.memoria_titolo}</h2>
       <p className="small">{s.memoria_testo}</p>
+      <p className="small muted">{s.memoria_oblio}</p>
       {memorie.errore && <p className="error">{memorie.errore}</p>}
       {memorie.dati && elenco.length === 0 && <p className="small muted">{s.memoria_vuoto}</p>}
       {elenco.length > 0 && (
@@ -220,25 +221,36 @@ function Memorie() {
 function RigaMemoria({
   memoria, selezionata, onSeleziona, onCambio,
 }: { memoria: Memoria; selezionata: boolean; onSeleziona: () => void; onCambio: () => void }) {
-  const { t } = useLingua();
+  const { t, locale } = useLingua();
   const s = t.storia;
   const { esegui, inCorso } = useAzione();
   const [modifica, setModifica] = useState(false);
   const [contenuto, setContenuto] = useState(memoria.contenuto);
   const [campo, setCampo] = useState(memoria.campo_attinenza);
+  const tipo = memoria.categoria ? s.categoria[memoria.categoria] : memoria.tipo === "stabile" ? s.tipo_stabile : s.tipo_variabile;
+  const scade = memoria.scade
+    ? f(s.scade, { data: new Date(memoria.scade).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" }) })
+    : "";
 
   return (
     <li className="memory-entry">
       <small>
-        {memoria.tipo === "stabile" ? s.tipo_stabile : s.tipo_variabile} · {memoria.campo_attinenza}
+        {tipo} · {s.campi[memoria.campo_attinenza] ?? memoria.campo_attinenza}
         {s.fonte[memoria.fonte] ? ` · ${s.fonte[memoria.fonte]}` : ""}
       </small>
+      {scade && <p className="small muted" style={{ margin: ".2rem 0 0" }}>{scade}</p>}
       {modifica ? (
         <div style={{ marginTop: ".5rem" }}>
           <label className="field"><span>{s.memoria_titolo}</span>
             <textarea value={contenuto} rows={3} dir="auto" onChange={(e) => setContenuto(e.target.value)} /></label>
           <label className="field"><span>{s.campo}</span>
-            <input value={campo} dir="auto" onChange={(e) => setCampo(e.target.value)} /></label>
+            {memoria.categoria ? (
+              <select value={campo} onChange={(e) => setCampo(e.target.value)}>
+                {Object.entries(s.campi).map(([valore, nome]) => <option key={valore} value={valore}>{nome}</option>)}
+              </select>
+            ) : (
+              <input value={campo} dir="auto" onChange={(e) => setCampo(e.target.value)} />
+            )}</label>
           <div className="button-row">
             <button type="button" className="button button-small" disabled={inCorso || !contenuto.trim()} onClick={async () => {
               await esegui((tok) => modificaMemoria(tok, memoria.id, { contenuto: contenuto.trim(), campo_attinenza: campo.trim() }));

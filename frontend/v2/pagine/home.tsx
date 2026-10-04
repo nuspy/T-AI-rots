@@ -2,25 +2,29 @@
 
 /* La home della v2, nell'ordine della specifica (§15): la domanda, l'esperienza, i temi, il rito, la memoria, la
  * differenza, i mazzi, le carte fisiche, il metodo, dal gratuito alla lettura completa, la condivisione, il
- * diario, le domande, l'ultimo invito. Una pagina che non si allunga per ripetere: ogni sezione fa una cosa. */
+ * diario, le domande, l'ultimo invito. Una pagina che non si allunga per ripetere: ogni sezione fa una cosa.
+ *
+ * Gli spazi pubblicitari (spenti per default): a un terzo dopo il rito, a due terzi dopo le carte fisiche, alla fine
+ * dopo il diario, prima delle domande e dell'ultimo invito. */
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTraccia } from "lanterna-osservatore/react";
 import { impostazioniPubbliche } from "@/lib/api";
-import { urlMedia } from "@/lib/blog";
 import { salvaInvito } from "@/lib/inviti";
 import { f } from "@/v2/i18n";
 import { ImmagineCarta } from "@/v2/componenti/carta";
 import { Dichiarazione } from "@/v2/componenti/dichiarazione";
 import LinkV2 from "@/v2/componenti/link";
-import { P, articoli, useMazzi } from "@/v2/lib/dati";
+import { Pubblicita } from "@/v2/componenti/pubblicita";
+import { P, useMazzi } from "@/v2/lib/dati";
 import { useLingua } from "@/v2/lib/lingua";
 import { R, indirizzoV2 } from "@/v2/lib/percorsi";
 import { useCarica } from "@/v2/lib/usa";
+import { DiarioNove } from "./blog";
 
 export function Home() {
-  const { t, lingua, prefissoIt } = useLingua();
+  const { t, prefissoIt } = useLingua();
   const h = t.home;
   const router = useRouter();
   const traccia = useTraccia();
@@ -28,7 +32,6 @@ export function Home() {
   const [avviso, setAvviso] = useState(false);
   const omaggi = useCarica(impostazioniPubbliche, [], { pubblico: true, iniziale: P.impostazioni() });
   const mazzi = useMazzi();
-  const diario = useCarica(() => articoli(lingua, { per_pagina: 3 }), [lingua], { pubblico: true, iniziale: P.articoli(lingua, { per_pagina: 3 }) });
 
   /* Chi arriva da un invito porta il codice nell'indirizzo: si ricorda fino alla registrazione. */
   useEffect(() => {
@@ -50,7 +53,6 @@ export function Home() {
   const nIscrizione = omaggi.dati?.crediti_iscrizione ?? 3;
   const nInvito = omaggi.dati?.crediti_invito ?? 5;
   const disponibile = (mazzi.dati ?? []).find((m) => m.predefinito) ?? mazzi.dati?.[0];
-  const articoliDiario = diario.dati?.articoli ?? [];
 
   return (
     <>
@@ -146,6 +148,8 @@ export function Home() {
         <Dichiarazione />
       </section>
 
+      <Pubblicita posizione="terzo" />
+
       <section className="memory" aria-labelledby="titolo-memoria">
         <div className="band memory-layout">
           <figure className="memory-card" style={{ margin: 0 }}>
@@ -209,6 +213,8 @@ export function Home() {
         </div>
       </section>
 
+      <Pubblicita posizione="due_terzi" />
+
       <section className="band band-tight" aria-labelledby="titolo-metodo">
         <p className="eyebrow">{h.metodo_eyebrow}</p>
         <h2 id="titolo-metodo" className="section-title">{h.metodo_titolo}</h2>
@@ -239,25 +245,20 @@ export function Home() {
         </div>
       </section>
 
-      <section className="band" aria-labelledby="titolo-diario">
-        <div className="section-head">
-          <div>
-            <p className="eyebrow">{h.diario_eyebrow}</p>
-            <h2 id="titolo-diario" className="section-title">{h.diario_titolo}</h2>
-          </div>
-          <LinkV2 className="button button-quiet" href={R.blog}>{h.diario_cta}</LinkV2>
-        </div>
-        <div className="content-grid">
-          {articoliDiario.length > 0
-            ? articoliDiario.map((a) => (
-                <LinkV2 key={a.slug} className="article" href={R.articolo(a.slug)}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={urlMedia(a.immagine?.mini ?? a.immagine?.url) ?? "/cards/maj-06.webp"} alt="" loading="lazy" />
-                  <small>{a.sezione?.nome ?? a.tags[0]?.nome ?? h.diario_eyebrow}</small>
-                  <h3>{a.titolo}</h3>
-                </LinkV2>
-              ))
-            : [
+      <DiarioNove
+        eyebrow={h.diario_eyebrow}
+        titolo={h.diario_titolo}
+        vuoto={
+          <section className="band" aria-labelledby="titolo-diario">
+            <div className="section-head">
+              <div>
+                <p className="eyebrow">{h.diario_eyebrow}</p>
+                <h2 id="titolo-diario" className="section-title">{h.diario_titolo}</h2>
+              </div>
+              <LinkV2 className="button button-quiet" href={R.blog}>{h.diario_cta}</LinkV2>
+            </div>
+            <div className="content-grid">
+              {[
                 { href: R.carte, img: "maj-06", ...h.diario_riserva[0] },
                 { href: R.stese, img: "maj-17", ...h.diario_riserva[1] },
                 { href: R.giorno, img: "maj-02", ...h.diario_riserva[2] },
@@ -269,8 +270,12 @@ export function Home() {
                   <h3>{a.titolo}</h3>
                 </LinkV2>
               ))}
-        </div>
-      </section>
+            </div>
+          </section>
+        }
+      />
+
+      <Pubblicita posizione="fine" />
 
       <section className="band faq" aria-labelledby="titolo-faq">
         <div>

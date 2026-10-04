@@ -51,7 +51,7 @@ function Elenco() {
               <p className={stili.rigaTitolo}>«{l.question}»</p>
             </Link>
             <p className={stili.rigaDettagli}>
-              {l.categoria !== "standard" && (
+              {(l.categoria === "compatibilita" || l.categoria === "coppia") && (
                 <span className={stili.badge}>{l.categoria === "coppia" ? t.badge_coppia : t.badge_compat}</span>
               )}
               {nomeStesaDaNomi(l.stesa, l.stesa_nomi, lingua)}

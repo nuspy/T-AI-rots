@@ -1,18 +1,23 @@
 "use client";
 
 /* Le stese nella v2: una forma che aiuta la domanda a dispiegarsi. L'elenco porta alla lettura con quella stesa
- * (`/v2/read?spread=…`); la pagina di una stesa mostra lo schema sul tavolo, le posizioni, come leggerla. */
+ * (`/v2/read?spread=…`); la pagina di una stesa mostra lo schema sul tavolo, le posizioni, come leggerla.
+ *
+ * Gli spazi pubblicitari (spenti per default): nell'elenco dopo ogni gruppo di stese; nella pagina di una stesa dopo
+ * lo schema, dopo le regole e dopo le altre stese, prima del diario. */
 
 import { elencaStese, type Categoria, type Stesa, type Stile } from "@/lib/api";
 import { nomePosizione, nomeStesa } from "@/lib/i18n/nomi";
 import { f, plurale } from "@/v2/i18n";
 import LinkV2 from "@/v2/componenti/link";
+import { Pubblicita } from "@/v2/componenti/pubblicita";
 import { MiniaturaStesa } from "@/v2/lettura/miniatura";
 import { Tavolo } from "@/v2/lettura/tavolo";
 import { P, linguaContenuti } from "@/v2/lib/dati";
 import { useLingua } from "@/v2/lib/lingua";
 import { R } from "@/v2/lib/percorsi";
 import { useCarica } from "@/v2/lib/usa";
+import { DiarioNove } from "./blog";
 
 const ORDINE_STILI: Stile[] = ["tradizionale", "moderna", "tendenza"];
 
@@ -53,7 +58,7 @@ export function ElencoStese() {
           const elenco = per(c).filter((s) => s.stile === stile);
           if (!elenco.length) return null;
           return (
-            <div key={stile} style={{ marginTop: "1.6rem" }}>
+            <div key={stile} style={{ marginTop: ".55rem" }}>
               <p className="eyebrow">{t.lettura.stili[stile].nome} · {t.lettura.stili[stile].testo}</p>
               <div className="difference-grid even">{elenco.map((s) => <Tessera key={s.id} stesa={s} />)}</div>
             </div>
@@ -66,8 +71,11 @@ export function ElencoStese() {
   return (
     <>
       {gruppo("standard", k.standard, k.standard_testo)}
+      <Pubblicita posizione="terzo" />
       {gruppo("compatibilita", k.compat, k.compat_testo)}
+      <Pubblicita posizione="due_terzi" />
       {gruppo("coppia", k.coppia, k.coppia_testo)}
+      <Pubblicita posizione="fine" />
     </>
   );
 }
@@ -98,7 +106,7 @@ export function SchedaStesa({ id }: { id: string }) {
         <p className="eyebrow">{k.stesa_eyebrow} · {plurale(s.posizioni.length, t.lettura.n_carte)}</p>
         <h1 className="display">{nomeSt(s, lingua)}</h1>
         <p className="section-intro">{s.descrizione}</p>
-        <div className="button-row" style={{ marginTop: "1.4rem" }}>
+        <div className="button-row" style={{ marginTop: ".5rem" }}>
           <LinkV2 className="button button-brass" href={`${R.leggi}?spread=${encodeURIComponent(s.id)}&source=spread`}>{k.stesa_cta}</LinkV2>
           <LinkV2 className="button button-quiet" href={R.stese}>{k.stesa_tutte}</LinkV2>
         </div>
@@ -122,7 +130,8 @@ export function SchedaStesa({ id }: { id: string }) {
             </ol>
           </div>
         </div>
-        <div className="prose-block" style={{ marginTop: "2rem" }}>
+        <Pubblicita posizione="terzo" dentro />
+        <div className="prose-block" style={{ marginTop: ".7rem" }}>
           {s.regole.length > 0 && (<><h3>{k.stesa_come}</h3><ul>{s.regole.map((r, i) => <li key={i}>{r}</li>)}</ul></>)}
           {s.coppie.length > 0 && (
             <>
@@ -133,12 +142,18 @@ export function SchedaStesa({ id }: { id: string }) {
           {s.origine && (<><h3>{k.stesa_origine}</h3><p>{s.origine}</p></>)}
         </div>
       </section>
+      <Pubblicita posizione="due_terzi" />
       {altre.length > 0 && (
-        <section className="band band-tight">
-          <p className="eyebrow">{k.stesa_altre}</p>
-          <div className="difference-grid even">{altre.map((x) => <Tessera key={x.id} stesa={x} />)}</div>
-        </section>
+        <>
+          <section className="band band-tight">
+            <p className="eyebrow">{k.stesa_altre}</p>
+            <div className="difference-grid even">{altre.map((x) => <Tessera key={x.id} stesa={x} />)}</div>
+          </section>
+          {/* La fine dopo le altre stese: senza, cadrebbe subito dopo i due terzi. */}
+          <Pubblicita posizione="fine" />
+        </>
       )}
+      <DiarioNove contesto={{ stesa: s.id }} />
     </>
   );
 }

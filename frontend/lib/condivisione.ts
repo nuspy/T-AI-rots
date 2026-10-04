@@ -34,6 +34,26 @@ export const urlCondivisione = (token: string) => `${SITE_URL}/s/${token}`;
 
 const CHIAVE_VISITATORE = "tarots.visitatore";
 let inMemoria: string | null = null;
+/* GDPR, Fase 1: l'identificativo resta nella memoria del browser (localStorage) solo col consenso `statistiche`.
+ * Senza, vive quanto la pagina: basta a distinguere chi condivide da chi apre il link nella stessa visita, e non
+ * riconosce nessuno nei giorni successivi. Lo imposta `impostaConsensoAnalytics` (`lib/analytics.ts`). */
+let memoriaConsentita = false;
+
+/** Col consenso alle statistiche l'identificativo si salva nel browser; revocato, si cancella da lì (resta solo per
+ *  questa pagina, finché il server non lo dimentica). */
+export function consentiMemoriaVisitatore(consentita: boolean): void {
+  memoriaConsentita = consentita;
+  try {
+    if (consentita) {
+      const salvato = window.localStorage.getItem(CHIAVE_VISITATORE);
+      if (!salvato && inMemoria) window.localStorage.setItem(CHIAVE_VISITATORE, inMemoria);
+    } else {
+      window.localStorage.removeItem(CHIAVE_VISITATORE);
+    }
+  } catch {
+    /* memoria bloccata: l'identificativo resta solo per questa pagina */
+  }
+}
 
 const nuovoId = () =>
   (globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`)
@@ -41,15 +61,15 @@ const nuovoId = () =>
     .slice(0, 32)
     .padEnd(16, "0");
 
-/** Un identificativo casuale e stabile per questo browser (16–64 caratteri
- *  alfanumerici). Se la memoria del browser è bloccata dura quanto la pagina. */
+/** Un identificativo casuale per questo browser (16–64 caratteri alfanumerici): stabile fra le visite solo col
+ *  consenso `statistiche`, altrimenti (o con la memoria del browser bloccata) dura quanto la pagina. */
 export function idVisitatore(): string {
   try {
     const salvato = window.localStorage.getItem(CHIAVE_VISITATORE);
     if (salvato && /^[A-Za-z0-9_-]{16,64}$/.test(salvato)) return salvato;
-    const nuovo = inMemoria ?? nuovoId();
-    window.localStorage.setItem(CHIAVE_VISITATORE, nuovo);
-    return nuovo;
+    inMemoria ??= nuovoId();
+    if (memoriaConsentita) window.localStorage.setItem(CHIAVE_VISITATORE, inMemoria);
+    return inMemoria;
   } catch {
     inMemoria ??= nuovoId();
     return inMemoria;

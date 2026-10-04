@@ -90,7 +90,8 @@ export interface Posizione {
 }
 
 /* Il tipo di lettura: la standard e le due speciali. */
-export type Categoria = "standard" | "compatibilita" | "coppia";
+/* `lavoro` (lavoro e affari) si svolge come la standard: nessun dato del partner. */
+export type Categoria = "standard" | "lavoro" | "compatibilita" | "coppia";
 export type Stile = "tradizionale" | "moderna" | "tendenza";
 
 export interface Stesa {
@@ -106,7 +107,10 @@ export interface Stesa {
   categoria_label?: string | null;
   stile_label?: string | null;
   categoria: Categoria;
-  /* Solo nelle stese speciali. */
+  /* I temi per cui una stesa standard si propone anche altrove: `["lavoro"]` la mette anche fra quelle
+   * di «Lavoro e affari» (`/spreads?tema=lavoro` le restituisce già insieme a quelle di categoria `lavoro`). */
+  temi?: string[];
+  /* Solo nelle stese speciali e in quelle di lavoro. */
   stile: Stile | null;
   /* La larghezza di una carta come frazione del tavolo (e sul tavolo 1:1 dei
    * telefoni): sta nei dati della stesa, non nel codice del tavolo. */
@@ -251,6 +255,13 @@ export interface Piano {
   prezzo_annuale: number;
   crediti_per_periodo: number;
   limiti: Record<string, number>;
+  /* v9, Fase 2b: il livello (decide upgrade o downgrade) e i prezzi con e senza rinnovo automatico. */
+  livello?: number;
+  prezzi?: {
+    mensile: { listino: number; con_rinnovo: number; sconto: number };
+    annuale: { listino: number; con_rinnovo: number; sconto: number } | null;
+    prova_annuale: number | null;
+  };
 }
 
 export interface Conto {
@@ -262,11 +273,18 @@ export interface Conto {
     periodo_inizio: string;
     periodo_fine: string;
     disdetto_il: string | null;
+    /* v9, Fase 2b (il resto in `lib/abbonamenti.ts`, `AbbonamentoDettaglio`). */
+    annuale?: boolean;
+    rinnovo_automatico?: boolean;
   } | null;
   diritti: { piano: string; nome: string; limiti: Record<string, number>; predefiniti: boolean };
   saldo: number;
   uso: Record<string, { usati: number; limite: number | null; restanti: number | null }>;
   limiti_attivi: boolean;
+  /* v9, Fase 2b: un abbonamento a pagamento con letture comprese (oltre il limite: condono o consenso al credito), e
+   * se la prova gratuita è ancora possibile (il banner della prova lo legge da qui). */
+  letture_comprese?: boolean;
+  prova?: { idonea: boolean; motivo: string | null };
 }
 
 export interface Movimento {
@@ -352,6 +370,8 @@ export interface Profilo {
   email: string | null;
   display_name: string | null;
   locale: string;
+  /* v9, Fase 2d: quando la lingua è stata scelta dal sito (menu o profilo); `null` = mai. */
+  locale_scelta_il?: string | null;
   birth_date: string | null;
   gender: Genere | null;
   gender_custom: string | null;
@@ -375,6 +395,50 @@ export interface Profilo {
   condivisioni: Condivisioni;
   carta_anima: Carta | null;
   carta_anno: Carta | null;
+  /* La scheda anagrafica: la compila la persona o, se vuota, il social con cui entra (mai sopra un valore). */
+  nome?: string | null;
+  cognome?: string | null;
+  /* Dove si trova adesso: dal social o dall'IP all'accesso; `fonte` "utente" se l'ha corretta lei. */
+  posizione?: PosizioneAttuale | null;
+  /* Da dove vengono i campi presi dai social: campo → provider ("google", "facebook", "account", "utente") e data. */
+  dati_social?: Record<string, { da: string; il: string }>;
+  importa_social?: boolean;
+  rileva_posizione?: boolean;
+}
+
+export interface PosizioneAttuale {
+  paese: string | null;
+  citta: string | null;
+  fonte: string | null;
+  il: string | null;
+}
+
+/* Ciò che `POST /me/profilo-social` ha fatto: i campi compilati, i social letti, la posizione aggiornata. */
+export interface EsitoProfiloSocial {
+  compilati: string[];
+  provider: string[];
+  posizione: PosizioneAttuale | null;
+  /* Keycloak ha appena unito questo accesso a un account con l'email mai verificata: va chiesto se era suo. */
+  unione?: boolean;
+}
+
+/* `GET /me/unione`: l'account che c'era con la stessa email, mai verificato. Keycloak gli ha tolto i vecchi accessi
+ * (`credenziali`: password, otp…; `social`: gli alias dei social non fidati); `contenuto` dice cosa c'era dentro. */
+export interface UnioneDaConfermare {
+  id: string;
+  il: string;
+  creato_il: string | null;
+  credenziali: string[];
+  social: string[];
+  contenuto: {
+    letture: number;
+    memorie: number;
+    ordini: number;
+    acquisti: number;
+    crediti: number;
+    vuoto: boolean;
+    iscritto_il: string | null;
+  };
 }
 
 export interface CartaDelGiorno {
@@ -453,7 +517,7 @@ async function leggi<T>(risposta: Response): Promise<T> {
   return risposta.json() as Promise<T>;
 }
 
-async function chiama<T>(
+export async function chiama<T>(
   token: string | null,
   percorso: string,
   init: { method?: string; body?: unknown } = {},
@@ -546,6 +610,8 @@ export interface OpzioniApertura {
   manualCards?: CartaManualeInvio[];
   /* Lo slug di un mazzo posseduto (v8.5): la lettura lo ricorda per le immagini. Assente: il predefinito. */
   mazzo?: string | null;
+  /* Oltre un limite dell'abbonamento (v9, Fase 2b): il consenso dato nel dialogo — un condono o un credito. */
+  oltreLimite?: "condono" | "credito";
 }
 
 export const apriLettura = (token: string | null, o: OpzioniApertura) =>
@@ -558,16 +624,19 @@ export const apriLettura = (token: string | null, o: OpzioniApertura) =>
       ...(o.partner ? { partner: o.partner, ricorda_partner: !!o.ricordaPartner } : {}),
       ...(o.manualCards ? { manual_cards: o.manualCards.map((c) => ({ posizione: c.posizione, card_id: c.cardId })) } : {}),
       ...(o.mazzo ? { deck_id: o.mazzo } : {}),
+      ...(o.oltreLimite ? { oltre_limite: o.oltreLimite } : {}),
     },
   });
 
 /* La lettura gratuita per chi non ha un account (v6, Fase F): solo standard, nessun dato di una
  * seconda persona. Usa gli stessi endpoint di sempre con `token=null` da lì in poi — il cookie
  * anti-abuso (`credentials: "include"`, sopra) fa il resto. Un 409 significa "già usata: registrati". */
-export const apriLetturaAnonima = (spreadId: string, domanda: string, lang: string) =>
+/* `etaAnni` (GDPR, Fase 1): l'età minima che la persona ha confermato di avere («ho almeno N anni»); senza, il server
+ * risponde 403 `eta_da_confermare` con gli anni da chiedere. */
+export const apriLetturaAnonima = (spreadId: string, domanda: string, lang: string, etaAnni?: number) =>
   chiama<Apertura>(null, "/readings/anonime", {
     method: "POST",
-    body: { spread_id: spreadId, question: domanda, lang },
+    body: { spread_id: spreadId, question: domanda, lang, ...(etaAnni ? { eta_confermata: true, eta_anni: etaAnni } : {}) },
   });
 
 export interface PassoIntervista {
@@ -577,12 +646,15 @@ export interface PassoIntervista {
   riassunto?: string;
   crisi?: boolean;
   messaggio?: string;
+  /** v8.5: il minimo di domande è raggiunto, chi consulta può fermarsi qui («No, basta così»). */
+  facoltativa?: boolean;
 }
 
-export const rispondi = (token: string | null, id: string, risposta: string | null) =>
+/* `basta` (v8.5): chiude l'intervista dopo il minimo di domande e passa alle carte. */
+export const rispondi = (token: string | null, id: string, risposta: string | null, basta = false) =>
   chiama<PassoIntervista>(token, `/readings/${id}/interview`, {
     method: "POST",
-    body: risposta ? { risposta } : {},
+    body: basta ? { basta: true } : risposta ? { risposta } : {},
   });
 
 /* `taglio`: dove chi consulta ha cliccato per tagliare il mazzo, da 0 a 1. */
@@ -649,11 +721,16 @@ export const urlImmagineCondivisa = (linkToken: string) =>
 
 /* ---- lo streaming ---- */
 
+/* `posizione` su token, sostituisci ed errore c'è solo nello svelamento di tutte le carte (`rivelaTutte`): lì un
+ * flusso porta i testi di più carte. `fase` (`lettura`: il lettore sta leggendo le carte) e `battito` arrivano mentre
+ * la chiamata unica lavora. */
 export type EventoRivelazione =
   | { tipo: "carta"; posizione: number; carta: Carta; rovescio: boolean; calcolata: boolean; doppia_valenza: boolean; dignita: Dignita | null }
-  | { tipo: "token"; testo: string }
-  | { tipo: "sostituisci"; testo: string }
-  | { tipo: "errore"; messaggio: string }
+  | { tipo: "token"; testo: string; posizione?: number }
+  | { tipo: "sostituisci"; testo: string; posizione?: number }
+  | { tipo: "errore"; messaggio: string; posizione?: number }
+  | { tipo: "fase"; fase: string }
+  | { tipo: "battito" }
   | { tipo: "fine"; posizione: number; interpretazione: string; ultima: boolean };
 
 export type EventoSintesi =
@@ -721,6 +798,16 @@ export async function* rivela(
   }
 }
 
+/** Tutte le carte ancora coperte, interpretate con una chiamata sola: prima un `carta` per ognuna, poi `fase`
+ * `lettura` e i battiti, poi per ogni posizione il testo (`token` con `posizione`) e la sua `fine`. */
+export async function* rivelaTutte(
+  token: string | null, id: string, segnale?: AbortSignal,
+): AsyncGenerator<EventoRivelazione> {
+  for await (const { nome, dati } of flusso(token, `/readings/${id}/reveal-all`, segnale)) {
+    yield { tipo: nome, ...dati } as EventoRivelazione;
+  }
+}
+
 export async function* sintesi(
   token: string | null, id: string, segnale?: AbortSignal,
 ): AsyncGenerator<EventoSintesi> {
@@ -767,7 +854,11 @@ export function motivoCodice(e: unknown): string | null {
   return null;
 }
 export const statoPagamento = (token: string | null, id: string) =>
-  chiama<{ checkout_id: string; stato: string; piano: string; nome: string; tipo: string }>(token, `/me/checkout/${id}`);
+  chiama<{
+    checkout_id: string; stato: string; piano: string; nome: string; tipo: string;
+    /* v9, Fase 2b: una prova, un cambio di piano, e perché una prova non è partita (`carta_gia_usata`…). */
+    prova?: boolean; cambio?: boolean; esito?: string | null;
+  }>(token, `/me/checkout/${id}`);
 export const abbonaGratis = (token: string | null, piano: string) =>
   chiama<unknown>(token, "/me/subscription", { method: "POST", body: { piano } });
 export const disdici = (token: string | null) =>
@@ -831,8 +922,30 @@ export const aggiornaProfilo = (
     registro_linguistico?: "esoterico" | "quotidiano";
     /* `0` azzera la scelta e torna al predefinito globale. */
     mazzo_predefinito_id?: number;
+    /* Vuoto = cancellato. */
+    nome?: string;
+    cognome?: string;
+    /* La posizione corretta a mano (paese ISO a due lettere); entrambi vuoti = di nuovo automatica. */
+    posizione_paese?: string;
+    posizione_citta?: string;
+    importa_social?: boolean;
+    rileva_posizione?: boolean;
   },
 ) => chiama<Profilo>(token, "/me/profile", { method: "PATCH", body: dati });
+/* Dopo ogni accesso: i campi vuoti della scheda dai social collegati, e la posizione attuale. Idempotente. */
+export const importaProfiloSocial = (token: string | null) =>
+  chiama<EsitoProfiloSocial>(token, "/me/profilo-social", { method: "POST" });
+/* La domanda «l'account che c'era con la tua email era tuo?», se c'è. */
+export const unioneDaConfermare = (token: string | null) =>
+  chiama<{ unione: UnioneDaConfermare | null }>(token, "/me/unione");
+/* La risposta, con la password facoltativa (un rifiuto della politica torna come 422 `{password: chiave}`). */
+export const rispondiUnione = (token: string | null, scelta: "mia" | "non_mia", password?: string) =>
+  chiama<{ scelta: string; password: boolean; nuovo_account: boolean }>(token, "/me/unione", {
+    method: "POST", body: { scelta, ...(password ? { password } : {}) },
+  });
+/* Cancella i dati presi dai social (non quelli corretti a mano) e la posizione, e spegne importazione e rilevamento. */
+export const dimenticaDatiSocial = (token: string | null) =>
+  chiama<void>(token, "/me/dati-social", { method: "DELETE" });
 /* L'avatar: l'immagine come corpo della richiesta; il server la ritaglia e la riscrive in WebP. */
 export async function caricaAvatar(token: string | null, file: File): Promise<{ avatar: string }> {
   const h: Record<string, string> = { "Content-Type": file.type || "image/png" };
@@ -891,7 +1004,7 @@ export interface TurnoChat {
 }
 
 export const impostazioniChat = (token: string | null) =>
-  chiama<{ proattiva_minuti_inattivita: number }>(token, "/impostazioni-chat");
+  chiama<{ proattiva_minuti_inattivita: number; proattiva_max_per_visita?: number }>(token, "/impostazioni-chat");
 export const storicoChat = (token: string | null) =>
   chiama<{ turni: TurnoChat[] }>(token, "/chat/proattiva");
 export const avviaChat = (token: string | null) =>
@@ -903,13 +1016,19 @@ export const inviaMessaggioChat = (token: string | null, testo: string) =>
 
 export type TipoMemoria = "stabile" | "variabile";
 
+/* Le categorie dello stato sintetico della memoria: un fatto duraturo, una domanda fatta, una situazione del momento. */
+export type CategoriaMemoria = "stabile" | "tema" | "volatile";
+
 export interface Memoria {
   id: string;
   contenuto: string;
   tipo: TipoMemoria;
   campo_attinenza: string;
-  fonte: "lettura" | "chat";
+  fonte: string;
   aggiornata: string | null;
+  categoria?: CategoriaMemoria;
+  /* Il giorno in cui si dimentica da sola se nessuna lettura la conferma; `null`: resta finché non la cancelli. */
+  scade?: string | null;
 }
 
 export const elencaMemorie = (token: string | null) =>
@@ -947,7 +1066,10 @@ export const impostazioniPubbliche = () => chiama<ImpostazioniPubbliche>(null, "
 
 /* ---- consenso GDPR (v7, Fase G) ---- */
 
-export type TipoConsenso = "cookie" | "condivisione_dati_partner";
+/* GDPR, Fase 1: le categorie granulari. `cookie` resta solo per il vecchio sito sotto /old (vale per statistiche e
+ * Google Analytics insieme); `condivisione_dati_partner` non si sceglie più (non c'è nessuna condivisione). */
+export type TipoConsenso =
+  | "statistiche" | "google_analytics" | "pubblicita" | "testi_statistiche" | "dati_particolari" | "marketing" | "cookie";
 export type ValoreConsenso = "accettato" | "rifiutato";
 
 /* La versione del testo informativo mostrato: cambiarla in futuro (nuova informativa) fa
@@ -957,11 +1079,23 @@ export const VERSIONE_INFORMATIVA = "v1";
 export const leggiConsenso = (token: string | null) =>
   chiama<Record<TipoConsenso, ValoreConsenso | null>>(token, "/consenso");
 
-export const registraConsenso = (token: string | null, tipo: TipoConsenso, valore: ValoreConsenso) =>
+/* `versione`: il testo che questa persona ha davvero visto. La v2 del sito passa la sua (v8.6: l'informativa che
+ * nomina Google Analytics, `VERSIONE_INFORMATIVA_V2` in `v2/componenti/contatore-google.tsx`); la v1 resta sulla sua. */
+export const registraConsenso = (
+  token: string | null,
+  tipo: TipoConsenso,
+  valore: ValoreConsenso,
+  versione: string = VERSIONE_INFORMATIVA,
+) =>
   chiama<{ esito: string }>(token, "/consenso", {
     method: "POST",
-    body: { tipo, valore, versione_informativa: VERSIONE_INFORMATIVA },
+    body: { tipo, valore, versione_informativa: versione },
   });
+
+/* v8.6: se questa persona ha acconsentito a Google Analytics (un «accettato» sull'informativa che lo nomina), e se
+ * aveva accettato un testo precedente e va richiesto. */
+export const statoConsensoGoogle = (token: string | null) =>
+  chiama<{ attivo: boolean; da_rinnovare: boolean }>(token, "/consenso-google");
 
 /* ---- statistiche di utilizzo (v8): opposizione al legame visite-account ---- */
 
@@ -975,7 +1109,9 @@ export const impostaPreferenzaStatistiche = (token: string | null, opposizione: 
 
 export interface CampioneVoto {
   etichetta: string | null;
+  /* Percorsi relativi dell'API (`urlMedia`): la grande per l'ingrandimento, la miniatura per l'elenco. */
   url: string | null;
+  mini?: string | null;
 }
 
 export interface CandidatoVoto {

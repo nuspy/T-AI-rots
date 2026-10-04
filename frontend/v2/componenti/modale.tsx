@@ -7,7 +7,7 @@ import { useEffect, useId, useRef } from "react";
 import { useLingua } from "@/v2/lib/lingua";
 
 export function Modale({
-  aperta, titolo, onChiudi, children, larga = false,
+  aperta, titolo, onChiudi, children, larga = false, scura = false,
 }: {
   aperta: boolean;
   titolo: string;
@@ -15,6 +15,8 @@ export function Modale({
   children: React.ReactNode;
   /** Per contenuti ampi (le carte di un mazzo): quasi tutta la larghezza dello schermo. */
   larga?: boolean;
+  /** Il fondo prugna del rito (v8.5): le fasi del rito, sul telefono, si aprono in un dialogo. */
+  scura?: boolean;
 }) {
   const { t } = useLingua();
   const id = useId();
@@ -53,7 +55,7 @@ export function Modale({
   if (!aperta) return null;
   return (
     <div className="dialog-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onChiudi(); }}>
-      <div className={larga ? "dialog dialog-wide" : "dialog"} role="dialog" aria-modal="true" aria-labelledby={id} ref={riquadro} tabIndex={-1}>
+      <div className={`dialog${larga ? " dialog-wide" : ""}${scura ? " dialog-scuro" : ""}`} role="dialog" aria-modal="true" aria-labelledby={id} ref={riquadro} tabIndex={-1}>
         <button type="button" className="dialog-close" aria-label={t.comune.chiudi} onClick={onChiudi}>✕</button>
         <h2 id={id}>{titolo}</h2>
         {children}

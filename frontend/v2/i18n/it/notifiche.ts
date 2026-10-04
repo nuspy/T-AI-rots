@@ -1,0 +1,37 @@
+/* Le notifiche (v9, Fase 5): la sezione «Notifiche» del profilo e l'invito dopo la carta del giorno. */
+
+import type { notifiche as Base } from "../en/notifiche";
+
+export const notifiche: typeof Base = {
+  titolo: "Notifiche",
+  intro: "Un promemoria discreto per la tua carta del giorno e, se li vuoi, qualche altro messaggio. Scegli tu cosa e quando.",
+  stato_attive: "Le notifiche sono attive in questo browser.",
+  stato_spente: "Le notifiche sono spente in questo browser.",
+  attiva: "Attiva le notifiche qui",
+  disattiva: "Spegni in questo browser",
+  attivazione: "Attivazione…",
+  negato: "Il browser blocca le notifiche di questo sito. Consentile dalle impostazioni del sito (il lucchetto accanto all'indirizzo), poi riprova.",
+  errore: "Non è riuscito. Riprova fra poco.",
+  non_supportato: "Questo browser non può ricevere notifiche dal sito.",
+  ios_titolo: "Su iPhone e iPad",
+  ios_testo: "Safari mostra le notifiche solo dal sito aggiunto alla schermata Home: tocca Condividi, poi «Aggiungi alla schermata Home», apri TAROTS chat dalla nuova icona e attiva le notifiche dal profilo.",
+  altri: { uno: "Le notifiche sono attive anche su 1 altro dispositivo.", molti: "Le notifiche sono attive anche su altri {n} dispositivi." },
+  carta: "Carta del giorno",
+  carta_testo: "Un promemoria al mattino, se non hai ancora girato la tua carta.",
+  ora: "Ora",
+  promemoria: "Promemoria",
+  promemoria_testo: "La serie dei tuoi giorni, la fine di una prova, un pagamento da sistemare.",
+  promozioni: "Offerte e novità",
+  promozioni_testo: "Al massimo {n} a settimana. È la stessa scelta di «Promozioni» in Privacy e consensi.",
+  silenzio: "Ore di silenzio",
+  silenzio_testo: "Nessuna notifica fra questi orari, all'ora del tuo paese.",
+  dalle: "Dalle",
+  alle: "Alle",
+  fuso: "Il tuo fuso orario: {fuso}. Si aggiorna da solo.",
+  salvato: "Salvato.",
+  invito_titolo: "Vuoi che te la ricordiamo ogni mattina?",
+  invito_testo: "Una notifica discreta quando la tua carta del giorno è pronta. Solo questo, e la spegni quando vuoi.",
+  invito_si: "Sì, ricordamela",
+  invito_no: "Non ora",
+  invito_fatto: "Fatto: a domattina.",
+};

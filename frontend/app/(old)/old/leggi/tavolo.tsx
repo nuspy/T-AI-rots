@@ -246,7 +246,7 @@ export function Tavolo({
         );
       })}
     </div>
-    {stesa.categoria !== "standard" && <Legenda stesa={stesa} nomePartner={nomePartner} />}
+    {(stesa.categoria === "compatibilita" || stesa.categoria === "coppia") && <Legenda stesa={stesa} nomePartner={nomePartner} />}
     </>
   );
 }

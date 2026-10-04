@@ -40,7 +40,7 @@ export default async function PaginaStesa({ params }: { params: Promise<{ id: st
   if (!s) notFound();
   if (s.slug && id !== s.slug) permanentRedirect(pubblico(lingua, `/spreads/${s.slug}`));
 
-  const valori = await precarica([P.stese(lingua)]);
+  const valori = await precarica([P.stese(lingua), P.nove({ stesa: s.id })]);
   const seo = seoStesa(s, s.nome);
   const url = urlPubblico(lingua, `/spreads/${s.slug ?? s.id}`);
   const dati = grafo(

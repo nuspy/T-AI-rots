@@ -56,10 +56,11 @@ export function proxy(richiesta: NextRequest) {
   return risposta;
 }
 
-/* Ovunque tranne i file statici. `feed.xml` è un'eccezione: è un percorso del sito, in due lingue. */
+/* Ovunque tranne i file statici e `/.well-known/` (i collegamenti verificati delle app: niente lingua, mai un
+ * reindirizzamento). `feed.xml` è un'eccezione: è un percorso del sito, in due lingue. */
 export const config = {
   matcher: [
-    "/((?!_next/|.*\\.(?:png|jpe?g|gif|webp|avif|svg|ico|css|js|map|txt|woff2?|json|xml|webmanifest)$).*)",
+    "/((?!_next/|\\.well-known/|.*\\.(?:png|jpe?g|gif|webp|avif|svg|ico|css|js|map|txt|woff2?|json|xml|webmanifest)$).*)",
     "/blog/feed.xml",
     "/it/blog/feed.xml",
     "/old/blog/feed.xml",

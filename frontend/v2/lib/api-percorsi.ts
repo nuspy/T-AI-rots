@@ -7,7 +7,7 @@
 export const linguaContenuti = (lingua: string) => (lingua === "it" ? "it" : "en");
 
 /** Articoli per pagina negli elenchi del blog. */
-export const PER_PAGINA_BLOG = 12;
+export const PER_PAGINA_BLOG = 6;
 
 type Parametri = Record<string, string | number | undefined>;
 
@@ -20,6 +20,8 @@ export const P = {
   mazzi: (lingua: string) => `/decks?lang=${lingua}`,
   piani: (lingua: string) => `/plans?lang=${lingua}`,
   impostazioni: () => "/impostazioni-pubbliche",
+  /** I dati del titolare e i fornitori dell'AI attivi, per l'informativa (v9, Fase 2c: dalla console). */
+  titolare: () => "/privacy/titolare",
   voto: () => "/voto/home",
   condivisa: (token: string) => `/shared/${encodeURIComponent(token)}`,
   /** Gli elenchi degli articoli non si filtrano per lingua (v8: gli articoli si vedono in qualunque lingua
@@ -34,6 +36,17 @@ export const P = {
   sezioni: () => "/blog/sections",
   sezione: (slug: string, lingua: string) => `/blog/sections/${encodeURIComponent(slug)}?lang=${linguaContenuti(lingua)}`,
   etichette: () => "/blog/tags",
+  /** I nove articoli di ogni pagina (v8.5): 3 recenti + 6 attinenti al contesto, scelti a caso per la giornata. */
+  nove: (contesto: {
+    carta?: string; stesa?: string; sezione?: string; articolo?: string; tag?: string; recenti?: number; scelti?: number;
+  } = {}) => {
+    const p = new URLSearchParams();
+    for (const k of ["carta", "stesa", "sezione", "articolo", "tag", "recenti", "scelti"] as const) {
+      if (contesto[k] !== undefined && contesto[k] !== "") p.set(k, String(contesto[k]));
+    }
+    const q = p.toString();
+    return q ? `/blog/nove?${q}` : "/blog/nove";
+  },
   /** Gli articoli che parlano di una carta o di una stesa. */
   articoliSu: (tipo: "carta" | "stesa", id: string) => `/blog/links/${tipo}/${encodeURIComponent(id)}`,
 };

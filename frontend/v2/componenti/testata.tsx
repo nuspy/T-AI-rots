@@ -10,6 +10,7 @@ import { ADMIN_URL, useSessione } from "@/lib/sessione";
 import { LINGUE, comeLingua, f, plurale } from "@/v2/i18n";
 import { useCarrello } from "@/v2/lib/carrello";
 import { useLingua } from "@/v2/lib/lingua";
+import { SincroniaLinguaProfilo, salvaNelProfilo, segnaScelta } from "@/v2/lib/lingua-profilo";
 import { R, indirizzoV2, senzaPrefisso } from "@/v2/lib/percorsi";
 import LinkV2 from "./link";
 import { useConto } from "@/v2/lib/dati";
@@ -22,6 +23,25 @@ const ICONE = {
   entra: "M10 17l5-5-5-5M15 12H3M14 4h5a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-5",
 } as const;
 
+/* Le icone delle sezioni del menu, che sul telefono prendono il posto delle scritte (sotto, l'etichetta corta). */
+const ICONE_MENU: Record<Voce, string> = {
+  leggi: "M7 3h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2ZM11 7.5l1.1 2.2 2.4.4-1.7 1.7.4 2.4-2.2-1.2-2.2 1.2.4-2.4-1.7-1.7 2.4-.4Z",
+  fisica: "M3.5 8 10 4.5l5.5 11.5-6.5 3.5ZM13.5 4.5l6 2.5-4 10.5",
+  giorno: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 2.5v2M12 19.5v2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M2.5 12h2M19.5 12h2M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4",
+  diario: "M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4ZM5 17a3 3 0 0 1 3-3h9M9 8h5",
+  esplora: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM15.5 8.5l-2 5-5 2 2-5Z",
+  storia: "M3.5 12a8.5 8.5 0 1 0 2.6-6.1M3 4v4h4M12 7.5V12l3 2",
+  negozio: "M6 8h12l-1 12H7L6 8ZM9 8V6.5a3 3 0 0 1 6 0V8",
+};
+
+function IconaMenu({ voce }: { voce: Voce }) {
+  return (
+    <svg className="nav-icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={ICONE_MENU[voce]} />
+    </svg>
+  );
+}
+
 function Icona({ nome }: { nome: keyof typeof ICONE }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -30,11 +50,16 @@ function Icona({ nome }: { nome: keyof typeof ICONE }) {
   );
 }
 
-/* Quale voce del menu accendere: ogni sezione possiede alcune pagine. */
-const SEZIONI: { chiave: "leggi" | "mazzi" | "esplora" | "storia" | "negozio"; href: string; pagine: string[] }[] = [
-  { chiave: "leggi", href: R.leggi, pagine: [R.leggi, R.fisica, R.giorno] },
-  { chiave: "mazzi", href: R.mazzi, pagine: [R.mazzi, R.carte, R.voto] },
-  { chiave: "esplora", href: R.esplora, pagine: [R.esplora, R.blog, R.stese] },
+/* Quale voce del menu accendere: ogni sezione possiede alcune pagine. I mazzi stanno sotto «Esplora» (v8.5): al loro
+ * posto la carta del giorno; il diario e la lettura delle proprie carte hanno una voce loro. Le etichette lunghe
+ * vanno su due righe (`\n` nel dizionario) per stare nella barra. */
+type Voce = "leggi" | "fisica" | "giorno" | "diario" | "esplora" | "storia" | "negozio";
+const SEZIONI: { chiave: Voce; href: string; pagine: string[] }[] = [
+  { chiave: "leggi", href: R.leggi, pagine: [R.leggi] },
+  { chiave: "fisica", href: R.fisica, pagine: [R.fisica] },
+  { chiave: "giorno", href: R.giorno, pagine: [R.giorno] },
+  { chiave: "diario", href: R.blog, pagine: [R.blog] },
+  { chiave: "esplora", href: R.esplora, pagine: [R.esplora, R.stese, R.carte, R.mazzi, R.voto] },
   { chiave: "storia", href: R.storia, pagine: [R.storia, R.profilo] },
   { chiave: "negozio", href: R.negozio, pagine: [R.negozio, R.carrello] },
 ];
@@ -46,12 +71,16 @@ export function useEntra() {
 
 export function SelettoreLingua() {
   const { t, lingua, imposta, prefissoIt } = useLingua();
+  const sessione = useSessione();
   const router = useRouter();
   const percorso = usePathname() ?? R.home;
   const cambia = (valore: string) => {
     const l = comeLingua(valore);
     if (!l) return;
     imposta(l);
+    /* v9, Fase 2d: una scelta esplicita. Chi è dentro la porta anche nel profilo (oracolo, email, notifiche). */
+    segnaScelta();
+    if (sessione.autenticata) void salvaNelProfilo(sessione.token, l);
     /* Un indirizzo `/it/…` dice «italiano»: scegliendo un'altra lingua si va all'indirizzo inglese della stessa
      * pagina, scegliendo l'italiano a quello italiano (`/cards/x` → `/it/carte/x`). */
     const qui = `${senzaPrefisso(percorso)}${window.location.search}`;
@@ -106,21 +135,31 @@ export function Testata() {
   const entra = useEntra();
   const percorso = senzaPrefisso(usePathname() ?? R.home);
   const attiva = SEZIONI.find((s) => s.pagine.some((p) => percorso === p || percorso.startsWith(`${p}/`)))?.chiave;
-  const nomi = {
-    leggi: t.comune.nav_leggi, mazzi: t.comune.nav_mazzi, esplora: t.comune.nav_esplora,
-    storia: t.comune.nav_storia, negozio: t.comune.nav_negozio,
+  const nomi: Record<Voce, string> = {
+    leggi: t.comune.nav_leggi, fisica: t.comune.nav_fisica, giorno: t.comune.nav_giorno, diario: t.comune.nav_diario,
+    esplora: t.comune.nav_esplora, storia: t.comune.nav_storia, negozio: t.comune.nav_negozio,
+  };
+  /* Sul telefono: icona ed etichetta corta (le lunghe restano per computer e lettori di schermo). */
+  const brevi: Record<Voce, string> = {
+    leggi: t.comune.nav_breve_leggi, fisica: t.comune.nav_breve_fisica, giorno: t.comune.nav_breve_giorno,
+    diario: t.comune.nav_breve_diario, esplora: t.comune.nav_breve_esplora, storia: t.comune.nav_breve_storia,
+    negozio: t.comune.nav_breve_negozio,
   };
 
   return (
     <header className="site-header">
+      <SincroniaLinguaProfilo />
       <LinkV2 className="brand" href={R.home} aria-label={t.comune.aria_home}>
         <span className="brand-mark" aria-hidden="true">✦</span>
         <span className="brand-name">TAROTS <em>chat</em></span>
       </LinkV2>
       <nav className="primary-nav" aria-label={t.comune.aria_nav}>
         {SEZIONI.map((s) => (
-          <LinkV2 key={s.chiave} href={s.href} aria-current={attiva === s.chiave ? "page" : undefined}>
-            {nomi[s.chiave]}
+          <LinkV2 key={s.chiave} href={s.href} aria-current={attiva === s.chiave ? "page" : undefined}
+            className={`nav-voce nav-${s.chiave}`} aria-label={nomi[s.chiave].replace(/\n/g, " ")} title={nomi[s.chiave].replace(/\n/g, " ")}>
+            <span className="nav-lungo" aria-hidden="true">{nomi[s.chiave]}</span>
+            <IconaMenu voce={s.chiave} />
+            <span className="nav-breve" aria-hidden="true">{brevi[s.chiave]}</span>
           </LinkV2>
         ))}
       </nav>
@@ -143,7 +182,7 @@ export function Testata() {
           sessione.pronta && (
             <button type="button" className="hdr-icon" onClick={entra} title={t.comune.entra}>
               <Icona nome="entra" />
-              <span className="hdr-label">{t.comune.entra}</span>
+              <span className="hdr-label">{t.comune.testata_entra}</span>
             </button>
           )
         )}

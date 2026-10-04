@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function PaginaHome() {
   const lingua = await linguaPagina();
   const t = await testiServer();
-  const valori = await precarica([P.impostazioni(), P.mazzi(lingua), P.articoli(lingua, { per_pagina: 3 })]);
+  const valori = await precarica([P.impostazioni(), P.mazzi(lingua), P.nove()]);
   const dati = grafo(organizzazione(), sito(lingua), applicazione(lingua, HOME.description(lingua)), domande(t.home.faq));
   return (
     <DatiIniziali valori={valori}>

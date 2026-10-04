@@ -147,7 +147,7 @@ export function Lettura() {
     () => (stese.dati ?? []).filter((s) => s.categoria === categoria),
     [stese.dati, categoria],
   );
-  const speciale = categoria !== "standard";
+  const speciale = categoria === "compatibilita" || categoria === "coppia";
 
   /* Analytics (v8): ogni fase raggiunta è un passo dell'imbuto della lettura. Solo la fase e il
    * tipo, mai la domanda né le carte. */
@@ -169,7 +169,7 @@ export function Lettura() {
   useEffect(() => {
     if (fase !== "stesa" || !stese.dati || !stesaId) return;
     const s = stese.dati.find((x) => x.id === stesaId);
-    if (s && s.categoria !== "standard") {
+    if (s && (s.categoria === "compatibilita" || s.categoria === "coppia")) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setCategoria(s.categoria);
       setFase("persone");

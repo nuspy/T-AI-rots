@@ -2,10 +2,15 @@
  * si eredita niente della v1: si passa dall'una all'altra ricaricando la pagina. */
 
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
 import { SITE_URL } from "@/lib/condivisione";
 import { linguaPagina } from "@/lib/lingua-server";
 import { NOME_MARCHIO } from "@/lib/marchio";
+import { leggiDalServer } from "@/lib/server-api";
 import { ProvidersV2 } from "@/v2/componenti/providers";
+import { COOKIE_PUBBLICITA, PERCORSO_PUBBLICITA, SPENTA, type ImpostazioniPubblicita } from "@/v2/lib/pubblicita";
+import { PERCORSO_PUBBLICO_ABBONAMENTI, type ImpostazioniPubblicheAbbonamenti } from "@/lib/abbonamenti";
+import { ProvaIniziale, SCRIPT_BANNER_PROVA } from "@/v2/lib/prova";
 import { classiFontV2 } from "./fonts";
 import "./v2.css";
 
@@ -23,11 +28,30 @@ export const viewport: Viewport = {
 };
 
 export default async function LayoutV2({ children }: { children: React.ReactNode }) {
-  const lingua = await linguaPagina();
+  /* Gli spazi pubblicitari (spenti per default) e il promemoria del consenso agli annunci: letti qui perché l'HTML
+   * esca già con lo spazio riservato a chi li vedrà (`v2/componenti/pubblicita.tsx`). */
+  const [lingua, pubblicita, biscotti, prova] = await Promise.all([
+    linguaPagina(),
+    leggiDalServer<ImpostazioniPubblicita>(PERCORSO_PUBBLICITA, { secondi: 60 }),
+    cookies(),
+    /* La prova gratuita (v9, Fase 2b): il banner esce già nell'HTML, senza spostare la pagina comparendo dopo. */
+    leggiDalServer<ImpostazioniPubblicheAbbonamenti>(PERCORSO_PUBBLICO_ABBONAMENTI, { secondi: 60 }),
+  ]);
+  const statoPubblicita = {
+    impostazioni: pubblicita ?? SPENTA,
+    ricordo: biscotti.get(COOKIE_PUBBLICITA)?.value === "1",
+  };
   return (
-    <html lang={lingua} className={classiFontV2}>
-      <body>
-        <ProvidersV2 linguaIniziale={lingua}>{children}</ProvidersV2>
+    /* `suppressHydrationWarning`: lo script del banner della prova può mettere `data-prova-nascosta` su <html>
+     * prima che React arrivi (chi l'ha chiuso non lo vede nemmeno per un istante). */
+    <html lang={lingua} className={classiFontV2} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT_BANNER_PROVA }} />
+      </head>
+      <body suppressHydrationWarning>
+        <ProvidersV2 linguaIniziale={lingua} pubblicita={statoPubblicita}>
+          <ProvaIniziale valore={prova}>{children}</ProvaIniziale>
+        </ProvidersV2>
       </body>
     </html>
   );

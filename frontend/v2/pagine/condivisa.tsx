@@ -18,6 +18,7 @@ import { useSessione } from "@/lib/sessione";
 import { LATO_SIMBOLO, PERCORSI_SIMBOLI, simboloDi } from "@/lib/simboli";
 import { f } from "@/v2/i18n";
 import LinkV2 from "@/v2/componenti/link";
+import { Pubblicita } from "@/v2/componenti/pubblicita";
 import { Tavolo, type Posata } from "@/v2/lettura/tavolo";
 import stili from "@/v2/lettura/lettura.module.css";
 import { P } from "@/v2/lib/dati";
@@ -92,14 +93,18 @@ export function Condivisa({ token }: { token: string }) {
         <div className="read-panel dark">
           <Tavolo stesa={stesa} posate={posate} prossima={null} rivelazioneInCorso={false} evidenzia={null} nomePartner={d.partner_frase} />
         </div>
+        {/* Gli spazi pubblicitari (spenti per default): dopo il tavolo e prima dell'invito finale. Il responso non si
+            interrompe. */}
+        {d.synthesis && <Pubblicita posizione="terzo" dentro />}
         {d.synthesis && (
-          <section className={stili.responso} style={{ marginTop: "2rem" }} aria-labelledby="titolo-condivisa">
+          <section className={stili.responso} style={{ marginTop: ".7rem" }} aria-labelledby="titolo-condivisa">
             <h2 id="titolo-condivisa">{c.l_interpretazione}</h2>
             <Markdown testo={d.synthesis} className={stili.testo} />
             <p className={stili.avvertenza}>{d.disclaimer}</p>
           </section>
         )}
       </section>
+      <Pubblicita posizione="fine" />
       <section className="final">
         <div className="band">
           <h2 className="display">{c.invito_titolo}</h2>

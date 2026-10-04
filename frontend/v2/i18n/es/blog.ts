@@ -60,4 +60,11 @@ export const blog: typeof Base = {
     { chiave: "fisica", simbolo: "✋", titolo: "Tus propias cartas", testo: "Saca las cartas con tu mazo y lee aquí el conjunto." },
   ],
   esplora_ultimi: "Del diario",
+  nove_eyebrow: "El Diario",
+  nove_titolo: "Del Diario",
+  nove_ultimi: "Leer las últimas entradas",
+  nove_attinenti: "Elegidos para esta página",
+  a_caso: "Más para leer, elegido hoy para ti",
+  nove_sezione: "Más en {sezione}",
+  copyright: "© {anno} TAROTS chat (tarots.chat). Todos los derechos reservados. Queda prohibida la reproducción, distribución o adaptación, total o parcial, de este artículo sin la autorización escrita del titular.",
 };

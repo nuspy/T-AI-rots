@@ -66,7 +66,40 @@ const componenti: Components = {
   table: ({ children }) => <div className={stili.tabella}><table>{children}</table></div>,
 };
 
-export function BlogMarkdownV2({ testo, riferimenti, etichette }: { testo: string; riferimenti: Riferimenti; etichette: EtichetteTipo }) {
+/* Un inizio di blocco prima del quale si può inserire qualcosa senza rompere il Markdown: un titolo, o una riga che non
+ * apre né continua un elenco, una citazione, una tabella, una direttiva, un'immagine o un riferimento. */
+const INIZIO_SICURO = /^(#{1,6}\s|[^\s\-*+>|:![\d])/;
+
+/** Un pezzo di Markdown tagliato dove un inserto non rompe nulla: righe vuote fuori dai blocchi di codice e dalle
+ *  direttive (`:::`), prima di un inizio sicuro. Riunire i pezzi ridà esattamente il testo. */
+function blocchiSicuri(md: string): string[] {
+  const righe = md.split("\n");
+  const fuori: string[] = [];
+  let corrente: string[] = [];
+  let recinto = false;
+  let direttive = 0;
+  righe.forEach((riga, i) => {
+    if (/^\s*(```|~~~)/.test(riga)) recinto = !recinto;
+    else if (!recinto && /^\s*:::+\s*\S/.test(riga)) direttive++;
+    else if (!recinto && /^\s*:::+\s*$/.test(riga)) direttive = Math.max(0, direttive - 1);
+    corrente.push(riga);
+    const prossima = righe[i + 1];
+    if (riga.trim() === "" && !recinto && direttive === 0 && prossima !== undefined && INIZIO_SICURO.test(prossima)
+        && corrente.some((x) => x.trim() !== "")) {
+      fuori.push(corrente.join("\n"));
+      corrente = [];
+    }
+  });
+  if (corrente.length) fuori.push(corrente.join("\n"));
+  return fuori;
+}
+
+/** Gli spazi da inserire nel testo, a circa un terzo e due terzi della sua lunghezza (gli spazi pubblicitari). */
+export interface InsertiTesto { terzo?: React.ReactNode; due_terzi?: React.ReactNode }
+
+export function BlogMarkdownV2({
+  testo, riferimenti, etichette, inserti,
+}: { testo: string; riferimenti: Riferimenti; etichette: EtichetteTipo; inserti?: InsertiTesto }) {
   const pezzi: ({ md: string } | { tipo: Tipo; id: string; idCarta?: string; nome: string } | { video: string })[] = [];
   let corrente: string[] = [];
   const chiudi = () => { if (corrente.length) pezzi.push({ md: corrente.join("\n") }); corrente = []; };
@@ -81,19 +114,43 @@ export function BlogMarkdownV2({ testo, riferimenti, etichette }: { testo: strin
   }
   chiudi();
 
+  /* Con degli inserti, il Markdown si taglia nei punti sicuri e gli inserti vanno prima del primo blocco che comincia
+   * dopo un terzo (e dopo due terzi) della lunghezza. Senza, i pezzi restano quelli di sempre. */
+  const unita: typeof pezzi = inserti
+    ? pezzi.flatMap((p): typeof pezzi => ("md" in p ? blocchiSicuri(p.md).map((md) => ({ md })) : [p]))
+    : pezzi;
+  const prima = new Map<number, React.ReactNode>();
+  if (inserti) {
+    const pesi = unita.map((u) => ("md" in u ? u.md.length : 200));
+    const totale = pesi.reduce((a, b) => a + b, 0);
+    let fin = 0;
+    let terzo = false;
+    for (let i = 1; i < unita.length; i++) {
+      fin += pesi[i - 1];
+      if (!terzo && fin >= totale / 3) {
+        prima.set(i, inserti.terzo);
+        terzo = true;
+      } else if (terzo && fin >= (2 * totale) / 3) {
+        prima.set(i, inserti.due_terzi);
+        break;
+      }
+    }
+  }
+
   return (
     <div className={stili.testo} dir="auto">
-      {pezzi.map((p, i) =>
-        "md" in p ? (
-          <ReactMarkdown key={i} remarkPlugins={[remarkGfm, remarkDirective, direttiveBlog]} components={componenti}>{inLinea(p.md, riferimenti)}</ReactMarkdown>
-        ) : "video" in p ? (
-          <div key={i} className={stili.video}>
-            <iframe src={p.video} title="Video" loading="lazy"
-              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              referrerPolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-presentation" allowFullScreen />
-          </div>
-        ) : (
-          <Fragment key={i}>
+      {unita.map((p, i) => (
+        <Fragment key={i}>
+          {prima.get(i)}
+          {"md" in p ? (
+            <ReactMarkdown remarkPlugins={[remarkGfm, remarkDirective, direttiveBlog]} components={componenti}>{inLinea(p.md, riferimenti)}</ReactMarkdown>
+          ) : "video" in p ? (
+            <div className={stili.video}>
+              <iframe src={p.video} title="Video" loading="lazy"
+                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-presentation" allowFullScreen />
+            </div>
+          ) : (
             <LinkV2 href={indirizzo(p.tipo, p.id)} className={stili.scheda}>
               {p.tipo === "carta" && (
                 // eslint-disable-next-line @next/next/no-img-element -- la carta vera, piccola
@@ -101,9 +158,9 @@ export function BlogMarkdownV2({ testo, riferimenti, etichette }: { testo: strin
               )}
               <span><small>{etichette[p.tipo]}</small><strong>{p.nome}</strong></span>
             </LinkV2>
-          </Fragment>
-        ),
-      )}
+          )}
+        </Fragment>
+      ))}
     </div>
   );
 }

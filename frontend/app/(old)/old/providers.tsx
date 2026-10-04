@@ -6,7 +6,7 @@ import { AuthProvider } from "react-oidc-context";
 import { WebStorageStateStore } from "oidc-client-ts";
 import { SITE_URL } from "@/lib/condivisione";
 import { ProviderLingua, type Lingua } from "@/lib/lingua";
-import { AUTH_DISATTIVATA, SessioneDiSviluppo, SessioneKeycloak } from "@/lib/sessione";
+import { AUTH_DISATTIVATA, SCOPE_PERSISTENTE, SessioneDiSviluppo, SessioneKeycloak } from "@/lib/sessione";
 import { AttribuzioneCondivisione } from "@/lib/attribuzione";
 import { BannerCookie } from "./componenti/banner-cookie";
 import { Oracolo } from "./componenti/oracolo";
@@ -66,7 +66,8 @@ export function Providers({ children, linguaIniziale }: { children: React.ReactN
             redirect_uri: nelBrowser ? `${window.location.origin}${VECCHIO}` : `${SITE_URL}${VECCHIO}`,
             post_logout_redirect_uri: nelBrowser ? `${window.location.origin}${VECCHIO}` : `${SITE_URL}${VECCHIO}`,
             response_type: "code",
-            scope: "openid profile email",
+            /* Login persistente fino al logout: token di rinnovo offline (vedi `SCOPE_PERSISTENTE`). */
+            scope: SCOPE_PERSISTENTE,
             /* Rinnovo silenzioso prima della scadenza: senza, una lettura
              * lunga si interrompe con un 401 a metà del responso. */
             automaticSilentRenew: true,

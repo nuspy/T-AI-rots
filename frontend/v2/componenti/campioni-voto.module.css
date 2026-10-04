@@ -1,0 +1,47 @@
+/* Le carte d'esempio di un candidato al voto: una fila di miniature (fino a cinque) che va a capo, mai uno
+ * scorrimento orizzontale. Ogni miniatura è un pulsante di almeno 48×48 px. */
+
+.fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.miniatura {
+  display: block;
+  padding: 0;
+  border: 2px solid #f5e6bf;
+  border-radius: 6px;
+  background: var(--paper-deep, #e9dfcc);
+  cursor: zoom-in;
+  line-height: 0;
+  min-width: 48px;
+  min-height: 48px;
+}
+
+.miniatura img {
+  display: block;
+  width: clamp(56px, 16vw, 88px);
+  height: auto;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.miniatura:focus-visible {
+  outline: 3px solid var(--brass, #b28336);
+  outline-offset: 3px;
+}
+
+.contatore {
+  margin: .4rem 0 0;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .miniatura { transition: transform .15s ease; }
+  .miniatura:hover { transform: translateY(-2px); }
+}

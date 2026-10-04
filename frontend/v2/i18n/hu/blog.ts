@@ -60,4 +60,11 @@ export const blog: typeof Base = {
     { chiave: "fisica", simbolo: "✋", titolo: "A saját kártyáid", testo: "Húzz a saját paklidból, és itt olvasd ki a mintázatot." },
   ],
   esplora_ultimi: "A naplóból",
+  nove_eyebrow: "A Napló",
+  nove_titolo: "A Naplóból",
+  nove_ultimi: "A legfrissebb bejegyzések",
+  nove_attinenti: "Ehhez az oldalhoz válogatva",
+  a_caso: "Még olvasnivaló, ma neked válogatva",
+  nove_sezione: "Továbbiak: {sezione}",
+  copyright: "© {anno} TAROTS chat (tarots.chat). Minden jog fenntartva. A cikk egészének vagy részeinek másolása, terjesztése vagy átdolgozása a jogtulajdonos írásos engedélye nélkül tilos.",
 };

@@ -19,7 +19,7 @@
   --line: rgba(60, 24, 70, .18);
   --serif: var(--font-v2-serif), "Libre Baskerville", Georgia, serif;
   --sans: var(--font-v2-sans), "DM Sans", Arial, sans-serif;
-  --gutter: clamp(1rem, 5vw, 4.5rem);
+  --gutter: clamp(.8rem, 4vw, 3.6rem);
   color-scheme: light;
 }
 
@@ -44,7 +44,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .brand-mark { display: grid; place-items: center; width: 33px; height: 40px; border: 1px solid var(--brass-pale); color: var(--brass-pale); clip-path: polygon(50% 0, 100% 18%, 100% 82%, 50% 100%, 0 82%, 0 18%); font-family: var(--serif); }
 .brand em { color: var(--brass-pale); }
 .primary-nav { display: flex; justify-content: center; gap: clamp(.25rem, 1.4vw, 1.25rem); }
-.primary-nav a { display: inline-flex; align-items: center; min-height: 44px; padding-inline: .45rem; color: #e9decd; font-size: .84rem; font-weight: 600; white-space: nowrap; }
+.primary-nav a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding-inline: .45rem; color: #e9decd; font-size: .8rem; font-weight: 600; line-height: 1.12; text-align: center; white-space: pre-line; }
 .primary-nav a:hover, .primary-nav a[aria-current="page"] { color: var(--brass-pale); }
 .primary-nav a[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--brass-pale); }
 .header-actions { display: flex; align-items: center; gap: .6rem; }
@@ -571,3 +571,383 @@ p, li, .section-intro, .lede, .faq-item p, .message { text-wrap: pretty; }
   .topic-grid { grid-template-columns: 1fr 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+
+/* ---- stampa di una lettura (v8.5): «Stampa in PDF» --------------------------------------------------------- */
+.solo-stampa { display: none; }
+@media print {
+  @page { margin: 14mm; }
+  body { padding: 0 !important; background: #fff !important; color: #1d1320; }
+  .site-header, .site-footer, .oracolo, .cookie, .shop-bar, .skip-link, .button, .button-row, .non-stampare,
+  .dialog-backdrop, nav, [data-promemoria] { display: none !important; }
+  .band, .band-tight { padding: 0 !important; }
+  .read-layout { display: block; border: 0; background: none; }
+  .read-panel { padding: 0 0 6mm; background: #fff !important; color: #1d1320 !important; }
+  .read-panel.dark { background: #3c1846 !important; color: #fff !important; padding: 4mm !important;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact; break-inside: avoid; }
+  .solo-stampa { display: block; }
+  .stampa-carte { margin-top: 6mm; }
+  .stampa-carta { break-inside: avoid; margin: 0 0 5mm; padding-bottom: 3mm; border-bottom: 1px solid #ddd; }
+  .stampa-carta h3 { margin: 0 0 1.5mm; font: 600 12pt var(--serif); }
+  .stampa-carta p { margin: 0; font-size: 10.5pt; line-height: 1.45; }
+  .stampa-nota { margin-top: 8mm; font-size: 9pt; color: #555; text-align: center; }
+  a { color: inherit; text-decoration: none; }
+}
+
+/* ---- galleria del mazzo (v8.5): ingrandimento con le frecce ai lati, color melanzana ------------------------- */
+.deck-zoom { position: relative; display: grid; justify-items: center; padding-inline: 3.4rem; }
+.deck-zoom-carta { display: block; padding: 0; border: 0; background: none; cursor: zoom-out; }
+.deck-zoom-carta:focus-visible { outline: 2px solid var(--brass); outline-offset: 4px; }
+.deck-zoom-freccia { position: absolute; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 48px; height: 48px; border: 1px solid rgba(214, 182, 109, .55); border-radius: 50%; color: #fff7e8; background: var(--plum); font-size: 1.3rem; box-shadow: 0 6px 18px rgba(32, 16, 38, .3); cursor: pointer; }
+.deck-zoom-freccia:hover, .deck-zoom-freccia:focus-visible { background: var(--plum-deep); outline: 2px solid var(--brass-pale); outline-offset: 2px; }
+.deck-zoom-prec { left: 0; }
+.deck-zoom-succ { right: 0; }
+@media (max-width: 560px) { .deck-zoom { padding-inline: 2.9rem; } .deck-zoom-freccia { width: 44px; height: 44px; } }
+
+/* ---- i nove articoli (v8.5) e il copyright degli articoli ------------------------------------------------- */
+.diario-nove-sotto { margin: 2rem 0 1rem; font: 400 1.25rem var(--serif); color: var(--ink); }
+.diario-nove-voce { display: grid; gap: .45rem; align-content: start; }
+.diario-nove-voce > .inline { min-height: 44px; display: inline-flex; align-items: center; justify-self: start; }
+.articolo-copyright { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+
+/* ---- spazi fra le sezioni al 35% (v8.5, 3/10) ----------------------------------------------------------------
+ * Lo spazio fra una sezione e l'altra è la somma del margine sotto la prima e sopra la seconda: tutti e due al 35% del
+ * valore di prima (bande, eroe, testate delle pagine interne, piede). L'eroe non ha più l'altezza minima di una
+ * finestra intera, che lasciava vuoto sotto il testo; sul telefono si scende al 35% ma non sotto 1rem. */
+.band { padding-block: clamp(1.6rem, 3.15vw, 2.8rem); }
+.band-tight { padding-block: clamp(1rem, 1.75vw, 1.4rem); }
+.hero { min-height: 0; padding-block: clamp(1.2rem, 2.45vw, 2.45rem); }
+.ritual-object { min-height: 400px; }
+.subhero { padding-top: clamp(1.25rem, 2.8vw, 2.45rem); padding-bottom: 1.05rem; }
+.subhero-compact { padding-block: clamp(1rem, 2.1vw, 1.6rem) .9rem; }
+.site-footer { padding-block: 1.25rem; }
+@media (max-width: 760px) {
+  .band { padding-block: 1rem; }
+  .band-tight { padding-block: 1rem; }
+  .hero { padding-top: 1rem; padding-bottom: 1rem; }
+  .subhero { padding-top: 1rem; padding-bottom: 1rem; }
+  .subhero-compact { padding-block: 1rem; }
+  .ritual-object { min-height: 260px; }
+  .site-footer { padding-block: 1rem; padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+}
+
+/* ---- vuoti fra i blocchi al 35% (v8.5, 3/10), dopo la misura di tutte le pagine --------------------------------
+ * Margini e distanze fra un blocco e l'altro al 35% (minimo .5rem). L'imbottitura verticale dei riquadri con sfondo
+ * o bordo al 50%, perché il testo non tocchi il bordo; quella orizzontale resta. Via le altezze minime che lasciavano
+ * vuote le tessere. Valgono per tutte le larghezze (stanno dopo le regole del telefono). */
+.section-head { margin-bottom: .9rem; gap: .7rem; }
+.section-head > a { margin-top: .5rem; }
+.trust-strip { margin-top: 1.05rem; padding-top: .5rem; }
+.ritual-steps { margin-top: .75rem; }
+.declaration { margin-top: 1.05rem; row-gap: .55rem; padding-block: clamp(.75rem, 2vw, 1.5rem); }
+.declaration-facts li { padding-block: .5rem; }
+.declaration-close { padding-top: .5rem; }
+.method-grid { margin-top: .85rem; }
+.method-grid > div { padding-top: .5rem; }
+.funnel-steps { margin-top: .85rem; }
+.funnel-step { min-height: 0; padding-block: .75rem; }
+.memory-card { padding-block: 1.1rem; }
+.memory-card .memory-label { margin-bottom: .7rem; }
+.memory-card footer { margin-top: .6rem; }
+.memory-list { margin-block: .5rem; }
+.memory-layout { gap: clamp(.7rem, 2.8vw, 2.8rem); }
+.deck-layout { gap: clamp(.7rem, 2.1vw, 1.75rem); }
+.physical-layout { gap: 1.05rem; }
+.physical-card { padding-block: .8rem; }
+.demo-copy, .demo-ritual { padding-block: clamp(.75rem, 2vw, 1.6rem); }
+.read-panel { padding-block: clamp(.75rem, 2vw, 1.5rem); }
+.share-band { padding-block: clamp(.75rem, 2vw, 1.25rem); gap: .7rem; }
+.static-share { padding-block: clamp(.65rem, 2vw, 1rem); }
+.panel { padding-block: clamp(.6rem, 1.5vw, .9rem); }
+.panel + .panel { margin-top: .5rem; }
+.panel h3 { margin-top: .5rem; }
+.profile-grid { row-gap: .5rem; }
+.plan { min-height: 0; padding-block: .85rem; }
+.plan .price { margin: .5rem 0; }
+.plan .button { margin-top: .5rem; }
+.pricing-grid, .shop-grid, .content-grid, .cards-grid { row-gap: .5rem; }
+.story-grid { gap: .7rem; }
+.story-sidebar { padding-block: .65rem; }
+.difference { min-height: 0; padding-block: .75rem; }
+.difference span { margin-bottom: .55rem; }
+.topic { min-height: 0; }
+.faq { row-gap: .55rem; }
+.faq-item summary { padding-block: .55rem; }
+.faq-item p { margin-bottom: .5rem; }
+.pager { margin-top: .7rem; }
+.articolo-copyright { margin-top: .7rem; padding-top: .5rem; }
+.diario-nove-sotto { margin: .7rem 0 .5rem; }
+.section-intro { margin-top: .5rem; }
+
+/* ---- l'oracolo nella barra (v8.5, 3/10): chiusa mostra la proposta, un tocco la apre in verticale ------------ */
+.oracolo-chiusa { width: 100%; text-align: left; cursor: pointer; font: inherit; border-left: 0; border-right: 0; border-bottom: 0; align-items: center; }
+.oracolo-chiusa:focus-visible { outline: 2px solid var(--brass-pale); outline-offset: -4px; }
+.oracolo-proposta { min-width: 0; min-height: 44px; display: flex; align-items: center; padding: .55rem .8rem; border: 1px solid rgba(214,182,109,.4); border-radius: 3px; background: rgba(255,255,255,.07); color: #fff7e8; font: italic 1rem/1.35 var(--serif); overflow: hidden; }
+.oracolo-chiusa .oracolo-proposta { white-space: nowrap; text-overflow: ellipsis; display: block; line-height: 1.95rem; }
+.oracolo-chiusa .oracolo-invia { pointer-events: none; }
+.oracolo-segno .dot { position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; border-radius: 50%; background: var(--verdigris); box-shadow: 0 0 0 2px var(--plum-deep); }
+.oracolo-espansa { grid-template-columns: 1fr; gap: .45rem; align-items: stretch; }
+.oracolo-testa { display: flex; align-items: center; gap: .5rem; color: var(--brass-pale); font-size: .82rem; letter-spacing: .04em; }
+.oracolo-testa .oracolo-segno { width: 32px; height: 32px; }
+.oracolo-azioni { margin-left: auto; display: flex; gap: .3rem; }
+.oracolo-azioni button { width: 44px; height: 44px; border: 0; border-radius: 50%; color: #fff7e8; background: rgba(255,255,255,.06); cursor: pointer; }
+.oracolo-azioni button:focus-visible { outline: 2px solid var(--brass-pale); outline-offset: 1px; }
+/* Due righe di chat: l'ultima proposta e la risposta; lo storico scorre. */
+.oracolo-chat { display: grid; gap: .45rem; align-content: start; max-height: 8.6rem; overflow-y: auto; overscroll-behavior: contain; padding-right: .2rem; }
+.oracolo-chat .message { max-width: 100%; margin: 0; }
+.oracolo-turno { display: grid; gap: .35rem; justify-items: start; }
+.oracolo-campo { display: grid; grid-template-columns: 1fr auto; gap: .5rem; align-items: end; }
+@media (max-width: 560px) {
+  .oracolo-chiusa { grid-template-columns: auto 1fr auto; }
+  .oracolo-proposta { font-size: .95rem; }
+  .oracolo-chat { max-height: 7.6rem; }
+}
+
+/* ---- temi della home sul telefono (v8.5, 3/10): il simbolo a sinistra, il nome sopra e la spiegazione sotto,
+ * così la tessera sta nella sua colonna senza allargarsi. */
+@media (max-width: 760px) {
+  .topic { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; column-gap: .55rem; row-gap: .1rem; align-items: center; justify-content: stretch; }
+  .topic-icon { grid-row: 1 / span 2; }
+  .topic b, .topic small { grid-column: 2; min-width: 0; overflow-wrap: anywhere; }
+  .topic small { line-height: 1.25; }
+}
+
+/* ---- il rito in un dialogo sul telefono (3/10): fondo prugna come il pannello del rito ------------------------ */
+.dialog-scuro { color: #f6ecdd; background: var(--plum); border-top-color: var(--brass-pale); }
+.dialog-scuro h2 { color: var(--brass-pale); }
+.dialog-scuro .dialog-close { color: #fff7e8; }
+
+/* ---- le sezioni del Diario (3/10): riquadri nello stile del sito e un piccolo albero ------------------------- */
+.journal-aside { display: grid; gap: .7rem; align-content: start; }
+.sezioni-box { padding: .75rem .85rem; border: 1px solid var(--line); border-top: 3px solid var(--brass); background: #fffaf1; box-shadow: 0 10px 24px rgba(60,24,70,.06); }
+.sezioni-box h2 { display: flex; align-items: center; gap: .45rem; margin: 0 0 .45rem; font: 400 1.2rem var(--serif); }
+.sezioni-box h2::before { content: "✦"; color: var(--brass); font-size: .85rem; }
+.albero-sezioni, .albero-rami { margin: 0; padding: 0; list-style: none; }
+.albero-rami { margin-left: .95rem; padding-left: .8rem; border-left: 1px solid rgba(178,131,54,.5); }
+.albero-rami > li { position: relative; }
+.albero-rami > li::before { content: ""; position: absolute; left: -.8rem; top: 22px; width: .65rem; border-top: 1px solid rgba(178,131,54,.5); }
+.albero-voce { display: flex; align-items: center; justify-content: space-between; gap: .5rem; min-height: 44px; padding: .3rem .55rem; border-radius: 3px; color: var(--ink); }
+.albero-voce:hover, .albero-voce:focus-visible { background: var(--mist); }
+.albero-voce:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
+.albero-voce[aria-current="page"] { color: #fff7e8; background: var(--plum); }
+.albero-sezioni > li > .albero-voce .albero-nome { font: 400 1.02rem var(--serif); }
+.albero-conta { min-width: 1.8rem; padding: .05rem .45rem; border-radius: 999px; background: rgba(178,131,54,.16); color: var(--ink-soft); font-size: .75rem; text-align: center; }
+.albero-voce[aria-current="page"] .albero-conta { color: #fff7e8; background: rgba(255,255,255,.18); }
+.journal-a-caso { margin-top: .7rem; }
+
+/* ---- la testata sul telefono: una riga sola (3/10) -------------------------------------------------------------
+ * Sul computer le voci del menu restano scritte. Sul telefono tutto sta su UNA riga: simbolo, le sei voci del menu
+ * (icona + etichetta corta a 8 px; «Read» sparisce, c'è già «Start reading»), carrello, crediti, profilo e «Start
+ * reading». Un'unica fila di icone equidistanti (4/10): `.header-actions` sparisce come scatola (`display: contents`),
+ * il menu vale 6 parti e carrello, crediti e account una parte ciascuno, ogni voce larga uguale (mai meno della sua
+ * parola più lunga);
+ * le etichette hanno gli a capo scritti nei dizionari (`nav_breve_*`, `testata_*`), una parola o un gruppo breve per
+ * riga, due righe al massimo; le stesse stringhe vanno nelle app. Bordo della pagina 4 px, imbottiture 1-2 px,
+ * «Start reading» su due righe senza imbottitura (largo quanto «reading»). Le voci restano alte 44 px; la larghezza
+ * scende sotto i 44 px consigliati: è il prezzo della riga unica. */
+.nav-icona, .nav-breve { display: none; }
+@media (max-width: 760px) {
+  .site-header { display: flex; flex-wrap: nowrap; align-items: center; gap: 0; min-height: 56px; padding-block: 4px; padding-top: max(4px, env(safe-area-inset-top)); padding-left: max(4px, env(safe-area-inset-left)); padding-right: max(4px, env(safe-area-inset-right)); }
+  .site-header .brand { flex: none; gap: .4rem; margin-right: 2px; }
+  .primary-nav { display: flex; flex: 6 1 0; justify-content: space-between; gap: 0; min-width: 0; margin: 0; overflow: visible; }
+  .primary-nav .nav-leggi { display: none; }
+  .primary-nav a.nav-voce { flex: 1 1 0; flex-direction: column; justify-content: center; gap: .15rem; min-width: min-content; min-height: 44px; padding: 2px 1px; white-space: normal; }
+  .primary-nav .nav-lungo { display: none; }
+  .primary-nav .nav-icona { display: block; width: 20px; height: 20px; flex: none; }
+  .primary-nav .nav-breve { white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 8px; font-weight: 600; line-height: 1.15; letter-spacing: 0; text-align: center; overflow-wrap: normal; word-break: keep-all; hyphens: none; }
+  .primary-nav a.nav-voce[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--brass-pale); }
+  .header-actions { display: contents; }
+  .header-actions .hdr-icon { flex: 1 1 0; min-width: min-content; min-height: 44px; padding: 2px 1px; white-space: normal; }
+  .header-actions .hdr-icon svg { width: 20px; height: 20px; }
+  .header-actions .hdr-icon .hdr-label { white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 8px; letter-spacing: 0; text-align: center; word-break: keep-all; }
+  .site-header .brand-mark { width: 22px; height: 27px; font-size: .8rem; }
+  .header-actions .hdr-badge { top: 0; right: -2px; min-width: 15px; height: 15px; padding: 0 3px; font-size: .58rem; line-height: 15px; }
+  .header-actions .button-small { flex: none; width: min-content; max-width: none; min-height: 44px; margin-left: 2px; padding: 2px 3px; border-width: 1px; font-size: .64rem; line-height: 1.08; white-space: normal; text-align: center; }
+}
+@media (max-width: 560px) { .site-header .brand-name { display: none; } }
+
+/* ---- l'unione con un account mai verificato (unione-account.tsx) ---------------------------------------------- */
+.unione { display: grid; gap: .8rem; }
+.unione p { margin: 0; line-height: 1.55; }
+.unione-contenuto { padding: .7rem .9rem; border-left: 3px solid var(--brass); background: #fff8e8; font-size: .92rem; }
+.unione-scelta { display: grid; gap: .2rem; margin: 0; padding: 0; border: 0; }
+.unione-scelta legend { margin-bottom: .3rem; color: var(--ink); font-weight: 600; }
+.unione-scelta small { display: block; margin-top: .25rem; color: var(--ink-soft); font-size: .84rem; }
+.unione .field { margin: 0; }
+.unione-password { display: flex; gap: .5rem; align-items: stretch; }
+.unione-password input { flex: 1; min-width: 0; }
+.unione-password .button { flex: none; min-height: 47px; }
+/* Edge mette il suo occhio nel campo: c'è già «Mostra». */
+.unione-password input::-ms-reveal { display: none; }
+
+/* Gli spazi pubblicitari (`v2/componenti/pubblicita.tsx`, spenti per default): un'etichetta sopra e un'altezza
+ * riservata secondo il formato, così l'annuncio che arriva non sposta la pagina. Fra due sezioni prendono i margini
+ * della fascia; dentro una colonna (`pubblicita-dentro`) solo quelli verticali. */
+.pubblicita { box-sizing: border-box; width: 100%; max-width: 1200px; min-width: 0; margin: 0 auto; padding: 1.2rem var(--gutter); }
+.pubblicita-dentro { max-width: none; margin: 1.4rem 0; padding: 0; }
+.pubblicita p.pubblicita-etichetta { margin: 0 0 .35rem; color: var(--ink-soft); font: 700 .68rem/1.4 var(--sans); letter-spacing: .1em; text-transform: uppercase; }
+.pubblicita .adsbygoogle { width: 100%; min-height: 280px; border-block: 1px solid var(--line); background: var(--paper-light); }
+.pubblicita-horizontal .adsbygoogle { min-height: 100px; }
+.pubblicita-vertical .adsbygoogle { min-height: 600px; }
+@media (min-width: 761px) { .pubblicita-auto .adsbygoogle, .pubblicita-rectangle .adsbygoogle { min-height: 250px; } }
+/* La griglia della biblioteca tagliata in terzi: fra una parte e l'altra lo stesso passo che fra le righe. */
+.cards-grid + .cards-grid { margin-top: .5rem; }
+/* Sotto i 340 px (telefoni molto vecchi) le etichette a 7 px: a 8 px ungherese, russo e spagnolo non stanno in riga. */
+@media (max-width: 339px) { .primary-nav .nav-breve, .header-actions .hdr-icon .hdr-label { font-size: 7px; } .header-actions .button-small { font-size: .6rem; } }
+
+/* ---- GDPR, Fase 1: il banner a categorie, i consensi, l'informativa, l'eliminazione dell'account ------------------- */
+/* Il banner: sul telefono un foglio in basso a tutta larghezza (sopra la barra dell'oracolo e la safe area), con le
+ * categorie che scorrono dentro se lo schermo è basso; i tre comandi hanno lo stesso peso. */
+.cookie-categorie { max-height: calc(100dvh - 2rem - env(safe-area-inset-top)); overflow-y: auto; overscroll-behavior: contain; }
+.cookie-scelte { margin: 0 0 .6rem; padding: 0; border: 0; }
+.cookie-voce span, .consensi-elenco .check span { display: grid; gap: .15rem; }
+.cookie-voce small, .consensi-elenco .check small { color: var(--ink-soft); font-size: .8rem; line-height: 1.45; }
+.cookie-voce b, .consensi-elenco .check b { font-weight: 700; color: var(--ink); }
+.cookie-comandi .button { flex: 1 1 auto; }
+@media (max-width: 560px) {
+  .cookie-categorie { left: 0; right: 0; width: auto; padding: 1rem max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); bottom: var(--oracolo-h, 0px); border-left: 0; border-right: 0; }
+  .cookie-comandi { display: grid; grid-template-columns: 1fr 1fr; }
+  .cookie-comandi .button:last-child:nth-child(3) { grid-column: 1 / -1; }
+}
+/* La richiesta del consenso ai dati particolari accanto alla casella «persona trans». */
+.consenso-inline { margin: -.2rem 0 .8rem 1.9rem; padding: .7rem .9rem; border-left: 3px solid var(--verdigris); background: #f3f7f2; }
+.consenso-inline p { margin: 0 0 .5rem; }
+/* «Privacy e consensi» nel profilo e le scelte nella pagina privacy. */
+.consensi-elenco { margin: .2rem 0 .8rem; }
+.consensi-elenco li + li { border-top: 1px solid var(--line); }
+.consenso-stato { font-weight: 600; }
+.privacy-profilo h3 { margin-top: 1.1rem; }
+.privacy-finalita { display: grid; gap: .7rem; margin: 0; }
+.privacy-finalita div { padding-bottom: .6rem; border-bottom: 1px solid var(--line); }
+.privacy-finalita dt { font-weight: 700; font-size: .9rem; }
+.privacy-finalita dd { margin: .2rem 0 0; }
+.privacy-elenco { margin: .4rem 0 .8rem; padding-left: 1.2rem; }
+.privacy-elenco li + li { margin-top: .4rem; }
+.privacy-versione { grid-column: 1 / -1; margin: 0; }
+.elimina-passi { margin: 0 0 .8rem; padding-left: 1.2rem; }
+.elimina-passi li + li { margin-top: .35rem; }
+.elimina-account .field input { max-width: 16rem; text-transform: uppercase; }
+
+/* ---- abbonamenti (v9, Fase 2b) ---------------------------------------------------------------------------------
+ * Il banner della prova: nel flusso sotto la testata (mai sopra il contenuto), carta calda con l'ottone; chi l'ha
+ * chiuso non lo vede nemmeno per un istante (`data-prova-nascosta`, messo dallo script del layout). */
+html[data-prova-nascosta] .banner-prova { display: none; }
+.banner-prova { display: grid; grid-template-columns: minmax(0, 1fr) auto 44px; align-items: center; gap: .4rem 1rem; padding: .55rem var(--gutter); padding-left: max(var(--gutter), env(safe-area-inset-left)); padding-right: max(var(--gutter), env(safe-area-inset-right)); border-bottom: 1px solid rgba(178,131,54,.45); background: linear-gradient(90deg, #f6e9c9, #efe0bf 60%, #f3e6c8); color: var(--ink); }
+.banner-prova-testo { display: grid; gap: .1rem; min-width: 0; }
+.banner-prova p { margin: 0; }
+.banner-prova-etichetta { color: #145a59; font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.banner-prova-titolo { font: 400 1.02rem/1.35 var(--serif); }
+.banner-prova-nota { color: var(--ink-soft); font-size: .82rem; line-height: 1.45; }
+.banner-prova-cta { white-space: nowrap; }
+.banner-prova-chiudi { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; color: var(--ink-soft); background: transparent; font-size: 1rem; }
+.banner-prova-chiudi:hover { background: rgba(60,24,70,.08); }
+@media (max-width: 760px) {
+  .banner-prova { grid-template-columns: minmax(0, 1fr) 44px; grid-template-areas: "testo chiudi" "cta cta"; padding-block: .5rem .65rem; }
+  .banner-prova-testo { grid-area: testo; }
+  .banner-prova-chiudi { grid-area: chiudi; align-self: start; margin-top: -.2rem; }
+  .banner-prova-cta { grid-area: cta; width: 100%; white-space: normal; }
+  .banner-prova-titolo { font-size: .95rem; }
+}
+@media print { .banner-prova { display: none; } }
+
+/* L'interruttore (rinnovo automatico): una casella nativa con `role=switch`, disegnata come levetta, 44 px di tocco. */
+.interruttore { display: inline-flex; align-items: center; gap: .7rem; min-height: 44px; margin: .3rem 0; cursor: pointer; }
+.interruttore input { appearance: none; flex: none; position: relative; width: 46px; height: 26px; margin: 0; border: 1px solid var(--ink-soft); border-radius: 999px; background: #e3dace; cursor: pointer; transition: background .18s ease; }
+.interruttore input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(32,16,38,.35); transition: transform .18s ease; }
+.interruttore input:checked { border-color: var(--verdigris); background: var(--verdigris); }
+.interruttore input:checked::after { transform: translateX(20px); }
+.interruttore input:focus-visible { outline: 3px solid var(--verdigris); outline-offset: 3px; }
+.interruttore input:disabled { opacity: .55; cursor: not-allowed; }
+
+/* Il dialogo del limite e del condono. */
+.dialogo-limite p { margin: 0 0 .8rem; }
+.dialogo-limite-sopra { color: var(--verdigris); font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.dialogo-limite-dono { padding: .8rem 1rem; border-left: 3px solid var(--brass); background: #fff6e2; font: 400 1rem/1.55 var(--serif); }
+
+/* Le tre righe del conguaglio: importi allineati, il totale in evidenza. */
+.conguaglio { display: grid; gap: 0; margin: 0 0 .8rem; border: 1px solid var(--line); background: #fff; }
+.conguaglio-riga { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1rem; align-items: baseline; padding: .8rem 1rem; }
+.conguaglio-riga + .conguaglio-riga { border-top: 1px solid var(--line); }
+.conguaglio dt { font-weight: 600; }
+.conguaglio dt small { display: block; margin-top: .15rem; color: var(--ink-soft); font-size: .8rem; font-weight: 400; }
+.conguaglio dd { margin: 0; font: 400 1.25rem var(--serif); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.conguaglio-totale { background: var(--paper-deep); }
+.conguaglio-totale dt { font-size: 1.05rem; }
+.conguaglio-totale dd { font-size: 1.6rem; font-weight: 700; }
+
+/* La sezione «Abbonamento» del profilo. */
+.abbonamento-testa { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .8rem; margin: 0 0 .4rem; }
+.abbonamento-testa strong { font: 400 1.2rem var(--serif); }
+.stato-abbonamento { display: inline-flex; padding: .15rem .55rem; border: 1px solid currentColor; border-radius: 999px; font-size: .75rem; font-weight: 700; letter-spacing: .04em; }
+.stato-attivo, .stato-in_prova { color: #0f5958; }
+.stato-in_sospeso { color: #7a4f05; }
+.stato-sospeso, .stato-scaduto, .stato-disdetto { color: var(--danger); }
+.rinnovo-automatico { margin: .6rem 0; padding: .7rem 0; border-block: 1px solid var(--line); }
+.rinnovo-automatico h3 { margin: 0; }
+.rinnovo-automatico p { margin: .2rem 0 0; }
+.notice-pagamento { border-left-color: var(--danger); background: #fdf1ee; color: var(--ink); }
+
+/* La pagina dei prezzi: periodo, rinnovo automatico, la banda della prova. */
+.abbonamenti-comandi { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.4rem; margin: 0 0 1rem; }
+.abbonamenti-comandi .interruttore span { display: grid; gap: .1rem; }
+.abbonamenti-comandi .interruttore small { max-width: 52ch; font-size: .8rem; line-height: 1.4; }
+.plan-abbonamento .badge-offer { align-self: flex-start; }
+.prezzo-barrato { color: var(--ink-soft); font-size: 1.15rem; text-decoration-thickness: 2px; }
+.prova-banda { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem 1.2rem; margin: 0 0 1.2rem; padding: 1rem 1.2rem; border: 1px solid rgba(178,131,54,.5); border-left: 4px solid var(--brass); background: #fbf2dc; }
+.prova-banda p { margin: 0; }
+.prova-banda-titolo { font: 400 1.1rem/1.35 var(--serif); }
+
+/* La pagina della prova. */
+.prova-testa { padding-bottom: 0; }
+.prova-vantaggio { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.4rem; align-items: center; margin: 0 0 1.4rem; padding: clamp(1.1rem, 3vw, 1.8rem); color: #fff7e8; background: var(--plum); box-shadow: 8px 8px 0 var(--brass-pale); }
+.prova-vantaggio h2 { margin: 0 0 .3rem; color: var(--brass-pale); font: 400 1.5rem var(--serif); }
+.prova-vantaggio p { margin: 0; color: #eadbe9; }
+.prova-vantaggio-numero { margin: 0; color: var(--brass-pale); font: 400 clamp(2.8rem, 9vw, 4.6rem)/1 var(--serif); letter-spacing: -.04em; }
+.prova-griglia { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem; align-items: start; }
+.prova-griglia .panel + .panel { margin-top: 0; }
+.prova-passi { margin: 0 0 .8rem; padding-left: 1.3rem; }
+.prova-passi li + li { margin-top: .55rem; }
+.prova-livelli { display: grid; gap: .6rem; margin: 0 0 1rem; }
+.prova-livello { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .1rem 1rem; align-items: baseline; width: 100%; min-height: 56px; padding: .75rem 1rem; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); background: #fff; text-align: left; }
+.prova-livello.attivo { border: 2px solid var(--verdigris); background: #f1f7f4; }
+.prova-livello-nome { font: 400 1.1rem var(--serif); }
+.prova-livello-prezzi { text-align: right; white-space: nowrap; }
+.prova-livello-prezzi s { color: var(--ink-soft); font-size: .85rem; }
+.prova-livello-prezzi b { font: 700 1.15rem var(--serif); }
+.prova-livello-nota { grid-column: 1 / -1; color: var(--ink-soft); font-size: .78rem; }
+.prova-azione .button { width: 100%; }
+@media (max-width: 760px) {
+  .prova-griglia { grid-template-columns: 1fr; }
+  .prova-vantaggio { grid-template-columns: 1fr; gap: .4rem; }
+}
+
+/* Il codice sconto sui prezzi (v9, Fase 2d): la banda del codice applicato, il risparmio e la scadenza su ogni
+   offerta. Mai solo il colore: il prezzo pieno è barrato e il risparmio è scritto. */
+.coupon-banda { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem 1.2rem; padding: 1rem 1.2rem; border: 1px solid rgba(25,112,111,.45); border-left: 4px solid var(--verdigris); background: #eef6f2; }
+.coupon-banda > div { min-width: 0; flex: 1 1 18rem; }
+.coupon-banda p { margin: 0 0 .3rem; }
+.coupon-banda-titolo { font: 400 1.15rem/1.35 var(--serif); overflow-wrap: anywhere; }
+.coupon-banda-errore { border-color: rgba(155,44,44,.4); border-left-color: var(--danger); background: #fdf1ee; }
+.coupon-codice { font-family: var(--sans); font-weight: 700; letter-spacing: .06em; }
+.coupon-scadenza { display: inline-block; padding: .15rem .5rem; color: var(--danger); background: #fff; border: 1px solid rgba(155,44,44,.35); font-size: .82rem; font-weight: 700; }
+.coupon-risparmio { margin: .2rem 0 .3rem; color: #0f4d4c; font-weight: 700; }
+.coupon-nota { margin: .2rem 0 .4rem; color: var(--ink-soft); }
+@media (max-width: 480px) {
+  .coupon-banda { padding: .9rem 1rem; }
+  .coupon-banda .button { width: 100%; }
+}
+
+/* Notifiche (v9, Fase 5): la sezione del profilo e l'invito dopo la carta del giorno. */
+.notifiche-scelte { margin-top: .8rem; }
+.notifiche-profilo .check span { display: grid; gap: .15rem; }
+.notifiche-profilo .check small { color: var(--ink-soft); font-size: .8rem; line-height: 1.45; }
+.notifiche-profilo .check b { font-weight: 700; color: var(--ink); }
+.notifiche-ora { max-width: 12rem; margin-left: calc(20px + .6rem); }
+.notifiche-silenzio { margin-left: calc(20px + .6rem); max-width: 24rem; }
+.invito-notifiche { margin-top: 1.2rem; padding: .9rem 1rem; border-left: 3px solid var(--brass); background: #fff8e8; }
+.invito-notifiche-titolo { margin: 0 0 .3rem; font: 400 1.15rem var(--serif); color: var(--ink); }
+.invito-notifiche p.small { margin: 0 0 .6rem; color: var(--ink-soft); }
+@media (max-width: 480px) {
+  .notifiche-silenzio { grid-template-columns: 1fr 1fr; margin-left: 0; }
+  .notifiche-ora { margin-left: 0; }
+  .invito-notifiche .button { flex: 1 1 auto; }
+}

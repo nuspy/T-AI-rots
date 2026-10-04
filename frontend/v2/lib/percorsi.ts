@@ -23,6 +23,8 @@ export const R = {
   negozio: "/shop",
   carrello: "/cart",
   prezzi: "/pricing",
+  /** La prova gratuita (v9, Fase 2b): stesso nome in tutte le lingue, come le pagine nuove della v2. */
+  prova: "/trial",
   esplora: "/explore",
   blog: "/blog",
   articolo: (slug: string) => `/blog/${encodeURIComponent(slug)}`,
@@ -30,6 +32,9 @@ export const R = {
   blogTag: (slug: string) => `/blog/tag/${encodeURIComponent(slug)}`,
   profilo: "/profile",
   privacy: "/privacy",
+  /** La cancellazione dell'account (GDPR, Fase 1): una pagina pubblica, perché Google Play vuole un indirizzo da
+   *  aprire anche senza l'app e senza essere entrati. */
+  elimina: "/account/elimina",
 } as const;
 
 /** Un indirizzo interno della v2 → quello che si vede: in italiano (`/it/carte/…`) se la pagina è stata aperta così,

@@ -11,6 +11,7 @@ import { f } from "@/v2/i18n";
 import LinkV2 from "@/v2/componenti/link";
 import { useLingua } from "@/v2/lib/lingua";
 import { R } from "@/v2/lib/percorsi";
+import { PulsanteStampa } from "@/v2/componenti/stampa";
 import { PannelloCondivisione } from "./condivisione";
 import stili from "./lettura.module.css";
 
@@ -81,9 +82,10 @@ export function Responso({
               <code>{commitment}</code>
             </details>
           )}
-          <div className="button-row" style={{ marginTop: "1.4rem" }}>
+          <div className="button-row" style={{ marginTop: ".5rem" }}>
             <button type="button" className="button" onClick={() => setCondividendo(true)} data-an="share_started">{l.condividi}</button>
             <LinkV2 className="button button-quiet" href={R.lettura(id)}>{l.vai_storia}</LinkV2>
+            <PulsanteStampa etichetta={l.stampa_pdf} />
             <button type="button" className="button button-quiet" onClick={onNuova}>{l.nuova}</button>
           </div>
           {saldo === 0 && (

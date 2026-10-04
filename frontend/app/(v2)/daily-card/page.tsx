@@ -25,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function PaginaGiorno() {
   const lingua = await linguaPagina();
   /* Un minuto di memoria basta: la carta cambia una volta al giorno. */
-  const valori = await precarica([P.oggi(lingua)], 60);
+  const valori = await precarica([P.oggi(lingua), P.nove()], 60);
   const oggi = valori[P.oggi(lingua)] as CartaOggi | undefined;
   const url = urlPubblico(lingua, "/daily-card");
   const dati = grafo(

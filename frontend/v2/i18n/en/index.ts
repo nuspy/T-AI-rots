@@ -1,5 +1,7 @@
 /* English: the base of every V2 dictionary. */
 
+import { abbonamento } from "./abbonamento";
+import { app } from "./app";
 import { blog } from "./blog";
 import { carte } from "./carte";
 import { comune } from "./comune";
@@ -15,5 +17,6 @@ import { privacy } from "./privacy";
 import { profilo } from "./profilo";
 import { stese } from "./stese";
 import { storia } from "./storia";
+import { notifiche } from "./notifiche";
 
-export const en = { comune, home, lettura, fisica, storia, condivisa, carte, giorno, stese, mazzi, negozio, prezzi, blog, profilo, privacy };
+export const en = { comune, home, lettura, fisica, storia, condivisa, carte, giorno, stese, mazzi, negozio, prezzi, blog, profilo, privacy, abbonamento, app, notifiche };

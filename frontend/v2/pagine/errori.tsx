@@ -10,7 +10,7 @@ import { R } from "@/v2/lib/percorsi";
 function Uscite() {
   const { t } = useLingua();
   return (
-    <div className="button-row" style={{ marginTop: "1.6rem" }}>
+    <div className="button-row" style={{ marginTop: ".55rem" }}>
       <LinkV2 className="button button-brass" href={R.leggi}>{t.home.cta_gratis}</LinkV2>
       <LinkV2 className="button button-quiet" href={R.home}>{t.comune.e_home}</LinkV2>
       <LinkV2 className="button button-quiet" href={R.esplora}>{t.comune.nav_esplora}</LinkV2>
@@ -39,7 +39,7 @@ export function ErroreV2({ onRiprova }: { onRiprova: () => void }) {
       <p className="eyebrow">{c.e500_eyebrow}</p>
       <h1 className="display">{c.e500_titolo}</h1>
       <p className="section-intro">{c.e500_testo}</p>
-      <div className="button-row" style={{ marginTop: "1.6rem" }}>
+      <div className="button-row" style={{ marginTop: ".55rem" }}>
         <button type="button" className="button" onClick={onRiprova}>{c.riprova}</button>
       </div>
       <Uscite />

@@ -58,4 +58,9 @@ export const mazzi: typeof Base = {
   suggerisci_invia: "Отправить предложение",
   suggerisci_grazie: "Спасибо: твоё предложение получено.",
   stampa_cta: "Напечатай своё Таро",
+  /* the example cards of a candidate deck (up to five), enlargeable */
+  campioni_titolo: "Примеры карт колоды {mazzo}",
+  campione_ingrandisci: "Увеличить пример карты {n} колоды {mazzo}",
+  campione_zoom: "{mazzo} · карта {n} из {tot}",
+  campione_chiudi: "Закрыть увеличенную карту",
 };

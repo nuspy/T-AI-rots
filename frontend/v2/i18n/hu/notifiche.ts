@@ -1,0 +1,37 @@
+/* Értesítések (v9, 5. fázis): a profil „Értesítések” része és a meghívás a napi kártya után. */
+
+import type { notifiche as Base } from "../en/notifiche";
+
+export const notifiche: typeof Base = {
+  titolo: "Értesítések",
+  intro: "Egy diszkrét emlékeztető a napi kártyádhoz, és ha szeretnéd, néhány más üzenet. Te döntöd el, mit és mikor.",
+  stato_attive: "Az értesítések be vannak kapcsolva ebben a böngészőben.",
+  stato_spente: "Az értesítések ki vannak kapcsolva ebben a böngészőben.",
+  attiva: "Értesítések bekapcsolása itt",
+  disattiva: "Kikapcsolás ebben a böngészőben",
+  attivazione: "Bekapcsolás…",
+  negato: "A böngésző letiltja ennek az oldalnak az értesítéseit. Engedélyezd őket az oldal beállításaiban (a lakat a cím mellett), majd próbáld újra.",
+  errore: "Nem sikerült. Próbáld újra egy kicsit később.",
+  non_supportato: "Ez a böngésző nem tud értesítéseket fogadni az oldaltól.",
+  ios_titolo: "iPhone-on és iPaden",
+  ios_testo: "A Safari csak a Főképernyőhöz adott oldaltól mutat értesítéseket: koppints a Megosztás gombra, majd a „Hozzáadás a Főképernyőhöz” lehetőségre, nyisd meg a TAROTS chatet az új ikonról, és kapcsold be az értesítéseket a profilodban.",
+  altri: { uno: "Az értesítések 1 másik eszközön is be vannak kapcsolva.", molti: "Az értesítések további {n} eszközön is be vannak kapcsolva." },
+  carta: "Napi kártya",
+  carta_testo: "Reggeli emlékeztető, ha még nem fordítottad meg a kártyádat.",
+  ora: "Időpont",
+  promemoria: "Emlékeztetők",
+  promemoria_testo: "A napjaid sorozata, egy próbaidőszak vége, egy rendezendő fizetés.",
+  promozioni: "Ajánlatok és újdonságok",
+  promozioni_testo: "Legfeljebb heti {n}. Ugyanaz a választás, mint a „Promóciók” az Adatvédelem és hozzájárulások részben.",
+  silenzio: "Csendes órák",
+  silenzio_testo: "Ezek között az időpontok között nincs értesítés, a helyi időd szerint.",
+  dalle: "Ettől",
+  alle: "Eddig",
+  fuso: "Az időzónád: {fuso}. Magától frissül.",
+  salvato: "Mentve.",
+  invito_titolo: "Szeretnéd, hogy minden reggel emlékeztessünk?",
+  invito_testo: "Egy diszkrét értesítés, amikor a napi kártyád elkészült. Csak ennyi, és bármikor kikapcsolhatod.",
+  invito_si: "Igen, emlékeztess",
+  invito_no: "Most nem",
+  invito_fatto: "Kész: holnap reggel találkozunk.",
+};

@@ -8,9 +8,9 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { avvia, type Osservatore } from "lanterna-osservatore";
 import { ProviderOsservatore } from "lanterna-osservatore/react";
-import { leggiConsenso } from "@/lib/api";
-import { ENDPOINT_ANALYTICS, idPerAnalytics, impostaConsensoAnalytics } from "@/lib/analytics";
+import { ENDPOINT_ANALYTICS, idPerAnalytics } from "@/lib/analytics";
 import { useSessione } from "@/lib/sessione";
+import { useConsensi } from "@/v2/lib/consensi";
 import { useLingua } from "@/v2/lib/lingua";
 
 export function OsservatoreV2({ children }: { children: React.ReactNode }) {
@@ -37,12 +37,9 @@ export function OsservatoreV2({ children }: { children: React.ReactNode }) {
     return () => o.ferma();
   }, []);
 
-  useEffect(() => {
-    if (!sessione.pronta) return;
-    leggiConsenso(sessione.token)
-      .then((c) => impostaConsensoAnalytics(c.cookie))
-      .catch(() => {});
-  }, [sessione.pronta, sessione.token]);
+  /* Il livello esteso dipende dal consenso `statistiche` (GDPR, Fase 1): lo stato dei consensi lo legge a ogni cambio
+   * di sessione e lo applica da sé (`v2/lib/consensi.ts`). */
+  useConsensi();
 
   useEffect(() => {
     osservatore?.pagina(percorso);

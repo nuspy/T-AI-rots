@@ -8,6 +8,7 @@
 import { useId, useState } from "react";
 import type { Genere, PartnerInvio, Profilo } from "@/lib/api";
 import { f, type Dizionario } from "@/v2/i18n";
+import { useConsensi } from "@/v2/lib/consensi";
 import { useLingua } from "@/v2/lib/lingua";
 import stili from "./lettura.module.css";
 
@@ -108,10 +109,56 @@ export function CampiGenere({
           </label>
         )}
       </div>
+      <CasellaTrans trans={trans} onTrans={onTrans} />
+    </>
+  );
+}
+
+/* «Persona trans» è un dato dell'art. 9 GDPR (Fase 1): si usa solo col consenso esplicito `dati_particolari`. Il punto
+ * meno invasivo per chiederlo è qui, nel momento in cui lo si dà: spuntando la casella senza il consenso si apre sotto
+ * una richiesta breve; «Non ora» lascia la casella vuota. Togliere la spunta non chiede niente. Il consenso si
+ * revoca dal profilo («Privacy e consensi»). */
+function CasellaTrans({ trans, onTrans }: { trans: boolean; onTrans: (v: boolean) => void }) {
+  const { t } = useLingua();
+  const l = t.lettura;
+  const id = useId();
+  const consensi = useConsensi();
+  const [chiede, setChiede] = useState(false);
+  const [inCorso, setInCorso] = useState(false);
+  const [errore, setErrore] = useState(false);
+  const dato = consensi.dati?.dati_particolari === "accettato";
+  return (
+    <>
       <label className="check">
-        <input type="checkbox" checked={trans} onChange={(e) => onTrans(e.target.checked)} />
+        <input type="checkbox" checked={trans} aria-describedby={chiede ? `${id}-c` : undefined} onChange={(e) => {
+          if (e.target.checked && !dato) { setChiede(true); return; }
+          setChiede(false);
+          onTrans(e.target.checked);
+        }} />
         <span>{l.persone_trans}</span>
       </label>
+      {chiede && (
+        <div className="consenso-inline" id={`${id}-c`} role="group" aria-label={l.art9_titolo}>
+          <p className="small"><b>{l.art9_titolo}.</b> {l.art9_testo}</p>
+          <div className="button-row">
+            <button type="button" className="button button-small" disabled={inCorso} onClick={async () => {
+              setInCorso(true);
+              setErrore(false);
+              try {
+                await consensi.scegli({ dati_particolari: "accettato" });
+                setChiede(false);
+                onTrans(true);
+              } catch {
+                setErrore(true);
+              } finally {
+                setInCorso(false);
+              }
+            }}>{l.art9_si}</button>
+            <button type="button" className="button button-quiet button-small" onClick={() => setChiede(false)}>{l.art9_no}</button>
+          </div>
+          {errore && <p className="error small" role="alert">{t.comune.err_operazione}</p>}
+        </div>
+      )}
     </>
   );
 }

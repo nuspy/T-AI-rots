@@ -3,13 +3,16 @@
 /* Il profilo nella v2: le parti di una storia personale. Parità con il profilo del sito — carte personali, genere e
  * persona ricordata, immagine e nome pubblico, sicurezza (2FA), registro linguistico, mazzo predefinito,
  * condivisioni, inviti, ordini con PDF, indirizzi, opposizione alle statistiche — con due differenze: la memoria
- * vive in «La mia storia» (dove la specifica v2 la vuole visibile), e l'invito porta alla v2. */
+ * vive in «La mia storia» (dove la specifica v2 la vuole visibile), e l'invito porta alla v2. In più «I tuoi dati»:
+ * nome, cognome, posizione attuale, da quale social viene ogni campo e le scelte sull'importazione (vedi
+ * `ImportaProfiloSocial` e `backend/tarot_core/tarot/profilo_social.py`). E «Privacy e consensi» (GDPR, Fase 1,
+ * `privacy-profilo.tsx`): i consensi, il download dei dati, la chat e l'account da cancellare. */
 
 import { useState } from "react";
 import { scaricaBlob } from "@/lib/bigliettino-invito";
 import { componiBigliettinoV2 } from "@/v2/lettura/immagine-condivisione";
 import {
-  aggiornaProfilo, cancellaPartner, caricaAvatar, creaIndirizzo, elencaIndirizzi, elencaMieiMazzi, elencaOrdini, eliminaIndirizzo, euro, impostaPreferenzaStatistiche, impostazioniPubbliche, leggiPreferenzaStatistiche, leggiProfilo, modificaIndirizzo, riscattaInvito, togliAvatar, type Genere, type Indirizzo, type IndirizzoInvio, type Ordine,
+  aggiornaProfilo, cancellaPartner, caricaAvatar, creaIndirizzo, dimenticaDatiSocial, elencaIndirizzi, elencaMieiMazzi, elencaOrdini, eliminaIndirizzo, euro, impostaPreferenzaStatistiche, impostazioniPubbliche, leggiPreferenzaStatistiche, leggiProfilo, modificaIndirizzo, riscattaInvito, togliAvatar, type Genere, type Indirizzo, type IndirizzoInvio, type Ordine, type Profilo as DatiProfilo,
 } from "@/lib/api";
 import { urlMedia } from "@/lib/blog";
 import { dimenticaInvito, leggiInvito } from "@/lib/inviti";
@@ -24,7 +27,11 @@ import { useLingua } from "@/v2/lib/lingua";
 import { R } from "@/v2/lib/percorsi";
 import { useAzione, useCarica } from "@/v2/lib/usa";
 import { BottonePdfV2 } from "./negozio";
+import { PrivacyProfilo } from "./privacy-profilo";
+import { NotificheProfilo } from "@/v2/componenti/notifiche";
+import { AbbonamentoProfilo } from "@/v2/componenti/abbonamento-profilo";
 import { P, useMazzi } from "@/v2/lib/dati";
+import { AccessiCollegati } from "@/v2/componenti/accessi-collegati";
 
 function Sezione({ id, titolo, children }: { id: string; titolo: string; children: React.ReactNode }) {
   return (
@@ -82,7 +89,7 @@ function Dentro() {
 
   return (
     <section className="band band-tight">
-      <div className="share-band" style={{ marginBottom: "1.4rem" }}>
+      <div className="share-band" style={{ marginBottom: ".5rem" }}>
         <div><p className="eyebrow">{p.email}</p><p>{k.storia_link}</p></div>
         <div className="button-row">
           <LinkV2 className="button" href={R.storia}>{k.storia_cta}</LinkV2>
@@ -91,6 +98,10 @@ function Dentro() {
       </div>
       {errore && <p className="error">{errore}</p>}
       <div className="profile-grid">
+        <DatiPersonali p={p} ricarica={profilo.ricarica} />
+        {/* v9, Fase 2b: rinnovo automatico, prova, pagamento da sistemare. */}
+        <AbbonamentoProfilo />
+
         <Sezione id="carte" titolo={k.carte_titolo}>
           <p className="small">{k.carte_testo}</p>
           <div className="button-row" style={{ alignItems: "end" }}>
@@ -99,8 +110,9 @@ function Dentro() {
             <button type="button" className="button button-small" disabled={inCorso || !nascita}
               onClick={async () => { await esegui((tok) => aggiornaProfilo(tok, { birth_date: nascita })); profilo.ricarica(); }}>{t.comune.salva}</button>
           </div>
+          <Provenienza p={p} campo="birth_date" />
           {p.carta_anima && p.carta_anno && (
-            <div className="button-row" style={{ marginTop: "1.2rem", gap: "1.4rem" }}>
+            <div className="button-row" style={{ marginTop: ".5rem", gap: "1.4rem" }}>
               {([[k.carta_anima, p.carta_anima], [k.carta_anno, p.carta_anno]] as const).map(([titolo, carta]) => (
                 <div key={titolo} style={{ textAlign: "center" }}>
                   <CartaV2 carta={carta} rivelata larghezza={120} /><p className="small">{titolo}</p>
@@ -114,6 +126,7 @@ function Dentro() {
           <p className="small">{k.genere_testo}</p>
           <CampiGenere genere={genere ?? p.gender ?? ""} altro={genereAltro ?? p.gender_custom ?? ""} trans={trans ?? p.is_trans}
             onGenere={setGenere} onAltro={setGenereAltro} onTrans={setTrans} />
+          <Provenienza p={p} campo="gender" />
           <button type="button" className="button button-small"
             disabled={inCorso || (genere ?? p.gender ?? "") === "" || (genere === null && genereAltro === null && trans === null)}
             onClick={async () => {
@@ -121,7 +134,7 @@ function Dentro() {
               await esegui((tok) => aggiornaProfilo(tok, { gender: g, gender_custom: g === "altro" ? (genereAltro ?? p.gender_custom ?? "") : null, is_trans: trans ?? p.is_trans }));
               setGenere(null); setGenereAltro(null); setTrans(null); profilo.ricarica();
             }}>{t.comune.salva}</button>
-          <h3 style={{ marginTop: "1.6rem" }}>{k.partner_titolo}</h3>
+          <h3 style={{ marginTop: ".55rem" }}>{k.partner_titolo}</h3>
           {p.partner_ricordato ? (
             <>
               <p className="small">{[p.partner_ricordato.nome, p.partner_ricordato.cognome].filter(Boolean).join(" ")} · {new Date(p.partner_ricordato.nascita).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })}</p>
@@ -191,7 +204,7 @@ function Dentro() {
             </div>
           )}
           {esitoInvito && <p className="success" role="status">{esitoInvito}</p>}
-          <h3 style={{ marginTop: "1.6rem" }}>{k.cond_titolo}</h3>
+          <h3 style={{ marginTop: ".55rem" }}>{k.cond_titolo}</h3>
           <p className="small">{f(k.cond_testo, { soglia: c.soglia, crediti: c.crediti_iscrizione })}</p>
           <div className="stat-bar" role="progressbar" aria-valuemin={0} aria-valuemax={c.soglia} aria-valuenow={c.soglia - c.prossimo_tra} aria-label={k.cond_titolo}>
             <span style={{ width: `${((c.soglia - c.prossimo_tra) / c.soglia) * 100}%` }} />
@@ -258,10 +271,14 @@ function Dentro() {
             )}
           </Sezione>
         )}
+        {/* v9, Fase 6: Apple e Google collegati all'account, e il codice dell'app. */}
+        {!AUTH_DISATTIVATA && <AccessiCollegati onSpostato={profilo.ricarica} />}
 
         <Ordini />
         <Indirizzi />
         <Statistiche />
+        <NotificheProfilo />
+        <PrivacyProfilo onCambio={profilo.ricarica} />
       </div>
 
       <Modale aperta={dimentica} titolo={k.partner_conferma} onChiudi={() => setDimentica(false)}>
@@ -385,6 +402,123 @@ function Indirizzi() {
       ) : (
         <button type="button" className="button button-quiet button-small" style={{ marginTop: ".8rem" }} onClick={() => setAggiunta(true)}>{k.indirizzi_aggiungi}</button>
       )}
+    </Sezione>
+  );
+}
+
+const NOMI_SOCIAL: Record<string, string> = {
+  google: "Google", facebook: "Facebook", microsoft: "Microsoft", github: "GitHub", linkedin: "LinkedIn", apple: "Apple",
+};
+
+/* «da Google, 3 ott 2026» accanto a un campo compilato da un social; niente se l'ha scritto la persona. */
+function Provenienza({ p, campo }: { p: DatiProfilo; campo: string }) {
+  const { t, locale } = useLingua();
+  const voce = p.dati_social?.[campo];
+  if (!voce || voce.da === "utente") return null;
+  if (voce.da === "account") return <p className="small muted">{t.profilo.da_account}</p>;
+  const data = new Date(voce.il).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" });
+  return <p className="small muted">{f(t.profilo.da_social, { provider: NOMI_SOCIAL[voce.da] ?? voce.da, data })}</p>;
+}
+
+function nomePaese(codice: string | null, locale: string): string {
+  if (!codice) return "";
+  try {
+    return new Intl.DisplayNames([locale], { type: "region" }).of(codice) ?? codice;
+  } catch {
+    return codice;
+  }
+}
+
+/* I tuoi dati: nome e cognome, la posizione attuale (con il modo di correggerla o di tornare al rilevamento
+ * automatico), le due scelte sull'importazione dai social e la cancellazione di ciò che è arrivato da lì. */
+function DatiPersonali({ p, ricarica }: { p: DatiProfilo; ricarica: () => void }) {
+  const { t, locale } = useLingua();
+  const k = t.profilo;
+  const { esegui, inCorso, errore } = useAzione();
+  const [nome, setNome] = useState<string | null>(null);
+  const [cognome, setCognome] = useState<string | null>(null);
+  const [paese, setPaese] = useState<string | null>(null);
+  const [citta, setCitta] = useState<string | null>(null);
+  const [salvato, setSalvato] = useState<string | null>(null);
+  const [conferma, setConferma] = useState(false);
+  const pos = p.posizione ?? null;
+  const quando = pos?.il ? new Date(pos.il).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" }) : "";
+  const fonte = !pos ? "" : pos.fonte === "utente" ? k.posizione_utente : pos.fonte === "ip"
+    ? f(k.posizione_ip, { data: quando })
+    : f(k.da_social, { provider: NOMI_SOCIAL[pos.fonte ?? ""] ?? pos.fonte ?? "", data: quando });
+
+  const salva = async (dati: Parameters<typeof aggiornaProfilo>[1], messaggio: string) => {
+    setSalvato(null);
+    const r = await esegui((tok) => aggiornaProfilo(tok, dati));
+    if (r) { setSalvato(messaggio); ricarica(); }
+    return r;
+  };
+
+  return (
+    <Sezione id="dati" titolo={k.dati_titolo}>
+      <p className="small">{k.dati_testo}</p>
+      {/* v9, Fase 6: Apple manda il nome solo al primo accesso e Keycloak non lo legge; lo si chiede, con garbo. */}
+      {!p.nome && <p className="small" role="note" style={{ borderLeft: "2px solid currentColor", paddingLeft: ".6rem" }}>{k.nome_manca}</p>}
+      <div className="button-row" style={{ alignItems: "end" }}>
+        <label className="field" style={{ margin: 0, flex: "1 1 12rem" }}><span>{k.nome}</span>
+          <input autoComplete="given-name" maxLength={100} value={nome ?? p.nome ?? ""} onChange={(e) => setNome(e.target.value)} /></label>
+        <label className="field" style={{ margin: 0, flex: "1 1 12rem" }}><span>{k.cognome}</span>
+          <input autoComplete="family-name" maxLength={100} value={cognome ?? p.cognome ?? ""} onChange={(e) => setCognome(e.target.value)} /></label>
+        <button type="button" className="button button-small" disabled={inCorso || (nome === null && cognome === null)} onClick={async () => {
+          const r = await salva({ ...(nome !== null ? { nome } : {}), ...(cognome !== null ? { cognome } : {}) }, k.salvato);
+          if (r) { setNome(null); setCognome(null); }
+        }}>{t.comune.salva}</button>
+      </div>
+      <Provenienza p={p} campo="nome" />
+
+      <h3 style={{ marginTop: ".8rem" }}>{k.posizione_titolo}</h3>
+      <p className="small">{k.posizione_testo}</p>
+      <p role="status">
+        {pos ? <><b>{[pos.citta, nomePaese(pos.paese, locale)].filter(Boolean).join(", ")}</b> <span className="small muted">· {fonte}</span></> : <span className="muted">{k.posizione_nessuna}</span>}
+      </p>
+      <div className="button-row" style={{ alignItems: "end" }}>
+        <label className="field" style={{ margin: 0, flex: "1 1 12rem" }}><span>{k.posizione_citta}</span>
+          <input autoComplete="address-level2" maxLength={100} value={citta ?? pos?.citta ?? ""} onChange={(e) => setCitta(e.target.value)} /></label>
+        <label className="field" style={{ margin: 0, flex: "0 1 9rem" }}><span>{k.posizione_paese}</span>
+          <input autoComplete="country" maxLength={2} value={paese ?? pos?.paese ?? ""} pattern="[A-Za-z]{2}"
+            onChange={(e) => setPaese(e.target.value.toUpperCase().replace(/[^A-Z]/g, ""))} /></label>
+        <button type="button" className="button button-small" disabled={inCorso || (paese === null && citta === null) || (paese ?? pos?.paese ?? "").length === 1}
+          onClick={async () => {
+            const r = await salva({ posizione_paese: paese ?? pos?.paese ?? "", posizione_citta: citta ?? pos?.citta ?? "" }, k.salvato);
+            if (r) { setPaese(null); setCitta(null); }
+          }}>{k.posizione_correggi}</button>
+      </div>
+      {pos?.fonte === "utente" && (
+        <button type="button" className="button button-quiet button-small" disabled={inCorso}
+          onClick={() => salva({ posizione_paese: "", posizione_citta: "" }, k.salvato)}>{k.posizione_automatica}</button>
+      )}
+
+      <label className="check">
+        <input type="checkbox" checked={p.importa_social ?? true} disabled={inCorso}
+          onChange={(e) => salva({ importa_social: e.target.checked }, k.salvato)} />
+        <span>{k.importa_social}</span>
+      </label>
+      <label className="check">
+        <input type="checkbox" checked={p.rileva_posizione ?? true} disabled={inCorso}
+          onChange={(e) => salva({ rileva_posizione: e.target.checked }, k.salvato)} />
+        <span>{k.rileva_posizione}</span>
+      </label>
+      <button type="button" className="button button-quiet button-small" disabled={inCorso} onClick={() => setConferma(true)}>{k.dimentica_social}</button>
+      {salvato && <p className="success" role="status">{salvato}</p>}
+      {errore && <p className="error" role="alert">{errore}</p>}
+
+      <Modale aperta={conferma} titolo={k.dimentica_social} onChiudi={() => setConferma(false)}>
+        <p>{k.dimentica_conferma}</p>
+        <div className="button-row">
+          <button type="button" className="button button-danger" disabled={inCorso} onClick={async () => {
+            setConferma(false);
+            setSalvato(null);
+            const r = await esegui(async (tok) => { await dimenticaDatiSocial(tok); return true; });
+            if (r) { setSalvato(k.dimentica_fatto); ricarica(); }
+          }}>{k.dimentica_social}</button>
+          <button type="button" className="button button-quiet" onClick={() => setConferma(false)}>{t.comune.annulla}</button>
+        </div>
+      </Modale>
     </Sezione>
   );
 }

@@ -36,7 +36,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const lingua = await linguaPagina();
   return (
     <html lang={lingua} className={classiFont}>
-      <body>
+      <body suppressHydrationWarning>
         <Cosmo />
         <Providers linguaIniziale={lingua}>{children}</Providers>
       </body>

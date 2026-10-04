@@ -103,6 +103,19 @@ export function useAzione() {
   return { esegui, inCorso, errore };
 }
 
+/** Vero sugli schermi stretti (il telefono): alcune scelte si fanno in un dialogo invece che nella pagina. */
+export function useStretto(massimo = 760): boolean {
+  const [stretto, setStretto] = useState(false);
+  useEffect(() => {
+    const q = window.matchMedia(`(max-width: ${massimo}px)`);
+    const aggiorna = () => setStretto(q.matches);
+    aggiorna();
+    q.addEventListener("change", aggiorna);
+    return () => q.removeEventListener("change", aggiorna);
+  }, [massimo]);
+  return stretto;
+}
+
 /** Vero se chi guarda preferisce meno movimento. */
 export function useMenoMovimento(): boolean {
   const [meno, setMeno] = useState(false);

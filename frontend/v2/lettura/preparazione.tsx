@@ -4,7 +4,7 @@
  * domanda, il tipo di lettura, le persone, la forma della stesa), a destra la console del rito che mostra la
  * stesa scelta e l'invito a cominciare. */
 
-import type { Categoria, Mazzo, Stesa, Stile } from "@/lib/api";
+import type { Mazzo, Stesa, Stile } from "@/lib/api";
 import { nomePosizione, nomeStesa } from "@/lib/i18n/nomi";
 import { plurale } from "@/v2/i18n";
 import { useLingua } from "@/v2/lib/lingua";
@@ -13,17 +13,33 @@ import { MiniaturaStesa } from "./miniatura";
 import stili from "./lettura.module.css";
 
 const ORDINE_STILI: Stile[] = ["tradizionale", "moderna", "tendenza"];
-const CATEGORIE: Categoria[] = ["standard", "compatibilita", "coppia"];
 
-export function SceltaTipo({ categoria, onScegli }: { categoria: Categoria; onScegli: (c: Categoria) => void }) {
+/* I temi della lettura (v8.5): «Amore e compatibilità» riunisce le stese di compatibilità e di coppia (la categoria
+ * vera della lettura viene dalla stesa scelta); «Lavoro e affari» ha le sue stese e quelle adatte del catalogo. */
+export type TemaLettura = "standard" | "amore" | "lavoro";
+export const TEMI_LETTURA: TemaLettura[] = ["standard", "amore", "lavoro"];
+
+export const temaDi = (c: string | null | undefined): TemaLettura =>
+  c === "compatibilita" || c === "coppia" ? "amore" : c === "lavoro" ? "lavoro" : "standard";
+
+export function nelTema(s: Stesa, tema: TemaLettura): boolean {
+  const categoria = s.categoria as string;
+  if (tema === "amore") return categoria === "compatibilita" || categoria === "coppia";
+  if (tema === "lavoro") return categoria === "lavoro" || ((s as Stesa & { temi?: string[] }).temi ?? []).includes("lavoro");
+  return categoria === "standard";
+}
+
+export function SceltaTipo({
+  tema, onScegli, conTitolo = true,
+}: { tema: TemaLettura; onScegli: (t: TemaLettura) => void; conTitolo?: boolean }) {
   const { t } = useLingua();
   const l = t.lettura;
   return (
     <>
-      <h3 className={stili.passo}>{l.tipo_titolo}</h3>
+      {conTitolo && <h3 className={stili.passo}>{l.tipo_titolo}</h3>}
       <div className={stili.tipi} role="group" aria-label={l.tipo_titolo}>
-        {CATEGORIE.map((c) => (
-          <button key={c} type="button" className={stili.tipo} aria-pressed={c === categoria} onClick={() => onScegli(c)}>
+        {TEMI_LETTURA.map((c) => (
+          <button key={c} type="button" className={stili.tipo} aria-pressed={c === tema} onClick={() => onScegli(c)}>
             <b>{l.tipi[c].nome}</b>
             <span>{l.tipi[c].testo}</span>
           </button>

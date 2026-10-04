@@ -59,4 +59,9 @@ export const mazzi = {
   suggerisci_invia: "Send the suggestion",
   suggerisci_grazie: "Thank you: your suggestion has been received.",
   stampa_cta: "Print your own Tarot",
+  /* the example cards of a candidate deck (up to five), enlargeable */
+  campioni_titolo: "Example cards of {mazzo}",
+  campione_ingrandisci: "Enlarge example card {n} of {mazzo}",
+  campione_zoom: "{mazzo} · card {n} of {tot}",
+  campione_chiudi: "Close the enlarged card",
 };
