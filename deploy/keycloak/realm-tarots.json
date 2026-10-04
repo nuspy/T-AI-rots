@@ -9,11 +9,23 @@
   "registrationEmailAsUsername": true,
   "verifyEmail": false,
   "resetPasswordAllowed": true,
-  "rememberMe": true,
+  "rememberMe": false,
   "editUsernameAllowed": false,
   "accessTokenLifespan": 900,
   "ssoSessionIdleTimeout": 1800,
   "ssoSessionMaxLifespan": 36000,
+  "offlineSessionIdleTimeout": 31536000,
+  "offlineSessionMaxLifespanEnabled": false,
+  "internationalizationEnabled": true,
+  "supportedLocales": [
+    "en",
+    "it",
+    "hu",
+    "ru",
+    "uk",
+    "es"
+  ],
+  "defaultLocale": "en",
   "roles": {
     "realm": [
       {
@@ -25,17 +37,25 @@
         "description": "Amministratore: utenti, pagamenti, catalogo, statistiche, modelli"
       },
       {
+        "name": "offline_access",
+        "description": "${role_offline-access}"
+      },
+      {
         "name": "default-roles-tarots",
         "description": "Assegnato automaticamente a ogni nuovo utente",
         "composite": true,
         "composites": {
           "realm": [
-            "user"
+            "user",
+            "offline_access"
           ],
           "client": {
             "account": [
               "view-profile",
               "manage-account"
+            ],
+            "broker": [
+              "read-token"
             ]
           }
         },
@@ -62,7 +82,61 @@
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256"
-      }
+      },
+      "protocolMappers": [
+        {
+          "name": "unione da confermare",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "tarots_unione",
+            "claim.name": "tarots_unione",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "tarot-mobile",
+      "name": "App TAROTS chat (Android e iOS)",
+      "description": "Client pubblico delle app native: codice + PKCE S256 nel browser di sistema (AppAuth)",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": false,
+      "redirectUris": [
+        "chat.tarots.app:/oauth2redirect"
+      ],
+      "webOrigins": [],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "chat.tarots.app:/oauth2redirect"
+      },
+      "protocolMappers": [
+        {
+          "name": "unione da confermare",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "tarots_unione",
+            "claim.name": "tarots_unione",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
     },
     {
       "clientId": "tarot-admin",
@@ -135,6 +209,7 @@
         }
       ],
       "realmRoles": [
+        "default-roles-tarots",
         "user"
       ]
     },
@@ -154,6 +229,7 @@
         }
       ],
       "realmRoles": [
+        "default-roles-tarots",
         "user",
         "admin"
       ]
@@ -167,7 +243,9 @@
       ],
       "clientRoles": {
         "realm-management": [
-          "manage-realm"
+          "manage-realm",
+          "manage-identity-providers",
+          "manage-users"
         ]
       }
     }
@@ -185,6 +263,7 @@
       "providerId": "google",
       "enabled": false,
       "trustEmail": true,
+      "storeToken": true,
       "firstBrokerLoginFlowAlias": "first broker login",
       "config": {
         "clientId": "sostituire-google",
@@ -199,6 +278,7 @@
       "providerId": "facebook",
       "enabled": false,
       "trustEmail": true,
+      "storeToken": true,
       "firstBrokerLoginFlowAlias": "first broker login",
       "config": {
         "clientId": "sostituire-facebook",
@@ -225,6 +305,64 @@
         "useJwksUrl": "true",
         "defaultScope": "openid name email",
         "clientAuthMethod": "client_secret_post"
+      }
+    },
+    {
+      "alias": "microsoft",
+      "displayName": "Microsoft",
+      "providerId": "microsoft",
+      "enabled": false,
+      "trustEmail": false,
+      "storeToken": true,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "sostituire-microsoft",
+        "clientSecret": "sostituire-microsoft",
+        "syncMode": "IMPORT",
+        "defaultScope": "openid profile email"
+      }
+    },
+    {
+      "alias": "github",
+      "displayName": "GitHub",
+      "providerId": "github",
+      "enabled": false,
+      "trustEmail": true,
+      "storeToken": true,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "sostituire-github",
+        "clientSecret": "sostituire-github",
+        "syncMode": "IMPORT",
+        "defaultScope": "user:email"
+      }
+    },
+    {
+      "alias": "linkedin",
+      "displayName": "LinkedIn",
+      "providerId": "linkedin-openid-connect",
+      "enabled": false,
+      "trustEmail": true,
+      "storeToken": true,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "sostituire-linkedin",
+        "clientSecret": "sostituire-linkedin",
+        "syncMode": "IMPORT",
+        "defaultScope": "openid profile email"
+      }
+    },
+    {
+      "alias": "twitter",
+      "displayName": "X (Twitter)",
+      "providerId": "twitter",
+      "enabled": false,
+      "trustEmail": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "sostituire-twitter",
+        "clientSecret": "sostituire-twitter",
+        "syncMode": "IMPORT"
       }
     }
   ]

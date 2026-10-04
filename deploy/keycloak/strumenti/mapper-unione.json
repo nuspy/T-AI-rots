@@ -1,0 +1,15 @@
+{
+  "name": "unione da confermare",
+  "protocol": "openid-connect",
+  "protocolMapper": "oidc-usersessionmodel-note-mapper",
+  "consentRequired": false,
+  "config": {
+    "user.session.note": "tarots_unione",
+    "claim.name": "tarots_unione",
+    "jsonType.label": "String",
+    "access.token.claim": "true",
+    "id.token.claim": "false",
+    "userinfo.token.claim": "false",
+    "introspection.token.claim": "true"
+  }
+}

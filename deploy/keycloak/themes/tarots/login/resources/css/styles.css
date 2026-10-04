@@ -1,153 +1,980 @@
-/* Tema di login TAROTS chat: un override CSS sopra il tema di base `keycloak.v2` (PatternFly), non una
- * riscrittura dei template FreeMarker. Stessa palette/font del sito (frontend/app/globals.css):
- * notte/oro/viola, Cinzel per i titoli, IBM Plex Sans per l'interfaccia.
+/* Tema di accesso di TAROTS chat, nello stile della v2 del sito (frontend/app/(v2)/v2.css): carta e prugna,
+ * ottone e verderame, Libre Baskerville per la voce e DM Sans per l'interfaccia.
  *
- * Approccio: prima si ridefiniscono i token globali di PatternFly (--pf-v5-global--...) e le variabili
- * proprie di Keycloak 26 (--kc-...), che il tema di base già usa ovunque — questo da solo reskinna la
- * maggior parte della pagina senza indovinare ogni classe. Poi qualche selettore specifico per lo sfondo,
- * il logo e i dettagli che i token non coprono. Se al controllo visivo qualche dettaglio non torna,
- * aggiungere qui il selettore preciso trovato dagli strumenti del browser: è un override, si estende. */
+ * Il guscio (testata, scena, foglio, piede) è di template.ftl, con classi proprie `t-…`. Dentro il foglio le pagine
+ * di Keycloak (login, registrazione, password, OTP…) restano col loro markup PatternFly 5: qui se ne ridefiniscono
+ * i token globali e le variabili dei componenti, più qualche selettore preciso. Il foglio di PatternFly resta
+ * caricato sotto (stylesCommon del tema di base) per tutto ciò che non si ridisegna: icone, griglie, liste.
+ *
+ * Mobile-first: verificato a 360×640, 390×844 e ≥1280. Bersagli toccabili ≥44px (campi e bottoni 48px), niente
+ * azioni solo al passaggio del mouse, focus sempre visibile, safe area rispettata, animazioni solo se il sistema
+ * non chiede movimento ridotto. Contrasti ≥4,5:1 per il testo, ≥3:1 per i bordi dei campi.
+ *
+ * Caratteri serviti dal tema (resources/fonts), non da Google: la pagina di accesso non manda l'IP di chi entra a
+ * terzi. Libre Baskerville e DM Sans: SIL Open Font License 1.1. Il cirillico ricade sui caratteri di sistema,
+ * come nel sito. */
 
-@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap");
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("../fonts/dm-sans-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("../fonts/dm-sans-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Libre Baskerville";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("../fonts/libre-baskerville-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Libre Baskerville";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("../fonts/libre-baskerville-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Libre Baskerville";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/libre-baskerville-italic-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Libre Baskerville";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/libre-baskerville-italic-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 
 :root {
-  /* Palette (stessi valori di frontend/app/globals.css) */
-  --tarots-notte: #07050f;
-  --tarots-notte-2: #0e0a1f;
-  --tarots-superficie: rgba(24, 18, 46, 0.86);
-  --tarots-bordo: rgba(201, 162, 74, 0.28);
-  --tarots-bordo-forte: rgba(201, 162, 74, 0.55);
-  --tarots-oro: #d8b45a;
-  --tarots-oro-chiaro: #f1d68e;
-  --tarots-viola: #7b5cd6;
-  --tarots-testo: #efe6d2;
-  --tarots-testo-tenue: #b3a8cf;
-  --tarots-rosso: #e0707a;
+  /* I token della v2 (v2.css), con gli stessi valori. */
+  --t-carta: #f4efe5;
+  --t-carta-chiara: #fffaf1;
+  --t-inchiostro: #20162b;
+  --t-inchiostro-tenue: #55455d;
+  --t-prugna: #3c1846;
+  --t-prugna-viva: #572064;
+  --t-prugna-notte: #201026;
+  --t-ottone: #b28336;
+  --t-ottone-chiaro: #d6b66d;
+  --t-verderame: #19706f;
+  --t-pericolo: #9b2c2c;
+  --t-filo: rgba(60, 24, 70, 0.18);
+  /* Il bordo dei campi: 3,9:1 sul bianco (WCAG 1.4.11 ne chiede 3), più deciso del filo dei riquadri. */
+  --t-bordo-campo: #857487;
+  --t-serif: "Libre Baskerville", Georgia, "Times New Roman", serif;
+  --t-sans: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --t-margine: clamp(1rem, 5vw, 3rem);
 
-  /* Token globali PatternFly che il tema keycloak.v2 legge ovunque */
-  --pf-v5-global--BackgroundColor--100: var(--tarots-notte);
-  --pf-v5-global--BackgroundColor--150: var(--tarots-notte-2);
-  --pf-v5-global--BackgroundColor--200: var(--tarots-superficie);
-  --pf-v5-global--Color--100: var(--tarots-testo);
-  --pf-v5-global--Color--200: var(--tarots-testo-tenue);
-  --pf-v5-global--primary-color--100: var(--tarots-oro);
-  --pf-v5-global--primary-color--200: var(--tarots-oro-chiaro);
-  --pf-v5-global--link--Color: var(--tarots-oro-chiaro);
-  --pf-v5-global--link--Color--hover: var(--tarots-oro);
-  --pf-v5-global--danger-color--100: var(--tarots-rosso);
-  --pf-v5-global--BorderColor--100: var(--tarots-bordo-forte);
-  --pf-v5-global--BorderColor--200: var(--tarots-bordo);
-  --pf-v5-global--FontFamily--sans-serif: "IBM Plex Sans", system-ui, sans-serif;
-  --pf-v5-global--FontFamily--heading--sans-serif: "Cinzel", serif;
-
-  /* Variabili proprie di Keycloak 26 (fondo pagina, brand) */
-  --kc-login-bg-color: var(--tarots-notte);
-  --kc-login-bg-image: none;
+  /* PatternFly 5: i token globali che i componenti leggono ovunque. */
+  --pf-v5-global--FontFamily--text: var(--t-sans);
+  --pf-v5-global--FontFamily--heading: var(--t-serif);
+  --pf-v5-global--FontFamily--sans-serif: var(--t-sans);
+  --pf-v5-global--FontFamily--heading--sans-serif: var(--t-serif);
+  --pf-v5-global--FontSize--md: 1rem;
+  --pf-v5-global--LineHeight--md: 1.5;
+  --pf-v5-global--Color--100: var(--t-inchiostro);
+  --pf-v5-global--Color--200: var(--t-inchiostro-tenue);
+  --pf-v5-global--BackgroundColor--100: #ffffff;
+  --pf-v5-global--BorderColor--100: var(--t-filo);
+  --pf-v5-global--BorderColor--200: var(--t-bordo-campo);
+  --pf-v5-global--BorderColor--300: var(--t-bordo-campo);
+  --pf-v5-global--primary-color--100: var(--t-prugna);
+  --pf-v5-global--primary-color--200: var(--t-prugna-viva);
+  --pf-v5-global--link--Color: var(--t-prugna);
+  --pf-v5-global--link--Color--hover: var(--t-prugna-viva);
+  --pf-v5-global--danger-color--100: var(--t-pericolo);
+  --pf-v5-global--danger-color--200: var(--t-pericolo);
+  --pf-v5-global--success-color--100: var(--t-verderame);
+  --pf-v5-global--BorderRadius--sm: 3px;
+  color-scheme: light;
 }
 
-html,
-body {
-  background: radial-gradient(ellipse at top, var(--tarots-notte-2), var(--tarots-notte) 70%) !important;
-  font-family: "IBM Plex Sans", system-ui, sans-serif;
-  color: var(--tarots-testo);
+* {
+  box-sizing: border-box;
 }
 
-/* Contenitore centrale della pagina di login (card) */
-.pf-v5-c-login__main,
-.pf-v5-c-login__main-body,
-.card-pf,
-#kc-form-wrapper {
-  background: var(--tarots-superficie) !important;
-  border: 1px solid var(--tarots-bordo);
-  border-radius: 14px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(14px);
+html {
+  -webkit-text-size-adjust: 100%;
+  background: var(--t-carta);
 }
 
-/* Titoli */
-#kc-page-title,
-.pf-v5-c-title,
-.pf-v5-c-login__header .pf-v5-c-title {
-  font-family: "Cinzel", serif;
-  color: var(--tarots-oro-chiaro);
-  letter-spacing: 0.02em;
+body.t-corpo {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  min-width: 320px;
+  color: var(--t-inchiostro);
+  background: var(--t-carta);
+  font: 400 1rem/1.6 var(--t-sans);
 }
 
-/* Il "logo": keycloak.v2 non ha più un <img> di logo dedicato in cima al form — lo si aggiunge come
- * sfondo/etichetta sull'intestazione tramite kcLogoLink, oppure (se assente nel markup) semplicemente
- * il nome del sito resta nel titolo, già tradotto correttamente dal realm (vedi realm-tarots.json). */
-#kc-header-wrapper {
-  background-image: url("../img/logo.webp");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
-  min-height: 64px;
-  text-indent: -9999px;
-  overflow: hidden;
+/* La trama della carta della v2: due aloni (ottone e verderame) e righe sottilissime. */
+body.t-corpo::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.6;
+  background-image:
+    radial-gradient(circle at 15% 5%, rgba(178, 131, 54, 0.12), transparent 22rem),
+    radial-gradient(circle at 85% 35%, rgba(25, 112, 111, 0.1), transparent 24rem),
+    repeating-linear-gradient(0deg, transparent 0 5px, rgba(60, 24, 70, 0.018) 6px);
 }
 
-/* Campi di testo */
-.pf-v5-c-form-control,
-input[type="text"],
-input[type="password"],
-input[type="email"] {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid var(--tarots-bordo) !important;
-  color: var(--tarots-testo) !important;
-  border-radius: 8px !important;
+:focus-visible {
+  outline: 3px solid var(--t-verderame);
+  outline-offset: 3px;
 }
 
-.pf-v5-c-form-control:focus {
-  border-color: var(--tarots-bordo-forte) !important;
-  box-shadow: 0 0 0 1px var(--tarots-oro) !important;
-}
-
-label,
-.pf-v5-c-form__label-text {
-  color: var(--tarots-testo-tenue) !important;
-}
-
-/* Bottone primario: stesso gradiente oro dei bottoni del sito (.bottone in globals.css) */
-.pf-v5-c-button.pf-m-primary,
-#kc-login {
-  background: linear-gradient(180deg, #e6c56d, #b98e36) !important;
-  border: 1px solid var(--tarots-bordo-forte) !important;
-  color: #1a1206 !important;
-  font-weight: 600;
-  border-radius: 999px !important;
-  box-shadow: 0 0 24px rgba(216, 180, 90, 0.45);
-}
-
-.pf-v5-c-button.pf-m-primary:hover {
-  box-shadow: 0 0 36px rgba(216, 180, 90, 0.6);
-}
-
-/* Link (registrati, password dimenticata, provider social) */
-a,
-.pf-v5-c-login__main-footer-links a {
-  color: var(--tarots-oro-chiaro);
+a {
+  color: var(--t-prugna);
+  text-decoration: underline;
+  text-decoration-color: var(--t-ottone);
+  text-underline-offset: 4px;
 }
 
 a:hover {
-  color: var(--tarots-oro);
+  color: var(--t-prugna-viva);
 }
 
-/* La conferma "stai continuando come ..." che il tema di base `keycloak.v2` mostra su ogni passo
- * successivo al primo (password, OTP, ecc.): un campo readonly con l'username/email appena scritto,
- * più un bottone per ricominciare il login. È comportamento di serie del tema (macro `username` in
- * `template.ftl`, mostrata quando `auth.showUsername()` è vero), non un errore di configurazione di
- * questo progetto — ma è ridondante nel nostro flusso e va tolto dalla vista: l'input non porta dati
- * che servano a completare l'autenticazione (quella resta nel cookie di sessione), è solo un'etichetta.
- * `:has()` individua il gruppo campo dal suo contenuto invece di indovinare una classe/id del gruppo
- * stesso, che il tema di base non documenta stabilmente. */
-.pf-v5-c-form__group:has(#kc-attempted-username) {
-  display: none !important;
+.t-nascosto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 
-/* Messaggi di errore/avviso */
-.pf-v5-c-alert.pf-m-danger,
-.alert-error {
-  background: rgba(224, 112, 122, 0.12) !important;
-  border-color: var(--tarots-rosso) !important;
-  color: var(--tarots-testo) !important;
+.t-salta {
+  position: absolute;
+  left: 1rem;
+  top: -5rem;
+  z-index: 100;
+  padding: 0.7rem 1rem;
+  color: #fff;
+  background: var(--t-inchiostro);
+}
+
+.t-salta:focus {
+  top: 1rem;
+}
+
+/* ---- testata ---------------------------------------------------------------------------------------- */
+
+.t-testata {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 64px;
+  padding: 0.6rem var(--t-margine);
+  padding-top: max(0.6rem, env(safe-area-inset-top));
+  padding-left: max(var(--t-margine), env(safe-area-inset-left));
+  padding-right: max(var(--t-margine), env(safe-area-inset-right));
+  color: #fff8eb;
+  background: rgba(32, 16, 38, 0.97);
+  border-bottom: 1px solid rgba(244, 239, 229, 0.16);
+}
+
+.t-marchio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  color: #fff8eb;
+  font-family: var(--t-serif);
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+a.t-marchio:hover {
+  color: var(--t-ottone-chiaro);
+}
+
+.t-marchio em {
+  color: var(--t-ottone-chiaro);
+}
+
+.t-marchio-segno {
+  display: grid;
+  place-items: center;
+  width: 33px;
+  height: 40px;
+  border: 1px solid var(--t-ottone-chiaro);
+  color: var(--t-ottone-chiaro);
+  clip-path: polygon(50% 0, 100% 18%, 100% 82%, 50% 100%, 0 82%, 0 18%);
+}
+
+.t-lingua {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.t-lingua select {
+  appearance: none;
+  min-height: 44px;
+  max-width: 9.5rem;
+  padding: 0 1.8rem 0 0.7rem;
+  border: 1px solid rgba(214, 182, 109, 0.55);
+  border-radius: 3px;
+  color: #f3e8d8;
+  background: transparent;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.t-lingua select option {
+  color: var(--t-inchiostro);
+  background: var(--t-carta);
+}
+
+.t-lingua::after {
+  content: "▾";
+  position: absolute;
+  right: 0.65rem;
+  pointer-events: none;
+  color: var(--t-ottone-chiaro);
+  font-size: 0.75rem;
+}
+
+/* ---- scena: la quinta prugna (solo su schermi larghi) e il foglio -------------------------------------- */
+
+.t-scena {
+  flex: 1 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  align-items: start;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: clamp(1.25rem, 5vw, 4rem) var(--t-margine) clamp(2rem, 6vw, 5rem);
+  padding-left: max(var(--t-margine), env(safe-area-inset-left));
+  padding-right: max(var(--t-margine), env(safe-area-inset-right));
+}
+
+.t-quinta {
+  display: none;
+}
+
+.t-foglio {
+  position: relative;
+  width: 100%;
+  max-width: 30rem;
+  min-width: 0;
+  padding: clamp(1.25rem, 5vw, 2.5rem);
+  border: 1px solid var(--t-filo);
+  background: var(--t-carta-chiara);
+  /* L'ombra sfalsata d'ottone della «dichiarazione» della v2: il foglio è l'unica cosa che conta qui. */
+  box-shadow: 10px 10px 0 rgba(178, 131, 54, 0.3);
+}
+
+@media (min-width: 960px) {
+  .t-scena {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: clamp(2rem, 5vw, 4.5rem);
+    align-items: center;
+  }
+
+  .t-quinta {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-self: stretch;
+    width: 100%;
+    min-height: 26rem;
+    padding: 2.5rem;
+    overflow: hidden;
+    color: #f8f0e1;
+    background: var(--t-prugna-notte);
+  }
+
+  .t-foglio {
+    justify-self: start;
+  }
+}
+
+/* L'oggetto rituale della home, in piccolo: un cerchio d'ottone con i suoi aloni e la ruota che gira piano. */
+.t-cerchio {
+  position: absolute;
+  top: 2.5rem;
+  right: -4rem;
+  width: 18rem;
+  aspect-ratio: 1;
+  border: 1px solid rgba(214, 182, 109, 0.7);
+  border-radius: 50%;
+  box-shadow: 0 0 0 18px rgba(178, 131, 54, 0.08), 0 0 0 44px rgba(25, 112, 111, 0.08);
+}
+
+.t-cerchio::after {
+  content: "";
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  background: conic-gradient(from 10deg, transparent 0 7%, rgba(214, 182, 109, 0.5) 7% 8%, transparent 8% 25%, rgba(25, 112, 111, 0.6) 25% 26%, transparent 26% 50%, rgba(214, 182, 109, 0.5) 50% 51%, transparent 51% 75%, rgba(25, 112, 111, 0.6) 75% 76%, transparent 76%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .t-cerchio::after {
+    animation: t-giro 40s linear infinite;
+  }
+}
+
+@keyframes t-giro {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.t-motto {
+  position: relative;
+  max-width: 22ch;
+  margin: 0;
+  font: italic 400 clamp(1.4rem, 2.2vw, 1.9rem) / 1.35 var(--t-serif);
+  letter-spacing: -0.02em;
+  color: #fff7e8;
+}
+
+/* ---- dentro il foglio ----------------------------------------------------------------------------------- */
+
+.t-occhiello {
+  margin: 0 0 0.75rem;
+  color: var(--t-verderame);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.t-occhiello-chiaro {
+  position: relative;
+  color: #8fd0c9;
+}
+
+.t-titolo {
+  margin: 0 0 1.5rem;
+  font: 400 clamp(1.75rem, 6vw, 2.3rem) / 1.15 var(--t-serif);
+  letter-spacing: -0.04em;
+  color: var(--t-inchiostro);
+  overflow-wrap: anywhere;
+}
+
+.t-titolo:focus {
+  outline: none;
+}
+
+.t-obbligatori {
+  margin: -0.75rem 0 1rem;
+  color: var(--t-inchiostro-tenue);
+  font-size: 0.875rem;
+}
+
+/* «Stai entrando come …» nei passi dopo il primo (password, OTP): chi è, e come ricominciare con un altro account. */
+.t-chi {
+  margin-bottom: 1.25rem;
+}
+
+.t-chi .pf-v5-c-form__group-label {
+  padding-bottom: 0.25rem;
+}
+
+.t-chi .pf-v5-c-input-group {
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.t-chi .pf-v5-c-form-control.pf-m-readonly {
+  --pf-v5-c-form-control--m-readonly--BackgroundColor: transparent;
+  --pf-v5-c-form-control--before--BorderTopColor: transparent;
+  --pf-v5-c-form-control--before--BorderRightColor: transparent;
+  --pf-v5-c-form-control--before--BorderLeftColor: transparent;
+  --pf-v5-c-form-control--after--BorderBottomColor: var(--t-filo);
+  min-height: 44px;
+}
+
+.t-chi #kc-attempted-username {
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+
+.t-ricomincia {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+/* Messaggi: il bordo a sinistra della v2 (.notice, .error), con un segno che non dipende dal colore. */
+.t-avviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  margin: 0 0 1.25rem;
+  padding: 0.85rem 1rem;
+  border-left: 3px solid var(--t-ottone);
+  color: var(--t-inchiostro);
+  background: #fff4dc;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.t-avviso-error {
+  border-left-color: var(--t-pericolo);
+  color: var(--t-pericolo);
+  background: #fbeeee;
+}
+
+.t-avviso-success {
+  border-left-color: var(--t-verderame);
+  background: #e6f2ee;
+}
+
+.t-avviso-segno {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ---- moduli PatternFly ---------------------------------------------------------------------------------- */
+
+.t-foglio .pf-v5-c-form {
+  --pf-v5-c-form--GridGap: 1.15rem;
+}
+
+/* Un gruppo rimasto vuoto (la casella «ricordami» quando il realm non la offre) non deve lasciare un buco. */
+.t-foglio .pf-v5-c-form__group:not(:has(*)) {
+  display: none;
+}
+
+.t-foglio .pf-v5-c-form__label,
+.t-foglio .pf-v5-c-form__label-text,
+.t-foglio .pf-v5-c-form__group-label label {
+  color: var(--t-inchiostro);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Spazio fra etichetta e campo: l'anello di fuoco (3px + 2px di distacco) non deve toccare l'etichetta. */
+.t-foglio .pf-v5-c-form__group-label {
+  padding-bottom: 0.5rem;
+}
+
+.t-foglio .pf-v5-c-form__label-required,
+.t-foglio .pf-v5-c-check__label-required {
+  color: var(--t-pericolo);
+}
+
+.pf-v5-c-form-control {
+  --pf-v5-c-form-control--BackgroundColor: #ffffff;
+  --pf-v5-c-form-control--before--BorderTopColor: var(--t-bordo-campo);
+  --pf-v5-c-form-control--before--BorderRightColor: var(--t-bordo-campo);
+  --pf-v5-c-form-control--before--BorderLeftColor: var(--t-bordo-campo);
+  --pf-v5-c-form-control--after--BorderBottomColor: var(--t-bordo-campo);
+  --pf-v5-c-form-control--hover--after--BorderBottomColor: var(--t-prugna);
+  --pf-v5-c-form-control--focus--after--BorderBottomColor: var(--t-verderame);
+  --pf-v5-c-form-control--m-error--after--BorderBottomColor: var(--t-pericolo);
+  --pf-v5-c-form-control--m-error__icon--m-status--Color: var(--t-pericolo);
+  --pf-v5-c-form-control--PaddingTop: 0.7rem;
+  --pf-v5-c-form-control--PaddingBottom: 0.7rem;
+  --pf-v5-c-form-control--PaddingLeft: 0.8rem;
+  --pf-v5-c-form-control--PaddingRight: 0.8rem;
+  min-height: 48px;
+  border-radius: 0;
+}
+
+/* Il fuoco si vede sul campo intero, col verderame della v2, non solo come linea in basso. */
+.pf-v5-c-form-control:focus-within {
+  outline: 3px solid var(--t-verderame);
+  outline-offset: 2px;
+}
+
+.pf-v5-c-form-control > input,
+.pf-v5-c-form-control > select,
+.pf-v5-c-form-control > textarea {
+  /* 16px: sotto, iOS ingrandisce la pagina a ogni tocco su un campo. */
+  font-size: 1rem;
+  color: var(--t-inchiostro);
+}
+
+.pf-v5-c-form-control > input:focus-visible,
+.pf-v5-c-form-control > select:focus-visible,
+.pf-v5-c-form-control > textarea:focus-visible {
+  outline: none;
+}
+
+.pf-v5-c-form-control.pf-m-error {
+  --pf-v5-c-form-control--before--BorderTopColor: var(--t-pericolo);
+  --pf-v5-c-form-control--before--BorderRightColor: var(--t-pericolo);
+  --pf-v5-c-form-control--before--BorderLeftColor: var(--t-pericolo);
+}
+
+.t-foglio .pf-v5-c-helper-text__item-text {
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.t-foglio .pf-v5-c-helper-text__item.pf-m-error,
+.t-foglio .pf-v5-c-helper-text__item-text.pf-m-error,
+.t-foglio .kc-feedback-text.pf-m-error {
+  color: var(--t-pericolo);
+}
+
+/* «Password dimenticata?»: un collegamento toccabile, non una riga di testo minuto. */
+.t-foglio .pf-v5-c-form__helper-text a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.875rem;
+}
+
+/* Il bottone che mostra la password: quadrato da 48px accanto al campo. */
+.pf-v5-c-button.pf-m-control {
+  --pf-v5-c-button--m-control--Color: var(--t-prugna);
+  --pf-v5-c-button--m-control--hover--Color: var(--t-prugna-viva);
+  --pf-v5-c-button--m-control--BackgroundColor: #ffffff;
+  --pf-v5-c-button--m-control--after--BorderTopColor: var(--t-bordo-campo);
+  --pf-v5-c-button--m-control--after--BorderRightColor: var(--t-bordo-campo);
+  --pf-v5-c-button--m-control--after--BorderBottomColor: var(--t-bordo-campo);
+  --pf-v5-c-button--m-control--after--BorderLeftColor: transparent;
+  --pf-v5-c-button--m-control--hover--after--BorderBottomColor: var(--t-prugna);
+  --pf-v5-c-button--m-control--focus--after--BorderBottomColor: var(--t-verderame);
+  --pf-v5-c-button--m-control--BorderRadius: 0;
+  min-width: 48px;
+  min-height: 48px;
+}
+
+/* Le caselle (ricordami, chiudi le altre sessioni, termini): bersaglio alto 44px, casella da 20px. */
+.t-foglio .pf-v5-c-check {
+  align-items: center;
+  min-height: 44px;
+  column-gap: 0.65rem;
+}
+
+.t-foglio .pf-v5-c-check__input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--t-verderame);
+}
+
+.t-foglio .pf-v5-c-check__label {
+  --pf-v5-c-check__label--Color: var(--t-inchiostro);
+  font-size: 0.9375rem;
+}
+
+/* ---- bottoni ---------------------------------------------------------------------------------------------- */
+
+.pf-v5-c-button {
+  --pf-v5-c-button--BorderRadius: 3px;
+  --pf-v5-c-button--after--BorderRadius: 3px;
+  --pf-v5-c-button--FontWeight: 700;
+  --pf-v5-c-button--PaddingTop: 0.75rem;
+  --pf-v5-c-button--PaddingBottom: 0.75rem;
+  font-family: var(--t-sans);
+}
+
+.pf-v5-c-button.pf-m-primary,
+.pf-v5-c-button.pf-m-secondary,
+.pf-v5-c-button.pf-m-tertiary,
+.t-foglio input[type="submit"].pf-v5-c-button,
+.t-foglio button[type="submit"].pf-v5-c-button {
+  min-height: 48px;
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+}
+
+.pf-v5-c-button.pf-m-primary {
+  --pf-v5-c-button--m-primary--BackgroundColor: var(--t-prugna);
+  --pf-v5-c-button--m-primary--Color: #ffffff;
+  --pf-v5-c-button--m-primary--hover--BackgroundColor: var(--t-prugna-viva);
+  --pf-v5-c-button--m-primary--hover--Color: #ffffff;
+  --pf-v5-c-button--m-primary--focus--BackgroundColor: var(--t-prugna-viva);
+  --pf-v5-c-button--m-primary--focus--Color: #ffffff;
+  --pf-v5-c-button--m-primary--active--BackgroundColor: var(--t-prugna-notte);
+  --pf-v5-c-button--m-primary--active--Color: #ffffff;
+}
+
+.pf-v5-c-button.pf-m-secondary {
+  --pf-v5-c-button--m-secondary--BackgroundColor: transparent;
+  --pf-v5-c-button--m-secondary--Color: var(--t-prugna);
+  --pf-v5-c-button--m-secondary--after--BorderColor: var(--t-bordo-campo);
+  --pf-v5-c-button--m-secondary--hover--BackgroundColor: rgba(60, 24, 70, 0.06);
+  --pf-v5-c-button--m-secondary--hover--Color: var(--t-prugna);
+  --pf-v5-c-button--m-secondary--hover--after--BorderColor: var(--t-prugna);
+  --pf-v5-c-button--m-secondary--focus--Color: var(--t-prugna);
+  --pf-v5-c-button--m-secondary--focus--after--BorderColor: var(--t-prugna);
+  --pf-v5-c-button--m-secondary--active--Color: var(--t-prugna);
+  --pf-v5-c-button--m-secondary--active--after--BorderColor: var(--t-prugna);
+}
+
+.pf-v5-c-button.pf-m-link {
+  --pf-v5-c-button--m-link--Color: var(--t-prugna);
+  --pf-v5-c-button--m-link--hover--Color: var(--t-prugna-viva);
+  --pf-v5-c-button--m-link--focus--Color: var(--t-prugna-viva);
+  min-height: 44px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pf-v5-c-button.pf-m-primary {
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+  }
+
+  .pf-v5-c-button.pf-m-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(32, 16, 38, 0.2);
+  }
+}
+
+/* PatternFly dà alle azioni margini negativi (per spaziare i figli): qui il bottone deve allinearsi ai campi. */
+.t-foglio .pf-v5-c-form__actions {
+  margin: 0.25rem 0 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.6rem;
+}
+
+.t-foglio .pf-v5-c-form__actions > * {
+  width: 100%;
+  margin: 0;
+}
+
+/* «Annulla» della configurazione OTP avviata dal profilo: usa una classe che keycloak.v2 non definisce, e
+ * resterebbe un bottone grigio di sistema. */
+#cancelTOTPBtn,
+/* «Prova un altro modo» (scelta del secondo fattore). */
+.t-bottone-quieto {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 0.75rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--t-bordo-campo);
+  border-radius: 3px;
+  color: var(--t-prugna);
+  background: transparent;
+  font: 700 0.9375rem var(--t-sans);
+  cursor: pointer;
+}
+
+#cancelTOTPBtn:hover,
+.t-bottone-quieto:hover {
+  background: rgba(60, 24, 70, 0.06);
+}
+
+/* Il suggerimento «ricomincia» del tema di base è solo al passaggio del mouse: qui non serve (il link è scritto). */
+.kc-tooltip-text {
+  display: none;
+}
+
+/* ---- accesso con i social ---------------------------------------------------------------------------------- */
+
+.t-social {
+  margin-top: 1.5rem;
+}
+
+.t-oppure {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin: 0 0 1rem;
+  color: var(--t-inchiostro-tenue);
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.t-oppure::before,
+.t-oppure::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--t-filo);
+}
+
+.t-social-elenco {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.t-social-bottone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 48px;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--t-bordo-campo);
+  border-radius: 3px;
+  color: var(--t-inchiostro);
+  background: #ffffff;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  text-decoration: none;
+}
+
+.t-social-bottone:hover {
+  border-color: var(--t-prugna);
+  color: var(--t-inchiostro);
+  background: #fffdf8;
+}
+
+.t-social-icona {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+}
+
+.t-social-icona svg {
+  display: block;
+}
+
+.t-social-iniziale {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: #ffffff;
+  background: var(--t-prugna);
+  font-size: 0.75rem;
+}
+
+.t-social-nome {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ---- info (registrati / torna al login) ---------------------------------------------------------------------- */
+
+.t-info {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--t-filo);
+  color: var(--t-inchiostro-tenue);
+  font-size: 0.9375rem;
+  text-align: center;
+}
+
+.t-info .pf-v5-c-login__main-footer-band,
+.t-info .pf-v5-c-login__main-footer-band-item {
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: center;
+}
+
+.t-info a,
+#kc-form-options a,
+.t-foglio #backToApplication,
+.t-foglio .pf-v5-c-login__main-footer-band-item a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 600;
+}
+
+/* Le pagine di registrazione e password dimenticata mettono «torna al login» in una banda PF: la si spiana. */
+.t-foglio .pf-v5-c-login__main-footer-band {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+/* ---- 2FA: configurazione dell'OTP (login-config-totp.ftl) e scelta del dispositivo (login-otp.ftl) -------------- */
+
+#kc-totp-settings {
+  counter-reset: passo;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+#kc-totp-settings > li {
+  position: relative;
+  counter-increment: passo;
+  margin: 0;
+  padding: 0 0 1.1rem 2.6rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+#kc-totp-settings > li + li {
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--t-filo);
+}
+
+#kc-totp-settings > li::before {
+  content: counter(passo);
+  position: absolute;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border: 1px solid var(--t-ottone);
+  border-radius: 50%;
+  color: var(--t-prugna);
+  font: 400 0.95rem var(--t-serif);
+}
+
+#kc-totp-settings > li + li::before {
+  top: 1.1rem;
+}
+
+#kc-totp-settings p {
+  margin: 0 0 0.5rem;
+}
+
+#kc-totp-supported-apps {
+  margin: 0.25rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--t-inchiostro-tenue);
+}
+
+/* Il QR: incorniciato come una carta, bianco pieno (il lettore della fotocamera vuole contrasto). */
+#kc-totp-secret-qr-code {
+  display: block;
+  width: min(220px, 100%);
+  height: auto;
+  margin: 0.5rem 0;
+  padding: 10px;
+  border: 1px solid var(--t-ottone);
+  background: #ffffff;
+  box-shadow: 6px 6px 0 rgba(178, 131, 54, 0.25);
+}
+
+#kc-totp-secret-key {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.5rem 0.7rem;
+  border: 1px dashed var(--t-bordo-campo);
+  background: #ffffff;
+  font: 600 1rem/1.5 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  letter-spacing: 0.08em;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+#mode-manual,
+#mode-barcode {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+/* login-otp.ftl con più dispositivi: tessere da toccare. */
+.t-foglio .pf-v5-c-tile {
+  min-height: 48px;
+  margin: 0 0.5rem 0.5rem 0;
+  border-radius: 3px;
+  --pf-v5-c-tile--m-selected--before--BorderColor: var(--t-verderame);
+  --pf-v5-c-tile--hover__title--Color: var(--t-prugna);
+  --pf-v5-c-tile--m-selected__title--Color: var(--t-prugna);
+  --pf-v5-c-tile--m-selected__icon--Color: var(--t-verderame);
+  cursor: pointer;
+}
+
+/* Il codice: cifre grandi e spaziate, si leggono e si correggono meglio. */
+.t-foglio input#otp,
+.t-foglio input#totp {
+  font-size: 1.25rem;
+  letter-spacing: 0.3em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* select-authenticator.ftl: l'elenco dei metodi (OTP, chiavi di sicurezza…). */
+.t-foglio .select-auth-box-parent {
+  min-height: 56px;
+  cursor: pointer;
+}
+
+.t-foglio .select-auth-box-headline {
+  font-family: var(--t-serif);
+  color: var(--t-prugna);
+}
+
+#kc-recovery-codes-list {
+  columns: 2;
+}
+
+#certificate_subjectDN {
+  overflow-wrap: break-word;
+}
+
+/* ---- piede -------------------------------------------------------------------------------------------------- */
+
+.t-piede {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 1.5rem;
+  padding: 1rem var(--t-margine);
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  padding-left: max(var(--t-margine), env(safe-area-inset-left));
+  padding-right: max(var(--t-margine), env(safe-area-inset-right));
+  color: #d7c7db;
+  background: var(--t-prugna-notte);
+  font-size: 0.875rem;
+}
+
+.t-piede p {
+  margin: 0;
+  color: #cbbccf;
+}
+
+.t-piede a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #fff5e4;
+  text-decoration-color: var(--t-ottone-chiaro);
+}
+
+.t-piede a:hover {
+  color: var(--t-ottone-chiaro);
 }

@@ -1,141 +1,49 @@
-/* Tema di login TAROTS chat: un override CSS sopra il tema di base `keycloak.v2` (PatternFly), non una
- * riscrittura dei template FreeMarker. Stessa palette/font del sito (frontend/app/globals.css):
- * notte/oro/viola, Cinzel per i titoli, IBM Plex Sans per l'interfaccia.
- *
- * Approccio: prima si ridefiniscono i token globali di PatternFly (--pf-v5-global--...) e le variabili
- * proprie di Keycloak 26 (--kc-...), che il tema di base già usa ovunque — questo da solo reskinna la
- * maggior parte della pagina senza indovinare ogni classe. Poi qualche selettore specifico per lo sfondo,
- * il logo e i dettagli che i token non coprono. Se al controllo visivo qualche dettaglio non torna,
- * aggiungere qui il selettore preciso trovato dagli strumenti del browser: è un override, si estende. */
-
-@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap");
+/* Console dell'account di Keycloak (`{realm}/account/`, dove si gestiscono la 2FA e i dispositivi) nei colori della
+ * v2 del sito. È un'applicazione React su PatternFly 5 (tema keycloak.v3): qui si ridefiniscono solo i token
+ * globali e pochi componenti, senza toccarne la struttura. I caratteri sono quelli del sistema: la console
+ * dell'account è uno strumento, la voce del sito sta nella pagina di accesso. */
 
 :root {
-  /* Palette (stessi valori di frontend/app/globals.css) */
-  --tarots-notte: #07050f;
-  --tarots-notte-2: #0e0a1f;
-  --tarots-superficie: rgba(24, 18, 46, 0.86);
-  --tarots-bordo: rgba(201, 162, 74, 0.28);
-  --tarots-bordo-forte: rgba(201, 162, 74, 0.55);
-  --tarots-oro: #d8b45a;
-  --tarots-oro-chiaro: #f1d68e;
-  --tarots-viola: #7b5cd6;
-  --tarots-testo: #efe6d2;
-  --tarots-testo-tenue: #b3a8cf;
-  --tarots-rosso: #e0707a;
+  --t-carta: #f4efe5;
+  --t-carta-chiara: #fffaf1;
+  --t-inchiostro: #20162b;
+  --t-inchiostro-tenue: #55455d;
+  --t-prugna: #3c1846;
+  --t-prugna-viva: #572064;
+  --t-prugna-notte: #201026;
+  --t-verderame: #19706f;
+  --t-pericolo: #9b2c2c;
 
-  /* Token globali PatternFly che il tema keycloak.v2 legge ovunque */
-  --pf-v5-global--BackgroundColor--100: var(--tarots-notte);
-  --pf-v5-global--BackgroundColor--150: var(--tarots-notte-2);
-  --pf-v5-global--BackgroundColor--200: var(--tarots-superficie);
-  --pf-v5-global--Color--100: var(--tarots-testo);
-  --pf-v5-global--Color--200: var(--tarots-testo-tenue);
-  --pf-v5-global--primary-color--100: var(--tarots-oro);
-  --pf-v5-global--primary-color--200: var(--tarots-oro-chiaro);
-  --pf-v5-global--link--Color: var(--tarots-oro-chiaro);
-  --pf-v5-global--link--Color--hover: var(--tarots-oro);
-  --pf-v5-global--danger-color--100: var(--tarots-rosso);
-  --pf-v5-global--BorderColor--100: var(--tarots-bordo-forte);
-  --pf-v5-global--BorderColor--200: var(--tarots-bordo);
-  --pf-v5-global--FontFamily--sans-serif: "IBM Plex Sans", system-ui, sans-serif;
-  --pf-v5-global--FontFamily--heading--sans-serif: "Cinzel", serif;
-
-  /* Variabili proprie di Keycloak 26 (fondo pagina, brand) */
-  --kc-login-bg-color: var(--tarots-notte);
-  --kc-login-bg-image: none;
+  --pf-v5-global--Color--100: var(--t-inchiostro);
+  --pf-v5-global--Color--200: var(--t-inchiostro-tenue);
+  --pf-v5-global--BackgroundColor--100: #ffffff;
+  --pf-v5-global--BackgroundColor--200: var(--t-carta);
+  --pf-v5-global--primary-color--100: var(--t-prugna);
+  --pf-v5-global--primary-color--200: var(--t-prugna-viva);
+  --pf-v5-global--link--Color: var(--t-prugna);
+  --pf-v5-global--link--Color--hover: var(--t-prugna-viva);
+  --pf-v5-global--danger-color--100: var(--t-pericolo);
+  --pf-v5-global--success-color--100: var(--t-verderame);
 }
 
-html,
-body {
-  background: radial-gradient(ellipse at top, var(--tarots-notte-2), var(--tarots-notte) 70%) !important;
-  font-family: "IBM Plex Sans", system-ui, sans-serif;
-  color: var(--tarots-testo);
+/* La barra in alto prugna come la testata del sito. */
+.pf-v5-c-masthead {
+  --pf-v5-c-masthead--BackgroundColor: var(--t-prugna-notte);
 }
 
-/* Contenitore centrale della pagina di login (card) */
-.pf-v5-c-login__main,
-.pf-v5-c-login__main-body,
-.card-pf,
-#kc-form-wrapper {
-  background: var(--tarots-superficie) !important;
-  border: 1px solid var(--tarots-bordo);
-  border-radius: 14px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(14px);
+.pf-v5-c-page__main-section,
+.pf-v5-c-page__main {
+  --pf-v5-c-page__main-section--BackgroundColor: var(--t-carta);
 }
 
-/* Titoli */
-#kc-page-title,
-.pf-v5-c-title,
-.pf-v5-c-login__header .pf-v5-c-title {
-  font-family: "Cinzel", serif;
-  color: var(--tarots-oro-chiaro);
-  letter-spacing: 0.02em;
+.pf-v5-c-button.pf-m-primary {
+  --pf-v5-c-button--m-primary--BackgroundColor: var(--t-prugna);
+  --pf-v5-c-button--m-primary--hover--BackgroundColor: var(--t-prugna-viva);
+  --pf-v5-c-button--m-primary--focus--BackgroundColor: var(--t-prugna-viva);
+  min-height: 44px;
 }
 
-/* Il "logo": keycloak.v2 non ha più un <img> di logo dedicato in cima al form — lo si aggiunge come
- * sfondo/etichetta sull'intestazione tramite kcLogoLink, oppure (se assente nel markup) semplicemente
- * il nome del sito resta nel titolo, già tradotto correttamente dal realm (vedi realm-tarots.json). */
-#kc-header-wrapper {
-  background-image: url("../img/logo.webp");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
-  min-height: 64px;
-  text-indent: -9999px;
-  overflow: hidden;
-}
-
-/* Campi di testo */
-.pf-v5-c-form-control,
-input[type="text"],
-input[type="password"],
-input[type="email"] {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid var(--tarots-bordo) !important;
-  color: var(--tarots-testo) !important;
-  border-radius: 8px !important;
-}
-
-.pf-v5-c-form-control:focus {
-  border-color: var(--tarots-bordo-forte) !important;
-  box-shadow: 0 0 0 1px var(--tarots-oro) !important;
-}
-
-label,
-.pf-v5-c-form__label-text {
-  color: var(--tarots-testo-tenue) !important;
-}
-
-/* Bottone primario: stesso gradiente oro dei bottoni del sito (.bottone in globals.css) */
-.pf-v5-c-button.pf-m-primary,
-#kc-login {
-  background: linear-gradient(180deg, #e6c56d, #b98e36) !important;
-  border: 1px solid var(--tarots-bordo-forte) !important;
-  color: #1a1206 !important;
-  font-weight: 600;
-  border-radius: 999px !important;
-  box-shadow: 0 0 24px rgba(216, 180, 90, 0.45);
-}
-
-.pf-v5-c-button.pf-m-primary:hover {
-  box-shadow: 0 0 36px rgba(216, 180, 90, 0.6);
-}
-
-/* Link (registrati, password dimenticata, provider social) */
-a,
-.pf-v5-c-login__main-footer-links a {
-  color: var(--tarots-oro-chiaro);
-}
-
-a:hover {
-  color: var(--tarots-oro);
-}
-
-/* Messaggi di errore/avviso */
-.pf-v5-c-alert.pf-m-danger,
-.alert-error {
-  background: rgba(224, 112, 122, 0.12) !important;
-  border-color: var(--tarots-rosso) !important;
-  color: var(--tarots-testo) !important;
+:focus-visible {
+  outline: 3px solid var(--t-verderame);
+  outline-offset: 2px;
 }

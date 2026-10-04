@@ -39,7 +39,17 @@ REALM = "tarots"
 
 BROWSER = "browser con 2FA amministratori"
 DOPO_ESTERNO = "2FA amministratori dopo accesso esterno"
+# Il primo accesso social che unisce gli account con la stessa email: lo stesso alias e gli stessi passi di
+# `FLUSSO_UNIONE` / `KeycloakAdmin.assicura_flusso_unione` nel backend (che lo crea anche sul realm vivo).
+UNIONE = "primo accesso con unione degli account"
+# I provider di cui il backend legge il profilo (nome, nascita, sesso, lingua, foto, città) con il token che
+# Keycloak conserva: `legge_profilo` in `backend/tarot_core/auth/provider_sociali.py`.
+LEGGE_PROFILO = {"google", "facebook", "microsoft", "github", "linkedin"}
 MASCHERA = "**********"
+# Il client delle app e il suo ritorno: gli stessi di `CLIENT_MOBILE`/`REDIRECT_MOBILE` in
+# `backend/tarot_core/auth/keycloak_admin.py` e di `mobile/lib/auth/configurazione.dart`.
+MOBILE = "tarot-mobile"
+REDIRECT_MOBILE = "chat.tarots.app:/oauth2redirect"
 
 # La REST API di Keycloak non risolve i segnaposto e rifiuta come URI di
 # redirect `${KC_URL_WEB}/*` («A redirect URI is not a valid URI», 500):
@@ -67,6 +77,14 @@ def realm_di_partenza() -> dict:
             # "+": le origini dei redirect. Un indirizzo con un percorso (come la
             # console sotto /admin) non è un'origine, e il CORS del login fallirebbe.
             c["webOrigins"] = ["+"]
+    # Il client delle app Android e iOS (v9, Fase 6): pubblico, PKCE S256, il ritorno sullo schema dell'app
+    # (`chat.tarots.app:/oauth2redirect`, uguale in produzione e in prova: niente segnaposto) e il mapper
+    # `tarots_unione`. Viene così com'è dal realm di sviluppo; sul realm già vivo lo crea la console
+    # («App mobili» → «Prepara l'accesso dall'app», `KeycloakAdmin.assicura_client_mobile`).
+    mobile = next((c for c in prod["clients"] if c["clientId"] == MOBILE), None)
+    if mobile is None or mobile["redirectUris"] != [REDIRECT_MOBILE] or \
+            mobile.get("attributes", {}).get("pkce.code.challenge.method") != "S256":
+        raise SystemExit(f"Il realm di sviluppo non ha il client «{MOBILE}» come lo vogliono le app")
     prod.update({
         "verifyEmail": True,
         "sslRequired": "external",
@@ -95,9 +113,16 @@ def realm_di_partenza() -> dict:
             # submission SMTPS implicito su 465 invece del piu' comune 587+starttls.
             "starttls": "false", "ssl": "true",
         },
+        # Gli stessi provider che la console sa configurare (`backend/tarot_core/auth/provider_sociali.py`),
+        # tutti spenti: si accendono dalla console («Accesso con i social») o, a un import nuovo, dall'ambiente.
+        # Instagram no: il provider di Keycloak 26.0 usa la Basic Display API, chiusa da Meta nel dicembre 2024.
         "identityProviders": [
             _provider("google", "Google", "google", {"defaultScope": "openid profile email"}),
             _provider("facebook", "Facebook", "facebook", {"defaultScope": "email public_profile"}),
+            _provider("microsoft", "Microsoft", "microsoft", {"defaultScope": "openid profile email"}, email_fidata=False),
+            _provider("github", "GitHub", "github", {"defaultScope": "user:email"}),
+            _provider("linkedin", "LinkedIn", "linkedin-openid-connect", {"defaultScope": "openid profile email"}),
+            _provider("twitter", "X (Twitter)", "twitter", {}, email_fidata=False),
             # Apple non ha un provider integrato: OIDC generico. Il suo
             # `client_secret` è un JWT firmato con la chiave dell'account
             # sviluppatore, e scade al più ogni sei mesi (vedi il README).
@@ -116,13 +141,24 @@ def realm_di_partenza() -> dict:
     return prod
 
 
-def _provider(alias: str, nome: str, tipo: str, config: dict) -> dict:
+def account_di_servizio() -> list:
+    """L'utente di servizio di `tarot-api` con i suoi ruoli di `realm-management`, preso dal realm di sviluppo.
+
+    L'esportazione parziale non contiene utenti, nemmeno quelli di servizio: senza questa aggiunta il file
+    importerebbe un `tarot-api` senza `manage-realm` né `manage-identity-providers`, e la console non potrebbe
+    cambiare il login persistente né l'accesso con i social (403 da Keycloak)."""
+    sviluppo = json.loads(SVILUPPO.read_text(encoding="utf-8"))
+    return [u for u in sviluppo["users"] if u.get("serviceAccountClientId") == "tarot-api"]
+
+
+def _provider(alias: str, nome: str, tipo: str, config: dict, *, email_fidata: bool = True) -> dict:
     # Spento finché non lo si accende dall'ambiente: all'import il segnaposto
     # diventa `false`, e un provider senza credenziali non compare nella
     # pagina di accesso.
     return {
         "alias": alias, "displayName": nome, "providerId": tipo, "enabled": False,
-        "trustEmail": True, "firstBrokerLoginFlowAlias": "first broker login",
+        "trustEmail": email_fidata, "firstBrokerLoginFlowAlias": "first broker login",
+        "storeToken": alias in LEGGE_PROFILO,
         "config": {
             "clientId": f"${{KC_{alias.upper()}_CLIENT_ID}}",
             "clientSecret": f"${{KC_{alias.upper()}_CLIENT_SECRET}}",
@@ -240,13 +276,45 @@ def configura(kc: Keycloak, partenza: dict) -> dict:
     kc.requisito(DOPO_ESTERNO, esterno, "CONDITIONAL")
     kc.condizione_admin(esterno["displayName"], "amministratore esterno", nega=False)
     kc.requisito(esterno["displayName"], kc.esecuzione(esterno["displayName"], "auth-otp-form"), "REQUIRED")
-    for alias in ("google", "facebook", "apple"):
-        provider = kc.ok(kc.c.get(f"/{REALM}/identity-provider/instances/{alias}")).json()
+    # Un account per persona: al primo accesso con un social che garantisce l'email, l'identità si collega
+    # all'utente che ha già quell'email (iscritto con la password o entrato con un altro social), o lo crea.
+    # Si assegna solo ai provider con `trustEmail`; X e Microsoft restano sul flusso standard, con conferma.
+    configura_unione(kc)
+    for p in partenza["identityProviders"]:
+        provider = kc.ok(kc.c.get(f"/{REALM}/identity-provider/instances/{p['alias']}")).json()
         provider["postBrokerLoginFlowAlias"] = DOPO_ESTERNO
-        kc.ok(kc.c.put(f"/{REALM}/identity-provider/instances/{alias}", json=provider))
+        if p["trustEmail"]:
+            provider["firstBrokerLoginFlowAlias"] = UNIONE
+        kc.ok(kc.c.put(f"/{REALM}/identity-provider/instances/{p['alias']}", json=provider))
 
     return kc.ok(kc.c.post(f"/{REALM}/partial-export",
                            params={"exportClients": "true", "exportGroupsAndRoles": "true"})).json()
+
+
+def configura_unione(kc: Keycloak) -> None:
+    """La ricetta di Keycloak «Automatically link existing first login flow», costruita da zero: «Review Profile»
+    solo se manca qualcosa, poi «Create User If Unique» oppure il nostro «tarots-unione-sicura» (il collegamento
+    automatico di Keycloak, che però toglie i vecchi accessi a un account con l'email mai verificata)."""
+    kc.ok(kc.c.post(f"/{REALM}/authentication/flows", json={
+        "alias": UNIONE, "providerId": "basic-flow", "topLevel": True, "builtIn": False,
+        "description": "Primo accesso con un social: collega l'identità all'utente con la stessa email, o lo crea",
+    }))
+    rivedi = kc.esecuzione(UNIONE, "idp-review-profile")
+    kc.requisito(UNIONE, rivedi, "REQUIRED")
+    kc.ok(kc.c.post(f"/{REALM}/authentication/executions/{rivedi['id']}/config", json={
+        "alias": "unione - rivedi il profilo se manca qualcosa",
+        "config": {"update.profile.on.first.login": "missing"},
+    }))
+    sotto = f"{UNIONE} - crea o collega"
+    kc.ok(kc.c.post(f"/{REALM}/authentication/flows/{quote(UNIONE)}/executions/flow", json={
+        "alias": sotto, "type": "basic-flow",
+        "description": "Crea l'utente se l'email è nuova, altrimenti collega l'identità a quello che c'è",
+    }))
+    kc.requisito(UNIONE, next(e for e in kc.esecuzioni(UNIONE) if e.get("displayName") == sotto), "REQUIRED")
+    kc.requisito(sotto, kc.esecuzione(sotto, "idp-create-user-if-unique"), "ALTERNATIVE")
+    # Il nostro passo al posto di «idp-auto-link»: toglie i vecchi accessi a un account con l'email mai verificata.
+    # Il Keycloak su cui gira questo script deve avere il provider (deploy/keycloak/spi).
+    kc.requisito(sotto, kc.esecuzione(sotto, "tarots-unione-sicura"), "ALTERNATIVE")
 
 
 def con_segnaposto(esportato: dict) -> str:
@@ -278,6 +346,7 @@ def main() -> None:
     a = argomenti.parse_args()
 
     esportato = configura(Keycloak(a.keycloak, a.password), realm_di_partenza())
+    esportato["users"] = account_di_servizio()
     PRODUZIONE.write_text(con_segnaposto(esportato), encoding="utf-8")
     print(f"Scritto {PRODUZIONE}")
 
