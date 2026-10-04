@@ -1,5 +1,6 @@
-"""La console del backup sul NAS (v8.3): destinazione, prova del collegamento, backup subito, copie sul NAS,
-storico, e il ripristino di una copia (con la copia di sicurezza prima). Solo il ruolo admin.
+"""La console del backup sul NAS (v8.3): destinazione, credenziale (v9, Fase 2c: chiave SSH o password, cifrate),
+prova del collegamento, backup subito, copie sul NAS, storico, e il ripristino di una copia (con la copia di
+sicurezza prima). Solo il ruolo admin.
 
 Backup e ripristino durano secondi o minuti: partono dopo la risposta (`BackgroundTasks`), e la console segue lo
 stato (`GET /admin/backup` e `GET /admin/backup/ripristino`).
@@ -38,7 +39,7 @@ async def stato(session: DbSession) -> Dict[str, Any]:
     await session.commit()
     return {
         "impostazioni": _impostazioni_json(riga),
-        "credenziale": backup.credenziale(),
+        "credenziale": backup.credenziale(riga),
         "esecuzioni": [backup.esecuzione_json(e) for e in await backup.ultime_esecuzioni(session)],
         "ripristino": backup.stato_json(),
     }
@@ -72,6 +73,51 @@ async def salva_impostazioni(payload: ImpostazioniIn, user: CurrentUser, session
     )
     await session.commit()
     return _impostazioni_json(riga)
+
+
+class CredenzialeIn(BaseModel):
+    """La credenziale del NAS dalla console (v9, Fase 2c). Un campo vuoto lascia com'è; `togli` cancella entrambe
+    (si torna al Secret montato, se c'è)."""
+
+    chiave_ssh: str = Field(default="", max_length=20_000)
+    password: str = Field(default="", max_length=500)
+    togli: bool = False
+
+
+@router.put("/credenziale")
+async def salva_credenziale(payload: CredenzialeIn, user: CurrentUser, session: DbSession) -> Dict[str, Any]:
+    from ...llm.cifratura import cifra
+
+    riga = await backup.impostazioni(session)
+    prima = backup.credenziale(riga)
+    campi = []
+    if payload.togli:
+        riga.chiave_ssh_cifrata = riga.password_cifrata = None
+        riga.chiave_ssh_tipo = riga.chiave_ssh_impronta = None
+        campi = ["chiave_ssh", "password"]
+    else:
+        if payload.chiave_ssh.strip():
+            try:
+                tipo, impronta = backup.descrivi_chiave(payload.chiave_ssh)
+            except backup.ErroreBackup as exc:
+                raise HTTPException(status_code=422, detail=f"Chiave SSH: {exc}.") from exc
+            riga.chiave_ssh_cifrata = cifra(payload.chiave_ssh.strip().replace("\r\n", "\n"))
+            riga.chiave_ssh_tipo, riga.chiave_ssh_impronta = tipo, impronta
+            campi.append("chiave_ssh")
+        if payload.password:
+            riga.password_cifrata = cifra(payload.password)
+            campi.append("password")
+        if not campi:
+            raise HTTPException(status_code=422, detail="Scegli un file di chiave, incollala, o scrivi una password.")
+    riga.updated_by = user.id
+    # Nell'audit solo quali campi e l'impronta pubblica della chiave: mai la chiave né la password.
+    await AuditRepository(session).record(
+        action="backup.credenziale", actor_id=user.id, target_type="impostazioni_backup", target_id="1",
+        before={"origine": prima["origine"], "chiave_impronta": prima["chiave_impronta"]},
+        after={"campi": campi, "tolta": payload.togli, "chiave_impronta": riga.chiave_ssh_impronta},
+    )
+    await session.commit()
+    return backup.credenziale(riga)
 
 
 class ProvaIn(BaseModel):

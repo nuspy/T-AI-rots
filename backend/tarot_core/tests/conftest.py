@@ -42,9 +42,48 @@ def niente_modelli_veri(monkeypatch):
 
     monkeypatch.setenv("TAROT_LLM_BASE_URL", "http://127.0.0.1:9/v1")
     monkeypatch.setenv("TAROT_ANTHROPIC_BASE_URL", "http://127.0.0.1:9")
+    # Il registro dei consumi (`llm/consumi.py`) scrive con il motore del processo, non con quello dei test: spento,
+    # salvo nelle prove che lo riguardano (`test_consumi_llm.py`), che lo riaccendono con uno scrittore loro.
+    monkeypatch.setenv("TAROT_CONSUMI_LLM", "false")
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()
+
+
+@pytest.fixture(autouse=True)
+def configurazioni_dimenticate():
+    """Le configurazioni della console tenute in memoria (v9, Fase 2c: Stripe, posta, segreti interni) si
+    dimenticano fra una prova e l'altra: ogni prova parte dall'ambiente, come un processo appena avviato."""
+    from tarot_core.configurazioni import correnti, dns, segreti
+    from tarot_core.llm.openai_compatible import dimentica_dialetti_json
+    from tarot_core.tarot import ip_protetto
+
+    def azzera():
+        dimentica_dialetti_json()
+        correnti.dimentica()
+        dns.dimentica()
+        segreti._imposta_sale(None)
+        ip_protetto.imposta_segreto(None)
+
+    azzera()
+    yield
+    azzera()
+
+
+@pytest.fixture(autouse=True)
+def eta_gia_confermata(request, monkeypatch):
+    """La conferma dell'età minima (GDPR, Fase 1, `tarot/eta_minima.py`) spenta nei test che non la riguardano:
+    altrimenti ogni prova che apre una lettura o scrive nella chat dovrebbe prima confermarla. I test dell'età la
+    riaccendono con `@pytest.mark.eta_vera`."""
+    if request.node.get_closest_marker("eta_vera") is None:
+        from tarot_core.tarot import eta_minima
+
+        monkeypatch.setattr(eta_minima, "controllo_attivo", lambda: False)
+    yield
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "eta_vera: il controllo dell'età minima resta acceso (GDPR, Fase 1)")
 
 
 #: Un database separato da quello di sviluppo: le prove creano e cancellano

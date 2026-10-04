@@ -261,7 +261,7 @@ async def test_il_catalogo_da_le_scorciatoie_pronte_e_le_etichette_esistenti(adm
     chiave, _ = await _chiave(admin, ("blog:write", "blog:publish"))
     await admin.post("/v1/blog/posts", json={**ARTICOLO, "stato": "pubblicato"}, headers=_h(chiave))
     cat = (await admin.get("/v1/blog/catalog", headers=_h(chiave))).json()
-    assert len(cat["carte"]) == 78 and len(cat["stese"]) == 14
+    assert len(cat["carte"]) == 78 and len(cat["stese"]) == 19
     stella = next(c for c in cat["carte"] if c["id"] == "maj-17")
     assert stella["slug"] == "the-star" and stella["scorciatoia"] == "[[card:the-star]]"
     assert next(s for s in cat["stese"] if s["id"] == "croce-celtica")["scorciatoia"] == "[[spread:celtic-cross]]"

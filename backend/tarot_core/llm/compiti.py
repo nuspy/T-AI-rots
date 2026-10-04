@@ -33,7 +33,7 @@ rotta.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -56,6 +56,9 @@ class Compito(str, Enum):
     SINTESI = "sintesi"
     #: Il guardrail: il giudice che verifica la sicurezza del responso.
     GIUDIZIO = "giudizio"
+    #: L'anteprima breve del responso per chi non è registrato (`tarot/teaser.py`). Senza assegnazione usa il
+    #: fornitore della sintesi, ma col ragionamento spento (`LIVELLO_PREDEFINITO_COMPITO`): non eredita il suo livello.
+    TEASER = "teaser"
     #: Traduzione di un articolo del blog in un'altra lingua (v5, fase E): non durante una lettura, ma
     #: su richiesta esplicita dalla console, sempre in bozza per la revisione editoriale.
     TRADUZIONE_ARTICOLO = "traduzione_articolo"
@@ -96,11 +99,12 @@ _ETICHETTE: Dict[Compito, str] = {
     Compito.INTERPRETAZIONE: "Interpretazione delle carte",
     Compito.SINTESI: "Sintesi finale (CAG)",
     Compito.GIUDIZIO: "Guardrail del responso",
+    Compito.TEASER: "Anteprima del responso (senza account)",
     Compito.TRADUZIONE_ARTICOLO: "Traduzione articoli del blog",
     Compito.TRADUZIONE_CONOSCENZA: "Traduzione di carte e stese (offline)",
     Compito.CREAZIONE_MAZZO: "Scene di un mazzo nuovo (offline)",
     Compito.EMBEDDING: "Vettorizzazione per la memoria (RAG)",
-    Compito.MEMORIA_ESTRAZIONE: "Estrazione della memoria da una lettura conclusa",
+    Compito.MEMORIA_ESTRAZIONE: "Aggiornamento della memoria dopo una lettura",
     Compito.CHAT_PROATTIVA: "Chat proattiva basata sulla memoria",
     Compito.ANALISI_DATI: "Interpretazione dei dati (analytics)",
 }
@@ -115,8 +119,9 @@ _DESCRIZIONI: Dict[Compito, str] = {
         "o una previsione. Un modello piccolo e rigoroso basta."
     ),
     Compito.INTERPRETAZIONE: (
-        "Legge ogni carta nella sua posizione, in streaming, mentre l'utente "
-        "la guarda girarsi: conta la latenza."
+        "Legge tutte le carte della lettura in una chiamata sola (una risposta JSON, divisa dal "
+        "codice carta per carta), ognuna nella sua posizione. Le carte che la risposta non copre "
+        "si leggono una per una, come prima."
     ),
     Compito.SINTESI: (
         "Mette insieme domanda, intervista, carte e dottrina. È il modello "
@@ -127,6 +132,11 @@ _DESCRIZIONI: Dict[Compito, str] = {
         "Verifica che il responso non sia pericoloso. **Conviene che sia un "
         "modello diverso** da quello che ha scritto: un giudice che è anche "
         "l'autore assolve sé stesso."
+    ),
+    Compito.TEASER: (
+        "Scrive le due o tre frasi che chi non ha un account legge al posto del responso. Senza una scelta "
+        "qui usa il modello della sintesi, ma senza ragionamento: è un testo breve, non serve pensarci "
+        "a lungo (e la sintesi può ragionare molto)."
     ),
     Compito.TRADUZIONE_ARTICOLO: (
         "Traduce titolo, sottotitolo, corpo e campi SEO di un articolo del blog già pubblicato in "
@@ -147,12 +157,13 @@ _DESCRIZIONI: Dict[Compito, str] = {
     Compito.EMBEDDING: (
         "Trasforma un testo (una domanda, una sintesi, una memoria estratta) in un vettore, per "
         "ritrovare ciò che è pertinente a una lettura o una conversazione. Non è generazione di "
-        "testo: il fornitore assegnato deve offrire un endpoint di embedding."
+        "testo: il fornitore assegnato deve offrire un endpoint di embedding. Oggi non si usa: la "
+        "memoria è un riassunto breve, senza vettori (si riaccende con TAROT_MEMORIA_EMBEDDING)."
     ),
     Compito.MEMORIA_ESTRAZIONE: (
-        "Legge il quesito, il colloquio e la sintesi di una lettura appena conclusa e ne estrae i "
-        "fatti da ricordare — stabili (non si richiedono più) o variabili (se ne può chiedere "
-        "l'evoluzione). Gira in background dopo la sintesi, non durante la lettura."
+        "Dopo ogni lettura conclusa aggiorna il riassunto breve che il lettore tiene su chi consulta: "
+        "fatti stabili, situazioni in corso e temi recenti. Una chiamata breve in background, sempre "
+        "senza ragionamento qualunque sia la scelta qui sotto; ciò che è vecchio lo dimentica il codice."
     ),
     Compito.CHAT_PROATTIVA: (
         "Apre o continua una conversazione con un utente già loggato, basandosi sulle sue memorie, "
@@ -165,6 +176,15 @@ _DESCRIZIONI: Dict[Compito, str] = {
         "della velocità: un modello forte, anche col ragionamento acceso. Riceve solo aggregati."
     ),
 }
+
+
+#: I compiti che, **senza assegnazione**, usano il fornitore di un altro compito invece del predefinito: l'anteprima
+#: è scritta dallo stesso modello del responso, come prima che avesse un compito suo.
+FORNITORE_DI: Dict[Compito, Compito] = {Compito.TEASER: Compito.SINTESI}
+
+#: I compiti con un livello di ragionamento proprio quando la console non ne sceglie uno (assegnazione assente, o senza
+#: livello): non ereditano quello del fornitore. L'anteprima non deve ragionare a `xhigh` solo perché la sintesi lo fa.
+LIVELLO_PREDEFINITO_COMPITO: Dict[Compito, str] = {Compito.TEASER: "none"}
 
 
 class ModelloConfigurato(BaseModel):
@@ -210,11 +230,24 @@ class ModelloConfigurato(BaseModel):
     #: è l'amministratore a decidere. Serve perché la scelta sia informata
     #: invece che accidentale, e perché resti scritto cosa si è scelto.
     senza_filtri: bool = False
+    #: Il tipo del catalogo (`llm/catalogo_fornitori.py`: `nebius`, `nvidia`, `lmstudio`…): decide il dialetto del
+    #: ragionamento (`llm/ragionamento.py`). Vuoto per i modelli dall'ambiente.
+    tipo: str = ""
+    #: Il livello di ragionamento predefinito del fornitore (`none` … `max`), che i compiti ereditano. Vuoto: un
+    #: modello configurato prima dei livelli, che segue ancora `ragiona` e i suoi `parametri` come prima.
+    livello_ragionamento: str = ""
 
     @field_validator("parametri")
     @classmethod
     def _parametri_ammessi(cls, valore: Dict[str, Any]) -> Dict[str, Any]:
         return controlla_parametri(valore)
+
+    @field_validator("livello_ragionamento")
+    @classmethod
+    def _livello_ammesso(cls, valore: str) -> str:
+        from .ragionamento import valido
+
+        return valido(valore) or ""
 
 
 #: I campi della richiesta che l'applicazione scrive da sé: `parametri` non li può toccare (un modello che
@@ -249,6 +282,18 @@ class AssegnazioneModello:
     nome: str
     ragiona_override: Optional[bool] = None
     parametri_override: Optional[Dict[str, Any]] = None
+    #: Il livello di ragionamento di questo compito (`none` … `max`). `None`: eredita dal fornitore.
+    livello: Optional[str] = None
+    #: Lo schema JSON rigoroso nelle risposte strutturate (`llm/schemi_json.py`), con ripiego automatico se il
+    #: fornitore lo rifiuta. `None`: spento (il predefinito, finché non lo si prova su Nebius).
+    json_schema: Optional[bool] = None
+
+    def sostituisce(self) -> bool:
+        """Se l'assegnazione cambia qualcosa oltre al nome del fornitore."""
+        return (
+            self.ragiona_override is not None or bool(self.parametri_override) or self.livello is not None
+            or self.json_schema is not None
+        )
 
 
 class RegistroModelli:
@@ -328,6 +373,7 @@ class RegistroModelli:
     def assegna(
         self, compito: Compito, nome: Optional[str], *,
         ragiona_override: Optional[bool] = None, parametri_override: Optional[Dict[str, Any]] = None,
+        livello: Optional[str] = None, json_schema: Optional[bool] = None,
     ) -> None:
         """Registra o toglie un'assegnazione. `None` fa tornare al predefinito."""
         if nome is None:
@@ -335,7 +381,9 @@ class RegistroModelli:
             return
         if nome not in self._modelli:
             raise ValueError(f"modello sconosciuto: {nome!r}")
-        self._assegnazioni[compito] = AssegnazioneModello(nome, ragiona_override, parametri_override)
+        self._assegnazioni[compito] = AssegnazioneModello(
+            nome, ragiona_override, parametri_override, livello=livello, json_schema=json_schema,
+        )
 
     def aggiorna(self, assegnazioni: Dict[Compito, AssegnazioneModello]) -> None:
         """Sostituisce tutte le assegnazioni con quelle lette dal database.
@@ -378,40 +426,118 @@ class RegistroModelli:
                 "modelli configurati: si usa il predefinito",
                 compito.value, nome,
             )
+        if compito in FORNITORE_DI:
+            return self.nome_per(FORNITORE_DI[compito])
         if PREDEFINITO in self._modelli:
             return PREDEFINITO
         return next(iter(self._modelli), "")
 
-    def per(self, compito: Compito):
-        """Il fornitore che serve questo compito."""
+    def per(self, compito: Compito, *, senza_ragionamento: bool = False):
+        """Il fornitore che serve questo compito.
+
+        `senza_ragionamento`: per le chiamate che il codice vuole brevi qualunque cosa dica la console (l'aggiornamento
+        dello stato sintetico della memoria, `tarot/stato_memoria.py`). Il ragionamento si spegne nello stesso modo di
+        un livello `none` scelto in console — `_configurazione_per`, il punto unico.
+        """
         nome = self.nome_per(compito)
         if not nome:
             raise RuntimeError(
                 "nessun modello configurato: nessun fornitore in console e "
                 "non esiste nemmeno un modello predefinito dall'ambiente"
             )
+        valida = self._assegnazione_valida(compito, nome)
+        if senza_ragionamento:
+            valida = replace(valida or AssegnazioneModello(nome), ragiona_override=False, livello="none")
+        if (valida is not None and valida.sostituisce()) or compito in LIVELLO_PREDEFINITO_COMPITO:
+            # Mai in cache (anche un compito col suo livello predefinito, che non è quello del fornitore): due compiti sullo stesso fornitore con sostituzioni diverse non devono scambiarsele.
+            # Costruire un oggetto è economico (nessuna rete), e il dialetto JSON negoziato si ricorda comunque per
+            # indirizzo e modello (`openai_compatible._DIALETTI_NOTI`).
+            return self._costruisci(self._configurazione_per(nome, compito, valida), f"{nome}+override", compito)
+        return self._fornitore(nome, compito)
+
+    def _assegnazione_valida(self, compito: Compito, nome: str) -> Optional[AssegnazioneModello]:
+        """L'assegnazione del compito se punta ancora al modello in uso: se `nome_per` è ricaduto sul predefinito
+        (modello assegnato sparito), le sostituzioni di un'assegnazione ormai orfana non si applicano."""
         assegnazione = self._assegnazioni.get(compito)
-        # L'override si applica solo se l'assegnazione punta ancora al modello in uso: se
-        # `nome_per` è ricaduto sul predefinito (modello assegnato sparito), l'override di
-        # un'assegnazione ormai orfana non ha più senso applicarlo.
-        if assegnazione and assegnazione.nome == nome and (
-            assegnazione.ragiona_override is not None or assegnazione.parametri_override
-        ):
-            return self._fornitore_override(nome, assegnazione)
-        return self._fornitore(nome)
+        if isinstance(assegnazione, AssegnazioneModello) and assegnazione.nome == nome:
+            return assegnazione
+        return None
+
+    def json_schema_di(self, compito: Compito) -> bool:
+        """Se il compito prova lo schema JSON rigoroso: l'assegnazione se lo dice, altrimenti spento."""
+        a = self._assegnazione_valida(compito, self.nome_per(compito))
+        return bool(a is not None and a.json_schema)
+
+    def ragionamento_di(self, compito: Compito) -> Dict[str, Any]:
+        """Quanto ragiona **davvero** questo compito, e da dove viene la scelta.
+
+        È lo stesso calcolo di `per()` (`_configurazione_per`), senza costruire il fornitore: la console deve mostrare
+        ciò che succede, non solo ciò che è scritto nell'assegnazione. Un compito senza assegnazione (o con
+        un'assegnazione che non dice il livello) eredita dal fornitore in uso — in produzione è il caso dell'oracolo e
+        della memoria, che ragionavano senza che la casella lo mostrasse.
+
+        - `livello`: `none` … `max`, o `None` per un fornitore configurato prima dei livelli (lì conta `effettivo`);
+        - `effettivo`: il modello riceve il ragionamento acceso;
+        - `origine`: `compito` (scelto per questo compito in console), `parametri` (deciso dai parametri scritti a mano
+          sull'assegnazione), `fornitore` (ereditato dal fornitore in uso), `predefinito` (il livello proprio del
+          compito, `LIVELLO_PREDEFINITO_COMPITO`, finché la console non ne sceglie un altro) o `codice` (spento dal
+          servizio comunque: `_spento_dal_codice`);
+        - `fornitore`: il nome del fornitore in uso; `livello_fornitore`: il suo predefinito;
+        - `spegnibile`: l'applicazione sa come spegnerlo nella richiesta (un livello c'è sempre, o il fornitore di prima
+          dichiara `chat_template_kwargs.enable_thinking`). Se no, cambia solo il margine di budget lato applicazione.
+        """
+        nome = self.nome_per(compito)
+        base = self._modelli.get(nome)
+        if base is None:
+            return {"livello": None, "effettivo": False, "origine": "fornitore", "fornitore": nome,
+                    "livello_fornitore": None, "spegnibile": False}
+        if self._spento_dal_codice(compito):
+            # Il vettore non ragiona; lo stato sintetico della memoria chiede sempre `senza_ragionamento`.
+            return {"livello": "none", "effettivo": False, "origine": "codice", "fornitore": nome,
+                    "livello_fornitore": base.livello_ragionamento or None, "spegnibile": True}
+        livello, origine = self._livello(base, self._assegnazione_valida(compito, nome), compito)
+        configurazione = self._configurazione_per(nome, compito, self._assegnazione_valida(compito, nome))
+        kwargs = (self._assegnazione_valida(compito, nome) or AssegnazioneModello(nome)).parametri_override or {}
+        if isinstance(kwargs.get("chat_template_kwargs"), dict) and "enable_thinking" in kwargs["chat_template_kwargs"]:
+            origine = "parametri"
+        kwargs_base = base.parametri.get("chat_template_kwargs")
+        spegnibile = livello is not None or (isinstance(kwargs_base, dict) and "enable_thinking" in kwargs_base)
+        return {
+            "livello": livello, "effettivo": configurazione.ragiona, "origine": origine, "fornitore": nome,
+            "livello_fornitore": base.livello_ragionamento or None, "spegnibile": spegnibile,
+        }
 
     def stato(self) -> List[dict]:
         """Cosa mostrare in console: i compiti, chi li serve, e perché."""
+        from .schemi_json import COMPITI_CON_SCHEMA
+
         righe = []
         for compito in Compito:
             assegnazione = self._assegnazioni.get(compito)
+            assegnazione = assegnazione if isinstance(assegnazione, AssegnazioneModello) else None
             in_uso = self.nome_per(compito)
+            ragionamento = self.ragionamento_di(compito)
             righe.append({
                 "compito": compito.value,
                 "label": compito.label,
                 "descrizione": compito.descrizione,
                 "assegnato": assegnazione.nome if assegnazione else None,
                 "ragiona_override": assegnazione.ragiona_override if assegnazione else None,
+                #: Il livello scelto per il compito (`None`: eredita dal fornitore).
+                "livello": assegnazione.livello if assegnazione else None,
+                #: Lo stato vero: il livello in uso, acceso o spento, e chi l'ha deciso (vedi `ragionamento_di`).
+                "livello_effettivo": ragionamento["livello"],
+                "livello_fornitore": ragionamento["livello_fornitore"],
+                "ragiona_effettivo": ragionamento["effettivo"],
+                "ragiona_origine": ragionamento["origine"],
+                "ragiona_spegnibile": ragionamento["spegnibile"],
+                #: Il livello del compito quando la console non ne sceglie uno (`None`: eredita dal fornitore).
+                "livello_predefinito": LIVELLO_PREDEFINITO_COMPITO.get(compito),
+                #: Senza assegnazione usa il fornitore di questo compito invece del predefinito (`None`: il predefinito).
+                "segue": FORNITORE_DI[compito].value if compito in FORNITORE_DI else None,
+                #: Lo schema JSON rigoroso: in uso, e se il compito risponde in JSON (altrimenti non si offre).
+                "json_schema": self.json_schema_di(compito),
+                "schema_possibile": compito.value in COMPITI_CON_SCHEMA,
                 "in_uso": in_uso,
                 "senza_filtri": bool((m := self._modelli.get(in_uso)) and m.senza_filtri),
             })
@@ -419,38 +545,88 @@ class RegistroModelli:
 
     # ------------------------------------------------------------- interno
 
-    def _fornitore(self, nome: str):
+    @staticmethod
+    def _spento_dal_codice(compito: Compito) -> bool:
+        """I compiti che non ragionano qualunque cosa dica la console: l'embedding (non genera testo) e l'aggiornamento
+        della memoria, che chiama sempre `per(..., senza_ragionamento=True)` — finché non si riaccende la memoria di
+        prima (`TAROT_MEMORIA_EMBEDDING`), la cui estrazione segue invece la console."""
+        if compito == Compito.EMBEDDING:
+            return True
+        if compito == Compito.MEMORIA_ESTRAZIONE:
+            from ..settings import get_settings
+
+            return not get_settings().memoria_embedding
+        return False
+
+    def _fornitore(self, nome: str, compito: Optional[Compito] = None):
+        """Il fornitore condiviso dei compiti senza sostituzioni, in cache per nome: quello che li distingue (livello,
+        schema JSON) passa solo dalle sostituzioni, che non usano questa cache."""
         if nome in self._fornitori:
             return self._fornitori[nome]
-        base = self._modelli[nome]
-        configurazione = base.model_copy(update={"parametri": _parametri_coerenti(base.parametri, base.ragiona)})
-        fornitore = self._costruisci(configurazione, nome)
+        fornitore = self._costruisci(self._configurazione_per(nome, None, None), nome)
         self._fornitori[nome] = fornitore
         return fornitore
 
-    def _fornitore_override(self, nome: str, assegnazione: AssegnazioneModello):
-        """Un fornitore con `ragiona`/`parametri` sovrascritti SOLO per questa assegnazione.
+    @staticmethod
+    def _livello(
+        base: ModelloConfigurato, assegnazione: Optional[AssegnazioneModello], compito: Optional[Compito] = None,
+    ) -> tuple:
+        """Il livello di ragionamento del compito e la sua origine. `(None, …)`: un fornitore di prima dei livelli,
+        senza livello neanche sul compito — lì vale ancora il booleano (`_parametri_coerenti`). Un compito con un
+        livello proprio (`LIVELLO_PREDEFINITO_COMPITO`) senza una scelta in console usa quello (origine `predefinito`)."""
+        from .ragionamento import livello_da_bool, valido
 
-        Mai in cache per nome: la cache di `_fornitore` è per fornitore condiviso, e due compiti
-        sullo stesso fornitore con override diversi si scambierebbero le impostazioni se finissero
-        sulla stessa voce. Costruire un oggetto in più è economico (nessuna chiamata di rete),
-        quindi qui si sceglie la correttezza sopra il riuso.
+        if assegnazione is not None and valido(assegnazione.livello):
+            return assegnazione.livello, "compito"
+        if compito in LIVELLO_PREDEFINITO_COMPITO and (assegnazione is None or assegnazione.ragiona_override is None):
+            return LIVELLO_PREDEFINITO_COMPITO[compito], "predefinito"
+        if base.livello_ragionamento:
+            if assegnazione is not None and assegnazione.ragiona_override is not None:
+                return livello_da_bool(assegnazione.ragiona_override), "compito"
+            return base.livello_ragionamento, "fornitore"
+        origine = "compito" if assegnazione is not None and assegnazione.ragiona_override is not None else "fornitore"
+        return None, origine
+
+    def _configurazione_per(
+        self, nome: str, compito: Optional[Compito], assegnazione: Optional[AssegnazioneModello],
+    ) -> ModelloConfigurato:
+        """La configurazione con cui si costruisce il fornitore di un compito: **il punto unico** in cui il livello di
+        ragionamento diventa parametri (`llm/ragionamento.py`) e `ragiona` (il margine di budget) lo segue.
+
+        Con un livello (del compito o del fornitore) i parametri si riscrivono nel dialetto del fornitore, senza
+        conflitti. Senza (un fornitore di prima dei livelli) vale il booleano: `ragiona_override` o `ragiona` del
+        fornitore, allineato a `enable_thinking` se il fornitore lo dichiara (`_parametri_coerenti`). Un
+        `parametri_override` scritto a mano resta l'ultima parola, e se accende o spegne `enable_thinking` il margine
+        di budget lo segue: «app spenta, modello acceso» faceva finire il ragionamento nel testo (budget esaurito a
+        metà pensiero, verificato su Nebius il 2026-09-30).
         """
-        base = self._modelli[nome]
-        ragiona = base.ragiona if assegnazione.ragiona_override is None else assegnazione.ragiona_override
-        # I parametri del fornitore si allineano al `ragiona` del compito; un `parametri_override`
-        # scritto a mano dall'amministratore resta l'ultima parola (va applicato dopo).
-        parametri = {**_parametri_coerenti(base.parametri, ragiona), **(assegnazione.parametri_override or {})}
-        # E se l'override scritto a mano accende/spegne il pensiero del modello, il margine di budget
-        # lo segue: "app spenta, modello acceso" è proprio lo stato che faceva finire il ragionamento
-        # nel testo (budget esaurito a metà pensiero, verificato su Nebius il 2026-09-30).
-        kwargs = parametri.get("chat_template_kwargs")
-        if isinstance(kwargs, dict) and "enable_thinking" in kwargs:
-            ragiona = bool(kwargs["enable_thinking"])
-        configurazione = base.model_copy(update={"ragiona": ragiona, "parametri": parametri})
-        return self._costruisci(configurazione, f"{nome}+override")
+        from .ragionamento import dialetto, parametri_per_livello, ragiona_da_livello, senza_conflitti
 
-    def _costruisci(self, configurazione: ModelloConfigurato, nome_traccia: str):
+        base = self._modelli[nome]
+        livello, _ = self._livello(base, assegnazione, compito)
+        dialetto_ = dialetto(base.tipo, base.provider, base.parametri)
+        if livello is not None:
+            ragiona = ragiona_da_livello(livello)
+            parametri = parametri_per_livello(base.parametri, livello, dialetto_)
+        else:
+            ragiona = base.ragiona
+            if assegnazione is not None and assegnazione.ragiona_override is not None:
+                ragiona = assegnazione.ragiona_override
+            parametri = _parametri_coerenti(base.parametri, ragiona)
+        if assegnazione is not None and assegnazione.parametri_override:
+            parametri = {**parametri, **assegnazione.parametri_override}
+            if livello is not None:
+                parametri = senza_conflitti(parametri, dialetto_)
+            kwargs = parametri.get("chat_template_kwargs")
+            if isinstance(kwargs, dict) and "enable_thinking" in kwargs:
+                ragiona = bool(kwargs["enable_thinking"])
+        return base.model_copy(update={
+            "ragiona": ragiona, "parametri": parametri, "livello_ragionamento": livello or "",
+        })
+
+    def _costruisci(self, configurazione: ModelloConfigurato, nome_traccia: str, compito: Optional[Compito] = None):
+        from .ragionamento import budget_anthropic
+
         if configurazione.provider == "anthropic":
             from .anthropic import AnthropicProvider
 
@@ -458,6 +634,7 @@ class RegistroModelli:
                 base_url=configurazione.base_url or None,
                 api_key=configurazione.api_key or None,
                 default_model=configurazione.model,
+                budget_ragionamento=budget_anthropic(configurazione.livello_ragionamento or None),
             )
 
         from .openai_compatible import OpenAICompatibleProvider
@@ -469,16 +646,22 @@ class RegistroModelli:
             embed_model=configurazione.embed_model,
             motore=configurazione.motore or None,
             ragiona=configurazione.ragiona,
+            livello_ragionamento=configurazione.livello_ragionamento,
             parametri=configurazione.parametri,
             # Il nome finisce nelle tracce: senza, due modelli diversi
             # comparirebbero entrambi come «openai-compatibile» e non si
             # saprebbe quale ha prodotto quale risposta.
             name=nome_traccia,
+            json_schema=self.json_schema_di(compito) if compito is not None else False,
         )
 
 
 def _parametri_coerenti(parametri: Dict[str, Any], ragiona: bool) -> Dict[str, Any]:
     """I `parametri` di un fornitore allineati al `ragiona` effettivo del compito.
+
+    **Solo per i fornitori configurati prima dei livelli di ragionamento** (senza `livello_ragionamento`): per gli
+    altri decide `llm/ragionamento.py`, chiamato da `RegistroModelli._configurazione_per`, il punto unico. Non aggiunge
+    campi che il fornitore non dichiara già: si limita ad allineare quelli presenti.
 
     `ragiona` da solo decide soltanto il margine di budget lato applicazione (vedi
     `pavimento_ragionamento`): il MODELLO ragiona o no secondo `chat_template_kwargs.enable_thinking`

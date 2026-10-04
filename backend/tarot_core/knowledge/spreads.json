@@ -5,6 +5,9 @@
   "nome_en": "Three cards",
   "mazzo": "maggiori",
   "carte_da_scegliere": 3,
+  "temi": [
+   "lavoro"
+  ],
   "origine": "La stesa più diffusa al mondo: una linea temporale di tre Arcani maggiori.",
   "descrizione": "Passato, presente e futuro: la traiettoria della questione letta attraverso le sole forze archetipiche dei 22 Arcani maggiori.",
   "posizioni": [
@@ -74,6 +77,9 @@
   "nome_en": "Simple cross (Wirth)",
   "mazzo": "maggiori",
   "carte_da_scegliere": 4,
+  "temi": [
+   "lavoro"
+  ],
   "origine": "Metodo diffuso da Oswald Wirth e cardine della tradizione italiana: quattro Arcani maggiori e una sintesi calcolata.",
   "descrizione": "A favore, contro, il perché e il giudice; al centro la sintesi, che non si pesca ma si calcola sommando gli Arcani.",
   "posizioni": [
@@ -178,6 +184,9 @@
   "nome_en": "Horseshoe",
   "mazzo": "completo",
   "carte_da_scegliere": 7,
+  "temi": [
+   "lavoro"
+  ],
   "origine": "Stesa tradizionale a sette carte disposte a V, diffusa nella cartomanzia europea per domande pratiche.",
   "descrizione": "Sette carte a ferro di cavallo: dal passato all'esito, passando per ciò che è nascosto, gli ostacoli, l'ambiente e il consiglio.",
   "posizioni": [
@@ -309,6 +318,9 @@
   "nome_en": "Celtic Cross",
   "mazzo": "completo",
   "carte_da_scegliere": 10,
+  "temi": [
+   "lavoro"
+  ],
   "origine": "Pubblicata da A. E. Waite nel 1910 e divenuta la stesa più famosa del tarocco moderno.",
   "descrizione": "Dieci carte: la croce descrive la situazione e il suo tempo, il bastone a destra descrive chi consulta, l'ambiente e l'esito.",
   "posizioni": [
@@ -2085,5 +2097,657 @@
    8
   ],
   "nota_intervista": "Chiarisci quali sono le due strade fra cui la coppia si trova, senza suggerirne una."
+ },
+ {
+  "id": "lavoro-trattativa",
+  "nome": "Trattativa",
+  "nome_en": "Negotiation",
+  "categoria": "lavoro",
+  "stile": "tendenza",
+  "mazzo": "completo",
+  "carte_da_scegliere": 4,
+  "larghezza": 0.14,
+  "larghezza_stretto": 0.16,
+  "origine": "Stesa recente a quattro carte in fila, diffusa nei siti di tarocchi dedicati al lavoro (la «Negotiation Prep» di Elvi Tarot) per prepararsi a una trattativa: uno stipendio, un contratto, una proposta a un cliente.",
+  "descrizione": "Quattro carte in fila: il valore reale di ciò che porti, come lo vede l'altra parte, la tua leva e l'approccio da tenere. Prepara al confronto, non ne predice l'esito.",
+  "posizioni": [
+   {
+    "n": 1,
+    "nome": "Il tuo valore",
+    "nome_en": "Your value",
+    "significato": "Ciò che porti davvero al tavolo: competenze, risultati, la sostanza della tua proposta.",
+    "domanda": "Quanto vale davvero ciò che porto?",
+    "x": 0.14,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 2,
+    "nome": "Come ti vede l'altra parte",
+    "nome_en": "How the other side sees you",
+    "significato": "L'immagine che l'altra parte tende a farsi di te e della tua proposta, come tendenza: mai la lettura del suo pensiero.",
+    "domanda": "Che immagine arriva di me e della mia proposta?",
+    "x": 0.38,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 3,
+    "nome": "La tua leva",
+    "nome_en": "Your leverage",
+    "significato": "Il punto di forza più solido che hai in questo confronto: ciò su cui puoi appoggiarti.",
+    "domanda": "Su che cosa posso fare leva?",
+    "x": 0.62,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 4,
+    "nome": "L'approccio",
+    "nome_en": "Your approach",
+    "significato": "Il modo di condurre il confronto che le carte suggeriscono: il tono, i tempi, che cosa mettere davanti.",
+    "domanda": "Come conviene condurre la trattativa?",
+    "x": 0.86,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   }
+  ],
+  "linee": [
+   [
+    1,
+    2,
+    3,
+    4
+   ]
+  ],
+  "coppie": [
+   [
+    1,
+    2,
+    "Il valore e la sua immagine: la distanza fra le due carte è il terreno su cui si gioca la trattativa."
+   ],
+   [
+    3,
+    4,
+    "La leva e l'approccio: come usare il punto di forza senza irrigidire il confronto."
+   ]
+  ],
+  "regole": [
+   "La carta 2 descrive come l'altra parte tende a vedere chi consulta, non ciò che pensa: è una tendenza da verificare nel confronto.",
+   "Se la carta 1 è forte e la 2 debole, il nodo non è il valore ma la sua visibilità: il consiglio lavora su come mostrarlo.",
+   "Un Arcano maggiore in posizione 3 indica una leva più grande di quanto chi consulta creda; il seme della carta 4 dà il registro dell'approccio: Dischi i fatti e i numeri, Coppe la relazione, Spade la chiarezza degli argomenti, Bastoni l'iniziativa.",
+   "Le carte non dicono quanto chiedere né se firmare: per le cifre e le clausole serve chi conosce il caso."
+  ],
+  "racconto": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "nota_intervista": "Chiarisci che cosa si tratta (uno stipendio, un contratto, un prezzo, un accordo), con chi e quando, senza chiedere cifre esatte né dati riservati."
+ },
+ {
+  "id": "lavoro-offerta",
+  "nome": "Offerta di lavoro",
+  "nome_en": "Job offer",
+  "categoria": "lavoro",
+  "stile": "tendenza",
+  "mazzo": "completo",
+  "carte_da_scegliere": 5,
+  "larghezza": 0.12,
+  "larghezza_stretto": 0.14,
+  "origine": "Stesa recente a cinque carte, diffusa nelle guide online di tarocchi per la carriera (per esempio quella di Unmei Tarot) per valutare un posto offerto o un colloquio: il ruolo, le persone, ciò che dà e ciò che costa.",
+  "descrizione": "Cinque carte ad arco per valutare un'offerta o un colloquio: com'è davvero il ruolo, le persone con cui lavoreresti, che cosa ti farebbe crescere, che cosa ti costerebbe e dove porta il primo anno.",
+  "posizioni": [
+   {
+    "n": 1,
+    "nome": "Il ruolo",
+    "nome_en": "The role",
+    "significato": "La natura reale del posto, al di là del titolo e dell'annuncio.",
+    "domanda": "Com'è davvero questo ruolo?",
+    "x": 0.1,
+    "y": 0.66,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 2,
+    "nome": "Le persone",
+    "nome_en": "The people",
+    "significato": "Il gruppo, i responsabili, il clima: le persone con cui lavoreresti ogni giorno.",
+    "domanda": "Che ambiente troverei?",
+    "x": 0.3,
+    "y": 0.44,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 3,
+    "nome": "Ciò che ti dà",
+    "nome_en": "What it gives you",
+    "significato": "La crescita che il ruolo offre: competenze, esperienza, possibilità.",
+    "domanda": "Che cosa mi farebbe crescere?",
+    "x": 0.5,
+    "y": 0.34,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 4,
+    "nome": "Ciò che ti costa",
+    "nome_en": "What it costs you",
+    "significato": "Il prezzo del ruolo: tempo, energie, equilibrio, ciò a cui rinunceresti.",
+    "domanda": "Che cosa mi costerebbe?",
+    "x": 0.7,
+    "y": 0.44,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 5,
+    "nome": "Il primo anno",
+    "nome_en": "The first year",
+    "significato": "La traiettoria più probabile nei primi dodici mesi, se accetti e le forze restano quelle attuali.",
+    "domanda": "Dove mi porterebbe il primo anno?",
+    "x": 0.9,
+    "y": 0.66,
+    "rotazione": 0,
+    "calcolata": false
+   }
+  ],
+  "linee": [
+   [
+    1,
+    2,
+    3,
+    4,
+    5
+   ]
+  ],
+  "coppie": [
+   [
+    3,
+    4,
+    "Ciò che il ruolo dà e ciò che costa: il bilancio vero dell'offerta."
+   ],
+   [
+    1,
+    2,
+    "Il ruolo e le persone: il lavoro com'è sulla carta e com'è vissuto ogni giorno."
+   ],
+   [
+    1,
+    5,
+    "Dal ruolo di oggi a dove porta: se la direzione è quella che chi consulta cerca."
+   ]
+  ],
+  "regole": [
+   "Le carte non dicono se il posto arriverà: lo decide chi assume, con candidati, budget e tempi che non si vedono. Descrivono il ruolo e ciò che porterebbe a chi consulta.",
+   "Le carte 3 e 4 si leggono insieme, come i due piatti di una bilancia.",
+   "Una figura di corte in posizione 2 indica di solito una persona concreta dell'ambiente (un responsabile, un collega), come energia e non come giudizio sulla persona.",
+   "La carta 5 è una tendenza, non una promessa: la decisione di accettare resta a chi consulta."
+  ],
+  "racconto": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "nota_intervista": "Chiarisci se si tratta di un colloquio ancora da fare o di un'offerta già arrivata, e che cosa chi consulta lascerebbe per accettarla."
+ },
+ {
+  "id": "lavoro-swot",
+  "nome": "Analisi SWOT",
+  "nome_en": "SWOT",
+  "categoria": "lavoro",
+  "stile": "moderna",
+  "mazzo": "completo",
+  "carte_da_scegliere": 6,
+  "larghezza": 0.1,
+  "larghezza_stretto": 0.12,
+  "origine": "L'analisi SWOT (punti di forza, punti deboli, opportunità, minacce) è uno strumento di pianificazione aziendale nato negli anni Sessanta, che i lettori di tarocchi hanno trasformato in stesa. Questa è la versione «SWOT Plus» di Priskha (2015), con il consiglio e l'esito possibile.",
+  "descrizione": "Una matrice di quattro carte — punti di forza, punti deboli, opportunità e minacce — e accanto il consiglio e l'esito possibile. Per un progetto, un'attività o una scelta professionale.",
+  "posizioni": [
+   {
+    "n": 1,
+    "nome": "Punti di forza",
+    "nome_en": "Strengths",
+    "significato": "Le qualità interne, di chi consulta o dell'attività, che sostengono il progetto.",
+    "domanda": "Su che cosa posso contare?",
+    "x": 0.14,
+    "y": 0.25,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 2,
+    "nome": "Punti deboli",
+    "nome_en": "Weaknesses",
+    "significato": "Le fragilità interne che possono frenare: ciò che manca o va rafforzato.",
+    "domanda": "Che cosa mi indebolisce?",
+    "x": 0.37,
+    "y": 0.25,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 3,
+    "nome": "Opportunità",
+    "nome_en": "Opportunities",
+    "significato": "Le circostanze esterne favorevoli: ciò che il contesto offre e si può cogliere.",
+    "domanda": "Che cosa offre il contesto?",
+    "x": 0.14,
+    "y": 0.75,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 4,
+    "nome": "Minacce",
+    "nome_en": "Threats",
+    "significato": "I fattori esterni che possono ostacolare: la concorrenza, i tempi, le condizioni.",
+    "domanda": "Che cosa può mettersi di traverso?",
+    "x": 0.37,
+    "y": 0.75,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 5,
+    "nome": "Consiglio",
+    "nome_en": "Advice",
+    "significato": "L'atteggiamento o l'azione che le carte suggeriscono alla luce della matrice.",
+    "domanda": "Che cosa conviene fare?",
+    "x": 0.64,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 6,
+    "nome": "Esito possibile",
+    "nome_en": "Possible outcome",
+    "significato": "La tendenza più probabile se si segue il consiglio e le forze restano quelle attuali.",
+    "domanda": "Dove porta?",
+    "x": 0.87,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   }
+  ],
+  "linee": [
+   [
+    1,
+    2
+   ],
+   [
+    1,
+    3
+   ],
+   [
+    2,
+    4
+   ],
+   [
+    3,
+    4
+   ],
+   [
+    5,
+    6
+   ]
+  ],
+  "coppie": [
+   [
+    1,
+    3,
+    "Forze e opportunità: dove ciò che si ha incontra ciò che il contesto offre. È il piano d'azione."
+   ],
+   [
+    2,
+    4,
+    "Debolezze e minacce: dove una fragilità interna incontra un rischio esterno. È ciò da proteggere."
+   ],
+   [
+    5,
+    6,
+    "Il consiglio e l'esito: dove porta la strada che le carte suggeriscono."
+   ]
+  ],
+  "regole": [
+   "Le carte 1 e 2 parlano di ciò che dipende da chi consulta, le carte 3 e 4 di ciò che viene dall'esterno: non confondere i due piani.",
+   "Il consiglio (5) nasce dalla matrice: usare le forze per cogliere le opportunità, riparare le debolezze esposte alle minacce.",
+   "L'esito (6) è la tendenza se si segue il consiglio, non una sentenza.",
+   "Le carte non sostituiscono i numeri: per un piano economico o finanziario serve un professionista."
+  ],
+  "racconto": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6
+  ],
+  "nota_intervista": "Chiarisci di quale progetto, attività o scelta professionale si tratta e in che fase si trova."
+ },
+ {
+  "id": "lavoro-restare-andare",
+  "nome": "Restare o andare",
+  "nome_en": "Stay or go",
+  "categoria": "lavoro",
+  "stile": "tendenza",
+  "mazzo": "completo",
+  "carte_da_scegliere": 7,
+  "larghezza": 0.1,
+  "larghezza_stretto": 0.12,
+  "origine": "Stesa recente a sette carte delle guide online per la carriera (lo «Stay or Go» di Unmei Tarot), per chi pensa di lasciare il lavoro: le due strade si leggono a specchio, con i timori e ciò che ciascuna offre. Qui l'ultima carta non è un verdetto ma la chiave della scelta.",
+  "descrizione": "Il motivo vero del dubbio, poi due strade a specchio, restare e andare, ciascuna col suo timore e con ciò che offre; infine ciò che non vedi e la chiave per decidere.",
+  "posizioni": [
+   {
+    "n": 1,
+    "nome": "Il motivo vero",
+    "nome_en": "The real reason",
+    "significato": "Ciò che davvero spinge a pensare di andarsene, sotto le ragioni dette.",
+    "domanda": "Perché ci sto pensando davvero?",
+    "x": 0.1,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 2,
+    "nome": "Il timore se resti",
+    "nome_en": "The fear if you stay",
+    "significato": "Ciò che chi consulta teme che accada restando.",
+    "domanda": "Che cosa temo, se resto?",
+    "x": 0.33,
+    "y": 0.17,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 3,
+    "nome": "Il timore se vai",
+    "nome_en": "The fear if you go",
+    "significato": "Ciò che chi consulta teme che accada andando via.",
+    "domanda": "Che cosa temo, se vado?",
+    "x": 0.33,
+    "y": 0.83,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 4,
+    "nome": "Ciò che offre restare",
+    "nome_en": "What staying offers",
+    "significato": "Ciò che il posto attuale può ancora dare nei prossimi sei-dodici mesi.",
+    "domanda": "Che cosa mi dà restare?",
+    "x": 0.56,
+    "y": 0.17,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 5,
+    "nome": "Ciò che offre andare",
+    "nome_en": "What leaving offers",
+    "significato": "Ciò che una strada nuova può aprire nei prossimi sei-dodici mesi.",
+    "domanda": "Che cosa mi dà andare?",
+    "x": 0.56,
+    "y": 0.83,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 6,
+    "nome": "Ciò che non vedi",
+    "nome_en": "What you don't see",
+    "significato": "Il fattore che sfugge e che cambia il peso della scelta.",
+    "domanda": "Che cosa non sto vedendo?",
+    "x": 0.45,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 7,
+    "nome": "La chiave della scelta",
+    "nome_en": "The key to the choice",
+    "significato": "Ciò che conta davvero per decidere: non la decisione, che resta a chi consulta, ma il criterio con cui prenderla.",
+    "domanda": "Su che cosa devo basare la scelta?",
+    "x": 0.82,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   }
+  ],
+  "linee": [
+   [
+    1,
+    6,
+    7
+   ],
+   [
+    2,
+    4
+   ],
+   [
+    3,
+    5
+   ]
+  ],
+  "coppie": [
+   [
+    2,
+    3,
+    "I due timori a confronto: quale paura pesa davvero nella scelta."
+   ],
+   [
+    4,
+    5,
+    "Ciò che offrono le due strade, a confronto nello stesso arco di tempo."
+   ],
+   [
+    1,
+    7,
+    "Dal motivo vero alla chiave della scelta: se la decisione risponde al bisogno che l'ha fatta nascere."
+   ]
+  ],
+  "regole": [
+   "La riga in alto è la strada del restare, quella in basso la strada dell'andare: si leggono a specchio, timore con timore e offerta con offerta.",
+   "Le carte descrivono le due strade e non scelgono fra esse: la carta 7 indica il criterio, la decisione resta a chi consulta.",
+   "Una carta di Dischi nelle posizioni 4 o 5 parla di sicurezza materiale; per le questioni economiche e contrattuali serve chi conosce il caso."
+  ],
+  "racconto": [
+   1,
+   2,
+   4,
+   3,
+   5,
+   6,
+   7
+  ],
+  "nota_intervista": "Chiarisci qual è il lavoro attuale e qual è l'alternativa concreta (un'offerta, un progetto, una pausa), senza suggerire quale scegliere."
+ },
+ {
+  "id": "lavoro-impresa",
+  "nome": "Nuova impresa",
+  "nome_en": "New venture",
+  "categoria": "lavoro",
+  "stile": "moderna",
+  "mazzo": "completo",
+  "carte_da_scegliere": 9,
+  "larghezza": 0.085,
+  "forma": "quadrata",
+  "origine": "Stesa moderna a nove carte per chi avvia un'attività o un progetto, adattata da «Aligning With Your Higher Purpose» di Labyrinthos e dalla «Business Idea Check» di Elvi Tarot: lo scopo al centro e, intorno, la motivazione, la visione, l'offerta, il punto cieco, i clienti, i mezzi e la preparazione.",
+  "descrizione": "Una ruota di otto carte intorno al tuo ruolo nell'impresa: perché la vuoi, che cosa può diventare, che cosa offri, che cosa sottovaluti, a chi ti rivolgi, come servirli, che cosa serve per partire e a che punto è la tua preparazione.",
+  "posizioni": [
+   {
+    "n": 1,
+    "nome": "Il tuo ruolo",
+    "nome_en": "Your role",
+    "significato": "Il posto di chi consulta nell'impresa: lo scopo e l'energia che la reggono.",
+    "domanda": "Che ruolo ho in questa impresa?",
+    "x": 0.5,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 2,
+    "nome": "La motivazione",
+    "nome_en": "The motivation",
+    "significato": "Ciò che spinge davvero ad avviarla, sotto le ragioni dette.",
+    "domanda": "Perché voglio avviarla?",
+    "x": 0.5,
+    "y": 0.13,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 3,
+    "nome": "La visione",
+    "nome_en": "The vision",
+    "significato": "Ciò che l'impresa può diventare, se cresce secondo la sua natura.",
+    "domanda": "Che cosa può diventare?",
+    "x": 0.762,
+    "y": 0.238,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 4,
+    "nome": "L'offerta",
+    "nome_en": "The offer",
+    "significato": "Ciò che l'impresa dà ai clienti: il prodotto, il servizio, il valore.",
+    "domanda": "Che cosa offro?",
+    "x": 0.87,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 5,
+    "nome": "Il punto cieco",
+    "nome_en": "The blind spot",
+    "significato": "Ciò che chi consulta sottovaluta o non vede ancora.",
+    "domanda": "Che cosa sto sottovalutando?",
+    "x": 0.762,
+    "y": 0.762,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 6,
+    "nome": "I clienti",
+    "nome_en": "The customers",
+    "significato": "Le persone a cui l'impresa si rivolge e il loro bisogno reale.",
+    "domanda": "A chi mi rivolgo davvero?",
+    "x": 0.5,
+    "y": 0.87,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 7,
+    "nome": "Come servirli",
+    "nome_en": "How to serve them",
+    "significato": "Il modo di raggiungere quei clienti e di rispondere al loro bisogno.",
+    "domanda": "Come posso servirli?",
+    "x": 0.238,
+    "y": 0.762,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 8,
+    "nome": "Ciò che serve per partire",
+    "nome_en": "What you need to start",
+    "significato": "I mezzi da mettere insieme: competenze, persone, risorse, tempo.",
+    "domanda": "Che cosa mi serve per partire?",
+    "x": 0.13,
+    "y": 0.5,
+    "rotazione": 0,
+    "calcolata": false
+   },
+   {
+    "n": 9,
+    "nome": "La preparazione",
+    "nome_en": "Readiness",
+    "significato": "Quanto chi consulta è pronto a cominciare, e che cosa manca ancora.",
+    "domanda": "A che punto è la mia preparazione?",
+    "x": 0.238,
+    "y": 0.238,
+    "rotazione": 0,
+    "calcolata": false
+   }
+  ],
+  "linee": [
+   [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    2
+   ],
+   [
+    2,
+    1,
+    6
+   ],
+   [
+    8,
+    1,
+    4
+   ]
+  ],
+  "coppie": [
+   [
+    2,
+    3,
+    "Motivazione e visione: se ciò che spinge porta davvero dove si vuole arrivare."
+   ],
+   [
+    4,
+    6,
+    "L'offerta e i clienti: se ciò che si offre risponde al bisogno di chi si vuole servire."
+   ],
+   [
+    5,
+    9,
+    "Il punto cieco e la preparazione: ciò che manca ancora prima di partire."
+   ],
+   [
+    7,
+    8,
+    "Come servire i clienti e che cosa serve per farlo: il piano concreto."
+   ]
+  ],
+  "regole": [
+   "La carta 1, al centro, è il perno: ogni carta della ruota si legge in rapporto al ruolo di chi consulta.",
+   "Il punto cieco (5) non è una condanna: è ciò che conviene guardare prima di investire tempo e denaro.",
+   "Le carte leggono la vocazione e il momento; il piano economico, i permessi e i contratti chiedono un professionista."
+  ],
+  "racconto": [
+   2,
+   1,
+   3,
+   4,
+   6,
+   7,
+   8,
+   5,
+   9
+  ],
+  "nota_intervista": "Chiarisci di che attività o progetto si tratta, in che fase è (idea, preparazione, avvio) e con quali mezzi chi consulta conta di partire."
  }
 ]

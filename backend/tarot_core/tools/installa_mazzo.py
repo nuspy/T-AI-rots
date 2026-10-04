@@ -13,6 +13,10 @@ carte più il dorso, con i nomi della convenzione (`maj-00.webp`, `bastoni-01.we
 lì la si accende. `--attivo` la accende subito.
 
 Idempotente: rilanciato, non duplica niente. Non tocca mai il mazzo predefinito (il Thoth).
+
+**Senza rilascio**: dalla console (Mazzi → Immagini) si carica lo stesso set come ZIP o come cartella, con le stesse
+regole sui nomi; le immagini finiscono nel database e il sito le mostra subito (`tarot/immagini_mazzo.py`). I file
+installati da qui, se ci sono, hanno la precedenza.
 """
 from __future__ import annotations
 

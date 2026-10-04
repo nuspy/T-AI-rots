@@ -9,7 +9,8 @@ from typing import Any, Dict
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .config_models import ImpostazioniChat, ImpostazioniCrediti, ImpostazioniSessione
+from ..settings import get_settings
+from .config_models import ImpostazioniChat, ImpostazioniCrediti, ImpostazioniIntervista
 from .repositories import AuditRepository
 
 ID_RIGA = 1
@@ -67,7 +68,10 @@ async def correnti_chat(session: AsyncSession) -> ImpostazioniChat:
 
 
 def pubblico_chat(riga: ImpostazioniChat) -> Dict[str, int]:
-    return {"proattiva_minuti_inattivita": riga.proattiva_minuti_inattivita}
+    return {
+        "proattiva_minuti_inattivita": riga.proattiva_minuti_inattivita,
+        "proattiva_max_per_visita": riga.proattiva_max_per_visita,
+    }
 
 
 async def aggiorna_chat(
@@ -78,6 +82,8 @@ async def aggiorna_chat(
 
     if "proattiva_minuti_inattivita" in campi and campi["proattiva_minuti_inattivita"] is not None:
         riga.proattiva_minuti_inattivita = int(campi["proattiva_minuti_inattivita"])
+    if "proattiva_max_per_visita" in campi and campi["proattiva_max_per_visita"] is not None:
+        riga.proattiva_max_per_visita = int(campi["proattiva_max_per_visita"])
     riga.updated_by = attore_id
 
     dopo = pubblico_chat(riga)
@@ -89,35 +95,59 @@ async def aggiorna_chat(
     return riga
 
 
-# ---- sessione (v6, Fase G) --------------------------------------------------------------------
+# La sessione (login persistente) non ha più una riga qui: la console legge e scrive le durate direttamente su
+# Keycloak (`api/routers/admin_impostazioni.py`), che ne è l'unica fonte. Vedi `config_models.ImpostazioniSessione`.
 
 
-async def correnti_sessione(session: AsyncSession) -> ImpostazioniSessione:
-    riga = await session.get(ImpostazioniSessione, ID_RIGA)
+# ---- intervista (v8.5) -----------------------------------------------------------------------------
+
+
+async def correnti_intervista(session: AsyncSession) -> ImpostazioniIntervista:
+    """La riga dell'intervista, creata coi valori di `settings` se manca (così il primo avvio non cambia nulla)."""
+    riga = await session.get(ImpostazioniIntervista, ID_RIGA)
     if riga is None:
-        riga = ImpostazioniSessione(id=ID_RIGA)
+        s = get_settings()
+        minimo = max(1, s.intervista_min_domande)
+        riga = ImpostazioniIntervista(id=ID_RIGA, min_domande=minimo, max_domande=max(minimo, s.intervista_max_domande))
         session.add(riga)
         await session.flush()
     return riga
 
 
-def pubblico_sessione(riga: ImpostazioniSessione) -> Dict[str, int]:
-    return {"sso_session_max_lifespan_secondi": riga.sso_session_max_lifespan_secondi}
+#: I tre modi del validatore delle domande e della guardia del responso.
+MODI_CONTROLLO = ("dubbi", "spento", "acceso")
 
 
-async def specchia_sessione(
-    session: AsyncSession, secondi: int, *, attore_id: int, ip: str | None = None,
-) -> ImpostazioniSessione:
-    """Scrive la copia locale **dopo** che il cambio vero su Keycloak è riuscito: mai prima, altrimenti
-    un errore di rete verso Keycloak lascerebbe questa tabella a mentire su cosa vale davvero."""
-    riga = await correnti_sessione(session)
-    prima = pubblico_sessione(riga)
-    riga.sso_session_max_lifespan_secondi = secondi
+def pubblico_intervista(riga: ImpostazioniIntervista) -> Dict[str, Any]:
+    return {
+        "min_domande": riga.min_domande, "max_domande": riga.max_domande,
+        # Una riga appena creata in memoria non ha ancora i default del database: si dicono qui.
+        "validatore_domande": riga.validatore_domande or "dubbi",
+        "guardia_responso": riga.guardia_responso or "dubbi",
+        "memoria_stato_nei_prompt": bool(riga.memoria_stato_nei_prompt),
+    }
+
+
+async def aggiorna_intervista(
+    session: AsyncSession, campi: Dict[str, Any], *, attore_id: int, ip: str | None = None,
+) -> ImpostazioniIntervista:
+    """Aggiorna minimo e massimo, i modi dei controlli e la memoria nei prompt; il chiamante ha già controllato che il
+    minimo non superi il massimo e che i modi siano fra `MODI_CONTROLLO`."""
+    riga = await correnti_intervista(session)
+    prima = pubblico_intervista(riga)
+    for campo in ("min_domande", "max_domande"):
+        if campo in campi and campi[campo] is not None:
+            setattr(riga, campo, int(campi[campo]))
+    for campo in ("validatore_domande", "guardia_responso"):
+        if campi.get(campo) in MODI_CONTROLLO:
+            setattr(riga, campo, campi[campo])
+    if campi.get("memoria_stato_nei_prompt") is not None:
+        riga.memoria_stato_nei_prompt = bool(campi["memoria_stato_nei_prompt"])
     riga.updated_by = attore_id
-    dopo = pubblico_sessione(riga)
+    dopo = pubblico_intervista(riga)
     if prima != dopo:
         await AuditRepository(session).record(
-            action="impostazioni_sessione.modifica", actor_id=attore_id, target_type="impostazioni_sessione",
+            action="impostazioni_intervista.modifica", actor_id=attore_id, target_type="impostazioni_intervista",
             target_id=str(ID_RIGA), before=prima, after=dopo, ip=ip,
         )
     return riga

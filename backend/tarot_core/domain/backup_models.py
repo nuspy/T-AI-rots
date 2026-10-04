@@ -1,9 +1,10 @@
 """Il backup del database sul NAS (v8.3): dove va, e il registro di ogni esecuzione.
 
 La **destinazione** (host, porta, utente, cartella, quante copie tenere, l'impronta della chiave dell'host) si sceglie
-dalla console e sta qui; la **credenziale** (la chiave SSH privata, o una password) no: la monta un Secret
-Kubernetes che imposta l'operatore, e il database non la vede mai. Così un dump del database — che finisce proprio
-sul NAS — non porta con sé la chiave per entrare nel NAS.
+dalla console e sta qui; dalla v9 (Fase 2c) anche la **credenziale** (la chiave SSH privata, o una password), ma
+**cifrata** con la chiave master che sta solo sul server (`llm/cifratura.py`): un dump del database — che finisce
+proprio sul NAS — porta con sé solo testo cifrato, non la chiave per entrare nel NAS. Il Secret montato
+(`/etc/tarots-backup`) resta il ripiego, e al primo avvio la sua chiave si copia qui da sola.
 
 Il **registro** tiene ogni esecuzione: il backup notturno, quello lanciato a mano, la copia di sicurezza fatta prima
 di un ripristino, il ripristino stesso, le prove di connessione. Dopo un ripristino il registro torna com'era al
@@ -15,7 +16,9 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Text, Uuid
+from sqlalchemy import (
+    BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, LargeBinary, String, Text, Uuid,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -46,6 +49,13 @@ class ImpostazioniBackup(Base, TimestampMixin):
     #: L'impronta SHA256 della chiave dell'host, accettata dall'operatore dopo la prima prova («Fidati di questa
     #: chiave»). Senza, nessun backup parte: un NAS impersonato riceverebbe il database intero.
     impronta_host: Mapped[Optional[str]] = mapped_column(String(120))
+    #: La credenziale per entrare nel NAS, dalla console (v9, Fase 2c): la chiave SSH privata (testo OpenSSH/PEM) o la
+    #: password, **cifrate** con la chiave master che resta sul server. Nulle: il Secret montato, come prima.
+    chiave_ssh_cifrata: Mapped[Optional[bytes]] = mapped_column(LargeBinary)
+    password_cifrata: Mapped[Optional[bytes]] = mapped_column(LargeBinary)
+    #: Della chiave caricata si mostrano solo tipo e impronta (`ssh-ed25519`, `SHA256:…`), mai la chiave.
+    chiave_ssh_tipo: Mapped[Optional[str]] = mapped_column(String(40))
+    chiave_ssh_impronta: Mapped[Optional[str]] = mapped_column(String(120))
     updated_by: Mapped[Optional[int]] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="SET NULL"))
 
 

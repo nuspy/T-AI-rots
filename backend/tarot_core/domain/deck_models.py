@@ -5,11 +5,13 @@ schema di 78 carte (`maj-NN`, `<seme>-<numero>`, le corti), stessi significati (
 globale e condivisa) — cambia solo l'artwork. Estendere `Conoscenza` a significati diversi per mazzo è
 esplicitamente fuori scope per questa fase (vedi il piano).
 
-**Grafica come file statici**, non blob nel database (a differenza delle immagini del blog): un mazzo
-nuovo vive sotto `frontend/public/cards/<slug>/` e richiede un build+deploy del frontend per essere
-mostrato — compromesso scelto esplicitamente dall'utente (più semplice da servire, contro la comodità
-di caricarlo dalla console). Questo modello descrive solo i **metadati commerciali** del mazzo
-(prezzo, finestra di attivazione, chi lo possiede): non l'artwork in sé.
+**La grafica, in due modi.** I mazzi installati come file (il Thoth in `frontend/public/cards/`, gli altri in
+`frontend/public/cards/<slug>/`, con `tools/installa_mazzo.py`) richiedono un build+deploy del frontend. Dal
+2026-10 un mazzo si carica anche dalla console (uno ZIP o una cartella con le 78 carte e il dorso): le
+immagini, già in WebP alla misura web, stanno in `DeckCardImage` e le serve l'API — il sito le mostra
+subito, senza ricostruire niente (il frontend chiede `/cards/<slug>/<id>.webp`: se quel file non c'è, la
+richiesta passa all'API). `Deck` resta la scheda **commerciale** (prezzo, finestra di attivazione, chi lo
+possiede).
 
 **Il mazzo predefinito** (il Thoth) è posseduto da chiunque senza una riga in `DeckUnlock`: non ha
 bisogno di essere comprato, e non deve poter essere disattivato per errore (vedi il vincolo sotto).
@@ -20,8 +22,8 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 from sqlalchemy import (
-    BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, false, text,
-    true,
+    BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Integer, LargeBinary, String, Text, UniqueConstraint,
+    false, text, true,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -70,6 +72,9 @@ class Deck(Base, TimestampMixin):
 
     #: Ordine di presentazione nel negozio.
     rank: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
+    #: L'impronta dell'ultima serie di immagini caricata dalla console e pubblicata (`DeckCardImage`): `None` = il
+    #: mazzo usa i file del sito (o non ha ancora immagini).
+    immagini_versione: Mapped[Optional[str]] = mapped_column(String(16))
 
     __table_args__ = (
         CheckConstraint(
@@ -142,4 +147,29 @@ class OffertaMazzo(Base, TimestampMixin):
             "valido_dal is null or valido_fino is null or valido_dal < valido_fino",
             name="ck_offerte_mazzo_finestra",
         ),
+    )
+
+
+class DeckCardImage(Base, TimestampMixin):
+    """Un'immagine di un mazzo caricato dalla console: una carta (`maj-00`, `bastoni-06`, …) o il dorso (`dorso`),
+    già convertita in WebP alla misura web (`tarot/immagini_mazzo.py`). La serve `GET /decks/{slug}/cards/{id}.webp`
+    con l'`etag` (l'impronta dei byte) e una cache lunga.
+
+    **Bozza e pubblicate.** Una cartella si carica un file per richiesta: le righe nascono `bozza` e il sito non le
+    vede finché la serie non è completa (78 + dorso) e la si pubblica — allora sostituiscono in blocco quelle di
+    prima. Uno ZIP arriva tutto insieme e si pubblica nella stessa richiesta, senza passare dalla bozza."""
+
+    __tablename__ = "deck_card_images"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    deck_id: Mapped[int] = mapped_column(ForeignKey("decks.id", ondelete="CASCADE"), nullable=False)
+    card_id: Mapped[str] = mapped_column(String(20), nullable=False)
+    bozza: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false(), nullable=False)
+    webp: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    larghezza: Mapped[int] = mapped_column(Integer, nullable=False)
+    altezza: Mapped[int] = mapped_column(Integer, nullable=False)
+    etag: Mapped[str] = mapped_column(String(64), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("deck_id", "card_id", "bozza", name="uq_deck_card_images_carta"),
     )

@@ -44,6 +44,10 @@ class Usage:
     cached_tokens: int = 0
     total_tokens: int = 0
     model: str = ""
+    #: La parte di `completion_tokens` spesa a ragionare (`completion_tokens_details.reasoning_tokens`). È già
+    #: compresa in `completion_tokens` — il fornitore la fattura come uscita — e non va sommata di nuovo. Zero dove il
+    #: fornitore non la riporta: allora resta solo la stima dai caratteri del ragionamento (`llm/consumi.py`).
+    reasoning_tokens: int = 0
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -51,6 +55,7 @@ class Usage:
             "completion_tokens": self.completion_tokens,
             "cached_tokens": self.cached_tokens,
             "total_tokens": self.total_tokens,
+            "reasoning_tokens": self.reasoning_tokens,
             "model": self.model,
         }
 
@@ -134,6 +139,9 @@ class GenerationRequest:
     cache_breakpoint_after: Optional[int] = None
     cache: Optional[CacheHint] = None
     extra: Dict[str, Any] = field(default_factory=dict)
+    #: Chi ha chiesto e perché — compito, lettura — per il registro dei consumi (`llm/consumi.py`). Non va mai al
+    #: fornitore: lo scrive `ProviderMisurato` e lo legge solo chi registra la chiamata.
+    etichetta: Dict[str, Any] = field(default_factory=dict)
 
 
 class LLMProvider(Protocol):

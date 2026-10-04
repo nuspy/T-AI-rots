@@ -34,17 +34,19 @@ class Settings(BaseSettings):
     #: e' spesso gia' occupata da un PostgreSQL di sistema. I container
     #: ricevono `TAROT_DATABASE_URL` con `postgres:5432` e non usano questo.
     database_url: str = "postgresql+psycopg://tarot:tarot@localhost:5433/tarot"
-    redis_url: str = "redis://localhost:6379/0"
+    # Niente Redis: nessuna parte del codice lo usava (v9, Fase 3). Un `TAROT_REDIS_URL` rimasto
+    # nell'ambiente si ignora (`extra="ignore"`).
 
     # --- identita' degli utenti -------------------------------------------
     keycloak_url: str = "http://localhost:8080"
     keycloak_realm: str = "tarots"
     keycloak_client_id: str = "tarot-api"
     #: Il segreto del client `tarot-api` (confidenziale, `serviceAccountsEnabled`): serve solo al
-    #: grant client-credentials di `auth/keycloak_admin.py` (v6, Fase G), per cambiare
-    #: `ssoSessionMaxLifespan` dalla console senza toccare Keycloak a mano. Vuoto: l'admin API di
-    #: Keycloak resta silenziosamente non disponibile, non un errore all'avvio — un impianto senza
-    #: bisogno del login persistente configurabile non deve smettere di partire per questo.
+    #: grant client-credentials di `auth/keycloak_admin.py`, con cui la console cambia su Keycloak il
+    #: login persistente (sessione offline) e l'accesso con i social. Nel cluster viene dal Secret
+    #: `tarots-secrets`, chiave `api-client-secret` (la stessa che Keycloak legge come
+    #: `KC_API_CLIENT_SECRET`). Vuoto: quelle due sezioni della console rispondono con l'errore, non
+    #: un errore all'avvio — l'API non deve smettere di partire per questo.
     keycloak_client_secret: str = ""
     #: L'indirizzo pubblico di Keycloak, quello scritto nel campo `iss` dei
     #: token. Vuoto vale `keycloak_url`, come in sviluppo; in un cluster
@@ -56,8 +58,9 @@ class Settings(BaseSettings):
     #: fosse elencato qui ogni richiesta dell'interfaccia verrebbe respinta —
     #: con un 401 che sembrerebbe un problema di login. Resta un elenco chiuso
     #: perche' accettare qualunque destinatario significa accettare i token di
-    #: qualunque applicazione che usi lo stesso realm.
-    keycloak_accepted_audiences: tuple[str, ...] = ("tarot-frontend", "tarot-admin")
+    #: qualunque applicazione che usi lo stesso realm. `tarot-mobile` (v9, Fase 6):
+    #: il client pubblico delle app Android e iOS.
+    keycloak_accepted_audiences: tuple[str, ...] = ("tarot-frontend", "tarot-admin", "tarot-mobile")
     #: In sviluppo l'autenticazione puo' essere disattivata per provare gli
     #: endpoint senza avviare Keycloak. Va negata fuori dallo sviluppo, e il
     #: controllo e' in `validate_production()`: un flag simile lasciato acceso
@@ -65,15 +68,26 @@ class Settings(BaseSettings):
     auth_disabled: bool = False
 
     # --- pagamenti ---------------------------------------------------------
-    #: Chi incassa: `mock` (il simulatore, per lo sviluppo) o `disattivato`
-    #: (nessuno: i piani a pagamento rispondono 503). Il fornitore vero non e'
-    #: ancora scelto, e il flusso — sessione, pagina ospitata, evento firmato —
+    #: Chi incassa: `stripe` (v9, `billing/stripe.py`), `mock` (il simulatore,
+    #: per lo sviluppo) o `disattivato` (nessuno: i piani a pagamento
+    #: rispondono 503). Il flusso — sessione, pagina ospitata, evento firmato —
     #: e' lo stesso per tutti. In produzione `mock` impedisce l'avvio.
+    #: Dalla v9 (Fase 2c) si sceglie dalla console (Pagamenti → Stripe, `configurazioni/correnti.py`):
+    #: questo è il ripiego finché la console non ha scelto.
     billing_provider: str = "mock"
-    #: Il segreto con cui il fornitore firma i suoi eventi.
+    #: Il segreto con cui il simulatore firma i suoi eventi (Stripe ha il suo, qui sotto).
     billing_webhook_secret: str = "segreto-di-sviluppo-da-cambiare"
     #: Fa fallire i rinnovi del simulatore, per provare la sospensione.
     billing_mock_renewal_fails: bool = False
+    #: Stripe (v9): la chiave segreta dell'API (`sk_test_…`/`sk_live_…`, o una chiave limitata `rk_…`) e il segreto
+    #: dell'endpoint del webhook (`whsec_…`). Dalla v9 (Fase 2c) si impostano dalla console (Pagamenti → Stripe,
+    #: cifrate nel database, il webhook registrato da lì): questi, dal Secret `tarots-secrets` (`stripe-secret-key`,
+    #: `stripe-webhook-secret`), sono il ripiego e al primo avvio si copiano nel database.
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+    #: Gli schemi dei deep link a cui il checkout può tornare oltre ai percorsi del sito: l'app (`chat.tarots.app://…`).
+    #: Un elenco chiuso: un ritorno arbitrario sarebbe un open redirect.
+    ritorno_schemi_app: List[str] = Field(default_factory=lambda: ["chat.tarots.app"])
     #: Gli indirizzi pubblici: dove sta l'API (per la pagina di pagamento
     #: simulata) e dove torna l'utente dopo aver pagato.
     api_public_url: str = "http://localhost:8100"
@@ -99,6 +113,10 @@ class Settings(BaseSettings):
     #: JSON: campi aggiunti a ogni richiesta al modello predefinito (vedi `ModelloConfigurato.parametri`), per
     #: esempio `{"reasoning_effort": "low"}` per regolare il ragionamento. Vuoto: nessuno.
     llm_parametri: Dict[str, Any] = Field(default_factory=dict)
+    #: JSON: il margine di token per il ragionamento che si aggiunge al tetto visibile di ogni richiesta quando il
+    #: livello non è `none`, per livello (es. `{"xhigh": 32768}`). I livelli non indicati tengono i valori di
+    #: `llm/ragionamento.MARGINE_LIVELLO`.
+    margini_ragionamento: Dict[str, int] = Field(default_factory=dict)
     #: Oltre questo tempo senza un singolo token la richiesta viene interrotta.
     #: E' un timeout fra i token, non sulla durata totale: una risposta lunga e'
     #: legittima, un silenzio di due minuti no.
@@ -143,12 +161,27 @@ class Settings(BaseSettings):
     #: I crediti con cui nasce un utente di prova creato dal seed.
     crediti_utente_di_prova: int = 1000
     #: Il sale delle impronte anonime di chi visita un link condiviso (indirizzo e
-    #: identificativo del browser). In produzione va cambiato: con quello di
-    #: sviluppo le impronte sarebbero calcolabili da chiunque conosca il codice.
-    condivisione_sale: str = "sale-di-sviluppo"
+    #: identificativo del browser). Facoltativo dalla v9 (Fase 2c): senza, al primo avvio se ne
+    #: genera uno casuale che si conserva cifrato nel database (`configurazioni/segreti.py`); se
+    #: c'è, vince questo e si copia nel database.
+    condivisione_sale: str = ""
+    #: Il segreto dell'HMAC con cui si conservano gli indirizzi IP (GDPR, Fase 1): in `user_consents`, `audit_log` e
+    #: `consensi_storico` l'IP non si scrive mai in chiaro, ma troncato (IPv4 /24, IPv6 /48) più questa impronta
+    #: dell'indirizzo intero (`tarot/ip_protetto.py`). Facoltativo dalla v9 (Fase 2c): senza, al primo avvio se ne
+    #: genera uno casuale conservato cifrato nel database; se c'è, vince questo e si copia nel database.
+    ip_hash_secret: str = ""
     #: Con `true` le letture usano il modello finto di `tarot/finto.py`:
     #: serve a provare il flusso intero senza un modello vero.
     llm_finto: bool = False
+    #: Il registro dei consumi delle chiamate ai modelli (`llm/consumi.py`, tabella `llm_consumi`): token in ingresso,
+    #: in cache, in uscita e di ragionamento, per compito. Acceso anche in produzione: scrive in background e un errore
+    #: di scrittura non tocca la lettura. `false` lo spegne (i test lo spengono, salvo quelli che lo provano).
+    consumi_llm: bool = True
+    #: La memoria di prima, con gli embedding (`tarot/memoria.py`, `memoria_retrieval.py`): l'estrazione dopo ogni
+    #: lettura (compito `memoria_estrazione`, che ereditava il ragionamento), la vettorizzazione e il recupero per
+    #: somiglianza all'apertura. Spenta dalla riduzione dei costi: la sostituisce lo stato sintetico
+    #: (`tarot/stato_memoria.py`), e in produzione l'embedding non ha mai funzionato. `true` la riaccende com'era.
+    memoria_embedding: bool = False
 
     #: Notifica notturna ai motori di ricerca (v8, libreria `seo-notify`). Ogni canale è
     #: facoltativo: senza configurazione si salta, non fa fallire gli altri.
@@ -177,6 +210,8 @@ class Settings(BaseSettings):
 
     #: La posta in uscita del backend (v8: il rapporto settimanale degli analytics). Stalwart, lo
     #: stesso server e mittente di Keycloak. Senza host il rapporto non parte (e lo dice).
+    #: Dalla v9 (Fase 2c) si imposta dalla console (Impostazioni → Posta in uscita): questi valori
+    #: sono il ripiego, e al primo avvio si copiano da soli nel database (password cifrata).
     smtp_host: str = ""
     smtp_porta: int = 465
     #: SMTPS implicito (465). Falso: STARTTLS (587).
@@ -185,9 +220,9 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_mittente: str = ""
 
-    #: Il backup notturno sul NAS (v8.3). La destinazione si sceglie dalla console; la credenziale per entrarci
-    #: no: la monta un Secret (la chiave SSH privata in questo file, oppure una password). Mai nel database, che
-    #: finisce proprio sul NAS.
+    #: Il backup notturno sul NAS (v8.3). La destinazione si sceglie dalla console; dalla v9 (Fase 2c) anche la
+    #: credenziale (chiave SSH o password, cifrata nel database). Il Secret montato (la chiave SSH privata in
+    #: questo file, oppure una password) resta il ripiego e al primo avvio si copia nel database.
     backup_chiave_ssh: str = "/etc/tarots-backup/ssh-key"
     backup_password: str = ""
     #: I programmi del client PostgreSQL, alla versione del server (l'immagine dell'API porta il 18).
@@ -243,8 +278,16 @@ class Settings(BaseSettings):
                 )
             if "*" in self.cors_origins:
                 problems.append("CORS aperto a qualunque origine in produzione")
+            # Il sale delle condivisioni e il segreto degli IP non si chiedono più (v9, Fase 2c): senza ambiente se ne
+            # genera uno casuale al primo avvio, conservato cifrato nel database. Solo i valori di sviluppo scritti
+            # a mano nell'ambiente sono un difetto.
             if self.condivisione_sale == "sale-di-sviluppo":
-                problems.append("TAROT_CONDIVISIONE_SALE e' quello di sviluppo in produzione")
+                problems.append("TAROT_CONDIVISIONE_SALE e' quello di sviluppo in produzione: toglilo, se ne genera uno")
+            if self.ip_hash_secret == "segreto-ip-di-sviluppo":
+                problems.append(
+                    "TAROT_IP_HASH_SECRET e' quello di sviluppo in produzione: l'impronta degli indirizzi IP "
+                    "salvati si potrebbe ricalcolare (toglilo: se ne genera uno)"
+                )
             if self.llm_provider_key == "pF6wjvqBFeElH8yC0tfWcG6KFZnKDr5s6n4L5EjmMTE=":
                 problems.append(
                     "TAROT_LLM_PROVIDER_KEY e' quella di sviluppo in produzione: chi legge il database "
@@ -252,7 +295,12 @@ class Settings(BaseSettings):
                 )
             if "localhost" in self.database_url:
                 problems.append("il database punta a localhost in produzione")
-            if self.billing_provider == "mock":
+            # Dalla v9 (Fase 2c) il fornitore e le chiavi di Stripe si scelgono dalla console: l'ambiente è solo il
+            # ripiego, e in produzione il simulatore non vale mai (`configurazioni/correnti.py` lo tratta come
+            # `disattivato`). Blocca l'avvio solo un `mock` chiesto esplicitamente dall'ambiente; le chiavi di Stripe
+            # mancanti non bloccano più (possono stare in console: la pagina Pagamenti dice cosa manca).
+            esplicito = "billing_provider" in self.model_fields_set
+            if self.billing_provider == "mock" and esplicito:
                 problems.append(
                     "fornitore di pagamento simulato in produzione: chiunque "
                     "potrebbe attivare qualunque piano senza pagare. Finché un "
@@ -260,8 +308,10 @@ class Settings(BaseSettings):
                 )
             # Senza fornitore non si accetta nessun evento, e il segreto non
             # firma niente: pretenderlo costringerebbe a inventarne uno.
+            # Stripe firma con il suo segreto (`stripe_webhook_secret`), non con questo.
             if (
-                self.billing_provider != "disattivato"
+                esplicito
+                and self.billing_provider not in ("disattivato", "stripe")
                 and self.billing_webhook_secret == "segreto-di-sviluppo-da-cambiare"
             ):
                 problems.append(

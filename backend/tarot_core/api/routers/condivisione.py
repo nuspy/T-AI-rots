@@ -41,7 +41,6 @@ from ...domain.base import utcnow
 from ...domain.models import Reading, User
 from ...domain.repositories import AuditRepository, ReadingRepository
 from ...domain.share_models import ShareEvent, ShareImage, ShareSignup, ShareVisit
-from ...settings import get_settings
 from ...tarot import condivisione as regole
 
 logger = logging.getLogger(__name__)
@@ -62,7 +61,9 @@ def _indirizzo(request: Request) -> str:
 
 
 def _impronte(request: Request, visitor: str) -> tuple:
-    sale = get_settings().condivisione_sale
+    from ...configurazioni.segreti import sale_condivisione
+
+    sale = sale_condivisione()  # v9 Fase 2c: generato al primo avvio se l'ambiente non lo dà
     return regole.anonimo(visitor, sale), regole.anonimo(_indirizzo(request), sale)
 
 

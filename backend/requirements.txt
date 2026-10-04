@@ -33,3 +33,9 @@ opentelemetry-instrumentation-httpx>=0.49b0
 opentelemetry-exporter-otlp-proto-http>=1.28
 # Il backup notturno sul NAS (v8.3): SFTP con verifica della chiave dell'host.
 paramiko>=3.5
+# Gli acquisti nell'app iPhone (v9, Fase 4): la libreria ufficiale di Apple verifica le transazioni e le notifiche
+# firmate di StoreKit 2 fino ad Apple Root CA G3 (`billing/store/app_store.py`). Porta PyJWT e pyOpenSSL.
+app-store-server-library>=3.0
+# Le notifiche Web Push del sito (v9, Fase 5): cifratura aes128gcm (RFC 8291) e firma VAPID (RFC 8292), dagli autori
+# della specifica (web-push-libs). L'invio vero lo fa httpx (`notifiche/webpush.py`).
+pywebpush>=2.0

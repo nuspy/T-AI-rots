@@ -14,7 +14,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import delete, func, select
 
@@ -25,11 +25,12 @@ from ...domain.blog_models import ApiKey, BlogPost, BlogSection, BlogTag, MediaI
 from ...domain.blog_repositories import BlogRepository, ErroreBlog, assicura_miniatura
 from ...domain.models import User
 from ...domain.repositories import AuditRepository
+from ...domain.session import get_session_factory
 from ...llm.compiti import Compito
 from ..deps import provider_per, verifica_modello
 from ...tarot import blog as regole
 from ...tarot import blog_seo
-from ...tarot import traduzione_blog
+from ...tarot import reddit, traduzione_blog
 from .blog import url_immagine, url_miniatura
 
 router = APIRouter(prefix="/admin/blog", tags=["console-blog"], dependencies=[Depends(require_role("admin"))])
@@ -50,7 +51,8 @@ class SezioneIn(BaseModel):
     slug: Optional[str] = Field(default=None, max_length=80)
     descrizione: Optional[str] = Field(default=None, max_length=2000)
     tipo: TipoSezione = "articoli"
-    #: Per `carte`: `{"arcano": "maggiore"}` o `{"seme": "bastoni"}`; per `stese`: `{"categoria": "coppia"}`.
+    #: Per `carte`: `{"arcano": "maggiore"}` o `{"seme": "bastoni"}`; per `stese`: `{"categoria": "coppia"}`
+    #: o `{"tema": "lavoro"}` (le stese di lavoro e affari più le standard adatte anche al lavoro).
     filtro: Optional[Dict[str, str]] = None
     parent_id: Optional[int] = None
     ordine: int = 0
@@ -327,7 +329,10 @@ async def articolo(post_id: uuid.UUID, session: DbSession) -> Dict[str, Any]:
 
 
 @router.post("/posts", status_code=201)
-async def crea_articolo(payload: ArticoloIn, user: CurrentUser, session: DbSession) -> Dict[str, Any]:
+async def crea_articolo(
+    payload: ArticoloIn, user: CurrentUser, session: DbSession, compiti: BackgroundTasks,
+    fabbrica=Depends(get_session_factory),
+) -> Dict[str, Any]:
     repo = BlogRepository(session)
     dati = payload.model_dump(exclude={"tags"})
     try:
@@ -339,11 +344,16 @@ async def crea_articolo(payload: ArticoloIn, user: CurrentUser, session: DbSessi
         after={"slug": p.slug, "titolo": p.titolo, "stato": p.stato},
     )
     await session.commit()
-    return await articolo_admin_json(session, p)
+    risposta = await articolo_admin_json(session, p)
+    await reddit.dopo_pubblicazione(session, compiti, fabbrica, p)  # v8.6: anche su Reddit, se acceso
+    return risposta
 
 
 @router.patch("/posts/{post_id}")
-async def modifica_articolo(post_id: uuid.UUID, payload: ArticoloMod, user: CurrentUser, session: DbSession) -> Dict[str, Any]:
+async def modifica_articolo(
+    post_id: uuid.UUID, payload: ArticoloMod, user: CurrentUser, session: DbSession, compiti: BackgroundTasks,
+    fabbrica=Depends(get_session_factory),
+) -> Dict[str, Any]:
     repo = BlogRepository(session)
     p = await repo.per_id(post_id)
     if p is None:
@@ -360,11 +370,16 @@ async def modifica_articolo(post_id: uuid.UUID, payload: ArticoloMod, user: Curr
         before=prima, after={"stato": p.stato, "slug": p.slug},
     )
     await session.commit()
-    return await articolo_admin_json(session, p)
+    risposta = await articolo_admin_json(session, p)
+    await reddit.dopo_pubblicazione(session, compiti, fabbrica, p)
+    return risposta
 
 
 @router.post("/posts/{post_id}/{azione}")
-async def cambia_stato(post_id: uuid.UUID, azione: Literal["pubblica", "archivia", "bozza"], user: CurrentUser, session: DbSession) -> Dict[str, Any]:
+async def cambia_stato(
+    post_id: uuid.UUID, azione: Literal["pubblica", "archivia", "bozza"], user: CurrentUser, session: DbSession,
+    compiti: BackgroundTasks, fabbrica=Depends(get_session_factory),
+) -> Dict[str, Any]:
     """Pubblica (adesso, o alla data già scritta), archivia o riporta a bozza."""
     repo = BlogRepository(session)
     p = await repo.per_id(post_id)
@@ -376,7 +391,9 @@ async def cambia_stato(post_id: uuid.UUID, azione: Literal["pubblica", "archivia
         action=f"blog.post.{azione}", actor_id=user.id, target_type="blog_post", target_id=str(p.id), after={"stato": nuovo},
     )
     await session.commit()
-    return await articolo_admin_json(session, p)
+    risposta = await articolo_admin_json(session, p)
+    await reddit.dopo_pubblicazione(session, compiti, fabbrica, p)
+    return risposta
 
 
 @router.post("/posts/{post_id}/traduci", status_code=201)

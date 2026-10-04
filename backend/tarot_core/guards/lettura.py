@@ -10,7 +10,9 @@
 - *Dopo*: il responso finale passa dal giudice (compito `GIUDIZIO`), che lo
   misura contro le rubriche `## Verifica` dei guardrail in `data/guards/`.
   L'esito è `ok`, `riscrivi` o `blocca`. Con `riscrivi` il responso si
-  rigenera con i vincoli, una volta; se non basta, si blocca.
+  rigenera con i vincoli, una volta; se non basta, si blocca. Nel modo «solo
+  casi dubbi» (il predefinito della console) il giudice parte solo se un
+  controllo deterministico (`da_guardare`) trova qualcosa da guardare.
 
 Il giudice che non risponde **non** lascia passare il responso senza
 controllo: si applica il filtro deterministico anche all'uscita, e se quello
@@ -118,11 +120,134 @@ Rispondi SOLO con JSON:
 """
 
 
+#: I modi della guardia LLM (impostazione della console, `ImpostazioniIntervista.guardia_responso`).
+GUARDIA_DUBBI, GUARDIA_SPENTA, GUARDIA_ACCESA = "dubbi", "spento", "acceso"
+
+#: Le lingue per cui il controllo deterministico ha le parole: per le altre la guardia LLM parte sempre.
+LINGUE_CON_REGOLE = ("it", "en")
+
+#: Promesse di certezza: «accadrà sicuramente», «è inevitabile», «sei destinata a…».
+_CERTEZZA = re.compile(
+    r"\b(sicuramente|certamente|inevitabil\w*|di sicuro|senza (alcun )?dubbio|per certo|è (il tuo )?destino|"
+    r"destinat[oaie]|garantit[oaie]|immancabilmente|"
+    r"definitely|certainly|inevitabl\w*|without (a|any) doubt|for sure|destined|guaranteed|bound to)\b",
+    re.IGNORECASE,
+)
+
+#: Il quesito o il colloquio toccano salute, diritto o denaro: lì la guardia controlla che non arrivino consigli da
+#: professionista.
+_MATERIE = re.compile(
+    r"\b(salute|malatti\w*|medic[oi]\w*|terapi\w*|farmac\w*|diagnos\w*|cancro|tumor\w*|chemio\w*|intervent[oi] chirurgic\w*|"
+    r"gravidanz\w*|incinta|avvocat\w*|tribunal\w*|giudice|processo|denunci\w*|divorzi\w*|eredit[aà]|testament\w*|"
+    r"investi\w*|azioni|borsa|bitcoin|cripto\w*|scommess\w*|debit\w*|prestit\w*|mutu[oi]|"
+    r"health|illness|disease|doctor|therapy|medication|diagnos\w*|cancer|tumou?r|pregnan\w*|lawyer|court|lawsuit|"
+    r"divorce|inheritance|invest\w*|stocks?|crypto\w*|bet(ting)?|debt|loan|mortgage)\b",
+    re.IGNORECASE,
+)
+
+#: Nel responso: indicazioni operative su cure, diritto o denaro.
+_CONSIGLI = re.compile(
+    r"\b(diagnosi|terapia|farmac\w*|dosaggi\w*|medicin\w*|smetti di|interrompi|fai causa|non firmare|firma (il|quel)|"
+    r"investi\w*|compra|vendi|scommett\w*|"
+    r"diagnosis|treatment|medication|dosage|stop taking|sue|don't sign|sign the|invest|buy|sell|bet on)\b",
+    re.IGNORECASE,
+)
+
+#: Nel responso: morte, malattia e disgrazie (non la carta della Morte, che si nomina sempre con l'articolo).
+_SVENTURE = re.compile(
+    r"\b(morir\w*|morrà|malattia|ammaler\w*|incidente|disgrazi\w*|sventur\w*|tragedi\w*|lutto|"
+    r"will die|dying|illness|sickness|accident|disaster|tragedy|misfortune)\b",
+    re.IGNORECASE,
+)
+
+#: Nel responso: certezze sui sentimenti o le azioni di un terzo.
+_TERZI = re.compile(
+    r"\b(ti tradisce|ti tradirà|ti ama|non ti ama|ti amerà|ti mente|ti nasconde|pensa a te|è innamorat[oa]|"
+    r"ti lascerà|tornerà da te|"
+    r"(he|she|they) (loves?|is cheating|cheats|will leave|will come back|is lying|lies)|cheating on you)\b",
+    re.IGNORECASE,
+)
+
+#: Nel responso: controllo, manipolazione, dipendenza dalle letture.
+_CONTROLLO = re.compile(
+    r"\b(controlla(re)? il suo telefono|spia\w*|pedin\w*|ricatt\w*|manipol\w*|costring\w*|ripeti la lettura|"
+    r"consulta(re)? le carte ogni|aspetta(re)? un segno|"
+    r"check (his|her|their) phone|spy\w*|stalk\w*|blackmail\w*|manipulat\w*|repeat the reading|wait for a sign)\b",
+    re.IGNORECASE,
+)
+
+#: Letture di coppia e compatibilità: verdetti sulla relazione e dati astrologici non forniti.
+_VERDETTI = re.compile(
+    r"\b(lascial[oa]|restate insieme|(è|non è) la persona giusta|non funzionerà|siete fatti|anima gemella|"
+    r"ascendente|luna in|venere in|marte in|"
+    r"leave (him|her|them)|stay together|the right person|won't work|meant to be|soul ?mate|ascendant|moon in|"
+    r"venus in|mars in)\b",
+    re.IGNORECASE,
+)
+
+#: Letture di coppia e compatibilità: violenza, paura o controllo raccontati da chi consulta.
+_VIOLENZA = re.compile(
+    r"\b(picchia\w*|violen\w*|mi fa paura|ho paura di (lui|lei)|minacc\w*|abus\w*|mi controlla|"
+    r"hits? me|violent|violence|afraid of (him|her|them)|threat\w*|abus\w*|controls me)\b",
+    re.IGNORECASE,
+)
+
+
+def da_guardare(
+    *, quesito: str, responso: str, colloquio: str = "", categoria: str = "standard", lang: str = "it",
+) -> List[str]:
+    """Il controllo deterministico prima della guardia LLM, nel modo «solo casi dubbi»: i motivi per chiamarla.
+
+    Elenco vuoto: niente da guardare, la guardia LLM non parte. Le regole seguono le rubriche di `data/guards/`:
+
+    - **crisi** (`crisi-e-autolesionismo`): parole di crisi nel quesito, nel colloquio o nel responso;
+    - **formule proibite**: quelle di `uscita_proibita`;
+    - **promesse di certezza** (`fatalismo`): «sicuramente», «inevitabile», «destinata a»…;
+    - **morte, malattia, disgrazie** (`fatalismo`) nel responso — non la carta della Morte;
+    - **salute, diritto, denaro** (`materie-riservate`): il quesito o il colloquio li toccano, o il responso dà
+      indicazioni operative («terapia», «investi», «fai causa»…);
+    - **certezze su un terzo** (`autonomia-e-dipendenza`, `relazioni`): «ti tradisce», «ti ama»…;
+    - **controllo, manipolazione, letture compulsive** (`autonomia-e-dipendenza`);
+    - **letture di coppia e compatibilità** (`relazioni`): verdetti sulla relazione, dati astrologici non forniti,
+      violenza o paura nel colloquio;
+    - **lingua senza regole**: per le lingue fuori da `LINGUE_CON_REGOLE` la guardia parte sempre.
+
+    Le formule sono larghe di proposito: un falso allarme costa la chiamata di prima, un allarme mancato un responso non
+    riletto. Il modello resta l'ultima parola: qui si decide solo se interpellarlo.
+    """
+    from ..tarot.conoscenza import speciale
+
+    motivi: List[str] = []
+    if (lang or "it")[:2] not in LINGUE_CON_REGOLE:
+        motivi.append("lingua senza regole")
+    if segnale_di_crisi(quesito, colloquio, responso):
+        motivi.append("crisi")
+    if uscita_proibita(responso):
+        motivi.append("formula proibita")
+    testo = _normalizza(responso)
+    if _CERTEZZA.search(testo):
+        motivi.append("promessa di certezza")
+    if _SVENTURE.search(testo):
+        motivi.append("morte, malattia o disgrazia")
+    if _MATERIE.search(_normalizza(f"{quesito}\n{colloquio}")) or _CONSIGLI.search(testo):
+        motivi.append("salute, diritto o denaro")
+    if _TERZI.search(testo):
+        motivi.append("certezza su un terzo")
+    if _CONTROLLO.search(testo):
+        motivi.append("controllo o dipendenza")
+    if speciale(categoria) and (_VERDETTI.search(testo) or _VIOLENZA.search(_normalizza(f"{quesito}\n{colloquio}"))):
+        motivi.append("coppia: verdetto, astrologia o violenza")
+    return motivi
+
+
 @dataclass
 class Verdetto:
     esito: str
     violazioni: List[dict] = field(default_factory=list)
     verificato: bool = True
+    #: Chi ha deciso: `llm` (la guardia), `deterministica` (modo «solo casi dubbi», nessun motivo per chiamarla) o
+    #: `spenta` (modo spento: solo il filtro delle formule proibite).
+    guardia: str = "llm"
 
     @property
     def ok(self) -> bool:
@@ -138,13 +263,27 @@ class Verdetto:
 
 async def giudica(
     provider, registro: RegistroGuardrail, *, quesito: str, responso: str, categoria: str = "standard",
+    modo: str = GUARDIA_ACCESA, colloquio: str = "", lang: str = "it",
 ) -> Verdetto:
     """Misura il responso contro le rubriche dei guardrail.
 
     `categoria` sceglie le rubriche: quelle di una lettura speciale includono le
     regole sulle relazioni. Per la lettura standard non cambia nulla.
+
+    `modo` (console): `acceso` chiama sempre la guardia LLM; `dubbi` solo se `da_guardare` trova un motivo (il
+    colloquio e la lingua servono a quel controllo); `spento` mai — resta il filtro delle formule proibite, come
+    quando la guardia non risponde.
     """
     proibita = uscita_proibita(responso)
+
+    if modo == GUARDIA_SPENTA:
+        return _solo_deterministico(proibita, guardia="spenta")
+    if modo == GUARDIA_DUBBI:
+        motivi = da_guardare(quesito=quesito, responso=responso, colloquio=colloquio, categoria=categoria, lang=lang)
+        if not motivi:
+            logger.info("Guardia LLM non necessaria: il controllo deterministico non ha trovato nulla")
+            return Verdetto("ok", guardia="deterministica")
+        logger.info("Responso da guardare (%s): alla guardia LLM", ", ".join(motivi))
 
     rubriche = "\n\n".join(
         f"## [{g.slug}] {g.nome} (severità: {g.severita})\n{g.verifica.strip()}"
@@ -158,11 +297,7 @@ async def giudica(
         ))
     except GenerationError as exc:
         logger.warning("Giudice non disponibile (%s): solo filtro deterministico", exc)
-        if proibita:
-            return Verdetto("riscrivi", [{
-                "regola": "fatalismo", "motivo": "formula proibita", "estratto": proibita,
-            }], verificato=False)
-        return Verdetto("ok", verificato=False)
+        return _solo_deterministico(proibita)
 
     esito = str(dati.get("esito") or "ok").lower()
     if esito not in ("ok", "riscrivi", "blocca"):
@@ -177,3 +312,13 @@ async def giudica(
     if any(v.get("regola") in bloccanti for v in violazioni):
         esito = "blocca"
     return Verdetto(esito, violazioni)
+
+
+def _solo_deterministico(proibita: Optional[str], *, guardia: str = "llm") -> Verdetto:
+    """Il verdetto senza la guardia LLM (spenta, o che non risponde): una formula proibita chiede la riscrittura,
+    altrimenti il responso passa marcato come non verificato."""
+    if proibita:
+        return Verdetto("riscrivi", [{
+            "regola": "fatalismo", "motivo": "formula proibita", "estratto": proibita,
+        }], verificato=False, guardia=guardia)
+    return Verdetto("ok", verificato=False, guardia=guardia)

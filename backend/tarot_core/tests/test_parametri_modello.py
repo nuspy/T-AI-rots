@@ -29,7 +29,9 @@ async def test_i_parametri_del_modello_entrano_in_ogni_richiesta():
 async def test_senza_parametri_la_richiesta_e_quella_di_prima():
     p = OpenAICompatibleProvider(base_url="http://x/v1", default_model="m")
     payload = await p._build_payload(_richiesta(), stream=False)
-    assert set(payload) == {"model", "messages", "temperature", "stream", "max_tokens"}
+    # `store: false` sempre (il fornitore non conserva le risposte): è l'unico campo in più di prima.
+    assert set(payload) == {"model", "messages", "temperature", "stream", "max_tokens", "store"}
+    assert payload["store"] is False
 
 
 async def test_i_campi_della_singola_richiesta_prevalgono_sui_parametri_del_modello():

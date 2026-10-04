@@ -4,7 +4,7 @@ Si carica una volta sola e si valida al caricamento. Un mazzo con 77 carte o
 una stesa che cita una posizione inesistente sono errori di rilascio: devono
 fermare l'avvio, non comparire alla prima lettura di un utente.
 
-I **nomi** in altre lingue stanno in `nomi.json` (oggi l'ungherese): sono
+I **nomi** in altre lingue stanno in `nomi.json` (ungherese, russo, ucraino e spagnolo): sono
 dati, non testo dell'interfaccia, e vengono validati come il mazzo — una carta
 o una posizione senza traduzione ferma l'avvio.
 
@@ -28,10 +28,18 @@ from .lingue import lingua
 
 logger = logging.getLogger(__name__)
 
-#: Le categorie di stesa: la lettura standard e le due letture speciali.
-CATEGORIE = ("standard", "compatibilita", "coppia")
+#: Le categorie di stesa: la lettura standard, quella di lavoro e affari e le due letture speciali.
+CATEGORIE = ("standard", "lavoro", "compatibilita", "coppia")
 
-#: Lo stile di una stesa speciale: come la si trova nella tradizione.
+#: Le letture speciali: quelle che chiedono i dati di una seconda persona. Le altre (`standard`,
+#: `lavoro`) si svolgono allo stesso modo, con la sola persona che consulta.
+CATEGORIE_SPECIALI = ("compatibilita", "coppia")
+
+#: I temi per cui una stesa standard si propone anche fuori dalla sua categoria: una stesa con
+#: `"temi": ["lavoro"]` compare anche fra quelle di lavoro e affari (la Croce Celtica, il ferro di cavallo…).
+TEMI = ("lavoro",)
+
+#: Lo stile di una stesa speciale o di lavoro: come la si trova nella tradizione.
 STILI = ("tradizionale", "moderna", "tendenza")
 
 #: Di chi è il vissuto che una posizione descrive (solo nelle stese speciali).
@@ -53,6 +61,12 @@ CAMPI_CARTA = (
 
 class ConoscenzaNonValida(ValueError):
     """La base di conoscenza non è coerente."""
+
+
+def speciale(categoria: str) -> bool:
+    """Una lettura con due persone (compatibilità, coppia): chiede il partner e ha le regole sulle relazioni.
+    La standard e quella di lavoro no."""
+    return categoria in CATEGORIE_SPECIALI
 
 
 def _nome_inglese_carta(carta: Dict[str, Any]) -> str:
@@ -201,10 +215,12 @@ class Conoscenza:
             raise ConoscenzaNonValida(f"{stesa['id']}: `forma` sconosciuta")
 
     def _valida_categoria(self, stesa: Dict[str, Any]) -> None:
-        """Le stese speciali hanno stile e soggetto; le standard non ne hanno."""
+        """Le stese speciali hanno stile e soggetto; quelle di lavoro uno stile e nessun soggetto; le
+        standard nessuno dei due, e solo loro possono proporsi per altri `temi`."""
         categoria = stesa.get("categoria", "standard")
         if categoria not in CATEGORIE:
             raise ConoscenzaNonValida(f"{stesa['id']}: categoria sconosciuta «{categoria}»")
+        self._valida_temi(stesa, categoria)
         if categoria == "standard":
             if stesa.get("stile"):
                 raise ConoscenzaNonValida(f"{stesa['id']}: una stesa standard non ha `stile`")
@@ -213,6 +229,14 @@ class Conoscenza:
             raise ConoscenzaNonValida(f"{stesa['id']}: `stile` mancante o sconosciuto")
         if stesa.get("sintesi_wirth"):
             raise ConoscenzaNonValida(f"{stesa['id']}: la sintesi di Wirth è solo della croce semplice")
+        if not speciale(categoria):
+            # Lavoro e affari: una persona sola, quindi nessun soggetto; e nessuna carta calcolata.
+            for p in stesa["posizioni"]:
+                if p.get("calcolata"):
+                    raise ConoscenzaNonValida(f"{stesa['id']}: una stesa di {categoria} non ha carte calcolate")
+                if "soggetto" in p:
+                    raise ConoscenzaNonValida(f"{stesa['id']}: una stesa di {categoria} non ha `soggetto`")
+            return
         for p in stesa["posizioni"]:
             if p.get("calcolata"):
                 raise ConoscenzaNonValida(f"{stesa['id']}: una stesa speciale non ha carte calcolate")
@@ -220,6 +244,23 @@ class Conoscenza:
                 raise ConoscenzaNonValida(f"{stesa['id']}: la posizione {p['n']} non ha un `soggetto` valido")
             if p["soggetto"].startswith("strada-") and categoria != "coppia":
                 raise ConoscenzaNonValida(f"{stesa['id']}: le strade sono solo della coppia")
+
+    @staticmethod
+    def _valida_temi(stesa: Dict[str, Any], categoria: str) -> None:
+        """`temi`: una lista di temi noti, senza doppioni, e solo nelle stese standard (una stesa
+        speciale chiede il partner, quindi non si può proporre per un tema da una persona sola)."""
+        if "temi" not in stesa:
+            return
+        temi = stesa["temi"]
+        if not isinstance(temi, list) or not temi:
+            raise ConoscenzaNonValida(f"{stesa['id']}: `temi` dev'essere una lista non vuota")
+        if categoria != "standard":
+            raise ConoscenzaNonValida(f"{stesa['id']}: solo una stesa standard ha `temi`")
+        sconosciuti = [t for t in temi if t not in TEMI]
+        if sconosciuti:
+            raise ConoscenzaNonValida(f"{stesa['id']}: temi sconosciuti {sconosciuti}")
+        if len(set(temi)) != len(temi):
+            raise ConoscenzaNonValida(f"{stesa['id']}: temi ripetuti")
 
     def _valida_copertura_stili(self) -> None:
         """Ogni lettura speciale offre almeno una stesa per ciascuno stile."""
@@ -239,12 +280,19 @@ class Conoscenza:
 
     @staticmethod
     def categoria_di(stesa: Dict[str, Any]) -> str:
-        """`standard`, `compatibilita` o `coppia`: l'assenza del campo è standard."""
+        """`standard`, `lavoro`, `compatibilita` o `coppia`: l'assenza del campo è standard."""
         return stesa.get("categoria", "standard")
 
     def stese_per(self, categoria: str) -> List[Dict[str, Any]]:
         """Le stese di una categoria, nell'ordine del catalogo."""
         return [s for s in self.stese.values() if self.categoria_di(s) == categoria]
+
+    def stese_per_tema(self, tema: str) -> List[Dict[str, Any]]:
+        """Le stese che il sito propone per un tema (oggi `lavoro`): quelle della categoria omonima
+        e, dopo, le standard che lo dichiarano in `temi`. Ciascuna nell'ordine del catalogo."""
+        proprie = self.stese_per(tema)
+        adatte = [s for s in self.stese.values() if tema in s.get("temi", ()) and s not in proprie]
+        return proprie + adatte
 
     def mazzo_per(self, stesa: Dict[str, Any]) -> List[str]:
         """Le carte in gioco per una stesa: i 22 maggiori o tutte e 78."""
@@ -264,7 +312,7 @@ class Conoscenza:
     # -- nomi nelle lingue --------------------------------------------------
 
     def nome_carta(self, card_id: str, lang: str) -> str:
-        """Il nome della carta nella lingua: italiano, ungherese o, altrove, il
+        """Il nome della carta nella lingua: italiano, una lingua di `nomi.json` o, altrove, il
         nome di Thoth in inglese (che è lo standard internazionale)."""
         carta = self.carte[card_id]
         codice = lingua(lang)
@@ -429,6 +477,8 @@ class Conoscenza:
             )
         } | {
             "categoria": self.categoria_di(stesa),
+            # I temi per cui una stesa standard si propone anche altrove (`["lavoro"]`); sempre una lista.
+            "temi": list(stesa.get("temi", [])),
             "forma": stesa.get("forma", "standard"),
             "posizioni": posizioni,
             "nomi": nomi_di(stesa.get("nome_en"), lambda t: t.get("nome")),

@@ -3,22 +3,23 @@ durante il dialogo può proporre una lettura sul tema in corso.
 
 **La categoria della proposta non è un classificatore a parte.** Il modello sceglie fra un piccolo
 elenco chiuso di temi (`amore`, `coppia`, `lavoro`, `generico`); il codice li traduce nella categoria
-di lettura giusta (`standard`, `compatibilita`, `coppia`) con `MAPPA_CATEGORIA`, la stessa mappa che
+di lettura giusta (`standard`, `lavoro`, `compatibilita`, `coppia`) con `MAPPA_CATEGORIA`, la stessa mappa che
 il frontend userebbe altrimenti a mano.
 """
 from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Sequence
 
 from ..llm.base import GenerationError
+from .lingue import nome_per_prompt
 from .llm import genera_json, richiesta
 
 logger = logging.getLogger(__name__)
 
-#: Tema scelto dal modello -> categoria di lettura (le stesse tre di `cag.PROMPT_PER_CATEGORIA`).
-MAPPA_CATEGORIA = {"amore": "compatibilita", "coppia": "coppia", "lavoro": "standard", "generico": "standard"}
+#: Tema scelto dal modello -> categoria di lettura (le stesse di `cag.PROMPT_PER_CATEGORIA`).
+MAPPA_CATEGORIA = {"amore": "compatibilita", "coppia": "coppia", "lavoro": "lavoro", "generico": "standard"}
 
 PROMPT_CHAT_PROATTIVA = """# Compito: chat_proattiva
 
@@ -65,10 +66,30 @@ def _proposta_da(dati: Dict[str, Any]) -> Optional[Proposta]:
     return Proposta(argomento=argomento, categoria=MAPPA_CATEGORIA.get(tema, "standard"))
 
 
+#: Gli spunti da cui l'apertura può partire quando le memorie non suggeriscono di meglio: uno a caso a ogni
+#: apertura, perché due aperture di seguito non si somiglino.
+SPUNTI_APERTURA = (
+    "una relazione o un sentimento", "il lavoro o un progetto", "una decisione rimandata", "la famiglia",
+    "un cambiamento in arrivo", "qualcosa che torna spesso nei pensieri", "il corpo e l'energia di questi giorni",
+    "un desiderio non detto", "una fine e ciò che lascia spazio", "il prossimo passo concreto",
+)
+
+
+def istruzione_lingua_chat(lang: str) -> str:
+    """L'ultima riga del messaggio: la lingua dell'oracolo è quella del profilo di chi consulta, non quella del prompt
+    (scritto in italiano), delle memorie o dei turni di prima."""
+    return (
+        f"Scrivi il messaggio in {nome_per_prompt(lang)}, la lingua di chi consulta, anche se le memorie o la "
+        "conversazione sono in un'altra lingua."
+    )
+
+
 async def genera_turno(
     provider, *, memorie: str = "", trascrizione: str = "", messaggio_utente: str = "",
+    gia_dette: Sequence[str] = (), spunto: str = "", lingua: str = "it",
 ) -> TurnoGenerato:
-    """Un turno della chat: l'apertura (senza `trascrizione` né `messaggio_utente`), o una risposta.
+    """Un turno della chat: l'apertura (senza `trascrizione` né `messaggio_utente`), o una risposta, sempre nella
+    `lingua` di chi consulta.
 
     Un modello che non risponde non deve far crollare il widget: un messaggio di scusa generico
     (mai inventato come se venisse dal modello) prende il suo posto.
@@ -81,7 +102,17 @@ async def genera_turno(
     if messaggio_utente:
         utente += f"L'utente ha appena scritto: {messaggio_utente}\n"
     if not utente:
-        utente = "Apri tu la conversazione: non c'è ancora nessuno scambio."
+        utente = "Apri tu la conversazione: non c'è ancora nessuno scambio.\n"
+    if not trascrizione and not messaggio_utente:
+        # L'apertura: varia ogni volta. Uno spunto a caso, e le aperture recenti da non ripetere.
+        if spunto:
+            utente += f"Spunto per questa apertura, se le memorie non suggeriscono di meglio: {spunto}.\n"
+        if gia_dette:
+            utente += (
+                "Aperture già fatte di recente: NON ripeterle e non riformularle, cambia argomento e parole:\n- "
+                + "\n- ".join(gia_dette) + "\n"
+            )
+    utente += istruzione_lingua_chat(lingua) + "\n"
 
     try:
         dati = await genera_json(provider, richiesta([PROMPT_CHAT_PROATTIVA], utente, temperatura=0.8))

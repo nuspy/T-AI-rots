@@ -142,7 +142,16 @@ class ProviderProtetto:
         self._p = pseudonimi
 
     def __getattr__(self, nome: str) -> Any:
-        return getattr(self._fornitore, nome)
+        valore = getattr(self._fornitore, nome)
+        if nome == "embed":
+            # Anche i testi da vettorizzare (memorie, quesiti) vanno al fornitore senza nomi (GDPR, Fase 1). Qui e non
+            # come metodo: `supporta_embedding()` guarda se `embed` esiste, e deve restare vero solo se il fornitore
+            # avvolto lo sa fare.
+            async def embed(testi, *argomenti, **opzioni):
+                return await valore([self._p.nascondi(t) for t in testi], *argomenti, **opzioni)
+
+            return embed
+        return valore
 
     def _richiesta(self, req: GenerationRequest) -> GenerationRequest:
         """Solo i messaggi che portano dati (utente, assistente): quelli di sistema sono regole fisse, senza nomi, e un
@@ -174,8 +183,35 @@ class ProviderProtetto:
 
 
 def protetto(fornitore: Any, persone: Any, *, attivo: bool = True) -> Any:
-    """Il fornitore, avvolto se ci sono nomi da nascondere (e la protezione è accesa)."""
+    """Il fornitore, avvolto se ci sono nomi da nascondere (e la protezione è accesa). `persone` sono le persone di
+    una lettura (`tarot.persone.Persone`) oppure dei `Pseudonimi` già pronti (la chat e le memorie, `nomi_utente`)."""
     if not attivo:
         return fornitore
-    pseudonimi = Pseudonimi.da_persone(persone)
+    pseudonimi = persone if isinstance(persone, Pseudonimi) else Pseudonimi.da_persone(persone)
     return fornitore if pseudonimi.vuoto else ProviderProtetto(fornitore, pseudonimi)
+
+
+async def nomi_utente(session: Any, user: Any, *, letture: int = 20) -> Pseudonimi:
+    """I nomi che possono comparire nei testi di una persona fuori da una lettura — la chat con l'oracolo, le memorie
+    (GDPR, Fase 1): il suo nome e cognome (della scheda e quello mostrato da Keycloak), il partner ricordato, e gli
+    altri nomi delle ultime letture di coppia. Al fornitore arrivano come «Persona_N»; le risposte tornano col nome."""
+    from sqlalchemy import desc, func, select
+
+    from ..domain.models import Reading
+
+    nomi: List[str] = [
+        getattr(user, "nome", None) or "", getattr(user, "cognome", None) or "",
+        getattr(user, "display_name", None) or "",
+    ]
+    ricordato = getattr(user, "partner_ricordato", None) or {}
+    nomi += [ricordato.get("nome") or "", ricordato.get("cognome") or ""]
+    persone = (await session.execute(
+        select(Reading.persone)
+        # `jsonb_typeof`: un `None` scritto in una colonna JSON diventa il `null` di JSON, non il NULL di SQL.
+        .where(Reading.owner_id == user.id, func.jsonb_typeof(Reading.persone) == "object")
+        .order_by(desc(Reading.created_at)).limit(letture)
+    )).scalars().all()
+    for p in persone:
+        partner = (p or {}).get("partner") or {}
+        nomi += [partner.get("nome") or "", partner.get("cognome") or ""]
+    return Pseudonimi(nomi)

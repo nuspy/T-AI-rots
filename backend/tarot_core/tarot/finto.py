@@ -2,7 +2,8 @@
 
 Riconosce il compito dall'intestazione del prompt di sistema
 (`# Compito: …`) e risponde nella forma attesa: JSON per intervista,
-validazione e giudizio, testo per interpretazione e sintesi. Le risposte
+validazione, giudizio e la chiamata unica delle interpretazioni, testo per
+l'interpretazione singola e la sintesi. Le risposte
 citano i dati che trova nel prompt — il nome della carta, la posizione — così
 che l'interfaccia mostri qualcosa di plausibile.
 
@@ -13,10 +14,42 @@ from __future__ import annotations
 
 import asyncio
 import json
+import random
 import re
 from typing import AsyncIterator, List
 
 from ..llm.base import GenerationRequest, StreamChunk, Usage
+
+#: Le aperture dell'oracolo finto: una a caso, come farebbe un modello vero.
+_APERTURE = [
+    "Ciao. Come stai oggi? C'è qualcosa che ti gira per la testa?",
+    "C'è una decisione che continui a rimandare? Possiamo guardarla insieme.",
+    "Qualcosa nel lavoro ti chiede energia in questi giorni?",
+    "Come va con le persone che ti stanno vicino, in questo periodo?",
+    "Un cambiamento si sta avvicinando? Ti va di raccontarmelo?",
+]
+
+#: Le stesse aperture nelle altre lingue del sito: il prompt dice in quale lingua scrivere (riga «Scrivi il messaggio
+#: in …»), e il finto la rispetta come un modello vero.
+_APERTURE_PER_LINGUA = {
+    "inglese": ["Hi. How are you today? Is something on your mind?",
+                "Is there a decision you keep putting off? We can look at it together."],
+    "ungherese": ["Szia. Hogy vagy ma? Jár valami a fejedben?",
+                  "Van egy döntés, amit folyton halogatsz? Megnézhetjük együtt."],
+    "russo": ["Привет. Как ты сегодня? Что-то не выходит из головы?",
+              "Есть решение, которое ты всё откладываешь? Можем взглянуть на него вместе."],
+    "ucraino": ["Привіт. Як ти сьогодні? Щось не дає спокою?",
+                "Є рішення, яке ти весь час відкладаєш? Можемо подивитися на нього разом."],
+    "spagnolo": ["Hola. ¿Cómo estás hoy? ¿Hay algo que te ronda la cabeza?",
+                 "¿Hay una decisión que sigues posponiendo? Podemos mirarla juntos."],
+}
+_RISPOSTA_PER_LINGUA = {
+    "inglese": "I'm listening. You wrote: «{t}». Tell me a little more, if you like.",
+    "ungherese": "Figyellek. Ezt írtad: «{t}». Mesélj még egy kicsit, ha szeretnéd.",
+    "russo": "Я слушаю. Ты написал(а): «{t}». Расскажи ещё немного, если хочешь.",
+    "ucraino": "Я слухаю. Ти написав(-ла): «{t}». Розкажи ще трохи, якщо хочеш.",
+    "spagnolo": "Te escucho. Escribiste: «{t}». Cuéntame un poco más, si quieres.",
+}
 
 _DOMANDE = [
     "Da quanto tempo questa situazione è presente nella tua vita, e cosa l'ha messa in moto?",
@@ -45,6 +78,22 @@ def _sistema(req: GenerationRequest) -> str:
 def _senza_soggetto(valore: str) -> str:
     """Toglie la coda « [riguarda: …]» che le letture speciali aggiungono alla catena."""
     return re.sub(r"\s*\[riguarda:.*$", "", valore).rstrip(".")
+
+
+def _interpreta(testo: str) -> str:
+    """La lettura finta di una carta: cita il nome, l'orientamento e la posizione che trova nel testo."""
+    carta = re.search(r"Carta: (.+)", testo)
+    pos = re.search(r"Posizione \d+: ([^—\n]+)", testo)
+    ori = "rovesciata" if "Orientamento: rovesciata" in testo else "dritta"
+    nome = carta.group(1).strip() if carta else "la carta"
+    posizione = pos.group(1).strip() if pos else "questa posizione"
+    return (
+        f"{nome}, {ori}, nella posizione «{posizione}», porta la sua energia "
+        f"proprio nel punto che la stesa dedica a questo aspetto della tua domanda. "
+        f"Il suo simbolo invita a guardare con lucidità ciò che si sta muovendo, "
+        f"senza fretta di concludere. È una forza da riconoscere e da orientare, "
+        f"non una sentenza."
+    )
 
 
 class ModelloFinto:
@@ -94,11 +143,19 @@ class ModelloFinto:
             return json.dumps({"valida": True, "motivo": ""})
         if compito == "chat_proattiva":
             scritto = re.search(r"L'utente ha appena scritto: (.+)", utente)
-            messaggio = (
-                f"Ti ascolto. Hai scritto: «{scritto.group(1).strip()[:120]}». Raccontami un po' di più, "
-                "se vuoi: cosa ti porta a pensarci proprio adesso?"
-                if scritto else "Ciao. Come stai oggi? C'è qualcosa che ti gira per la testa?"
-            )
+            nome_lingua = re.search(r"Scrivi il messaggio in ([^,]+),", utente)
+            nome_lingua = nome_lingua.group(1).strip() if nome_lingua else "italiano"
+            if nome_lingua in _APERTURE_PER_LINGUA:
+                messaggio = (
+                    _RISPOSTA_PER_LINGUA[nome_lingua].format(t=scritto.group(1).strip()[:120])
+                    if scritto else random.choice(_APERTURE_PER_LINGUA[nome_lingua])
+                )
+            else:
+                messaggio = (
+                    f"Ti ascolto. Hai scritto: «{scritto.group(1).strip()[:120]}». Raccontami un po' di più, "
+                    "se vuoi: cosa ti porta a pensarci proprio adesso?"
+                    if scritto else random.choice(_APERTURE)
+                )
             return json.dumps({"messaggio": messaggio, "proposta": None}, ensure_ascii=False)
         if compito == "analisi_dati":
             # Cita i primi fatti del prompt e ne riusa i numeri così come sono: la verifica deve
@@ -122,19 +179,36 @@ class ModelloFinto:
             }, ensure_ascii=False)
         if compito == "giudizio":
             return json.dumps({"esito": "ok", "violazioni": []})
+        if compito == "memoria_stato":
+            # Lo stato sintetico della memoria: conferma tutto ciò che c'è, aggiunge la prima frase del quadro come
+            # situazione in corso. Basta a provare il percorso intero (applicazione, oblio, profilo) senza un modello.
+            ids = re.findall(r"^- \[(\w+)\]", utente, re.MULTILINE)
+            quadro = re.search(r"Quadro emerso dal colloquio: ([^.\n]+)", utente)
+            aggiungi = [{"categoria": "volatile", "campo": "altro", "testo": quadro.group(1).strip()}] \
+                if quadro and "non disponibile" not in quadro.group(1) else []
+            return json.dumps({"aggiungi": aggiungi, "conferma": ids, "rimuovi": [], "campo_quesito": "altro"},
+                              ensure_ascii=False)
+        if compito == "traduzione_notifica":
+            # v9, Fase 5: il testo di partenza con la lingua davanti, segnaposto intatti (la console lo mostra così).
+            origine = json.loads(utente)
+            return json.dumps({
+                lingua: {"titolo": f"[{lingua}] {origine['titolo']}", "corpo": f"[{lingua}] {origine['corpo']}"}
+                for lingua in origine.get("lingue", [])
+            }, ensure_ascii=False)
         if compito == "interpretazione":
-            carta = re.search(r"Carta: (.+)", utente)
-            pos = re.search(r"Posizione \d+: ([^—\n]+)", utente)
-            ori = "rovesciata" if "Orientamento: rovesciata" in utente else "dritta"
-            nome = carta.group(1).strip() if carta else "la carta"
-            posizione = pos.group(1).strip() if pos else "questa posizione"
-            return (
-                f"{nome}, {ori}, nella posizione «{posizione}», porta la sua energia "
-                f"proprio nel punto che la stesa dedica a questo aspetto della tua domanda. "
-                f"Il suo simbolo invita a guardare con lucidità ciò che si sta muovendo, "
-                f"senza fretta di concludere. È una forza da riconoscere e da orientare, "
-                f"non una sentenza."
-            )
+            return _interpreta(utente)
+        if compito == "interpretazione_unica":
+            # La chiamata unica: un blocco «## Carta in posizione N» per carta, la stessa lettura della chiamata
+            # singola per ciascuno, nel JSON chiesto dal prompt.
+            blocchi = re.split(r"^## Carta in posizione (\d+)$", utente, flags=re.MULTILINE)[1:]
+            return json.dumps({"carte": [
+                {
+                    "posizione": int(n),
+                    "orientamento": "rovesciata" if "Orientamento: rovesciata" in blocco else "dritta",
+                    "interpretazione": _interpreta(blocco),
+                }
+                for n, blocco in zip(blocchi[::2], blocchi[1::2])
+            ]}, ensure_ascii=False)
         if compito == "teaser":
             # L'anteprima per chi non ha un account: due o tre frasi, che si fermano prima del consiglio.
             return (

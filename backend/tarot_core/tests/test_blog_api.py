@@ -492,7 +492,7 @@ async def test_il_seed_scrive_l_albero_una_volta_e_non_disfa_le_modifiche(admin,
     assert figli["major-arcana"]["n_elementi"] == 22 and figli["major-arcana"]["tipo"] == "carte"
     assert [f["slug"] for f in figli["minor-arcana"]["figli"]] == ["wands", "cups", "swords", "disks"]
     assert [f["slug"] for f in figli["learn-tarot"]["figli"]] == ["tarot-spreads"]
-    assert figli["learn-tarot"]["figli"][0]["n_elementi"] == 14
+    assert figli["learn-tarot"]["figli"][0]["n_elementi"] == 19
     assert [f["slug"] for f in figli["articles"]["figli"]] == [
         "love", "relationships", "career", "spirituality", "symbolism", "thoth-tarot",
     ]

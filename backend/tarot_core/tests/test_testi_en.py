@@ -23,9 +23,9 @@ def _testi_carta(scheda: dict) -> list:
     return [scheda["astro"], *scheda["kw"], *(scheda[c] for c in ("exo", "psy", "ini", "sha", "up", "rev", "love", "work", "spirit", "crowley"))]
 
 
-def test_le_78_carte_e_le_14_stese_hanno_il_loro_testo_inglese(k):
+def test_le_78_carte_e_le_19_stese_hanno_il_loro_testo_inglese(k):
     assert set(k.testi["en"]["carte"]) == set(k.carte) and len(k.carte) == 78
-    assert set(k.testi["en"]["stese"]) == set(k.stese) and len(k.stese) == 14
+    assert set(k.testi["en"]["stese"]) == set(k.stese) and len(k.stese) == 19
 
 
 def test_nessuna_parola_italiana_nei_testi_inglesi(k):

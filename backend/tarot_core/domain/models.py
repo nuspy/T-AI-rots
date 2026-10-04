@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from sqlalchemy import (
     BigInteger, Boolean, CheckConstraint, Date, DateTime, ForeignKey, Index,
-    Integer, String, Text, UniqueConstraint, Uuid, false, true,
+    Integer, String, Text, UniqueConstraint, Uuid, false, text, true,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -66,6 +66,12 @@ class User(Base, TimestampMixin):
     email: Mapped[Optional[str]] = mapped_column(String(320), index=True)
     display_name: Mapped[Optional[str]] = mapped_column(String(200))
     locale: Mapped[str] = mapped_column(String(10), default="it", nullable=False)
+    #: Quando la persona ha scelto la lingua dal sito (menu o profilo, v9 Fase 2d). Da lì in poi il claim `locale`
+    #: del token non la riscrive più (`UserRepository.ensure`), e fra due dispositivi vince la scelta più recente.
+    locale_scelta_il: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    #: Il fuso orario (IANA, `Europe/Rome`), rilevato dal sito con `Intl` e dall'app (v9, Fase 5): decide il giorno
+    #: della carta del giorno e l'ora locale delle notifiche. Vuoto: il giorno resta quello di `Europe/Rome`.
+    fuso_orario: Mapped[Optional[str]] = mapped_column(String(64))
 
     #: Facoltativa: serve alla carta dell'anima e dell'anno, e se c'è entra
     #: nel contesto della lettura.
@@ -126,12 +132,65 @@ class User(Base, TimestampMixin):
         ForeignKey("users.id", ondelete="SET NULL"),
     )
 
+    #: La scheda anagrafica. Li compila la persona, o — se vuoti — il social con cui entra
+    #: (`tarot/profilo_social.py`): mai sopra un valore già inserito.
+    nome: Mapped[Optional[str]] = mapped_column(String(100))
+    cognome: Mapped[Optional[str]] = mapped_column(String(100))
+
+    #: Dove si trova adesso (paese ISO e città): dal social, se lo dà, o dall'IP all'accesso, aggiornata a ogni
+    #: accesso. Separata dagli indirizzi che la persona compila. `posizione_fonte`: `ip`, il provider (`facebook`,
+    #: `github`…) o `utente` se l'ha corretta lei (e allora l'accesso non la sovrascrive più).
+    posizione_paese: Mapped[Optional[str]] = mapped_column(String(2))
+    posizione_citta: Mapped[Optional[str]] = mapped_column(String(100))
+    posizione_fonte: Mapped[Optional[str]] = mapped_column(String(20))
+    posizione_il: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+    #: La provenienza dei dati presi dai social: `{"campi": {campo: {"da": provider, "il": iso}}, "ultimo":
+    #: {"il": iso, "provider": [...], "compilati": [...]}}`. Un campo che la persona corregge esce da `campi`.
+    dati_social: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB)
+    #: Le due scelte della persona: prendere i dati vuoti dai social all'accesso, e rilevare la posizione attuale.
+    importa_social: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true(), nullable=False)
+    rileva_posizione: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true(), nullable=False)
+
+    #: L'unione da confermare (`tarot/unione_account.py`): Keycloak ha collegato un social a questo account, che
+    #: aveva l'email mai verificata, e gli ha tolto i vecchi accessi. `{"id", "il", "creato_il", "credenziali",
+    #: "social"}`; la persona dice se l'account era suo. `unione_risolta`: l'id dell'ultima risposta, perché la stessa
+    #: nota resta nei token di tutta la sessione e non deve riaprire la domanda.
+    unione_in_attesa: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB)
+    unione_risolta: Mapped[Optional[str]] = mapped_column(String(40))
+
+    #: L'età minima (GDPR, Fase 1, `tarot/eta_minima.py`): quando la persona ha confermato di avere almeno
+    #: `eta_confermata_anni` anni (il minimo del suo paese in quel momento). Senza conferma niente letture né chat. È
+    #: una condizione per usare il servizio, non un consenso revocabile: per questo sta qui e non in `user_consents`
+    #: (si legge a ogni apertura senza una query in più); la prova — versione del testo, origine, impronta dell'IP —
+    #: resta in `consensi_storico` (tipo `eta_minima`).
+    eta_confermata_il: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    eta_confermata_anni: Mapped[Optional[int]] = mapped_column(Integer)
+
+    #: La cancellazione dell'account chiesta dalla persona (`tarot/cancellazione.py`): da quel momento `deleted_at` è
+    #: valorizzato e l'account è chiuso, ma per 30 giorni rientrando lo si può riaprire. Poi il CronJob
+    #: `tarots-cancellazioni` cancella l'utente in Keycloak e i dati personali, e scrive `cancellazione_eseguita_il`:
+    #: della riga resta solo lo pseudonimo che tiene insieme la contabilità.
+    cancellazione_richiesta_il: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), index=True)
+    cancellazione_eseguita_il: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+    #: L'identificativo dell'account negli acquisti delle app (v9, Fase 4): l'app lo passa allo store a ogni acquisto
+    #: (Google `obfuscatedAccountId`, Apple `appAccountToken`), e lo store lo rimanda firmato. Così un acquisto si lega
+    #: a chi l'ha fatto, e un token di acquisto copiato da un altro account non accredita niente. Un UUID casuale e non
+    #: l'id o l'email: lo store non deve poter risalire alla persona.
+    app_account_token: Mapped[uuid.UUID] = mapped_column(
+        Uuid, unique=True, nullable=False, default=uuid.uuid4, server_default=text("gen_random_uuid()"),
+    )
 
     #: Vero solo sull'istanza che ha appena creato la riga. Non è una colonna:
     #: serve a chi deve fare qualcosa una volta sola alla nascita
     #: dell'account — aprire il piano gratuito.
     appena_creato: bool = False
+    #: Vero se la persona è rientrata durante i 30 giorni di ripensamento dopo aver chiesto la cancellazione
+    #: (`UserRepository.ensure`): può solo vedere la richiesta, annullarla o scaricare i suoi dati. Non è una colonna.
+    in_cancellazione: bool = False
 
     readings: Mapped[List["Reading"]] = relationship(
         back_populates="owner", cascade="all, delete-orphan",
@@ -183,6 +242,10 @@ class Reading(Base, TimestampMixin, OwnedMixin):
     #: (una delle letture giornaliere dell'abbonamento), oppure `omaggio`
     #: dove l'installazione non fa pagare.
     consumo: Mapped[str] = mapped_column(String(10), nullable=False)
+    #: Il limite dell'abbonamento superato all'apertura (v9, Fase 2b): `letture_al_giorno`, `letture_alla_settimana`,
+    #: `letture_al_mese` o `letture_totali`. Con `consumo='condono'` la lettura oltre il limite è stata regalata
+    #: (i condoni si contano per limite e per periodo); con `credito`, l'utente ha acconsentito a usare un credito.
+    limite: Mapped[Optional[str]] = mapped_column(String(30))
 
     #: Vero se le carte sono state inserite a mano (mazzo fisico già estratto, v5 "Interpreta i miei
     #: tarocchi") invece che estratte dal ventaglio. Decide solo la visibilità dell'identità della
@@ -271,7 +334,7 @@ class Reading(Base, TimestampMixin, OwnedMixin):
             name="ck_readings_status",
         ),
         CheckConstraint(
-            "consumo in ('credito', 'quota', 'omaggio', 'anonimo')", name="ck_readings_consumo",
+            "consumo in ('credito', 'quota', 'omaggio', 'anonimo', 'condono')", name="ck_readings_consumo",
         ),
         CheckConstraint(
             "feedback is null or feedback in ('si', 'in_parte', 'no')",
@@ -385,7 +448,10 @@ class AuditLog(Base):
     before: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB)
     after: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB)
 
+    #: Dalla Fase 1 del GDPR mai in chiaro: la rete troncata (IPv4 /24, IPv6 /48) e, in `ip_hash`, l'impronta HMAC
+    #: dell'indirizzo intero (`tarot/ip_protetto.py`, applicato in `AuditRepository.record`).
     ip: Mapped[Optional[str]] = mapped_column(String(45))  # anche IPv6
+    ip_hash: Mapped[Optional[str]] = mapped_column(String(64))
     correlation_id: Mapped[Optional[str]] = mapped_column(String(64), index=True)
 
     created_at: Mapped[datetime] = mapped_column(

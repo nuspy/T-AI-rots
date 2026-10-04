@@ -9,8 +9,10 @@ immutabile: l'id è casuale e cambia a ogni caricamento, quindi il contenuto non
 """
 from __future__ import annotations
 
+import random
 import re
 import uuid
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query, Response
@@ -126,6 +128,9 @@ def _elementi_catalogo(sezione: BlogSection, lang: Optional[str] = None) -> List
         return [conoscenza.carta_pubblica(c["id"], lang=lang) for c in carte]
     if sezione.tipo == "stese":
         stese = conoscenza.stese.values()
+        if "tema" in filtro:
+            # `{"tema": "lavoro"}`: le stese di lavoro e affari e le standard adatte anche al lavoro.
+            stese = conoscenza.stese_per_tema(filtro["tema"])
         if "categoria" in filtro:
             stese = [s for s in stese if conoscenza.categoria_di(s) == filtro["categoria"]]
         return [
@@ -330,6 +335,69 @@ async def articoli_che_citano(
         raise HTTPException(status_code=404, detail="Riferimento sconosciuto")
     posts = await BlogRepository(session).per_riferimento(tipo, riferimento, limite)
     return await articoli_json(session, posts)
+
+
+@router.get("/nove")
+async def nove_articoli(
+    session: DbSession,
+    carta: Optional[str] = Query(default=None, pattern="^[a-z0-9-]{1,40}$"),
+    stesa: Optional[str] = Query(default=None, pattern="^[a-z0-9-]{1,60}$"),
+    sezione: Optional[str] = Query(default=None, pattern="^[a-z0-9-]{1,80}$"),
+    articolo: Optional[str] = Query(default=None, pattern="^[a-z0-9-]{1,160}$"),
+    tag: Optional[str] = Query(default=None, pattern="^[a-z0-9-]{1,80}$"),
+    recenti: int = Query(default=3, ge=0, le=12),
+    scelti: int = Query(default=6, ge=0, le=20),
+) -> Dict[str, Any]:
+    """I nove articoli che il sito mostra in ogni pagina (v8.5): i 3 più recenti, e 6 scelti a caso fra quelli
+    attinenti alla pagina — che citano la sua carta o la sua stesa, della sua sezione, con le etichette
+    dell'articolo che si sta leggendo —, completati a caso con gli altri se non bastano.
+
+    Il caso è stabile per un giorno (seme = data UTC + contesto): un motore di ricerca che passa due volte nello
+    stesso giorno vede la stessa pagina, e domani la scelta cambia. L'articolo che si sta leggendo non compare.
+
+    Le pagine del Diario (indice, sezione, etichetta) lo usano con `recenti=6&scelti=10`: con `sezione` o `tag` le
+    recenti sono quelle della sezione o dell'etichetta (le stesse della prima pagina del loro elenco), e le 10 a
+    caso le escludono."""
+    repo = BlogRepository(session)
+    visibili = await repo.sezioni() if sezione else []
+    radice = next((x for x in visibili if x.slug == sezione), None) if sezione else None
+    ids_sezione = repo.discendenti(radice.id, visibili) if radice is not None else None
+    if recenti:
+        recenti_post, _ = await repo.elenco(
+            sezioni=ids_sezione, tag=tag, per_pagina=recenti + (1 if articolo else 0),
+        )
+    else:
+        recenti_post = []
+    recenti_post = [p for p in recenti_post if p.slug != articolo][:recenti]
+    esclusi = {p.id for p in recenti_post}
+
+    attinenti: List[BlogPost] = []
+    if carta:
+        attinenti += await repo.per_riferimento("carta", carta, 20)
+    if stesa:
+        attinenti += await repo.per_riferimento("stesa", stesa, 20)
+    corrente = await repo.per_slug(articolo) if articolo else None
+    if corrente is not None:
+        attinenti += await repo.correlati(corrente, 20)
+    if ids_sezione is not None:
+        attinenti += (await repo.elenco(sezioni=ids_sezione, per_pagina=60))[0]
+    if tag:
+        attinenti += (await repo.elenco(tag=tag, per_pagina=60))[0]
+    tutti, _ = await repo.elenco(per_pagina=200)
+
+    caso = random.Random(f"{datetime.now(timezone.utc).date().isoformat()}|{carta}|{stesa}|{sezione}|{tag}|{articolo}")
+    visti = set(esclusi) | ({corrente.id} if corrente is not None else set())
+    quanti = scelti
+    scelti_post: List[BlogPost] = []
+    for gruppo in (attinenti, tutti):
+        candidati = [p for p in {p.id: p for p in gruppo}.values() if p.id not in visti]
+        caso.shuffle(candidati)
+        for p in candidati[: quanti - len(scelti_post)]:
+            scelti_post.append(p)
+            visti.add(p.id)
+        if len(scelti_post) >= quanti:
+            break
+    return {"recenti": await articoli_json(session, recenti_post), "scelti": await articoli_json(session, scelti_post)}
 
 
 @router.get("/mappa")

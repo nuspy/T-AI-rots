@@ -1,16 +1,17 @@
-"""Letture e scritture su `user_memories`: ogni funzione filtra per `owner_id`, mai delegato al chiamante
+"""Letture e scritture su `user_memories` e sullo stato sintetico (`memoria_stato`, in fondo al file): ogni funzione
+filtra per `owner_id`, mai delegato al chiamante
 (vedi il vincolo di `OwnedMixin` — qui non ereditato per la non-nullabilità, ma lo stesso principio vale).
 """
 from __future__ import annotations
 
 import uuid
-from typing import Iterable, List, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..tarot.memoria_retrieval import CandidatoMemoria, similarita_coseno
-from .memory_models import UserMemory
+from .memory_models import MemoriaStato, UserMemory
 
 #: Sopra questa similarità, una nuova memoria STABILE è considerata lo stesso fatto già noto nello
 #: stesso campo: si scarta invece di duplicarlo (l'esempio del backlog: "manca una gamba" non deve
@@ -171,3 +172,54 @@ async def elimina_tutte(session: AsyncSession, owner_id: int) -> int:
     for riga in righe:
         await session.delete(riga)
     return len(righe)
+
+
+# ---- lo stato sintetico (`tarot/stato_memoria.py`) ----------------------------------------------------------------
+
+
+async def stato_di(session: AsyncSession, owner_id: int, *, lock: bool = False) -> List[Dict[str, Any]]:
+    """Le voci dello stato sintetico di una persona (validate), o un elenco vuoto."""
+    from ..tarot.stato_memoria import valida
+
+    query = select(MemoriaStato).where(MemoriaStato.user_id == owner_id)
+    if lock:
+        query = query.with_for_update()
+    riga = (await session.execute(query)).scalar_one_or_none()
+    return valida(riga.voci) if riga is not None else []
+
+
+async def salva_stato(session: AsyncSession, owner_id: int, voci: Sequence[Dict[str, Any]]) -> None:
+    """Scrive lo stato (crea la riga se manca). Un elenco vuoto lascia la riga, vuota: «non ricordo nulla»."""
+    riga = await session.get(MemoriaStato, owner_id)
+    if riga is None:
+        session.add(MemoriaStato(user_id=owner_id, voci=list(voci)))
+    else:
+        riga.voci = list(voci)
+    await session.flush()
+
+
+async def elimina_stato(session: AsyncSession, owner_id: int) -> int:
+    """Cancella tutto lo stato di una persona. Restituisce quante voci c'erano."""
+    riga = await session.get(MemoriaStato, owner_id)
+    if riga is None:
+        return 0
+    quante = len(riga.voci or [])
+    await session.delete(riga)
+    return quante
+
+
+async def converti_in_stato(session: AsyncSession, owner_id: int, *, salute_ammessa: bool = False) -> int:
+    """Una tantum: le memorie correnti di `user_memories` diventano voci dello stato (unite a quelle che ci sono già,
+    senza doppioni). Le memorie di prima restano dove sono finché non le si cancella. Restituisce le voci aggiunte."""
+    from datetime import date
+
+    from ..tarot.stato_memoria import da_memorie, dimentica
+
+    attuali = await stato_di(session, owner_id, lock=True)
+    testi = {v["testo"].strip().lower() for v in attuali}
+    nuove = [v for v in da_memorie(await elenca(session, owner_id), salute_ammessa=salute_ammessa)
+             if v["testo"].strip().lower() not in testi]
+    if not nuove:
+        return 0
+    await salva_stato(session, owner_id, dimentica(attuali + nuove, date.today()))
+    return len(nuove)

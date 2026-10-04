@@ -75,6 +75,9 @@ async def controlla_e_avvisa(session, *, adesso: Optional[datetime] = None) -> D
     if not trovati or not opzioni.get("avvisi", True):
         return esito
     destinatari = await rapporto.destinatari_attivi(session)
+    from ..configurazioni import correnti
+
+    await correnti.assicura(session)  # anche nel CronJob: la posta impostata in console
     config = rapporto.config_smtp()
     if not config.configurato or not destinatari:
         riuscito, dettaglio = False, "avvisi non inviati: SMTP o destinatari mancanti"

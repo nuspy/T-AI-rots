@@ -24,13 +24,15 @@ from typing import Any, Dict, List, Optional
 
 import html
 import uuid
+from urllib.parse import urlsplit
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
 from ...analytics import eventi as analytics
-from ...auth.dependencies import CurrentUser, DbSession, require_role
+from ...auth.dependencies import CurrentUser, DbSession, OptionalUser, require_role
+from ...billing import abbonamenti as gestione_abbonamenti
 from ...billing import offerte
 from ...billing.credits import RegistroCrediti
 from ...billing.lingue import in_lingua
@@ -63,17 +65,24 @@ class Sottoscrizione(BaseModel):
     piano: str = Field(min_length=1, max_length=40)
     annuale: bool = False
     #: Dove tornare dopo il pagamento: la lettura interrotta per mancanza di
-    #: crediti, per esempio. Solo percorsi del frontend, mai indirizzi
-    #: esterni — un ritorno arbitrario sarebbe un open redirect.
+    #: crediti, per esempio. Solo percorsi del frontend o il deep link
+    #: dell'app (schemi in `ritorno_schemi_app`), mai indirizzi esterni — un
+    #: ritorno arbitrario sarebbe un open redirect.
     ritorno: Optional[str] = Field(default=None, max_length=300)
     #: Un codice sconto. Lo sconto vale sul primo pagamento.
     coupon: Optional[str] = Field(default=None, max_length=60)
+    #: Il rinnovo automatico (v9, Fase 2b): acceso per default, con lo sconto del rinnovo sul prezzo; spento, si paga
+    #: il listino e il periodo non si rinnova. Per un pacchetto non conta.
+    rinnovo: bool = True
 
 
 class AnteprimaCoupon(BaseModel):
     codice: str = Field(min_length=1, max_length=60)
     piano: str = Field(min_length=1, max_length=40)
     annuale: bool = False
+    #: Fase 2d: il rinnovo automatico scelto (il suo sconto si somma al coupon o compete con lui) e la prova.
+    rinnovo: bool = True
+    prova: bool = False
 
 
 class RiscattoCodice(BaseModel):
@@ -87,8 +96,30 @@ class Rettifica(BaseModel):
     motivo: str = Field(min_length=3, max_length=500)
 
 
-def _piano_json(p, lang: Optional[str] = None) -> Dict[str, Any]:
-    return {
+class StornoManuale(BaseModel):
+    #: Obbligatorio come per la rettifica: chi legge il registro deve sapere perché quei crediti sono stati tolti.
+    motivo: str = Field(min_length=3, max_length=500)
+
+
+def deep_link_ammesso(indirizzo: str) -> bool:
+    """Un deep link dell'app con uno schema dell'elenco chiuso (`ritorno_schemi_app`), senza spazi né controlli."""
+    if not indirizzo or any(c.isspace() or ord(c) < 32 for c in indirizzo) or "\\" in indirizzo:
+        return False
+    schema = urlsplit(indirizzo).scheme.lower()
+    return bool(schema) and schema in {s.lower() for s in get_settings().ritorno_schemi_app}
+
+
+def _ritorno_valido(ritorno: str, base: str) -> str:
+    """Il ritorno di un checkout: un percorso del sito (diventa assoluto) o il deep link dell'app; altro no."""
+    if ritorno.startswith("/") and not ritorno.startswith("//"):
+        return f"{base}{ritorno}"
+    if deep_link_ammesso(ritorno):
+        return ritorno
+    raise HTTPException(status_code=400, detail="Ritorno non valido")
+
+
+def _piano_json(p, lang: Optional[str] = None, impostazioni=None) -> Dict[str, Any]:
+    dati = {
         "slug": p.slug,
         "nome": in_lingua(p.nomi, lang, p.name),
         "tipo": p.tipo,
@@ -99,21 +130,18 @@ def _piano_json(p, lang: Optional[str] = None) -> Dict[str, Any]:
         "crediti_per_periodo": p.credits_per_period,
         "limiti": p.limits or {},
         "diritti": p.entitlements or {},
+        #: Il livello (l'ordine del catalogo): decide se un cambio di piano è un upgrade o un downgrade.
+        "livello": p.rank,
     }
+    if impostazioni is not None and not p.pacchetto:
+        # Fase 2b: il prezzo con e senza rinnovo automatico, e l'annuale della prova.
+        dati["prezzi"] = gestione_abbonamenti.prezzi_piano(p, impostazioni)
+    return dati
 
 
 def _abbonamento_json(a, lang: Optional[str] = None) -> Optional[Dict[str, Any]]:
-    if a is None:
-        return None
-    return {
-        "id": str(a.id),
-        "piano": a.plan.slug,
-        "nome": in_lingua(a.plan.nomi, lang, a.plan.name),
-        "stato": a.status,
-        "periodo_inizio": a.period_start.isoformat(),
-        "periodo_fine": a.period_end.isoformat(),
-        "disdetto_il": a.cancel_at.isoformat() if a.cancel_at else None,
-    }
+    """L'abbonamento come lo vede il conto (v9, Fase 2b: con rinnovo automatico, prossimo addebito, tolleranza)."""
+    return gestione_abbonamenti.abbonamento_json(a, lang)
 
 
 @router.get("/plans")
@@ -122,7 +150,10 @@ async def piani(
 ) -> List[Dict[str, Any]]:
     """Il catalogo. Pubblico: si guarda prima di avere un account. `lang`: nomi e descrizioni in quella lingua
     (poi l'inglese, poi l'originale); senza, l'originale."""
-    return [_piano_json(p, lang) for p in await GestoreAbbonamenti(session).piani()]
+    riga = await gestione_abbonamenti.impostazioni(session)
+    piani = [_piano_json(p, lang, riga) for p in await GestoreAbbonamenti(session).piani()]
+    await session.commit()
+    return piani
 
 
 @router.get("/me/billing")
@@ -138,6 +169,7 @@ async def il_mio_conto(
     gestore = GestoreAbbonamenti(session)
     abbonamento = await gestore.abbonamento_di(user.id)
     diritti = await gestore.diritti_di(user.id)
+    idonea, motivo = await gestione_abbonamenti.idoneita_prova(session, user.id, abbonamento)
 
     return {
         "abbonamento": _abbonamento_json(abbonamento, lang),
@@ -145,9 +177,18 @@ async def il_mio_conto(
         "saldo": await RegistroCrediti(session).saldo(user.id),
         # Quanto dei limiti è usato: mostrarlo prima evita che il limite si
         # scopra come un rifiuto. `limite` nullo significa illimitato, e senza
-        # catalogo attivo l'installazione non limita affatto.
-        "uso": (await ContatoreQuote(session).uso(user.id)).to_dict(diritti),
+        # catalogo attivo l'installazione non limita affatto. Fase 2b: tutti i limiti del piano (giorno, settimana,
+        # mese, totali del periodo pagato).
+        "uso": (await ContatoreQuote(session).uso(
+            user.id, diritti,
+            periodo_inizio=abbonamento.period_start if abbonamento else None,
+            periodo_fine=abbonamento.period_end if abbonamento else None,
+        )).to_dict(diritti),
         "limiti_attivi": await gestore.tariffe_in_vigore(),
+        # Letture comprese: un abbonamento a pagamento con limiti (oltre un limite, condono o consenso a un credito).
+        "letture_comprese": gestione_abbonamenti.ha_letture_comprese(abbonamento, diritti),
+        # Il banner della prova lo legge da qui: idonea = mai avuta e nessun abbonamento a pagamento.
+        "prova": {"idonea": idonea, "motivo": motivo},
     }
 
 
@@ -244,7 +285,7 @@ async def sottoscrivi(
 
 @router.post("/me/checkout", status_code=status.HTTP_201_CREATED)
 async def apri_checkout(
-    payload: Sottoscrizione, user: CurrentUser, session: DbSession,
+    payload: Sottoscrizione, request: Request, user: CurrentUser, session: DbSession,
 ) -> Dict[str, Any]:
     """Apre una sessione di pagamento e dice dove andare a pagare.
 
@@ -264,23 +305,48 @@ async def apri_checkout(
             status_code=400,
             detail=f"Il piano «{piano.slug}» è gratuito: non serve pagare.",
         )
+    sconto_rinnovo = 0
+    if not piano.pacchetto:
+        # Fase 2b. Mai un secondo addebito: con una fattura aperta si paga quella; con un abbonamento a pagamento già
+        # attivo si cambia piano (col conguaglio), non se ne apre un secondo.
+        try:
+            await gestione_abbonamenti.verifica_nessuna_fattura_aperta(session, user.id)
+        except gestione_abbonamenti.ErroreAbbonamento as exc:
+            raise HTTPException(status_code=409, detail={"motivo": exc.motivo, "messaggio": str(exc)}) from exc
+        attuale = await gestore.abbonamento_di(user.id)
+        if attuale is not None and not gestione_abbonamenti.gratuito(attuale.plan):
+            raise HTTPException(status_code=409, detail={
+                "motivo": "abbonamento_attivo",
+                "messaggio": "Hai già un abbonamento: cambia piano dal profilo o dai prezzi, col conguaglio.",
+            })
+        if payload.rinnovo:
+            riga = await gestione_abbonamenti.impostazioni(session)
+            sconto_rinnovo = gestione_abbonamenti.percentuale(
+                piano.price_yearly if annuale else piano.price_monthly, riga.sconto_rinnovo,
+            )
 
     base = get_settings().web_public_url.rstrip('/')
     # Senza un ritorno esplicito si torna ai prezzi in inglese (la lingua canonica del sito); il frontend indica sempre
-    # il proprio, nella lingua di chi ha pagato (`/pricing` o `/it/piano`).
+    # il proprio, nella lingua di chi ha pagato (`/pricing` o `/it/piano`). L'app indica il suo deep link.
     ritorno = f"{base}/pricing"
     if payload.ritorno:
-        if not payload.ritorno.startswith("/") or payload.ritorno.startswith("//"):
-            raise HTTPException(status_code=400, detail="Ritorno non valido")
-        payload.ritorno = f"{base}{payload.ritorno}"
+        payload.ritorno = _ritorno_valido(payload.ritorno, base)
     sconto = None
+    composizione = None
     if payload.coupon and payload.coupon.strip():
-        _limita_tentativi(user.id)
+        chiavi = _chiavi_tentativi(request, user.id)
+        _limita_tentativi(chiavi)
         try:
-            sconto = await offerte.valuta(session, user.id, payload.coupon, piano, annuale=annuale)
+            valutato = await offerte.valuta(session, user.id, payload.coupon, piano, annuale=annuale)
+            # Fase 2d: il coupon con lo sconto del rinnovo, sommati o il più alto dei due (`offerte.componi`).
+            composizione = offerte.componi(
+                valutato.listino, base=sconto_rinnovo, valutato=valutato, abbonamento=not piano.pacchetto,
+                rinnovo=payload.rinnovo,
+            )
         except offerte.CouponNonValido as exc:
-            _conta_tentativo(user.id, exc)
+            _conta_tentativo(chiavi, exc)
             raise _errore_coupon(exc) from exc
+        sconto = composizione.sconto_per_pagamento()
 
     if sconto is not None and sconto.finale == 0:
         # Un pacchetto azzerato dal coupon: niente da pagare, quindi nessun fornitore. I crediti sono già dati.
@@ -303,6 +369,8 @@ async def apri_checkout(
         async with session.begin_nested():
             checkout, url = await GestorePagamenti(session).apri(
                 user.id, piano, annuale=annuale, ritorno=payload.ritorno or ritorno, sconto=sconto,
+                rinnovo=payload.rinnovo and not piano.pacchetto, sconto_rinnovo=sconto_rinnovo,
+                sconto_ricorrente=composizione.sconto_ricorrente if composizione and composizione.applicato else None,
             )
     except PagamentiNonDisponibili as exc:
         raise HTTPException(
@@ -317,38 +385,64 @@ async def apri_checkout(
     await session.commit()
     return {
         "checkout_id": str(checkout.id), "url": url, "importo": checkout.importo, "sconto": checkout.sconto,
-        "valuta": checkout.currency, "gratis": False,
+        "valuta": checkout.currency, "gratis": False, "listino": checkout.listino,
+        "sconto_rinnovo": checkout.sconto_rinnovo, "rinnovo": checkout.rinnovo,
+        # Fase 2d: il codice valeva ma un altro sconto era più alto (non cumulabile): non si è consumato.
+        "coupon": composizione.to_dict() if composizione else None,
     }
 
 
 # ---- codici sconto e codici regalo --------------------------------------------------------------
 #
-# Un codice si prova a mano: chi ne indovina uno sconta un acquisto o riscuote crediti. Dieci tentativi falliti in dieci
-# minuti fermano chi prova a caso. Il conto sta in memoria del processo: con più repliche il limite si moltiplica, ma un
-# codice di otto caratteri su 32 simboli ha 10^12 combinazioni, e a quel ritmo non si indovina.
+# Un codice si prova a mano: chi ne indovina uno sconta un acquisto o riscuote crediti. Dieci codici inesistenti in
+# un'ora — per persona **o** per indirizzo IP, così né cambiare account né restare anonimi aggira il limite — fermano chi
+# prova a caso (429 `troppi_tentativi`, che il sito traduce). Il conto sta in memoria del processo: con più repliche il
+# limite si moltiplica, ma un codice di otto caratteri su 32 simboli ha 10^12 combinazioni, e a quel ritmo non si
+# indovina. Maiuscole e spazi non contano (`offerte.normalizza_codice`).
 
-_TENTATIVI: Dict[int, List[float]] = {}
-FINESTRA_TENTATIVI = 600.0
+_TENTATIVI: Dict[str, List[float]] = {}
+FINESTRA_TENTATIVI = 3600.0
 MAX_FALLITI = 10
+TROPPI_TENTATIVI = "Troppi codici sbagliati: riprova fra un'ora."
 
 
-def _limita_tentativi(user_id: int) -> None:
+def _chiavi_tentativi(request: Request, user_id: Optional[int]) -> List[str]:
+    from lanterna.rete import ip_client
+
+    chiavi = [f"u:{user_id}"] if user_id is not None else []
+    ip = ip_client(request)
+    if ip:
+        chiavi.append(f"ip:{ip}")
+    return chiavi
+
+
+def _limita_tentativi(chiavi: List[str]) -> None:
     import time
 
     ora = time.monotonic()
-    recenti = [t for t in _TENTATIVI.get(user_id, []) if ora - t < FINESTRA_TENTATIVI]
-    _TENTATIVI[user_id] = recenti
-    if len(recenti) >= MAX_FALLITI:
-        raise HTTPException(status_code=429, detail="Troppi codici sbagliati: riprova fra qualche minuto.")
+    if len(_TENTATIVI) > 10_000:
+        # Gli indirizzi passati senza tentativi recenti non servono più: la memoria non cresce senza fine.
+        for chiave in [k for k, v in _TENTATIVI.items() if not v or ora - v[-1] >= FINESTRA_TENTATIVI]:
+            _TENTATIVI.pop(chiave, None)
+    for chiave in chiavi:
+        recenti = [t for t in _TENTATIVI.get(chiave, []) if ora - t < FINESTRA_TENTATIVI]
+        _TENTATIVI[chiave] = recenti
+        if len(recenti) >= MAX_FALLITI:
+            attesa = int(FINESTRA_TENTATIVI - (ora - recenti[0])) + 1
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS, headers={"Retry-After": str(attesa)},
+                detail={"motivo": "troppi_tentativi", "messaggio": TROPPI_TENTATIVI, "riprova_fra": attesa},
+            )
 
 
-def _conta_tentativo(user_id: int, exc: "offerte.CouponNonValido") -> None:
+def _conta_tentativo(chiavi: List[str], exc: "offerte.CouponNonValido") -> None:
     """Conta solo i codici che **non esistono**: sono i tentativi a caso. Un codice che esiste ma non vale (scaduto, non
     per questa offerta…) non è un tentativo, e una pagina che lo prova su ogni offerta non deve bloccare chi lo ha."""
     import time
 
     if exc.motivo == "coupon_sconosciuto":
-        _TENTATIVI.setdefault(user_id, []).append(time.monotonic())
+        for chiave in chiavi:
+            _TENTATIVI.setdefault(chiave, []).append(time.monotonic())
 
 
 def _errore_coupon(exc: "offerte.CouponNonValido") -> HTTPException:
@@ -356,32 +450,87 @@ def _errore_coupon(exc: "offerte.CouponNonValido") -> HTTPException:
 
 
 @router.post("/me/coupon/anteprima")
-async def anteprima_coupon(payload: AnteprimaCoupon, user: CurrentUser, session: DbSession) -> Dict[str, Any]:
-    """Quanto costerebbe un'offerta con questo codice, senza aprire nessun pagamento."""
+async def anteprima_coupon(
+    payload: AnteprimaCoupon, request: Request, user: CurrentUser, session: DbSession,
+) -> Dict[str, Any]:
+    """Quanto costerebbe un'offerta con questo codice, senza aprire nessun pagamento. Fase 2d: con il rinnovo
+    automatico scelto (o la prova) e il cumulo, come lo farà il pagamento."""
     piano = await GestoreAbbonamenti(session).piano_per_slug(payload.piano)
     if piano is None or not piano.active:
         raise HTTPException(status_code=404, detail=f"Il piano «{payload.piano}» non esiste o non è più offerto.")
-    _limita_tentativi(user.id)
+    chiavi = _chiavi_tentativi(request, user.id)
+    _limita_tentativi(chiavi)
+    annuale = (payload.annuale or payload.prova) and not piano.pacchetto
     try:
-        s = await offerte.valuta(session, user.id, payload.codice, piano, annuale=payload.annuale and not piano.pacchetto)
+        s = await offerte.valuta(session, user.id, payload.codice, piano, annuale=annuale)
+        base = 0
+        if not piano.pacchetto and (payload.rinnovo or payload.prova):
+            riga = await gestione_abbonamenti.impostazioni(session)
+            base = gestione_abbonamenti.percentuale(
+                s.listino, riga.sconto_prova if payload.prova else riga.sconto_rinnovo,
+            )
+        composizione = offerte.componi(
+            s.listino, base=base, valutato=s, abbonamento=not piano.pacchetto, rinnovo=payload.rinnovo,
+            prova=payload.prova and not piano.pacchetto,
+        )
     except offerte.CouponNonValido as exc:
-        _conta_tentativo(user.id, exc)
+        _conta_tentativo(chiavi, exc)
         raise _errore_coupon(exc) from exc
+    await session.commit()
     return {
-        "codice": s.coupon.code, "tipo": s.coupon.tipo, "listino": s.listino, "sconto": s.sconto,
-        "importo": s.finale, "valuta": piano.currency, "gratis": s.finale == 0,
+        "codice": s.coupon.code, "tipo": s.coupon.tipo, "listino": s.listino,
+        # `sconto` e `importo` sono quelli del pagamento intero (rinnovo automatico e coupon secondo il cumulo).
+        "sconto": composizione.sconto, "importo": composizione.importo, "valuta": piano.currency,
+        "gratis": composizione.importo == 0 and not composizione.prova,
+        "coupon": offerte.coupon_pubblico(s.coupon), **composizione.to_dict(),
     }
 
 
+class AnteprimaPubblica(BaseModel):
+    codice: str = Field(min_length=1, max_length=60)
+
+
+@router.post("/coupon/anteprima")
+async def anteprima_pubblica(
+    payload: AnteprimaPubblica, request: Request, user: OptionalUser, session: DbSession,
+) -> Dict[str, Any]:
+    """Il codice di un link (`/pricing?coupon=CODICE`) su tutte le offerte, anche senza account (Fase 2d): chi
+    arriva da una newsletter vede subito il prezzo barrato e quanto risparmia. Senza accesso non si controllano le
+    regole della persona (già usato, solo primo acquisto): le ricontrolla il pagamento. Limite dei tentativi per IP."""
+    chiavi = _chiavi_tentativi(request, user.id if user else None)
+    _limita_tentativi(chiavi)
+    try:
+        coupon = await offerte.verifica_sconto(session, user.id if user else None, payload.codice)
+    except offerte.CouponNonValido as exc:
+        _conta_tentativo(chiavi, exc)
+        raise _errore_coupon(exc) from exc
+    riga = await gestione_abbonamenti.impostazioni(session)
+    piani = await GestoreAbbonamenti(session).piani()
+    from ...billing.pagamenti import PagamentiDisattivati
+
+    risposta = {
+        "coupon": offerte.coupon_pubblico(coupon),
+        "offerte": offerte.preventivi(
+            coupon, list(piani), percento_rinnovo=riga.sconto_rinnovo, percento_prova=riga.sconto_prova,
+            con_prova=not isinstance(provider_pagamenti(), PagamentiDisattivati),
+        ),
+    }
+    await session.commit()
+    return risposta
+
+
 @router.post("/me/coupon/riscatta")
-async def riscatta_codice(payload: RiscattoCodice, user: CurrentUser, session: DbSession) -> Dict[str, Any]:
+async def riscatta_codice(
+    payload: RiscattoCodice, request: Request, user: CurrentUser, session: DbSession,
+) -> Dict[str, Any]:
     """Riscatta un codice regalo: i crediti arrivano subito."""
-    _limita_tentativi(user.id)
+    chiavi = _chiavi_tentativi(request, user.id)
+    _limita_tentativi(chiavi)
     try:
         coupon, crediti = await offerte.riscatta_regalo(session, user.id, payload.codice)
     except offerte.CouponNonValido as exc:
         # Niente da annullare: le regole si controllano prima di scrivere (e la riga bloccata si libera a fine richiesta).
-        _conta_tentativo(user.id, exc)
+        _conta_tentativo(chiavi, exc)
         raise _errore_coupon(exc) from exc
     await AuditRepository(session).record(
         actor_id=user.id, action="coupon.redeem", target_type="coupon", target_id=coupon.code, after={"crediti": crediti},
@@ -409,6 +558,11 @@ async def stato_checkout(
         "piano": checkout.plan.slug,
         "nome": checkout.plan.name,
         "tipo": checkout.plan.tipo,
+        # Fase 2b: una prova, un cambio di piano, e perché un pagamento non ha prodotto ciò che chiedeva
+        # (`prova_gia_usata`, `carta_gia_usata`).
+        "prova": checkout.prova,
+        "cambio": checkout.sostituisce_id is not None,
+        "esito": checkout.esito,
     }
 
 
@@ -440,6 +594,18 @@ async def webhook(request: Request, session: DbSession) -> Dict[str, Any]:
     await session.commit()
     logger.info("Evento %s (%s): %s", evento.id, evento.tipo, esito)
     return {"ricevuto": evento.id, "esito": esito}
+
+
+@router.get("/billing/ritorno-app")
+async def ritorno_app(verso: str = Query(max_length=300)) -> RedirectResponse:
+    """Il rimbalzo verso l'app dopo il pagamento (v9): Stripe torna solo a indirizzi web, l'app vuole il suo deep link.
+
+    Si riconvalida lo schema contro l'elenco chiuso: chi costruisse a mano questo indirizzo non deve poterlo usare
+    per mandare altrove.
+    """
+    if not deep_link_ammesso(verso):
+        raise HTTPException(status_code=400, detail="Ritorno non valido")
+    return RedirectResponse(verso, status_code=status.HTTP_303_SEE_OTHER)
 
 
 # ---- la pagina di pagamento del simulatore ---------------------------------
@@ -619,7 +785,19 @@ async def disdici(user: CurrentUser, session: DbSession) -> Dict[str, Any]:
             detail="Non hai un abbonamento attivo.",
         )
 
-    await gestore.disdici(abbonamento)
+    try:
+        if not gestione_abbonamenti.gratuito(abbonamento.plan):
+            # Fase 2b: è lo spegnimento del rinnovo automatico, con la sua email di conferma formale.
+            await gestione_abbonamenti.imposta_rinnovo(
+                session, abbonamento, False, configurato=gestore._provider, utente=user,
+            )
+        else:
+            await gestore.disdici(abbonamento)
+    except gestione_abbonamenti.ErroreAbbonamento as exc:
+        raise HTTPException(status_code=409, detail={"motivo": exc.motivo, "messaggio": str(exc), **exc.dati}) from exc
+    except PagamentiNonDisponibili as exc:
+        # Il fornitore non ha confermato la disdetta: meglio dirlo che segnarla qui e lasciarlo addebitare.
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
     await session.commit()
     await session.refresh(abbonamento, ["plan"])
     return {"abbonamento": _abbonamento_json(abbonamento)}
@@ -676,3 +854,69 @@ async def rettifica(
     await session.commit()
 
     return {"saldo": dopo, "delta": payload.delta}
+
+
+@router_admin.post("/users/{user_id}/credits/{voce_id}/storno")
+async def storna_a_mano(
+    user_id: int, voce_id: int, payload: StornoManuale, user: CurrentUser, session: DbSession,
+) -> Dict[str, Any]:
+    """Registra lo storno di un incasso: un rimborso fatto a mano dalla dashboard del fornitore, una contestazione
+    di cui il webhook non ha trovato i crediti, un incasso di prima del registro multicanale.
+
+    **Non rimborsa il denaro**: quello si fa presso il fornitore. Qui si tolgono i crediti che quell'incasso aveva
+    dato, con lo stesso riferimento — se poi arriva anche l'evento del fornitore, trova lo storno già fatto e non
+    toglie due volte. Il saldo può andare sotto zero, come per uno storno automatico.
+    """
+    from ...domain.billing_models import CreditEntry
+
+    voce = await session.get(CreditEntry, voce_id)
+    if voce is None or voce.user_id != user_id:
+        raise HTTPException(status_code=404, detail="Movimento non trovato")
+    if voce.reason not in ("acquisto", "accredito_piano") or voce.delta <= 0:
+        raise HTTPException(status_code=422, detail="Si storna solo un acquisto o un accredito di piano.")
+
+    registro = RegistroCrediti(session)
+    prima = await registro.saldo(user_id)
+    riga, nuova = await registro.storna(
+        user_id, voce.delta, provider=voce.provider,
+        riferimento_esterno=voce.riferimento_esterno or f"voce:{voce.id}",
+        canale="console", note=f"storno manuale: {payload.motivo}", expires_at=voce.expires_at,
+    )
+    if not nuova:
+        raise HTTPException(status_code=409, detail="Questo incasso è già stato stornato.")
+    dopo = await registro.saldo(user_id)
+    await AuditRepository(session).record(
+        actor_id=user.id, action="credits.reverse", target_type="user", target_id=str(user_id),
+        before={"saldo": prima},
+        after={
+            "saldo": dopo, "voce": voce.id, "crediti": -riga.delta, "provider": voce.provider,
+            "riferimento": riga.riferimento_esterno, "motivo": payload.motivo,
+        },
+    )
+    await session.commit()
+    return {"saldo": dopo, "delta": riga.delta}
+
+
+@router_admin.get("/payments/config")
+async def configurazione_pagamenti() -> Dict[str, Any]:
+    """Il fornitore attivo e lo stato delle chiavi di Stripe, per la console. **Mai i valori**: solo se ci sono e,
+    dalla forma della chiave, se è di prova o reale."""
+    from ...billing.stripe import EVENTI
+
+    from ...configurazioni.correnti import pagamenti as pagamenti_correnti
+
+    impostazioni = get_settings()
+    # v9 Fase 2c: i valori in uso (console, poi ambiente); il dettaglio sta in `/admin/configurazioni/stripe`.
+    correnti = pagamenti_correnti(impostazioni)
+    return {
+        "provider": correnti.provider,
+        "stripe": {
+            "chiave_segreta": bool(correnti.chiave_segreta),
+            "segreto_webhook": bool(correnti.segreto_webhook),
+            "modalita": correnti.modalita,
+        },
+        # L'indirizzo pubblico dell'API: dietro il gateway è `https://tarots.chat/api/billing/webhook`.
+        "webhook_url": f"{impostazioni.api_public_url.rstrip('/')}/billing/webhook",
+        "eventi": list(EVENTI),
+        "schemi_app": list(impostazioni.ritorno_schemi_app),
+    }

@@ -60,6 +60,8 @@ async def test_i_generi_della_scheda_si_salvano(client, session, catalogo, gener
 
 
 async def test_altro_porta_un_testo_libero_che_si_azzera_se_il_genere_cambia(client, session, catalogo):
+    # «Persona trans» è un dato dell'art. 9: si salva solo col consenso `dati_particolari` (GDPR, Fase 1).
+    await client.post("/consenso", json={"tipo": "dati_particolari", "valore": "accettato", "versione_informativa": "v3"})
     p = await _scheda(client, gender="altro", gender_custom="  agender  ", is_trans=True)
     assert p["gender"] == "altro" and p["gender_custom"] == "agender" and p["is_trans"] is True
     p = (await client.patch("/me/profile", json={"gender": "donna"})).json()
@@ -361,7 +363,7 @@ async def test_il_ritiro_di_una_condivisione_speciale_funziona(client, session, 
 
 async def test_le_stese_si_filtrano_per_categoria(client, catalogo):
     tutte = (await client.get("/spreads")).json()
-    assert len(tutte) == 14
+    assert len(tutte) == 19
     standard = (await client.get("/spreads", params={"categoria": "standard"})).json()
     assert [s["id"] for s in standard] == ["tre-carte", "croce-semplice", "ferro-di-cavallo", "croce-celtica", "ruota-astrologica"]
     compat = (await client.get("/spreads", params={"categoria": "compatibilita"})).json()

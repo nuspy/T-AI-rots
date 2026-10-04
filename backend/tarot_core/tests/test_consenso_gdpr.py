@@ -15,19 +15,20 @@ VERSIONE = "v1"
 
 
 async def test_un_secondo_consenso_sovrascrive_lo_stato_ma_raddoppia_l_audit(client, session, utente):
+    # Dalla Fase 1 del GDPR «cookie» è il vecchio nome di statistiche + Google Analytics: si guarda `statistiche`.
     r1 = await client.post("/consenso", json={"tipo": "cookie", "valore": "rifiutato", "versione_informativa": VERSIONE})
     assert r1.status_code == 200, r1.text
     r2 = await client.post("/consenso", json={"tipo": "cookie", "valore": "accettato", "versione_informativa": VERSIONE})
     assert r2.status_code == 200, r2.text
 
     righe = (await session.execute(
-        select(UserConsent).where(UserConsent.user_id == utente.id, UserConsent.tipo == "cookie")
+        select(UserConsent).where(UserConsent.user_id == utente.id, UserConsent.tipo == "statistiche")
     )).scalars().all()
     assert len(righe) == 1
     assert righe[0].valore == "accettato"
 
     eventi = (await session.execute(
-        select(AuditLog).where(AuditLog.action == "consenso.cookie", AuditLog.actor_id == utente.id)
+        select(AuditLog).where(AuditLog.action == "consenso.statistiche", AuditLog.actor_id == utente.id)
     )).scalars().all()
     assert len(eventi) == 2
     assert eventi[0].ip is not None and eventi[0].created_at is not None
@@ -36,14 +37,17 @@ async def test_un_secondo_consenso_sovrascrive_lo_stato_ma_raddoppia_l_audit(cli
 async def test_get_consenso_riporta_none_per_un_tipo_mai_deciso(client):
     r = await client.get("/consenso")
     assert r.status_code == 200
-    assert r.json() == {"cookie": None, "condivisione_dati_partner": None}
+    assert r.json() == {
+        "statistiche": None, "google_analytics": None, "pubblicita": None, "testi_statistiche": None,
+        "dati_particolari": None, "marketing": None, "cookie": None,
+    }
 
 
 async def test_get_consenso_dopo_una_scelta(client):
     await client.post("/consenso", json={"tipo": "cookie", "valore": "accettato", "versione_informativa": VERSIONE})
     r = await client.get("/consenso")
-    assert r.json()["cookie"] == "accettato"
-    assert r.json()["condivisione_dati_partner"] is None
+    assert r.json()["cookie"] == "accettato" and r.json()["statistiche"] == "accettato"
+    assert r.json()["google_analytics"] == "accettato" and r.json()["marketing"] is None
 
 
 async def test_un_visitatore_anonimo_puo_dare_il_consenso_cookie(client):

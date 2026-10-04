@@ -12,7 +12,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from lanterna.rete import ip_client
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -26,7 +26,7 @@ from ...domain.deck_models import Deck
 from ...domain.repositories import AuditRepository
 from ...domain.voting_models import DeckCandidate, DeckSuggestion, VotingRound
 from ...tarot import blog as regole
-from .blog import url_immagine
+from .blog import url_immagine, url_miniatura
 
 router = APIRouter(prefix="/admin/voto", tags=["voto"], dependencies=[Depends(require_role("admin"))])
 
@@ -35,13 +35,22 @@ def _ip(request: Request) -> Optional[str]:
     return ip_client(request)
 
 
+#: Le carte d'esempio di un candidato: al massimo cinque, nell'ordine scelto in console.
+MAX_CAMPIONI = 5
+
+
+def _campione_json(camp: Dict[str, Any]) -> Dict[str, Any]:
+    media_id = uuid.UUID(camp["media_id"])
+    return {
+        "media_id": str(media_id), "etichetta": camp.get("etichetta"),
+        "url": url_immagine(media_id), "mini": url_miniatura(media_id),
+    }
+
+
 def _candidato_json(c: DeckCandidate, conteggi: Dict[uuid.UUID, int]) -> Dict[str, Any]:
     return {
         "id": str(c.id), "nome": c.nome, "descrizione": c.descrizione,
-        "campioni": [
-            {"etichetta": camp.get("etichetta"), "url": url_immagine(uuid.UUID(camp["media_id"]))}
-            for camp in c.campioni
-        ],
+        "campioni": [_campione_json(camp) for camp in c.campioni if camp.get("media_id")],
         "voti": conteggi.get(c.id, 0),
         "accettato": c.accettato,
         "deck_id": c.deck_id,
@@ -203,13 +212,19 @@ async def elimina_candidato(candidate_id: uuid.UUID, request: Request, user: Cur
 
 @router.post("/candidati/{candidate_id}/campioni")
 async def carica_campione(
-    candidate_id: uuid.UUID, etichetta: str, request: Request, user: CurrentUser, session: DbSession,
+    candidate_id: uuid.UUID, request: Request, user: CurrentUser, session: DbSession,
+    etichetta: Optional[str] = Query(default=None, max_length=80),
 ) -> Dict[str, Any]:
-    """Carica una carta di prova (corpo = immagine grezza, stesso pattern di `POST /admin/media`):
-    si elabora e si salva come `MediaImage(uso="voto")`, poi si aggiunge a `campioni`."""
-    candidato = await session.get(DeckCandidate, candidate_id)
+    """Carica una carta d'esempio (corpo = immagine grezza, stesso pattern di `POST /admin/media`): si elabora e si
+    salva come `MediaImage(uso="voto")`, poi si aggiunge in fondo a `campioni`. Al massimo `MAX_CAMPIONI` per
+    candidato: la console ne manda più d'una di seguito (selezione multipla), una per richiesta. L'etichetta è
+    facoltativa (la console usa il nome del file senza estensione)."""
+    candidato = await session.get(DeckCandidate, candidate_id, with_for_update=True)
     if candidato is None:
         raise HTTPException(status_code=404, detail="Candidato non trovato")
+    if len(candidato.campioni) >= MAX_CAMPIONI:
+        raise HTTPException(status_code=409, detail=f"Al massimo {MAX_CAMPIONI} carte d'esempio per candidato.")
+    etichetta = (etichetta or "").strip() or None
     if not request.headers.get("content-type", "").startswith("image/"):
         raise HTTPException(status_code=415, detail="Serve un'immagine")
     if int(request.headers.get("content-length") or 0) > regole.MAX_CARICO_IMMAGINE:
@@ -229,7 +244,56 @@ async def carica_campione(
         after={"etichetta": etichetta}, ip=_ip(request),
     )
     await session.commit()
-    return {"etichetta": etichetta, "url": url_immagine(img.id)}
+    return _campione_json({"etichetta": etichetta, "media_id": str(img.id)})
+
+
+class OrdineCampioniIn(BaseModel):
+    #: Gli id delle immagini (`media_id`) nel nuovo ordine: esattamente quelle che il candidato ha già.
+    ordine: List[uuid.UUID] = Field(max_length=MAX_CAMPIONI)
+
+
+@router.put("/candidati/{candidate_id}/campioni")
+async def riordina_campioni(
+    candidate_id: uuid.UUID, payload: OrdineCampioniIn, request: Request, user: CurrentUser, session: DbSession,
+) -> List[Dict[str, Any]]:
+    """Il nuovo ordine delle carte d'esempio (la prima è quella che si vede per prima sul sito)."""
+    candidato = await session.get(DeckCandidate, candidate_id, with_for_update=True)
+    if candidato is None:
+        raise HTTPException(status_code=404, detail="Candidato non trovato")
+    per_id = {camp["media_id"]: camp for camp in candidato.campioni if camp.get("media_id")}
+    nuovo = [str(m) for m in payload.ordine]
+    if sorted(nuovo) != sorted(per_id) or len(set(nuovo)) != len(nuovo):
+        raise HTTPException(status_code=409, detail="L'ordine deve contenere esattamente le carte d'esempio del candidato.")
+    candidato.campioni = [per_id[m] for m in nuovo]
+    await AuditRepository(session).record(
+        action="voto.candidato.campioni_ordine", actor_id=user.id, target_type="deck_candidate",
+        target_id=str(candidate_id), after={"ordine": nuovo}, ip=_ip(request),
+    )
+    await session.commit()
+    return [_campione_json(camp) for camp in candidato.campioni]
+
+
+@router.delete("/candidati/{candidate_id}/campioni/{media_id}", status_code=204)
+async def elimina_campione(
+    candidate_id: uuid.UUID, media_id: uuid.UUID, request: Request, user: CurrentUser, session: DbSession,
+) -> None:
+    """Toglie una carta d'esempio dal candidato e ne cancella l'immagine (`MediaImage(uso="voto")`: non la usa
+    nessun altro)."""
+    candidato = await session.get(DeckCandidate, candidate_id, with_for_update=True)
+    if candidato is None:
+        raise HTTPException(status_code=404, detail="Candidato non trovato")
+    resto = [camp for camp in candidato.campioni if camp.get("media_id") != str(media_id)]
+    if len(resto) == len(candidato.campioni):
+        raise HTTPException(status_code=404, detail="Carta d'esempio non trovata")
+    candidato.campioni = resto
+    img = await session.get(MediaImage, media_id)
+    if img is not None and img.uso == "voto":
+        await session.delete(img)
+    await AuditRepository(session).record(
+        action="voto.candidato.campione_elimina", actor_id=user.id, target_type="deck_candidate",
+        target_id=str(candidate_id), after={"media_id": str(media_id)}, ip=_ip(request),
+    )
+    await session.commit()
 
 
 # ---- generare un mazzo da un candidato, vincitore o no ---------------------------------------------

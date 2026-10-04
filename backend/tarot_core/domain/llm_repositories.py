@@ -27,7 +27,8 @@ def pubblico(f: LlmProvider) -> Dict[str, Any]:
         "id": f.id, "nome": f.nome, "tipo": f.tipo, "provider": f.provider,
         "base_url": f.base_url, "model": f.model, "embed_model": f.embed_model,
         "has_key": f.api_key_cifrata is not None,
-        "motore": f.motore, "ragiona": f.ragiona, "parametri": f.parametri or {},
+        "motore": f.motore, "ragiona": f.ragiona, "livello_ragionamento": f.livello_ragionamento or "none",
+        "parametri": f.parametri or {},
         "senza_filtri": f.senza_filtri, "descrizione": f.descrizione, "attivo": f.attivo,
         "aggiornato": f.updated_at.isoformat() if f.updated_at else None,
     }
@@ -53,6 +54,7 @@ async def modelli_da_db(session: AsyncSession) -> List[ModelloConfigurato]:
             nome=f.nome, provider=f.provider, base_url=f.base_url, model=f.model,
             embed_model=f.embed_model, api_key=decifra(f.api_key_cifrata), ragiona=f.ragiona, motore=f.motore,
             parametri=f.parametri or {}, descrizione=f.descrizione, senza_filtri=f.senza_filtri,
+            tipo=f.tipo, livello_ragionamento=f.livello_ragionamento or "",
         )
         for f in righe
     ]

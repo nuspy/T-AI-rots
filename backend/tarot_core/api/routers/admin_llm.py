@@ -10,7 +10,7 @@ fra nomi e continua a farlo — i nomi vengono da qui invece che dall'ambiente.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from lanterna.rete import ip_client
@@ -24,9 +24,13 @@ from ...domain.repositories import AuditRepository
 from ...llm.catalogo_fornitori import CATALOGO
 from ...llm.cifratura import cifra
 from ...llm.compiti import controlla_parametri
+from ...llm.ragionamento import livello_da_bool, ragiona_da_livello
 from ..deps import aggiorna_assegnazioni
 
 router = APIRouter(prefix="/admin", tags=["fornitori-llm"], dependencies=[Depends(require_role("admin"))])
+
+#: I livelli di ragionamento (`llm/ragionamento.LIVELLI`).
+Livello = Literal["none", "minimal", "low", "medium", "high", "xhigh", "max"]
 
 
 def _ip(request: Request) -> Optional[str]:
@@ -42,6 +46,8 @@ class FornitoreNuovo(BaseModel):
     api_key: str = Field(default="", max_length=400)
     motore: str = Field(default="", max_length=20)
     ragiona: bool = False
+    #: Il livello di ragionamento predefinito del fornitore. Assente: dal booleano `ragiona` (`true` → `medium`).
+    livello_ragionamento: Optional[Livello] = None
     parametri: Dict[str, Any] = Field(default_factory=dict)
     senza_filtri: bool = False
     descrizione: str = Field(default="", max_length=200)
@@ -64,6 +70,7 @@ class FornitoreModifica(BaseModel):
     api_key: Optional[str] = Field(default=None, max_length=400)
     motore: Optional[str] = Field(default=None, max_length=20)
     ragiona: Optional[bool] = None
+    livello_ragionamento: Optional[Livello] = None
     parametri: Optional[Dict[str, Any]] = None
     senza_filtri: Optional[bool] = None
     descrizione: Optional[str] = Field(default=None, max_length=200)
@@ -98,7 +105,10 @@ async def aggiungi(
         nome=payload.nome.strip(), tipo=payload.tipo, provider=spec["provider"],
         base_url=(payload.base_url or spec.get("base_url") or "").strip(),
         model=payload.model.strip(), embed_model=payload.embed_model.strip(),
-        api_key_cifrata=cifra(payload.api_key), motore=payload.motore.strip(), ragiona=payload.ragiona,
+        api_key_cifrata=cifra(payload.api_key), motore=payload.motore.strip(),
+        # Il livello e il booleano restano allineati: chi manda solo `ragiona` (console di prima) ottiene medium/none.
+        livello_ragionamento=payload.livello_ragionamento or livello_da_bool(payload.ragiona),
+        ragiona=ragiona_da_livello(payload.livello_ragionamento) if payload.livello_ragionamento else payload.ragiona,
         parametri=payload.parametri, senza_filtri=payload.senza_filtri,
         descrizione=payload.descrizione.strip(), attivo=payload.attivo, updated_by=user.id,
     )
@@ -133,6 +143,12 @@ async def modifica(
     for campo in ("ragiona", "senza_filtri", "attivo", "parametri"):
         if campo in campi:
             setattr(fornitore, campo, campi[campo])
+    # Il livello e il booleano restano allineati: il livello, se c'è, decide; altrimenti il booleano lo riscrive.
+    if campi.get("livello_ragionamento"):
+        fornitore.livello_ragionamento = campi["livello_ragionamento"]
+        fornitore.ragiona = ragiona_da_livello(campi["livello_ragionamento"])
+    elif campi.get("ragiona") is not None:
+        fornitore.livello_ragionamento = livello_da_bool(campi["ragiona"])
     if "api_key" in campi:
         fornitore.api_key_cifrata = cifra(campi["api_key"])
     fornitore.updated_by = user.id

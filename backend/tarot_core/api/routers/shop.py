@@ -160,6 +160,7 @@ async def pdf_ordine(ordine_id: uuid.UUID, deck_id: int, user: CurrentUser, sess
     conoscenza = get_conoscenza()
     corpo = await pdf_per_mazzo(
         mazzo.slug, list(conoscenza.ordine), gratuito=False, web_public_url=get_settings().web_public_url,
+        precaricate=await deck_repositories.immagini_per_pdf(session, mazzo),
     )
     return Response(
         content=corpo, media_type="application/pdf",

@@ -102,26 +102,40 @@ def _saltato(motivo: str) -> Dict[str, str]:
     return {"stato": "saltato", "dettaglio": motivo}
 
 
-def stato_configurazione() -> Dict[str, Dict[str, Any]]:
-    """Quali canali sono pronti, e perché no quelli che non lo sono: per la console."""
+def stato_configurazione(google_console: Optional[Any] = None) -> Dict[str, Dict[str, Any]]:
+    """Quali canali sono pronti, e perché no quelli che non lo sono: per la console.
+
+    `google_console` è la riga `ConfigGoogle` (v8.6): le credenziali caricate dalla console valgono prima del file
+    montato, che resta il ripiego."""
+    from . import google
+
     s = get_settings()
     sito = s.web_public_url.rstrip("/")
     credenziali_presenti = bool(s.search_console_credenziali) and os.path.isfile(s.search_console_credenziali)
+    dalla_console = bool(google_console is not None and google_console.service_account_cifrato)
+    if dalla_console:
+        search_console = {
+            "configurato": True,
+            "dettaglio": (f"proprietà {google.proprieta_sc(google_console)}, sitemap {sito}/sitemap.xml, service account "
+                          f"{google_console.client_email} (dalla console)"),
+        }
+    else:
+        search_console = {
+            "configurato": credenziali_presenti and bool(s.search_console_proprieta),
+            "dettaglio": (
+                f"proprietà {s.search_console_proprieta}, sitemap {sito}/sitemap.xml (credenziali dal file montato)"
+                if credenziali_presenti and s.search_console_proprieta
+                else "mancano le credenziali del service account: caricale con «Configura Google»" if not credenziali_presenti
+                else "manca TAROT_SEARCH_CONSOLE_PROPRIETA"
+            ),
+        }
     return {
         "indexnow": {
             "configurato": bool(s.indexnow_chiave),
             "dettaglio": (f"file di verifica: {sito}/{s.indexnow_chiave}.txt" if s.indexnow_chiave
                           else "manca TAROT_INDEXNOW_CHIAVE"),
         },
-        "search_console": {
-            "configurato": credenziali_presenti and bool(s.search_console_proprieta),
-            "dettaglio": (
-                f"proprietà {s.search_console_proprieta}, sitemap {sito}/sitemap.xml"
-                if credenziali_presenti and s.search_console_proprieta
-                else "mancano le credenziali del service account" if not credenziali_presenti
-                else "manca TAROT_SEARCH_CONSOLE_PROPRIETA"
-            ),
-        },
+        "search_console": search_console,
         "websub": {
             "configurato": bool(s.websub_hub),
             "dettaglio": f"hub {s.websub_hub}, feed {sito}/blog/feed.xml" if s.websub_hub else "manca TAROT_WEBSUB_HUB",
@@ -184,6 +198,18 @@ async def _canale(nome: str, urls: List[str]) -> Dict[str, str]:
         return {"stato": "errore", "dettaglio": f"{type(exc).__name__}: {exc}"[:500]}
 
 
+async def _search_console_da_console(session: AsyncSession) -> Optional[Dict[str, str]]:
+    """L'invio della sitemap con le credenziali della console, isolato come gli altri canali. `None`: in console non
+    ci sono credenziali, vale il file montato."""
+    from . import google
+
+    try:
+        return await google.sitemap_dalla_console(session)
+    except Exception as exc:  # noqa: BLE001 — un canale rotto non deve fermare gli altri
+        logger.exception("Notifica ai motori, Search Console dalla console fallita")
+        return {"stato": "errore", "dettaglio": f"{type(exc).__name__}: {exc}"[:500]}
+
+
 async def ultima(session: AsyncSession) -> Optional[NotificaMotori]:
     q = select(NotificaMotori).order_by(NotificaMotori.created_at.desc()).limit(1)
     return (await session.execute(q)).scalar_one_or_none()
@@ -235,7 +261,10 @@ async def esegui(session: AsyncSession, *, manuale: bool = False, tutte: bool = 
     urls = list(dict.fromkeys(articoli + pagine))[:MAX_URL]
 
     if urls:
-        esiti.update({nome: await _canale(nome, urls) for nome in CANALI})
+        for nome in CANALI:
+            # v8.6: con le credenziali caricate dalla console la sitemap parte da lì; senza, dal file montato.
+            dalla_console = await _search_console_da_console(session) if nome == "search_console" else None
+            esiti[nome] = dalla_console or await _canale(nome, urls)
     else:
         esiti.update({nome: _saltato("nessuna pagina nuova o aggiornata") for nome in CANALI})
 

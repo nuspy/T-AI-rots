@@ -81,16 +81,24 @@ async def estrai_e_salva(
     sintesi: str,
     provider_estrazione,
     provider_embedding,
+    salute_ammessa: bool = False,
 ) -> None:
     """Orchestrazione in background: estrae, vettorizza, fonde con le memorie esistenti, salva.
 
     Va lanciata con `asyncio.create_task()`, mai `await`-ata dal flusso SSE: un errore qui non deve
     mai raggiungere una risposta già inviata all'utente, e per questo ogni eccezione è solo loggata.
+
+    `salute_ammessa` (GDPR, Fase 1): i fatti sulla salute sono una categoria particolare (art. 9) e si ricordano
+    solo con il consenso `dati_particolari` di chi consulta. Senza, il modello li può ancora proporre, ma qui si
+    scartano prima di vettorizzarli o salvarli: non escono mai dalla lettura in cui sono stati detti.
     """
     from ..domain.memoria_repositories import scrivi_o_fondi  # import locale: evita un ciclo con readings.py
+    from .consensi import campo_salute
 
     try:
         memorie = await estrai_memorie(provider_estrazione, quesito=quesito, colloquio=colloquio, sintesi=sintesi)
+        if not salute_ammessa:
+            memorie = [m for m in memorie if not campo_salute(m["campo_attinenza"])]
         if not memorie:
             return
         if not supporta_embedding(provider_embedding):

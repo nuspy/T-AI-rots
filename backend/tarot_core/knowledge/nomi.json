@@ -249,6 +249,989 @@
      "7": "B. út: kihívás",
      "8": "B. út: kimenet"
     }
+   },
+   "lavoro-trattativa": {
+    "nome": "Tárgyalás",
+    "posizioni": {
+     "1": "A te értéked",
+     "2": "Ahogy a másik fél lát",
+     "3": "Az ütőkártyád",
+     "4": "A megközelítésed"
+    }
+   },
+   "lavoro-offerta": {
+    "nome": "Állásajánlat",
+    "posizioni": {
+     "1": "A szerep",
+     "2": "Az emberek",
+     "3": "Amit ad",
+     "4": "Amibe kerül",
+     "5": "Az első év"
+    }
+   },
+   "lavoro-swot": {
+    "nome": "SWOT-elemzés",
+    "posizioni": {
+     "1": "Erősségek",
+     "2": "Gyengeségek",
+     "3": "Lehetőségek",
+     "4": "Veszélyek",
+     "5": "Tanács",
+     "6": "Lehetséges kimenet"
+    }
+   },
+   "lavoro-restare-andare": {
+    "nome": "Maradni vagy menni",
+    "posizioni": {
+     "1": "A valódi ok",
+     "2": "A félelem, ha maradsz",
+     "3": "A félelem, ha mész",
+     "4": "Amit a maradás kínál",
+     "5": "Amit a távozás kínál",
+     "6": "Amit nem látsz",
+     "7": "A döntés kulcsa"
+    }
+   },
+   "lavoro-impresa": {
+    "nome": "Új vállalkozás",
+    "posizioni": {
+     "1": "A szereped",
+     "2": "A motiváció",
+     "3": "A jövőkép",
+     "4": "A kínálat",
+     "5": "A vakfolt",
+     "6": "Az ügyfelek",
+     "7": "Hogyan szolgáld őket",
+     "8": "Ami az induláshoz kell",
+     "9": "A felkészültség"
+    }
+   }
+  }
+ },
+ "ru": {
+  "carte": {
+   "maj-00": "Дурак",
+   "maj-01": "Маг",
+   "maj-02": "Жрица",
+   "maj-03": "Императрица",
+   "maj-04": "Император",
+   "maj-05": "Иерофант",
+   "maj-06": "Влюблённые",
+   "maj-07": "Колесница",
+   "maj-08": "Регулирование",
+   "maj-09": "Отшельник",
+   "maj-10": "Фортуна",
+   "maj-11": "Вожделение",
+   "maj-12": "Повешенный",
+   "maj-13": "Смерть",
+   "maj-14": "Искусство",
+   "maj-15": "Дьявол",
+   "maj-16": "Башня",
+   "maj-17": "Звезда",
+   "maj-18": "Луна",
+   "maj-19": "Солнце",
+   "maj-20": "Эон",
+   "maj-21": "Вселенная",
+   "bastoni-01": "Туз Жезлов",
+   "bastoni-02": "Двойка Жезлов — Владычество",
+   "bastoni-03": "Тройка Жезлов — Добродетель",
+   "bastoni-04": "Четвёрка Жезлов — Завершение",
+   "bastoni-05": "Пятёрка Жезлов — Борьба",
+   "bastoni-06": "Шестёрка Жезлов — Победа",
+   "bastoni-07": "Семёрка Жезлов — Доблесть",
+   "bastoni-08": "Восьмёрка Жезлов — Стремительность",
+   "bastoni-09": "Девятка Жезлов — Сила",
+   "bastoni-10": "Десятка Жезлов — Угнетение",
+   "bastoni-cavaliere": "Рыцарь Жезлов",
+   "bastoni-regina": "Королева Жезлов",
+   "bastoni-principe": "Принц Жезлов",
+   "bastoni-principessa": "Принцесса Жезлов",
+   "coppe-01": "Туз Кубков",
+   "coppe-02": "Двойка Кубков — Любовь",
+   "coppe-03": "Тройка Кубков — Изобилие",
+   "coppe-04": "Четвёрка Кубков — Роскошь",
+   "coppe-05": "Пятёрка Кубков — Разочарование",
+   "coppe-06": "Шестёрка Кубков — Удовольствие",
+   "coppe-07": "Семёрка Кубков — Разврат",
+   "coppe-08": "Восьмёрка Кубков — Праздность",
+   "coppe-09": "Девятка Кубков — Счастье",
+   "coppe-10": "Десятка Кубков — Пресыщение",
+   "coppe-cavaliere": "Рыцарь Кубков",
+   "coppe-regina": "Королева Кубков",
+   "coppe-principe": "Принц Кубков",
+   "coppe-principessa": "Принцесса Кубков",
+   "spade-01": "Туз Мечей",
+   "spade-02": "Двойка Мечей — Мир",
+   "spade-03": "Тройка Мечей — Печаль",
+   "spade-04": "Четвёрка Мечей — Перемирие",
+   "spade-05": "Пятёрка Мечей — Поражение",
+   "spade-06": "Шестёрка Мечей — Наука",
+   "spade-07": "Семёрка Мечей — Тщетность",
+   "spade-08": "Восьмёрка Мечей — Вмешательство",
+   "spade-09": "Девятка Мечей — Жестокость",
+   "spade-10": "Десятка Мечей — Крах",
+   "spade-cavaliere": "Рыцарь Мечей",
+   "spade-regina": "Королева Мечей",
+   "spade-principe": "Принц Мечей",
+   "spade-principessa": "Принцесса Мечей",
+   "dischi-01": "Туз Дисков",
+   "dischi-02": "Двойка Дисков — Перемена",
+   "dischi-03": "Тройка Дисков — Работа",
+   "dischi-04": "Четвёрка Дисков — Власть",
+   "dischi-05": "Пятёрка Дисков — Беспокойство",
+   "dischi-06": "Шестёрка Дисков — Успех",
+   "dischi-07": "Семёрка Дисков — Неудача",
+   "dischi-08": "Восьмёрка Дисков — Благоразумие",
+   "dischi-09": "Девятка Дисков — Приобретение",
+   "dischi-10": "Десятка Дисков — Богатство",
+   "dischi-cavaliere": "Рыцарь Дисков",
+   "dischi-regina": "Королева Дисков",
+   "dischi-principe": "Принц Дисков",
+   "dischi-principessa": "Принцесса Дисков"
+  },
+  "stese": {
+   "tre-carte": {
+    "nome": "Три карты",
+    "posizioni": {
+     "1": "Прошлое",
+     "2": "Настоящее",
+     "3": "Будущее"
+    }
+   },
+   "croce-semplice": {
+    "nome": "Простой крест (Вирт)",
+    "posizioni": {
+     "1": "За",
+     "2": "Против",
+     "3": "Почему",
+     "4": "Судья",
+     "5": "Синтез"
+    }
+   },
+   "ferro-di-cavallo": {
+    "nome": "Подкова",
+    "posizioni": {
+     "1": "Прошлое",
+     "2": "Настоящее",
+     "3": "Скрытые влияния",
+     "4": "Препятствия",
+     "5": "Окружение",
+     "6": "Совет",
+     "7": "Исход"
+    }
+   },
+   "croce-celtica": {
+    "nome": "Кельтский крест",
+    "posizioni": {
+     "1": "Настоящее",
+     "2": "Вызов",
+     "3": "Недавнее прошлое",
+     "4": "Основа",
+     "5": "Венец",
+     "6": "Ближайшее будущее",
+     "7": "Твоя позиция",
+     "8": "Окружение",
+     "9": "Надежды и страхи",
+     "10": "Исход"
+    }
+   },
+   "ruota-astrologica": {
+    "nome": "Астрологическое колесо",
+    "posizioni": {
+     "1": "Дом I",
+     "2": "Дом II",
+     "3": "Дом III",
+     "4": "Дом IV",
+     "5": "Дом V",
+     "6": "Дом VI",
+     "7": "Дом VII",
+     "8": "Дом VIII",
+     "9": "Дом IX",
+     "10": "Дом X",
+     "11": "Дом XI",
+     "12": "Дом XII",
+     "13": "Сигнификатор"
+    }
+   },
+   "compat-tre": {
+    "nome": "Совместимость на три карты",
+    "posizioni": {
+     "1": "Ты",
+     "2": "Другой человек",
+     "3": "Динамика"
+    }
+   },
+   "compat-sette": {
+    "nome": "Совместимость на семь карт",
+    "posizioni": {
+     "1": "Что ищешь ты",
+     "2": "Что ищет другой человек",
+     "3": "Сходства",
+     "4": "Различия",
+     "5": "Эмоциональная совместимость",
+     "6": "Физическая совместимость",
+     "7": "Ментальная совместимость"
+    }
+   },
+   "compat-nove": {
+    "nome": "Совместимость на девять карт",
+    "posizioni": {
+     "1": "Центральная энергия",
+     "2": "Эмоциональная совместимость",
+     "3": "Твой вклад",
+     "4": "Вклад другого человека",
+     "5": "Сильные стороны",
+     "6": "Трудности",
+     "7": "Долгосрочный потенциал",
+     "8": "Скрытое влияние: ты",
+     "9": "Скрытое влияние: другой человек"
+    }
+   },
+   "compat-anime": {
+    "nome": "Родственные души",
+    "posizioni": {
+     "1": "Твой урок",
+     "2": "Урок другого человека",
+     "3": "Почему вы встретились",
+     "4": "Что вы отражаете",
+     "5": "Кармическая тема",
+     "6": "Нынешний этап",
+     "7": "Долгосрочный потенциал"
+    }
+   },
+   "coppia-croce": {
+    "nome": "Крест пары",
+    "posizioni": {
+     "1": "Ты",
+     "2": "Другой человек",
+     "3": "Корни",
+     "4": "Настоящее",
+     "5": "Будущее"
+    }
+   },
+   "coppia-stazione": {
+    "nome": "Станция для двоих",
+    "posizioni": {
+     "1": "Что ты думаешь о другом человеке",
+     "2": "Что другой человек думает о тебе",
+     "3": "Что чувствуешь ты",
+     "4": "Что чувствует другой человек",
+     "5": "Что делаешь ты",
+     "6": "Что делает другой человек",
+     "7": "Текущая ситуация"
+    }
+   },
+   "coppia-sette": {
+    "nome": "Отношения на семь карт",
+    "posizioni": {
+     "1": "Ты",
+     "2": "Другой человек",
+     "3": "Связь",
+     "4": "Сильная сторона",
+     "5": "Трения",
+     "6": "Совет",
+     "7": "Исход"
+    }
+   },
+   "coppia-specchio": {
+    "nome": "Зеркало",
+    "posizioni": {
+     "1": "Ты",
+     "2": "Как ты видишь другого человека",
+     "3": "Как другой человек видит себя",
+     "4": "Что другой человек значит для тебя",
+     "5": "Что ты значишь для другого человека",
+     "6": "Препятствия",
+     "7": "Сильные стороны",
+     "8": "Вероятный исход"
+    }
+   },
+   "coppia-bivio": {
+    "nome": "Развилка",
+    "posizioni": {
+     "1": "Где вы сейчас",
+     "2": "Что привело вас сюда",
+     "3": "Путь А: энергия",
+     "4": "Путь А: вызов",
+     "5": "Путь А: исход",
+     "6": "Путь Б: энергия",
+     "7": "Путь Б: вызов",
+     "8": "Путь Б: исход"
+    }
+   },
+   "lavoro-trattativa": {
+    "nome": "Переговоры",
+    "posizioni": {
+     "1": "Твоя ценность",
+     "2": "Как тебя видит другая сторона",
+     "3": "Твой рычаг",
+     "4": "Твой подход"
+    }
+   },
+   "lavoro-offerta": {
+    "nome": "Предложение о работе",
+    "posizioni": {
+     "1": "Роль",
+     "2": "Люди",
+     "3": "Что она даёт",
+     "4": "Чего она стоит",
+     "5": "Первый год"
+    }
+   },
+   "lavoro-swot": {
+    "nome": "SWOT-анализ",
+    "posizioni": {
+     "1": "Сильные стороны",
+     "2": "Слабые стороны",
+     "3": "Возможности",
+     "4": "Угрозы",
+     "5": "Совет",
+     "6": "Возможный исход"
+    }
+   },
+   "lavoro-restare-andare": {
+    "nome": "Остаться или уйти",
+    "posizioni": {
+     "1": "Настоящая причина",
+     "2": "Страх, если останешься",
+     "3": "Страх, если уйдёшь",
+     "4": "Что даёт остаться",
+     "5": "Что даёт уйти",
+     "6": "Чего ты не видишь",
+     "7": "Ключ к выбору"
+    }
+   },
+   "lavoro-impresa": {
+    "nome": "Новое дело",
+    "posizioni": {
+     "1": "Твоя роль",
+     "2": "Мотивация",
+     "3": "Видение",
+     "4": "Предложение",
+     "5": "Слепое пятно",
+     "6": "Клиенты",
+     "7": "Как им служить",
+     "8": "Что нужно для старта",
+     "9": "Готовность"
+    }
+   }
+  }
+ },
+ "uk": {
+  "carte": {
+   "maj-00": "Блазень",
+   "maj-01": "Маг",
+   "maj-02": "Жриця",
+   "maj-03": "Імператриця",
+   "maj-04": "Імператор",
+   "maj-05": "Ієрофант",
+   "maj-06": "Закохані",
+   "maj-07": "Колісниця",
+   "maj-08": "Регулювання",
+   "maj-09": "Відлюдник",
+   "maj-10": "Фортуна",
+   "maj-11": "Хіть",
+   "maj-12": "Повішений",
+   "maj-13": "Смерть",
+   "maj-14": "Мистецтво",
+   "maj-15": "Диявол",
+   "maj-16": "Вежа",
+   "maj-17": "Зірка",
+   "maj-18": "Місяць",
+   "maj-19": "Сонце",
+   "maj-20": "Еон",
+   "maj-21": "Всесвіт",
+   "bastoni-01": "Туз Жезлів",
+   "bastoni-02": "Двійка Жезлів — Панування",
+   "bastoni-03": "Трійка Жезлів — Чеснота",
+   "bastoni-04": "Четвірка Жезлів — Завершення",
+   "bastoni-05": "П'ятірка Жезлів — Боротьба",
+   "bastoni-06": "Шістка Жезлів — Перемога",
+   "bastoni-07": "Сімка Жезлів — Доблесть",
+   "bastoni-08": "Вісімка Жезлів — Швидкість",
+   "bastoni-09": "Дев'ятка Жезлів — Сила",
+   "bastoni-10": "Десятка Жезлів — Гніт",
+   "bastoni-cavaliere": "Лицар Жезлів",
+   "bastoni-regina": "Королева Жезлів",
+   "bastoni-principe": "Принц Жезлів",
+   "bastoni-principessa": "Принцеса Жезлів",
+   "coppe-01": "Туз Кубків",
+   "coppe-02": "Двійка Кубків — Любов",
+   "coppe-03": "Трійка Кубків — Достаток",
+   "coppe-04": "Четвірка Кубків — Розкіш",
+   "coppe-05": "П'ятірка Кубків — Розчарування",
+   "coppe-06": "Шістка Кубків — Насолода",
+   "coppe-07": "Сімка Кубків — Розпуста",
+   "coppe-08": "Вісімка Кубків — Лінощі",
+   "coppe-09": "Дев'ятка Кубків — Щастя",
+   "coppe-10": "Десятка Кубків — Пересичення",
+   "coppe-cavaliere": "Лицар Кубків",
+   "coppe-regina": "Королева Кубків",
+   "coppe-principe": "Принц Кубків",
+   "coppe-principessa": "Принцеса Кубків",
+   "spade-01": "Туз Мечів",
+   "spade-02": "Двійка Мечів — Мир",
+   "spade-03": "Трійка Мечів — Смуток",
+   "spade-04": "Четвірка Мечів — Перемир'я",
+   "spade-05": "П'ятірка Мечів — Поразка",
+   "spade-06": "Шістка Мечів — Наука",
+   "spade-07": "Сімка Мечів — Марність",
+   "spade-08": "Вісімка Мечів — Втручання",
+   "spade-09": "Дев'ятка Мечів — Жорстокість",
+   "spade-10": "Десятка Мечів — Руйнування",
+   "spade-cavaliere": "Лицар Мечів",
+   "spade-regina": "Королева Мечів",
+   "spade-principe": "Принц Мечів",
+   "spade-principessa": "Принцеса Мечів",
+   "dischi-01": "Туз Дисків",
+   "dischi-02": "Двійка Дисків — Зміна",
+   "dischi-03": "Трійка Дисків — Праця",
+   "dischi-04": "Четвірка Дисків — Влада",
+   "dischi-05": "П'ятірка Дисків — Тривога",
+   "dischi-06": "Шістка Дисків — Успіх",
+   "dischi-07": "Сімка Дисків — Невдача",
+   "dischi-08": "Вісімка Дисків — Розсудливість",
+   "dischi-09": "Дев'ятка Дисків — Здобуток",
+   "dischi-10": "Десятка Дисків — Багатство",
+   "dischi-cavaliere": "Лицар Дисків",
+   "dischi-regina": "Королева Дисків",
+   "dischi-principe": "Принц Дисків",
+   "dischi-principessa": "Принцеса Дисків"
+  },
+  "stese": {
+   "tre-carte": {
+    "nome": "Три карти",
+    "posizioni": {
+     "1": "Минуле",
+     "2": "Теперішнє",
+     "3": "Майбутнє"
+    }
+   },
+   "croce-semplice": {
+    "nome": "Простий хрест (Вірт)",
+    "posizioni": {
+     "1": "За",
+     "2": "Проти",
+     "3": "Чому",
+     "4": "Суддя",
+     "5": "Синтез"
+    }
+   },
+   "ferro-di-cavallo": {
+    "nome": "Підкова",
+    "posizioni": {
+     "1": "Минуле",
+     "2": "Теперішнє",
+     "3": "Приховані впливи",
+     "4": "Перешкоди",
+     "5": "Оточення",
+     "6": "Порада",
+     "7": "Результат"
+    }
+   },
+   "croce-celtica": {
+    "nome": "Кельтський хрест",
+    "posizioni": {
+     "1": "Теперішнє",
+     "2": "Виклик",
+     "3": "Недавнє минуле",
+     "4": "Основа",
+     "5": "Вінець",
+     "6": "Найближче майбутнє",
+     "7": "Твоя позиція",
+     "8": "Оточення",
+     "9": "Надії та страхи",
+     "10": "Результат"
+    }
+   },
+   "ruota-astrologica": {
+    "nome": "Астрологічне колесо",
+    "posizioni": {
+     "1": "Дім I",
+     "2": "Дім II",
+     "3": "Дім III",
+     "4": "Дім IV",
+     "5": "Дім V",
+     "6": "Дім VI",
+     "7": "Дім VII",
+     "8": "Дім VIII",
+     "9": "Дім IX",
+     "10": "Дім X",
+     "11": "Дім XI",
+     "12": "Дім XII",
+     "13": "Сигніфікатор"
+    }
+   },
+   "compat-tre": {
+    "nome": "Сумісність на три карти",
+    "posizioni": {
+     "1": "Ти",
+     "2": "Інша людина",
+     "3": "Динаміка"
+    }
+   },
+   "compat-sette": {
+    "nome": "Сумісність на сім карт",
+    "posizioni": {
+     "1": "Що шукаєш ти",
+     "2": "Що шукає інша людина",
+     "3": "Схожості",
+     "4": "Відмінності",
+     "5": "Емоційна сумісність",
+     "6": "Фізична сумісність",
+     "7": "Ментальна сумісність"
+    }
+   },
+   "compat-nove": {
+    "nome": "Сумісність на дев'ять карт",
+    "posizioni": {
+     "1": "Центральна енергія",
+     "2": "Емоційна сумісність",
+     "3": "Твій внесок",
+     "4": "Внесок іншої людини",
+     "5": "Сильні сторони",
+     "6": "Виклики",
+     "7": "Довгостроковий потенціал",
+     "8": "Прихований вплив: ти",
+     "9": "Прихований вплив: інша людина"
+    }
+   },
+   "compat-anime": {
+    "nome": "Споріднені душі",
+    "posizioni": {
+     "1": "Твій урок",
+     "2": "Урок іншої людини",
+     "3": "Чому ви зустрілися",
+     "4": "Що ви віддзеркалюєте",
+     "5": "Кармічна тема",
+     "6": "Поточний етап",
+     "7": "Довгостроковий потенціал"
+    }
+   },
+   "coppia-croce": {
+    "nome": "Хрест пари",
+    "posizioni": {
+     "1": "Ти",
+     "2": "Інша людина",
+     "3": "Коріння",
+     "4": "Теперішнє",
+     "5": "Майбутнє"
+    }
+   },
+   "coppia-stazione": {
+    "nome": "Станція для двох",
+    "posizioni": {
+     "1": "Що ти думаєш про іншу людину",
+     "2": "Що інша людина думає про тебе",
+     "3": "Що відчуваєш ти",
+     "4": "Що відчуває інша людина",
+     "5": "Що робиш ти",
+     "6": "Що робить інша людина",
+     "7": "Поточна ситуація"
+    }
+   },
+   "coppia-sette": {
+    "nome": "Стосунки на сім карт",
+    "posizioni": {
+     "1": "Ти",
+     "2": "Інша людина",
+     "3": "Зв'язок",
+     "4": "Сильна сторона",
+     "5": "Тертя",
+     "6": "Порада",
+     "7": "Результат"
+    }
+   },
+   "coppia-specchio": {
+    "nome": "Дзеркало",
+    "posizioni": {
+     "1": "Ти",
+     "2": "Як ти бачиш іншу людину",
+     "3": "Як інша людина бачить себе",
+     "4": "Що інша людина означає для тебе",
+     "5": "Що ти означаєш для іншої людини",
+     "6": "Перешкоди",
+     "7": "Сильні сторони",
+     "8": "Ймовірний результат"
+    }
+   },
+   "coppia-bivio": {
+    "nome": "Роздоріжжя",
+    "posizioni": {
+     "1": "Де ви зараз",
+     "2": "Що привело вас сюди",
+     "3": "Шлях А: енергія",
+     "4": "Шлях А: виклик",
+     "5": "Шлях А: результат",
+     "6": "Шлях Б: енергія",
+     "7": "Шлях Б: виклик",
+     "8": "Шлях Б: результат"
+    }
+   },
+   "lavoro-trattativa": {
+    "nome": "Переговори",
+    "posizioni": {
+     "1": "Твоя цінність",
+     "2": "Як тебе бачить інша сторона",
+     "3": "Твій важіль",
+     "4": "Твій підхід"
+    }
+   },
+   "lavoro-offerta": {
+    "nome": "Пропозиція роботи",
+    "posizioni": {
+     "1": "Роль",
+     "2": "Люди",
+     "3": "Що вона дає",
+     "4": "Чого вона коштує",
+     "5": "Перший рік"
+    }
+   },
+   "lavoro-swot": {
+    "nome": "SWOT-аналіз",
+    "posizioni": {
+     "1": "Сильні сторони",
+     "2": "Слабкі сторони",
+     "3": "Можливості",
+     "4": "Загрози",
+     "5": "Порада",
+     "6": "Можливий результат"
+    }
+   },
+   "lavoro-restare-andare": {
+    "nome": "Залишитися чи піти",
+    "posizioni": {
+     "1": "Справжня причина",
+     "2": "Страх, якщо залишишся",
+     "3": "Страх, якщо підеш",
+     "4": "Що дає залишитися",
+     "5": "Що дає піти",
+     "6": "Чого ти не бачиш",
+     "7": "Ключ до вибору"
+    }
+   },
+   "lavoro-impresa": {
+    "nome": "Нова справа",
+    "posizioni": {
+     "1": "Твоя роль",
+     "2": "Мотивація",
+     "3": "Бачення",
+     "4": "Пропозиція",
+     "5": "Сліпа пляма",
+     "6": "Клієнти",
+     "7": "Як їм служити",
+     "8": "Що потрібно для старту",
+     "9": "Готовність"
+    }
+   }
+  }
+ },
+ "es": {
+  "carte": {
+   "maj-00": "El Loco",
+   "maj-01": "El Mago",
+   "maj-02": "La Sacerdotisa",
+   "maj-03": "La Emperatriz",
+   "maj-04": "El Emperador",
+   "maj-05": "El Hierofante",
+   "maj-06": "Los Amantes",
+   "maj-07": "El Carro",
+   "maj-08": "El Ajuste",
+   "maj-09": "El Ermitaño",
+   "maj-10": "La Fortuna",
+   "maj-11": "La Lujuria",
+   "maj-12": "El Colgado",
+   "maj-13": "La Muerte",
+   "maj-14": "El Arte",
+   "maj-15": "El Diablo",
+   "maj-16": "La Torre",
+   "maj-17": "La Estrella",
+   "maj-18": "La Luna",
+   "maj-19": "El Sol",
+   "maj-20": "El Eón",
+   "maj-21": "El Universo",
+   "bastoni-01": "As de Bastos",
+   "bastoni-02": "Dos de Bastos — Dominio",
+   "bastoni-03": "Tres de Bastos — Virtud",
+   "bastoni-04": "Cuatro de Bastos — Culminación",
+   "bastoni-05": "Cinco de Bastos — Lucha",
+   "bastoni-06": "Seis de Bastos — Victoria",
+   "bastoni-07": "Siete de Bastos — Valor",
+   "bastoni-08": "Ocho de Bastos — Rapidez",
+   "bastoni-09": "Nueve de Bastos — Fuerza",
+   "bastoni-10": "Diez de Bastos — Opresión",
+   "bastoni-cavaliere": "Caballero de Bastos",
+   "bastoni-regina": "Reina de Bastos",
+   "bastoni-principe": "Príncipe de Bastos",
+   "bastoni-principessa": "Princesa de Bastos",
+   "coppe-01": "As de Copas",
+   "coppe-02": "Dos de Copas — Amor",
+   "coppe-03": "Tres de Copas — Abundancia",
+   "coppe-04": "Cuatro de Copas — Lujo",
+   "coppe-05": "Cinco de Copas — Decepción",
+   "coppe-06": "Seis de Copas — Placer",
+   "coppe-07": "Siete de Copas — Libertinaje",
+   "coppe-08": "Ocho de Copas — Indolencia",
+   "coppe-09": "Nueve de Copas — Felicidad",
+   "coppe-10": "Diez de Copas — Saciedad",
+   "coppe-cavaliere": "Caballero de Copas",
+   "coppe-regina": "Reina de Copas",
+   "coppe-principe": "Príncipe de Copas",
+   "coppe-principessa": "Princesa de Copas",
+   "spade-01": "As de Espadas",
+   "spade-02": "Dos de Espadas — Paz",
+   "spade-03": "Tres de Espadas — Dolor",
+   "spade-04": "Cuatro de Espadas — Tregua",
+   "spade-05": "Cinco de Espadas — Derrota",
+   "spade-06": "Seis de Espadas — Ciencia",
+   "spade-07": "Siete de Espadas — Futilidad",
+   "spade-08": "Ocho de Espadas — Interferencia",
+   "spade-09": "Nueve de Espadas — Crueldad",
+   "spade-10": "Diez de Espadas — Ruina",
+   "spade-cavaliere": "Caballero de Espadas",
+   "spade-regina": "Reina de Espadas",
+   "spade-principe": "Príncipe de Espadas",
+   "spade-principessa": "Princesa de Espadas",
+   "dischi-01": "As de Discos",
+   "dischi-02": "Dos de Discos — Cambio",
+   "dischi-03": "Tres de Discos — Obras",
+   "dischi-04": "Cuatro de Discos — Poder",
+   "dischi-05": "Cinco de Discos — Preocupación",
+   "dischi-06": "Seis de Discos — Éxito",
+   "dischi-07": "Siete de Discos — Fracaso",
+   "dischi-08": "Ocho de Discos — Prudencia",
+   "dischi-09": "Nueve de Discos — Ganancia",
+   "dischi-10": "Diez de Discos — Riqueza",
+   "dischi-cavaliere": "Caballero de Discos",
+   "dischi-regina": "Reina de Discos",
+   "dischi-principe": "Príncipe de Discos",
+   "dischi-principessa": "Princesa de Discos"
+  },
+  "stese": {
+   "tre-carte": {
+    "nome": "Tres cartas",
+    "posizioni": {
+     "1": "Pasado",
+     "2": "Presente",
+     "3": "Futuro"
+    }
+   },
+   "croce-semplice": {
+    "nome": "Cruz simple (Wirth)",
+    "posizioni": {
+     "1": "A favor",
+     "2": "En contra",
+     "3": "El porqué",
+     "4": "El juez",
+     "5": "Síntesis"
+    }
+   },
+   "ferro-di-cavallo": {
+    "nome": "Herradura",
+    "posizioni": {
+     "1": "Pasado",
+     "2": "Presente",
+     "3": "Influencias ocultas",
+     "4": "Obstáculos",
+     "5": "Entorno",
+     "6": "Consejo",
+     "7": "Resultado"
+    }
+   },
+   "croce-celtica": {
+    "nome": "Cruz Celta",
+    "posizioni": {
+     "1": "El presente",
+     "2": "El desafío",
+     "3": "Pasado reciente",
+     "4": "La base",
+     "5": "La corona",
+     "6": "Futuro próximo",
+     "7": "La actitud",
+     "8": "El entorno",
+     "9": "Esperanzas y miedos",
+     "10": "El resultado"
+    }
+   },
+   "ruota-astrologica": {
+    "nome": "Rueda astrológica",
+    "posizioni": {
+     "1": "Casa I",
+     "2": "Casa II",
+     "3": "Casa III",
+     "4": "Casa IV",
+     "5": "Casa V",
+     "6": "Casa VI",
+     "7": "Casa VII",
+     "8": "Casa VIII",
+     "9": "Casa IX",
+     "10": "Casa X",
+     "11": "Casa XI",
+     "12": "Casa XII",
+     "13": "El significador"
+    }
+   },
+   "compat-tre": {
+    "nome": "Compatibilidad de tres cartas",
+    "posizioni": {
+     "1": "Tú",
+     "2": "La otra persona",
+     "3": "La dinámica"
+    }
+   },
+   "compat-sette": {
+    "nome": "Compatibilidad de siete cartas",
+    "posizioni": {
+     "1": "Lo que buscas",
+     "2": "Lo que busca la otra persona",
+     "3": "Semejanzas",
+     "4": "Diferencias",
+     "5": "Compatibilidad emocional",
+     "6": "Compatibilidad física",
+     "7": "Compatibilidad mental"
+    }
+   },
+   "compat-nove": {
+    "nome": "Compatibilidad de nueve cartas",
+    "posizioni": {
+     "1": "Energía central",
+     "2": "Compatibilidad emocional",
+     "3": "Tu aporte",
+     "4": "El aporte de la otra persona",
+     "5": "Fortalezas",
+     "6": "Desafíos",
+     "7": "Potencial a largo plazo",
+     "8": "Influencia oculta: tú",
+     "9": "Influencia oculta: la otra persona"
+    }
+   },
+   "compat-anime": {
+    "nome": "Almas afines",
+    "posizioni": {
+     "1": "Tu lección",
+     "2": "La lección de la otra persona",
+     "3": "Por qué se encontraron",
+     "4": "Lo que reflejan",
+     "5": "El tema kármico",
+     "6": "La etapa actual",
+     "7": "Potencial a largo plazo"
+    }
+   },
+   "coppia-croce": {
+    "nome": "Cruz de la pareja",
+    "posizioni": {
+     "1": "Tú",
+     "2": "La otra persona",
+     "3": "Las raíces",
+     "4": "El presente",
+     "5": "El futuro"
+    }
+   },
+   "coppia-stazione": {
+    "nome": "Estación para dos",
+    "posizioni": {
+     "1": "Lo que piensas de la otra persona",
+     "2": "Lo que la otra persona piensa de ti",
+     "3": "Lo que sientes tú",
+     "4": "Lo que siente la otra persona",
+     "5": "Lo que haces tú",
+     "6": "Lo que hace la otra persona",
+     "7": "La situación actual"
+    }
+   },
+   "coppia-sette": {
+    "nome": "Relación de siete cartas",
+    "posizioni": {
+     "1": "Tú",
+     "2": "La otra persona",
+     "3": "El vínculo",
+     "4": "Punto fuerte",
+     "5": "Fricción",
+     "6": "Consejo",
+     "7": "Resultado"
+    }
+   },
+   "coppia-specchio": {
+    "nome": "Espejo",
+    "posizioni": {
+     "1": "Tú",
+     "2": "Cómo ves a la otra persona",
+     "3": "Cómo se ve la otra persona",
+     "4": "Lo que la otra persona significa para ti",
+     "5": "Lo que significas para la otra persona",
+     "6": "Obstáculos",
+     "7": "Fortalezas",
+     "8": "Resultado probable"
+    }
+   },
+   "coppia-bivio": {
+    "nome": "Encrucijada",
+    "posizioni": {
+     "1": "Dónde están",
+     "2": "Lo que los trajo aquí",
+     "3": "Camino A: energía",
+     "4": "Camino A: desafío",
+     "5": "Camino A: resultado",
+     "6": "Camino B: energía",
+     "7": "Camino B: desafío",
+     "8": "Camino B: resultado"
+    }
+   },
+   "lavoro-trattativa": {
+    "nome": "Negociación",
+    "posizioni": {
+     "1": "Tu valor",
+     "2": "Cómo te ve la otra parte",
+     "3": "Tu baza",
+     "4": "Tu enfoque"
+    }
+   },
+   "lavoro-offerta": {
+    "nome": "Oferta de trabajo",
+    "posizioni": {
+     "1": "El puesto",
+     "2": "Las personas",
+     "3": "Lo que te da",
+     "4": "Lo que te cuesta",
+     "5": "El primer año"
+    }
+   },
+   "lavoro-swot": {
+    "nome": "Análisis DAFO",
+    "posizioni": {
+     "1": "Fortalezas",
+     "2": "Debilidades",
+     "3": "Oportunidades",
+     "4": "Amenazas",
+     "5": "Consejo",
+     "6": "Resultado posible"
+    }
+   },
+   "lavoro-restare-andare": {
+    "nome": "Quedarse o irse",
+    "posizioni": {
+     "1": "El motivo real",
+     "2": "El miedo si te quedas",
+     "3": "El miedo si te vas",
+     "4": "Lo que ofrece quedarse",
+     "5": "Lo que ofrece irse",
+     "6": "Lo que no ves",
+     "7": "La clave de la elección"
+    }
+   },
+   "lavoro-impresa": {
+    "nome": "Nuevo emprendimiento",
+    "posizioni": {
+     "1": "Tu papel",
+     "2": "La motivación",
+     "3": "La visión",
+     "4": "La oferta",
+     "5": "El punto ciego",
+     "6": "Los clientes",
+     "7": "Cómo servirles",
+     "8": "Lo que necesitas para empezar",
+     "9": "La preparación"
+    }
    }
   }
  }

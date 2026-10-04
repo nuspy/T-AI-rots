@@ -43,11 +43,10 @@ def settimana_conclusa(adesso: Optional[datetime] = None) -> Tuple[date, date]:
 
 
 def config_smtp() -> posta.ConfigSmtp:
-    s = get_settings()
-    return posta.ConfigSmtp(
-        host=s.smtp_host, porta=s.smtp_porta, utente=s.smtp_utente, password=s.smtp_password,
-        mittente=s.smtp_mittente, nome_mittente="TAROTS chat", ssl=s.smtp_ssl,
-    )
+    """La posta in uscita: quella della console, poi l'ambiente (v9, Fase 2c, `configurazioni/correnti.py`)."""
+    from ..configurazioni import correnti
+
+    return correnti.smtp()
 
 
 async def opzioni(session) -> Dict[str, Any]:
@@ -189,10 +188,13 @@ async def invia_rapporto(session, *, manuale: bool = False, provider=None,
     """Compone e invia il rapporto della settimana conclusa; registra l'esito in `an_invii`."""
     da, a = settimana_conclusa(adesso)
     destinatari = solo if solo is not None else await destinatari_attivi(session)
+    from ..configurazioni import correnti
+
+    await correnti.assicura(session)  # anche nel CronJob: la posta impostata in console
     config = config_smtp()
     esito: Dict[str, Any] = {"da": da.isoformat(), "a": a.isoformat(), "destinatari": destinatari}
     if not config.configurato:
-        riuscito, dettaglio = False, "SMTP non configurato (TAROT_SMTP_HOST, TAROT_SMTP_MITTENTE)"
+        riuscito, dettaglio = False, "SMTP non configurato (console: Impostazioni → Posta in uscita)"
     elif not destinatari:
         riuscito, dettaglio = False, "nessun destinatario attivo"
     else:

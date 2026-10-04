@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .deck_models import Deck, DeckUnlock, OffertaMazzo
+from .deck_models import Deck, DeckCardImage, DeckUnlock, OffertaMazzo
 
 
 async def tutti(session: AsyncSession) -> List[Deck]:
@@ -101,4 +101,38 @@ def mazzo_json(d: Deck, lang: Optional[str] = None) -> Dict[str, Any]:
         "richiede_spedizione": d.richiede_spedizione,
         "valuta": d.valuta,
         "rank": d.rank,
+        # Le immagini caricate dalla console: l'impronta della serie pubblicata, `None` se il mazzo usa i file del sito.
+        "immagini_versione": d.immagini_versione,
     }
+
+
+# ---- le immagini caricate dalla console (`DeckCardImage`) ------------------------------------------
+
+
+async def immagine_pubblicata(session: AsyncSession, slug: str, card_id: str) -> Optional[DeckCardImage]:
+    """La carta (o il dorso) di un mazzo, se il mazzo ha immagini pubblicate dalla console."""
+    return (await session.execute(
+        select(DeckCardImage).join(Deck, Deck.id == DeckCardImage.deck_id)
+        .where(Deck.slug == slug, DeckCardImage.card_id == card_id, DeckCardImage.bozza.is_(False))
+    )).scalar_one_or_none()
+
+
+async def immagini_di(session: AsyncSession, deck_id: int, *, bozza: bool) -> List[DeckCardImage]:
+    return list((await session.execute(
+        select(DeckCardImage).where(DeckCardImage.deck_id == deck_id, DeckCardImage.bozza.is_(bozza))
+    )).scalars())
+
+
+async def ids_immagini(session: AsyncSession, deck_id: int, *, bozza: bool) -> List[str]:
+    """Solo gli id delle carte presenti, senza leggere i byte."""
+    return list((await session.execute(
+        select(DeckCardImage.card_id).where(DeckCardImage.deck_id == deck_id, DeckCardImage.bozza.is_(bozza))
+    )).scalars())
+
+
+async def immagini_per_pdf(session: AsyncSession, deck: Optional[Deck]) -> Dict[str, bytes]:
+    """Le immagini pubblicate di un mazzo per il PDF da stampare, coi nomi file di `tarot/stampa_mazzo.py`
+    (`maj-00.webp`, `dorso.webp`): vuoto per i mazzi che usano i file del sito."""
+    if deck is None or not deck.immagini_versione:
+        return {}
+    return {f"{img.card_id}.webp": img.webp for img in await immagini_di(session, deck.id, bozza=False)}

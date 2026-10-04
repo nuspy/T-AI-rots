@@ -11,13 +11,26 @@ from .test_lettura_speciale import PARTNER, QUESITO, _scheda
 pytestmark = richiede_database
 
 
+async def _controlli_sempre(session) -> None:
+    """Validatore e guardia LLM a ogni giro (il modo «acceso» della console): qui si controlla che nessun prompt, di
+    nessun compito, porti i nomi veri. Nel modo predefinito partono solo sui casi dubbi."""
+    from tarot_core.domain.impostazioni_repositories import correnti_intervista
+
+    regole = await correnti_intervista(session)
+    regole.validatore_domande, regole.guardia_responso = "acceso", "acceso"
+    await session.flush()
+
+
 async def test_ai_prompt_arrivano_le_persone_ma_mai_il_cognome_ne_il_nome(client, session, catalogo, prompt_visti):
     """Il nome vero non lascia il server: al modello arriva `Persona_1` (vedi `tarot/pseudonimi.py`)."""
     await _accredita(session, client.identita.principal, 5)
+    # «Persona trans» arriva al modello solo col consenso alle categorie particolari (GDPR, Fase 1): qui c'è.
+    await client.post("/consenso", json={"tipo": "dati_particolari", "valore": "accettato", "versione_informativa": "v3"})
     await _scheda(client, gender="non_binario", is_trans=True)
+    await _controlli_sempre(session)
     await _lettura_completa(client, "coppia-specchio", 8, QUESITO, {"partner": PARTNER})
     compiti = {v["compito"] for v in prompt_visti}
-    assert {"intervista", "validazione", "interpretazione", "sintesi", "giudizio"} <= compiti
+    assert {"intervista", "validazione", "interpretazione_unica", "sintesi", "giudizio"} <= compiti
     for v in prompt_visti:
         testo = v["sistema"] + "\n" + v["utente"]
         assert "Rossi" not in testo, v["compito"]          # il cognome non entra mai
@@ -35,15 +48,21 @@ async def test_ogni_interpretazione_ha_il_soggetto_della_sua_posizione(client, s
     await _scheda(client)
     await _lettura_completa(client, "coppia-bivio", 8, QUESITO, {"partner": PARTNER})
     persone = da_json({"tu": {}, "partner": PARTNER})
-    lette = [v for v in prompt_visti if v["compito"] == "interpretazione"]
-    assert len(lette) == 8
-    for n, v in enumerate(lette, start=1):
+    # Una chiamata sola per le otto carte: le persone una volta, il soggetto nel blocco di ogni carta.
+    lette = [v for v in prompt_visti if v["compito"] == "interpretazione_unica"]
+    assert len(lette) == 1 and not [v for v in prompt_visti if v["compito"] == "interpretazione"]
+    v = lette[0]
+    assert v["utente"].count("## Le persone") == 1
+    blocchi = v["utente"].split("## Carta in posizione ")[1:]
+    assert len(blocchi) == 8
+    for n, blocco in enumerate(blocchi, start=1):
         soggetto = soggetto_testo(stesa["posizioni"][n - 1]["soggetto"], persone)
         # Il modello riceve il segnaposto al posto del nome (vedi `tarot/pseudonimi.py`).
-        assert f"Questa posizione riguarda: {soggetto}".replace("Marco", "Persona_1") in v["utente"]
-        assert "Regole aggiuntive: compatibilità e coppia" in v["sistema"]        # secondo messaggio di sistema
-        assert "Non dare verdetti" in v["sistema"]                                 # il guardrail «relazioni»
-        assert v["sistema"].startswith("# Compito: interpretazione")              # il compito resta quello
+        assert f"Questa posizione riguarda: {soggetto}".replace("Marco", "Persona_1") in blocco
+    assert "Regole aggiuntive: compatibilità e coppia" in v["sistema"]        # le regole della coppia, come prima
+    assert "Non dare verdetti" in v["sistema"]                                 # il guardrail «relazioni»
+    assert v["sistema"].startswith("# Compito: interpretazione_unica")        # la fase del registro dei consumi
+    assert v["sistema"].rstrip().endswith("senza titoli né elenchi.")         # il formato JSON in fondo
 
 
 async def test_la_sintesi_ha_persone_compatibilita_e_soggetti_e_il_formato_della_categoria(
@@ -51,6 +70,7 @@ async def test_la_sintesi_ha_persone_compatibilita_e_soggetti_e_il_formato_della
 ):
     await _accredita(session, client.identita.principal, 5)
     await _scheda(client)
+    await _controlli_sempre(session)
     await _lettura_completa(client, "compat-nove", 9, QUESITO, {"partner": PARTNER})
     sintesi = next(v for v in prompt_visti if v["compito"] == "sintesi")
     assert "## Compatibilità zodiacale (calcolata dal sistema, non da te)" in sintesi["utente"]

@@ -37,6 +37,15 @@ def nuovo_codice_invito() -> str:
     return "".join(secrets.choice(_ALFABETO_INVITI) for _ in range(8))
 
 
+def _lingua_del_sito(codice: Optional[str]) -> Optional[str]:
+    """Il claim `locale` come lingua del sito (`tarot/lingue.py`): «pt-BR» → «pt»; una lingua che il sito non ha →
+    `None` (resta quella di prima). Keycloak offre le stesse lingue, ma un attributo si può scrivere a mano."""
+    from ..tarot.lingue import LINGUE
+
+    base = (codice or "").strip().lower().replace("_", "-").split("-")[0]
+    return base if base in LINGUE else None
+
+
 class UserRepository:
     """Gli utenti, sincronizzati da ciò che afferma Keycloak."""
 
@@ -69,7 +78,7 @@ class UserRepository:
                 keycloak_sub=principal.subject,
                 email=principal.email,
                 display_name=principal.display_name,
-                locale=principal.locale,
+                locale=_lingua_del_sito(principal.locale) or "it",
                 referral_code=nuovo_codice_invito(),
             )
             self._session.add(utente)
@@ -83,6 +92,18 @@ class UserRepository:
             return utente
 
         utente.appena_creato = False
+        utente.in_cancellazione = False
+
+        if (
+            utente.deleted_at is not None
+            and utente.cancellazione_richiesta_il is not None
+            and utente.cancellazione_eseguita_il is None
+        ):
+            # La cancellazione chiesta dalla persona, nei 30 giorni di ripensamento (`tarot/cancellazione.py`): può
+            # rientrare, ma solo per annullarla (o scaricare i suoi dati). Lo decide `current_user`; qui non si
+            # riallinea niente, l'account resta com'era quando l'ha chiusa.
+            utente.in_cancellazione = True
+            return utente
 
         if utente.deleted_at is not None:
             # Riattivare in silenzio nasconderebbe che l'account era stato
@@ -92,7 +113,15 @@ class UserRepository:
 
         utente.email = principal.email or utente.email
         utente.display_name = principal.display_name or utente.display_name
-        utente.locale = principal.locale or utente.locale
+        # La lingua solo se il token la porta davvero (l'attributo `locale` dell'utente in Keycloak): senza, il
+        # `Principal` ripiega su «it», e riscriverla a ogni accesso cancellerebbe quella presa dal social o scelta
+        # dal profilo. Un `Principal` costruito a mano (sviluppo, test) non ha claim e vale com'è.
+        # v9, Fase 2d: e **solo finché la persona non ha scelto dal sito** (menu o profilo, `locale_scelta_il`). Il
+        # claim è la lingua della pagina di accesso del giorno della registrazione: riscriverla a ogni richiesta
+        # annullerebbe la scelta del menu alla richiesta dopo, e oracolo ed email tornerebbero nella lingua vecchia.
+        if utente.locale_scelta_il is None:
+            locale_token = principal.raw_claims.get("locale") if principal.raw_claims else principal.locale
+            utente.locale = _lingua_del_sito(locale_token) or utente.locale
         return utente
 
 
@@ -210,6 +239,10 @@ class AuditRepository:
         ip: Optional[str] = None,
         correlation_id: Optional[str] = None,
     ) -> AuditLog:
+        # L'indirizzo non entra mai in chiaro (GDPR, Fase 1): la rete troncata e l'impronta HMAC dell'intero.
+        from ..tarot.ip_protetto import proteggi
+
+        ip, ip_hash = proteggi(ip)
         voce = AuditLog(
             actor_id=actor_id,
             action=action,
@@ -218,6 +251,7 @@ class AuditRepository:
             before=before,
             after=after,
             ip=ip,
+            ip_hash=ip_hash,
             correlation_id=correlation_id,
             created_at=utcnow(),
         )

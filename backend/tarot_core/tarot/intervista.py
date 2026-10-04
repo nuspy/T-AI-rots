@@ -11,16 +11,22 @@ La regola è difesa in tre punti, perché un prompt da solo non basta:
 1. il prompt dell'intervista la dichiara, con esempi;
 2. un controllo deterministico scarta le domande che ricalcano il quesito o
    che chiedono una previsione con le formule tipiche;
-3. un modello di validazione, separato, giudica ogni domanda candidata.
+3. un modello di validazione, separato, giudica le domande candidate: tutte, solo quelle che una regola
+   deterministica leggera trova dubbie (`sospetta`, il modo predefinito) o nessuna, secondo la console.
 
 Una domanda scartata si rigenera (fino a due volte). **Non esistono domande di
 riserva**: se il modello non risponde, o insiste con domande vietate prima del
 minimo, l'intervista fallisce con `IntervistaNonRiuscita` e il servizio lo dice,
 invece di porre a tutti le stesse domande fisse.
 
-**Quante domande.** Le decide il modello in base al quesito, fra un minimo (2) e
-un massimo (6) che il codice fa rispettare: prima del minimo una chiusura viene
-respinta, al massimo la chiusura è obbligatoria.
+**Quante domande.** Le decide il modello in base al quesito, fra un minimo e un
+massimo che si scelgono dalla console (2 e 6 se nessuno li ha cambiati) e che il
+codice fa rispettare: prima del minimo una chiusura viene respinta, al massimo la
+chiusura è obbligatoria. Dopo il minimo ogni domanda è *facoltativa*: il sito
+chiede a chi consulta se vuole aggiungere altro o passare alle carte.
+
+**Mai la stessa domanda due volte.** Il controllo deterministico scarta anche le
+domande che ripetono, o riformulano da vicino, una domanda già posta.
 """
 from __future__ import annotations
 
@@ -31,6 +37,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from ..llm.base import GenerationError
+from .conoscenza import speciale
 from .llm import genera_json, richiesta
 from .lingue import istruzione_lingua
 from .memoria_retrieval import MemoriaRilevante, formatta_memorie
@@ -56,10 +63,10 @@ disporre le carte conduci un breve colloquio per capire il contesto della
 domanda di chi consulta. Le tue domande servono a leggere meglio le carte, non
 a compilare un modulo.
 
-Quante domande: da 2 a 6 in totale, e le decidi TU in base al quesito. Un
-quesito circoscritto e chiaro ne richiede poche; uno vago, che coinvolge più
-persone o più ambiti della vita, ne richiede di più. Non chiudere prima della
-seconda domanda, non superare la sesta, e non allungare il colloquio quando il
+Quante domande: fra il minimo e il massimo indicati nel messaggio, e le decidi TU
+in base al quesito. Un quesito circoscritto e chiaro ne richiede poche; uno vago,
+che coinvolge più persone o più ambiti della vita, ne richiede di più. Non chiudere
+prima del minimo, non superare il massimo, e non allungare il colloquio quando il
 quadro è già sufficiente per una lettura sensata.
 
 Come devono essere le domande:
@@ -82,7 +89,8 @@ Regole inviolabili:
   ami?», «senti che ti ama?», «secondo te prova qualcosa?».
 - NON chiedere MAI previsioni o valutazioni sul futuro («come pensi che andrà?»,
   «credi che succederà?»): le previsioni le danno le carte, non chi consulta.
-- Non ripetere domande già poste e non chiedere ciò che è già stato detto.
+- MAI ripetere una domanda già posta, nemmeno con altre parole, e mai chiedere
+  ciò che è già stato detto: ogni domanda nuova esplora un aspetto diverso.
 - Non chiedere dati sensibili superflui (indirizzi, nomi completi, dati sanitari
   dettagliati).
 
@@ -96,7 +104,7 @@ Se il messaggio contiene una sezione «Cose già note su questa persona»:
 
 Rispondi SOLO con un oggetto JSON:
 {"completo": false, "domanda": "<la prossima domanda>"}
-oppure, quando il quadro è sufficiente e hai già fatto almeno 2 domande:
+oppure, quando il quadro è sufficiente e hai già fatto almeno il minimo di domande:
 {"completo": true, "riassunto": "<il quadro emerso, 3-6 frasi in terza persona, senza anticipare alcuna previsione>"}
 """
 
@@ -148,6 +156,24 @@ Se chi consulta accenna a violenza, paura o controllo da parte dell'altra
 persona, non indagare i dettagli: rispondi con ascolto e chiedi solo, con
 delicatezza, come sta e se si sente al sicuro. Non suggerire di «lavorare sulla
 coppia».
+"""
+
+PROMPT_INTERVISTA_LAVORO = """# Regole aggiuntive: lavoro e affari
+
+Questa lettura riguarda il lavoro, la carriera o un'attività di chi consulta (un posto, un
+colloquio, una trattativa, un progetto, un'impresa da avviare). Le domande raccolgono il
+contesto professionale che serve a leggere le carte:
+- LA SITUAZIONE CONCRETA: il ruolo o il progetto, da quanto dura, in che fase è;
+- LE PERSONE: chi è coinvolto (responsabili, colleghi, soci, clienti, controparti) e che
+  ruolo ha, raccontato attraverso ciò che fa o dice, non ciò che pensa;
+- I TEMPI E LE DECISIONI: scadenze, colloqui, offerte, scelte in arrivo;
+- IL VISSUTO DI CHI CONSULTA: che cosa desidera, che cosa teme, che cosa ha già tentato.
+
+Non chiedere:
+- dati riservati o superflui: nomi di aziende o di persone, cifre esatte di stipendi,
+  fatturati o contratti, documenti interni;
+- che cosa pensano o decideranno un responsabile, un selezionatore o una controparte: le
+  carte danno la tendenza.
 """
 
 PROMPT_VALIDAZIONE_RELAZIONE = """# Regole aggiuntive: compatibilità e coppia
@@ -218,8 +244,26 @@ def ricalca_il_quesito(
     return len(q & d) / len(q) >= soglia
 
 
+def ripete_una_domanda(domanda: str, precedenti: Sequence[str], *, soglia: float = 0.55) -> bool:
+    """Vero se la domanda ripete, o riformula da vicino, una di quelle già poste.
+
+    Confronta le parole di contenuto: quanta parte della domanda più corta ricompare nell'altra. Grezzo come
+    `ricalca_il_quesito`, ma basta per i casi che si vedono davvero (la stessa domanda con due parole cambiate)."""
+    d = _parole(domanda)
+    if not d:
+        return False
+    for altra in precedenti:
+        p = _parole(altra)
+        if not p:
+            continue
+        if len(d & p) / min(len(d), len(p)) >= soglia:
+            return True
+    return False
+
+
 def viola_le_regole(
     quesito: str, domanda: str, *, categoria: str = "standard", neutre: Sequence[str] = (),
+    precedenti: Sequence[str] = (),
 ) -> Optional[str]:
     """Il controllo deterministico. Restituisce il motivo, o `None`."""
     if not domanda.strip():
@@ -228,10 +272,77 @@ def viola_le_regole(
         return "più domande insieme"
     if _FORMULE_PREVISIONE.search(domanda):
         return "chiede una previsione o la risposta al quesito"
-    if categoria != "standard" and _FORMULE_TERZO.search(domanda):
+    if speciale(categoria) and _FORMULE_TERZO.search(domanda):
         return "chiede cosa pensa o prova l'altra persona"
     if ricalca_il_quesito(quesito, domanda, neutre=neutre):
         return "ricalca il quesito"
+    if ripete_una_domanda(domanda, precedenti):
+        return "ripete una domanda già posta"
+    return None
+
+
+#: I modi del validatore LLM (impostazione della console, `ImpostazioniIntervista.validatore_domande`).
+VALIDATORE_DUBBI, VALIDATORE_SPENTO, VALIDATORE_ACCESO = "dubbi", "spento", "acceso"
+
+#: Le lingue per cui le regole del sospetto hanno le parole: per le altre ogni domanda è «dubbia» e va al validatore.
+LINGUE_CON_REGOLE = ("it", "en")
+
+#: Sospetto 1 — parole del campo «chiedere la risposta»: si chiede a chi consulta un'opinione, una convinzione o una
+#: sensazione su come stanno le cose. Più larga di `_FORMULE_PREVISIONE`, che scarta solo se c'è anche un verbo al
+#: futuro: qui basta la formula, perché l'ultima parola la dà il validatore.
+_SOSPETTO_OPINIONE = re.compile(
+    r"\b(pensi|credi|ritieni|secondo te|a tuo (parere|avviso)|immagini|ti aspetti|prevedi|sei sicur[oa]|"
+    r"senti che|hai la sensazione|speri che|sei convint[oa]|"
+    r"do you think|do you believe|do you feel|do you expect|in your opinion|would you say|how likely|are you sure)\b",
+    re.IGNORECASE,
+)
+
+#: Sospetto 2 — il futuro o l'esito: la domanda parla di come andrà, non di com'è.
+_SOSPETTO_FUTURO = re.compile(
+    r"\b(succed\w*|accadr\w*|andr[aà]|finir[aà]|funzioner\w*|riuscir\w*|otterr\w*|tornerà|cambierà|avverr\w*|"
+    r"futuro|esito|will|going to|future|outcome)\b",
+    re.IGNORECASE,
+)
+
+#: Sospetto 3 (solo letture di coppia e compatibilità) — il mondo interiore dell'altra persona o un dato sensibile.
+_SOSPETTO_RELAZIONE = re.compile(
+    r"\b(pensa|prova|sente|vuole|ama|desidera|nasconde|innamorat\w*|orientament\w*|sessual\w*|salute|malatti\w*|"
+    r"cognome|think|feels?|wants?|loves?|hides?|orientation|sexual\w*|health|surname)\b",
+    re.IGNORECASE,
+)
+
+#: Sospetto 4 — la domanda somiglia al quesito, anche sotto la soglia che la scarta (`ricalca_il_quesito`, 0,6).
+SOGLIA_SOSPETTO_QUESITO = 0.35
+
+
+def sospetta(
+    quesito: str, domanda: str, *, categoria: str = "standard", neutre: Sequence[str] = (), lang: str = "it",
+) -> Optional[str]:
+    """La regola deterministica leggera del modo «solo casi dubbi»: il motivo del sospetto, o `None`.
+
+    Gira **dopo** `viola_le_regole` (che scarta senza appello) e decide solo se la domanda merita il validatore LLM. Una
+    domanda è dubbia se:
+
+    1. usa una formula d'opinione rivolta a chi consulta («pensi», «secondo te», «do you think»…);
+    2. parla del futuro o dell'esito («succederà», «andrà», «futuro», «will»…);
+    3. nelle letture di coppia e compatibilità, nomina il mondo interiore dell'altra persona («pensa», «prova», «ama»)
+       o un dato sensibile («salute», «orientamento», «cognome»);
+    4. riprende più di un terzo delle parole del quesito (soglia 0,35, contro lo 0,6 che scarta);
+    5. è in una lingua per cui queste parole non ci sono (`LINGUE_CON_REGOLE`): lì ogni domanda va al validatore.
+
+    Un falso sospetto costa la chiamata di prima; un sospetto mancato lascia passare una domanda che il prompt
+    dell'intervista e i controlli deterministici non hanno fermato — per questo le formule sono larghe.
+    """
+    if (lang or "it")[:2] not in LINGUE_CON_REGOLE:
+        return "lingua senza regole del sospetto"
+    if _SOSPETTO_OPINIONE.search(domanda):
+        return "chiede un'opinione a chi consulta"
+    if _SOSPETTO_FUTURO.search(domanda):
+        return "parla del futuro o dell'esito"
+    if speciale(categoria) and _SOSPETTO_RELAZIONE.search(domanda):
+        return "tocca il mondo interiore dell'altra persona o un dato sensibile"
+    if ricalca_il_quesito(quesito, domanda, soglia=SOGLIA_SOSPETTO_QUESITO, neutre=neutre):
+        return "somiglia al quesito"
     return None
 
 
@@ -244,6 +355,19 @@ class Passo:
     riassunto: Optional[str] = None
     #: Quante domande candidate sono state scartate prima di questa.
     scartate: int = 0
+    #: Il minimo di domande è già raggiunto: chi consulta può fermarsi qui e passare alle carte.
+    facoltativa: bool = False
+
+
+def sistema_intervista(categoria: str = "standard") -> List[str]:
+    """Il prompt di sistema dell'intervista: quello di sempre e, per le letture di relazione o di
+    lavoro, le regole aggiuntive della categoria. La standard resta com'era."""
+    sistema = [PROMPT_INTERVISTA]
+    if speciale(categoria):
+        sistema.append(PROMPT_INTERVISTA_RELAZIONE)
+    elif categoria == "lavoro":
+        sistema.append(PROMPT_INTERVISTA_LAVORO)
+    return sistema
 
 
 def trascrizione(turni: Sequence[Tuple[str, str]]) -> str:
@@ -270,11 +394,13 @@ async def prossimo_passo(
     nota: str = "",
     parole_neutre: Sequence[str] = (),
     memorie: Sequence[MemoriaRilevante] = (),
+    validatore: str = VALIDATORE_ACCESO,
 ) -> Passo:
     """Decide la prossima domanda, o chiude l'intervista col riassunto.
 
     Per le letture di compatibilità e di coppia (`categoria`) il modello riceve
-    anche le regole sulle relazioni; `nota` è l'avvertenza della stesa scelta, e
+    anche le regole sulle relazioni, per quelle di lavoro le regole sul contesto
+    professionale; `nota` è l'avvertenza della stesa scelta, e
     `parole_neutre` le parole (il nome del partner) che non contano come
     ripetizione del quesito.
 
@@ -286,8 +412,13 @@ async def prossimo_passo(
     Le domande sono fra `min_domande` e `max_domande`: quante ne servano lo
     decide il modello. Prima del minimo una chiusura viene respinta; al
     massimo la chiusura è obbligatoria.
+
+    `validatore` è il modo del controllo LLM delle domande (impostazione della console): `acceso` giudica ogni
+    candidata che supera i controlli deterministici, `dubbi` solo quelle che `sospetta()` segnala, `spento` nessuna.
+    I controlli deterministici (`viola_le_regole`) valgono sempre, in tutti e tre i modi.
     """
     poste = sum(1 for r, _ in turni if r == "oracolo")
+    precedenti = [t for r, t in turni if r == "oracolo"]
     obbligo_chiusura = poste >= max_domande
     prima_del_minimo = poste < min_domande
 
@@ -299,8 +430,16 @@ async def prossimo_passo(
         + f"{profilo}"
         + (f"Nota sulla stesa: {nota}\n" if nota else "")
         + (f"Cose già note su questa persona:\n{blocco_memorie}\n" if blocco_memorie else "")
-        + f"Domande già poste: {poste} (minimo {min_domande}, massimo {max_domande})\n\n"
-        f"Colloquio finora:\n{trascrizione(turni)}\n\n"
+        + "\n"
+        # Le domande già fatte stanno una volta sola, dentro il colloquio; il contatore sta dopo, così fra un turno e
+        # il successivo il messaggio resta identico fino all'ultima risposta (prefisso utile alla cache del fornitore).
+        + (
+            "Colloquio finora (le domande dell'oracolo sono già fatte: NON ripeterle e non riformularle; "
+            "esplora un aspetto diverso):\n"
+            if precedenti else "Colloquio finora:\n"
+        )
+        + f"{trascrizione(turni)}\n\n"
+        + f"Domande già poste: {poste} (minimo {min_domande}, massimo {max_domande})\n"
         + (
             "Hai raggiunto il numero massimo di domande: chiudi l'intervista con il riassunto.\n"
             if obbligo_chiusura else ""
@@ -312,18 +451,17 @@ async def prossimo_passo(
         )
         + istruzione_lingua(lang)
     )
-    sistema = [PROMPT_INTERVISTA]
-    if categoria != "standard":
-        sistema.append(PROMPT_INTERVISTA_RELAZIONE)
+    sistema = sistema_intervista(categoria)
 
     scartate: List[str] = []
+    motivi: List[str] = []
     for _tentativo in range(TENTATIVI_RIGENERAZIONE + 1):
         extra = ""
         if scartate:
             extra = (
-                "\n\nQueste domande sono state scartate perché violano le regole "
-                "(chiedono la risposta al quesito o una previsione), non riproporle:\n- "
-                + "\n- ".join(scartate)
+                "\n\nQueste domande sono state scartate perché violano le regole (il motivo è fra parentesi), "
+                "non riproporle e non riformularle:\n- "
+                + "\n- ".join(f"{d} ({m})" for d, m in zip(scartate, motivi))
             )
         try:
             dati = await genera_json(
@@ -355,14 +493,21 @@ async def prossimo_passo(
             # Ha chiuso troppo presto o non ha scritto nulla: si richiede.
             continue
 
-        motivo = viola_le_regole(quesito, domanda, categoria=categoria, neutre=parole_neutre)
-        if motivo is None:
+        motivo = viola_le_regole(
+            quesito, domanda, categoria=categoria, neutre=parole_neutre, precedenti=precedenti,
+        )
+        if motivo is None and _da_validare(
+            validatore, quesito, domanda, categoria=categoria, neutre=parole_neutre, lang=lang,
+        ):
             motivo = await _giudica(provider_validazione, quesito, domanda, categoria)
         if motivo is None:
-            return Passo(completo=False, domanda=domanda, scartate=len(scartate))
+            return Passo(
+                completo=False, domanda=domanda, scartate=len(scartate), facoltativa=poste >= min_domande,
+            )
 
         logger.info("Domanda scartata (%s): %s", motivo, domanda)
         scartate.append(domanda)
+        motivi.append(motivo)
 
     # Nessuna domanda utilizzabile. Dopo il minimo si può chiudere col quadro
     # che c'è; prima no: servirebbe una domanda fissa, e non ce ne sono.
@@ -376,11 +521,27 @@ async def prossimo_passo(
     raise IntervistaNonRiuscita("il modello non ha formulato una domanda valida")
 
 
+def _da_validare(
+    modo: str, quesito: str, domanda: str, *, categoria: str, neutre: Sequence[str], lang: str,
+) -> bool:
+    """Se la domanda va al validatore LLM, secondo il modo scelto in console. Un modo sconosciuto vale «acceso»: nel
+    dubbio si controlla."""
+    if modo == VALIDATORE_SPENTO:
+        return False
+    if modo == VALIDATORE_DUBBI:
+        motivo = sospetta(quesito, domanda, categoria=categoria, neutre=neutre, lang=lang)
+        if motivo is None:
+            logger.debug("Validatore saltato (nessun sospetto): %s", domanda)
+            return False
+        logger.debug("Domanda dubbia (%s): al validatore", motivo)
+    return True
+
+
 async def _giudica(provider, quesito: str, domanda: str, categoria: str = "standard") -> Optional[str]:
     """Il validatore LLM. Un validatore che non risponde non blocca: il
     controllo deterministico è già passato."""
     sistema = [PROMPT_VALIDAZIONE]
-    if categoria != "standard":
+    if speciale(categoria):
         sistema.append(PROMPT_VALIDAZIONE_RELAZIONE)
     try:
         dati = await genera_json(provider, richiesta(
@@ -403,7 +564,7 @@ async def riassumi(
     """Il quadro emerso, quando il modello ha chiuso senza riassumere."""
     try:
         dati = await genera_json(provider, richiesta(
-            [PROMPT_INTERVISTA] + ([PROMPT_INTERVISTA_RELAZIONE] if categoria != "standard" else []),
+            sistema_intervista(categoria),
             f"Quesito: {quesito}\n\nColloquio:\n{trascrizione(turni)}\n\n"
             f"L'intervista è conclusa: restituisci solo "
             f'{{"completo": true, "riassunto": "..."}}. {istruzione_lingua(lang)}',

@@ -21,11 +21,13 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from typing import Any, AsyncIterator, Dict, List, Optional
 
 import httpx
 
 from ..settings import Settings, get_settings
+from . import consumi
 from .base import (
     GenerationError, GenerationRequest, Message, StreamChunk, TruncatedResponse,
     Usage,
@@ -58,8 +60,12 @@ class AnthropicProvider:
         timeout: Optional[float] = None,
         settings: Optional[Settings] = None,
         transport: Optional[httpx.AsyncBaseTransport] = None,
+        budget_ragionamento: Optional[int] = None,
     ) -> None:
         settings = settings or get_settings()
+        #: Il budget del «thinking» di Claude, dal livello di ragionamento del compito (`llm/ragionamento.py`).
+        #: `None`: thinking spento, la richiesta resta quella di prima.
+        self._budget_ragionamento = budget_ragionamento
         self._api_key = api_key or settings.anthropic_api_key
         self._base_url = (base_url or settings.anthropic_base_url).rstrip("/")
         self._default_model = default_model or settings.anthropic_model
@@ -121,13 +127,55 @@ class AnthropicProvider:
             corpo["system"] = sistema
         if request.stop:
             corpo["stop_sequences"] = request.stop
+        if self._budget_ragionamento:
+            # Il thinking esteso: il budget sta dentro `max_tokens` (che deve superarlo, con spazio per la risposta), e
+            # Claude lo accetta solo con la temperatura predefinita. Il tetto è quello visibile più il budget: il pensiero
+            # non si mangia la risposta (come `ragionamento.tetto_con_ragionamento` per gli OpenAI-compatibili).
+            corpo["thinking"] = {"type": "enabled", "budget_tokens": self._budget_ragionamento}
+            corpo["max_tokens"] = corpo["max_tokens"] + self._budget_ragionamento
+            corpo["temperature"] = 1
         corpo.update(request.extra)
         return corpo
 
     # -- generazione -------------------------------------------------------
 
     async def stream(self, request: GenerationRequest) -> AsyncIterator[StreamChunk]:
+        """Come `OpenAICompatibleProvider.stream`: alla fine, comunque finisca, il consumo va al registro.
+
+        Anthropic non separa i token di ragionamento da quelli di uscita: restano solo i caratteri del pensiero."""
+        inizio = time.perf_counter()
+        stato: Dict[str, Any] = {"esito": "interrotta", "errore": "", "usage": None, "motivo": "",
+                                 "testo": 0, "pensiero": 0, "corpo": None, "annotato": False}
+
+        def annota() -> None:
+            if stato["annotato"]:
+                return
+            stato["annotato"] = True
+            corpo = stato["corpo"] or {}
+            consumi.registra(consumi.consumo_da(
+                request, fornitore="anthropic", modello=str(corpo.get("model") or ""), usage=stato["usage"],
+                durata_ms=int((time.perf_counter() - inizio) * 1000), esito=stato["esito"],
+                finish_reason=stato["motivo"], caratteri_uscita=stato["testo"],
+                caratteri_ragionamento=stato["pensiero"], max_tokens=corpo.get("max_tokens"), errore=stato["errore"],
+            ))
+
+        try:
+            async for pezzo in self._stream(request, stato):
+                if pezzo.done:
+                    annota()
+                yield pezzo
+        except TruncatedResponse as exc:
+            stato["esito"], stato["errore"] = "troncata", str(exc)[:300]
+            raise
+        except Exception as exc:
+            stato["esito"], stato["errore"] = "errore", f"{type(exc).__name__}: {exc}"[:300]
+            raise
+        finally:
+            annota()
+
+    async def _stream(self, request: GenerationRequest, stato: Dict[str, Any]) -> AsyncIterator[StreamChunk]:
         corpo = self.costruisci(request, stream=True)
+        stato["corpo"] = corpo
         testo: List[str] = []
         uso = Usage(model=corpo["model"])
         motivo = ""
@@ -152,15 +200,19 @@ class AnthropicProvider:
                     tipo = evento.get("type")
                     if tipo == "message_start":
                         _conta_ingresso(uso, (evento.get("message") or {}).get("usage") or {})
+                        stato["usage"] = uso
                     elif tipo == "content_block_delta":
                         delta = evento.get("delta") or {}
                         if delta.get("type") == "text_delta" and delta.get("text"):
+                            stato["testo"] += len(delta["text"])
                             testo.append(delta["text"])
                             yield StreamChunk(text=delta["text"])
                         elif delta.get("type") == "thinking_delta" and delta.get("thinking"):
+                            stato["pensiero"] += len(delta["thinking"])
                             yield StreamChunk(reasoning=delta["thinking"])
                     elif tipo == "message_delta":
                         motivo = (evento.get("delta") or {}).get("stop_reason") or motivo
+                        stato["motivo"] = motivo
                         uscita = (evento.get("usage") or {}).get("output_tokens")
                         if uscita is not None:
                             uso.completion_tokens = int(uscita)
@@ -174,6 +226,7 @@ class AnthropicProvider:
             raise TruncatedResponse(
                 "il modello ha esaurito max_tokens senza produrre testo", partial=completo, usage=uso,
             )
+        stato["esito"] = "ok"
         yield StreamChunk(done=True, usage=uso, finish_reason=motivo)
 
     async def complete(self, request: GenerationRequest) -> str:

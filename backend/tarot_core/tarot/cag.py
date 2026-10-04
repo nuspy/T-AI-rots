@@ -100,6 +100,10 @@ questo ordine, con i titoli tradotti nella lingua della risposta:
 ## Il consiglio delle carte
 ## La tendenza più probabile
 
+Stile: conciso ma completo, esaustivo e chiaro. Ogni frase aggiunge un'informazione
+specifica di questa lettura; nessuna sezione ripete il contenuto di un'altra; niente
+frasi generiche che varrebbero per qualunque lettura. Resta nel numero di parole indicato.
+
 Non aggiungere disclaimer: li aggiunge la piattaforma.
 """
 
@@ -140,6 +144,10 @@ ordine, con i titoli tradotti nella lingua della risposta:
 ## Il consiglio delle carte
 ## La tendenza più probabile
 
+Stile: conciso ma completo, esaustivo e chiaro. Ogni frase aggiunge un'informazione
+specifica di questa lettura; nessuna sezione ripete il contenuto di un'altra; niente
+frasi generiche che varrebbero per qualunque lettura. Resta nel numero di parole indicato.
+
 Non aggiungere disclaimer: li aggiunge la piattaforma.
 """
 
@@ -152,13 +160,34 @@ ordine, con i titoli tradotti nella lingua della risposta:
 ## Il consiglio delle carte   (rivolto a chi consulta: cosa può fare chi consulta, non l'altra persona)
 ## La tendenza più probabile   (con «cosa dipende da voi»)
 
+Stile: conciso ma completo, esaustivo e chiaro. Ogni frase aggiunge un'informazione
+specifica di questa lettura; nessuna sezione ripete il contenuto di un'altra; niente
+frasi generiche che varrebbero per qualunque lettura. Resta nel numero di parole indicato.
+
 Non aggiungere disclaimer: li aggiunge la piattaforma.
+"""
+
+_REGOLE_LAVORO = """
+Regole per le letture di lavoro e affari:
+- La lettura riguarda il lavoro, la carriera o un'attività di chi consulta: porta
+  ogni forza sul piano professionale con concretezza (il ruolo, il progetto, le
+  persone dell'ambiente di lavoro, i tempi, le decisioni in arrivo), senza
+  perdere il senso simbolico delle carte.
+- Colleghi, responsabili, clienti, soci e controparti sono energie e tendenze nei
+  loro atteggiamenti, mai certezze su ciò che pensano o decideranno.
+- Le carte non dicono se un posto, un contratto o un affare arriveranno: dicono
+  le forze in gioco e ciò che dipende da chi consulta. La scelta resta sua.
+- Nel consiglio indica passi concreti e alla portata di chi consulta, non cifre,
+  investimenti, passi legali o contrattuali: per quelli rimanda a un
+  professionista che conosca il caso.
 """
 
 #: Il prompt di sintesi per categoria di lettura. Il prefisso in cache è uno
 #: per categoria, e ciascuno è stabile fra letture della stessa categoria.
 PROMPT_PER_CATEGORIA = {
     "standard": PROMPT_SINTESI,
+    # Lavoro e affari: le stesse quattro sezioni della standard, con le regole del piano professionale.
+    "lavoro": _CORPO_SINTESI + _REGOLE_LAVORO + _FORMATO_STANDARD,
     "compatibilita": _CORPO_SINTESI + _REGOLE_RELAZIONE + _FORMATO_COMPATIBILITA,
     "coppia": _CORPO_SINTESI + _REGOLE_RELAZIONE + _FORMATO_COPPIA,
 }
@@ -180,8 +209,8 @@ def prefisso(
     dato della lettura, nessuna data, nessun ordine che dipenda dal caso.
     Solo ruolo, sicurezza e dottrina: le stese e le carte le sceglie il codice.
 
-    Ce n'è uno per categoria di lettura (standard, compatibilità, coppia): il
-    formato del responso e le regole sulle relazioni cambiano, la dottrina no.
+    Ce n'è uno per categoria di lettura (standard, lavoro, compatibilità, coppia): il
+    formato del responso e le regole sulle relazioni o sul lavoro cambiano, la dottrina no.
     Quello della lettura standard non è cambiato."""
     return _prefisso_cache(conoscenza.dottrina, "\n\n".join(istruzioni_guardrail), categoria)
 

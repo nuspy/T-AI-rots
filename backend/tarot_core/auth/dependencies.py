@@ -121,47 +121,79 @@ async def current_principal_opzionale(
 COOKIE_ANONIMO = "tarots_anon"
 
 
-async def current_user(
+async def accogli(session: AsyncSession, utente: User, request: Request) -> None:
+    """Ciò che si fa una volta sola, alla nascita di un account: il piano gratuito, il regalo d'iscrizione, la
+    lettura anonima da reclamare, l'evento delle analytics. Non fa commit: lo fa chi chiama.
+
+    Il piano gratuito si apre qui e non dentro `ensure`: il dominio degli utenti non deve sapere che esiste una
+    tariffa, o le due cose non si possono più cambiare separatamente. Lo stesso vale per il regalo d'iscrizione:
+    quanti crediti dare è una scelta di console (`ImpostazioniCrediti`), non qualcosa che il dominio utenti decide
+    da sé."""
+    from ..billing.credits import RegistroCrediti
+    from ..billing.plans import GestoreAbbonamenti
+    from ..domain.impostazioni_repositories import correnti as impostazioni_correnti
+    from ..domain.repositories import ReadingRepository
+
+    await GestoreAbbonamenti(session).apri_piano_base(utente.id)
+    impostazioni = await impostazioni_correnti(session)
+    if impostazioni.crediti_iscrizione > 0:
+        await RegistroCrediti(session).accredita(
+            utente.id, impostazioni.crediti_iscrizione, reason="omaggio", note="iscrizione",
+        )
+    # Il reclamo della lettura anonima (v6, Fase F): non rigenera nulla, sposta solo
+    # `owner_id` su una lettura già completa — il client la rilegge per intero.
+    anon_id = request.cookies.get(COOKIE_ANONIMO)
+    if anon_id:
+        await ReadingRepository(session).reclama_anonima(anon_id, utente)
+        # Le scelte del banner fatte prima di iscriversi valgono anche per l'account (GDPR, Fase 1): chi aveva
+        # rifiutato le statistiche non deve ritrovarle chieste, o accese, appena entra.
+        from ..domain.consent_repositories import trasferisci_anonimi
+
+        await trasferisci_anonimi(session, anon_id=anon_id, user_id=utente.id)
+    # Analytics (v8): la riga di attribuzione e l'evento. Non sollevano mai.
+    from ..analytics.eventi import registrazione
+
+    await registrazione(session, utente.id)
+
+
+async def current_user_anche_in_cancellazione(
     principal: CurrentPrincipal,
     session: Annotated[AsyncSession, Depends(get_db_session)],
     request: Request,
 ) -> User:
-    """L'utente del database, allineato al token."""
+    """L'utente del database, allineato al token — anche se ha chiesto la cancellazione dell'account ed è nei 30
+    giorni di ripensamento (`User.in_cancellazione`). Solo per gli endpoint che servono a chi è in quella situazione:
+    vedere la richiesta, annullarla, scaricare i propri dati (`api/routers/privacy.py`)."""
     try:
         utente = await UserRepository(session).ensure(principal)
         if getattr(utente, "appena_creato", False):
-            # Il piano gratuito si apre qui e non dentro `ensure`: il dominio
-            # degli utenti non deve sapere che esiste una tariffa, o le due
-            # cose non si possono più cambiare separatamente. Lo stesso vale
-            # per il regalo d'iscrizione: quanti crediti dare è una scelta di
-            # console (`ImpostazioniCrediti`), non qualcosa che il dominio
-            # utenti decide da sé.
-            from ..billing.credits import RegistroCrediti
-            from ..billing.plans import GestoreAbbonamenti
-            from ..domain.impostazioni_repositories import correnti as impostazioni_correnti
-            from ..domain.repositories import ReadingRepository
-
-            await GestoreAbbonamenti(session).apri_piano_base(utente.id)
-            impostazioni = await impostazioni_correnti(session)
-            if impostazioni.crediti_iscrizione > 0:
-                await RegistroCrediti(session).accredita(
-                    utente.id, impostazioni.crediti_iscrizione, reason="omaggio", note="iscrizione",
-                )
-            # Il reclamo della lettura anonima (v6, Fase F): non rigenera nulla, sposta solo
-            # `owner_id` su una lettura già completa — il client la rilegge per intero.
-            anon_id = request.cookies.get(COOKIE_ANONIMO)
-            if anon_id:
-                await ReadingRepository(session).reclama_anonima(anon_id, utente)
-            # Analytics (v8): la riga di attribuzione e l'evento. Non sollevano mai.
-            from ..analytics.eventi import registrazione
-
-            await registrazione(session, utente.id)
+            await accogli(session, utente, request)
             await session.commit()
         return utente
     except PermissionError as exc:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail=str(exc),
         ) from exc
+
+
+UtenteAncheInCancellazione = Annotated[User, Depends(current_user_anche_in_cancellazione)]
+
+
+async def current_user(
+    principal: CurrentPrincipal,
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    request: Request,
+) -> User:
+    """L'utente del database, allineato al token.
+
+    Un account in cancellazione (chiusa dalla persona, ancora annullabile) risponde 409 `account_in_cancellazione`
+    a ogni endpoint normale: il sito lo riconosce e propone di annullarla."""
+    utente = await current_user_anche_in_cancellazione(principal, session, request)
+    if getattr(utente, "in_cancellazione", False):
+        from ..tarot.cancellazione import dettaglio_in_cancellazione
+
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=dettaglio_in_cancellazione(utente))
+    return utente
 
 
 CurrentUser = Annotated[User, Depends(current_user)]

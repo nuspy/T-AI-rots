@@ -8,6 +8,6 @@
   },
   "arcano": {"maggiore": "Major Arcana", "minore": "Minor Arcana"},
   "mazzo": {"maggiori": "The 22 Major Arcana", "completo": "The full 78-card deck"},
-  "categoria": {"standard": "Classic spread", "compatibilita": "Compatibility spread", "coppia": "Relationship spread"},
+  "categoria": {"standard": "Classic spread", "lavoro": "Work and business spread", "compatibilita": "Compatibility spread", "coppia": "Relationship spread"},
   "stile": {"tradizionale": "Traditional", "moderna": "Modern", "tendenza": "Trending"}
 }

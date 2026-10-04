@@ -7,6 +7,7 @@
 | mescolamento e ventaglio | `POST /readings/{id}/fan` | `scelta` |
 | una carta per volta | `POST /readings/{id}/pick` | `rivelazione` a carte scelte |
 | rivelazione e lettura immediata (SSE) | `POST /readings/{id}/reveal/{pos}` | `sintesi` all'ultima |
+| tutte le carte insieme, una chiamata (SSE) | `POST /readings/{id}/reveal-all` | `sintesi` |
 | responso finale CAG, col guardrail (SSE) | `POST /readings/{id}/synthesis` | `completata` |
 
 **Il pagamento è all'apertura.** Una lettura consuma un credito o una lettura
@@ -32,6 +33,7 @@ from typing import Any, AsyncIterator, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from fastapi.responses import StreamingResponse
+from lanterna.rete import ip_client
 from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy import delete, select
 from sqlalchemy.orm.attributes import set_committed_value
@@ -39,8 +41,8 @@ from sqlalchemy.orm.attributes import set_committed_value
 from ...auth.dependencies import COOKIE_ANONIMO, CurrentUser, DbSession, OptionalUser
 from ...billing.credits import CreditiInsufficienti, RegistroCrediti
 from ...billing.plans import GestoreAbbonamenti
-from ...billing.quote import COSTO_LETTURA, ContatoreQuote
-from ...domain import deck_repositories, memoria_repositories
+from ...billing.quote import COSTO_LETTURA
+from ...domain import consent_repositories, deck_repositories, memoria_repositories
 from ...domain.base import utcnow
 from ...domain.models import InterviewTurn, Reading, User
 from ...analytics import eventi as analytics
@@ -51,18 +53,21 @@ from ...guards.lettura import giudica, segnale_di_crisi, uscita_proibita
 from ...llm.base import GenerationError, supporta_embedding
 from ...llm.compiti import Compito
 from ...settings import get_settings
-from ...tarot import cag, interpretazione
+from ...tarot import cag, eta_minima, interpretazione
 from ...tarot.condivisione import pulisci_testo
-from ...tarot.intervista import IntervistaNonRiuscita, prossimo_passo, profilo_da, trascrizione, turni_da
+from ...tarot.conoscenza import speciale
+from ...domain.impostazioni_repositories import correnti_intervista
+from ...tarot.intervista import IntervistaNonRiuscita, prossimo_passo, profilo_da, riassumi, trascrizione, turni_da
 from ...tarot.memoria import estrai_e_salva
+from ...tarot.stato_memoria import aggiorna_stato, come_istantanea
 from ...tarot.teaser import genera_teaser
 from ...tarot.memoria_retrieval import da_istantanea, formatta_per_sintesi, istantanea, rilevanti
 from ...tarot.lettura import (
-    StatoNonValido, dignita_di, doppia_valenza, gia_rivelate, note_di_posizione,
-    posa, posa_manuale, prevalenze_di, prossima_da_rivelare, wirth,
+    StatoNonValido, dignita_di, posa, posa_manuale, prevalenze_di, prossima_da_rivelare, wirth,
 )
 from ...tarot.llm import genera_flusso, genera_testo, richiesta
 from ...tarot.numerologia import carta_dell_anima, carta_dell_anno
+from ...tarot.consensi import trans_ammesso
 from ...tarot.persone import (
     LUNGHEZZA_COGNOME, LUNGHEZZA_GENERE_ALTRO, LUNGHEZZA_NOME, Persone, blocco_compatibilita,
     blocco_persone, compatibilita_json, da_json, mancanti, parole_neutre, pulisci, soggetto_testo,
@@ -70,10 +75,12 @@ from ...tarot.persone import (
 from ...tarot.shuffle import mescola
 from ...tarot.lingue import in_lingua, lingua, rileva_lingua
 from ...tarot.testi import (
-    AIUTO, CREDITI_ESAURITI, DISCLAIMER, INTERPRETAZIONE_NON_DISPONIBILE,
+    AIUTO, CREDITI_ESAURITI, DISCLAIMER, INTERPRETAZIONE_NON_DISPONIBILE, SALDO_NEGATIVO,
     MODELLO_NON_DISPONIBILE, PARTNER_MANCANTE, PARTNER_NON_AMMESSO,
     PROFILO_INCOMPLETO, RESPONSO_BLOCCATO, RESPONSO_NON_GENERATO,
 )
+from .privacy import errore_eta_anonima, verifica_eta
+from .. import rivelazione
 from ..deps import (
     aggiorna_assegnazioni, get_conoscenza, get_guardrail, provider_per, verifica_modello,
 )
@@ -139,11 +146,19 @@ class NuovaLettura(BaseModel):
     #: Il mazzo con cui leggere (v5, Fase B): lo slug di un `Deck`. Assente o nullo: il predefinito
     #: (il Thoth), sempre posseduto, nessuna verifica necessaria.
     deck_id: Optional[str] = Field(default=None, max_length=40)
+    #: Oltre un limite dell'abbonamento (v9, Fase 2b) la lettura non parte da sola: il primo tentativo risponde 402
+    #: `limite_superato`, e il secondo porta il consenso — `condono` (una delle letture regalate del periodo) o
+    #: `credito` (un credito del saldo). Se restano condoni si usa sempre un condono: mai un credito quando c'è il
+    #: regalo.
+    oltre_limite: Optional[str] = Field(default=None, pattern="^(condono|credito)$")
 
 
 class RispostaIntervista(BaseModel):
     #: Vuota alla prima chiamata, che chiede la prima domanda.
     risposta: Optional[str] = Field(default=None, max_length=2000)
+    #: «No, basta così» (v8.5): dopo il minimo di domande chi consulta chiude l'intervista e passa alle carte.
+    #: La domanda facoltativa rimasta senza risposta si toglie dal colloquio.
+    basta: bool = False
 
 
 class Scelta(BaseModel):
@@ -231,40 +246,56 @@ def _errore_422(motivo: str, testo: Dict[str, str], lang: str, **extra: Any) -> 
     )
 
 
-def _istantanea_persone(user: User, partner: PersonaIn) -> Dict[str, Any]:
+def _istantanea_persone(user: User, partner: PersonaIn, *, dati_particolari: bool = False) -> Dict[str, Any]:
     """Le due persone come stanno adesso: si salvano con la lettura.
 
     È una copia: se poi l'utente corregge la scheda, la lettura resta coerente
     con il responso. Il cognome sta qui e non va oltre lo storico.
+
+    La casella «persona trans» (di chi consulta e del partner) è un dato dell'art. 9 GDPR: entra nell'istantanea
+    solo con il consenso `dati_particolari` di chi consulta (GDPR, Fase 1). Senza, non si salva nemmeno.
     """
     assert user.birth_date is not None
     return {
         "v": 1,
         "tu": {
             "genere": user.gender, "genere_altro": user.gender_custom,
-            "trans": bool(user.is_trans), "nascita": user.birth_date.isoformat(),
+            "trans": trans_ammesso(dati_particolari, user.is_trans), "nascita": user.birth_date.isoformat(),
         },
         "partner": {
             "nome": pulisci(partner.nome, LUNGHEZZA_NOME),
             "cognome": pulisci(partner.cognome, LUNGHEZZA_COGNOME) or None,
             "genere": partner.genere,
             "genere_altro": pulisci(partner.genere_altro, LUNGHEZZA_GENERE_ALTRO) or None,
-            "trans": partner.trans,
+            "trans": trans_ammesso(dati_particolari, partner.trans),
             "nascita": partner.nascita.isoformat(),
         },
     }
 
 
+async def _dati_particolari(session, user: Optional[User]) -> bool:
+    """Il consenso alle categorie particolari (art. 9) di chi consulta: senza, niente «persona trans» al modello."""
+    return await consent_repositories.accettato(session, user.id if user else None, "dati_particolari")
+
+
+async def _persone_per_prompt(session, lettura: Reading, user: Optional[User]) -> Optional[Persone]:
+    """Le persone della lettura come le vede il modello: la casella «persona trans» solo con il consenso attuale —
+    un'istantanea presa prima della Fase 1, o un consenso revocato a metà lettura, non la fanno passare."""
+    if not lettura.persone:
+        return None
+    return da_json(lettura.persone, trans=await _dati_particolari(session, user))
+
+
 def _persone_dell_apertura(
-    user: User, payload: "NuovaLettura", categoria: str, lang: str,
+    user: User, payload: "NuovaLettura", categoria: str, lang: str, *, dati_particolari: bool = False,
 ) -> Optional[Dict[str, Any]]:
     """Valida partner e scheda per il tipo di lettura e ne fa l'istantanea.
 
-    `None` per la lettura standard. Per le speciali: 422 `partner_mancante`,
+    `None` per la lettura standard e per quella di lavoro. Per le speciali: 422 `partner_mancante`,
     `partner_non_ammesso` o `profilo_incompleto` (con l'elenco di ciò che manca
     nella scheda: il frontend lo chiede e riprova).
     """
-    if categoria == "standard":
+    if not speciale(categoria):
         if payload.partner is not None:
             raise _errore_422("partner_non_ammesso", PARTNER_NON_AMMESSO, lang)
         return None
@@ -273,7 +304,7 @@ def _persone_dell_apertura(
     da_completare = mancanti(user)
     if da_completare:
         raise _errore_422("profilo_incompleto", PROFILO_INCOMPLETO, lang, mancanti=da_completare)
-    return _istantanea_persone(user, payload.partner)
+    return _istantanea_persone(user, payload.partner, dati_particolari=dati_particolari)
 
 
 def carta_json(conoscenza, c, *, completa: bool = False, manuale: bool = False) -> Dict[str, Any]:
@@ -289,7 +320,9 @@ def carta_json(conoscenza, c, *, completa: bool = False, manuale: bool = False) 
         dati.update({
             "carta": conoscenza.carta_pubblica(c.card_id, completa=completa),
             "rovescio": c.rovescio,
-            "interpretazione": c.interpretazione,
+            # Solo a carta girata: la chiamata unica scrive in anticipo anche le interpretazioni delle carte ancora
+            # coperte (in una lettura manuale la carta si vede da subito, la sua lettura no).
+            "interpretazione": c.interpretazione if c.rivelata else None,
         })
     return dati
 
@@ -299,6 +332,25 @@ def _soggetti(stesa: Dict[str, Any], persone: Optional[Persone]) -> Optional[Dic
     if persone is None:
         return None
     return {p["n"]: soggetto_testo(p.get("soggetto"), persone) for p in stesa["posizioni"]}
+
+
+#: Il tetto dei token del responso. Misurato il 4/10/2026 senza ragionamento (Nemotron 3.5 Lightning): la tre carte
+#: scrive 950–1 750 token e si fermava a 1 800 una volta su cinque; la compatibilità 1 400–1 730 su 2 200, una volta
+#: troncata; la croce celtica si fermava sempre a 1 800, a metà di una sezione. È un tetto, non un obiettivo: chi ha
+#: finito si ferma, e i token in più si pagano solo quando prima il responso sarebbe stato tagliato.
+TETTO_SINTESI = 2600
+#: In più per le letture speciali (una sezione e i nomi dei due) e per le stese lunghe (più di cinque posizioni).
+TETTO_SINTESI_SPECIALE = 400
+TETTO_SINTESI_STESA_LUNGA = 600
+
+
+def _tetto_sintesi(stesa: Dict[str, Any], categoria: str) -> int:
+    tetto = TETTO_SINTESI
+    if speciale(categoria):
+        tetto += TETTO_SINTESI_SPECIALE
+    if len(stesa.get("posizioni") or []) > 5:
+        tetto += TETTO_SINTESI_STESA_LUNGA
+    return tetto
 
 
 async def _memorie_per_sintesi(session: DbSession, owner_id: int, snapshot: List[Dict[str, Any]]) -> str:
@@ -383,6 +435,35 @@ def lettura_json(lettura: Reading, *, dettaglio: bool = True) -> Dict[str, Any]:
 # ---- apertura ---------------------------------------------------------------
 
 
+async def _consumo_con_limiti(
+    session, gestore: GestoreAbbonamenti, user_id: int, diritti, oltre_limite: Optional[str], lang: str,
+) -> tuple[str, Optional[str]]:
+    """Da dove si paga la lettura, e quale limite dell'abbonamento ha superato (v9, Fase 2b, `billing/abbonamenti.py`).
+
+    Entro i limiti: `quota`. Oltre, senza consenso: 402 `limite_superato` col limite, le letture fatte nel periodo, i
+    condoni rimasti e il saldo — il sito lo mostra e chiede. Col consenso: `condono` finché ce ne sono, poi `credito`.
+    """
+    from ...billing import abbonamenti as gestione
+
+    abbonamento = await gestore.abbonamento_di(user_id)
+    if gestione.ha_letture_comprese(abbonamento, diritti):
+        # Il lock sulla riga dell'utente prima di contare: due letture aperte insieme non prendono lo stesso condono.
+        await RegistroCrediti(session)._blocca(user_id)
+    valutazione = await gestione.valuta_lettura(session, user_id, abbonamento, diritti)
+    if valutazione.consumo is not None:
+        return valutazione.consumo, None
+    superato = valutazione.superato
+    assert superato is not None
+    if oltre_limite is not None and valutazione.condoni_rimasti > 0:
+        return "condono", superato.nome
+    if oltre_limite == "credito":
+        return "credito", superato.nome
+    raise HTTPException(
+        status_code=status.HTTP_402_PAYMENT_REQUIRED,
+        detail={**valutazione.dettaglio(), "messaggio": in_lingua(gestione.LIMITE_SUPERATO, lang)},
+    )
+
+
 @router.post("/readings", status_code=status.HTTP_201_CREATED)
 async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> Dict[str, Any]:
     """Apre una lettura e la paga.
@@ -394,9 +475,13 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
     # La lingua della lettura è quella del quesito, non quella dell'interfaccia:
     # si ricava qui, una volta, e si salva. Ogni nuovo quesito la rinnova.
     lang = rileva_lingua(payload.question, fallback=payload.lang)
+    # L'età minima (GDPR, Fase 1): senza la conferma, o con una data di nascita sotto il minimo, niente lettura.
+    verifica_eta(user, payload.lang)
     conoscenza = get_conoscenza()
     categoria = conoscenza.categoria_di(stesa)
-    persone = _persone_dell_apertura(user, payload, categoria, lang)
+    persone = _persone_dell_apertura(
+        user, payload, categoria, lang, dati_particolari=await _dati_particolari(session, user),
+    )
 
     # Il mazzo (v5, Fase B): assente o nullo, il predefinito — nessuna verifica. Indicato, deve
     # esistere ed essere posseduto (il predefinito lo è sempre da chiunque). Si verifica qui, prima
@@ -436,10 +521,9 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
         assegnazioni_manuali = {c.posizione: c.card_id for c in payload.manual_cards}
 
     if segnale_di_crisi(payload.question):
-        await AuditRepository(session).record(
-            action="reading.crisis", actor_id=user.id, target_type="user", target_id=str(user.id),
-        )
-        await analytics.evento(session, analytics.LETTURA_CRISI, utente_id=user.id, proprieta={"fase": "apertura"})
+        # Un segnale di crisi è un dato sulla salute (art. 9 GDPR): si conta, ma senza legarlo a chi l'ha scritto —
+        # né nel registro né nelle statistiche (GDPR, Fase 1).
+        await _registra_crisi(session, "apertura")
         await session.commit()
         return {"crisi": True, "messaggio": in_lingua(AIUTO, lang)}
 
@@ -447,23 +531,42 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
     await verifica_modello(session, lang)
 
     gestore = GestoreAbbonamenti(session)
+    limite_superato: Optional[str] = None
     if not await gestore.tariffe_in_vigore():
         consumo = "omaggio"
     else:
+        # Un saldo sotto zero è il debito lasciato da uno storno (v9): nessuna lettura, nemmeno in quota, finché non
+        # torna in pari — altrimenti chi si fa rimborsare continuerebbe a leggere con il piano.
+        saldo = await RegistroCrediti(session).saldo(user.id)
+        if saldo < 0:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail={"motivo": "saldo_negativo", "messaggio": in_lingua(SALDO_NEGATIVO, lang), "saldo": saldo},
+            )
         diritti = await gestore.diritti_di(user.id)
-        consumo = "quota" if await ContatoreQuote(session).quota_disponibile(user.id, diritti) else "credito"
+        consumo, limite_superato = await _consumo_con_limiti(session, gestore, user.id, diritti, payload.oltre_limite, lang)
 
     # Il recupero delle memorie (v6, Fase C): un'istantanea presa una volta sola, qui, che vale per
     # tutta l'intervista. Non deve mai impedire l'apertura di una lettura: un fornitore di embedding
     # non configurato o che fallisce lascia solo la lista vuota, non un errore all'utente.
+    #
+    # Con l'interruttore della console acceso l'istantanea è lo stato sintetico (`tarot/stato_memoria.py`), nella
+    # stessa forma: l'intervista e la sintesi la leggono come prima. Spento (il predefinito), resta il recupero di
+    # prima — che dalla riduzione dei costi gira solo con `TAROT_MEMORIA_EMBEDDING=true`.
     memorie_recuperate: List[Dict[str, Any]] = []
     try:
-        provider_embed = provider_per(Compito.EMBEDDING, persone)
-        if supporta_embedding(provider_embed):
-            candidati = await memoria_repositories.candidati_per(session, user.id)
-            if candidati:
-                vettore = (await provider_embed.embed([payload.question.strip()]))[0]
-                memorie_recuperate = istantanea(rilevanti(candidati, vettore, top_n=5))
+        if (await correnti_intervista(session)).memoria_stato_nei_prompt:
+            memorie_recuperate = come_istantanea(
+                await memoria_repositories.stato_di(session, user.id), date.today(), owner_id=user.id, limite=5,
+            )
+        elif get_settings().memoria_embedding:
+            # Le persone come oggetto, non l'istantanea: il quesito va al fornitore degli embedding senza i nomi.
+            provider_embed = provider_per(Compito.EMBEDDING, da_json(persone) if persone else None, riferimento="apertura")
+            if supporta_embedding(provider_embed):
+                candidati = await memoria_repositories.candidati_per(session, user.id)
+                if candidati:
+                    vettore = (await provider_embed.embed([payload.question.strip()]))[0]
+                    memorie_recuperate = istantanea(rilevanti(candidati, vettore, top_n=5))
     except Exception:  # noqa: BLE001 - il recupero memorie non deve mai bloccare l'apertura
         logger.warning("Recupero memorie non riuscito all'apertura della lettura", exc_info=True)
 
@@ -473,6 +576,7 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
         manuale=assegnazioni_manuali is not None,
         deck_id=mazzo_scelto.id if mazzo_scelto else None,
         memorie_recuperate=memorie_recuperate,
+        limite=limite_superato if consumo != "omaggio" else None,
     )
     if assegnazioni_manuali is not None:
         # `lettura` è appena stata creata (solo un flush, mai un `select`): la relazione `cards` non è
@@ -528,6 +632,10 @@ class NuovaLetturaAnonima(BaseModel):
     spread_id: str = Field(min_length=1, max_length=40)
     question: str = Field(min_length=3, max_length=1000)
     lang: str = Field(default="it", max_length=5)
+    #: «Ho almeno N anni» (GDPR, Fase 1): il sito lo chiede prima della lettura gratuita, come al primo accesso.
+    eta_confermata: bool = False
+    #: L'età confermata (quella mostrata nella domanda, da `GET /eta-minima`).
+    eta_anni: Optional[int] = Field(default=None, ge=13, le=21)
 
 
 DURATA_COOKIE_ANONIMO = 60 * 60 * 24 * 365  # un anno
@@ -544,9 +652,17 @@ async def apri_anonima(
     una seconda gratis.
     """
     stesa = _stesa_o_404(payload.spread_id)
-    if get_conoscenza().categoria_di(stesa) != "standard":
-        raise HTTPException(status_code=422, detail="La lettura gratuita per anonimi è solo standard")
+    # Ammesse la standard e quella di lavoro: una persona sola, nessun dato di un partner.
+    categoria = get_conoscenza().categoria_di(stesa)
+    if speciale(categoria):
+        raise HTTPException(status_code=422, detail="La lettura gratuita per anonimi è solo standard o di lavoro")
     lang = rileva_lingua(payload.question, fallback=payload.lang)
+
+    # L'età minima vale anche senza account: la conferma arriva con la richiesta, per il paese stimato dall'IP.
+    ip = ip_client(request)
+    anni = eta_minima.anni_minimi(eta_minima.paese_da_ip(ip))
+    if eta_minima.controllo_attivo() and (not payload.eta_confermata or (payload.eta_anni or 0) < anni):
+        raise errore_eta_anonima(anni, payload.lang)
 
     if segnale_di_crisi(payload.question):
         return {"crisi": True, "messaggio": in_lingua(AIUTO, lang)}
@@ -570,8 +686,13 @@ async def apri_anonima(
         consumo="anonimo", lang=lang, status="intervista",
     )
     session.add(lettura)
+    if payload.eta_confermata:
+        consent_repositories.annota_storico(
+            session, user_id=None, anon_id=nuovo_anon_id, tipo="eta_minima", valore="confermato",
+            versione_informativa=f"eta-v1:{payload.eta_anni or anni}", ip=ip,
+        )
     await analytics.evento(session, analytics.LETTURA_APERTA, proprieta={
-        "stesa": stesa["id"], "categoria": "standard", "consumo": "anonimo", "lingua": lang,
+        "stesa": stesa["id"], "categoria": categoria, "consumo": "anonimo", "lingua": lang,
     })
     await session.commit()
 
@@ -590,7 +711,7 @@ async def apri_anonima(
         "status": lettura.status,
         "consumo": "anonimo",
         "lang": lang,
-        "categoria": "standard",
+        "categoria": categoria,
         "disclaimer": in_lingua(DISCLAIMER, lang),
         "stesa": get_conoscenza().stesa_pubblica(stesa),
     }
@@ -617,6 +738,10 @@ async def intervista(
 
     turni = list(lettura.turns)
     attende_risposta = bool(turni) and turni[-1].ruolo == "oracolo"
+    regole = await correnti_intervista(session)
+    min_domande, max_domande = regole.min_domande, regole.max_domande
+    if payload.basta:
+        return await _basta_cosi(session, repo, user, lettura, reading_id, anon_id, min_domande)
     if payload.risposta is not None and payload.risposta.strip():
         if not attende_risposta:
             raise _conflitto("Nessuna domanda in attesa di risposta")
@@ -629,7 +754,11 @@ async def intervista(
     elif attende_risposta:
         # Una seconda chiamata vuota (una pagina ricaricata) ripropone la
         # domanda in attesa invece di generarne un'altra.
-        return {"completa": False, "domanda": turni[-1].testo, "ordine": turni[-1].ordine}
+        poste = sum(1 for t in turni if t.ruolo == "oracolo")
+        return {
+            "completa": False, "domanda": turni[-1].testo, "ordine": turni[-1].ordine,
+            "facoltativa": poste - 1 >= min_domande,
+        }
     await session.commit()
 
     await verifica_modello(session, lettura.lang)          # rilegge già fornitori e assegnazioni
@@ -637,14 +766,14 @@ async def intervista(
     impostazioni = get_settings()
     conoscenza = get_conoscenza()
     categoria = conoscenza.categoria_di(stesa)
-    persone = da_json(lettura.persone)
+    persone = await _persone_per_prompt(session, lettura, user)
     # Nelle letture speciali il profilo del prompt sono le due persone (col
     # partner senza cognome); nella standard, la carta dell'anima e dell'anno.
     profilo = (_profilo(user) if user else "") if persone is None else blocco_persone(persone, conoscenza) + "\n"
     try:
         passo = await prossimo_passo(
-            provider_intervista=provider_per(Compito.INTERVISTA, persone),
-            provider_validazione=provider_per(Compito.VALIDAZIONE, persone),
+            provider_intervista=provider_per(Compito.INTERVISTA, persone, lettura=reading_id),
+            provider_validazione=provider_per(Compito.VALIDAZIONE, persone, lettura=reading_id),
             quesito=lettura.question,
             stesa_nome=stesa["nome"],
             stesa_descrizione=(
@@ -652,14 +781,15 @@ async def intervista(
                 + "; ".join(f"{p['n']}. {p['nome']}" for p in stesa["posizioni"])
             ),
             turni=turni_da(lettura.turns),
-            min_domande=impostazioni.intervista_min_domande,
-            max_domande=impostazioni.intervista_max_domande,
+            min_domande=min_domande,
+            max_domande=max_domande,
             lang=lettura.lang,
             profilo=profilo,
             categoria=categoria,
             nota=stesa.get("nota_intervista", ""),
             parole_neutre=parole_neutre(persone),
             memorie=da_istantanea(lettura.memorie_recuperate or []),
+            validatore=regole.validatore_domande or "dubbi",
         )
     except (IntervistaNonRiuscita, RuntimeError) as exc:
         # Nessuna domanda di riserva: si dice che l'oracolo non ha risposto.
@@ -688,7 +818,37 @@ async def intervista(
         ordine=ordine, ruolo="oracolo", testo=passo.domanda, created_at=utcnow(),
     ))
     await session.commit()
-    return {"completa": False, "domanda": passo.domanda, "ordine": ordine, "scartate": passo.scartate}
+    return {
+        "completa": False, "domanda": passo.domanda, "ordine": ordine, "scartate": passo.scartate,
+        "facoltativa": passo.facoltativa,
+    }
+
+
+async def _basta_cosi(session, repo, user, lettura: Reading, reading_id, anon_id, min_domande: int) -> Dict[str, Any]:
+    """«No, basta così»: chiude l'intervista col quadro emerso fin qui e passa alle carte.
+
+    Solo dopo il minimo di domande con risposta; la domanda facoltativa rimasta senza risposta si toglie, così il
+    colloquio salvato (e la storia) non mostra una domanda sospesa."""
+    turni = list(lettura.turns)
+    if turni and turni[-1].ruolo == "oracolo":
+        lettura.turns.remove(turni[-1])
+        turni = turni[:-1]
+    risposte = sum(1 for t in turni if t.ruolo == "oracolo")
+    if risposte < min_domande:
+        raise _conflitto("Servono ancora alcune risposte prima di passare alle carte")
+    await session.commit()
+    await verifica_modello(session, lettura.lang)
+    persone = await _persone_per_prompt(session, lettura, user)
+    categoria = get_conoscenza().categoria_di(_stesa_o_404(lettura.spread_id))
+    riassunto = await riassumi(
+        provider_per(Compito.INTERVISTA, persone, lettura=reading_id), quesito=lettura.question, turni=turni_da(turni),
+        lang=lettura.lang, categoria=categoria,
+    )
+    lettura = await _lettura_o_404(repo, user, reading_id, lock=True, anon_id=anon_id)
+    lettura.context_summary = riassunto
+    lettura.status = "rivelazione" if lettura.manuale else "ventaglio"
+    await session.commit()
+    return {"completa": True, "riassunto": riassunto}
 
 
 async def _chiudi_per_crisi(session, user: Optional[User], lettura: Reading) -> Dict[str, Any]:
@@ -696,18 +856,22 @@ async def _chiudi_per_crisi(session, user: Optional[User], lettura: Reading) -> 
     non carte. Una lettura anonima (v6, Fase F) non ha nulla da rimborsare."""
     lettura.status = "annullata"
     if user and lettura.consumo == "credito":
+        # La nota del registro dei crediti non dice perché: il registro è contabilità, resta anche dopo la
+        # cancellazione dell'account, e un segnale di crisi è un dato sulla salute (art. 9 GDPR).
         await RegistroCrediti(session).rimborsa(
-            user.id, COSTO_LETTURA, reading_id=lettura.id, note="lettura sospesa: segnale di crisi",
+            user.id, COSTO_LETTURA, reading_id=lettura.id, note="lettura sospesa",
         )
-    await AuditRepository(session).record(
-        action="reading.crisis", actor_id=user.id if user else None,
-        target_type="reading", target_id=str(lettura.id),
-    )
-    await analytics.evento(
-        session, analytics.LETTURA_CRISI, utente_id=user.id if user else None, proprieta={"fase": "intervista"},
-    )
+    await _registra_crisi(session, "intervista")
     await session.commit()
     return {"completa": False, "crisi": True, "messaggio": in_lingua(AIUTO, lettura.lang)}
+
+
+async def _registra_crisi(session, fase: str) -> None:
+    """Il segnale di crisi si conta e basta (GDPR, Fase 1): nel registro senza chi né quale lettura, nelle
+    statistiche senza utente. Quanti segnali, in che fase, quando: abbastanza per capire se il filtro funziona e se
+    i numeri di aiuto vanno ripensati, niente che riporti a una persona."""
+    await AuditRepository(session).record(action="reading.crisis", after={"fase": fase})
+    await analytics.evento(session, analytics.LETTURA_CRISI, proprieta={"fase": fase})
 
 
 # ---- ventaglio e scelta ---------------------------------------------------------
@@ -776,10 +940,16 @@ async def rivela(
     reading_id: uuid.UUID, posizione: int, user: OptionalUser, session: DbSession,
     fabbrica: SessionFactory, request: Request,
 ) -> StreamingResponse:
-    """Gira la carta e ne dà l'interpretazione immediata, in streaming.
+    """Gira la carta e ne dà l'interpretazione, in streaming.
 
     Le carte si rivelano in ordine di posizione: la lettura è un racconto, e
     l'interpretazione di ciascuna tiene conto di quelle già viste.
+
+    **Una chiamata sola per tutte le carte** (`api/rivelazione.py`): la prima richiesta di svelamento della lettura
+    interpreta tutte le carte ancora da leggere; le richieste delle altre posizioni trovano il testo già pronto e lo
+    mandano subito (`token` con il testo intero). Gli eventi restano quelli di prima — `carta`, `battito` mentre il
+    lettore legge, `token`, `sostituisci`, `errore`, `fine` — così sito e app di prima funzionano come prima. Le
+    posizioni che la chiamata unica non copre si leggono con la chiamata singola di prima, in streaming.
     """
     anon_id = None if user else request.cookies.get(COOKIE_ANONIMO)
     repo = ReadingRepository(session)
@@ -793,94 +963,200 @@ async def rivela(
     await verifica_modello(session, lettura.lang)
     conoscenza = get_conoscenza()
     stesa = _stesa_o_404(lettura.spread_id)
-    carta.rivelata = True
-    dignita = dignita_di(lettura, stesa, conoscenza, solo_rivelate=True).get(posizione)
-    doppia = doppia_valenza(lettura, carta)
     lang = lingua(lettura.lang)
     categoria = conoscenza.categoria_di(stesa)
-    persone_lettura = da_json(lettura.persone)
+    persone_lettura = await _persone_per_prompt(session, lettura, user)
     soggetti = _soggetti(stesa, persone_lettura)
-    # Le interpretazioni delle carte sono brevi e hanno le loro regole: nelle
-    # letture speciali ricevono in più solo ciò che è specifico del tipo di lettura.
-    sistema_interpretazione = [interpretazione.PROMPT_INTERPRETAZIONE]
-    if categoria != "standard":
-        sistema_interpretazione.append(interpretazione.PROMPT_INTERPRETAZIONE_RELAZIONE)
-        specifiche = get_guardrail().istruzioni_per("interpretazione", categoria, solo_categoria=True)
-        if specifiche:
-            sistema_interpretazione.append("# Regole di sicurezza della relazione\n\n" + "\n\n".join(specifiche))
-    note = note_di_posizione(
-        stesa, posizione, [c.posizione for c in lettura.cards if c.rivelata and c.posizione != posizione],
+    comune = rivelazione.contesto_comune(lettura, stesa, persone_lettura, user)
+    # Questa carta e quelle ancora coperte: la chiamata unica le legge tutte, ciascuna con i dati che avrebbe avuto
+    # girandola da sola (`rivelazione.dati_carta`).
+    da_leggere = [c for c in lettura.cards if not c.rivelata and not c.interpretazione]
+    carta.rivelata = True
+    dati = rivelazione.dati_carta(lettura, stesa, carta, lang, soggetti)
+    preparata = rivelazione.prepara(
+        reading_id, [(c, rivelazione.dati_carta(lettura, stesa, c, lang, soggetti)) for c in da_leggere],
+        categoria=categoria, comune=comune, lang=lang,
     )
-    domanda = interpretazione.messaggio(
-        carta=conoscenza.carta(carta.card_id),
-        rovescio=carta.rovescio,
-        stesa=stesa,
-        posizione=conoscenza.posizione(stesa, posizione),
-        quesito=lettura.question,
-        contesto=lettura.context_summary or "",
-        dignita=dignita,
-        precedenti=gia_rivelate(lettura, stesa, conoscenza, posizione, lang),
-        note=note,
-        doppia_valenza=doppia,
-        colloquio=trascrizione(turni_da(lettura.turns)),
-        nomi=(conoscenza.nome_carta(carta.card_id, lang), conoscenza.nome_posizione(stesa, posizione, lang)),
-        lang=lang,
-        persone=blocco_persone(persone_lettura, conoscenza) if persone_lettura else "",
-        soggetto=(soggetti or {}).get(posizione, ""),
-        registro=user.registro_linguistico if user else "",
-    )
-    evento_carta = {
-        "posizione": posizione,
-        "carta": conoscenza.carta_pubblica(carta.card_id),
-        "rovescio": carta.rovescio,
-        "calcolata": carta.calcolata,
-        "doppia_valenza": doppia,
-        "dignita": dignita,
-    }
+    pronta = carta.interpretazione or ""
+    evento_carta = _evento_carta(conoscenza, carta, dati)
     await session.commit()
     await aggiorna_assegnazioni(session)
-    provider = provider_per(Compito.INTERPRETAZIONE, persone_lettura)
+    unica = None if pronta else rivelazione.avvia(
+        preparata, provider_per(Compito.INTERPRETAZIONE, persone_lettura, lettura=reading_id), fabbrica,
+    )
 
     async def genera() -> AsyncIterator[bytes]:
         yield _sse("carta", evento_carta)
-        testo = ""
-        try:
-            async for pezzo in genera_flusso(provider, richiesta(
-                sistema_interpretazione, domanda, temperatura=0.7, max_tokens=500,
-            )):
-                testo += pezzo
-                yield _sse("token", {"testo": pezzo})
-        except Exception as exc:  # noqa: BLE001 - errori del fornitore e di rete
-            logger.warning("Interpretazione non generata: %s", exc)
-            yield _sse("errore", {"messaggio": in_lingua(INTERPRETAZIONE_NON_DISPONIBILE, lettura.lang)})
+        testo = pronta
+        if not testo and unica is not None:
+            async for battito in _attendi(unica):
+                yield battito
+            testo = rivelazione.risultato(unica).get(posizione, "")
+        if not testo:
+            # Scritta nel frattempo da un'altra richiesta della stessa lettura?
+            testo = (await rivelazione.leggi(fabbrica, reading_id, [posizione])).get(posizione, "")
+        if testo:
+            yield _sse("token", {"testo": testo})
+        else:
+            esito: List[str] = []
+            async for evento in _interpreta_una(
+                provider_per(Compito.INTERPRETAZIONE, persone_lettura, lettura=reading_id),
+                rivelazione.sistema(categoria, unica=False),
+                interpretazione.messaggio(**comune, **dati, lang=lang), dati, lettura.lang, esito,
+            ):
+                yield evento
+            testo = esito[0] if esito else ""
 
-        testo = testo.strip()
-        if testo and uscita_proibita(testo):
-            # Il guardrail leggero delle carte: una formula proibita non
-            # resta sullo schermo.
-            testo = _interpretazione_prudente(conoscenza.carta(carta.card_id), carta.rovescio, lettura.lang)
-            yield _sse("sostituisci", {"testo": testo})
-
-        async with fabbrica() as s:
-            r = await ReadingRepository(s).get_flex(reading_id, owner=user, anon_id=anon_id, lock=True)
-            if r is not None:
-                for c in r.cards:
-                    if c.posizione == posizione:
-                        c.interpretazione = testo or None
-                if prossima_da_rivelare(r) is None:
-                    r.status = "sintesi"
-                await s.commit()
-                ultima = r.status == "sintesi"
-            else:
-                ultima = False
+        ultima = await _salva_interpretazione(fabbrica, reading_id, user, anon_id, posizione, testo)
         yield _sse("fine", {"posizione": posizione, "interpretazione": testo, "ultima": ultima})
 
     return _flusso(genera())
 
 
+@router.post("/readings/{reading_id}/reveal-all")
+async def rivela_tutte(
+    reading_id: uuid.UUID, user: OptionalUser, session: DbSession, fabbrica: SessionFactory, request: Request,
+) -> StreamingResponse:
+    """Gira tutte le carte ancora coperte e le interpreta con una chiamata sola, in streaming.
+
+    Eventi: un `carta` per ogni carta, in ordine (subito: le carte si girano insieme); `fase` `lettura` (il lettore sta
+    leggendo le carte) e `battito` finché la chiamata unica lavora; poi per ogni posizione `token` (con `posizione`; il
+    testo intero, o a pezzi se quella posizione torna alla chiamata singola), eventualmente `sostituisci` o `errore`
+    (con `posizione`), e `fine` (`posizione`, `interpretazione`, `ultima`). Le regole sono quelle di
+    `POST /readings/{id}/reveal/{posizione}`, che resta per i client di prima.
+    """
+    anon_id = None if user else request.cookies.get(COOKIE_ANONIMO)
+    repo = ReadingRepository(session)
+    lettura = await _lettura_o_404(repo, user, reading_id, lock=True, anon_id=anon_id)
+    coperte = sorted((c for c in lettura.cards if not c.rivelata), key=lambda c: c.posizione)
+    if lettura.status != "rivelazione" or not coperte:
+        raise _conflitto("Non ci sono carte da rivelare")
+
+    await verifica_modello(session, lettura.lang)
+    conoscenza = get_conoscenza()
+    stesa = _stesa_o_404(lettura.spread_id)
+    lang = lingua(lettura.lang)
+    categoria = conoscenza.categoria_di(stesa)
+    persone_lettura = await _persone_per_prompt(session, lettura, user)
+    soggetti = _soggetti(stesa, persone_lettura)
+    comune = rivelazione.contesto_comune(lettura, stesa, persone_lettura, user)
+    voci = [(c, rivelazione.dati_carta(lettura, stesa, c, lang, soggetti)) for c in coperte]
+    pronte = {c.posizione: c.interpretazione for c in coperte if c.interpretazione}
+    preparata = rivelazione.prepara(
+        reading_id, [(c, d) for c, d in voci if c.posizione not in pronte],
+        categoria=categoria, comune=comune, lang=lang,
+    )
+    for c in coperte:
+        c.rivelata = True
+    eventi_carta = [_evento_carta(conoscenza, c, d) for c, d in voci]
+    await session.commit()
+    await aggiorna_assegnazioni(session)
+    unica = rivelazione.avvia(
+        preparata, provider_per(Compito.INTERPRETAZIONE, persone_lettura, lettura=reading_id), fabbrica,
+    ) if len(pronte) < len(coperte) else None
+
+    async def genera() -> AsyncIterator[bytes]:
+        for evento in eventi_carta:
+            yield _sse("carta", evento)
+        yield _sse("fase", {"fase": "lettura"})
+        if unica is not None:
+            async for battito in _attendi(unica):
+                yield battito
+        testi = {**rivelazione.risultato(unica), **pronte}
+        mancanti = [c.posizione for c in coperte if c.posizione not in testi]
+        testi.update(await rivelazione.leggi(fabbrica, reading_id, mancanti))
+        for c, dati in voci:
+            n = c.posizione
+            testo = testi.get(n, "")
+            if testo:
+                yield _sse("token", {"posizione": n, "testo": testo})
+            else:
+                esito: List[str] = []
+                async for evento in _interpreta_una(
+                    provider_per(Compito.INTERPRETAZIONE, persone_lettura, lettura=reading_id),
+                    rivelazione.sistema(categoria, unica=False),
+                    interpretazione.messaggio(**comune, **dati, lang=lang), dati, lettura.lang, esito, posizione=n,
+                ):
+                    yield evento
+                testo = esito[0] if esito else ""
+            ultima = await _salva_interpretazione(fabbrica, reading_id, user, anon_id, n, testo)
+            ultima = ultima and n == coperte[-1].posizione
+            yield _sse("fine", {"posizione": n, "interpretazione": testo, "ultima": ultima})
+
+    return _flusso(genera())
+
+
+def _evento_carta(conoscenza, carta, dati: Dict[str, Any]) -> Dict[str, Any]:
+    """L'evento `carta`: la carta girata, con la dignità rispetto alle carte già rivelate (come chi consulta la vede)."""
+    return {
+        "posizione": carta.posizione,
+        "carta": conoscenza.carta_pubblica(carta.card_id),
+        "rovescio": carta.rovescio,
+        "calcolata": carta.calcolata,
+        "doppia_valenza": dati["doppia_valenza"],
+        "dignita": dati["dignita"],
+    }
+
+
+async def _attendi(task) -> AsyncIterator[bytes]:
+    """Un `battito` ogni cinque secondi finché la chiamata unica lavora: la connessione resta viva. Il task non si
+    annulla se il client se ne va (`shield`): l'interpretazione si scrive comunque."""
+    while not task.done():
+        try:
+            await asyncio.wait_for(asyncio.shield(task), timeout=5)
+        except asyncio.TimeoutError:
+            yield _sse("battito", {})
+        except Exception:  # noqa: BLE001 - l'esito si legge dal task
+            break
+
+
+async def _interpreta_una(
+    provider, sistema: List[str], domanda: str, dati: Dict[str, Any], lang_lettura: str, esito: List[str],
+    *, posizione: Optional[int] = None,
+) -> AsyncIterator[bytes]:
+    """La chiamata singola di prima per una carta, in streaming: il ripiego della chiamata unica. Il testo finale va in
+    `esito`. Con `posizione` (svelamento di tutte le carte) gli eventi la portano, per dire a quale carta vanno."""
+    dove = {} if posizione is None else {"posizione": posizione}
+    testo = ""
+    try:
+        async for pezzo in genera_flusso(provider, richiesta(
+            sistema, domanda, temperatura=0.7, max_tokens=interpretazione.TETTO_CARTA,
+        )):
+            testo += pezzo
+            yield _sse("token", {**dove, "testo": pezzo})
+    except Exception as exc:  # noqa: BLE001 - errori del fornitore e di rete
+        logger.warning("Interpretazione non generata: %s", exc)
+        yield _sse("errore", {**dove, "messaggio": in_lingua(INTERPRETAZIONE_NON_DISPONIBILE, lang_lettura)})
+
+    testo = testo.strip()
+    if testo and uscita_proibita(testo):
+        # Il guardrail leggero delle carte: una formula proibita non resta sullo schermo.
+        testo = rivelazione.prudente(dati["carta"], dati["rovescio"])
+        yield _sse("sostituisci", {**dove, "testo": testo})
+    esito.append(testo)
+
+
+async def _salva_interpretazione(
+    fabbrica, reading_id: uuid.UUID, user: Optional[User], anon_id: Optional[str], posizione: int, testo: str,
+) -> bool:
+    """Scrive il testo della posizione e, se non resta niente da girare, passa la lettura alla sintesi. Vero se era
+    l'ultima."""
+    async with fabbrica() as s:
+        r = await ReadingRepository(s).get_flex(reading_id, owner=user, anon_id=anon_id, lock=True)
+        if r is None:
+            return False
+        for c in r.cards:
+            if c.posizione == posizione:
+                c.interpretazione = testo or None
+        if prossima_da_rivelare(r) is None:
+            r.status = "sintesi"
+        await s.commit()
+        return r.status == "sintesi"
+
+
 def _interpretazione_prudente(carta: Dict[str, Any], rovescio: bool, lang: str) -> str:
     """Il significato del mazzo, al posto di un testo che il filtro ha fermato."""
-    return carta.get("rovescio" if rovescio else "dritto") or ""
+    return rivelazione.prudente(carta, rovescio)
 
 
 # ---- sintesi ------------------------------------------------------------------------
@@ -922,6 +1198,10 @@ async def sintesi(
             yield _sse("fine", chiusura)
         return _flusso(rilegge())
 
+    if lettura.status == "rivelazione" and lettura.cards and prossima_da_rivelare(lettura) is None:
+        # Tutte le carte girate, ma il passaggio alla sintesi non è stato scritto (il client ha chiuso la connessione
+        # prima della fine dell'ultima interpretazione): la lettura non resta bloccata.
+        lettura.status = "sintesi"
     if lettura.status != "sintesi":
         raise _conflitto("Il responso arriva dopo aver rivelato tutte le carte")
 
@@ -930,9 +1210,13 @@ async def sintesi(
     stesa = _stesa_o_404(lettura.spread_id)
     registro = get_guardrail()
     await aggiorna_assegnazioni(session)
-    persone_lettura = da_json(lettura.persone)
-    autore = provider_per(Compito.SINTESI, persone_lettura)
-    giudice = provider_per(Compito.GIUDIZIO, persone_lettura)
+    persone_lettura = await _persone_per_prompt(session, lettura, user)
+    # Le memorie sulla salute (art. 9) si estraggono solo con il consenso alle categorie particolari (GDPR, Fase 1).
+    salute_ammessa = await _dati_particolari(session, user)
+    regole = await correnti_intervista(session)
+    modo_guardia = regole.guardia_responso or "dubbi"
+    autore = provider_per(Compito.SINTESI, persone_lettura, lettura=reading_id)
+    giudice = provider_per(Compito.GIUDIZIO, persone_lettura, lettura=reading_id)
 
     categoria = conoscenza.categoria_di(stesa)
     prefisso = cag.prefisso(conoscenza, registro.istruzioni_per("sintesi", categoria), categoria)
@@ -966,11 +1250,12 @@ async def sintesi(
     # connessione per niente la toglie al pool.
     await session.commit()
 
+    tetto = _tetto_sintesi(stesa, categoria)
+
     async def scrivi(vincoli: str = "") -> str:
         return await genera_testo(autore, richiesta(
             [prefisso], cag.parte_variabile(**argomenti, vincoli=vincoli),
-            # Le letture speciali hanno una sezione in più e i nomi dei due.
-            temperatura=0.75, max_tokens=1800 if categoria == "standard" else 2200, cache_dopo=0,
+            temperatura=0.75, max_tokens=tetto, cache_dopo=0,
         ))
 
     async def genera() -> AsyncIterator[bytes]:
@@ -998,17 +1283,18 @@ async def sintesi(
             return
 
         yield _sse("fase", {"fase": "guardia"})
-        verdetto = await giudica(
-            giudice, registro, quesito=lettura.question, responso=responso, categoria=categoria,
+        # Il modo della guardia (console): nel predefinito «solo casi dubbi» la guardia LLM parte solo se il controllo
+        # deterministico trova qualcosa da guardare; la revisione resta legata a ciò che la guardia segnala.
+        guardia = dict(
+            categoria=categoria, modo=modo_guardia, colloquio=argomenti["colloquio"], lang=lang,
         )
+        verdetto = await giudica(giudice, registro, quesito=lettura.question, responso=responso, **guardia)
         esito = "ok"
         if verdetto.esito == "riscrivi":
             yield _sse("fase", {"fase": "revisione"})
             try:
                 responso = await scrivi(verdetto.vincoli())
-                verdetto = await giudica(
-                    giudice, registro, quesito=lettura.question, responso=responso, categoria=categoria,
-                )
+                verdetto = await giudica(giudice, registro, quesito=lettura.question, responso=responso, **guardia)
                 esito = "riscritto" if verdetto.ok else "bloccato"
             except Exception:  # noqa: BLE001
                 esito = "bloccato"
@@ -1016,14 +1302,17 @@ async def sintesi(
             esito = "bloccato"
         if esito == "bloccato":
             responso = in_lingua(RESPONSO_BLOCCATO, lang)
-        elif not verdetto.verificato:
+        elif not verdetto.verificato and verdetto.guardia != "spenta":
             logger.warning("Responso della lettura %s non verificato dal giudice", reading_id)
 
         # Per un anonimo, l'anteprima si genera qui: sul responso vero, mai su quello bloccato (un
         # rifiuto del guardrail non ha nulla su cui basare un'anteprima sensata).
         teaser_testo = ""
         if is_anonimo and esito != "bloccato":
-            teaser_testo = await genera_teaser(autore, responso=responso, lang=lang)
+            # Un compito suo (senza assegnazione: il modello della sintesi, col ragionamento spento).
+            teaser_testo = await genera_teaser(
+                provider_per(Compito.TEASER, persone_lettura, lettura=reading_id), responso=responso, lang=lang,
+            )
 
         async with fabbrica() as s:
             r = await ReadingRepository(s).get_flex(reading_id, owner=user, anon_id=anon_id, lock=True)
@@ -1050,15 +1339,28 @@ async def sintesi(
             chiusura["anonimo"] = is_anonimo
 
         if user and esito != "bloccato":
-            # In background, mai atteso: un'estrazione lenta o fallita non deve ritardare né
+            # In background, mai atteso: un aggiornamento lento o fallito non deve ritardare né
             # rompere una risposta già consegnata all'utente (v6, Fase B). Un anonimo non ha un
-            # profilo a cui attaccare memorie: niente da estrarre finché non si registra.
-            asyncio.create_task(estrai_e_salva(
-                fabbrica, user.id, reading_id,
-                quesito=lettura.question, colloquio=argomenti["colloquio"], sintesi=responso,
-                provider_estrazione=provider_per(Compito.MEMORIA_ESTRAZIONE, persone_lettura),
-                provider_embedding=provider_per(Compito.EMBEDDING, persone_lettura),
+            # profilo a cui attaccare memorie: niente da ricordare finché non si registra.
+            #
+            # Lo stato sintetico: una chiamata breve, sempre senza ragionamento, sul quadro dell'intervista (non sulla
+            # trascrizione né sul responso). Si aggiorna anche quando non entra nei prompt (interruttore della console).
+            asyncio.create_task(aggiorna_stato(
+                fabbrica, user.id, quesito=lettura.question, quadro=lettura.context_summary or "",
+                provider=provider_per(
+                    Compito.MEMORIA_ESTRAZIONE, persone_lettura, lettura=reading_id, senza_ragionamento=True,
+                ),
+                lang=lang, salute_ammessa=salute_ammessa,
             ))
+            if get_settings().memoria_embedding:
+                # La memoria di prima, solo se riaccesa (`TAROT_MEMORIA_EMBEDDING`).
+                asyncio.create_task(estrai_e_salva(
+                    fabbrica, user.id, reading_id,
+                    quesito=lettura.question, colloquio=argomenti["colloquio"], sintesi=responso,
+                    provider_estrazione=provider_per(Compito.MEMORIA_ESTRAZIONE, persone_lettura, lettura=reading_id),
+                    provider_embedding=provider_per(Compito.EMBEDDING, persone_lettura, lettura=reading_id),
+                    salute_ammessa=salute_ammessa,
+                ))
 
         yield _sse("fase", {"fase": "responso", "guardia": esito})
         # Il testo esce a frammenti: già approvato, ma lo si scrive davanti

@@ -168,7 +168,7 @@ class GestoreOrdini:
         ordine.external_id = f"{self._provider.name}_ord_{ordine.id.hex[:16]}"
         await self._session.flush()
         set_committed_value(ordine, "righe", righe_scritte)
-        return ordine, self._provider.url_di_pagamento_ordine(ordine, ritorno=ritorno)
+        return ordine, await self._provider.url_di_pagamento_ordine(ordine, ritorno=ritorno)
 
     async def applica(self, evento: EventoPagamento) -> str:
         """Stessa idempotenza di `GestorePagamenti.applica()`: la riga dell'evento si scrive nella

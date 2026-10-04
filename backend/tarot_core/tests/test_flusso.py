@@ -230,10 +230,18 @@ async def test_l_abbonamento_usa_la_quota_prima_dei_crediti(client, session, cat
     await gestore.sottoscrivi(utente.id, await gestore.piano_per_slug("mensile-base"))
     await session.commit()
     consumi = []
-    for _ in range(4):
+    for _ in range(3):
         r = await client.post("/readings", json={"spread_id": "tre-carte", "question": "Oggi?"})
         consumi.append(r.json()["consumo"])
-    assert consumi == ["quota", "quota", "quota", "credito"]
+    assert consumi == ["quota", "quota", "quota"]
+    # Oltre il limite (v9, Fase 2b) la lettura non parte da sola: si chiede il consenso, e prima vengono i condoni.
+    r = await client.post("/readings", json={"spread_id": "tre-carte", "question": "Oggi?"})
+    assert r.status_code == 402 and r.json()["detail"]["motivo"] == "limite_superato"
+    for _ in range(2):
+        r = await client.post("/readings", json={"spread_id": "tre-carte", "question": "Oggi?", "oltre_limite": "credito"})
+        assert r.json()["consumo"] == "condono"
+    r = await client.post("/readings", json={"spread_id": "tre-carte", "question": "Oggi?", "oltre_limite": "credito"})
+    assert r.json()["consumo"] == "credito"
     assert (await client.get("/me/billing")).json()["saldo"] == 4
 
 
@@ -319,13 +327,14 @@ async def test_la_lingua_e_quella_del_quesito_e_si_rinnova_a_ogni_quesito(
     prompt_visti.clear()
 
     await _lettura_completa(client, "tre-carte", 3, QUESITI["hu"])
-    assert {v["compito"] for v in prompt_visti} >= {"intervista", "interpretazione", "sintesi"}
+    assert {v["compito"] for v in prompt_visti} >= {"intervista", "interpretazione_unica", "sintesi"}
     for v in prompt_visti:
-        if v["compito"] in ("intervista", "interpretazione", "sintesi"):
+        if v["compito"] in ("intervista", "interpretazione_unica", "sintesi"):
             assert "ungherese" in v["utente"], v["compito"]
             assert "Scrivi in italiano" not in v["utente"], v["compito"]
-    # Nell'interpretazione i nomi tradotti da usare accompagnano quelli italiani.
-    assert all("Nomi da usare nella risposta" in v["utente"] for v in prompt_visti if v["compito"] == "interpretazione")
+    # Nell'interpretazione i nomi tradotti da usare accompagnano quelli italiani: uno per carta, nella chiamata unica.
+    unica = next(v for v in prompt_visti if v["compito"] == "interpretazione_unica")
+    assert unica["utente"].count("Nomi da usare nella risposta") == 3
 
     # Un nuovo quesito, in inglese, rinnova la lingua: la lettura di prima non la trascina.
     prompt_visti.clear()
@@ -333,9 +342,9 @@ async def test_la_lingua_e_quella_del_quesito_e_si_rinnova_a_ogni_quesito(
     assert r.json()["lang"] == "en"
     await _lettura_completa(client, "tre-carte", 3, QUESITI["en"])
     for v in prompt_visti:
-        if v["compito"] in ("intervista", "interpretazione", "sintesi"):
+        if v["compito"] in ("intervista", "interpretazione_unica", "sintesi"):
             assert "inglese" in v["utente"] and "ungherese" not in v["utente"], v["compito"]
-            assert "Nomi da usare nella risposta" not in v["utente"] or v["compito"] == "interpretazione"
+            assert "Nomi da usare nella risposta" not in v["utente"] or v["compito"] == "interpretazione_unica"
 
 
 async def test_senza_indizi_nel_quesito_vale_la_lingua_dell_interfaccia(client, session, catalogo):
@@ -357,15 +366,23 @@ async def test_l_interpretazione_riceve_solo_la_sua_posizione(client, session, c
     stesa = Conoscenza.carica().stesa("tre-carte")
     await _accredita(session, client.identita.principal)
     await _lettura_completa(client, "tre-carte", 3)
-    letture = [v for v in prompt_visti if v["compito"] == "interpretazione"]
-    assert len(letture) == 3
-    for n, v in enumerate(letture, start=1):
-        assert stesa["posizioni"][n - 1]["significato"] in v["utente"]
+    # Una chiamata sola per le tre carte, con un blocco per carta: ogni blocco porta solo la sua posizione.
+    assert [v["compito"] for v in prompt_visti].count("interpretazione") == 0
+    unica = [v for v in prompt_visti if v["compito"] == "interpretazione_unica"]
+    assert len(unica) == 1
+    comune, *resto = unica[0]["utente"].split("## Carta in posizione ")
+    blocchi = dict(zip((int(b.split("\n", 1)[0]) for b in resto), resto))
+    assert sorted(blocchi) == [1, 2, 3]
+    assert not any(p["significato"] in comune for p in stesa["posizioni"])
+    for n, blocco in blocchi.items():
+        assert stesa["posizioni"][n - 1]["significato"] in blocco
         for altra in stesa["posizioni"]:
             if altra["n"] != n:
-                assert altra["significato"] not in v["utente"], (n, altra["nome"])
-        # Le sole carte già girate prima di questa, mai le successive.
-        assert v["utente"].count("Orientamento:") == 1
+                assert altra["significato"] not in blocco, (n, altra["nome"])
+        assert blocco.count("Orientamento:") == 1
+        # Le sole carte già girate prima di questa, mai le successive: come se si girassero una alla volta.
+        gia = blocco.split("Carte già rivelate:\n", 1)[1].split("\n\n", 1)[0] if "Carte già rivelate:" in blocco else ""
+        assert len([r for r in gia.splitlines() if r.startswith("- ")]) == n - 1
 
 
 async def test_la_sintesi_riceve_le_carte_nell_ordine_del_racconto(client, session, catalogo, prompt_visti):

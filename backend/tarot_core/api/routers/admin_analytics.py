@@ -426,6 +426,26 @@ async def controlla_avvisi(session: DbSession) -> Dict[str, Any]:
     return {"giorno": ieri.isoformat(), "avvisi": [{"metrica": a.metrica, "tipo": a.tipo, "testo": a.testo()} for a in trovati]}
 
 
+class RichiestaUscite(BaseModel):
+    da: date
+    a: date
+    limite: int = Field(default=25, ge=1, le=100)
+
+
+@router.post("/uscite")
+async def calcola_uscite(r: RichiestaUscite, session: DbSession) -> Dict[str, Any]:
+    """Le pagine d'uscita e, per le pagine di lettura, l'ultima azione compiuta prima di uscire (v8.6)."""
+    from ...analytics import uscite
+
+    if r.a < r.da or (r.a - r.da).days > 366:
+        raise HTTPException(status_code=422, detail="intervallo non valido (massimo un anno)")
+    try:
+        return await uscite.uscite(session, r.da, r.a, limite=r.limite)
+    except DBAPIError as exc:
+        await session.rollback()
+        raise _errore(exc) from exc
+
+
 @router.get("/tempo-reale")
 async def tempo_reale(session: DbSession) -> Dict[str, Any]:
     from lanterna.tempo_reale import adesso

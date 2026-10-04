@@ -53,6 +53,34 @@ DA_DESTRA = ("ar",)
 
 PREDEFINITA = "it"
 
+#: La lingua più probabile per paese (ISO 3166-1 alpha-2): serve solo come ultimo indizio, quando né una scelta
+#: salvata né la lingua del browser o del telefono dicono qualcosa di utile. Paese assente = nessun suggerimento.
+LINGUA_PER_PAESE: Dict[str, str] = {
+    **{p: "it" for p in ("IT", "SM", "VA")},
+    "HU": "hu",
+    **{p: "de" for p in ("DE", "AT", "LI")},
+    **{p: "fr" for p in ("FR", "MC", "LU")},
+    **{p: "ru" for p in ("RU", "BY", "KZ", "KG")},
+    "UA": "uk",
+    **{p: "es" for p in ("ES", "MX", "AR", "CO", "CL", "PE", "VE", "EC", "GT", "CU", "BO", "DO", "HN", "PY",
+                         "SV", "NI", "CR", "PA", "UY")},
+    **{p: "pt" for p in ("PT", "BR", "AO", "MZ")},
+    **{p: "ro" for p in ("RO", "MD")},
+    "PL": "pl",
+    **{p: "zh" for p in ("CN", "TW", "HK", "MO")},
+    "IN": "hi",
+    "KR": "ko",
+    **{p: "ar" for p in ("SA", "AE", "EG", "MA", "DZ", "TN", "JO", "LB", "IQ", "KW", "QA", "BH", "OM", "YE", "LY",
+                         "SY", "SD")},
+    **{p: "en" for p in ("GB", "IE", "US", "CA", "AU", "NZ", "ZA")},
+}
+
+
+def lingua_per_paese(paese: str | None) -> str | None:
+    """La lingua suggerita per un paese, o None se il paese non dice niente (paesi multilingue non elencati, come
+    Svizzera e Belgio, restano senza suggerimento)."""
+    return LINGUA_PER_PAESE.get((paese or "").upper())
+
 
 def lingua(lang: str) -> str:
     """Il codice di una lingua supportata; l'italiano se non lo è."""

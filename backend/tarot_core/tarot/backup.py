@@ -6,7 +6,8 @@ accanto `<file>.sha256`.
 
 **Dove.** Su SFTP (paramiko), nella cartella scelta dalla console. La chiave dell'host del NAS si accetta una volta
 dalla console («Fidati di questa chiave») e poi si controlla a ogni collegamento: un host con un'altra chiave non
-riceve il database. La credenziale (chiave SSH privata o password) la monta un Secret, mai nel database.
+riceve il database. La credenziale (chiave SSH privata o password) si carica dalla console ed è cifrata nel database
+con la chiave master che sta solo sul server (v9, Fase 2c); il Secret montato resta il ripiego.
 
 **Quante copie.** Si tengono le `conserva` più recenti (sette, se la console non dice altro); le più vecchie si
 cancellano **solo dopo** un caricamento riuscito e verificato (dimensione sul NAS = dimensione locale). Le copie di
@@ -70,6 +71,10 @@ class Destinazione:
     cartella: str
     conserva: int = 7
     impronta_host: Optional[str] = None
+    #: La credenziale dalla console (v9, Fase 2c), già decifrata, solo in memoria: la chiave SSH privata (testo) o la
+    #: password. Vuote: il Secret montato. Fuori da `repr`, perché un log della destinazione non la stampi mai.
+    chiave_ssh: Optional[str] = field(default=None, repr=False)
+    password: Optional[str] = field(default=None, repr=False)
 
     def completa(self) -> bool:
         return bool(self.host and self.utente and self.cartella)
@@ -115,17 +120,59 @@ async def impostazioni(session) -> ImpostazioniBackup:
 
 
 def destinazione_di(riga: ImpostazioniBackup) -> Destinazione:
+    from ..llm.cifratura import decifra
+
     return Destinazione(
         host=riga.host.strip(), porta=riga.porta, utente=riga.utente.strip(), cartella=riga.cartella.strip(),
         conserva=riga.conserva, impronta_host=riga.impronta_host,
+        chiave_ssh=decifra(riga.chiave_ssh_cifrata) or None, password=decifra(riga.password_cifrata) or None,
     )
 
 
-def credenziale() -> Dict[str, Any]:
-    """Com'è configurato l'accesso al NAS, senza mai mostrare il segreto."""
+def credenziale(riga: Optional[ImpostazioniBackup] = None) -> Dict[str, Any]:
+    """Com'è configurato l'accesso al NAS, senza mai mostrare il segreto: prima la console (cifrata nel database),
+    poi il Secret montato. Della chiave della console si dicono solo tipo e impronta."""
     s = get_settings()
-    chiave = bool(s.backup_chiave_ssh) and os.path.isfile(s.backup_chiave_ssh)
-    return {"chiave_ssh": chiave, "password": bool(s.backup_password), "configurata": chiave or bool(s.backup_password)}
+    console_chiave = bool(riga is not None and riga.chiave_ssh_cifrata)
+    console_password = bool(riga is not None and riga.password_cifrata)
+    file_chiave = bool(s.backup_chiave_ssh) and os.path.isfile(s.backup_chiave_ssh)
+    chiave = console_chiave or file_chiave
+    password = console_password or bool(s.backup_password)
+    origine = "console" if (console_chiave or console_password) else "server" if (file_chiave or s.backup_password) else None
+    return {
+        "chiave_ssh": chiave, "password": password, "configurata": chiave or password, "origine": origine,
+        "chiave_tipo": riga.chiave_ssh_tipo if console_chiave and riga is not None else None,
+        "chiave_impronta": riga.chiave_ssh_impronta if console_chiave and riga is not None else None,
+    }
+
+
+def leggi_chiave_privata(testo: str):
+    """La chiave SSH privata da un testo OpenSSH/PEM (RSA, ECDSA, Ed25519). Solleva `ErroreBackup` con una frase che
+    l'operatore capisce."""
+    import io
+
+    import paramiko
+
+    testo = (testo or "").strip().replace("\r\n", "\n")
+    if "PRIVATE KEY" not in testo:
+        raise ErroreBackup(
+            "non è una chiave privata: serve il file che inizia con «-----BEGIN OPENSSH PRIVATE KEY-----» "
+            "(non quello che finisce con .pub)",
+        )
+    for classe in (paramiko.Ed25519Key, paramiko.ECDSAKey, paramiko.RSAKey):
+        try:
+            return classe.from_private_key(io.StringIO(testo + "\n"))
+        except paramiko.PasswordRequiredException as exc:
+            raise ErroreBackup("la chiave è protetta da una passphrase: serve una chiave senza passphrase") from exc
+        except (paramiko.SSHException, ValueError, IndexError, TypeError):
+            continue
+    raise ErroreBackup("la chiave SSH non si legge: incolla il file intero della chiave privata, righe BEGIN/END comprese")
+
+
+def descrivi_chiave(testo: str) -> tuple:
+    """`(tipo, impronta)` di una chiave privata: ciò che la console può mostrare (`ssh-ed25519`, `SHA256:…`)."""
+    chiave = leggi_chiave_privata(testo)
+    return chiave.get_name(), impronta(chiave)
 
 
 # ---- SFTP --------------------------------------------------------------------------------------------------
@@ -157,13 +204,33 @@ class Archivio:
         return posixpath.join(self.cartella, nome)
 
     def assicura_cartella(self) -> None:
+        """Crea la cartella, un pezzo alla volta, se manca. Se un pezzo non si può creare e accanto ce n'è uno che
+        differisce solo per maiuscole e minuscole (`/Volume1/Backup` contro `/Volume1/backup`), lo dice: sul NAS le
+        maiuscole contano, ed è l'errore più facile da fare scrivendo il percorso."""
         parziale = "/" if self.cartella.startswith("/") else ""
         for pezzo in [p for p in self.cartella.split("/") if p]:
+            genitore = parziale or "."
             parziale = posixpath.join(parziale, pezzo) if parziale else pezzo
             try:
                 self._sftp.stat(parziale)
             except FileNotFoundError:
-                self._sftp.mkdir(parziale)
+                try:
+                    self._sftp.mkdir(parziale)
+                except OSError as exc:
+                    try:
+                        vicine = [n for n in self._sftp.listdir(genitore) if n.lower() == pezzo.lower()]
+                    except OSError:
+                        vicine = []
+                    if vicine:
+                        giusta = posixpath.join(genitore, vicine[0]) if genitore != "." else vicine[0]
+                        raise ErroreBackup(
+                            f"la cartella {parziale} non esiste, ma c'è {giusta}: sul NAS le maiuscole contano, "
+                            "correggi il percorso",
+                        ) from exc
+                    raise ErroreBackup(
+                        f"non posso creare {parziale} sul NAS (permesso negato all'utente?): creala dal NAS o "
+                        "scegli una cartella dove l'utente può scrivere",
+                    ) from exc
 
     def carica(self, locale: Path, nome: str) -> int:
         """Carica con un nome provvisorio e poi rinomina: una copia a metà non ha mai il nome di una copia."""
@@ -239,14 +306,24 @@ def apri(dest: Destinazione, *, richiedi_impronta: bool = True) -> Iterator[Arch
         if richiedi_impronta and not dest.impronta_host:
             raise ErroreBackup("la chiave del NAS non è ancora stata accettata: fai la prova dalla console")
         try:
-            if s.backup_chiave_ssh and os.path.isfile(s.backup_chiave_ssh):
+            # Prima la credenziale della console (v9, Fase 2c), poi il Secret montato.
+            if dest.chiave_ssh:
+                trasporto.auth_publickey(dest.utente, leggi_chiave_privata(dest.chiave_ssh))
+            elif dest.password:
+                trasporto.auth_password(dest.utente, dest.password)
+            elif s.backup_chiave_ssh and os.path.isfile(s.backup_chiave_ssh):
                 trasporto.auth_publickey(dest.utente, _chiave_privata(s.backup_chiave_ssh))
             elif s.backup_password:
                 trasporto.auth_password(dest.utente, s.backup_password)
             else:
-                raise ErroreBackup("manca la credenziale del NAS: il Secret tarots-backup (chiave SSH o password)")
+                raise ErroreBackup(
+                    "manca la credenziale del NAS: caricala in console (Backup → Credenziale) come chiave SSH o password",
+                )
         except paramiko.AuthenticationException as exc:
-            raise ErroreBackup(f"il NAS ha rifiutato l'accesso come {dest.utente}") from exc
+            raise ErroreBackup(
+                f"il NAS ha rifiutato l'accesso come {dest.utente}: la chiave SSH vale solo per l'utente "
+                "del NAS su cui è stata installata (in questa installazione nuspy; root di solito non la accetta)",
+            ) from exc
         sftp = paramiko.SFTPClient.from_transport(trasporto)
         if sftp is None:
             raise ErroreBackup("SFTP non disponibile sul NAS")
@@ -439,6 +516,9 @@ async def _avvisa(fabbrica, riga: BackupEsecuzione) -> None:
     try:
         async with fabbrica() as session:
             destinatari = await rapporto.destinatari_attivi(session)
+            from ..configurazioni import correnti
+
+            await correnti.assicura(session)  # la posta della console, anche nel CronJob
         config = rapporto.config_smtp()
         if not config.configurato or not destinatari:
             logger.warning("Backup fallito e nessun avviso possibile (SMTP o destinatari mancanti)")

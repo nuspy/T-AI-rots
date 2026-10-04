@@ -263,7 +263,7 @@ def test_i_nomi_ungheresi_coprono_carte_stese_e_posizioni(conoscenza):
 
 def test_le_lingue_senza_nomi_ricadono_sull_inglese(conoscenza):
     stesa = conoscenza.stesa("tre-carte")
-    for codice in ("de", "ru", "zh", "ar"):
+    for codice in ("de", "fr", "zh", "ar"):
         assert conoscenza.nome_carta("maj-07", codice) == conoscenza.nome_carta("maj-07", "en")
         assert conoscenza.nome_posizione(stesa, 1, codice) == conoscenza.nome_posizione(stesa, 1, "en")
     assert conoscenza.nome_carta("maj-07", "it") == conoscenza.carta("maj-07")["nome_it"]

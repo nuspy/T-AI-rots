@@ -78,15 +78,20 @@ def _percorso_locale(slug_mazzo: str, nome_file: str) -> Optional[str]:
 
 async def carica_immagini(
     slug_mazzo: str, nomi_file: List[str], *, web_public_url: str, client: Optional[httpx.AsyncClient] = None,
+    precaricate: Optional[Dict[str, bytes]] = None,
 ) -> Dict[str, bytes]:
-    """I byte di ogni file in `nomi_file` (carte + dorso): da disco se c'è, altrimenti dal sito
-    pubblico. Un file introvabile in nessuno dei due modi resta assente dal risultato — chi genera il
+    """I byte di ogni file in `nomi_file` (carte + dorso): prima fra le `precaricate` (le immagini di un mazzo
+    caricato dalla console, lette dal database dal chiamante), poi da disco se c'è, altrimenti dal sito
+    pubblico. Un file introvabile in nessuno di questi modi resta assente dal risultato — chi genera il
     PDF disegna un segnaposto al suo posto invece di far fallire l'intera stampa per una carta sola."""
     proprio_client = client is None
     client = client or httpx.AsyncClient(timeout=10.0)
     trovate: Dict[str, bytes] = {}
     try:
         for nome_file in nomi_file:
+            if precaricate and nome_file in precaricate:
+                trovate[nome_file] = precaricate[nome_file]
+                continue
             locale = _percorso_locale(slug_mazzo, nome_file)
             if locale is not None:
                 with open(locale, "rb") as f:
@@ -181,9 +186,10 @@ def genera_pdf(
 
 async def pdf_per_mazzo(
     slug_mazzo: str, ordine_carte: List[str], *, gratuito: bool, web_public_url: str,
-    marchio_testo: Optional[str] = None,
+    marchio_testo: Optional[str] = None, precaricate: Optional[Dict[str, bytes]] = None,
 ) -> bytes:
-    """Scarica (o legge) le immagini e genera il PDF: il punto d'ingresso usato dagli endpoint."""
+    """Scarica (o legge) le immagini e genera il PDF: il punto d'ingresso usato dagli endpoint. `precaricate`: le
+    immagini del mazzo già in memoria (dal database, `deck_repositories.immagini_per_pdf`)."""
     nomi_file = [f"{card_id}.{ESTENSIONE}" for card_id in ordine_carte] + [f"dorso.{ESTENSIONE}"]
-    immagini = await carica_immagini(slug_mazzo, nomi_file, web_public_url=web_public_url)
+    immagini = await carica_immagini(slug_mazzo, nomi_file, web_public_url=web_public_url, precaricate=precaricate)
     return genera_pdf(ordine_carte, immagini, gratuito=gratuito, marchio_testo=marchio_testo)

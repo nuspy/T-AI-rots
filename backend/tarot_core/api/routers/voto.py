@@ -20,14 +20,20 @@ from ...auth.dependencies import CurrentUser, DbSession
 from ...domain import voting_repositories
 from ...domain.repositories import AuditRepository
 from ...domain.voting_models import DeckSuggestion
-from .blog import url_immagine
+from .blog import url_immagine, url_miniatura
 
 router = APIRouter(prefix="/voto", tags=["voto"])
 
 
 def _campioni_json(campioni: List[Dict[str, Any]]) -> List[Dict[str, Optional[str]]]:
+    """Le carte d'esempio (al massimo cinque, nell'ordine scelto in console): `url` la grande, per l'ingrandimento;
+    `mini` la miniatura, per l'elenco."""
     return [
-        {"etichetta": c.get("etichetta"), "url": url_immagine(uuid.UUID(c["media_id"])) if c.get("media_id") else None}
+        {
+            "etichetta": c.get("etichetta"),
+            "url": url_immagine(uuid.UUID(c["media_id"])) if c.get("media_id") else None,
+            "mini": url_miniatura(uuid.UUID(c["media_id"])) if c.get("media_id") else None,
+        }
         for c in campioni
     ]
 

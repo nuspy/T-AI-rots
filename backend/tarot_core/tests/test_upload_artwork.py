@@ -23,10 +23,13 @@ def come(client, principal_utente, principal_admin):
 
 
 def _zip(nomi) -> bytes:
+    """Uno ZIP con una data fissa per ogni file: `writestr` con un nome solo mette l'ora corrente (a passi di due
+    secondi), e due ZIP «uguali» costruiti a cavallo di quel passo differivano. Nella suite completa, più lenta, il
+    confronto fra lo ZIP caricato e uno ricostruito dopo falliva una volta su due."""
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as z:
         for nome in nomi:
-            z.writestr(nome, b"finto webp")
+            z.writestr(zipfile.ZipInfo(nome, date_time=(2026, 1, 1, 0, 0, 0)), b"finto webp")
     return buf.getvalue()
 
 
@@ -58,12 +61,13 @@ async def test_upload_non_zip_viene_rifiutato(come):
 
 async def test_scarico_e_cancellazione(come):
     admin = come("admin")
-    r = await admin.post("/admin/decks/prova-artwork/artwork", content=_zip_completo())
+    caricato = _zip_completo()
+    r = await admin.post("/admin/decks/prova-artwork/artwork", content=caricato)
     upload_id = r.json()["id"]
 
     scaricato = await admin.get(f"/admin/decks/prova-artwork/artwork/{upload_id}")
     assert scaricato.status_code == 200
-    assert scaricato.content == _zip_completo()
+    assert scaricato.content == caricato
 
     elenco = await admin.get("/admin/decks/prova-artwork/artwork")
     assert len(elenco.json()) == 1

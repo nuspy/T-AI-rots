@@ -43,20 +43,24 @@ async def test_un_pacchetto_paga_la_commissione_a_chi_ha_invitato(client, sessio
 async def test_il_primo_periodo_di_un_abbonamento_paga_la_commissione(
     client, session, catalogo, principal_altro, principal_admin,
 ):
+    """Fase 2b: l'abbonamento non dà crediti, la commissione è il 20% dell'importo pagato, convertito al prezzo per
+    credito del pacchetto più economico (seed: 5 crediti a 4,90 €, cioè 0,98 € l'uno)."""
     invitante, invitato = await _collega_invito(session, client.identita.principal, principal_altro)
     client.identita.principal = principal_admin
     piano = await _piano(
         client, slug="abbonamento-prova-commissione", tipo="abbonamento",
-        price_monthly=500, credits_per_period=10, letture_al_giorno=3,
+        price_monthly=5000, credits_per_period=0, letture_al_giorno=3,
     )
     client.identita.principal = principal_altro
 
     r = await client.post("/me/checkout", json={"piano": piano["slug"], "ritorno": "/leggi"})
     assert r.status_code == 201, r.text
+    assert r.json()["importo"] == 4000          # 50 € col 20% del rinnovo automatico
     await _paga(client, r.json()["checkout_id"])
 
-    # 10 crediti del primo periodo, 20% = 2.
-    assert await RegistroCrediti(session).saldo(invitante.id) == 2
+    # 20% di 40 € = 8 €; 8 € / 0,98 € = 8,16 → 8 crediti.
+    assert await RegistroCrediti(session).saldo(invitante.id) == 8
+    assert await RegistroCrediti(session).saldo(invitato.id) == 0       # l'abbonamento non dà crediti
 
 
 async def test_ogni_rinnovo_paga_di_nuovo_la_commissione(
@@ -68,22 +72,23 @@ async def test_ogni_rinnovo_paga_di_nuovo_la_commissione(
     client.identita.principal = principal_admin
     piano_json = await _piano(
         client, slug="abbonamento-prova-rinnovo", tipo="abbonamento",
-        price_monthly=500, credits_per_period=10, letture_al_giorno=3,
+        price_monthly=5000, credits_per_period=0, letture_al_giorno=3,
     )
     client.identita.principal = principal_altro
 
     r = await client.post("/me/checkout", json={"piano": piano_json["slug"], "ritorno": "/leggi"})
     assert r.status_code == 201, r.text
     await _paga(client, r.json()["checkout_id"])
-    assert await RegistroCrediti(session).saldo(invitante.id) == 2       # il primo periodo, dal checkout
+    assert await RegistroCrediti(session).saldo(invitante.id) == 8       # il primo periodo, dal checkout
 
     gestore = GestoreAbbonamenti(session)
     abbonamento = await gestore.abbonamento_di(invitato.id)
     assert abbonamento is not None
+    abbonamento.period_end = utcnow()
     await gestore.rinnova(abbonamento)
     await session.commit()
-    assert await RegistroCrediti(session).saldo(invitante.id) == 4       # +2 al rinnovo, cumulativo
-
+    assert abbonamento.importo_periodo == 4000
+    assert await RegistroCrediti(session).saldo(invitante.id) == 16      # +8 al rinnovo, cumulativo
 
 async def test_se_chi_ha_invitato_ha_cancellato_l_account_l_acquisto_prosegue_senza_conseguenze(
     client, session, catalogo, principal_altro,

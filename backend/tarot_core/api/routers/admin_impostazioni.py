@@ -1,4 +1,4 @@
-"""La console: i numeri del regalo d'iscrizione e del referral.
+"""La console: i numeri del regalo d'iscrizione e del referral, la chat proattiva, il login persistente.
 
 Una riga sola (`ImpostazioniCrediti`): quanti crediti regala l'iscrizione, quanti il riscatto di un codice
 d'invito, e la percentuale di commissione che chi ha invitato riceve su ogni acquisto futuro dell'invitato. Ogni
@@ -14,10 +14,8 @@ from pydantic import BaseModel, Field
 
 from ...auth.dependencies import CurrentUser, DbSession, require_role
 from ...auth.keycloak_admin import KeycloakAdmin, KeycloakAdminError
-from ...domain.impostazioni_repositories import (
-    aggiorna, aggiorna_chat, correnti, correnti_chat, correnti_sessione, pubblico, pubblico_chat,
-    pubblico_sessione, specchia_sessione,
-)
+from ...domain.impostazioni_repositories import aggiorna, aggiorna_chat, correnti, correnti_chat, pubblico, pubblico_chat
+from ...domain.repositories import AuditRepository
 
 router = APIRouter(prefix="/admin", tags=["impostazioni"], dependencies=[Depends(require_role("admin"))])
 
@@ -51,6 +49,8 @@ async def modifica(
 
 class ImpostazioniChatModifica(BaseModel):
     proattiva_minuti_inattivita: Optional[int] = Field(default=None, ge=1, le=180)
+    #: 0 = l'oracolo non apre mai da solo (solo quando l'utente scrive).
+    proattiva_max_per_visita: Optional[int] = Field(default=None, ge=0, le=20)
 
 
 @router.get("/impostazioni-chat")
@@ -69,30 +69,70 @@ async def modifica_chat(
     return pubblico_chat(riga)
 
 
+#: Un giorno in secondi: la console ragiona in giorni, Keycloak in secondi.
+GIORNO = 86_400
+
+
 class ImpostazioniSessioneModifica(BaseModel):
-    #: Da 5 minuti a un anno: un limite più basso vorrebbe dire disconnettere gli utenti più spesso
-    #: di quanto abbia senso chiamarlo "login persistente".
-    sso_session_max_lifespan_secondi: int = Field(ge=300, le=31_536_000)
+    """Il login persistente: la sessione offline di Keycloak (vedi `KeycloakAdmin.imposta_sessione_persistente`).
+
+    `inattivita_giorni`: dopo quanti giorni **senza mai aprire** il sito o la console si deve rifare l'accesso
+    (ogni visita li fa ripartire). `durata_massima_giorni`: un tetto assoluto dall'accesso; 0 = nessuno, si resta
+    dentro fino al logout."""
+
+    inattivita_giorni: int = Field(ge=1, le=3650)
+    durata_massima_giorni: int = Field(default=0, ge=0, le=3650)
+
+
+def _sessione_da_realm(realm: Dict[str, Any]) -> Dict[str, int]:
+    attiva = bool(realm.get("offlineSessionMaxLifespanEnabled"))
+    massima = int(realm.get("offlineSessionMaxLifespan") or 0) if attiva else 0
+    return {
+        "inattivita_giorni": round(int(realm.get("offlineSessionIdleTimeout") or 0) / GIORNO),
+        "durata_massima_giorni": round(massima / GIORNO),
+    }
 
 
 @router.get("/impostazioni-sessione")
-async def leggi_sessione(session: DbSession) -> Dict[str, Any]:
-    return pubblico_sessione(await correnti_sessione(session))
+async def leggi_sessione() -> Dict[str, Any]:
+    """I valori veri, letti da Keycloak a ogni apertura: nessuna copia locale che possa smentirli. Se Keycloak
+    non risponde lo si dice, con il motivo, invece di mostrare un numero inventato."""
+    try:
+        valori = _sessione_da_realm(await KeycloakAdmin().leggi_realm())
+    except KeycloakAdminError as exc:
+        return {
+            "keycloak_raggiungibile": False, "errore": str(exc),
+            "inattivita_giorni": None, "durata_massima_giorni": None,
+        }
+    return {"keycloak_raggiungibile": True, "errore": None, **valori}
 
 
 @router.put("/impostazioni-sessione")
 async def modifica_sessione(
     payload: ImpostazioniSessioneModifica, request: Request, user: CurrentUser, session: DbSession,
 ) -> Dict[str, Any]:
-    """Cambia la durata **su Keycloak**, live; la riga locale è solo lo specchio per la console
-    (vedi `domain.config_models.ImpostazioniSessione`) e si scrive solo se Keycloak accetta."""
+    """Cambia le durate **su Keycloak**, subito: valgono per il sito e per la console, anche per chi è già
+    dentro (la scadenza di un token offline si ricalcola a ogni rinnovo)."""
+    if payload.durata_massima_giorni and payload.durata_massima_giorni < payload.inattivita_giorni:
+        raise HTTPException(
+            status_code=422,
+            detail="La durata massima non può essere più breve dell'inattività ammessa (0 = nessun limite).",
+        )
+    kc = KeycloakAdmin()
     try:
-        await KeycloakAdmin().imposta_durata_sessione(payload.sso_session_max_lifespan_secondi)
+        prima = _sessione_da_realm(await kc.leggi_realm())
+        await kc.imposta_sessione_persistente(
+            inattivita_secondi=payload.inattivita_giorni * GIORNO,
+            durata_massima_secondi=payload.durata_massima_giorni * GIORNO,
+        )
+        dopo = _sessione_da_realm(await kc.leggi_realm())
     except KeycloakAdminError as exc:
         raise HTTPException(status_code=502, detail=f"Keycloak non ha accettato il cambio: {exc}") from exc
 
-    riga = await specchia_sessione(
-        session, payload.sso_session_max_lifespan_secondi, attore_id=user.id, ip=_ip(request),
-    )
-    await session.commit()
-    return pubblico_sessione(riga)
+    if prima != dopo:
+        await AuditRepository(session).record(
+            action="impostazioni_sessione.modifica", actor_id=user.id, target_type="keycloak_realm",
+            target_id="sessione_offline", before=prima, after=dopo, ip=_ip(request),
+        )
+        await session.commit()
+    return {"keycloak_raggiungibile": True, "errore": None, **dopo}

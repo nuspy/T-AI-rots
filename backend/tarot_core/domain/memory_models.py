@@ -22,9 +22,10 @@ spirito append-only di `CreditEntry`.
 from __future__ import annotations
 
 import uuid
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy import ARRAY, BigInteger, CheckConstraint, Float, ForeignKey, String, Text, Uuid
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base, TimestampMixin, owner_index
@@ -65,3 +66,19 @@ class UserMemory(Base, TimestampMixin):
     superseded_by: Mapped[Optional[uuid.UUID]] = mapped_column(
         Uuid, ForeignKey("user_memories.id", ondelete="SET NULL"), nullable=True,
     )
+
+
+class MemoriaStato(Base, TimestampMixin):
+    """Lo stato sintetico della memoria di un utente: una riga per persona, al posto delle memorie con embedding.
+
+    `voci` è un elenco breve di fatti, ognuno con la sua categoria (`stabile`, `tema`, `volatile`), il campo di
+    attinenza, il testo e due date (`dal`: quando è entrato; `visto`: l'ultima volta che una lettura l'ha confermato).
+    La forma e le regole — chi aggiunge, chi conferma, quando una voce si dimentica da sola — stanno in
+    `tarot/stato_memoria.py`, puro e testabile; qui c'è solo dove si tiene. Una persona, una riga: si legge con una
+    chiave primaria, senza ricerche per somiglianza.
+    """
+
+    __tablename__ = "memoria_stato"
+
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    voci: Mapped[List[Dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)

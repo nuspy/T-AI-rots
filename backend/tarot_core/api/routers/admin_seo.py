@@ -10,7 +10,7 @@ from sqlalchemy import select
 from ...auth.dependencies import CurrentUser, DbSession, require_role
 from ...domain.repositories import AuditRepository
 from ...domain.seo_models import NotificaMotori
-from ...tarot import notifiche_motori
+from ...tarot import google, notifiche_motori
 
 router = APIRouter(prefix="/admin/seo", tags=["seo"], dependencies=[Depends(require_role("admin"))])
 
@@ -21,7 +21,7 @@ async def elenco(session: DbSession, limite: int = Query(default=30, ge=1, le=20
         select(NotificaMotori).order_by(NotificaMotori.created_at.desc()).limit(limite)
     )).scalars().all()
     return {
-        "canali": notifiche_motori.stato_configurazione(),
+        "canali": notifiche_motori.stato_configurazione(await google.config(session)),
         "invii": [notifiche_motori.riga_json(r) for r in righe],
     }
 

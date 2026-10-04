@@ -312,7 +312,8 @@ ACQUISTI = Sorgente(
     "data di pagamento. Importi in euro, dopo gli sconti.",
     da=lambda: C.join(P, P.c.id == C.c.plan_id).join(UT, UT.c.id == C.c.user_id).outerjoin(U, U.c.utente_id == C.c.user_id),
     tempo=lambda: C.c.completed_at,
-    dove=lambda: C.c.status == "pagato",
+    # Gli acquisti di prova degli store (tester, App Review: v9 Fase 4) accreditano ma non sono vendite.
+    dove=lambda: (C.c.status == "pagato") & C.c.sandbox.is_(False),
     persone=lambda: func.count(func.distinct(C.c.user_id)),
     misure={
         "acquisti": Misura("Acquisti", lambda: func.count()),

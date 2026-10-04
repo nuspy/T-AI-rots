@@ -21,9 +21,20 @@ from ..observability.tracing import (
 )
 from ..settings import get_settings
 from .routers import (
-    admin, admin_analytics, admin_blog, admin_impostazioni, admin_llm, admin_mazzi, admin_offerte, admin_ordini, admin_seo, admin_voto, admin_backup,
+    admin, admin_analytics, admin_blog, admin_impostazioni, admin_intervista, admin_llm, admin_mazzi, admin_offerte, admin_ordini, admin_seo, admin_voto, admin_backup,
     analytics, analytics_colab, billing, blog, chat, condivisione, profile, public, readings, rest_blog, shop, voto,
 )
+from .routers import admin_accesso_social
+from .routers import admin_costi  # la pagina «Costi»: consumi delle chiamate ai modelli e listini
+from .routers import admin_google, admin_reddit  # v8.6: Google (Search Console, GA4) e Reddit dalla console
+from .routers import admin_pubblicita  # gli spazi pubblicitari (Advertisements → Google AdSense)
+from .routers import admin_account, admin_app_mobili  # v9 Fase 3: «App mobili» e «Account» (servizi esterni)
+from .routers import admin_conservazione, privacy  # v9 Fase 1 (GDPR): età, esportazione, cancellazione, conservazione
+from .routers import abbonamenti, admin_abbonamenti  # v9 Fase 2b: rinnovo, conguaglio, prova, tolleranza
+from .routers import admin_configurazioni  # v9 Fase 2c: Stripe, posta, titolare dalla console
+from .routers import admin_notifiche, notifiche  # v9 Fase 5: notifiche push (app e sito) e la console «Notifications»
+from .routers import billing_store  # v9 Fase 4: acquisti nelle app (Google Play, App Store) e le loro notifiche
+from .routers import collega  # v9 Fase 6: collegare Apple e Google all'account (profilo e codice dell'app)
 
 # Le chiamate ai fornitori LLM (e a qualunque altro servizio HTTPS esterno) verificano il certificato con
 # l'archivio del sistema operativo, non solo con quello di `certifi`: su Windows, dietro un antivirus o un proxy
@@ -94,8 +105,28 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         logger.error("Motore di database non inizializzato: %s", exc)
 
+    # v9 Fase 2c: segreti interni (generati al primo avvio), copia una tantum dall'ambiente al database, valori
+    # della console in memoria — prima della prima richiesta — e poi il loro rinfresco periodico.
+    import asyncio
+
+    from ..configurazioni import avvio as avvio_configurazioni
+    from ..domain.session import get_session_factory
+
+    rinfresco = None
+    try:
+        await avvio_configurazioni.prepara(get_session_factory())
+        rinfresco = asyncio.create_task(avvio_configurazioni.aggiorna_periodicamente(get_session_factory()))
+    except Exception as exc:
+        logger.error("Configurazioni della console non caricate: %s", exc)
+        if settings.environment == "prod":
+            # Senza il segreto vero le impronte degli IP userebbero il ripiego di sviluppo: meglio non partire
+            # (Kubernetes riprova) che scrivere impronte deboli.
+            raise RuntimeError("configurazioni della console non caricate: il database non risponde?") from exc
+
     yield
 
+    if rinfresco is not None:
+        rinfresco.cancel()
     from ..domain.session import dispose_engine
 
     await dispose_engine()
@@ -161,20 +192,41 @@ def create_app() -> FastAPI:
     app.include_router(admin_ordini.router)
     app.include_router(admin_llm.router)
     app.include_router(admin_impostazioni.router)
+    app.include_router(admin_accesso_social.router)
+    app.include_router(admin_intervista.router)
     app.include_router(rest_blog.router)
     app.include_router(profile.router)
+    app.include_router(collega.router)
+    app.include_router(privacy.router)
+    app.include_router(admin_conservazione.router)
     app.include_router(billing.router)
     app.include_router(billing.router_admin)
+    app.include_router(abbonamenti.router)
+    app.include_router(admin_abbonamenti.router)
     app.include_router(shop.router)
     app.include_router(admin.router)
     app.include_router(chat.router)
     app.include_router(voto.router)
     app.include_router(admin_voto.router)
     app.include_router(admin_seo.router)
+    app.include_router(admin_google.router)
+    app.include_router(admin_google.router_pubblico)
+    app.include_router(admin_pubblicita.router)
+    app.include_router(admin_pubblicita.router_pubblico)
+    app.include_router(admin_reddit.router)
+    app.include_router(admin_app_mobili.router)
+    app.include_router(admin_app_mobili.router_pubblico)
+    app.include_router(admin_account.router)
     app.include_router(admin_backup.router)
+    app.include_router(admin_configurazioni.router)
+    app.include_router(admin_configurazioni.router_pubblico)
+    app.include_router(billing_store.router)
+    app.include_router(notifiche.router)
+    app.include_router(admin_notifiche.router)
     app.include_router(analytics.router)
     app.include_router(admin_analytics.router)
     app.include_router(analytics_colab.router)
+    app.include_router(admin_costi.router)
 
     # Qui e non nel lifespan: la strumentazione di FastAPI inserisce un
     # middleware ASGI, e Starlette costruisce la catena dei middleware alla

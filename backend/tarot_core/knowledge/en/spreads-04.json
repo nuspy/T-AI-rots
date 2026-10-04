@@ -1,0 +1,225 @@
+{
+  "lavoro-trattativa": {
+    "slug": "negotiation-spread",
+    "nome": "Negotiation Spread",
+    "origine": "A recent four-card spread laid out in a row, popular on career-focused tarot sites (Elvi Tarot's \"Negotiation Prep\") to prepare for a negotiation: a salary, a contract, a proposal to a client.",
+    "descrizione": "Four cards in a row: the real value of what you bring, how the other side sees it, your leverage and the approach to take. It prepares you for the conversation; it does not predict its outcome.",
+    "regole": [
+      "Card 2 describes how the other side tends to see the querent, not what they think: it is a tendency to check in the conversation.",
+      "If card 1 is strong and card 2 weak, the issue is not value but its visibility: the advice works on how to show it.",
+      "A Major Arcanum in position 3 points to more leverage than the querent believes; the suit of card 4 sets the tone of the approach: Disks facts and figures, Cups the relationship, Swords clear arguments, Wands initiative.",
+      "The cards do not say how much to ask for or whether to sign: figures and clauses need someone who knows the case."
+    ],
+    "pos": {
+      "1": {
+        "nome": "Your value",
+        "significato": "What you really bring to the table: skills, results, the substance of your proposal.",
+        "domanda": "What is what I bring really worth?"
+      },
+      "2": {
+        "nome": "How the other side sees you",
+        "significato": "The picture the other side tends to form of you and your proposal, as a tendency: never a reading of their mind.",
+        "domanda": "What picture of me and my proposal comes across?"
+      },
+      "3": {
+        "nome": "Your leverage",
+        "significato": "The firmest strength you have in this negotiation: what you can rely on.",
+        "domanda": "What can I use as leverage?"
+      },
+      "4": {
+        "nome": "Your approach",
+        "significato": "The way of conducting the negotiation the cards suggest: the tone, the timing, what to put first.",
+        "domanda": "How should I conduct the negotiation?"
+      }
+    }
+  },
+  "lavoro-offerta": {
+    "slug": "job-offer-spread",
+    "nome": "Job Offer Spread",
+    "origine": "A recent five-card spread, common in online career tarot guides (for example Unmei Tarot's) to weigh a job offer or an interview: the role, the people, what it gives and what it costs.",
+    "descrizione": "Five cards in an arch to weigh an offer or an interview: what the role is really like, the people you would work with, what would help you grow, what it would cost you and where the first year leads.",
+    "regole": [
+      "The cards do not say whether the job will come: the employer decides, with candidates, budgets and timing that cannot be seen. They describe the role and what it would bring to the querent.",
+      "Cards 3 and 4 are read together, like the two pans of a scale.",
+      "A court card in position 2 usually points to a real person in the workplace (a manager, a colleague), as an energy and not as a judgement on that person.",
+      "Card 5 is a tendency, not a promise: the decision to accept stays with the querent."
+    ],
+    "pos": {
+      "1": {
+        "nome": "The role",
+        "significato": "The real nature of the position, beyond the title and the job ad.",
+        "domanda": "What is this role really like?"
+      },
+      "2": {
+        "nome": "The people",
+        "significato": "The team, the managers, the atmosphere: the people you would work with every day.",
+        "domanda": "What environment would I find?"
+      },
+      "3": {
+        "nome": "What it gives you",
+        "significato": "The growth the role offers: skills, experience, possibilities.",
+        "domanda": "What would help me grow?"
+      },
+      "4": {
+        "nome": "What it costs you",
+        "significato": "The price of the role: time, energy, balance, what you would give up.",
+        "domanda": "What would it cost me?"
+      },
+      "5": {
+        "nome": "The first year",
+        "significato": "The most likely path over the first twelve months, if you accept and the forces stay as they are.",
+        "domanda": "Where would the first year take me?"
+      }
+    }
+  },
+  "lavoro-swot": {
+    "slug": "swot-spread",
+    "nome": "SWOT Spread",
+    "origine": "SWOT analysis (strengths, weaknesses, opportunities, threats) is a business planning tool from the 1960s that tarot readers turned into a spread. This is Priskha's \"SWOT Plus\" version (2015), with advice and a possible outcome.",
+    "descrizione": "A four-card matrix of strengths, weaknesses, opportunities and threats, with the advice and the possible outcome beside it. For a project, a business or a career choice.",
+    "regole": [
+      "Cards 1 and 2 speak of what depends on the querent, cards 3 and 4 of what comes from outside: do not mix the two levels.",
+      "The advice (5) grows out of the matrix: use the strengths to seize the opportunities, repair the weaknesses exposed to the threats.",
+      "The outcome (6) is the tendency if the advice is followed, not a verdict.",
+      "The cards do not replace the numbers: an economic or financial plan needs a professional."
+    ],
+    "pos": {
+      "1": {
+        "nome": "Strengths",
+        "significato": "The inner qualities, of the querent or of the business, that support the project.",
+        "domanda": "What can I count on?"
+      },
+      "2": {
+        "nome": "Weaknesses",
+        "significato": "The inner frailties that may hold things back: what is missing or needs strengthening.",
+        "domanda": "What weakens me?"
+      },
+      "3": {
+        "nome": "Opportunities",
+        "significato": "The favourable outside circumstances: what the context offers and can be seized.",
+        "domanda": "What does the context offer?"
+      },
+      "4": {
+        "nome": "Threats",
+        "significato": "The outside factors that may get in the way: competition, timing, conditions.",
+        "domanda": "What could stand in the way?"
+      },
+      "5": {
+        "nome": "Advice",
+        "significato": "The attitude or action the cards suggest in light of the matrix.",
+        "domanda": "What is best to do?"
+      },
+      "6": {
+        "nome": "Possible outcome",
+        "significato": "The most likely tendency if the advice is followed and the forces stay as they are.",
+        "domanda": "Where does it lead?"
+      }
+    }
+  },
+  "lavoro-restare-andare": {
+    "slug": "stay-or-go-spread",
+    "nome": "Stay or Go Spread",
+    "origine": "A recent seven-card spread from online career guides (Unmei Tarot's \"Stay or Go\") for those thinking of leaving their job: the two roads are read as a mirror, with the fears and what each one offers. Here the last card is not a verdict but the key to the choice.",
+    "descrizione": "The real reason for the doubt, then two mirrored roads, staying and leaving, each with its fear and what it offers; finally what you don't see and the key to deciding.",
+    "regole": [
+      "The top row is the road of staying, the bottom row the road of leaving: they are read as a mirror, fear with fear and offer with offer.",
+      "The cards describe the two roads and do not choose between them: card 7 gives the criterion, the decision stays with the querent.",
+      "A Disks card in positions 4 or 5 speaks of material security; economic and contractual matters need someone who knows the case."
+    ],
+    "pos": {
+      "1": {
+        "nome": "The real reason",
+        "significato": "What truly drives the thought of leaving, beneath the stated reasons.",
+        "domanda": "Why am I really thinking about it?"
+      },
+      "2": {
+        "nome": "The fear if you stay",
+        "significato": "What the querent fears will happen by staying.",
+        "domanda": "What do I fear if I stay?"
+      },
+      "3": {
+        "nome": "The fear if you go",
+        "significato": "What the querent fears will happen by leaving.",
+        "domanda": "What do I fear if I go?"
+      },
+      "4": {
+        "nome": "What staying offers",
+        "significato": "What the current job can still give over the next six to twelve months.",
+        "domanda": "What does staying give me?"
+      },
+      "5": {
+        "nome": "What leaving offers",
+        "significato": "What a new road can open over the next six to twelve months.",
+        "domanda": "What does leaving give me?"
+      },
+      "6": {
+        "nome": "What you don't see",
+        "significato": "The overlooked factor that changes the weight of the choice.",
+        "domanda": "What am I not seeing?"
+      },
+      "7": {
+        "nome": "The key to the choice",
+        "significato": "What really matters in deciding: not the decision, which stays with the querent, but the criterion for making it.",
+        "domanda": "What should I base the choice on?"
+      }
+    }
+  },
+  "lavoro-impresa": {
+    "slug": "new-venture-spread",
+    "nome": "New Venture Spread",
+    "origine": "A modern nine-card spread for starting a business or a project, adapted from Labyrinthos' \"Aligning With Your Higher Purpose\" and Elvi Tarot's \"Business Idea Check\": the purpose at the centre and, around it, motivation, vision, offer, blind spot, customers, means and readiness.",
+    "descrizione": "A wheel of eight cards around your role in the venture: why you want it, what it can become, what you offer, what you underestimate, who you serve, how to serve them, what you need to start and how ready you are.",
+    "regole": [
+      "Card 1, at the centre, is the pivot: every card of the wheel is read in relation to the querent's role.",
+      "The blind spot (5) is not a sentence: it is what is worth looking at before investing time and money.",
+      "The cards read the calling and the moment; the business plan, permits and contracts need a professional."
+    ],
+    "pos": {
+      "1": {
+        "nome": "Your role",
+        "significato": "The querent's place in the venture: the purpose and the energy that hold it up.",
+        "domanda": "What is my role in this venture?"
+      },
+      "2": {
+        "nome": "The motivation",
+        "significato": "What really drives the start, beneath the stated reasons.",
+        "domanda": "Why do I want to start it?"
+      },
+      "3": {
+        "nome": "The vision",
+        "significato": "What the venture can become if it grows according to its nature.",
+        "domanda": "What can it become?"
+      },
+      "4": {
+        "nome": "The offer",
+        "significato": "What the venture gives its customers: the product, the service, the value.",
+        "domanda": "What do I offer?"
+      },
+      "5": {
+        "nome": "The blind spot",
+        "significato": "What the querent underestimates or does not see yet.",
+        "domanda": "What am I underestimating?"
+      },
+      "6": {
+        "nome": "The customers",
+        "significato": "The people the venture speaks to and their real need.",
+        "domanda": "Who am I really speaking to?"
+      },
+      "7": {
+        "nome": "How to serve them",
+        "significato": "The way to reach those customers and answer their need.",
+        "domanda": "How can I serve them?"
+      },
+      "8": {
+        "nome": "What you need to start",
+        "significato": "The means to bring together: skills, people, resources, time.",
+        "domanda": "What do I need to start?"
+      },
+      "9": {
+        "nome": "Readiness",
+        "significato": "How ready the querent is to begin, and what is still missing.",
+        "domanda": "How ready am I?"
+      }
+    }
+  }
+}

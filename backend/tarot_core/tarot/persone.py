@@ -82,25 +82,30 @@ def _data(valore: Any) -> Optional[date]:
     return None
 
 
-def _persona(dati: Optional[Dict[str, Any]], *, con_nome: bool) -> Persona:
+def _persona(dati: Optional[Dict[str, Any]], *, con_nome: bool, trans: bool = True) -> Persona:
     dati = dati or {}
     genere = dati.get("genere")
     return Persona(
         nome=(pulisci(dati.get("nome"), LUNGHEZZA_NOME) or None) if con_nome else None,
         genere=genere if genere in GENERI else None,
         genere_altro=pulisci(dati.get("genere_altro"), LUNGHEZZA_GENERE_ALTRO) or None,
-        trans=bool(dati.get("trans")),
+        trans=trans and bool(dati.get("trans")),
         nascita=_data(dati.get("nascita")),
     )
 
 
-def da_json(dati: Optional[Dict[str, Any]]) -> Optional[Persone]:
-    """Da `Reading.persone` alle persone per i prompt. Il cognome si scarta."""
+def da_json(dati: Optional[Dict[str, Any]], *, trans: bool = True) -> Optional[Persone]:
+    """Da `Reading.persone` alle persone per i prompt. Il cognome si scarta.
+
+    `trans=False` toglie la casella «persona trans» a entrambe: è un dato dell'art. 9 GDPR e arriva al modello solo
+    con il consenso `dati_particolari` di chi consulta (GDPR, Fase 1). I percorsi della lettura (`api/routers/
+    readings.py::_persone_per_prompt`) passano sempre il valore esplicito; il predefinito serve a chi legge
+    l'istantanea per mostrarla, non per scrivere un prompt."""
     if not dati:
         return None
     return Persone(
-        tu=_persona(dati.get("tu"), con_nome=False),
-        partner=_persona(dati.get("partner"), con_nome=True),
+        tu=_persona(dati.get("tu"), con_nome=False, trans=trans),
+        partner=_persona(dati.get("partner"), con_nome=True, trans=trans),
     )
 
 

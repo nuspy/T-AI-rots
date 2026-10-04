@@ -14,7 +14,7 @@ from __future__ import annotations
 import csv
 import io
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
@@ -34,6 +34,7 @@ from ...domain.billing_models import CreditEntry, PaymentCheckout, Plan, Subscri
 from ...domain.models import AuditLog, DrawnCard, Reading, User
 from ...llm.compiti import Compito
 from ...settings import get_settings
+from ...tarot.profilo_social import posizione_json
 from ..deps import aggiorna_assegnazioni, get_conoscenza, get_registro_modelli
 
 router = APIRouter(
@@ -106,6 +107,15 @@ async def utente(user_id: int, session: DbSession) -> Dict[str, Any]:
     )).scalars().all()
     return {
         **_utente_json(u),
+        # La scheda anagrafica, con la provenienza dei campi presi dai social e la posizione attuale.
+        "anagrafica": {
+            "nome": u.nome, "cognome": u.cognome,
+            "nascita": u.birth_date.isoformat() if u.birth_date else None,
+            "genere": u.gender, "genere_altro": u.gender_custom,
+            "posizione": posizione_json(u),
+            "dati_social": u.dati_social or {},
+            "importa_social": u.importa_social, "rileva_posizione": u.rileva_posizione,
+        },
         "saldo": await registro.saldo(u.id),
         "abbonamento": {
             "piano": abb.plan.slug, "nome": abb.plan.name, "stato": abb.status,
@@ -114,7 +124,20 @@ async def utente(user_id: int, session: DbSession) -> Dict[str, Any]:
         "letture": {stato: n for stato, n in letture},
         "movimenti": [m.to_dict() for m in await registro.movimenti(u.id, limite=50)],
         "pagamenti": [_pagamento_json(p) for p in pagamenti],
+        # v9 Fase 4: gli acquisti nelle app, come li ha confermati lo store.
+        "acquisti_store": await _acquisti_store(session, u.id),
     }
+
+
+async def _acquisti_store(session, user_id: int) -> List[Dict[str, Any]]:
+    from ...billing.store.comune import acquisto_json
+    from ...domain.acquisti_store_models import AcquistoStore
+
+    righe = (await session.execute(
+        select(AcquistoStore).where(AcquistoStore.user_id == user_id)
+        .order_by(AcquistoStore.created_at.desc(), AcquistoStore.id.desc()).limit(50)
+    )).scalars().all()
+    return [acquisto_json(a) for a in righe]
 
 
 @router.patch("/users/{user_id}")
@@ -150,6 +173,7 @@ def _pagamento_json(p: PaymentCheckout) -> Dict[str, Any]:
         "fornitore": p.provider,
         "importo": p.importo,
         "valuta": p.currency,
+        "sandbox": p.sandbox,
         "creato": p.created_at.isoformat() if p.created_at else None,
         "completato": p.completed_at.isoformat() if p.completed_at else None,
     }
@@ -169,7 +193,7 @@ async def pagamenti(
     )).scalars().all()
     incassato = int(await session.scalar(
         select(func.coalesce(func.sum(PaymentCheckout.importo), 0))
-        .where(PaymentCheckout.status == "pagato")
+        .where(PaymentCheckout.status == "pagato", PaymentCheckout.sandbox.is_(False))      # v9 Fase 4: niente prove
     ) or 0)
     return {"totale": totale, "incassato": incassato, "pagamenti": [_pagamento_json(p) for p in righe]}
 
@@ -181,6 +205,10 @@ class PianoModificato(BaseModel):
     price_yearly: Optional[int] = Field(default=None, ge=0)
     credits_per_period: Optional[int] = Field(default=None, ge=0)
     letture_al_giorno: Optional[int] = Field(default=None, ge=-1)
+    #: I limiti della Fase 2b: per settimana, per mese, totali del periodo pagato. −1 = senza limite.
+    letture_alla_settimana: Optional[int] = Field(default=None, ge=-1, le=10_000)
+    letture_al_mese: Optional[int] = Field(default=None, ge=-1, le=10_000)
+    letture_totali: Optional[int] = Field(default=None, ge=-1, le=100_000)
     active: Optional[bool] = None
     #: L'ordine di presentazione (più basso, più in alto).
     rank: Optional[int] = Field(default=None, ge=0, le=10_000)
@@ -230,8 +258,10 @@ async def modifica_piano(
         valore = getattr(payload, campo)
         if valore is not None:
             setattr(piano, campo, valore)
-    if payload.letture_al_giorno is not None:
-        piano.limits = {**(piano.limits or {}), "letture_al_giorno": payload.letture_al_giorno}
+    for limite in ("letture_al_giorno", "letture_alla_settimana", "letture_al_mese", "letture_totali"):
+        valore = getattr(payload, limite)
+        if valore is not None:
+            piano.limits = {**(piano.limits or {}), limite: valore}
     from ...billing.lingue import pulisci
 
     if payload.nomi is not None:
@@ -274,7 +304,7 @@ async def _conteggi(session, dal: datetime, al: datetime) -> Dict[str, int]:
     ) or 0)
     ricavi = int(await session.scalar(
         select(func.coalesce(func.sum(PaymentCheckout.importo), 0))
-        .where(PaymentCheckout.status == "pagato", tra(PaymentCheckout.completed_at))
+        .where(PaymentCheckout.status == "pagato", PaymentCheckout.sandbox.is_(False), tra(PaymentCheckout.completed_at))
     ) or 0)
     bloccate = int(await session.scalar(
         select(func.count()).select_from(Reading)
@@ -384,8 +414,14 @@ async def report(tipo: str, session: DbSession, giorni: int = 30) -> StreamingRe
         righe = (await session.execute(
             select(CreditEntry).where(CreditEntry.created_at >= dal).order_by(CreditEntry.created_at)
         )).scalars().all()
-        return _csv("crediti", ["id", "utente", "delta", "motivo", "lettura", "nota", "quando"], (
-            [r.id, r.user_id, r.delta, r.reason, str(r.reading_id or ""), r.note or "", r.created_at.isoformat()]
+        return _csv("crediti", [
+            "id", "utente", "delta", "motivo", "lettura", "nota", "quando", "canale", "fornitore", "riferimento",
+            "scade",
+        ], (
+            [
+                r.id, r.user_id, r.delta, r.reason, str(r.reading_id or ""), r.note or "", r.created_at.isoformat(),
+                r.canale, r.provider, r.riferimento_esterno or "", r.expires_at.isoformat() if r.expires_at else "",
+            ]
             for r in righe
         ))
     if tipo == "letture":
@@ -428,6 +464,14 @@ class Assegnazione(BaseModel):
     #: che assegnano solo il modello); un valore esplicito sovrascrive.
     ragiona: Optional[bool] = None
     parametri_override: Optional[Dict[str, Any]] = None
+    #: I campi qui sotto si toccano solo se la richiesta li porta (`model_fields_set`): `null` riporta a «eredita dal
+    #: fornitore» / «predefinito del compito», un valore lo scrive.
+    livello: Optional[Literal["none", "minimal", "low", "medium", "high", "xhigh", "max"]] = None
+    json_schema: Optional[bool] = None
+
+
+#: I campi dell'assegnazione che si scrivono solo se presenti nella richiesta.
+_CAMPI_COMPITO = ("livello", "json_schema")
 
 
 @router.get("/models")
@@ -461,6 +505,7 @@ async def assegna(
         raise HTTPException(status_code=400, detail="Modello non configurato")
     risultato = await AssegnazioniModelliRepository(session, _contesto(user, request)).assegna(
         c.value, payload.modello, ragiona=payload.ragiona, parametri_override=payload.parametri_override,
+        **{campo: getattr(payload, campo) for campo in _CAMPI_COMPITO if campo in payload.model_fields_set},
     )
     await session.commit()
     # Lo stato in memoria si allinea a quello scritto (`risultato`), mai ricostruito dal solo
@@ -472,5 +517,6 @@ async def assegna(
         registro.assegna(
             c, risultato.nome,
             ragiona_override=risultato.ragiona_override, parametri_override=risultato.parametri_override,
+            livello=risultato.livello, json_schema=risultato.json_schema,
         )
     return {"compiti": registro.stato()}

@@ -139,6 +139,34 @@ CREDITI_ESAURITI = {
     "hu": "Nincs elég kredited egy új jóslásra.",
 }
 
+#: Il saldo è sotto zero dopo un rimborso o una contestazione (v9): niente letture finché non torna in pari.
+SALDO_NEGATIVO = {
+    "it": (
+        "Il tuo saldo è negativo perché un pagamento è stato rimborsato o contestato. "
+        "Per aprire nuove letture riporta il saldo almeno a zero con un pacchetto di crediti."
+    ),
+    "en": (
+        "Your balance is negative because a payment was refunded or disputed. "
+        "To open new readings, bring your balance back to at least zero with a credit pack."
+    ),
+    "hu": (
+        "Az egyenleged negatív, mert egy fizetést visszatérítettek vagy vitattak. "
+        "Új jósláshoz egy kreditcsomaggal hozd vissza az egyenleged legalább nullára."
+    ),
+    "es": (
+        "Tu saldo es negativo porque un pago fue reembolsado o impugnado. "
+        "Para abrir nuevas lecturas, vuelve a dejar tu saldo al menos en cero con un paquete de créditos."
+    ),
+    "ru": (
+        "Ваш баланс отрицательный, потому что платёж был возвращён или оспорен. "
+        "Чтобы открывать новые расклады, верните баланс хотя бы к нулю с помощью пакета кредитов."
+    ),
+    "uk": (
+        "Ваш баланс від'ємний, тому що платіж було повернено або оскаржено. "
+        "Щоб відкривати нові розклади, поверніть баланс принаймні до нуля за допомогою пакета кредитів."
+    ),
+}
+
 #: L'interpretazione di una carta non è arrivata: la ritrovi nel responso.
 INTERPRETAZIONE_NON_DISPONIBILE = {
     "it": "L'interpretazione non è disponibile ora: la ritroverai nel responso finale.",

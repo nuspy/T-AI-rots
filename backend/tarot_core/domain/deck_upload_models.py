@@ -1,4 +1,8 @@
-"""L'upload dell'artwork di un mazzo da GUI admin (v7, Fase I).
+"""L'upload dell'artwork di un mazzo da GUI admin (v7, Fase I) — l'«Archivio ZIP da scaricare» della console.
+
+Dal 2026-10 c'è anche la strada diretta, separata da questa: le «Immagini del mazzo nel sito» (`DeckCardImage` in
+`deck_models.py`), convertite e servite dall'API, online senza rilascio. Questo archivio resta per chi vuole
+installare il mazzo come file del frontend.
 
 **Perché un blob temporaneo in DB e non un file sul pod.** L'artwork finale resta un file statico
 dentro l'immagine Docker del frontend (decisione presa con l'operatore, vedi `deck_models.py`): un

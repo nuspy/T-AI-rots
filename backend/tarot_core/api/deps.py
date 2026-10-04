@@ -62,8 +62,13 @@ async def verifica_modello(session, lang: str = "it") -> None:
     )
 
 
-def provider_per(compito, persone=None) -> object:
+def provider_per(
+    compito, persone=None, *, lettura=None, riferimento: str = "", senza_ragionamento: bool = False,
+) -> object:
     """Il fornitore di un compito.
+
+    Avvolto per il registro dei consumi (`llm/consumi.py`): ogni chiamata si conta col suo compito e, se c'è, con la
+    `lettura` (l'id) o un `riferimento` («chat»). Non cambia nulla di ciò che arriva al modello.
 
     Con `TAROT_LLM_FINTO=true` tutti i compiti vanno al modello finto: serve
     a provare il flusso intero — e l'interfaccia — senza un modello vero.
@@ -71,13 +76,23 @@ def provider_per(compito, persone=None) -> object:
     Con `persone` (le persone di una lettura di coppia) il fornitore **non vede i nomi**: gli arriva un segnaposto e le
     risposte tornano col nome vero (`tarot/pseudonimi.py`). Si fa qui, al confine, perché nessun punto di chiamata
     debba ricordarsene.
+
+    `senza_ragionamento`: il ragionamento spento per questa chiamata, qualunque cosa dica la console (vedi
+    `RegistroModelli.per`).
     """
+    from ..llm.consumi import misurato
     from ..settings import get_settings
     from ..tarot.pseudonimi import protetto
 
     impostazioni = get_settings()
-    fornitore = _modello_finto() if impostazioni.llm_finto else get_registro_modelli().per(compito)
-    return protetto(fornitore, persone, attivo=impostazioni.anonimizza_nomi)
+    fornitore = (
+        _modello_finto() if impostazioni.llm_finto
+        else get_registro_modelli().per(compito, senza_ragionamento=senza_ragionamento)
+    )
+    return misurato(
+        protetto(fornitore, persone, attivo=impostazioni.anonimizza_nomi), compito,
+        lettura=lettura, riferimento=riferimento,
+    )
 
 
 async def aggiorna_assegnazioni(session, *, forza: bool = False) -> None:

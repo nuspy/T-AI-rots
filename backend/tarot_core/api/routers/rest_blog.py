@@ -31,7 +31,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Literal, Optional
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 
@@ -41,9 +41,10 @@ from ...domain.base import utcnow
 from ...domain.blog_models import BlogPost, BlogSection, MediaImage
 from ...domain.blog_repositories import BlogRepository, ErroreBlog, assicura_miniatura
 from ...domain.repositories import AuditRepository
+from ...domain.session import get_session_factory
 from ...settings import get_settings
 from ...tarot import blog as regole
-from ...tarot import blog_seo
+from ...tarot import blog_seo, reddit
 from ..deps import get_conoscenza
 from .admin_blog import FaqIn, articolo_admin_json
 from .blog import url_immagine, url_miniatura
@@ -362,7 +363,10 @@ async def _proprio(session, post_id: uuid.UUID, chiave: ChiaveVerificata) -> Blo
 
 
 @router.post("/posts", status_code=201)
-async def crea(payload: ArticoloRest, session: DbSession, chiave: ChiaveVerificata = Depends(richiede("blog:write"))) -> Dict[str, Any]:
+async def crea(
+    payload: ArticoloRest, session: DbSession, compiti: BackgroundTasks, fabbrica=Depends(get_session_factory),
+    chiave: ChiaveVerificata = Depends(richiede("blog:write")),
+) -> Dict[str, Any]:
     """Crea un articolo. Con `dry_run: true` restituisce solo il rapporto SEO."""
     repo = BlogRepository(session)
     avvisi: List[str] = []
@@ -391,6 +395,7 @@ async def crea(payload: ArticoloRest, session: DbSession, chiave: ChiaveVerifica
     )
     risposta = await _risposta(session, p, avvisi)
     await session.commit()
+    await reddit.dopo_pubblicazione(session, compiti, fabbrica, p)  # v8.6: anche su Reddit, se acceso
     return risposta
 
 
@@ -423,7 +428,8 @@ async def leggi(post_id: uuid.UUID, session: DbSession, chiave: ChiaveVerificata
 
 @router.patch("/posts/{post_id}")
 async def modifica(
-    post_id: uuid.UUID, payload: ArticoloRestMod, session: DbSession, chiave: ChiaveVerificata = Depends(richiede("blog:write")),
+    post_id: uuid.UUID, payload: ArticoloRestMod, session: DbSession, compiti: BackgroundTasks,
+    fabbrica=Depends(get_session_factory), chiave: ChiaveVerificata = Depends(richiede("blog:write")),
 ) -> Dict[str, Any]:
     """Modifica un articolo creato da questa chiave: si mandano solo i campi da cambiare."""
     p = await _proprio(session, post_id, chiave)
@@ -445,6 +451,7 @@ async def modifica(
     )
     risposta = await _risposta(session, p, avvisi)
     await session.commit()
+    await reddit.dopo_pubblicazione(session, compiti, fabbrica, p)
     return risposta
 
 

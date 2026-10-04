@@ -138,6 +138,10 @@ class RegistroAuditRepository:
         return (await self._session.execute(query)).scalars().all()
 
 
+#: «Questo campo non lo tocco» (diverso da `None`, che lo riporta al predefinito).
+NON_TOCCARE: Any = object()
+
+
 class AssegnazioniModelliRepository(_ConAudit):
     """Quale modello serve quale compito.
 
@@ -148,14 +152,12 @@ class AssegnazioniModelliRepository(_ConAudit):
 
     async def correnti(self) -> Dict[str, AssegnazioneModello]:
         righe = (await self._session.execute(select(ModelAssignment))).scalars()
-        return {
-            r.task: AssegnazioneModello(r.model_name, r.ragiona_override, r.parametri_override)
-            for r in righe
-        }
+        return {r.task: assegnazione_da(r) for r in righe}
 
     async def assegna(
         self, compito: str, modello: Optional[str], *,
         ragiona: Optional[bool] = None, parametri_override: Optional[Dict[str, Any]] = None,
+        livello: Any = NON_TOCCARE, json_schema: Any = NON_TOCCARE,
     ) -> Optional[AssegnazioneModello]:
         """Assegna un modello a un compito, o toglie l'assegnazione.
 
@@ -168,12 +170,15 @@ class AssegnazioniModelliRepository(_ConAudit):
         creazione di una riga nuova, dove `ragiona=None` diventa esplicitamente `False`: il
         backlog vuole il reasoning spento per default su ogni compito, non "eredita dal
         fornitore" per quelli non ancora toccati dall'amministratore.
+
+        `livello`, `json_schema`: `NON_TOCCARE` (il predefinito) lascia il campo com'è; `None` lo riporta a «eredita
+        dal fornitore» / «spento»; un valore lo scrive. Il livello e il booleano restano allineati: scrivere l'uno
+        riscrive l'altro (`ragiona=True` → `medium`, `False` → `none`).
         """
+        from ..llm.ragionamento import livello_da_bool, ragiona_da_livello
+
         riga = await self._session.get(ModelAssignment, compito)
-        prima = (
-            {"modello": riga.model_name, "ragiona": riga.ragiona_override, "parametri_override": riga.parametri_override}
-            if riga else None
-        )
+        prima = _forma_audit(riga) if riga else None
 
         if modello is None:
             if riga is not None:
@@ -185,20 +190,24 @@ class AssegnazioniModelliRepository(_ConAudit):
                     task=compito, model_name=modello,
                     ragiona_override=False if ragiona is None else ragiona,
                 )
+                riga.livello_ragionamento = livello_da_bool(riga.ragiona_override)
                 self._session.add(riga)
             else:
                 riga.model_name = modello
                 if ragiona is not None:
                     riga.ragiona_override = ragiona
+                    riga.livello_ragionamento = livello_da_bool(ragiona)
+            if livello is not NON_TOCCARE:
+                riga.livello_ragionamento = livello
+                riga.ragiona_override = None if livello is None else ragiona_da_livello(livello)
+            if json_schema is not NON_TOCCARE:
+                riga.json_schema = json_schema
             if parametri_override is not None:
                 riga.parametri_override = parametri_override
             riga.updated_by = self._contesto.attore.id
-            dopo = {"modello": modello, "ragiona": riga.ragiona_override, "parametri_override": riga.parametri_override}
+            dopo = _forma_audit(riga)
 
-        risultato = (
-            AssegnazioneModello(riga.model_name, riga.ragiona_override, riga.parametri_override)
-            if modello is not None else None
-        )
+        risultato = assegnazione_da(riga) if modello is not None else None
 
         if prima == dopo:
             return risultato
@@ -210,6 +219,21 @@ class AssegnazioniModelliRepository(_ConAudit):
         return risultato
 
 
+def assegnazione_da(r: ModelAssignment) -> AssegnazioneModello:
+    """La riga come la legge il registro dei modelli."""
+    return AssegnazioneModello(
+        r.model_name, r.ragiona_override, r.parametri_override,
+        livello=r.livello_ragionamento, json_schema=r.json_schema,
+    )
+
+
+def _forma_audit(r: ModelAssignment) -> Dict[str, Any]:
+    return {
+        "modello": r.model_name, "ragiona": r.ragiona_override, "parametri_override": r.parametri_override,
+        "livello": r.livello_ragionamento, "json_schema": r.json_schema,
+    }
+
+
 async def assegnazioni_correnti(session: AsyncSession) -> Dict[str, AssegnazioneModello]:
     """Le assegnazioni, senza contesto amministrativo.
 
@@ -217,7 +241,4 @@ async def assegnazioni_correnti(session: AsyncSession) -> Dict[str, Assegnazione
     di un lavoro. Il repository con l'audit serve a chi scrive.
     """
     righe = (await session.execute(select(ModelAssignment))).scalars()
-    return {
-        r.task: AssegnazioneModello(r.model_name, r.ragiona_override, r.parametri_override)
-        for r in righe
-    }
+    return {r.task: assegnazione_da(r) for r in righe}

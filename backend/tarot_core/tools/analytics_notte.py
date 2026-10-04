@@ -25,6 +25,9 @@ from ..domain.session import dispose_engine, get_session_factory
 async def _giro(giorni: int) -> None:
     try:
         async with get_session_factory()() as sessione:
+            from ..configurazioni.avvio import prepara_strumento
+
+            await prepara_strumento(sessione)  # v9 Fase 2c: il sale e la posta della console
             resoconto = await notte(sessione, TABELLE, configurazione(), giorni=giorni)
             # Dopo il riepilogo: ieri è uscito dal normale? (email solo se sì e se gli avvisi sono accesi)
             avviso = await controlla_e_avvisa(sessione)

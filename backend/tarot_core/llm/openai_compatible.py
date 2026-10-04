@@ -22,12 +22,14 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from dataclasses import replace
 from typing import Any, AsyncIterator, Dict, List, Optional
 
 import httpx
 
 from ..settings import Settings, get_settings
+from . import consumi
 from .base import (
     GenerationError, GenerationRequest, LLMProvider, StreamChunk,
     TruncatedResponse, Usage,
@@ -37,8 +39,24 @@ from .json_mode import (
     FiltroPensieroInline, JsonNonInterpretabile, e_rifiuto_del_formato,
     estrai_json, formato_risposta, pavimento_ragionamento, prossimo_budget,
 )
+from .ragionamento import ragiona_da_livello, tetto_con_ragionamento
 
 logger = logging.getLogger(__name__)
+
+#: Il dialetto JSON già negoziato, per (indirizzo, modello), per tutta la vita del processo.
+#:
+#: Non basta ricordarlo nell'oggetto: un compito con una sostituzione in console (`ragiona_override`, il livello…) riceve
+#: un fornitore nuovo a ogni chiamata (`RegistroModelli.per`, che non lo tiene in cache per non mescolare le
+#: sostituzioni di due compiti), e con il ricordo nell'oggetto la negoziazione ripartiva da capo ogni volta — «Modalità
+#: JSON negoziata» 199 volte in quattro giorni in produzione. Con un fornitore che rifiuta `json_object` (LM Studio) era
+#: una richiesta fallita in più per ogni chiamata JSON. Il dialetto dipende dal server e dal modello, non dal
+#: ragionamento né dai parametri: la chiave è quella.
+_DIALETTI_NOTI: Dict[tuple, Any] = {}
+
+
+def dimentica_dialetti_json() -> None:
+    """Svuota il ricordo dei dialetti JSON negoziati (per i test, o dopo un cambio di server allo stesso indirizzo)."""
+    _DIALETTI_NOTI.clear()
 
 
 class OpenAICompatibleProvider(LLMProvider):
@@ -54,6 +72,8 @@ class OpenAICompatibleProvider(LLMProvider):
         ragiona: bool = False,
         parametri: Optional[Dict[str, Any]] = None,
         embed_model: str = "",
+        json_schema: bool = False,
+        livello_ragionamento: str = "",
     ) -> None:
         settings = settings or get_settings()
         self.name = name
@@ -70,6 +90,10 @@ class OpenAICompatibleProvider(LLMProvider):
         #: budget su OGNI richiesta (non solo quelle strutturate): vedi
         #: `pavimento_ragionamento()`.
         self.ragiona = ragiona
+        #: Il livello di ragionamento della richiesta (`none` … `max`, `llm/ragionamento.py`): con un livello acceso il
+        #: `max_tokens` è il tetto visibile più il margine del livello (`tetto_con_ragionamento`). Vuoto: un fornitore
+        #: di prima dei livelli, che segue ancora il pavimento di `pavimento_ragionamento`.
+        self.livello_ragionamento = livello_ragionamento
         #: Campi aggiunti a ogni richiesta (per esempio il controllo del ragionamento, che si dà nella richiesta e
         #: non al caricamento del modello). Quelli di una singola richiesta (`request.extra`) prevalgono.
         self._parametri: Dict[str, Any] = dict(parametri or {})
@@ -82,6 +106,8 @@ class OpenAICompatibleProvider(LLMProvider):
         #: costerebbe una richiesta fallita per ogni chiamata.
         self._dialetto_json: Optional[str] = None
         self._dialetto_negoziato = False
+        #: Provare per prima la risposta vincolata allo schema rigoroso della fase (`llm/schemi_json.py`).
+        self._json_schema = json_schema
 
     # -- interrogazione ----------------------------------------------------
 
@@ -103,19 +129,37 @@ class OpenAICompatibleProvider(LLMProvider):
         if not texts:
             return []
         modello = self._embed_model or self._default_model or await self.resolve_model()
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
-            response = await client.post(
-                f"{self._base_url}/embeddings",
-                json={"model": modello, "input": texts},
-                headers=self._headers(),
-            )
-            if response.status_code >= 400:
-                corpo = response.text
-                raise GenerationError(
-                    f"{response.status_code} da {self._base_url}/embeddings: {corpo[:500]}"
+        inizio = time.perf_counter()
+        esito, errore, usage = "errore", "", None
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                response = await client.post(
+                    f"{self._base_url}/embeddings",
+                    json={"model": modello, "input": texts},
+                    headers=self._headers(),
                 )
-            dati = sorted(response.json()["data"], key=lambda d: d["index"])
-            return [d["embedding"] for d in dati]
+                if response.status_code >= 400:
+                    corpo = response.text
+                    raise GenerationError(
+                        f"{response.status_code} da {self._base_url}/embeddings: {corpo[:500]}"
+                    )
+                risposta = response.json()
+                if isinstance(risposta.get("usage"), dict):
+                    usage = self._parse_usage(risposta["usage"], modello)
+                dati = sorted(risposta["data"], key=lambda d: d["index"])
+                esito = "ok"
+                return [d["embedding"] for d in dati]
+        except Exception as exc:
+            errore = f"{type(exc).__name__}: {exc}"[:300]
+            raise
+        finally:
+            # Il compito arriva da `ProviderMisurato.embed` (una variabile di contesto: qui non c'è una richiesta).
+            consumi.registra(consumi.consumo_da(
+                None, fornitore=self.name, modello=modello, usage=usage, esito=esito, errore=errore,
+                durata_ms=int((time.perf_counter() - inizio) * 1000),
+                etichetta={**consumi.etichetta_embed(), "fase": "embedding", "streaming": False},
+                caratteri_ingresso=sum(len(t) for t in texts),
+            ))
 
     async def resolve_model(self) -> str:
         """Il modello da usare, chiedendo al server se non è configurato.
@@ -142,7 +186,50 @@ class OpenAICompatibleProvider(LLMProvider):
     # -- generazione -------------------------------------------------------
 
     async def stream(self, request: GenerationRequest) -> AsyncIterator[StreamChunk]:
+        """Una chiamata, un frammento per volta; alla fine, comunque finisca, il consumo va al registro.
+
+        Il registro (`llm/consumi.py`) non solleva mai: un errore di scrittura non tocca la risposta, e una chiamata
+        fallita o interrotta resta contata (spesso è proprio lì che si spreca). Si annota **prima** di consegnare
+        l'ultimo frammento: chi lo riceve di solito smette di leggere (`genera_flusso`), e un generatore abbandonato
+        arriva al suo `finally` solo quando il garbage collector se ne ricorda."""
+        inizio = time.perf_counter()
+        stato: Dict[str, Any] = {
+            "esito": "interrotta", "errore": "", "usage": None, "finish_reason": "",
+            "testo": 0, "pensiero": 0, "payload": None, "annotato": False,
+        }
+
+        def annota() -> None:
+            if stato["annotato"]:
+                return
+            stato["annotato"] = True
+            payload = stato["payload"] or {}
+            consumi.registra(consumi.consumo_da(
+                request, fornitore=self.name, modello=str(payload.get("model") or self._default_model),
+                usage=stato["usage"], durata_ms=int((time.perf_counter() - inizio) * 1000),
+                esito=stato["esito"], finish_reason=stato["finish_reason"], caratteri_uscita=stato["testo"],
+                caratteri_ragionamento=stato["pensiero"], max_tokens=payload.get("max_tokens"),
+                errore=stato["errore"],
+                extra={k: payload[k] for k in ("chat_template_kwargs", "reasoning_budget", "reasoning_effort")
+                       if k in payload},
+            ))
+
+        try:
+            async for pezzo in self._stream(request, stato):
+                if pezzo.done:
+                    annota()
+                yield pezzo
+        except TruncatedResponse as exc:
+            stato["esito"], stato["errore"] = "troncata", str(exc)[:300]
+            raise
+        except Exception as exc:
+            stato["esito"], stato["errore"] = "errore", f"{type(exc).__name__}: {exc}"[:300]
+            raise
+        finally:
+            annota()
+
+    async def _stream(self, request: GenerationRequest, stato: Dict[str, Any]) -> AsyncIterator[StreamChunk]:
         payload = await self._build_payload(request, stream=True)
+        stato["payload"] = payload
 
         testo_accumulato: List[str] = []
         usage: Optional[Usage] = None
@@ -179,11 +266,13 @@ class OpenAICompatibleProvider(LLMProvider):
 
                     if (uso := evento.get("usage")):
                         usage = self._parse_usage(uso, payload["model"])
+                        stato["usage"] = usage
 
                     for scelta in evento.get("choices", []):
                         delta = scelta.get("delta") or {}
                         if scelta.get("finish_reason"):
                             finish_reason = scelta["finish_reason"]
+                            stato["finish_reason"] = finish_reason
 
                         # Nome del campo diverso da un motore all'altro: LM
                         # Studio usa `reasoning`, altri `reasoning_content`.
@@ -191,6 +280,7 @@ class OpenAICompatibleProvider(LLMProvider):
                             "reasoning_content"
                         ) or ""
                         if pensiero_campo:
+                            stato["pensiero"] += len(pensiero_campo)
                             yield StreamChunk(reasoning=pensiero_campo)
 
                         # Alcuni motori non separano affatto il ragionamento: lo scrivono
@@ -200,8 +290,10 @@ class OpenAICompatibleProvider(LLMProvider):
                         if (grezzo := delta.get("content")):
                             testo, pensiero_inline = filtro_pensiero.filtra(grezzo)
                             if pensiero_inline:
+                                stato["pensiero"] += len(pensiero_inline)
                                 yield StreamChunk(reasoning=pensiero_inline)
                             if testo:
+                                stato["testo"] += len(testo)
                                 testo_accumulato.append(testo)
                                 yield StreamChunk(text=testo)
 
@@ -215,6 +307,9 @@ class OpenAICompatibleProvider(LLMProvider):
                 usage=usage,
             )
 
+        # Prima dell'ultimo frammento: chi lo riceve spesso chiude il flusso subito dopo (`genera_flusso`), e una
+        # chiamata conclusa non va contata come interrotta.
+        stato["esito"] = "ok"
         yield StreamChunk(done=True, usage=usage, finish_reason=finish_reason)
 
     async def complete(self, request: GenerationRequest) -> str:
@@ -234,6 +329,13 @@ class OpenAICompatibleProvider(LLMProvider):
         Non è streaming perché non avrebbe senso: un JSON parziale non si può
         mostrare, e chi chiama aspetta comunque la struttura completa.
         """
+        chiave = (self._base_url, request.model or self._default_model)
+        if self._json_schema:
+            rigoroso = await self._prova_schema_rigoroso(request, chiave)
+            if rigoroso is not None:
+                return rigoroso
+        if not self._dialetto_negoziato and chiave in _DIALETTI_NOTI:
+            self._dialetto_json, self._dialetto_negoziato = _DIALETTI_NOTI[chiave], True
         dialetti = [self._dialetto_json] if self._dialetto_negoziato else list(DIALETTI)
         ultimo_errore: Optional[Exception] = None
 
@@ -253,6 +355,7 @@ class OpenAICompatibleProvider(LLMProvider):
             if not self._dialetto_negoziato:
                 self._dialetto_json = dialetto
                 self._dialetto_negoziato = True
+                _DIALETTI_NOTI[chiave] = dialetto
                 logger.info(
                     "Modalità JSON negoziata: %s",
                     f"response_format '{dialetto}'" if dialetto
@@ -260,12 +363,44 @@ class OpenAICompatibleProvider(LLMProvider):
                 )
             return estrai_json(testo)
 
+        if len(dialetti) == 1 and _DIALETTI_NOTI.get(chiave, "?") == dialetti[0]:
+            # Il dialetto ricordato non va più (server aggiornato allo stesso indirizzo): lo si dimentica e si
+            # rinegozia una volta, invece di fallire ogni chiamata fino al riavvio.
+            _DIALETTI_NOTI.pop(chiave, None)
+            self._dialetto_json, self._dialetto_negoziato = None, False
+            return await self.complete_json(request)
+
         raise GenerationError(
             f"nessuna modalità JSON accettata dal server ({ultimo_errore})"
         )
 
+    async def _prova_schema_rigoroso(self, request: GenerationRequest, chiave: tuple) -> Any:
+        """La risposta vincolata allo schema rigoroso della fase (`llm/schemi_json.py`), se il compito l'ha acceso,
+        la fase ne ha uno e il server non l'ha già rifiutato. `None`: si negozia come sempre (`json_object`, poi
+        `json_schema` permissivo, poi testo). Il rifiuto si ricorda per indirizzo e modello come il dialetto."""
+        from .consumi import fase_da
+        from .schemi_json import formato_rigoroso
+
+        formato = formato_rigoroso(fase_da(request.messages))
+        chiave_rigorosa = (*chiave, "rigoroso")
+        if formato is None or _DIALETTI_NOTI.get(chiave_rigorosa) is False:
+            return None
+        try:
+            testo = await self._genera_con_budget(request, "rigoroso", richiede_json=True, formato=formato)
+        except GenerationError as exc:
+            if not e_rifiuto_del_formato(exc):
+                raise
+            _DIALETTI_NOTI[chiave_rigorosa] = False
+            logger.info("Il server non accetta lo schema JSON rigoroso: si negozia il formato come sempre")
+            return None
+        if _DIALETTI_NOTI.get(chiave_rigorosa) is not True:
+            _DIALETTI_NOTI[chiave_rigorosa] = True
+            logger.info("Schema JSON rigoroso accettato dal server")
+        return estrai_json(testo)
+
     async def _genera_con_budget(
         self, request: GenerationRequest, dialetto: Optional[str], *, richiede_json: bool = False,
+        formato: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Riprova con più spazio quando il modello esaurisce il budget.
 
@@ -290,7 +425,7 @@ class OpenAICompatibleProvider(LLMProvider):
             richiesta = replace(
                 request,
                 max_tokens=budget,
-                extra={**request.extra, **_formato(dialetto)},
+                extra={**request.extra, **({"response_format": formato} if formato else _formato(dialetto))},
             )
             try:
                 testo = await self.complete(richiesta)
@@ -360,10 +495,7 @@ class OpenAICompatibleProvider(LLMProvider):
             #
             # È un tetto, non un obiettivo: chi ha finito si ferma, e su un
             # modello che non ragiona la riga non fa nulla.
-            payload["max_tokens"] = (
-                max(request.max_tokens, pavimento_ragionamento(self._parametri))
-                if self.ragiona else request.max_tokens
-            )
+            payload["max_tokens"] = self._tetto(request.max_tokens)
         if request.stop:
             payload["stop"] = request.stop
         if stream:
@@ -374,7 +506,20 @@ class OpenAICompatibleProvider(LLMProvider):
         payload.update(self._parametri)
         payload.update(self._campi_di_cache(request))
         payload.update(request.extra)
+        # Sempre, ed esplicito, dopo tutto il resto: il fornitore non conserva le risposte (Nebius può tenerle per la
+        # distillazione se non glielo si dice). Lo dice anche l'informativa privacy.
+        payload["store"] = False
         return payload
+
+    def _tetto(self, visibile: int) -> int:
+        """Il `max_tokens` della richiesta. Un modello che non ragiona: il tetto visibile. Con un livello acceso: il
+        tetto visibile più il margine del livello (`ragionamento.tetto_con_ragionamento`, configurabile), così il
+        ragionamento non si mangia la risposta. Un fornitore di prima dei livelli che ragiona: il pavimento di sempre."""
+        if not self.ragiona:
+            return visibile
+        if ragiona_da_livello(self.livello_ragionamento or None):
+            return tetto_con_ragionamento(visibile, self.livello_ragionamento, self._parametri)
+        return max(visibile, pavimento_ragionamento(self._parametri))
 
     def _campi_di_cache(self, request: GenerationRequest) -> Dict[str, Any]:
         """Traduce l'indicazione di cache nei campi che questo motore capisce.
@@ -406,11 +551,15 @@ class OpenAICompatibleProvider(LLMProvider):
     @staticmethod
     def _parse_usage(uso: Dict[str, Any], model: str) -> Usage:
         dettagli = uso.get("prompt_tokens_details") or {}
+        uscita = uso.get("completion_tokens_details") or {}
         return Usage(
-            prompt_tokens=uso.get("prompt_tokens", 0),
-            completion_tokens=uso.get("completion_tokens", 0),
-            cached_tokens=dettagli.get("cached_tokens", 0),
-            total_tokens=uso.get("total_tokens", 0),
+            prompt_tokens=uso.get("prompt_tokens", 0) or 0,
+            completion_tokens=uso.get("completion_tokens", 0) or 0,
+            cached_tokens=dettagli.get("cached_tokens", 0) or 0,
+            total_tokens=uso.get("total_tokens", 0) or 0,
+            # `completion_tokens_details.reasoning_tokens` (OpenAI, LM Studio, vLLM); alcuni servizi lo mettono in
+            # cima a `usage`.
+            reasoning_tokens=uscita.get("reasoning_tokens") or uso.get("reasoning_tokens") or 0,
             model=model,
         )
 

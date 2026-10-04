@@ -30,7 +30,8 @@ async def test_una_proposta_valida_mappa_il_tema_sulla_categoria():
     esito = await genera_turno(provider)
     assert esito.proposta is not None
     assert esito.proposta.argomento == "il colloquio di domani"
-    assert esito.proposta.categoria == "standard"
+    # Il tema lavoro apre la lettura di lavoro e affari (le sue stese), non più la standard.
+    assert esito.proposta.categoria == "lavoro"
 
 
 async def test_ogni_tema_della_mappa_produce_una_categoria_nota():

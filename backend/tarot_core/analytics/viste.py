@@ -30,6 +30,8 @@ def traffico(da: date, a: date) -> List[Voce]:
         ("Nuovi e di ritorno", _q(da, a, "visite", ["sessioni", "giorni_tra_visite"], ["tipo_visitatore"]),
          "ritorni riconoscibili solo con accesso o cookie"),
         ("Pagine d'ingresso", _q(da, a, "visite", ["sessioni", "tasso_coinvolgimento"], ["ingresso"], limite=50), ""),
+        ("Pagine d'uscita", _q(da, a, "visite", ["sessioni", "pagine_per_sessione"], ["uscita"], limite=50),
+         "l'ultima pagina vista della visita"),
         ("Pagine più viste", _q(
             da, a, "eventi", ["eventi", "sessioni"], ["percorso"], limite=50,
             filtri=[{"dimensione": "nome", "valori": ["page_view"]}],

@@ -1,7 +1,7 @@
 """Quante chiamate al modello fa una lettura, e con quali prompt: la base per contare i token.
 
-Una lettura non è una chiamata: è un'intervista (una domanda, e il controllo di ciascuna), un'interpretazione per
-carta, il responso con la dottrina nel contesto e il giudice che lo verifica. Con un modello a pagamento ognuna
+Una lettura non è una chiamata: è un'intervista (una domanda, e il controllo di ciascuna), le interpretazioni delle
+carte (una chiamata sola), il responso con la dottrina nel contesto e il giudice che lo verifica. Con un modello a pagamento ognuna
 costa. Questo test percorre letture intere con il modello finto, registra ogni prompt e, se `TAROT_CATTURA_PROMPT`
 indica un file, lo scrive in JSON: `tools/conta_token.py` ne ricava token e costi. Senza la variabile controlla solo
 che la forma di una lettura non cambi di nascosto (quante chiamate, di che tipo)."""
@@ -13,7 +13,6 @@ from collections import Counter
 
 import pytest
 
-from ..tarot.conoscenza import Conoscenza
 from .conftest import richiede_database
 from .test_flusso import STESE, _accredita, _lettura_completa
 from .test_lettura_speciale import PARTNER, _scheda
@@ -37,6 +36,14 @@ def _salva():
 
 async def _giro(client, session, prompt_visti, spread_id, carte, lingua, speciale):
     await _accredita(session, client.identita.principal)
+    # La forma «piena» di una lettura: validatore e guardia LLM a ogni giro (il modo «acceso» della console). Nel modo
+    # predefinito partono solo sui casi dubbi, e quanti siano dipende dalle carte uscite: lo provano
+    # `test_controlli_dubbi.py`.
+    from ..domain.impostazioni_repositories import correnti_intervista
+
+    regole = await correnti_intervista(session)
+    regole.validatore_domande, regole.guardia_responso = "acceso", "acceso"
+    await session.flush()
     prompt_visti.clear()
     if speciale:
         await _scheda(client)
@@ -54,8 +61,8 @@ async def _giro(client, session, prompt_visti, spread_id, carte, lingua, special
 async def test_forma_di_una_lettura_standard(client, session, catalogo, prompt_visti, spread_id, lingua):
     n = STESE[spread_id]
     conta = await _giro(client, session, prompt_visti, spread_id, n, lingua, speciale=False)
-    # Una chiamata per posizione: anche una carta calcolata (non scelta) si interpreta.
-    assert conta["interpretazione"] == len(Conoscenza.carica().stesa(spread_id)["posizioni"])
+    # Una chiamata sola per tutte le posizioni (anche una carta calcolata, non scelta, si interpreta): nessuna singola.
+    assert conta["interpretazione_unica"] == 1 and conta["interpretazione"] == 0
     assert conta["sintesi"] == 1 and conta["giudizio"] == 1
     assert conta["intervista"] >= 3                 # col modello finto: due domande e la chiusura
 
@@ -65,4 +72,6 @@ async def test_forma_di_una_lettura_standard(client, session, catalogo, prompt_v
 async def test_forma_di_una_lettura_speciale(client, session, catalogo, prompt_visti, spread_id, lingua):
     n = SPECIALI[spread_id]
     conta = await _giro(client, session, prompt_visti, spread_id, n, lingua, speciale=True)
-    assert conta["interpretazione"] == len(Conoscenza.carica().stesa(spread_id)["posizioni"]) and conta["sintesi"] == 1 and conta["giudizio"] == 1
+    assert conta["interpretazione_unica"] == 1 and conta["interpretazione"] == 0 and conta["sintesi"] == 1
+    assert conta["giudizio"] == 1
+
