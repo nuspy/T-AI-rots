@@ -70,6 +70,24 @@ data:
         proxy_send_timeout 300s;
       }
 
+      # Le immagini dei mazzi dalla console: uno ZIP con le 78 carte e il
+      # dorso (fino a 300 MB, `tarot/immagini_mazzo.py`) o i file di una
+      # cartella uno per volta (fino a 25 MB). Solo qui il tetto è più alto.
+      location /api/admin/decks/ {
+        client_max_body_size 300m;
+        proxy_pass http://tarots-api:8100/admin/decks/;
+        proxy_request_buffering off;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+      }
+
+      # Le carte d'esempio dei candidati al voto: un'immagine per richiesta
+      # (fino a 8 MB, come le immagini del blog).
+      location /api/admin/voto/ {
+        client_max_body_size 10m;
+        proxy_pass http://tarots-api:8100/admin/voto/;
+      }
+
       # La console di amministrazione: un'altra app Next.js, costruita con
       # basePath /admin, quindi il percorso passa com'è.
       location ~ ^/admin(/|$) {
@@ -145,7 +163,8 @@ spec:
         - name: keycloak
           # deploy/keycloak/Dockerfile: Keycloak 26 già costruito per Postgres,
           # health e percorso /auth. Costruito sul server, senza registry.
-          image: tarots-keycloak:v4
+          # v5: il tema `tarots` nello stile della v2 (login, registrazione, 2FA, pulsanti social).
+          image: tarots-keycloak:v6
           imagePullPolicy: IfNotPresent
           # `start` (produzione), non `start-dev`: database vero, HTTPS dietro proxy.
           args: ["start", "--optimized", "--import-realm"]
@@ -177,7 +196,9 @@ spec:
               valueFrom: {secretKeyRef: {name: tarots-secrets, key: api-client-secret}}
             # Provider social spenti (KC_<P>_ENABLED vale false se manca): i
             # segnaposto degli id e dei segreti si riempiono comunque, perché
-            # un `${...}` senza valore non venga letto alla lettera.
+            # un `${...}` senza valore non venga letto alla lettera. Servono
+            # solo all'import di un realm nuovo: le credenziali vere si mettono
+            # dalla console («Accesso con i social»), che le scrive in Keycloak.
             - {name: KC_GOOGLE_ENABLED, value: "false"}
             - {name: KC_GOOGLE_CLIENT_ID, value: non-usato}
             - {name: KC_GOOGLE_CLIENT_SECRET, value: non-usato}
@@ -187,6 +208,18 @@ spec:
             - {name: KC_APPLE_ENABLED, value: "false"}
             - {name: KC_APPLE_CLIENT_ID, value: non-usato}
             - {name: KC_APPLE_CLIENT_SECRET, value: non-usato}
+            - {name: KC_MICROSOFT_ENABLED, value: "false"}
+            - {name: KC_MICROSOFT_CLIENT_ID, value: non-usato}
+            - {name: KC_MICROSOFT_CLIENT_SECRET, value: non-usato}
+            - {name: KC_GITHUB_ENABLED, value: "false"}
+            - {name: KC_GITHUB_CLIENT_ID, value: non-usato}
+            - {name: KC_GITHUB_CLIENT_SECRET, value: non-usato}
+            - {name: KC_LINKEDIN_ENABLED, value: "false"}
+            - {name: KC_LINKEDIN_CLIENT_ID, value: non-usato}
+            - {name: KC_LINKEDIN_CLIENT_SECRET, value: non-usato}
+            - {name: KC_TWITTER_ENABLED, value: "false"}
+            - {name: KC_TWITTER_CLIENT_ID, value: non-usato}
+            - {name: KC_TWITTER_CLIENT_SECRET, value: non-usato}
             # Stalwart Mail Server (v6): container Docker "stalwart-mail" sullo stesso host,
             # dominio tarots.chat, submission SMTPS implicito (465) — porta 587/STARTTLS non ha un
             # listener attivo su questa immagine, per questo si usa 465+ssl invece del piu' comune
@@ -255,7 +288,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: tarots-api:v8.3
+          image: tarots-api:v9.0
           imagePullPolicy: IfNotPresent
           # Il CMD dell'immagine applica le migrazioni e poi serve.
           env:
@@ -269,22 +302,41 @@ spec:
             - {name: TAROT_ENVIRONMENT, value: prod}
             - {name: TAROT_AUTH_DISABLED, value: "false"}
             # Nessun fornitore di pagamento: il simulato lascerebbe attivare
-            # qualunque piano senza pagare.
+            # qualunque piano senza pagare. Dalla v9 (Fase 2c) fornitore e chiavi di Stripe si scelgono dalla
+            # console (Pagamenti → Stripe): questo valore e le chiavi qui sotto sono solo il ripiego, copiati
+            # nel database al primo avvio (LEGGIMI.md, «Stripe»).
             - {name: TAROT_BILLING_PROVIDER, value: disattivato}
+            # Stripe (v9): ripiego facoltativo; le chiavi si incollano in console.
+            - name: TAROT_STRIPE_SECRET_KEY
+              valueFrom: {secretKeyRef: {name: tarots-secrets, key: stripe-secret-key, optional: true}}
+            - name: TAROT_STRIPE_WEBHOOK_SECRET
+              valueFrom: {secretKeyRef: {name: tarots-secrets, key: stripe-webhook-secret, optional: true}}
             - {name: TAROT_TRACING_ENABLED, value: "false"}
             - {name: TAROT_KEYCLOAK_URL, value: "http://tarots-keycloak:8080/auth"}
             - {name: TAROT_KEYCLOAK_ISSUER_URL, value: "https://tarots.chat/auth"}
             - {name: TAROT_KEYCLOAK_REALM, value: tarots}
+            # Il client `tarot-api` e il suo segreto (lo stesso che Keycloak riceve come KC_API_CLIENT_SECRET):
+            # la console li usa per cambiare su Keycloak il login persistente e l'accesso con i social
+            # (auth/keycloak_admin.py). Senza, quelle due pagine rispondono «TAROT_KEYCLOAK_CLIENT_SECRET non
+            # impostato». Il suo account di servizio deve avere manage-realm e manage-identity-providers
+            # (LEGGIMI.md, «Aggiornare il realm esistente»).
+            - {name: TAROT_KEYCLOAK_CLIENT_ID, value: tarot-api}
+            - name: TAROT_KEYCLOAK_CLIENT_SECRET
+              valueFrom: {secretKeyRef: {name: tarots-secrets, key: api-client-secret}}
             - {name: TAROT_API_PUBLIC_URL, value: "https://tarots.chat/api"}
             - {name: TAROT_WEB_PUBLIC_URL, value: "https://tarots.chat"}
             - {name: TAROT_CORS_ORIGINS, value: '["https://tarots.chat"]'}
             # Letto dal seed: i crediti degli utenti di prova.
             - {name: TAROT_CREDITI_UTENTE_DI_PROVA, value: "100000"}
-            # Il sale delle impronte anonime di chi visita un link condiviso: senza,
-            # in produzione l'API rifiuta di partire. Chiave da aggiungere al Secret
-            # (vedi LEGGIMI.md, passo 3).
+            # Il sale delle impronte anonime di chi visita un link condiviso. Facoltativo dalla v9 (Fase 2c):
+            # senza, al primo avvio l'API ne genera uno e lo conserva cifrato nel database; se c'è, vale questo.
             - name: TAROT_CONDIVISIONE_SALE
-              valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale}}
+              valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale, optional: true}}
+            # GDPR, Fase 1: il segreto dell'impronta HMAC degli IP (registro e consensi tengono l'IP troncato più questa
+            # impronta, mai l'intero). Facoltativo dalla v9 (Fase 2c): senza, se ne genera uno al primo avvio
+            # (conservato cifrato nel database); se c'è, vale questo e si copia nel database. Non cambiarlo dopo.
+            - name: TAROT_IP_HASH_SECRET
+              valueFrom: {secretKeyRef: {name: tarots-secrets, key: ip-hash-secret, optional: true}}
             # Cifra le chiavi dei fornitori LLM a riposo nel database (i fornitori si aggiungono dalla console, non
             # da qui). Senza, in produzione l'API rifiuta di partire. Una chiave Fernet vera, generata con
             # `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` — non un
@@ -299,7 +351,9 @@ spec:
             - {name: TAROT_SEARCH_CONSOLE_CREDENZIALI, value: /segreti/search-console/credentials.json}
             # Analytics (v8, lanterna): paese e città dal file DB-IP scaricato nell'immagine.
             - {name: TAROT_ANALYTICS_GEO, value: /opt/geo/citta.mmdb}
-            # Posta in uscita (rapporto analytics, «Invia ora» dalla console): lo Stalwart di Keycloak.
+            # Posta in uscita (rapporto analytics, email agli utenti): lo Stalwart di Keycloak. Dalla v9 (Fase 2c) si
+            # imposta in console (Impostazioni → Posta in uscita): questi valori sono il ripiego, copiati nel
+            # database (password cifrata) al primo avvio.
             - {name: TAROT_SMTP_HOST, value: mail.tadamoo.com}
             - {name: TAROT_SMTP_PORTA, value: "465"}
             - {name: TAROT_SMTP_UTENTE, value: "noreply@tarots.chat"}
@@ -307,8 +361,8 @@ spec:
             - name: TAROT_SMTP_PASSWORD
               valueFrom: {secretKeyRef: {name: tarots-secrets, key: smtp-password}}
             # Backup sul NAS (v8.3): la console prova il collegamento, lancia un backup e ripristina. La credenziale
-            # sta nel Secret `tarots-backup` (vedi LEGGIMI.md, "Backup sul NAS"): la chiave SSH come file, oppure una
-            # password. Facoltativo: senza, la console dice che manca.
+            # si carica in console (v9, Fase 2c, cifrata); il Secret `tarots-backup` (chiave SSH come file, oppure una
+            # password) è il ripiego facoltativo, copiato nel database al primo avvio.
             - {name: TAROT_BACKUP_CHIAVE_SSH, value: /etc/tarots-backup/ssh-key}
             - name: TAROT_BACKUP_PASSWORD
               valueFrom: {secretKeyRef: {name: tarots-backup, key: password, optional: true}}
@@ -363,6 +417,177 @@ spec:
   ports:
     - {name: http, port: 8100, targetPort: 8100}
 ---
+# Abbonamenti (v9): ogni ora rinnova i piani interni (gratuiti, regalati) arrivati a fine periodo, chiude i disdetti,
+# fa scadere i sospesi non saldati e gli abbonamenti Stripe rimasti senza rinnovo da una settimana (webhook persi), e
+# riporta chi resta senza piano sul gratuito. Quelli di Stripe li rinnova Stripe (webhook `invoice.paid`): questo giro
+# non li tocca, e rieseguirlo è innocuo (`tarot_core/tools/abbonamenti.py`). Il fornitore dev'essere lo stesso dell'API.
+# Fase 2b: anche la tolleranza dei pagamenti falliti (solleciti al 3° e 6° giorno, sospensione alla fine) e il
+# promemoria della prova due giorni prima, con le email (una volta sola per chiave, registro `invii_email`).
+# Prova a mano: kubectl -n tarots create job --from=cronjob/tarots-abbonamenti prova-abbonamenti
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: tarots-abbonamenti
+  namespace: tarots
+  labels: {app: tarots, component: abbonamenti}
+spec:
+  schedule: "7 * * * *"
+  timeZone: Europe/Rome
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels: {app: tarots, component: abbonamenti}
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: abbonamenti
+              image: tarots-api:v9.0
+              imagePullPolicy: IfNotPresent
+              command: ["python", "-m", "tarot_core.tools.abbonamenti"]
+              env:
+                - name: TAROT_DATABASE_URL
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: database-url}}
+                - {name: TAROT_ENVIRONMENT, value: prod}
+                - {name: TAROT_AUTH_DISABLED, value: "false"}
+                # Lo stesso dell'API: con `stripe` anche qui.
+                - {name: TAROT_BILLING_PROVIDER, value: disattivato}
+                - name: TAROT_STRIPE_SECRET_KEY
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: stripe-secret-key, optional: true}}
+                - name: TAROT_STRIPE_WEBHOOK_SECRET
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: stripe-webhook-secret, optional: true}}
+                - {name: TAROT_TRACING_ENABLED, value: "false"}
+                - {name: TAROT_WEB_PUBLIC_URL, value: "https://tarots.chat"}
+                - {name: TAROT_API_PUBLIC_URL, value: "https://tarots.chat/api"}
+                # Richiesti dal controllo di produzione delle impostazioni, anche se qui non servono.
+                - name: TAROT_CONDIVISIONE_SALE
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale, optional: true}}
+                - name: TAROT_LLM_PROVIDER_KEY
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: llm-provider-key}}
+                # Fase 2b: le email agli abbonati (solleciti, sospensione, promemoria della prova, rinnovo avvenuto).
+                - {name: TAROT_SMTP_HOST, value: mail.tadamoo.com}
+                - {name: TAROT_SMTP_PORTA, value: "465"}
+                - {name: TAROT_SMTP_UTENTE, value: "noreply@tarots.chat"}
+                - {name: TAROT_SMTP_MITTENTE, value: "noreply@tarots.chat"}
+                - name: TAROT_SMTP_PASSWORD
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: smtp-password}}
+              resources:
+                requests: {cpu: 20m, memory: 96Mi}
+                limits: {memory: 384Mi}
+---
+# Riconciliazione degli acquisti nelle app (v9, Fase 4): ogni notte alle 4:20 (ora italiana) chiede a Google
+# Play i rimborsi degli ultimi 30 giorni (`voidedpurchases.list` → storno dei crediti), riprova gli acquisti rimasti
+# in attesa o non confermati, e rilegge da Apple la storia di chi ha comprato su iPhone negli ultimi 40 giorni
+# (rinnovi o rimborsi di cui la notifica si è persa). Credenziali dalla console «App mobili» (cifrate: serve la
+# chiave master). Uno store non configurato si salta. Idempotente: rieseguirlo non accredita né storna due volte.
+# Prova a mano: kubectl -n tarots create job --from=cronjob/tarots-store-riconcilia prova-store
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: tarots-store-riconcilia
+  namespace: tarots
+  labels: {app: tarots, component: store-riconcilia}
+spec:
+  schedule: "20 4 * * *"
+  timeZone: Europe/Rome
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels: {app: tarots, component: store-riconcilia}
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: store-riconcilia
+              image: tarots-api:v9.0
+              imagePullPolicy: IfNotPresent
+              command: ["python", "-m", "tarot_core.tools.store_riconcilia"]
+              env:
+                - name: TAROT_DATABASE_URL
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: database-url}}
+                - {name: TAROT_ENVIRONMENT, value: prod}
+                - {name: TAROT_AUTH_DISABLED, value: "false"}
+                - {name: TAROT_BILLING_PROVIDER, value: disattivato}
+                - {name: TAROT_TRACING_ENABLED, value: "false"}
+                - {name: TAROT_WEB_PUBLIC_URL, value: "https://tarots.chat"}
+                - {name: TAROT_API_PUBLIC_URL, value: "https://tarots.chat/api"}
+                # Richiesti dal controllo di produzione delle impostazioni; la chiave master decifra le credenziali.
+                - name: TAROT_CONDIVISIONE_SALE
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale, optional: true}}
+                - name: TAROT_LLM_PROVIDER_KEY
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: llm-provider-key}}
+                # L'email di conferma quando la riconciliazione trova un rinnovo spento nello store.
+                - {name: TAROT_SMTP_HOST, value: mail.tadamoo.com}
+                - {name: TAROT_SMTP_PORTA, value: "465"}
+                - {name: TAROT_SMTP_UTENTE, value: "noreply@tarots.chat"}
+                - {name: TAROT_SMTP_MITTENTE, value: "noreply@tarots.chat"}
+                - name: TAROT_SMTP_PASSWORD
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: smtp-password}}
+              resources:
+                requests: {cpu: 20m, memory: 96Mi}
+                limits: {memory: 384Mi}
+---
+# Notifiche push (v9, Fase 5): ogni 15 minuti. Prima le automatiche la cui finestra è aperta all'ora LOCALE di chi
+# riceve (carta del giorno all'ora scelta, serie in pericolo, benvenuto, rinnovo non riuscito, fine della prova), fuori
+# dalle ore di silenzio; poi le campagne della console arrivate all'ora. FCM (app) con il service account di Firebase
+# caricato in console; Web Push (sito) con le chiavi VAPID generate e cifrate dal sito: serve solo la chiave master.
+# Idempotente (registro `invii_notifica` con indici unici): un giro ripetuto non rimanda niente.
+# Prova a mano: kubectl -n tarots create job --from=cronjob/tarots-notifiche prova-notifiche
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: tarots-notifiche
+  namespace: tarots
+  labels: {app: tarots, component: notifiche}
+spec:
+  schedule: "*/15 * * * *"
+  timeZone: Europe/Rome
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 840
+      template:
+        metadata:
+          labels: {app: tarots, component: notifiche}
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: notifiche
+              image: tarots-api:v9.0
+              imagePullPolicy: IfNotPresent
+              command: ["python", "-m", "tarot_core.tools.notifiche"]
+              env:
+                - name: TAROT_DATABASE_URL
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: database-url}}
+                - {name: TAROT_ENVIRONMENT, value: prod}
+                - {name: TAROT_AUTH_DISABLED, value: "false"}
+                - {name: TAROT_BILLING_PROVIDER, value: disattivato}
+                - {name: TAROT_TRACING_ENABLED, value: "false"}
+                # Il link d'apertura e la disiscrizione puntano all'API pubblica; il tocco apre il sito.
+                - {name: TAROT_WEB_PUBLIC_URL, value: "https://tarots.chat"}
+                - {name: TAROT_API_PUBLIC_URL, value: "https://tarots.chat/api"}
+                # Richiesti dal controllo di produzione; la chiave master decifra Firebase, VAPID e la firma dei link.
+                - name: TAROT_CONDIVISIONE_SALE
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale, optional: true}}
+                - name: TAROT_LLM_PROVIDER_KEY
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: llm-provider-key}}
+              resources:
+                requests: {cpu: 20m, memory: 96Mi}
+                limits: {memory: 384Mi}
+---
 # Notifica ai motori di ricerca (v8): ogni notte a mezzanotte (ora italiana) annuncia gli articoli del
 # blog nuovi o aggiornati dall'ultimo giro — IndexNow (Bing, Yandex…), Search Console (Google,
 # sitemap), WebSub (feed RSS). Stessa immagine dell'API. Un canale senza configurazione si salta.
@@ -391,7 +616,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: notifica
-              image: tarots-api:v8.3
+              image: tarots-api:v9.0
               imagePullPolicy: IfNotPresent
               command: ["python", "-m", "tarot_core.tools.notifica_motori"]
               env:
@@ -405,7 +630,7 @@ spec:
                 - {name: TAROT_API_PUBLIC_URL, value: "https://tarots.chat/api"}
                 # Richiesti dal controllo di produzione delle impostazioni, anche se qui non servono.
                 - name: TAROT_CONDIVISIONE_SALE
-                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale}}
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale, optional: true}}
                 - name: TAROT_LLM_PROVIDER_KEY
                   valueFrom: {secretKeyRef: {name: tarots-secrets, key: llm-provider-key}}
                 - {name: TAROT_INDEXNOW_CHIAVE, value: "5cad0a576d0c2f1d8f9ec214451b07f1"}
@@ -420,6 +645,55 @@ spec:
           volumes:
             - name: search-console
               secret: {secretName: tarots-search-console, optional: true}
+---
+# Reddit (v8.6): ogni quarto d'ora porta su Reddit gli articoli del blog in coda — i programmati quando arriva la
+# loro data, quelli rimandati dal limite di frequenza di Reddit, quelli che aspettano l'intervallo fra un post e
+# l'altro. Le pubblicazioni dalla console e dalla REST partono già da sole. Spento in console: non fa nulla.
+# Account e subreddit si configurano dalla console (Social), cifrati con TAROT_LLM_PROVIDER_KEY.
+# Prova a mano: kubectl -n tarots create job --from=cronjob/tarots-reddit prova-reddit
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: tarots-reddit
+  namespace: tarots
+  labels: {app: tarots, component: reddit}
+spec:
+  schedule: "*/15 * * * *"
+  timeZone: Europe/Rome
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels: {app: tarots, component: reddit}
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: reddit
+              image: tarots-api:v9.0
+              imagePullPolicy: IfNotPresent
+              command: ["python", "-m", "tarot_core.tools.reddit_pubblica"]
+              env:
+                - name: TAROT_DATABASE_URL
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: database-url}}
+                - {name: TAROT_ENVIRONMENT, value: prod}
+                - {name: TAROT_AUTH_DISABLED, value: "false"}
+                - {name: TAROT_BILLING_PROVIDER, value: disattivato}
+                - {name: TAROT_TRACING_ENABLED, value: "false"}
+                - {name: TAROT_WEB_PUBLIC_URL, value: "https://tarots.chat"}
+                - {name: TAROT_API_PUBLIC_URL, value: "https://tarots.chat/api"}
+                # Richiesti dal controllo di produzione; la chiave LLM decifra anche le credenziali di Reddit.
+                - name: TAROT_CONDIVISIONE_SALE
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale, optional: true}}
+                - name: TAROT_LLM_PROVIDER_KEY
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: llm-provider-key}}
+              resources:
+                requests: {cpu: 50m, memory: 128Mi}
+                limits: {memory: 512Mi}
 ---
 # Analytics (v8, lanterna): ogni notte alle 3:30 il riepilogo giornaliero anonimo degli ultimi tre
 # giorni e la pulizia del dettaglio oltre i 25 mesi. Prova a mano:
@@ -447,7 +721,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: analytics
-              image: tarots-api:v8.3
+              image: tarots-api:v9.0
               imagePullPolicy: IfNotPresent
               command: ["python", "-m", "tarot_core.tools.analytics_notte"]
               env:
@@ -460,7 +734,7 @@ spec:
                 - {name: TAROT_WEB_PUBLIC_URL, value: "https://tarots.chat"}
                 # Richiesti dal controllo di produzione delle impostazioni, anche se qui non servono.
                 - name: TAROT_CONDIVISIONE_SALE
-                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale}}
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale, optional: true}}
                 - name: TAROT_LLM_PROVIDER_KEY
                   valueFrom: {secretKeyRef: {name: tarots-secrets, key: llm-provider-key}}
                 # Gli avvisi automatici (email quando ieri esce dal normale).
@@ -501,7 +775,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: rapporto
-              image: tarots-api:v8.3
+              image: tarots-api:v9.0
               imagePullPolicy: IfNotPresent
               command: ["python", "-m", "tarot_core.tools.rapporto_settimanale"]
               env:
@@ -513,7 +787,7 @@ spec:
                 - {name: TAROT_TRACING_ENABLED, value: "false"}
                 - {name: TAROT_WEB_PUBLIC_URL, value: "https://tarots.chat"}
                 - name: TAROT_CONDIVISIONE_SALE
-                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale}}
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale, optional: true}}
                 # Serve a decifrare la chiave del fornitore LLM (interpretazione AI nel rapporto).
                 - name: TAROT_LLM_PROVIDER_KEY
                   valueFrom: {secretKeyRef: {name: tarots-secrets, key: llm-provider-key}}
@@ -548,7 +822,7 @@ spec:
         - name: web
           # Gli indirizzi pubblici (API, Keycloak) sono cotti nella build:
           # vedi le --build-arg in deploy/k8s/LEGGIMI.md.
-          image: tarots-web:v8.3
+          image: tarots-web:v9.0
           imagePullPolicy: IfNotPresent
           env:
             # Il server di Next legge le anteprime delle letture condivise
@@ -599,7 +873,7 @@ spec:
         - name: admin
           # La console, costruita con basePath /admin e client tarot-admin
           # (vedi le --build-arg in deploy/k8s/LEGGIMI.md).
-          image: tarots-admin:v8.3
+          image: tarots-admin:v9.0
           imagePullPolicy: IfNotPresent
           ports:
             - {name: http, containerPort: 3000}
@@ -653,7 +927,7 @@ spec:
           securityContext: {fsGroup: 1000}
           containers:
             - name: backup
-              image: tarots-api:v8.3
+              image: tarots-api:v9.0
               imagePullPolicy: IfNotPresent
               command: ["python", "-m", "tarot_core.tools.backup_db"]
               env:
@@ -666,7 +940,7 @@ spec:
                 - {name: TAROT_WEB_PUBLIC_URL, value: "https://tarots.chat"}
                 # Richiesti dal controllo di produzione delle impostazioni, anche se qui non servono.
                 - name: TAROT_CONDIVISIONE_SALE
-                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale}}
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale, optional: true}}
                 - name: TAROT_LLM_PROVIDER_KEY
                   valueFrom: {secretKeyRef: {name: tarots-secrets, key: llm-provider-key}}
                 - {name: TAROT_BACKUP_CHIAVE_SSH, value: /etc/tarots-backup/ssh-key}
@@ -687,3 +961,112 @@ spec:
           volumes:
             - name: backup-nas
               secret: {secretName: tarots-backup, optional: true, defaultMode: 0440}
+---
+# Le cancellazioni degli account (GDPR, Fase 1): ogni notte alle 3:15 (ora italiana, dopo il backup) gli account la
+# cui cancellazione è stata chiesta da più di 30 giorni e non annullata perdono l'utente in Keycloak e i dati
+# personali; la contabilità resta pseudonimizzata (`tarot/cancellazione.py`). Un account per transazione: uno che
+# fallisce (Keycloak giù) si riprova la notte dopo. Serve il segreto del client `tarot-api` (manage-users).
+# Prova a mano: kubectl -n tarots create job --from=cronjob/tarots-cancellazioni prova-cancellazioni
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: tarots-cancellazioni
+  namespace: tarots
+  labels: {app: tarots, component: cancellazioni}
+spec:
+  schedule: "15 3 * * *"
+  timeZone: Europe/Rome
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels: {app: tarots, component: cancellazioni}
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: cancellazioni
+              image: tarots-api:v9.0
+              imagePullPolicy: IfNotPresent
+              command: ["python", "-m", "tarot_core.tools.cancellazioni"]
+              env:
+                - name: TAROT_DATABASE_URL
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: database-url}}
+                - {name: TAROT_ENVIRONMENT, value: prod}
+                - {name: TAROT_AUTH_DISABLED, value: "false"}
+                - {name: TAROT_BILLING_PROVIDER, value: disattivato}
+                - {name: TAROT_TRACING_ENABLED, value: "false"}
+                - {name: TAROT_KEYCLOAK_URL, value: "http://tarots-keycloak:8080/auth"}
+                - {name: TAROT_KEYCLOAK_REALM, value: tarots}
+                - {name: TAROT_KEYCLOAK_CLIENT_ID, value: tarot-api}
+                - name: TAROT_KEYCLOAK_CLIENT_SECRET
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: api-client-secret}}
+                # Richiesti dal controllo di produzione delle impostazioni, anche se qui non servono tutti.
+                - name: TAROT_CONDIVISIONE_SALE
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale, optional: true}}
+                - name: TAROT_LLM_PROVIDER_KEY
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: llm-provider-key}}
+                - name: TAROT_IP_HASH_SECRET
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: ip-hash-secret, optional: true}}
+              resources:
+                requests: {cpu: 50m, memory: 128Mi}
+                limits: {memory: 512Mi}
+---
+# Il segreto di «Accedi con Apple» (v9, Fase 6): il 1° di ogni mese alle 4:40 (ora italiana). Apple non accetta un
+# segreto fisso ma un JWT firmato con la chiave .p8 caricata in console («Accesso con i social» → Apple), valido al
+# massimo sei mesi: se quello scritto in Keycloak scade fra meno di 75 giorni se ne firma uno nuovo e lo si scrive
+# nell'identity provider `apple` (`tarot_core/tools/apple_segreto.py`). Senza configurazione in console non fa niente.
+# Serve la chiave master (decifra la .p8) e il segreto del client `tarot-api` (manage-identity-providers).
+# Prova a mano: kubectl -n tarots create job --from=cronjob/tarots-apple-segreto prova-apple
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: tarots-apple-segreto
+  namespace: tarots
+  labels: {app: tarots, component: apple-segreto}
+spec:
+  schedule: "40 4 1 * *"
+  timeZone: Europe/Rome
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels: {app: tarots, component: apple-segreto}
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: apple-segreto
+              image: tarots-api:v9.0
+              imagePullPolicy: IfNotPresent
+              command: ["python", "-m", "tarot_core.tools.apple_segreto"]
+              env:
+                - name: TAROT_DATABASE_URL
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: database-url}}
+                - {name: TAROT_ENVIRONMENT, value: prod}
+                - {name: TAROT_AUTH_DISABLED, value: "false"}
+                - {name: TAROT_BILLING_PROVIDER, value: disattivato}
+                - {name: TAROT_TRACING_ENABLED, value: "false"}
+                - {name: TAROT_KEYCLOAK_URL, value: "http://tarots-keycloak:8080/auth"}
+                - {name: TAROT_KEYCLOAK_REALM, value: tarots}
+                - {name: TAROT_KEYCLOAK_CLIENT_ID, value: tarot-api}
+                - name: TAROT_KEYCLOAK_CLIENT_SECRET
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: api-client-secret}}
+                # Richiesti dal controllo di produzione delle impostazioni; la chiave master decifra la .p8.
+                - name: TAROT_CONDIVISIONE_SALE
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: condivisione-sale, optional: true}}
+                - name: TAROT_LLM_PROVIDER_KEY
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: llm-provider-key}}
+                - name: TAROT_IP_HASH_SECRET
+                  valueFrom: {secretKeyRef: {name: tarots-secrets, key: ip-hash-secret, optional: true}}
+              resources:
+                requests: {cpu: 20m, memory: 96Mi}
+                limits: {memory: 384Mi}

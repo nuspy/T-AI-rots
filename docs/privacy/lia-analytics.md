@@ -1,7 +1,8 @@
 # Valutazione del legittimo interesse — statistiche di utilizzo collegate all'account
 
-Titolare: Andrea Taini (TAROTS chat, https://tarots.chat). Data: 2026-09-30. Revisione: v1.
-Base giuridica valutata: art. 6(1)(f) GDPR. **Da far rivedere a un consulente legale.**
+Titolare: Andrea Taini (TAROTS chat, https://tarots.chat). Data: 2026-10-03. Revisione: v2.
+**Non è consulenza legale: da far rivedere a un consulente privacy.**
+Base giuridica valutata: art. 6(1)(f) GDPR. Scheda T12 di `registro-trattamenti.md`.
 
 ## Trattamento
 
@@ -13,8 +14,11 @@ del servizio (server nel Regno Unito), mai ceduti a terzi.
 
 Fuori da questa valutazione, perché anonimi: le visite di chi non ha fatto l'accesso (impronta
 giornaliera con sale distrutto dopo 48 ore, nessun cookie, nessun dato salvato nel browser, IP mai
-conservato). Il livello «esteso» (identificativo casuale del browser) si basa sul **consenso** del
-banner, non sul legittimo interesse.
+conservato). Il livello «esteso» (identificativo casuale del browser) si basa sul **consenso
+`statistiche`** del banner, non sul legittimo interesse; Google Analytics 4 sul consenso separato
+`google_analytics`. Fino alla v1 entrambi dipendevano dall'unico consenso «cookie», ora dismesso: la migrazione
+della Fase 1 GDPR ha convertito ogni scelta «cookie» nella stessa scelta su `statistiche` e su `google_analytics`
+(decisione dell'operatore).
 
 ## 1. Finalità (test dello scopo)
 
@@ -41,7 +45,18 @@ Interessi legittimi, concreti e attuali di un servizio a pagamento che deve sost
 - Natura dei dati: le letture dei tarocchi possono toccare temi personali, ma **il contenuto delle
   letture non entra nelle statistiche** (solo il fatto che una lettura è iniziata/finita, il tipo di
   stesa, la lingua).
-- Categorie particolari: nessuna. Il campo «trans» del profilo è escluso da ogni analisi.
+- Categorie particolari: **le statistiche non ne trattano, ma il servizio sì.** Letture e chat possono
+  contenere dati dell'art. 9 nei testi liberi (salute, vita sessuale, orientamento, identità di genere), e il
+  profilo ha la casella «persona trans». Nelle statistiche:
+  - il contenuto di letture e chat non entra mai (vedi sopra): nessun quesito, nessuna risposta, nessun
+    messaggio, nessuna query string;
+  - la casella «trans» è esclusa da ogni analisi; nel servizio vale solo con il consenso `dati_particolari`
+    (art. 9.2.a), e la revoca la spegne;
+  - il segnale di crisi (frasi su autolesionismo) è contato **senza utente**: un evento `lettura_crisi` e una riga
+    `reading.crisis` nel registro, senza legame con l'account, quindi non collegabile alla persona nemmeno in
+    questo trattamento.
+
+  I dati art. 9 del servizio sono valutati nella DPIA (`dpia.md`), non qui.
 - Garanzie: opposizione in un clic dal profilo (le visite smettono di essere collegate e il legame con
   quelle passate viene cancellato, art. 21), informativa nella pagina Privacy, conservazione 25 mesi
   del dettaglio (poi solo totali giornalieri anonimi), accesso alla console riservato agli

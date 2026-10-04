@@ -21,6 +21,7 @@ Esempi:
   python run_local.py --db postgresql+psycopg://tarot:tarot@localhost:5432/tarot
   python run_local.py --solo-web               # il backend è già acceso
   python run_local.py --reinstalla             # rifà venv e node_modules
+  python run_local.py --rete 192.168.1.91      # visibile dalla rete di casa (il cellulare)
 """
 from __future__ import annotations
 
@@ -248,6 +249,8 @@ def main() -> int:
     quale = ap.add_mutually_exclusive_group()
     quale.add_argument("--solo-api", action="store_true", help="solo il backend")
     quale.add_argument("--solo-web", action="store_true", help="solo il frontend")
+    ap.add_argument("--rete", metavar="IP", help="IP di questa macchina nella rete locale: API e sito ascoltano su "
+                    "tutte le interfacce e gli indirizzi usano quell'IP (per provare dal cellulare)")
     args = ap.parse_args()
     con_api, con_web = not args.solo_web, not args.solo_api
 
@@ -255,8 +258,9 @@ def main() -> int:
         if attivo and occupata(porta):
             esci(f"La porta {porta} è già occupata: c'è già {nome} acceso? Cambiala con --api-port / --web-port.")
 
-    api_url = f"http://localhost:{args.api_port}"
-    web_url = f"http://localhost:{args.web_port}"
+    nome = args.rete or "localhost"
+    api_url = f"http://{nome}:{args.api_port}"
+    web_url = f"http://{nome}:{args.web_port}"
     servizi: list[Servizio] = []
 
     try:
@@ -271,12 +275,13 @@ def main() -> int:
                 "TAROT_API_PUBLIC_URL": api_url,
                 "TAROT_WEB_PUBLIC_URL": web_url,
                 # Anche la console admin (`npm run dev` in admin/, :3001): senza, il browser blocca le sue chiamate.
-                "TAROT_CORS_ORIGINS": f'["{web_url}", "http://127.0.0.1:{args.web_port}", "http://localhost:3001", "http://127.0.0.1:3001"]',
+                "TAROT_CORS_ORIGINS": f'["{web_url}", "http://localhost:{args.web_port}", "http://127.0.0.1:{args.web_port}", "http://localhost:3001", "http://127.0.0.1:3001", "http://{nome}:3001"]',
             }
             env["TAROT_DATABASE_URL"] = scegli_database(args.db or os.environ.get("TAROT_DATABASE_URL"), env)
             esegui("avvio", [PY_VENV, "-m", "alembic", "upgrade", "head"], BACKEND, env)
             esegui("avvio", [PY_VENV, "-m", "tarot_core.tools.seed"], BACKEND, env)
-            servizi.append(Servizio("api", [PY_VENV, "-m", "tarot_core.api", "--port", args.api_port], BACKEND, env, args.api_port))
+            servizi.append(Servizio("api", [PY_VENV, "-m", "tarot_core.api", "--port", args.api_port,
+                                            *(["--host", "0.0.0.0"] if args.rete else [])], BACKEND, env, args.api_port))
 
         if con_web:
             prepara_frontend(args.reinstalla)
@@ -286,7 +291,8 @@ def main() -> int:
                 "NEXT_PUBLIC_API_URL": api_url,
                 "NEXT_TELEMETRY_DISABLED": "1",
             }
-            servizi.append(Servizio("web", [npm(), "run", "dev", "--", "-p", args.web_port], FRONTEND, env, args.web_port))
+            servizi.append(Servizio("web", [npm(), "run", "dev", "--", "-p", args.web_port,
+                                            *(["-H", "0.0.0.0"] if args.rete else [])], FRONTEND, env, args.web_port))
 
         in_attesa = list(servizi)
         while in_attesa:
