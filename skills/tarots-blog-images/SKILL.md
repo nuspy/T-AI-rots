@@ -72,6 +72,11 @@ library only. The script is `scripts/tarots_images.py` (paths below are relative
 
 ## Setup (once)
 
+`generate`, `prompt-check`, `catalog`, `progress` and `balance` need **no blog key** (only the LitMedia login of
+`litmedia-skill`): a cover for a new article (tarots-blog-publisher) needs nothing from this section. The `blog:media`
+key below is only for `list`, `show`, `cover` and `inline` on existing articles. Try the command first: if it works,
+never ask the operator for a key.
+
 1. An admin creates a key in the console: **Blog → Keys**, permission **«Cambiare le immagini» (`blog:media`)**.
    That permission touches only pictures, but on **every** article: keep the key for this job alone.
 2. For the first run only:

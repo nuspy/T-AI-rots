@@ -25,6 +25,11 @@ script: there is no other target to choose or ask about.
 
 ## Setup (once per key, not once per run)
 
+**Start every run with `python scripts/tarots_blog.py guide`, before asking anything.** If it prints the key's
+permissions (`note: using the saved key (prefix tk_live_…)`), the key and the URL are already saved: everything is
+set, go on with the workflow and **never ask the operator for a key or a URL**. Only if `guide` fails with a
+message about a missing key, follow the steps below.
+
 1. An editor creates a key in the console: **Blog → Keys**. The key is shown once. Permissions: `blog:write`
    (drafts) or `blog:write` + `blog:publish` (can publish). Ask the operator which one this agent should have.
 2. Put it in the environment for this run only:
