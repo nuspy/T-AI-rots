@@ -50,8 +50,10 @@ images-progress.json`, or `TAROTS_IMAGES_PROGRESS`. Before anything is uploaded 
 not made by `tarots_images.py generate` (unless `--operator-image`: a picture the operator supplied, accepted with a
 warning), if it was already used for another article (same sha256, whatever the file name), or if the prompt it
 was generated from makes cards the picture (a card as the subject, two or more cards, a spread, a hand holding a
-card: the rules of `tarots_images.py`, copied here). After a successful `post` or `upload` its sha256 is recorded
-with the article.
+card: the rules of `tarots_images.py`, copied here), or if that prompt draws a card (one single small card) and the
+article is not about that very card: its title or focus keyword (article.json for `post`; for `upload --for`, the
+work folder or the titles copy) must name the card the prompt names, and `upload` without `--for` refuses it.
+After a successful `post` or `upload` its sha256 is recorded with the article.
 
 Exit codes: 0 ok · 2 usage, bad or missing article file · 3 SEO score below the threshold, or an error (FIX) left
 (nothing saved) · 4 the API refused (message printed) · 5 configuration missing or unsafe · 7 a picture rule refused
@@ -106,9 +108,10 @@ TITLES_SHOWN = 100                                   # lines `titles` prints wit
 
 #: A copy of the card rules of `tarots_images.py`: a blog picture is never a picture of cards (no card as the
 #: subject, no two or more cards, no spread or layout, no hand holding a card), while cards may stay in the context
-#: ("tarot" as an adjective, the names of the cards, one single small card later in the scene). CARD_PATTERNS,
-#: CARD_WORD, LEAD_WORDS, LEAD_SKIP, DECK, NOT_A_CARD_DECK and `card_problems()` are kept identical to the original
-#: by a test (`tests/test_immagini.py`); change both together.
+#: ("tarot" as an adjective, the names of the cards as a world or a symbol; one single small card only for an
+#: article about that very card). CARD_PATTERNS, CARD_WORD, LEAD_WORDS, LEAD_SKIP, DECK, NOT_A_CARD_DECK,
+#: `card_problems()` and the card rule of the article (MAJOR_ARCANA… `card_rule_problems()`, after
+#: `card_problem()`) are kept identical to the original by a test (`tests/test_immagini.py`); change both together.
 SPREAD = "spread"
 _W = r"(?:[\w'-]+\s+)"  # one more word, in the patterns below
 CARD_PATTERNS = [
@@ -165,6 +168,8 @@ NOT_A_CARD_DECK = (
     r"|sun|pool|observation|promenade|garden|porch|patio|terrace)\s+decks?\b"
     r"|\bdecks?\s+chairs?\b|\bdeckchairs?\b|\bon\s+deck\b"
     r"|\bdecks?\s+of\s+(?:a|an|the)\s+(?:\w+\s+){0,2}(?:ship|boat|ferry|yacht|sailboat|liner|steamer|vessel|barge)s?\b"
+    # the style of the card of an article about it (see card_rule_problems): a style, not a deck in the picture
+    r"|\bstyle\s+of\s+(?:the\s+)?thoth\s+(?:tarot\s+)?decks?\b"
 )
 
 #: Friendly (English) keys of an article file → the API field. The API's own names are accepted as they are.
@@ -756,8 +761,29 @@ def cmd_key(a) -> int:
     return EXIT_OK
 
 
+def script_paths() -> Dict[str, str]:
+    """Absolute paths of this script and of tarots_images.py (the sibling skill), and the Python running them.
+    Agents ran `scripts/tarots_blog.py` from the work folder and then walked the whole disk to find it (5/10/2026):
+    every command they need is printed with these absolute paths."""
+    me = Path(__file__).resolve()
+    images = me.parents[2] / "tarots-blog-images" / "scripts" / "tarots_images.py"
+    return {"python": sys.executable, "blog": str(me), "images": str(images) if images.exists() else ""}
+
+
+def print_script_paths() -> None:
+    p = script_paths()
+    print(f'note: run the scripts by these absolute paths, from any folder:\n  BLOG   = "{p["python"]}" "{p["blog"]}"',
+          file=sys.stderr)
+    if p["images"]:
+        print(f'  IMAGES = "{p["python"]}" "{p["images"]}"', file=sys.stderr)
+    else:
+        print("  IMAGES = not found next to this skill: tarots-blog-images must sit in the same skills folder.",
+              file=sys.stderr)
+
+
 def cmd_guide(_a) -> int:
     show(call("GET", "/guide"))
+    print_script_paths()
     # On stderr, so the JSON above stays parseable. Seen: an «autumn equinox» article written two weeks after it.
     print(f"note: today is {datetime.date.today().isoformat()} (this computer's clock): a timely topic falls in the "
           "next 14 days; a date already past is not timely. Verify every date with a page you open.", file=sys.stderr)
@@ -1199,7 +1225,14 @@ def cmd_new(a) -> int:
     print(f"article:     {paths['article']}   (fill every empty field)")
     print(f"text:        {paths['body']}   (Markdown, no `# H1`, sections start at `##`)")
     print(f"pictures:    {paths['foto']}   (tarots_images.py generate ... --article {slug})")
-    print(f"next: write the text and the fields, then `tarots_blog.py check {slug}`")
+    p = script_paths()
+    blog = f'"{p["python"]}" "{p["blog"]}"'
+    images = f'"{p["python"]}" "{p["images"]}"' if p["images"] else "<tarots-blog-images not found next to this skill>"
+    print("next commands (copy them as they are: absolute paths, they work from any folder):")
+    print(f"  {blog} catalog --grep <word>")
+    print(f"  {blog} check {slug}")
+    print(f'  {images} generate --article {slug} --kind <k> --shot <s> --light <l> --setting "<place>" --prompt "<scene>"')
+    print(f"  {blog} post {slug} --cover cover.jpg")
     return EXIT_OK
 
 
@@ -1317,6 +1350,211 @@ def card_problem(text: str) -> Optional[str]:
     return f"«{found[0][1]}» ({found[0][2]})" if found else None
 
 
+# ---- a card in the picture: only for an article about that very card ------------------------------------------
+# Operator's rule (5/10/2026). In a test run Hermes added "one single small card" to the picture of «Tarot Meditation
+# for Libra Season Balance», an article about no card, and out came a large Rider-Waite Fool. A card drawn in the
+# picture (CARD_WORD: "card", "arcanum", "tarocco" in a prompt that `card_problems()` lets through) is allowed only
+# when the article's title or focus keyword names that very card, when the prompt names it in the same phrase ("a
+# single small card of the Tower") and draws it in the style of the Thoth deck, never as a copy of its artwork. The
+# names of the cards as a world or a symbol, without the word "card" ("the energy of the Tower"), stay free.
+# MAJOR_ARCANA, CONTEXT_NAMES, MINOR_RANKS, MINOR_SUITS, CARD_CONTEXT, NAME_GAP, NOT_A_CARD_NAME, COPY_OF_ARTWORK,
+# CLAUSE_BREAK and the functions down to `card_rule_problems()` are the same in tarots_images.py and tarots_blog.py
+# (a test in tarots-blog-publisher keeps them identical): change both together.
+
+#: Each major arcanum: its Thoth name → every name it goes by (Thoth, Rider-Waite, Marseille, Italian), written plain
+#: (lowercase, no accents, no punctuation). Adjustment = Justice, Lust = Strength, Art = Temperance, Aeon =
+#: Judgement, Universe = World, Fortune = Wheel of Fortune, Magus = Magician, Priestess = High Priestess.
+MAJOR_ARCANA = {
+    "the Fool": ("fool", "matto", "folle"),
+    "the Magus": ("magus", "magician", "mago", "bagatto", "bagatella"),
+    "the Priestess": ("high priestess", "priestess", "papessa", "gran sacerdotessa", "sacerdotessa"),
+    "the Empress": ("empress", "imperatrice"),
+    "the Emperor": ("emperor", "imperatore"),
+    "the Hierophant": ("hierophant", "pope", "papa", "ierofante"),
+    "the Lovers": ("lovers", "amanti", "innamorati"),
+    "the Chariot": ("chariot", "carro"),
+    "Adjustment": ("adjustment", "justice", "giustizia", "regolazione"),
+    "the Hermit": ("hermit", "eremita"),
+    "Fortune": ("wheel of fortune", "ruota della fortuna", "fortune", "fortuna"),
+    "Lust": ("lust", "strength", "lussuria", "forza"),
+    "the Hanged Man": ("hanged man", "appeso", "impiccato"),
+    "Death": ("death", "morte"),
+    "Art": ("temperance", "temperanza", "art", "arte"),
+    "the Devil": ("devil", "diavolo"),
+    "the Tower": ("house of god", "maison dieu", "casa di dio", "tower", "torre"),
+    "the Star": ("star", "stella"),
+    "the Moon": ("moon", "luna"),
+    "the Sun": ("sun", "sole"),
+    "the Aeon": ("aeon", "eone", "judgement", "judgment", "giudizio"),
+    "the Universe": ("universe", "world", "universo", "mondo"),
+}
+#: The names that are also common words («Full Moon tarot spread», «Sun sign», «the art of…»). They name a card
+#: only within NAME_GAP words of a tarot word (CARD_CONTEXT: tarot, card, arcana, Thoth…) or when they are the whole
+#: title («The Tower»). Every other name (Hierophant, High Priestess, Hanged Man, Ace of Cups, Knight of Wands…) is
+#: unmistakable and counts anywhere.
+CONTEXT_NAMES = frozenset("""
+fool matto folle mago pope papa lovers amanti innamorati chariot carro adjustment justice giustizia regolazione
+fortune fortuna lust strength lussuria forza appeso death morte art arte devil diavolo tower torre star stella moon
+luna sun sole judgement judgment giudizio universe world universo mondo
+""".split())
+#: The minor arcana: rank and suit, each with the names it goes by. "Ace of Cups", "3 of Swords", "Asso di Coppe"…
+#: The court cards are compared by name: the Thoth Knight is not the Rider-Waite Knight (the Thoth Prince is), so
+#: only Page = Knave = Fante are the same card. A suit alone («the suit of Cups») is not one card.
+MINOR_RANKS = {
+    "Ace": ("ace", "1", "asso"), "Two": ("two", "2", "due"), "Three": ("three", "3", "tre"),
+    "Four": ("four", "4", "quattro"), "Five": ("five", "5", "cinque"), "Six": ("six", "6", "sei"),
+    "Seven": ("seven", "7", "sette"), "Eight": ("eight", "8", "otto"), "Nine": ("nine", "9", "nove"),
+    "Ten": ("ten", "10", "dieci"), "Knight": ("knight", "cavaliere", "cavallo"), "Queen": ("queen", "regina"),
+    "Prince": ("prince", "principe"), "Princess": ("princess", "principessa"), "King": ("king", "re"),
+    "Page": ("page", "knave", "fante"),
+}
+MINOR_SUITS = {
+    "Wands": ("wands", "wand", "rods", "staves", "batons", "bastoni"),
+    "Cups": ("cups", "cup", "chalices", "coppe"),
+    "Swords": ("swords", "sword", "spade"),
+    "Disks": ("disks", "disk", "discs", "disc", "pentacles", "pentacle", "coins", "coin", "denari", "dischi", "pentacoli"),
+}
+#: The tarot words that make a common name («Moon», «Death») the name of a card when they are near it.
+CARD_CONTEXT = r"\b(?:tarot\w*|tarocc\w*|cards?|carta|carte|arcan\w*|thoth|atu|trumps?)\b"
+NAME_GAP = 4
+#: Phrases with a card's name that are not the card (astrology, idioms, "the art of"): taken out before looking,
+#: so «Full Moon tarot spread», «Sun sign tarot», «the art of tarot», «tarot fortune telling» name no card.
+NOT_A_CARD_NAME = (
+    r"\b(?:full|new|half|crescent|gibbous|waxing|waning|harvest|blue|blood|hunter s|hunters|wolf|snow|worm|pink"
+    r"|strawberry|buck|sturgeon|corn|beaver|cold|super|dark|black)\s+moons?\b"
+    r"|\b(?:moon|sun)\s+(?:signs?|phases?|cycles?|void|water|calendar|salutations?)\b"
+    r"|\b(?:moon|sun|venus|mars|mercury)\s+in\s+(?:aries|taurus|gemini|cancer|leo|virgo|libra|scorpio|sagittarius"
+    r"|capricorn|aquarius|pisces)\b"
+    r"|\bstar\s+(?:signs?|seeds?|charts?|maps?)\b"
+    r"|\b(?:shooting|falling|north|pole|morning|evening|lucky|guiding|rising|five pointed|six pointed)\s+stars?\b"
+    r"|\b(?:rising|setting|midnight|midsummer)\s+suns?\b"
+    r"|\bdeath\s+(?:anniversary|anniversaries|penalty|toll)\b|\bnear\s+death\b"
+    r"|\bworld\s+(?:tarot\s+day|war|wide)\b|\b(?:around|across)\s+the\s+world\b"
+    r"|\bfortune\s+tell\w*|\bfortunetell\w*|\bgood\s+fortune\b|\bbuona\s+fortuna\b"
+    r"|\bart\s+of\b|\b(?:tarot|thoth|deck|card)\s+art\b"
+    r"|\bart\s+(?:decks?|journals?|journaling|prints?|therapy|nouveau|deco|history)\b"
+    r"|\barte\s+d(?:i|e[il]\w*)\b"
+    r"|\bapril\s+fools?\b|\bfor\s+lovers\b"
+    r"|\bluna\s+(?:piena|nuova|crescente|calante)\b|\bsegn[oi]\s+(?:del\s+)?sole\b"
+)
+#: A copy of a deck's artwork: never, not even of the article's own card (a new drawing in the Thoth style).
+COPY_OF_ARTWORK = (r"\b(?:reproduc\w*|replicas?|replicating|exact\s+copy|faithful\s+copy|copy\s+of|copied\s+from"
+                   r"|facsimile)\b")
+#: Where a phrase of a prompt ends: the card shown is named in the same phrase as the word "card".
+CLAUSE_BREAK = r"[,;:.!?()]|\s[-–—]\s"
+
+_MAJOR_NAMES = sorted(((alias, card) for card, aliases in MAJOR_ARCANA.items() for alias in aliases),
+                      key=lambda t: -len(t[0]))
+_RANK_OF = {alias: rank for rank, aliases in MINOR_RANKS.items() for alias in aliases}
+_SUIT_OF = {alias: suit for suit, aliases in MINOR_SUITS.items() for alias in aliases}
+_MINOR_NAME = (r"\b(" + "|".join(sorted(_RANK_OF, key=len, reverse=True)) + r")\s+(?:of|di)\s+("
+               + "|".join(sorted(_SUIT_OF, key=len, reverse=True)) + r")\b")
+_ARTICLES = frozenset("the la il lo l le gli i".split())
+
+
+def _card_plain(text: str) -> str:
+    """Lowercase, no accents, only letters and digits separated by single spaces: how card names are looked for."""
+    text = unicodedata.normalize("NFKD", str(text or "")).replace("æ", "ae").replace("Æ", "ae").replace("œ", "oe")
+    text = "".join(c for c in text if not unicodedata.combining(c)).lower()
+    return " ".join(re.sub(r"[^0-9a-z]+", " ", text).split())
+
+
+def named_cards(text: str, *, need_context: bool = True) -> List[tuple]:
+    """The cards named in `text`, as (card, word index), in order. A name that is also a common word (CONTEXT_NAMES)
+    counts only near a tarot word or as the whole text, unless `need_context` is False (in a prompt, the word
+    "card" next to it is the context). The phrases of NOT_A_CARD_NAME never count."""
+    plain = re.sub(NOT_A_CARD_NAME, lambda m: " ".join("-" for _ in m.group(0).split()), _card_plain(text))
+    words = plain.split()
+    context = [plain[: m.start()].count(" ") for m in re.finditer(CARD_CONTEXT, plain)]
+    whole = " ".join(w for n, w in enumerate(words) if not (n == 0 and w in _ARTICLES))
+    taken: List[tuple] = []
+    found: List[tuple] = []
+    for m in re.finditer(_MINOR_NAME, plain):
+        taken.append((m.start(), m.end()))
+        found.append((plain[: m.start()].count(" "), f"the {_RANK_OF[m.group(1)]} of {_SUIT_OF[m.group(2)]}"))
+    for alias, card in _MAJOR_NAMES:  # the longest first: «wheel of fortune» before «fortune»
+        for m in re.finditer(r"\b" + re.escape(alias) + r"\b", plain):
+            if any(s < m.end() and m.start() < e for s, e in taken):
+                continue
+            taken.append((m.start(), m.end()))
+            first = plain[: m.start()].count(" ")
+            last = first + alias.count(" ")
+            if need_context and alias in CONTEXT_NAMES and whole != alias and not any(
+                    first - NAME_GAP <= c < first or last < c <= last + NAME_GAP for c in context):
+                continue
+            found.append((first, card))
+    return [(card, n) for n, card in sorted(found)]
+
+
+def cards_of_article(texts: List[str]) -> List[str]:
+    """The cards an article is about: those named in its title or its focus keyword, each once."""
+    cards: List[str] = []
+    for text in texts:
+        for card, _n in named_cards(text or ""):
+            if card not in cards:
+                cards.append(card)
+    return cards
+
+
+def cards_shown(prompt: str) -> Optional[List[Optional[str]]]:
+    """None when the prompt draws no card (no CARD_WORD); otherwise, for each "card" in it, the card named nearest
+    to it in the same phrase (None when that phrase names none)."""
+    low = " ".join(prompt.lower().split()).replace("’", "'")
+    shown: List[Optional[str]] = []
+    for m in re.finditer(CARD_WORD, low):
+        start = max((b.end() for b in re.finditer(CLAUSE_BREAK, low[: m.start()])), default=0)
+        stop = re.search(CLAUSE_BREAK, low[m.end():])
+        before, after = low[start: m.start()], low[m.end(): m.end() + stop.start() if stop else len(low)]
+        size = len(_card_plain(before).split())
+        near = [(size - n, card) for card, n in named_cards(before, need_context=False)]
+        near += [(n + 1, card) for card, n in named_cards(after, need_context=False)]
+        shown.append(min(near)[1] if near else None)
+    return shown or None
+
+
+def shows_a_card(prompt: str) -> bool:
+    """The prompt draws a card that `card_problems()` lets through: the card rule of the article applies."""
+    return not card_problems(prompt) and cards_shown(prompt) is not None
+
+
+def card_rule_problems(prompt: str, texts: List[str], title: str = "") -> tuple:
+    """(problems, warnings) of the card a prompt draws, for the article whose title and focus keyword are `texts`.
+    ([], []) when the prompt draws no card."""
+    shown = cards_shown(prompt) if not card_problems(prompt) else None
+    if shown is None:
+        return [], []
+    own = cards_of_article(texts)
+    about = f"«{title}»" if title else "this article"
+    if not own:
+        return [f"this article is not about a specific card: no card in its picture; show its world instead "
+                f"({about} names no card in its title or focus keyword; a card's name without the word «card», "
+                "as a world or a symbol, stays allowed)"], []
+    problems: List[str] = []
+    named = []
+    for card in shown:
+        if card and card not in named:
+            named.append(card)
+    if None in shown:
+        problems.append(f"the prompt draws a card without saying which: name it in the same phrase, e.g. «a single "
+                        f"small card of {own[0]}» ({about} is about {', '.join(own)})")
+    if len(named) > 1:
+        problems.append(f"the prompt draws more than one card ({', '.join(named)}): one single small card at most")
+    for card in named:
+        if card not in own:
+            problems.append(f"the card drawn ({card}) is not a card of this article ({about} is about "
+                            f"{', '.join(own)}): only the article's own card may appear; show {card} as a world or "
+                            "a symbol, without the word «card», or take it out")
+    if re.search(COPY_OF_ARTWORK, _card_plain(prompt)):
+        problems.append("it asks for a copy of a deck's artwork: the card is a new drawing in the style of the Thoth "
+                        "deck, never a reproduction")
+    warnings: List[str] = []
+    if not problems and not re.search(r"\bthoth\b", _card_plain(prompt)):
+        warnings.append("the prompt does not say the card is in the style of the Thoth deck: add «in the style of "
+                        "the Thoth deck» (a new drawing, not a copy; never Rider-Waite or Marseille), or the model "
+                        "paints the deck it knows best")
+    return problems, warnings
+
+
 def _used_by(data: Dict[str, Any], sha: str) -> Optional[str]:
     """The article a picture already belongs to: from `_used`, or from the per-article records of
     `tarots_images.py` (older ones without a hash are hashed from their file, if it is still there)."""
@@ -1333,9 +1571,49 @@ def _used_by(data: Dict[str, Any], sha: str) -> Optional[str]:
     return None
 
 
-def check_picture(path: str, *, article: Optional[str], operator_image: bool) -> str:
+def article_texts(arg: str) -> Optional[tuple]:
+    """(title and focus keyword, title) of the article `arg` (a slug or an id): from its work folder's article.json,
+    else from the titles copy (TITLES_CACHE_PATH). None when neither knows it. Nothing is asked to the API."""
+    folder = find_work_folder(slugify(arg))
+    if folder is not None:
+        try:
+            data = json.loads((folder / "article.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            data = {}
+        if isinstance(data, dict):
+            title = data.get("title") or data.get("titolo") or ""
+            texts = [t for t in (title, data.get("focus_keyword") or data.get("seo_parola_chiave")) if t]
+            if texts:
+                return texts, title
+    cache = _read_titles_cache() or {"articles": {}}
+    rows = [r for r in cache["articles"].values()
+            if isinstance(r, dict) and (str(r.get("id")) == arg or r.get("slug") in (arg, slugify(arg)))]
+    texts = [t for r in rows for t in (r.get("titolo"), r.get("parola_chiave")) if t]
+    return (texts, rows[0].get("titolo") or "") if texts else None
+
+
+def check_card_in_picture(path: str, prompt: str, *, article: Optional[str], about: Optional[tuple]) -> None:
+    """The card rule of the article (see `card_rule_problems`): a prompt that draws a card is accepted only for an
+    article about that very card. `about` is (texts, title) when the article is at hand (`post`)."""
+    if not shows_a_card(prompt):
+        return
+    if about is None and article:
+        about = article_texts(article)
+    if about is None:
+        why = ("no article was given (add --for SLUG_OR_ID)" if not article else
+               f"the article {article} was not found in the work folders or in the titles copy (`titles` refreshes it)")
+        raise Failure(f"{path} was generated from a prompt that draws a card, and {why}: a card may appear only in "
+                      "the picture of an article about that very card.", EXIT_RULE)
+    problems, _warnings = card_rule_problems(prompt, about[0], about[1])
+    if problems:
+        raise Failure(f"{path} was generated from a prompt that draws a card: {problems[0]}. Generate a new one.",
+                      EXIT_RULE)
+
+
+def check_picture(path: str, *, article: Optional[str], operator_image: bool, about: Optional[tuple] = None) -> str:
     """Refuse a picture before it is uploaded; return its sha256. `article` is the slug or id it is for (None for a
-    new article: then any earlier use is another article's)."""
+    new article: then any earlier use is another article's); `about` is (title and focus keyword, title) of the
+    article when it is at hand, for the card rule."""
     if IMAGE_TYPES.get(Path(path).suffix.lower()) is None:  # a usage error first: the record cannot fix a GIF
         raise Failure("The picture must be a PNG, JPEG or WebP file.", EXIT_USAGE)
     if not Path(path).is_file():
@@ -1353,6 +1631,7 @@ def check_picture(path: str, *, article: Optional[str], operator_image: bool) ->
         if card := card_problem(prompt):
             raise Failure(f"{path} was generated from a prompt that makes cards the picture ({card}): a blog picture "
                           "is never a picture of cards (cards may only be context). Generate a new one.", EXIT_RULE)
+        check_card_in_picture(path, prompt, article=article, about=about)
     if not generated:
         if not operator_image:
             raise Failure(
@@ -1399,7 +1678,9 @@ def cmd_post(a) -> int:
     payload = load_article(str(path))
     require_filled(payload, path)
     cover = resolve_picture(a.cover, in_work_folder(path)) if a.cover else None
-    sha = check_picture(cover, article=None, operator_image=a.operator_image) if cover else None
+    title = str(payload.get("titolo") or "")
+    about = ([t for t in (title, payload.get("seo_parola_chiave")) if t], title)
+    sha = check_picture(cover, article=None, operator_image=a.operator_image, about=about) if cover else None
     check_keyword(payload)
     if cover:
         image = upload(cover)

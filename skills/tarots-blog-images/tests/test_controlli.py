@@ -164,7 +164,8 @@ def test_cards_as_the_picture_are_refused(family, prompt):
     "a woman on a windy cliff at dawn, a sword-straight posture, the clarity of the Queen of Swords",
     "a forge in a mountain village, sparks and staves of oak, the fire of the Wands",
     "a tarot reader walking home at dusk along a canal, her coat wet with rain",
-    # one single small card later in the scene
+    # one single small card later in the scene: card_problems() lets it through, then the card rule of the
+    # article decides (only for an article about that very card: test_carta_articolo.py)
     "A rain-streaked kitchen window at dawn, a kettle steaming on the stove, a coat on the chair, bread on the "
     "board, and on the windowsill a single card tucked in a notebook",
 ])

@@ -27,7 +27,10 @@ script: there is no other target to choose or ask about.
 ## Setup: run `guide` first, never ask for a key
 **Start every run with `python scripts/tarots_blog.py guide`, before asking anything.** If it prints the key's
 permissions (`note: using the saved key (prefix tk_live_…)`), the key and the URL are already saved: everything is
-set, go on and **never ask the operator for a key or a URL**. `guide` also prints today's date (`note: today is …`):
+set, go on and **never ask the operator for a key or a URL**. `guide` (and `new`) also print the two scripts'
+**absolute paths** (`BLOG = "<python>" "<…>/tarots_blog.py"`, `IMAGES = "<python>" "<…>/tarots_images.py"`): use
+them for **every** command, from any folder (the work folder too). The `scripts/…` paths in this file are only
+short names for those: **never search the disk for a script** (`os.walk`, `dir /s`, `find`). `guide` also prints today's date (`note: today is …`):
 use it for every "timely" decision. Only if `guide` fails with a message about a missing key, follow
 `references/setup.md` (first setup, and what to do when a different key is offered).
 
@@ -140,10 +143,14 @@ Then the report (step 9).
 
 ### 6. Pictures: cover and inline
 3:2 cover, no text in the image, **never a picture of cards** (cards only as context), its own subject from this
-article, in a form that differs from the last pictures. Made **only** by the `tarots-blog-images` skill:
+article, in a form that differs from the last pictures. **One small card may appear only if the article is about
+that very card** (its title or focus keyword names it): the prompt names it ("a single small card of the Tower") and
+draws it "in the style of the Thoth deck"; in any other article a card is refused (exit 7: *this article is not
+about a specific card: no card in its picture; show its world instead*), as happened to *Tarot Meditation for Libra
+Season Balance* when a small Fool was added "as context". Made **only** by the `tarots-blog-images` skill:
 ```
 python ../tarots-blog-images/scripts/tarots_images.py progress
-python ../tarots-blog-images/scripts/tarots_images.py prompt-check --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --alt "<cover alt>"
+python ../tarots-blog-images/scripts/tarots_images.py prompt-check --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --alt "<cover alt>" --article <slug>
 python ../tarots-blog-images/scripts/tarots_images.py generate --article <slug> --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>"
 ```
 `--article <slug>` saves into the work folder's `foto/`: `cover.jpg` for a 3:2 picture, `inline-1.jpg`… for

@@ -1,6 +1,6 @@
 ---
 name: tarots-blog-images
-description: Generate and swap the images of TAROTS chat (tarots.chat) blog articles — the cover and the pictures inside the text — with the LitMedia skill (litmedia-skill, API, Seedream 5.0 2K) through this skill's own `tarots_images.py generate`, one article at a time. Every picture is a scene written for that article, different in form from the previous ones (kind, shot, light and setting declared and checked), and never a picture of cards (a card may only be context). Use when asked to replace, refresh, fix, vary or add images on TAROTS blog posts, to give an article a picture inside its text, or when tarots-blog-publisher needs a cover. Not browser-image-gen, not the agent's own image tool.
+description: Generate and swap the images of TAROTS chat (tarots.chat) blog articles — the cover and the pictures inside the text — with the LitMedia skill (litmedia-skill, API, Seedream 5.0 2K) through this skill's own `tarots_images.py generate`, one article at a time. Every picture is a scene written for that article, different in form from the previous ones (kind, shot, light and setting declared and checked), and never a picture of cards (one small card only in an article about that very card). Use when asked to replace, refresh, fix, vary or add images on TAROTS blog posts, to give an article a picture inside its text, or when tarots-blog-publisher needs a cover. Not browser-image-gen, not the agent's own image tool.
 ---
 
 # TAROTS chat blog images
@@ -66,9 +66,21 @@ Every picture of an article lives in its work folder, the one `tarots_blog.py ne
   word *card* is in the first clause or the first 8 content words, a close-up of a card, tarot artwork), **more than
   one card** (cards, a deck, a pile, a hand of cards, the arcana), a **spread or layout** (cards on a table, a
   reading, a fan of cards, cards face down, a Celtic Cross layout), **hands holding or turning a card**. Accepted:
-  "tarot" as an adjective, the **names of the cards** as a world or a symbol ("a lighthouse struck by lightning, the
-  energy of the Tower"), **one single small card later in the scene**. An alt text describing a spread is refused;
-  one mentioning a card gets a warning. Details and examples: `references/prompts.md`.
+  "tarot" as an adjective, the **names of the cards** as a world or a symbol, without the word *card* ("a lighthouse
+  struck by lightning, the energy of the Tower"). An alt text describing a spread is refused; one mentioning a card
+  gets a warning. Details and examples: `references/prompts.md`.
+- **A card in the picture only for an article about that very card.** A prompt that draws one single small card
+  (the word *card* later in the scene) needs `--article <slug or id>` (also on `prompt-check`), and is refused
+  (exit 7) unless the article's **title or focus keyword names that card** (looked for in the work folder's
+  article.json, then in the titles copy `~/.tarots-blog/titles-cache.json`, then through the API with the media
+  key) and the prompt **names it in the same phrase**: "a single small card of the Tower". The card is drawn **in the
+  style of the Thoth deck** (say it, or you get a warning; never a copy, never Rider-Waite or Marseille). Thoth and
+  Rider-Waite names are the same card (Adjustment = Justice, Lust = Strength, Art = Temperance, Aeon = Judgement,
+  Universe = World…). Accepted, for *The Tower tarot card meaning*: "…seen through the window, on the shelf a single
+  small card of the Tower leaning on a cup, in the style of the Thoth deck". Refused, for *Tarot Meditation for
+  Libra Season Balance* (an agent added a small Fool there "as context" and got a large Rider-Waite Fool): "…and
+  beside it a single small card of the Fool" → *this article is not about a specific card: no card in its picture;
+  show its world instead*. Not sure? Leave the card out: the world of the article is always the better picture.
 - **A concrete scene from this article**: at least 12 content words once the house style and the empty words
   ("mystical", "ethereal", "professional photography"…) are out.
 - **A new form**: `generate` and `prompt-check` require `--kind` (17 values), `--shot` (12), `--light` (10) and
@@ -105,7 +117,9 @@ never ask the operator for a key.
    file of a project, a prompt or a message; only its 12-character prefix may appear in output.
 3. Check: `python scripts/tarots_images.py list` and `python scripts/tarots_images.py balance`.
 
-(`generate` and `prompt-check` need no key: `tarots-blog-publisher` uses them without one.)
+(`generate` and `prompt-check` need no key: `tarots-blog-publisher` uses them without one. Only for a prompt that
+draws a card, and only when its article is neither in a work folder nor in the titles copy, do they read the article
+through the API with this key, if it is set.)
 
 ## Workflow
 
@@ -137,7 +151,8 @@ Follow `references/prompts.md`. In short:
   framing and the setting into the prompt with their own words.
 - Append the house style line unchanged; covers are **3:2**, pictures in the text **4:3** (or 1:1 for a close-up).
 - Check it for free:
-  `python scripts/tarots_images.py prompt-check --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --alt "<alt>"`.
+  `python scripts/tarots_images.py prompt-check --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --alt "<alt>" --article <slug>`
+  (`--article` is needed only when the prompt draws a card; giving it always does no harm).
 
 ### 4. Try it dry first
 ```
@@ -175,7 +190,7 @@ why, an article whose text made a good picture hard, LitMedia failing).
 
 ## Hard rules
 - Only pictures: never try to change text, title, SEO fields or status (the key cannot, and should not try).
-- **Never a picture of cards** (a card at most as a small detail in the context). No text in pictures. No recognisable real people, no fake photos of real
+- **Never a picture of cards** (a card at most as a small detail, and only in an article about that very card). No text in pictures. No recognisable real people, no fake photos of real
   events, no copy of the Thoth deck's actual artwork (copyrighted).
 - **Only `tarots_images.py generate`** makes pictures (through `litmedia-skill`). Never `browser-image-gen`, never a
   built-in image tool, never the LitMedia website.
@@ -194,3 +209,4 @@ why, an article whose text made a good picture hard, LitMedia failing).
 - `tests/test_controlli.py`: offline tests of the picture rules (`python -m pytest tests -q`).
 - `tests/test_cartella_e_python.py`: offline tests of the work folder (`--article`, `foto/`) and of the choice of
   the Python that runs LitMedia.
+- `tests/test_carta_articolo.py`: offline tests of the card rule (a card only for an article about that very card).

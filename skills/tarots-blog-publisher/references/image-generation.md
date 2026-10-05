@@ -17,7 +17,7 @@ website, never the agent's own image tool, never `litmedia-skill`'s `ai_image.py
 python ../tarots-blog-images/scripts/tarots_images.py balance
 python ../tarots-blog-images/scripts/tarots_images.py progress        # the last 20 pictures and what is free next
 python ../tarots-blog-images/scripts/tarots_images.py catalog         # every value of --kind, --shot, --light
-python ../tarots-blog-images/scripts/tarots_images.py prompt-check --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --alt "<alt>"
+python ../tarots-blog-images/scripts/tarots_images.py prompt-check --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --alt "<alt>" --article <slug>
 python ../tarots-blog-images/scripts/tarots_images.py generate --article <slug> --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>"
 python ../tarots-blog-images/scripts/tarots_images.py generate --article <slug> --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --aspect 4:3
 ```
@@ -42,7 +42,11 @@ and refuse the file before uploading anything (exit 7) when:
   `--operator-image` and a warning; that option is never a way around a refusal;
 - the same picture (same sha256, whatever the name) is already used by another article;
 - the prompt it was generated from makes cards the picture (the same rules as `generate`, copied in
-  `tarots_blog.py`: a card as the subject, two or more cards, a spread, a hand holding a card).
+  `tarots_blog.py`: a card as the subject, two or more cards, a spread, a hand holding a card);
+- the prompt draws one small card and the article is not about that very card (the same card rule as `generate`,
+  copied too): for `post` the article is its article.json (`title`, `focus_keyword`); for `upload` it is the
+  `--for` slug or id, looked for in its work folder, then in the titles copy (`titles` refreshes it). `upload`
+  without `--for` refuses a picture with a card.
 
 A file that is not PNG, JPEG or WebP is refused first, as a usage error (exit 2).
 
@@ -58,8 +62,19 @@ line, examples. In short:
 - **Cards as context, never as the picture.** Refused: a card as the subject (at the start, in the first clause or
   the first 8 content words, a close-up of a card), more than one card (cards, a deck, a pile, the arcana), a spread
   or layout (cards on a table, a reading, a fan of cards, cards face down), hands holding or turning a card.
-  Accepted: "tarot" as an adjective, the names of the cards as a world or a symbol ("a lighthouse struck by
-  lightning, the energy of the Tower"), one single small card later in the scene.
+  Accepted: "tarot" as an adjective, the names of the cards as a world or a symbol, without the word *card* ("a
+  lighthouse struck by lightning, the energy of the Tower").
+- **A card in the picture only for an article about that very card.** One single small card later in the scene
+  is allowed only when the article's **title or focus keyword names that card** (Thoth and Rider-Waite names are the
+  same card: Adjustment = Justice, Lust = Strength, Art = Temperance, Aeon = Judgement, Universe = World…), the
+  prompt **names it in the same phrase** and draws it **in the style of the Thoth deck** (a new drawing, never a
+  copy, never Rider-Waite or Marseille). `generate` and `prompt-check` then need `--article <slug or id>`.
+  Accepted, for *The Tower tarot card meaning*: "…a wool coat drying by the door, seen through the window, on the
+  shelf a single small card of the Tower leaning on a cup, in the style of the Thoth deck". Refused, for *Tarot
+  Meditation for Libra Season Balance* (an agent added a small Fool there and got a large Rider-Waite Fool): "…and
+  beside it a single small card of the Fool" → *this article is not about a specific card: no card in its picture;
+  show its world instead*. The full rule (which names count, *Full Moon* vs *The Moon tarot card*):
+  `tarots-blog-images/references/prompts.md`.
 - **The form changes every time**, declared with four required options: `--kind` (17 values: landscape,
   sky-and-weather, architecture, interior, street-or-market, figure-from-behind, figure-at-distance,
   hands-and-gesture, still-life-object, nature-macro, animal, water-and-reflection, celestial, ritual-or-craft,

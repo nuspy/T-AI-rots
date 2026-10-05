@@ -32,8 +32,55 @@ It accepts:
 - **the names of the cards as a world or a symbol**: *a lighthouse struck by lightning, the energy of the Tower*;
   *the Queen of Cups on a throne by the sea*; *a stone fountain overflowing in a cloister, the Ace of Cups as a
   spring*;
-- **one single small card, later in the scene**: *…a coat on the chair, and on the windowsill a single card tucked
-  in a notebook*.
+- **one single small card, later in the scene, only in the picture of an article about that very card**: see the
+  next section.
+
+### A card in the picture: only the article's own card
+A card drawn in the picture (the word *card*, *arcanum* or *tarocco* later in the scene) is allowed **only when the
+article is about that very card**. On 5/10/2026 an agent added "one single small card" to the picture of *Tarot
+Meditation for Libra Season Balance*, an article about no card: out came a large Rider-Waite Fool. So `generate` and
+`prompt-check` refuse (exit 7) a prompt that draws a card:
+- **without `--article <slug or id>`**;
+- when **the article is not about a specific card**: *this article is not about a specific card: no card in its
+  picture; show its world instead*;
+- when **the prompt does not name the card it draws** in the same phrase (*a single small card of the Tower*), or
+  names **another card** than the article's, or **more than one**;
+- when it asks for **a copy** of a deck's artwork (*reproduction*, *replica*, *exact copy*…), or for Rider-Waite or
+  Marseille (refused anyway).
+
+When the card is allowed, the prompt says it is drawn **in the style of the Thoth deck** (a new drawing, never a
+copy of the artwork): without "Thoth" the check passes with a warning, and the model would paint the deck it knows
+best, Rider-Waite. A card's name **without the word "card"** (*the energy of the Tower*) is a world or a symbol and
+stays allowed in any article.
+
+**Which article.** `--article` is looked for in the work folder (`article.json`: `title`, `focus_keyword`, `slug`),
+then in the titles copy that `tarots_blog.py titles` keeps (`~/.tarots-blog/titles-cache.json`, by slug or id),
+then, with a media key, through the API (`GET /media-posts/{id}`). Only a prompt that draws a card needs it.
+
+**Which cards an article is about**: those named in its **title** or its **focus keyword**:
+- the 22 major arcana under their Thoth names and the Rider-Waite/Marseille ones, as the same card: Adjustment =
+  Justice, Lust = Strength, Art = Temperance, Aeon = Judgement, Universe = World, Fortune = Wheel of Fortune, Magus =
+  Magician, Priestess = High Priestess (and the Italian names: la Torre, il Matto…);
+- the minor arcana as *rank of suit*: Ace…Ten (also in digits: *3 of Swords*), Knight, Queen, Prince, Princess,
+  King, Page/Knave; suits Wands, Cups, Swords, Disks (= Pentacles = Coins) and Bastoni, Coppe, Spade, Dischi,
+  Denari. Court cards are compared by name: the Thoth Knight is not the Rider-Waite Knight. A suit alone (*the suit
+  of Cups*) is not one card;
+- a name that is also a common word (Sun, Moon, Star, Death, World, Tower, Chariot, Fool, Lovers, Art, Fortune,
+  Justice, Strength…) counts only **within 4 words of a tarot word** (*tarot*, *card*, *arcana*, *Thoth*,
+  *tarocchi*) or as **the whole title** (*The Tower*). Astrology and idioms never count: *Full Moon*, *New Moon*,
+  *Sun sign*, *Star sign*, *Moon in Scorpio*, *the art of*, *fortune telling*, *World Tarot Day*. So *The Moon
+  tarot card meaning* is about the Moon; *Full Moon tarot spread* is about no card. Names like Hierophant, High
+  Priestess, Hanged Man, Ace of Cups, Knight of Wands count anywhere.
+
+Accepted, for *The Tower tarot card meaning* (`--article the-tower-tarot-card-meaning`):
+"A lighthouse keeper's kitchen on a stormy night, rain on the glass, lightning over the sea, a kettle on the stove,
+a wool coat drying by the door, seen through the window, on the shelf a single small card of the Tower leaning on a
+cup, in the style of the Thoth deck"
+
+Refused, for *Tarot Meditation for Libra Season Balance* (an article about no card):
+"…a balance scale on a windowsill at dusk, and beside it a single small card of the Fool" → *this article is not
+about a specific card: no card in its picture; show its world instead*. Show the balance, the autumn light, the
+scales of Libra: no card.
 
 Ordinary words are never mistaken for cards: *cardinal*, *cardigan*, *discard*, *the deck of a ship*, *wings
 spread*, *a map spread out*, *a Celtic cross of stone on a hillside*, *an arcane astrolabe*.
@@ -211,11 +258,16 @@ the other; in a real run the options must also be free in `progress`.
   "Three stepping stones crossing a shallow Highlands river in morning mist, the first half hidden, the second wet
   and shining, the third on the far bank under a birch, a walker's boots on the first stone, small to one side of
   the frame, wide grey water around"
-- *Tarot journaling for beginners* (cover; one small card allowed, later in the scene):
+- *Tarot journaling for beginners* (cover; an article about no card, so no card in the picture):
   `--kind hands-and-gesture --shot over-the-shoulder --light dawn --setting "Cornish seaside village"`
   "A woman's hands writing in a linen notebook on her knees, on the steps of a Cornish seaside house at sunrise,
-  seen over her shoulder, wet sand and gulls below, a mug steaming on the step, a single card tucked between the
-  pages"
+  seen over her shoulder, wet sand and gulls below, a mug steaming on the step, a pressed sea pink tucked between
+  the pages"
+- *The Star tarot card meaning* (inline 4:3; the article's own card, small, named, Thoth style):
+  `--kind water-and-reflection --shot reflection --light starlight --setting "Icelandic hot spring"`
+  "A woman seen from behind pouring water from two jugs into a steaming Icelandic spring under a starry sky, the
+  stars doubled in the water, and on a flat stone at the edge a single small card of the Star, in the style of the
+  Thoth deck" (`--article the-star-tarot-card-meaning`)
 - *Shadow work* (cover):
   `--kind nature-macro --shot macro --light overcast --setting "Welsh hill wood"`
   "A fern unfurling in the deep shade of a dry-stone wall in a Welsh hill wood, macro view of the curled tip, moss
@@ -236,7 +288,8 @@ the other; in a real run the options must also be free in `progress`.
 
 ## Refuse, regenerate or rewrite if
 - the picture is a picture of cards anyway (a card filling the frame, a spread, a deck, hands holding cards), or a
-  card shows up big where the prompt asked for none;
+  card shows up big where the prompt asked for none; the article's own card that came out large, or looking like
+  Rider-Waite or Marseille instead of the Thoth style;
 - there is text, letters, numbers or a logo anywhere (even fake writing);
 - hands or faces are malformed, or a face looks like a real, recognisable person;
 - it looks like a stock photo or like the actual Thoth deck artwork;

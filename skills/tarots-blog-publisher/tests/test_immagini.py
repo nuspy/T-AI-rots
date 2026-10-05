@@ -87,6 +87,31 @@ def test_card_patterns_are_the_same_as_in_tarots_images():
     assert tb.SPREAD == ti.SPREAD
 
 
+def test_the_card_rule_of_the_article_is_the_same_as_in_tarots_images():
+    for name in ("MAJOR_ARCANA", "CONTEXT_NAMES", "MINOR_RANKS", "MINOR_SUITS", "CARD_CONTEXT", "NAME_GAP",
+                 "NOT_A_CARD_NAME", "COPY_OF_ARTWORK", "CLAUSE_BREAK", "_MINOR_NAME", "_MAJOR_NAMES", "_ARTICLES"):
+        assert getattr(tb, name) == getattr(ti, name), name
+    import inspect
+    for name in ("_card_plain", "named_cards", "cards_of_article", "cards_shown", "shows_a_card", "card_rule_problems"):
+        assert inspect.getsource(getattr(tb, name)) == inspect.getsource(getattr(ti, name)), name
+
+
+TOWER_CARD = (GOOD_PROMPT + ", the energy of the Tower, on the harbour wall a single small card of the Tower tucked "
+              "under a stone, in the style of the Thoth deck")
+NAMELESS_CARD = GOOD_PROMPT + ", on the harbour wall a single card tucked under a stone"
+FOOL_CARD = GOOD_PROMPT + ", on the harbour wall a single small card of the Fool, in the style of the Thoth deck"
+ARTICLES = [["The Tower tarot card meaning"], ["Tarot Meditation for Libra Season Balance"], ["Full Moon tarot spread"],
+            ["The Moon tarot card meaning"], ["Hierophant reversed in love"], ["Asso di Coppe nei tarocchi Thoth"]]
+
+
+@pytest.mark.parametrize("prompt", [TOWER_CARD, NAMELESS_CARD, FOOL_CARD, GOOD_PROMPT, CARD_PROMPT])
+@pytest.mark.parametrize("texts", ARTICLES)
+def test_the_copy_judges_the_card_of_the_article_like_tarots_images(prompt, texts):
+    assert tb.cards_of_article(texts) == ti.cards_of_article(texts)
+    assert tb.cards_shown(prompt) == ti.cards_shown(prompt)
+    assert tb.card_rule_problems(prompt, texts, texts[0]) == ti.card_rule_problems(prompt, texts, texts[0])
+
+
 SAMPLES = [
     CARD_PROMPT, GOOD_PROMPT,
     "a single card tucked between the pages of a notebook on a windowsill",
@@ -108,11 +133,68 @@ def test_the_copy_judges_every_prompt_like_tarots_images(prompt):
     assert tb.card_problem(prompt) == ti.card_problem(prompt)
 
 
-def test_a_card_as_context_does_not_stop_the_picture(env):
+def test_a_card_name_as_a_symbol_does_not_stop_the_picture(env):
     tmp, api, article = env
-    context = GOOD_PROMPT + ", the energy of the Tower, on the harbour wall a single card tucked under a stone"
-    cover = _generated(tmp, "cover.jpg", b"\xff\xd8 lighthouse", prompt=context)
+    cover = _generated(tmp, "cover.jpg", b"\xff\xd8 lighthouse", prompt=GOOD_PROMPT + ", the energy of the Tower")
     assert tb.main(["post", article, "--cover", cover]) == tb.EXIT_OK
+
+
+def test_the_card_of_the_article_named_in_the_prompt_is_accepted(env):
+    tmp, api, article = env  # article.json: title «The Tower»
+    cover = _generated(tmp, "cover.jpg", b"\xff\xd8 lighthouse", prompt=TOWER_CARD)
+    assert tb.main(["post", article, "--cover", cover]) == tb.EXIT_OK
+
+
+@pytest.mark.parametrize("prompt,words", [
+    (NAMELESS_CARD, "without saying which"),
+    (FOOL_CARD, "is not a card of this article"),
+])
+def test_post_refuses_a_card_that_is_not_the_one_of_the_article(env, capsys, prompt, words):
+    tmp, api, article = env
+    cover = _generated(tmp, "cover.jpg", b"\xff\xd8 lighthouse", prompt=prompt)
+    assert tb.main(["post", article, "--cover", cover]) == tb.EXIT_RULE
+    assert words in capsys.readouterr().err and api.calls == []
+
+
+def test_post_refuses_any_card_for_an_article_about_no_card(env, capsys):
+    tmp, api, _ = env
+    article = tmp / "libra.json"
+    article.write_text(json.dumps({"title": "Tarot Meditation for Libra Season Balance", "body": "text",
+                                   "focus_keyword": "libra season tarot", "status": "draft"}), encoding="utf-8")
+    cover = _generated(tmp, "cover.jpg", b"\xff\xd8 lighthouse", prompt=FOOL_CARD)
+    assert tb.main(["post", str(article), "--cover", cover]) == tb.EXIT_RULE
+    assert "this article is not about a specific card" in capsys.readouterr().err and api.calls == []
+
+
+def test_upload_reads_the_article_of_for_in_its_work_folder_or_the_titles_copy(env, monkeypatch, capsys):
+    tmp, api, _ = env
+    work = tmp / "work"
+    (work / "2026-10-05-the-tower-in-love").mkdir(parents=True)
+    (work / "2026-10-05-the-tower-in-love" / "article.json").write_text(
+        json.dumps({"title": "The Tower in love", "focus_keyword": "tower tarot card love", "slug": "the-tower-in-love"}),
+        encoding="utf-8")
+    monkeypatch.setenv("TAROTS_WORK_DIR", str(work))
+    cache = tmp / "titles-cache.json"
+    cache.write_text(json.dumps({"articles": {
+        "id-libra": {"id": "id-libra", "slug": "libra-season", "titolo": "Tarot Meditation for Libra Season Balance",
+                     "parola_chiave": "libra season tarot", "lang": "en"},
+        "id-tower": {"id": "id-tower", "slug": "tower-card", "titolo": "The Tower card meaning",
+                     "parola_chiave": "tower card meaning", "lang": "en"}}}), encoding="utf-8")
+    monkeypatch.setattr(tb, "TITLES_CACHE_PATH", cache)
+    pic = _generated(tmp, "inline.jpg", b"\xff\xd8 tower card", prompt=TOWER_CARD)
+    assert tb.main(["upload", pic, "--for", "the-tower-in-love"]) == tb.EXIT_OK        # the work folder
+    assert tb.main(["upload", pic, "--for", "the-tower-in-love"]) == tb.EXIT_OK
+    other = _generated(tmp, "inline-2.jpg", b"\xff\xd8 tower card 2", prompt=TOWER_CARD + ", rain")
+    assert tb.main(["upload", other, "--for", "id-tower"]) == tb.EXIT_OK                 # the titles copy, by id
+    third = _generated(tmp, "inline-3.jpg", b"\xff\xd8 tower card 3", prompt=TOWER_CARD + ", wind")
+    capsys.readouterr()
+    assert tb.main(["upload", third, "--for", "libra-season"]) == tb.EXIT_RULE           # the copy, by slug
+    assert "not about a specific card" in capsys.readouterr().err
+    assert tb.main(["upload", third, "--for", "nowhere"]) == tb.EXIT_RULE
+    assert "was not found" in capsys.readouterr().err
+    assert tb.main(["upload", third]) == tb.EXIT_RULE
+    assert "add --for" in capsys.readouterr().err
+    assert len(api.uploads) == 3
 
 
 def test_a_file_that_is_not_an_image_is_a_usage_error_before_the_record(env, capsys):
