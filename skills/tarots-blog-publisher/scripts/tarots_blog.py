@@ -20,13 +20,22 @@ Commands (run `tarots_blog.py <command> -h` for the options):
     catalog [--grep TEXT]  cards and spreads with the ready-made internal-link shortcut
     mine                   articles this key created (avoid duplicates, pick an unused keyword)
     check ARTICLE.json     SEO report without saving anything
-    upload IMAGE           upload a cover OR an inline image, print its id and reusable url
-    post ARTICLE.json      check, then create the article (draft unless the JSON says "published")
+    upload IMAGE [--for SLUG_OR_ID] [--operator-image]
+                           upload a cover OR an inline image, print its id and reusable url
+    post ARTICLE.json [--cover IMAGE [--operator-image]]
+                           check, then create the article (draft unless the JSON says "published")
     update ID PATCH.json   change fields of an article this key created
     delete-draft ID        delete a draft this key created
 
+Pictures (`post --cover`, `upload`) share the record of the `tarots-blog-images` skill: `~/.tarots-blog/
+images-progress.json`, or `TAROTS_IMAGES_PROGRESS`. Before anything is uploaded a picture is refused if it was
+not made by `tarots_images.py generate` (unless `--operator-image`: a picture the operator supplied, accepted with a
+warning), if it was already used for another article (same sha256, whatever the file name), or if the prompt it
+was generated from asks for a card. After a successful `post` or `upload` its sha256 is recorded with the article.
+
 Exit codes: 0 ok · 2 usage or bad article file · 3 SEO score below the threshold (nothing saved)
-· 4 the API refused (message printed) · 5 configuration missing or unsafe.
+· 4 the API refused (message printed) · 5 configuration missing or unsafe · 7 a picture rule refused the file
+(nothing uploaded).
 
 The full key is only ever sent to TAROTS_API_URL, never printed (only its 12-character prefix is, to tell keys
 apart), and redirects are not followed (a redirect would carry the key to another host): if the server redirects,
@@ -37,8 +46,11 @@ never be committed; keep it that way if `TAROTS_KEY_CACHE` is set to somewhere e
 from __future__ import annotations
 
 import argparse
+import datetime
+import hashlib
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -47,7 +59,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-EXIT_OK, EXIT_USAGE, EXIT_SCORE, EXIT_API, EXIT_CONFIG = 0, 2, 3, 4, 5
+EXIT_OK, EXIT_USAGE, EXIT_SCORE, EXIT_API, EXIT_CONFIG, EXIT_RULE = 0, 2, 3, 4, 5, 7
 
 MAX_IMAGE_BYTES = 8_000_000
 IMAGE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
@@ -55,6 +67,34 @@ IMAGE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
 #: Outside any repository by design: this is the only file this tool ever writes the key to.
 CACHE_PATH = Path(os.environ["TAROTS_KEY_CACHE"]) if os.environ.get("TAROTS_KEY_CACHE") else Path.home() / ".tarots-blog" / "credentials.json"
 _noted = False  # config() prints its "using saved key" / "key saved" note once per run, not once per API call
+
+#: The picture record of the `tarots-blog-images` skill, shared on purpose (same file, same keys): `_generated`
+#: lists what `tarots_images.py generate` made, `_used` maps sha256 → the article that uses the picture.
+PROGRESS_PATH = Path(os.environ["TAROTS_IMAGES_PROGRESS"]) if os.environ.get("TAROTS_IMAGES_PROGRESS") else Path.home() / ".tarots-blog" / "images-progress.json"
+
+#: A copy of the card patterns of `tarots_images.py` (prompts, not alt texts): no blog picture shows a card of any
+#: kind. Kept identical to the original by a test (`tests/test_immagini.py`); change both together.
+CARD_PATTERNS = [
+    r"\btarot\w*|\btarocc\w*",
+    r"\bcards?\b",
+    r"\b(?:tarot|cards?|reading|oracle|celtic[- ]cross|horseshoe|lenormand)\s+spreads?\b"
+    r"|\bspreads?\s+(?:positions?|layout)\b"
+    r"|\b(?:a|the|this|that|her|his|their|my|your)\s+spread\s+(?:on|across|over|laid)\b",
+    r"\barcan(?:a|um)\b",
+    r"\breading\s+tables?\b|\btables?\s+(?:set\s+)?for\s+(?:a\s+)?reading\b|\bdivination\s+tables?\b",
+    r"\brider[- ]?waite\b|\bwaite[- ]smith\b|\bsmith[- ]waite\b|\bthoth\s+(?:trumps?|atus?)\b|\batus?\s+[ivxlc]+\b",
+    r"\bcartomanc\w*|\blenormand\b",
+    r"\b(?:ace|two|three|four|five|six|seven|eight|nine|ten|page|knight|queen|king|princess|prince)\s+of\s+"
+    r"(?:cups|wands|swords|pentacles|disks|discs|coins)\b"
+    r"|\bhigh\s+priestess\b|\bhierophant\b|\bhanged\s+man\b|\bwheel\s+of\s+fortune\b",
+]
+DECK = r"\bdecks?\b"
+NOT_A_CARD_DECK = (
+    r"\b(?:ship's|ships|ship|boat's|boat|ferry|yacht|sailing|sailboat|liner|steamer|barge|vessel|upper|lower|top|main"
+    r"|sun|pool|observation|promenade|garden|porch|patio|terrace)\s+decks?\b"
+    r"|\bdecks?\s+chairs?\b|\bdeckchairs?\b|\bon\s+deck\b"
+    r"|\bdecks?\s+of\s+(?:a|an|the)\s+(?:\w+\s+){0,2}(?:ship|boat|ferry|yacht|sailboat|liner|steamer|vessel|barge)s?\b"
+)
 
 #: Friendly (English) keys of an article file → the API field. The API's own names are accepted as they are.
 FIELDS = {
@@ -396,18 +436,115 @@ def upload(path: str) -> Dict[str, Any]:
     return call("POST", "/media", raw=raw, content_type=kind)
 
 
+# ---- the picture record shared with tarots-blog-images ---------------------------------------------------------
+# Same file and keys as `tarots_images.py` (duplicated here on purpose: the two skills install separately).
+
+
+def _progress() -> Dict[str, Any]:
+    try:
+        data = json.loads(PROGRESS_PATH.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _save_progress(data: Dict[str, Any]) -> None:
+    PROGRESS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    tmp = PROGRESS_PATH.with_name(PROGRESS_PATH.name + ".tmp")
+    tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    os.replace(tmp, PROGRESS_PATH)
+
+
+def sha256_of(path: Any) -> str:
+    digest = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for block in iter(lambda: fh.read(1 << 20), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def card_problem(text: str) -> Optional[str]:
+    low = " ".join(text.lower().split()).replace("’", "'")
+    for pattern in CARD_PATTERNS:
+        m = re.search(pattern, low)
+        if m:
+            return m.group(0)
+    m = re.search(DECK, re.sub(NOT_A_CARD_DECK, " ", low))
+    return m.group(0) if m else None
+
+
+def _used_by(data: Dict[str, Any], sha: str) -> Optional[str]:
+    """The article a picture already belongs to: from `_used`, or from the per-article records of
+    `tarots_images.py` (older ones without a hash are hashed from their file, if it is still there)."""
+    entry = (data.get("_used") or {}).get(sha)
+    if isinstance(entry, dict) and entry.get("post"):
+        return str(entry["post"])
+    for post_id, riga in data.items():
+        if post_id.startswith("_") or not isinstance(riga, dict):
+            continue
+        for e in ([riga.get("cover")] if riga.get("cover") else []) + list(riga.get("inline") or []):
+            if e.get("sha256") == sha or (not e.get("sha256") and e.get("file") and Path(e["file"]).is_file()
+                                          and sha256_of(e["file"]) == sha):
+                return post_id
+    return None
+
+
+def check_picture(path: str, *, article: Optional[str], operator_image: bool) -> str:
+    """Refuse a picture before it is uploaded; return its sha256. `article` is the slug or id it is for (None for a
+    new article: then any earlier use is another article's)."""
+    if not Path(path).is_file():
+        raise Failure(f"Cannot read {path}.", EXIT_USAGE)
+    sha = sha256_of(path)
+    data = _progress()
+    other = _used_by(data, sha)
+    if other and other != article:
+        raise Failure(f"{path} is already a picture of article {other}: every article gets its own picture. "
+                      "Generate a new one with tarots_images.py generate.", EXIT_RULE)
+    generated = [e for e in data.get("_generated") or [] if isinstance(e, dict) and e.get("sha256") == sha]
+    sidecar = Path(path + ".prompt.txt")
+    prompts = [e.get("prompt") or "" for e in generated] + ([sidecar.read_text(encoding="utf-8")] if sidecar.is_file() else [])
+    for prompt in prompts:
+        if card := card_problem(prompt):
+            raise Failure(f"{path} was generated from a prompt that asks for a card («{card}»): no blog picture shows "
+                          "a card. Generate a new one.", EXIT_RULE)
+    if not generated:
+        if not operator_image:
+            raise Failure(
+                f"{path} was not made by `tarots_images.py generate` (skill tarots-blog-images, LitMedia): blog "
+                "pictures come only from there. If the operator supplied this very picture, add --operator-image.",
+                EXIT_RULE,
+            )
+        print(f"warning: {path} is accepted as a picture supplied by the operator (--operator-image): make sure it "
+              "shows no card and is not used by another article.", file=sys.stderr)
+    return sha
+
+
+def record_picture(sha: str, path: str, *, article: str, kind: str, slug: Optional[str] = None) -> None:
+    data = _progress()
+    entry = {"post": article, "kind": kind, "file": path,
+             "when": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")}
+    if slug:
+        entry["slug"] = slug
+    data.setdefault("_used", {})[sha] = entry
+    _save_progress(data)
+
+
 def cmd_upload(a) -> int:
+    sha = check_picture(a.image, article=a.for_article, operator_image=a.operator_image)
     image = upload(a.image)
+    record_picture(sha, a.image, article=a.for_article or f"(upload {image['id']})", kind="upload")
     if a.json:
         show(image)
     else:
         print(f"uploaded: id={image['id']} {image['larghezza']}x{image['altezza']} ({image['byte']} bytes)")
-        print(f'use it as "cover_image_id": "{image["id"]}"')
+        print(f"url: {image.get('url')}")
+        print(f'as the cover: "cover_image_id": "{image["id"]}"   inside the text: ![what the picture shows]({image.get("url")})')
     return EXIT_OK
 
 
 def cmd_post(a) -> int:
     payload = load_article(a.article)
+    sha = check_picture(a.cover, article=None, operator_image=a.operator_image) if a.cover else None
     if a.cover:
         image = upload(a.cover)
         payload["immagine_id"] = image["id"]
@@ -429,6 +566,8 @@ def cmd_post(a) -> int:
         return EXIT_OK
     result = call("POST", "/posts", body=payload)
     article = result["articolo"]
+    if sha:
+        record_picture(sha, a.cover, article=str(article["id"]), kind="cover", slug=article.get("slug"))
     if a.json:
         show(result)
     else:
@@ -441,6 +580,10 @@ def cmd_post(a) -> int:
 
 def cmd_update(a) -> int:
     payload = load_article(a.patch)
+    if "dry_run" in payload:
+        # PATCH has no dry run: the server would ignore the field and save the change anyway.
+        raise Failure("`update` has no dry run: remove `dry_run` from the patch, and run `check` on the full article "
+                      "first if you want the SEO report before saving.", EXIT_USAGE)
     result = call("PATCH", f"/posts/{urllib.parse.quote(a.id)}", body=payload)
     if a.json:
         show(result)
@@ -488,10 +631,16 @@ def parser() -> argparse.ArgumentParser:
     k.set_defaults(run=cmd_check)
     u = sub.add_parser("upload", help="upload a cover or inline image, print its id/url")
     u.add_argument("image")
+    u.add_argument("--for", dest="for_article", metavar="SLUG_OR_ID",
+                   help="the article this picture is for (recorded, so it is never used for another one)")
+    u.add_argument("--operator-image", action="store_true",
+                   help="accept a picture the operator supplied, not made by tarots_images.py generate")
     u.set_defaults(run=cmd_upload)
     r = sub.add_parser("post", help="check, then create the article")
     r.add_argument("article")
-    r.add_argument("--cover", help="an image file to upload and use as the cover")
+    r.add_argument("--cover", help="an image file made by tarots_images.py generate, to upload and use as the cover")
+    r.add_argument("--operator-image", action="store_true",
+                   help="the --cover file was supplied by the operator, not made by tarots_images.py generate")
     r.add_argument("--min-score", type=int, default=85, help="refuse to save below this SEO score (default 85)")
     r.add_argument("--save-anyway", action="store_true", help="below the score, keep it as a draft instead of refusing")
     r.add_argument("--dry-run", action="store_true", help="check only; save nothing")

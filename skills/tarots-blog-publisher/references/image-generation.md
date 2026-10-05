@@ -1,151 +1,67 @@
-# Cover image: two alternatives, pick one per run
+# Cover and inline pictures
 
-**Do not use your own agent framework's built-in image-generation tool for this** (a native
-`image_generate`/`generate_image`/similar capability some agents ship with) — it is a third,
-different mechanism, has no `nano-banana`/free option, and defeats the cost or free-method choice
-below. This skill's cover always comes from one of the two named skills' own CLI scripts, run as a
-shell command via your terminal/bash tool — never from an image tool built into your own runtime.
+One way only: the **`tarots-blog-images`** skill's `tarots_images.py generate`, which calls **`litmedia-skill`**
+(LitMedia API) and checks every prompt before spending a credit. Never `browser-image-gen`, never the LitMedia
+website, never the agent's own image tool, never `litmedia-skill`'s `ai_image.py` called directly.
 
-Two independent ways to get the cover (and any inline image) file to hand to `tarots_blog.py upload`
-or `post --cover`. Same downstream steps either way — only how the file is produced differs.
-
-| | `litmedia-skill` (API) | `browser-image-gen` (browser) |
+## Settings
+| | Cover | Inline picture |
 |---|---|---|
-| Cost | Paid, per generation | Free for `nano-banana` and `flux` (verify `Credits Required` each time — the site can change this without notice) |
-| Speed | Fast, can batch | Slow, ~60-90s, one at a time |
-| Setup | OAuth device grant once | One interactive browser login once (`login_una_tantum.py`) |
-| Command | `ai_image.py run ...` | `genera_immagine.py --model ... --prompt ...` |
+| Model | Seedream 5.0 | Seedream 5.0 |
+| Resolution | 2K (10 credits; there is no 1K, never 4K) | 2K |
+| Aspect | `3:2` (the default) | `4:3`, or `1:1` for a close-up |
+| How many | one | normally one, two at most |
 
-**Default to `litmedia-skill`** unless the operator's instructions say to use the free/browser
-method, or explicitly name "Nano Banana", "Flux", or "the browser one". When they do, use
-`browser-image-gen` instead for this run — both skills are meant to be trusted/installed side by
-side, this is a per-run choice via the prompt, not a permanent switch.
-
-## Option A: LitMedia (API, paid)
-
-The cover is generated with the **LitMedia** skill (`litmedia-skill`, script `scripts/ai_image.py`) and then uploaded
-with `tarots_blog.py`. LitMedia is a separate skill with its own login and credits: read its `SKILL.md` first.
-
-## Rules that apply here
-
-1. **Cost and consent.** LitMedia spends credits. Before the first generation of a session: run `estimate-cost`,
-   tell the operator the model, aspect ratio, resolution and the cost, and get a yes. If the operator has already
-   said to proceed without asking (a standing "auto-proceed"), go ahead. Ask again if the parameters change.
-2. **Use the script, not raw HTTP.** `ai_image.py run …` submits and polls until done; do not resubmit a task that is
-   still running.
-3. **TLS errors are not to be bypassed.** If LitMedia fails with a certificate error (`SSLCertVerificationError`),
-   do not disable verification, set `verify=False`, or use another certificate store trick. Report it, and either use
-   an image the operator supplied or publish without a cover.
-4. **Never send the blog key to LitMedia** (or anything else). The two tools do not share credentials.
-5. **The image is illustration, not evidence.** Don't generate fake photos of real people, fake screenshots, fake
-   "old manuscripts" presented as real, or a reproduction of the actual Thoth deck's cards (copyrighted artwork).
-   Symbolic, atmospheric imagery is right.
-
-## Commands
-
+## Commands (from this skill's folder)
 ```
-python <litmedia-skill>/scripts/ai_image.py list-models --type text2image
-python <litmedia-skill>/scripts/ai_image.py estimate-cost --type text2image --model "Seedream 5.0" --resolution 2K --count 1
-python <litmedia-skill>/scripts/ai_image.py run --type text2image --model "Seedream 5.0" \
-    --prompt "<prompt>" --aspect-ratio 3:2 --resolution 2K --count 1 --output-dir ./cover
+python ../tarots-blog-images/scripts/tarots_images.py balance
+python ../tarots-blog-images/scripts/tarots_images.py prompt-check --prompt "<prompt>" --alt "<alt>"
+python ../tarots-blog-images/scripts/tarots_images.py generate --prompt "<prompt>" --out work/<slug>-cover.jpg
+python ../tarots-blog-images/scripts/tarots_images.py generate --prompt "<prompt>" --aspect 4:3 --out work/<slug>-1.jpg
 ```
+Then `python scripts/tarots_blog.py post article.json --cover work/<slug>-cover.jpg` for the cover, and
+`python scripts/tarots_blog.py upload work/<slug>-1.jpg --for <slug>` for an inline picture (it prints the `url` to
+write as `![alt](url)` in the body). If `tarots-blog-images` is not next to this skill, find its folder by name in
+the agent's skills directories; if it is not installed, publish without pictures and say so.
 
-**Model: Seedream 5.0 at `2K` (10 credits)** — the fast and stable one on the API (about a minute). It has no `1K`
-tier; `2K` is its smallest. **Do not use "Nano Banana"** through the API: tasks are accepted and then fail on
-LitMedia's side ("Image generation failed", checked 2026-09-30); it is free only on the website. The server shrinks
-every upload to 1600 px and makes a 480 px thumbnail for the lists, so a larger file costs nothing on the page.
-Generate **one** image; a second only if the first is unusable. The result is downloaded into `--output-dir`; pass
-that file to `tarots_blog.py post … --cover <file>`.
+## What `post --cover` and `upload` check
+Both read the record `tarots_images.py` writes (`~/.tarots-blog/images-progress.json`, or `TAROTS_IMAGES_PROGRESS`)
+and refuse the file before uploading anything (exit 7) when:
+- it was not made by `tarots_images.py generate`. A picture **the operator supplied** passes with
+  `--operator-image` and a warning; that option is never a way around a refusal;
+- the same picture (same sha256, whatever the name) is already used by another article;
+- the prompt it was generated from asks for a card.
 
-## Option B: browser-image-gen (free/browser)
+After a successful `post` the cover's sha256 is recorded with the new article's id and slug; after `upload`, with
+the `--for` slug or id. Without `--for` the picture is tied to that single upload and refused afterwards: always
+pass it.
 
-The `browser-image-gen` skill is installed at `/c/Users/atain/AppData/Local/hermes/skills/browser-image-gen/`.
-Read its `SKILL.md` first — it covers one-time login setup and honest limitations (slower, fragile to site changes,
-one image at a time). Once the session is logged in:
+## The prompt
+Write it with `tarots-blog-images/references/prompts.md`: the reasons and the rules, the kinds of picture, the
+house style line, examples. In one breath: **no card of any kind** (not even the word "tarot"), a concrete scene
+from this article's text, a different kind of picture from the last three, never a prompt per section or a
+template. `generate` refuses a prompt that breaks these rules (exit 7) and says why: rewrite it, do not work
+around it.
 
-```
-python /c/Users/atain/AppData/Local/hermes/skills/browser-image-gen/scripts/genera_immagine.py \
-    --model nano-banana --prompt "<prompt>" --aspect 3:2 --output cover.png
-```
+## Rules
+- **Cost and consent**: 10 credits a picture. Before the first generation of a session tell the operator the
+  number of pictures and the cost, and get a yes (a standing "go ahead" from the operator counts).
+- **Look at every picture** before using it. Reject it if it shows a card or anything like one, text, letters,
+  malformed hands or faces, or has nothing to do with the article. A second try needs a rewritten prompt.
+- **Never reuse a picture** of another article, and never the cover as the inline picture.
+- **TLS errors are not to be bypassed.** Report them and publish without the picture.
+- **LitMedia down, out of credits or failing**: no picture, said in the report. Never another tool.
+- **Illustration, not evidence**: no fake photos of real people, no fake documents, no copy of the Thoth deck's
+  artwork (copyrighted).
+- **Never send the blog key to LitMedia** (or anywhere but `TAROTS_API_URL`).
 
-`--model nano-banana` at `3:2` (confirmed by the operator as the standing setting for posts, no
-resolution/quality forced — the script's own default resolution `1K` applies) is the confirmed free
-(0 credits) combination as of 2026-09-29 — the script prints the actual `Credits Required` before
-generating either way, so trust that over this note if they disagree. Same prompt recipe as Option A
-below. The downloaded file is automatically converted to WebP by the script (PNG/JPEG → WebP via PIL). 
-The output will always be `.webp` even if you pass `--output cover.png`. Pass it straight to 
-`tarots_blog.py upload` / `post --cover` like any other file.
+## Alt text
+Describe what is really in the picture, 8–125 characters: `"A lighthouse on a basalt cliff struck by lightning,
+warm light pouring from a crack in the tower"`. The keyword only if the picture really shows it (otherwise accept
+the `chiave_nell_alt` warning); never "tarot cards".
 
-### Critical notes for browser-image-gen reliability
-
-- **Domain**: The main site is `litmedia.ai`. Generated images are served from two of their CDN subdomains — 
-  `resource.soulvid.ai` (smaller assets, ~100KB) and `app-images.litvid.org` (the large generated results, typically 
-  1-2MB PNG). The script's internal `DOMINI_RISULTATI` checks for both `"soulvid"` and `"litvid"`. Do not change it.
-- **Session expiry**: Playwright sessions expire after ~3 minutes. If a generation fails with "nessuna immagine trovata", 
-  re-run `login_una_tantum.py` first, then retry the generation. Do NOT let more than 3 minutes pass between login 
-  and the generation command.
-- **DOM fallback**: The script now has a DOM extraction fallback — if no large network responses are captured (which 
-  happens when litmedia.ai serves images as `<img>` tags in the page), it extracts URLs directly from the DOM by 
-  querying `document.querySelectorAll('img[src]')` and filtering for both `soulvid` and `litvid`. This is reliable but 
-  requires the session to still be alive at extraction time.
-- **Timeout**: nano-banana typically takes 60–120 seconds to generate. Use `--timeout 600` (default) or higher if the 
-  queue is long. The script polls every 10 seconds and stops when "Processing" disappears from the page.
-- **WebP conversion**: Litmedia.ai generates images in PNG or JPEG format (often 1–2MB). The script automatically 
-  converts them to WebP using PIL (`quality=85, method=6`) after download — this reduces file size by 60–80% with no 
-  visible quality loss. The output file will always be `.webp` even if you pass `--output cover.png`. If conversion 
-  fails for any reason, the script falls back to saving the original format. Always check that the final file is WebP 
-  before passing it to `tarots_blog.py post --cover`.
-
-## Prompt recipe (English)
-
-**The full recipe, the house style line and the examples are in `tarots-blog-images/references/prompts.md`** — use
-them. The summary below is kept for agents that only have this skill.
-
-**Never a tarot spread on a table** (cards face down, a fan of cards, a reading table): every early cover was that
-picture and they all had to be redone. At most one card, as a small detail of a larger scene.
-
-`<subject/symbol> + <scene or composition> + <mood and light> + <style> + <constraints>`
-
-- Subject from the article: the human situation it speaks to (a break-up, waiting, a choice), the card's world as a
-  real scene (a lighthouse in a storm for the Tower, a summer garden for the Empress), the season or the sky, an
-  object charged with meaning (a key, a letter, two rings), a visual metaphor (two paths in a wood, a door ajar).
-- Composition for 3:2: leave calm space, one clear focal point, nothing important at the far edges.
-- Style, appended unchanged to every prompt (the site's palette: paper, plum, brass, verdigris): `editorial painterly
-  illustration, soft natural light, warm paper-cream highlights, deep plum shadows, touches of brass gold and
-  verdigris green, gentle film grain, calm composition with breathing space, contemplative mood`.
-- Constraints, always: `no text, no letters, no numbers, no watermark, no logo, no recognizable real person`.
-
-Examples:
-
-- *"A lone stone tower on a cliff struck by a golden lightning bolt at night, storm clouds in deep indigo and violet,
-  sparks falling, dramatic but symbolic, esoteric painterly illustration, calm dark space on the left, no text, no
-  letters, no watermark"* (article: The Tower)
-- *"Close-up of an open notebook on a windowsill with a pressed rose and a fountain pen, morning light, a single
-  tarot card tucked between the pages showing only its patterned back, editorial painterly illustration, …, no text,
-  no letters, no watermark"* (article: how to start a tarot journal)
-
-## Alt text and file
-
-Write `cover_alt` yourself, describing what is really in the image, 8+ characters, ideally ≤ 125:
-`"A stone tower on a cliff struck by golden lightning under a violet night sky"`. Include the keyword only if it
-fits without sounding forced. PNG, JPEG or WebP up to 8 MB.
-
-## Images inside the body, not just the cover
-
-**Checked against the live blog (2026-09-28): none of the sampled published articles had a real inline image —
-only a cover, sometimes not even that.** The instruction below was being treated as optional and skipped every
-time. It is not optional: a genuinely useful inline image (a diagram of a spread's positions, a scene from the text, a close-up of a symbol
-discussed in the text) is part of a normal article, the same way a cover is. Decide explicitly for every article
-whether one belongs, and say so in the step 9 report either way ("inline image: yes, showing X" / "inline image:
-none, the topic didn't call for one") — never just silently skip the decision.
-
-Either option above works for it (LitMedia or browser-image-gen), same choice logic as the cover:
-generate the same way, then `python scripts/tarots_blog.py upload picture.png` on its own (no
-`post`/`--cover`) to get back a URL, and write `![alt text](url)` at the right point in the
-Markdown body — not at the very top (that is what the cover is for) and not inside the closing
-paragraph.
-
-**Model and size: Seedream 5.0 at `2K`**, aspect `4:3` (or `1:1` for a symbol close-up), never `4K`. Same
-cost-and-consent rule as the cover: each inline image is a separate generation, counted and consented to like any
-other. One inline image is normally enough; a second only if the article genuinely covers two distinct visual
-ideas — a wall of decorative images hurts more than it helps.
+## Inline pictures are not optional by default
+Decide for every article whether one belongs (a scene from the text, an abstract picture of a spread's positions,
+a close-up of a symbol) and say so in the report either way: "inline image: yes, showing X" / "inline image: none,
+the topic didn't call for one". Place it where it serves the text: not at the very top (that is the cover) and not
+inside the closing paragraph.

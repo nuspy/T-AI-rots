@@ -1,19 +1,24 @@
 ---
 name: browser-image-gen
-description: Generate an image on litmedia.ai's free/low-cost web models (Nano Banana, Flux, GPT Image, Seedream, Wan, Stable Diffusion) by driving a real browser with Playwright, and download the result. Free alternative to LitMedia's paid API for any skill that needs a generated illustration and can tolerate a slower, one-at-a-time browser-driven flow. Use when an operator asks to save image-generation cost/credits, or explicitly asks for "the free/browser method", "Nano Banana", or "Flux" instead of the paid LitMedia API.
+description: Browser automation fallback (Playwright on the litmedia.ai website) used by the crea-mazzo-tarocchi skill to draw tarot deck cards with GPT Image. Use it only when crea-mazzo-tarocchi invokes it, or when the operator asks by name for the free browser method. Never for the TAROTS chat blog (covers or pictures in articles), which are made only by tarots-blog-images with litmedia-skill, and never as a substitute for litmedia-skill when it fails or costs credits.
 ---
 
 # Generazione immagini via browser (litmedia.ai, gratis/economico)
 
-Alternativa a `litmedia-skill` (che usa l'API a pagamento di LitMedia): questa skill guida un
-browser reale (Playwright/Chromium, headless) sull'interfaccia **web** di litmedia.ai, che offre
-alcuni modelli **gratuiti** (0 crediti a certe risoluzioni) non necessariamente esposti a parità di
-condizioni dall'API a pagamento. Più lenta (genera un'immagine alla volta, ~60-90s), ma senza costo
-per i modelli gratuiti.
+Ripiego di automazione del browser: guida un browser reale (Playwright/Chromium, headless)
+sull'interfaccia **web** di litmedia.ai, che offre alcuni modelli **gratuiti** (0 crediti a certe
+risoluzioni). Più lenta (un'immagine alla volta, ~60-90s) e fragile (dipende dal layout del sito).
+
+**Chi la usa**: la skill `crea-mazzo-tarocchi` (le 78 illustrazioni di un mazzo nuovo con GPT Image,
+tramite `crea_mazzo genera`), oppure l'operatore quando chiede per nome il metodo gratuito via browser.
+
+**Chi non la usa mai**: il blog di TAROTS chat. Copertine e immagini degli articoli si fanno solo con
+la skill `tarots-blog-images` (`tarots_images.py generate`, che chiama `litmedia-skill`): niente carte,
+prompt controllati, nessun riuso. Se `litmedia-skill` non risponde o mancano i crediti, per il blog
+non si ripiega su questa skill: l'articolo resta senza immagine e lo si dice nel rapporto.
 
 **Non sostituisce `litmedia-skill`**: sono due strumenti distinti con la stessa "materia prima"
-(litmedia.ai) ma percorsi diversi. Un altro skill che genera immagini (es. `tarots-blog-publisher`,
-`crea-mazzo-tarocchi`) può offrire entrambi come opzione e lasciare scegliere all'operatore.
+(litmedia.ai) ma percorsi diversi.
 
 ## Setup (una tantum, per account)
 

@@ -1,11 +1,12 @@
 """Genera un'immagine su litmedia.ai (Text to Image) via browser automatizzato e la scarica
-su disco. Alternativa gratuita/economica a LitMedia API (litmedia-skill), riusabile da
-qualunque skill (tarots-blog-publisher, crea-mazzo-tarocchi, ...).
+su disco. Ripiego gratuito/economico usato da crea-mazzo-tarocchi (illustrazioni dei mazzi) o su
+richiesta esplicita dell'operatore; mai per il blog di TAROTS chat, le cui immagini passano solo da
+tarots-blog-images (litmedia-skill).
 
 Richiede una sessione gia' salvata: esegui prima login_una_tantum.py una volta sola.
 
 Uso:
-    python genera_immagine.py --model nano-banana --prompt "..." --output cover.png
+    python genera_immagine.py --model nano-banana --prompt "..." --output immagine.png
     python genera_immagine.py --model flux --prompt "..." --aspect 16:9 --resolution 1K --output img.png
 
 Modelli supportati (nome esatto come appare nel selettore del sito):

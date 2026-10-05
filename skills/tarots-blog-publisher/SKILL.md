@@ -1,6 +1,6 @@
 ---
 name: tarots-blog-publisher
-description: Research a currently relevant esoteric / tarot topic (or the topic the operator names), write an SEO-optimized English article, generate its cover image with LitMedia, and publish it to the TAROTS chat blog through the site's REST API using every SEO field (keyword, meta title and description, slug, tags, FAQ, alt text). Use whenever asked to write, publish, schedule or post a blog article for TAROTS chat / tarots.chat, or to keep the blog fed with timely tarot, Thoth, Golden Dawn, astrology or cartomancy content.
+description: Write one SEO-optimized English article and publish it on the TAROTS chat (tarots.chat) site's OWN blog, through the site's own REST API with this skill's script `tarots_blog.py` (draft, publish, schedule, update or delete a draft), using every SEO field (keyword, meta title and description, slug, tags, FAQ, alt text). Pictures come from the tarots-blog-images skill (LitMedia, never cards). Use whenever asked to write, publish, schedule, edit or post an article on the TAROTS chat blog, or to keep that blog fed with timely tarot, Thoth, Golden Dawn or astrology content. This is not a social media or scheduling tool; it does not post to Postiz, SocialClaw, WordPress, Medium or any social network, and those tools never publish this blog.
 ---
 
 # TAROTS chat blog publisher
@@ -11,6 +11,17 @@ language is `en`; an Italian article is optional and separate.
 
 Works for any agent that can run a shell command and read files (Hermes, OpenClaw, Claude Code, a cron job).
 No dependency beyond Python 3.8+. The script is `scripts/tarots_blog.py` (path below is relative to this skill).
+
+## Which skill does what
+| Skill | Its job for the blog |
+|---|---|
+| **`tarots-blog-publisher`** (this one) | researches, writes and publishes the article on the blog of tarots.chat, through the site's REST API and `scripts/tarots_blog.py`; edits and deletes the drafts it created |
+| **`tarots-blog-images`** | generates every picture of the blog — this skill's cover and inline pictures too — with `tarots_images.py generate`, and swaps the pictures of existing articles |
+| **`litmedia-skill`** | the image engine (LitMedia API, Seedream 5.0). It is called **by** `tarots_images.py`: never call it directly for the blog |
+| Postiz, SocialClaw, `browser-image-gen` | **not used for the blog**, ever. Postiz and SocialClaw post to social networks (their "posts" on WordPress or Medium are not this blog); `browser-image-gen` drives a browser and is meant for the tarot-deck skill only |
+
+If the operator asks to "post", "publish" or "schedule" an article for TAROTS chat, it means this skill and this
+script: there is no other target to choose or ask about.
 
 ## Setup (once per key, not once per run)
 
@@ -79,11 +90,12 @@ python scripts/tarots_blog.py catalog --grep tower   # link shortcuts for cards 
   `[[post:some-existing-slug]]` (a card or spread on its own line becomes a card with its picture). Take the exact
   shortcut from `catalog`. An unknown reference disappears silently, so copy, don't guess.
 - **Inline images — decide explicitly, don't silently skip**: for every article, actively decide whether a scene
-  from the text, a diagram of a spread's positions (a diagram, never cards on a table) or a symbol close-up would
-  genuinely help — most articles about a spread or a specific symbol do benefit from one. If yes, generate it (see
-  `references/image-generation.md`: Seedream 5.0, 2K, 4:3, a subject different from the cover) and upload it with `python scripts/tarots_blog.py upload picture.png`, then paste
-  it into the body as ordinary Markdown: `![alt text](url)`. One is normally enough, not one per paragraph. State
-  the decision either way in the step 9 report.
+  from the text, an abstract picture of a spread's positions (lights, stones, a constellation: never cards) or a
+  close-up of a symbol would genuinely help — most articles about a spread or a specific symbol do benefit from one.
+  If yes, generate it with `tarots_images.py generate --aspect 4:3` (step 6; a different kind of picture from the
+  cover), upload it with `python scripts/tarots_blog.py upload work/<slug>-1.jpg --for <slug>`, then paste the
+  printed `url` into the body as ordinary Markdown: `![alt text](url)`. One is normally enough, not one per paragraph. State the decision either
+  way in the step 9 report.
 - **Inline video**: a line on its own with `[[video:youtube:VIDEO_ID]]` (11-character id from the URL, e.g.
   `dQw4w9WgXcQ`) or `[[video:vimeo:VIDEO_ID]]` (the number in the Vimeo URL) embeds that video. No other host —
   the site doesn't run its own video hosting. Use only a real, relevant, existing video (a tradition's own
@@ -106,31 +118,54 @@ python scripts/tarots_blog.py catalog --grep tower   # link shortcuts for cards 
 | `title` | ≤ 200; the page H1. Clear and specific. |
 | `seo_title` | **30–60 chars**, keyword near the start. |
 | `seo_description` | **120–160 chars**, keyword once, a promise and a reason to click. |
-| `focus_keyword` | the one phrase; must appear in the SEO title, description, slug, first 100 words, one `##`, cover alt. |
+| `focus_keyword` | the one phrase; must appear in the SEO title, description, slug, first 100 words, one `##`; in the cover alt only if the picture really shows it (otherwise accept that one warning). |
 | `secondary_keywords` | up to 10 related phrases, used naturally in the text. |
 | `slug` | lowercase-hyphen, ≤ 75 chars and ≤ 9 words, contains the keyword. |
 | `tags` | 2–6, reuse existing ones. |
 | `section` | a slug from `sections` (or omit). |
 | `faq` | 3–5 real questions with 1–3 sentence direct answers (`question`, `answer`); becomes FAQ structured data. |
-| `cover_alt` | describes the image; the keyword only if it fits. |
+| `cover_alt` | describes what is in the picture; the keyword only if it fits; never "tarot cards" (there are none). |
 | `language` | `en` (default). |
 | `canonical_url` / `noindex` | leave unset unless the operator says the text lives elsewhere / must stay out of search. |
 
 Put the article in a JSON file (see `assets/example-article.json`; friendly English keys are accepted). Put the
 Markdown in a file next to it and reference it with `"body_file": "article.md"`, so no quoting problems.
 
-### 6. Cover image
-3:2, no text in the image. **Its own subject, taken from this article — never tarot cards laid out on a table**:
-the blog's first covers were all that picture and had to be redone. Write the prompt with the recipe and the house
-style of `tarots-blog-images/references/prompts.md` (the same rules, shared by both skills), and look at the result
-before using it.
+### 6. Cover image (and the inline picture)
+3:2, no text in the image, **no card of any kind** — not a spread, not a deck, not one small card as a detail.
+**Its own subject, taken from this article's text**, and a different kind of picture from the last ones on the blog.
+The blog's covers had to be redone twice for breaking this. Read `tarots-blog-images/references/prompts.md` (the
+rules, the kinds of picture, the house style, examples) and write the prompt after the article, naming something
+concrete from it.
 
-Generate with **LitMedia Seedream 5.0 at 2K** (10 credits; `references/image-generation.md`): it is the fast and
-stable model on the API. Nano Banana fails on the API side at the moment; Seedream has no 1K. **browser-image-gen**
-only when the operator asks for the free/browser method by name. Cost estimate and consent first either way, never
-bypass TLS errors. Save the result as a PNG/JPEG/WebP file. The server makes the thumbnail for the blog lists by
-itself. If image generation is not possible, continue without a cover and say so in the report: an article without
-an image is better than a stalled one.
+Generate **only** with the `tarots-blog-images` skill's script, which calls `litmedia-skill` (Seedream 5.0, 2K,
+10 credits a picture) and checks the prompt first (no cards, a concrete scene, not a repeat of an earlier picture):
+```
+python ../tarots-blog-images/scripts/tarots_images.py prompt-check --prompt "<prompt>" --alt "<cover alt>"
+python ../tarots-blog-images/scripts/tarots_images.py generate --prompt "<prompt>" --out work/<slug>-cover.jpg
+python ../tarots-blog-images/scripts/tarots_images.py generate --prompt "<other prompt>" --aspect 4:3 --out work/<slug>-1.jpg
+```
+- The path is relative to this skill's folder: the two skills are normally installed side by side (`skills/`,
+  `~/.claude/skills/`, `~/.agents/skills/`, `%LOCALAPPDATA%/hermes/skills/`). If they are not, find the other one
+  by its folder name `tarots-blog-images` in the agent's skills directories and use its `scripts/tarots_images.py`.
+  If it is not installed, say so and publish without pictures: do not make them another way.
+- Then the file goes to `tarots_blog.py post article.json --cover work/<slug>-cover.jpg` (the cover) or
+  `tarots_blog.py upload work/<slug>-1.jpg --for <slug>` (an inline picture, step 4).
+- `post --cover` and `upload` check the picture against the same record as `tarots_images.py`
+  (`~/.tarots-blog/images-progress.json`, or `TAROTS_IMAGES_PROGRESS`) **before uploading anything**, and refuse it
+  (exit 7) if:
+  - it was **not made by `tarots_images.py generate`** — unless the operator supplied this very picture: then add
+    `--operator-image` (accepted with a warning; never for a picture you made some other way);
+  - it is **already used by another article** (same bytes, whatever the file name);
+  - the prompt it was generated from asks for a card.
+- After a successful `post` the cover is recorded with the new article; after `upload` the picture is recorded
+  with the `--for` slug or id (without `--for` it is tied to that upload alone and can never be used again). Always
+  pass `--for`.
+- **Never** `browser-image-gen`, never the LitMedia website, never the agent's own image tool, never `ai_image.py`
+  of `litmedia-skill` called directly.
+- Cost and consent first (10 credits a picture). Never bypass TLS errors. Look at every picture before using it.
+- If a picture cannot be made (LitMedia down, no credits, the prompt keeps being refused), continue without it and
+  say so in the report: an article without an image is better than a stalled one, or than a card picture.
 
 To change the pictures of articles that already exist (yours or others'), use the **`tarots-blog-images`** skill:
 it has its own key with the `blog:media` permission.
@@ -145,9 +180,9 @@ to push a number. Meanings of each check: `references/seo-checklist.md`.
 
 ### 8. Publish
 **The publishing target is always the TAROTS chat blog itself, through this one script and its REST API — never a
-social platform, a CMS, or any other publishing/scheduling tool you may also have available** (Postiz, a social
-scheduler, a generic "publish" skill, etc.). If you have such a tool loaded, ignore it for this task: it does not
-apply here, and there is no other target to ask the operator about.
+social platform, a CMS, or any other publishing/scheduling tool you may also have available** (Postiz, SocialClaw,
+WordPress, Medium, a social scheduler, a generic "publish" skill). If you have such a tool loaded, ignore it for
+this task: it does not apply here, and there is no other target to ask the operator about.
 ```
 python scripts/tarots_blog.py post article.json --cover cover.png
 ```
@@ -157,12 +192,36 @@ python scripts/tarots_blog.py post article.json --cover cover.png
   prints a `note:`; report it, don't try to get around it.
 - `"publish_at": "2026-10-12T08:00:00Z"` (with `published`) schedules the article for that time.
 - On a network error or timeout **do not simply run `post` again**: run `mine` first, the article may exist.
-- `--save-anyway` keeps a below-85 article as a draft for a human. Use it only when told to.
+- `--save-anyway` keeps a below-85 article as a draft for a human. Use it **only when the operator asked for it
+  for this very article**; never as a habit, never for a series. A low score means: fix the article (step 7).
 
 ### 9. Report
 Answer in a few lines: title, primary keyword, final SEO score, status, URL, cover yes/no, **inline image yes/no and
 why**, and anything an editor must look at (`note:` lines, unverified claims you removed). Do not paste the key or
 the article body.
+
+## Edit an existing article
+`tarots_blog.py` can change and delete **only the articles this key created** (`mine` lists them; for any other
+article the API answers `404`, the same as "does not exist").
+
+```
+python scripts/tarots_blog.py mine                       # find the id
+python scripts/tarots_blog.py update <id> patch.json     # change some fields
+python scripts/tarots_blog.py delete-draft <id>          # delete a draft
+```
+- `patch.json` holds **only the fields to change**, with the same names as an article file (`title`, `subtitle`,
+  `body` or `body_file`, `language`, `section`, `tags`, `slug`, `seo_title`, `seo_description`, `focus_keyword`,
+  `secondary_keywords`, `faq`, `cover_alt`, `cover_image_id`, `canonical_url`, `noindex`, `status`
+  (`draft|published|archived`), `publish_at`, `featured`). An unknown field is an error. `body`/`body_file`
+  replaces the **whole** text; `tags`, `faq` and `secondary_keywords` replace the whole list.
+- There is **no dry run and no score gate** on `update`: the change is saved, then the SEO report is printed. Run
+  `check` on the full article first. A `dry_run` field in the patch is refused (the server would ignore it and
+  save).
+- Without `blog:publish`: an article that is already published or archived cannot be changed (`403`), and
+  `status: published|archived`, `publish_at` or `featured` in the patch are ignored with a `note:`.
+- `delete-draft` deletes **drafts only** (`409` otherwise); a published article is archived from the console.
+- Pictures of an existing article (cover or inline): use the **`tarots-blog-images`** skill (`cover`, `inline`),
+  not `update` with a new `cover_image_id`, so the picture rules and the record of used pictures apply.
 
 ## Hard rules
 - The key lives in the environment or in the local cache file described above — **never** in a project file, an
@@ -170,15 +229,26 @@ the article body.
   `TAROTS_API_URL`; only its 12-character prefix (`tk_live_ab12…`) may ever appear in output.
 - Never disable TLS verification and never follow a redirect with the key. Fix the URL instead.
 - Publish only what you would put your name to: original, verified, no invented facts.
-- One article per run unless asked. The key has a daily limit (`guide` shows it); a `429` means stop, not retry.
+- **One article per run**, unless the operator explicitly asks for more; even then, one after the other with this
+  skill's commands, each one researched, written, checked and illustrated on its own. The key has a daily limit
+  (`guide` shows it); a `429` means stop, not retry.
+- **Never write your own script** (a loop, a batch, a "publish_sequential" or "generate_articles" helper) that
+  writes, generates pictures for or publishes articles in series. Run this skill's commands by hand.
+- **No card of any kind in any picture.** Pictures only from `tarots_images.py generate` (LitMedia), never from
+  `browser-image-gen` or a built-in image tool. **Never reuse the cover (or any picture) of another article.**
+  `--operator-image` only for a picture the operator supplied; never to get around a refusal.
+- `--save-anyway` only when the operator asked for it for that article.
 - Never edit or delete anything you did not create: the API refuses it, and you should not try.
 - Do not mass-produce near-duplicate articles for keyword variants: one page per intent.
+- Postiz, SocialClaw and other social or scheduling tools are not part of this job.
 
 ## Files
 - `scripts/tarots_blog.py`: the CLI (`-h` for every command).
 - `references/api.md`: the REST endpoints, fields and errors, if you would rather call the API directly.
 - `references/keywords.md`: keyword clusters per page, competitors, topic calendar, on-page rules.
 - `references/seo-checklist.md`: every check the server runs and how to satisfy it.
-- `references/image-generation.md`: LitMedia commands and prompt recipes for the cover.
+- `references/image-generation.md`: how the cover and inline pictures are made (only through `tarots-blog-images`).
 - `assets/example-article.json` + `assets/example-article.md`: the shape of an article (abridged, not a template
   to copy: a real article is 800+ words and its own).
+- `../tarots-blog-images/`: the picture skill (`scripts/tarots_images.py`, `references/prompts.md`).
+- `tests/test_immagini.py`: offline tests of the picture checks of `post --cover` and `upload`.

@@ -1,6 +1,6 @@
 ---
 name: crea-mazzo-tarocchi
-description: Create a brand-new tarot deck's artwork for TAROTS chat (tarots.chat) — from a style/setting brief, through an LLM-written sample scene and a sample image approval gate, to the full 78-card set generated with GPT Image (driven live through Claude in Chrome), organized on disk, converted to the site's WebP web format, and laid out into a print-ready double-sided PDF. Use whenever asked to design, create or generate a new tarot deck's images, an alternate/themed deck ("mazzo Halloween", "un mazzo Lovers", etc.), or to redo/extend a deck's artwork.
+description: Create a brand-new tarot deck's artwork for TAROTS chat (tarots.chat) — from a style/setting brief, through an LLM-written sample scene and a sample image approval gate, to the full 78-card set generated with GPT Image (through the browser-image-gen skill, or by hand in Claude in Chrome), organized on disk, converted to the site's WebP web format, and laid out into a print-ready double-sided PDF. Use whenever asked to design, create or generate a new tarot deck's images, an alternate/themed deck ("mazzo Halloween", "un mazzo Lovers", etc.), or to redo/extend a deck's artwork.
 ---
 
 # Creazione grafica di un mazzo di tarocchi nuovo
@@ -13,6 +13,12 @@ nuovo vive nella propria cartella.
 
 Due cancelli umani, sempre: prima il **testo** (la scena da dipingere), poi l'**immagine**. Non si
 passa al passo successivo senza un'approvazione esplicita dell'operatore.
+
+Qui le carte **sono** il contenuto: le regole «nessuna carta nelle immagini» e «solo LitMedia API» di
+`tarots-blog-images` / `tarots-blog-publisher` valgono per il blog, non per i mazzi.
+
+I comandi `python -m tarot_core.…` si lanciano dalla cartella `backend/` (col suo venv);
+`tools/resize_cards.py` dalla radice del repository.
 
 ## Workflow
 

@@ -95,5 +95,6 @@ Verify each date before publishing (sources: Farmers' Almanac, Britannica, CHANI
   H2, 3–6 H2s, ≥ 2 internal links (`[[card:the-star]]`, `[[spread:celtic-cross]]`, `[[post:slug]]`), ≥ 1
   reputable external source, keyword density 0.5–2.5 % (never stuff).
 - 3–5 FAQ items (real questions, direct 1–3 sentence answers) → `FAQPage` markup and AI-overview friendliness.
-- Cover image: 16:9, alt text describing the image (with the keyword only if it fits naturally).
+- Cover image: 3:2, a scene from this article and never a card (see `references/image-generation.md`), alt text
+  describing the image (with the keyword only if it fits naturally).
 - One article per primary keyword. Before writing, list existing posts and pick a keyword not already used.

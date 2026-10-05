@@ -19,6 +19,10 @@ Quando l'operatore chiede una correzione, capisci se riguarda:
 
 ## Cancello 2 — l'immagine (GPT Image, nel browser)
 
+La via predefinita è `crea_mazzo genera` (skill `browser-image-gen`, vedi `SKILL.md` passo 3); i passi
+qui sotto sono la via manuale. (Le regole «niente carte» del blog qui non valgono: le carte sono il
+contenuto del mazzo.)
+
 Passi concreti con Claude in Chrome (carica i tool `tabs_context_mcp`, `navigate`, `computer`,
 `read_page`, `tabs_create_mcp` prima di iniziare, se deferred):
 
