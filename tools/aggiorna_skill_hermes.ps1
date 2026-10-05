@@ -33,6 +33,11 @@ foreach ($voce in Get-ChildItem $progetto) {
     "progetto: $($voce.Name) aggiornata"
   }
 }
+# Tutte e quattro anche nella cartella di progetto: tarots-blog-publisher cerca ../tarots-blog-images accanto a sé.
+foreach ($s in $fonti.Keys) {
+  $p = Join-Path $progetto $s
+  if (-not (Test-Path $p)) { Copia $fonti[$s] $p; "progetto: $s copiata" }
+}
 
 # 2. Copie di Hermes.
 $hermes = "$env:LOCALAPPDATA\hermes\skills"
