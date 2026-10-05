@@ -19,7 +19,7 @@ import { useLingua } from "@/v2/lib/lingua";
 import { R } from "@/v2/lib/percorsi";
 import { inTerzi, type Posizione } from "@/v2/lib/pubblicita";
 import { useCarica } from "@/v2/lib/usa";
-import { DiarioNove } from "./blog";
+import { ArticoliSu, DiarioNove } from "./blog";
 
 const FILTRI = ["tutte", "maggiori", "bastoni", "coppe", "spade", "dischi"] as const;
 const POSIZIONI_GRIGLIA: Posizione[] = ["terzo", "due_terzi", "fine"];
@@ -138,7 +138,9 @@ export function SchedaCarta({ id }: { id: string }) {
         </div>
       </section>
       <Pubblicita posizione="fine" />
-      <DiarioNove contesto={{ carta: c.id }} />
+      {/* Le scelte per pertinenza prima degli ultimi articoli (v9.4), poi l'elenco completo di quelli su questa carta. */}
+      <DiarioNove contesto={{ carta: c.id }} ordine="scelti" />
+      <ArticoliSu tipo="carta" id={c.id} nome={nome} base={R.carta(c.slug ?? c.id)} />
     </>
   );
 }

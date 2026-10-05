@@ -66,7 +66,8 @@ export default async function PaginaArticolo({ params }: { params: Promise<{ slu
   const la = linguaPubblica(a.lang);
   if (la !== lingua || a.slug !== slug) permanentRedirect(pubblico(la, `/blog/${a.slug}`));
 
-  const valori = await precarica([P.articolo(slug), P.nove({ articolo: slug })], 10);
+  // Le scelte nella lingua dell'articolo, per pertinenza (`DiarioNove` con `lang`, v9.4).
+  const valori = await precarica([P.articolo(slug), P.nove({ articolo: slug, lang: a.lang })], 10);
   const url = urlPubblico(la, `/blog/${a.slug}`);
   const immagine = urlMedia(a.immagine?.url);
   const dati = grafo(

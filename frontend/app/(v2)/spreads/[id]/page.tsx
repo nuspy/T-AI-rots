@@ -13,7 +13,7 @@ import { briciole, comeSiFa, domande, grafo, urlPubblico } from "@/lib/seo";
 import { STESA, STESE, seoStesa } from "@/lib/seo-testi";
 import { leggiDalServer } from "@/lib/server-api";
 import { Pagina } from "@/v2/componenti/pagina";
-import { P } from "@/v2/lib/api-percorsi";
+import { P, numeroPagina, perPagina } from "@/v2/lib/api-percorsi";
 import { DatiIniziali } from "@/v2/lib/iniziali";
 import { NOINDEX, metaV2 } from "@/v2/lib/meta";
 import { precarica } from "@/v2/lib/precarica";
@@ -33,14 +33,20 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   });
 }
 
-export default async function PaginaStesa({ params }: { params: Promise<{ id: string }> }) {
+export default async function PaginaStesa({ params, searchParams }: {
+  params: Promise<{ id: string }>; searchParams: Promise<{ page?: string; per?: string }>;
+}) {
   const { id } = await params;
+  const sp = await searchParams;
   const lingua = await linguaPagina();
   const s = await leggiStesa(id, lingua);
   if (!s) notFound();
   if (s.slug && id !== s.slug) permanentRedirect(pubblico(lingua, `/spreads/${s.slug}`));
 
-  const valori = await precarica([P.stese(lingua), P.nove({ stesa: s.id })]);
+  // In fondo, l'elenco completo degli articoli su questa stesa (v9.4, `ArticoliSu`), con la sua paginazione.
+  const valori = await precarica([
+    P.stese(lingua), P.nove({ stesa: s.id }), P.elencoSu("stesa", s.id, numeroPagina(sp.page), perPagina(sp.per)),
+  ]);
   const seo = seoStesa(s, s.nome);
   const url = urlPubblico(lingua, `/spreads/${s.slug ?? s.id}`);
   const dati = grafo(

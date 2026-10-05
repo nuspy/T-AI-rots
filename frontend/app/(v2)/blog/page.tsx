@@ -13,42 +13,46 @@ import { anteprima, briciole, grafo, soloInglese, titoloPagina, urlPubblico } fr
 import { BLOG } from "@/lib/seo-testi";
 import { Pagina } from "@/v2/componenti/pagina";
 import { Sottotitolo } from "@/v2/componenti/sottotitolo";
-import { P, PER_PAGINA_BLOG } from "@/v2/lib/api-percorsi";
+import { P, PER_PAGINA_BLOG, numeroPagina, perPagina, recentiDiario } from "@/v2/lib/api-percorsi";
 import { DatiIniziali } from "@/v2/lib/iniziali";
 import { precarica } from "@/v2/lib/precarica";
 import { Diario } from "@/v2/pagine/blog";
 
-type Parametri = { searchParams: Promise<{ q?: string; page?: string }> };
+type Parametri = { searchParams: Promise<{ q?: string; page?: string; per?: string }> };
 
-const pulisci = (sp: { q?: string; page?: string }) => ({
+const pulisci = (sp: { q?: string; page?: string; per?: string }) => ({
   q: (sp.q ?? "").trim().slice(0, 100),
-  pagina: Math.max(1, Math.min(1000, parseInt(sp.page ?? "1", 10) || 1)),
+  pagina: numeroPagina(sp.page),
+  per: perPagina(sp.per),
 });
 
 /* Gli stessi percorsi che chiede la pagina nel browser (`Diario`). */
-const percorsi = (lingua: string, q: string, pagina: number) => ({
-  elenco: P.articoli(lingua, { q, pagina, per_pagina: PER_PAGINA_BLOG }),
+const percorsi = (lingua: string, q: string, pagina: number, per: number) => ({
+  elenco: P.articoli(lingua, { q, pagina, per_pagina: per }),
   evidenza: q || pagina > 1 ? null : P.articoli(lingua, { evidenza: "true", per_pagina: 1 }),
 });
 
 export async function generateMetadata({ searchParams }: Parametri): Promise<Metadata> {
-  const { q, pagina } = pulisci(await searchParams);
+  const { q, pagina, per } = pulisci(await searchParams);
   const lingua = await linguaPagina();
   const it = lingua === "it";
   const descrizione = BLOG.description(lingua);
   const titolo = q ? `${it ? "Ricerca" : "Search"}: ${q}`
     : pagina > 1 ? `${BLOG.title(lingua)} — ${it ? "pagina" : "page"} ${pagina}` : BLOG.title(lingua);
   const lingue = soloInglese(lingua, "/blog");
-  const elenco = (await precarica([percorsi(lingua, q, pagina).elenco]))[percorsi(lingua, q, pagina).elenco] as ElencoArticoli | undefined;
+  const elenco = (await precarica([percorsi(lingua, q, pagina, per).elenco]))[percorsi(lingua, q, pagina, per).elenco] as ElencoArticoli | undefined;
   const vuoto = !q && (elenco?.totale ?? 0) === 0;
+  // Un numero per pagina diverso da quello predefinito (`?per=10`) è la stessa lista tagliata in un altro modo: non si
+  // indicizza e il canonical va alla prima pagina.
+  const altroPer = per !== PER_PAGINA_BLOG;
   return {
     title: titoloPagina(titolo),
     description: descrizione,
     keywords: BLOG.parole(lingua),
-    robots: q || vuoto ? { index: false, follow: true } : undefined,
+    robots: q || vuoto || altroPer ? { index: false, follow: true } : undefined,
     alternates: {
       ...lingue,
-      canonical: pagina > 1 && !q ? `${lingue.canonical}?page=${pagina}` : lingue.canonical,
+      canonical: pagina > 1 && !q && !altroPer ? `${lingue.canonical}?page=${pagina}` : lingue.canonical,
       types: { "application/rss+xml": urlPubblico(lingua, "/blog/feed.xml") },
     },
     ...anteprima(lingua, { titolo, descrizione, url: urlPubblico(lingua, "/blog") }),
@@ -56,12 +60,12 @@ export async function generateMetadata({ searchParams }: Parametri): Promise<Met
 }
 
 export default async function PaginaDiario({ searchParams }: Parametri) {
-  const { q, pagina } = pulisci(await searchParams);
+  const { q, pagina, per } = pulisci(await searchParams);
   const lingua = await linguaPagina();
-  const p = percorsi(lingua, q, pagina);
+  const p = percorsi(lingua, q, pagina, per);
   const valori = await precarica([
     p.elenco, p.evidenza, P.sezioni(), P.etichette(),
-    !q && pagina === 1 ? P.nove({ recenti: PER_PAGINA_BLOG, scelti: 10 }) : null,
+    !q && pagina === 1 ? P.nove({ recenti: recentiDiario(per), scelti: 10 }) : null,
   ]);
   const elenco = valori[p.elenco] as ElencoArticoli | undefined;
   const evidenza = p.evidenza ? (valori[p.evidenza] as ElencoArticoli | undefined) : undefined;

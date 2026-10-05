@@ -48,6 +48,16 @@ export const blog: typeof Base = {
   ponte_testo: "Статья открывает дверь, расклад проходит через неё. Спроси, что это значит для тебя, в твоей ситуации.",
   ponte_cta: "Задать свой вопрос",
   non_trovato: "Такой статьи нет, или она больше не опубликована.",
+  /* v9.4: la paginazione del Journal, le schede ricche delle stese, l'elenco completo su carte e stese */
+  pagina_prima: "Первая страница",
+  pagina_ultima: "Последняя страница",
+  pagina_precedente: "Предыдущая страница",
+  pagina_successiva: "Следующая страница",
+  pagina_n: "Страница {p}",
+  per_pagina: "На странице",
+  stesa_inizia: "Начать расклад по этой схеме",
+  stesa_posizioni: "Посмотреть позиции",
+  articoli_su: "Все статьи о «{nome}»",
 
   esplora_meta_titolo: "Обзор мира Таро",
   esplora_meta_descrizione: "Журнал, карты, схемы раскладов и колоды — единая связанная сеть, которая ведёт обратно к твоему вопросу.",

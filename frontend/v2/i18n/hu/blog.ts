@@ -48,6 +48,16 @@ export const blog: typeof Base = {
   ponte_testo: "Egy cikk ajtót nyit; egy jóslás átvezet rajta. Kérdezd meg, mit jelent ez neked, a te helyzetedben.",
   ponte_cta: "Tedd fel a saját kérdésed",
   non_trovato: "Ez a cikk nem létezik, vagy már nincs közzétéve.",
+  /* v9.4: la paginazione del Journal, le schede ricche delle stese, l'elenco completo su carte e stese */
+  pagina_prima: "Első oldal",
+  pagina_ultima: "Utolsó oldal",
+  pagina_precedente: "Előző oldal",
+  pagina_successiva: "Következő oldal",
+  pagina_n: "{p}. oldal",
+  per_pagina: "Oldalanként",
+  stesa_inizia: "Kezdj jóslást ezzel a kirakással",
+  stesa_posizioni: "A pozíciók megtekintése",
+  articoli_su: "Minden cikk: {nome}",
 
   esplora_meta_titolo: "Fedezd fel a tarotot",
   esplora_meta_descrizione: "A napló, a kártyák, a kirakások és a paklik egyetlen összefüggő hálóként, amely visszavezet a saját kérdésedhez.",

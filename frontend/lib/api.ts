@@ -125,6 +125,11 @@ export interface Stesa {
   regole: string[];
   coppie: [number, number, string][];
   sintesi_wirth: boolean;
+  /* v9.4 (assenti da un'API più vecchia): l'illustrazione della stesa (`{url, mini, alt}` relativi all'API) e la
+   * tradizione in poche parole, nella lingua dei testi e per lingua (`tradizioni.hu`…). */
+  immagine?: { url: string; mini?: string | null; alt: string } | null;
+  tradizione?: string | null;
+  tradizioni?: Record<string, string>;
 }
 
 export interface Dignita {

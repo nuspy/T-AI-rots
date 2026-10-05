@@ -954,3 +954,85 @@ html[data-prova-nascosta] .banner-prova { display: none; }
   .notifiche-ora { margin-left: 0; }
   .invito-notifiche .button { flex: 1 1 auto; }
 }
+
+/* ---- il Journal v9.4: sezioni ricche, schede delle stese, paginazione ------------------------------------------
+ * Le sotto-sezioni sono riquadri con l'immagine della sezione dentro una cornice d'ottone incisa; senza immagine, un
+ * sigillo (lo stesso cerchio con i raggi del rito in home) col segno della sezione: l'iniziale, il numero romano di
+ * un grado, il quadrato delle stese. Le stese hanno la loro illustrazione con lo schema in una lastra prugna
+ * sovrapposta (senza illustrazione lo schema riempie la lastra). Tutto a tutta larghezza, prima della colonna degli
+ * articoli. Telefono: una colonna; nessun tocco sotto i 44 px. */
+.sezione-conti { margin-top: .7rem; }
+.sezione-conti .albero-conti { justify-content: flex-start; }
+.sezione-conti .albero-conta { padding: .15rem .65rem; font-size: .8rem; }
+.sezione-catalogo { display: grid; gap: clamp(1.2rem, 3vw, 2.2rem); }
+.sezione-blocco { min-width: 0; }
+.sezione-blocco-titolo { display: flex; align-items: center; gap: .5rem; margin: 0 0 .8rem; font: 400 clamp(1.3rem, 2.2vw, 1.75rem)/1.2 var(--serif); letter-spacing: -.02em; }
+.sezione-blocco-titolo::before { content: "✦"; color: var(--brass); font-size: .7em; }
+
+.riquadri-sezioni { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 1.1rem; margin: 0; padding: 0; list-style: none; }
+.riquadro-sezione { display: flex; flex-direction: column; gap: .55rem; min-width: 0; padding: .5rem .5rem .7rem; border: 1px solid var(--line); border-top: 3px solid var(--brass); background: var(--paper-light); box-shadow: 0 10px 24px rgba(60,24,70,.06); }
+.riquadro-testa { display: grid; gap: .5rem; color: var(--ink); }
+.riquadro-testa:focus-visible { outline: 3px solid var(--verdigris); outline-offset: 3px; }
+.riquadro-immagine { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; background: var(--plum-deep); }
+.riquadro-immagine img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .4s ease; }
+/* La cornice incisa, sopra l'immagine e sopra il sigillo. */
+.riquadro-immagine::after, .scheda-stesa-lastra::after { content: ""; position: absolute; inset: 6px; border: 1px solid rgba(214,182,109,.6); pointer-events: none; }
+.riquadro-testa:hover .riquadro-immagine img, .riquadro-testa:focus-visible .riquadro-immagine img { transform: scale(1.035); }
+.riquadro-nome { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem; padding-inline: .3rem; font: 400 1.3rem/1.25 var(--serif); letter-spacing: -.01em; overflow-wrap: anywhere; }
+.riquadro-freccia { flex: none; color: var(--brass); transition: transform .2s ease; }
+.riquadro-testa:hover .riquadro-freccia, .riquadro-testa:focus-visible .riquadro-freccia { transform: translateX(4px); }
+.riquadro-sezione > .albero-conti { justify-content: flex-start; padding-inline: .3rem; }
+.riquadro-articoli { margin: .1rem .3rem 0; padding: .25rem 0 0; list-style: none; border-top: 1px solid var(--line); }
+.riquadro-articoli li + li { border-top: 1px dashed rgba(60,24,70,.14); }
+.riquadro-articoli a { display: flex; align-items: center; gap: .55rem; min-height: 44px; padding-block: .35rem; color: var(--plum); font-size: .9rem; line-height: 1.35; }
+.riquadro-articoli a::before { content: "—"; flex: none; color: var(--brass); }
+.riquadro-articoli a:hover, .riquadro-articoli a:focus-visible { text-decoration: underline; text-decoration-color: var(--brass); text-underline-offset: 3px; }
+
+.sigillo { position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden; background: radial-gradient(circle at 25% 15%, rgba(178,131,54,.24), transparent 55%), radial-gradient(circle at 85% 95%, rgba(25,112,111,.32), transparent 50%), var(--plum-deep); }
+.sigillo::before { content: ""; position: absolute; inset: 0; opacity: .55; background-image: radial-gradient(1.2px 1.2px at 12% 28%, #f5e6bf, transparent 2px), radial-gradient(1px 1px at 78% 18%, #f5e6bf, transparent 2px), radial-gradient(1px 1px at 88% 64%, #d6b66d, transparent 2px), radial-gradient(1.2px 1.2px at 22% 78%, #d6b66d, transparent 2px), radial-gradient(1px 1px at 60% 86%, #f5e6bf, transparent 2px), radial-gradient(1px 1px at 40% 12%, #d6b66d, transparent 2px); }
+.sigillo-cerchio { position: relative; display: grid; place-items: center; width: min(44%, 118px); aspect-ratio: 1; border: 1px solid rgba(214,182,109,.8); border-radius: 50%; box-shadow: 0 0 0 9px rgba(178,131,54,.08), 0 0 0 21px rgba(25,112,111,.08); }
+.sigillo-cerchio::before { content: ""; position: absolute; inset: -16%; border-radius: 50%; background: conic-gradient(from 10deg, transparent 0 7%, rgba(178,131,54,.5) 7% 8%, transparent 8% 25%, rgba(25,112,111,.6) 25% 26%, transparent 26% 50%, rgba(178,131,54,.5) 50% 51%, transparent 51% 75%, rgba(25,112,111,.6) 75% 76%, transparent 76%); -webkit-mask: radial-gradient(circle, transparent 60%, #000 61%); mask: radial-gradient(circle, transparent 60%, #000 61%); }
+.sigillo-segno { position: relative; color: var(--brass-pale); font: italic 400 clamp(1.7rem, 3.4vw, 2.5rem)/1 var(--serif); letter-spacing: .02em; }
+
+.schede-stese { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap: 1.1rem; margin: 0; padding: 0; list-style: none; }
+.scheda-stesa { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--line); background: var(--paper-light); box-shadow: 0 10px 24px rgba(60,24,70,.06); }
+.scheda-stesa-lastra { position: relative; display: block; aspect-ratio: 16 / 10; overflow: hidden; background: radial-gradient(circle at 50% 42%, rgba(178,131,54,.2), transparent 62%), var(--plum-deep); }
+.scheda-stesa-lastra img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.scheda-stesa-schema { position: absolute; inset: 13% 11%; display: grid; place-items: center; }
+.scheda-stesa-schema svg { display: block; width: 100%; height: 100%; }
+/* Con l'illustrazione lo schema scende in un angolo, in una piccola lastra prugna. */
+.con-immagine .scheda-stesa-schema, .spread-illustrata .scheda-stesa-schema { inset: auto 12px 12px auto; width: 40%; height: auto; aspect-ratio: 100 / 64; padding: 4px; border: 1px solid rgba(214,182,109,.65); background: rgba(32,16,38,.9); box-shadow: 0 8px 18px rgba(0,0,0,.35); }
+.scheda-stesa-corpo { display: flex; flex: 1; flex-direction: column; gap: .45rem; padding: .85rem 1rem 1rem; }
+.scheda-stesa-sopra { margin: 0; color: var(--verdigris); font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.scheda-stesa h3 { margin: 0; font: 400 1.3rem/1.25 var(--serif); letter-spacing: -.01em; }
+.scheda-stesa h3 a { color: var(--ink); }
+.scheda-stesa h3 a:hover, .scheda-stesa h3 a:focus-visible { color: var(--plum); text-decoration: underline; text-decoration-color: var(--brass); text-underline-offset: 4px; }
+.scheda-stesa-intro { margin: 0; color: var(--ink-soft); font-size: .9rem; line-height: 1.55; }
+.scheda-stesa-azioni { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem 1rem; margin-top: auto; padding-top: .5rem; }
+.scheda-stesa-azioni .inline { display: inline-flex; align-items: center; min-height: 44px; }
+/* L'elenco delle stese (/spreads): l'illustrazione, se c'è, al posto della sola miniatura. */
+/* Stessa misura della miniatura (`.spread-mini`): le tessere con e senza illustrazione restano allineate. */
+.spread-illustrata { position: relative; display: block; width: 100%; max-width: 220px; aspect-ratio: 100 / 64; overflow: hidden; background: var(--plum-deep); }
+.difference .spread-illustrata { margin-bottom: 1.2rem; }
+.difference .spread-illustrata .scheda-stesa-schema { margin: 0; }
+.spread-illustrata img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* Le carte di una sezione: a tutta larghezza, tessere un po' più strette che nella biblioteca. */
+.cards-grid-sezione { grid-template-columns: repeat(auto-fill, minmax(clamp(96px, 11vw, 140px), 1fr)); }
+
+/* La paginazione: precedente, numeri (la corrente in prugna con il filo d'ottone), successiva, e quanti per pagina.
+ * La riga dei numeri si accorcia secondo lo spazio della colonna, non della finestra. */
+.paginatore { container-type: inline-size; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem 1rem; margin-top: 1rem; padding-top: .8rem; border-top: 1px solid var(--line); }
+.paginatore-numeri { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.paginatore-voce { display: inline-grid; place-items: center; min-width: 44px; height: 44px; padding: 0 .35rem; border: 1px solid var(--line); border-radius: 3px; color: var(--plum); background: var(--paper-light); font: 400 1rem/1 var(--serif); font-variant-numeric: lining-nums tabular-nums; transition: background .15s ease, border-color .15s ease; }
+a.paginatore-voce:hover { border-color: var(--brass); background: #fff3dc; }
+.paginatore-voce[aria-current="page"] { color: #fff7e8; background: var(--plum); border-color: var(--plum); box-shadow: inset 0 -3px 0 var(--brass-pale); }
+.paginatore-passo { font-size: 1.4rem; }
+span.paginatore-passo { color: rgba(60,24,70,.3); background: transparent; }
+.paginatore-salto { min-width: 1.3rem; color: var(--ink-soft); text-align: center; }
+.paginatore-stretto { display: none; }
+@container (max-width: 33rem) { .paginatore-ampio { display: none; } .paginatore-stretto { display: flex; gap: 3px; } }
+.paginatore-per { display: inline-flex; align-items: center; gap: .5rem; color: var(--ink-soft); font-size: .84rem; }
+.paginatore-per select { min-height: 44px; padding: 0 2rem 0 .75rem; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); background-color: #fff; background-image: linear-gradient(45deg, transparent 50%, var(--plum) 50%), linear-gradient(135deg, var(--plum) 50%, transparent 50%); background-position: calc(100% - 16px) 52%, calc(100% - 11px) 52%; background-size: 5px 5px; background-repeat: no-repeat; font-size: 1rem; appearance: none; cursor: pointer; }
+.articoli-su .section-head { align-items: center; }
+.articoli-su-conta { flex: none; padding: .2rem .7rem; font-size: .8rem; }

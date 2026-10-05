@@ -48,6 +48,16 @@ export const blog: typeof Base = {
   ponte_testo: "Стаття відчиняє двері; читання проходить крізь них. Запитай, що це означає для тебе, у твоїй ситуації.",
   ponte_cta: "Постав своє питання",
   non_trovato: "Такої статті не існує, або її більше не опубліковано.",
+  /* v9.4: la paginazione del Journal, le schede ricche delle stese, l'elenco completo su carte e stese */
+  pagina_prima: "Перша сторінка",
+  pagina_ultima: "Остання сторінка",
+  pagina_precedente: "Попередня сторінка",
+  pagina_successiva: "Наступна сторінка",
+  pagina_n: "Сторінка {p}",
+  per_pagina: "На сторінці",
+  stesa_inizia: "Почати читання з цим розкладом",
+  stesa_posizioni: "Переглянути позиції",
+  articoli_su: "Усі статті про «{nome}»",
 
   /* explore */
   esplora_meta_titolo: "Досліджуй Таро",

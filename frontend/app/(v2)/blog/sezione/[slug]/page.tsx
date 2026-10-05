@@ -13,26 +13,27 @@ import { alternative, anteprima, briciole, grafo, soloInglese, titoloPagina, url
 import { BLOG } from "@/lib/seo-testi";
 import { leggiDalServer } from "@/lib/server-api";
 import { Pagina } from "@/v2/componenti/pagina";
-import { P, PER_PAGINA_BLOG } from "@/v2/lib/api-percorsi";
+import { P, PER_PAGINA_BLOG, numeroPagina, perPagina, recentiDiario } from "@/v2/lib/api-percorsi";
 import { DatiIniziali } from "@/v2/lib/iniziali";
 import { NOINDEX } from "@/v2/lib/meta";
 import { precarica } from "@/v2/lib/precarica";
 import { SezioneDiario } from "@/v2/pagine/blog";
 
-type Parametri = { params: Promise<{ slug: string }>; searchParams: Promise<{ page?: string }> };
+type Parametri = { params: Promise<{ slug: string }>; searchParams: Promise<{ page?: string; per?: string }> };
 
-const numeroPagina = (v?: string) => Math.max(1, Math.min(1000, parseInt(v ?? "1", 10) || 1));
 const leggiSezione = (slug: string, lingua: string) => leggiDalServer<DettaglioSezione>(P.sezione(slug, lingua), { obbligatorio: true });
-const percorsoArticoli = (slug: string, lingua: string, pagina: number) =>
-  P.articoli(lingua, { sezione: slug, pagina, per_pagina: PER_PAGINA_BLOG });
+const percorsoArticoli = (slug: string, lingua: string, pagina: number, per: number) =>
+  P.articoli(lingua, { sezione: slug, pagina, per_pagina: per });
 
 export async function generateMetadata({ params, searchParams }: Parametri): Promise<Metadata> {
   const { slug } = await params;
-  const pagina = numeroPagina((await searchParams).page);
+  const sp = await searchParams;
+  const pagina = numeroPagina(sp.page);
+  const per = perPagina(sp.per);
   const lingua = await linguaPagina();
   const s = await leggiSezione(slug, lingua);
   if (!s) return { title: lingua === "it" ? "Sezione non trovata" : "Section not found", robots: NOINDEX };
-  const elenco = await leggiDalServer<ElencoArticoli>(percorsoArticoli(slug, lingua, pagina));
+  const elenco = await leggiDalServer<ElencoArticoli>(percorsoArticoli(slug, lingua, pagina, per));
   // Vuota: niente articoli nel ramo e nessun catalogo (carte, stese) né nella sezione né sotto. Un contenitore di
   // sole sezioni vuote è vuoto anche lui; uno con i semi dentro no. (Senza `n_carte`/`n_stese`, API più vecchia,
   // una sezione con sotto-sezioni non si considera vuota.)
@@ -45,14 +46,16 @@ export async function generateMetadata({ params, searchParams }: Parametri): Pro
   const interno = `/blog/sezione/${s.slug}`;
   const tradotta = s.tipo === "carte" || s.tipo === "stese";
   const lingue = tradotta ? alternative(lingua, { en: interno, it: interno }) : soloInglese(lingua, interno);
+  // `?per=10` o `?per=50`: la stessa lista tagliata diversamente, non si indicizza (canonical alla prima pagina).
+  const altroPer = per !== PER_PAGINA_BLOG;
   return {
     title: titoloPagina(titolo),
     description: descrizione,
-    robots: vuota ? { index: false, follow: true } : undefined,
+    robots: vuota || altroPer ? { index: false, follow: true } : undefined,
     alternates: {
       ...lingue,
-      canonical: pagina > 1 ? `${lingue.canonical}?page=${pagina}` : lingue.canonical,
-      ...(pagina > 1 ? { languages: undefined } : {}),
+      canonical: pagina > 1 && !altroPer ? `${lingue.canonical}?page=${pagina}` : lingue.canonical,
+      ...(pagina > 1 || altroPer ? { languages: undefined } : {}),
     },
     ...anteprima(lingua, { titolo, descrizione, url: urlPubblico(lingua, interno) }),
   };
@@ -60,13 +63,15 @@ export async function generateMetadata({ params, searchParams }: Parametri): Pro
 
 export default async function PaginaSezione({ params, searchParams }: Parametri) {
   const { slug } = await params;
-  const pagina = numeroPagina((await searchParams).page);
+  const sp = await searchParams;
+  const pagina = numeroPagina(sp.page);
+  const per = perPagina(sp.per);
   const lingua = await linguaPagina();
   const sezione = await leggiSezione(slug, lingua);
   if (!sezione) notFound();
   const valori = await precarica([
-    P.sezione(slug, lingua), percorsoArticoli(slug, lingua, pagina), P.sezioni(), P.etichette(),
-    pagina === 1 ? P.nove({ sezione: slug, recenti: PER_PAGINA_BLOG, scelti: 10, completa: false }) : null,
+    P.sezione(slug, lingua), percorsoArticoli(slug, lingua, pagina, per), P.sezioni(), P.etichette(),
+    pagina === 1 ? P.nove({ sezione: slug, recenti: recentiDiario(per), scelti: 10, completa: false }) : null,
   ]);
   const url = urlPubblico(lingua, `/blog/sezione/${sezione.slug}`);
   const dati = grafo(

@@ -28,6 +28,15 @@ export interface EtichettaBlog {
   nome: string;
 }
 
+/* La carta o la stesa di cui un articolo parla (v9.4): l'id canonico (`maj-10`, `croce-celtica`), il nome e lo slug
+ * nella lingua dell'articolo. */
+export interface SoggettoArticolo {
+  tipo: "carta" | "stesa";
+  ref: string;
+  nome: string | null;
+  slug: string | null;
+}
+
 export interface ArticoloBreve {
   slug: string;
   titolo: string;
@@ -42,6 +51,8 @@ export interface ArticoloBreve {
   tags: EtichettaBlog[];
   lang: string;
   in_evidenza: boolean;
+  /* Assente da un'API più vecchia (prima della v9.4). */
+  soggetto?: SoggettoArticolo | null;
 }
 
 export interface ArticoloBlog extends Omit<ArticoloBreve, "immagine"> {
@@ -81,7 +92,8 @@ export interface NodoSezione {
   descrizione: string | null;
   tipo: TipoSezione;
   filtro: Record<string, string> | null;
-  immagine: string | null;
+  /* v9.4: un oggetto (prima era il solo indirizzo); l'alt ripiega sul nome della sezione. */
+  immagine: ImmagineBreve | null;
   /* Gli articoli della sezione e di tutte le sotto-sezioni: quanti ne mostra la pagina della sezione. */
   n_articoli: number;
   /* Solo quelli della sezione (assente da un'API più vecchia). */
@@ -92,13 +104,40 @@ export interface NodoSezione {
   n_carte?: number;
   n_stese?: number;
   figli: NodoSezione[];
+  /* Solo nei figli del dettaglio di una sezione (v9.4): 3 articoli del loro ramo scelti a caso, stabili nel giorno. */
+  articoli?: ArticoloBreve[];
+}
+
+/* Una stesa negli `elementi` di una sezione «stese» (v9.4): ciò che serve alla sua scheda. */
+export interface ElementoStesa {
+  id: string;
+  nome: string;
+  nomi?: Record<string, string>;
+  descrizione: string;
+  descrizione_breve: string;
+  categoria: string;
+  stile: string | null;
+  posizioni: { n: number; nome: string; x: number; y: number; rotazione?: number; calcolata?: boolean }[];
+  lang?: string;
+  slug?: string;
+  slugs?: Record<string, string>;
+  /* La tradizione in poche parole («Celtic tradition», «love»): nella lingua dei testi, e per lingua. */
+  tradizione?: string | null;
+  tradizioni?: Record<string, string>;
+  forma?: string;
+  larghezza?: number | null;
+  larghezza_stretto?: number | null;
+  carte_da_scegliere?: number;
+  mazzo?: "maggiori" | "completo";
+  n_carte: number;
+  immagine: ImmagineBreve | null;
 }
 
 export interface DettaglioSezione extends NodoSezione {
   seo_titolo: string | null;
   seo_descrizione: string | null;
   briciole: { slug: string; nome: string }[];
-  /* Carte o stese del catalogo, per le sezioni di quei tipi. */
+  /* Carte o stese del catalogo, per le sezioni di quei tipi (le stese come `ElementoStesa`). */
   elementi: Record<string, unknown>[];
 }
 

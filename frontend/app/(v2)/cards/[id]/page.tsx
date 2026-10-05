@@ -16,7 +16,7 @@ import { briciole, domande, grafo, urlPubblico } from "@/lib/seo";
 import { CARTA, CARTE, seoCarta } from "@/lib/seo-testi";
 import { leggiDalServer } from "@/lib/server-api";
 import { Pagina } from "@/v2/componenti/pagina";
-import { P } from "@/v2/lib/api-percorsi";
+import { P, numeroPagina, perPagina } from "@/v2/lib/api-percorsi";
 import { DatiIniziali } from "@/v2/lib/iniziali";
 import { NOINDEX, metaV2 } from "@/v2/lib/meta";
 import { precarica } from "@/v2/lib/precarica";
@@ -37,14 +37,21 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   });
 }
 
-export default async function PaginaCarta({ params }: { params: Promise<{ id: string }> }) {
+export default async function PaginaCarta({ params, searchParams }: {
+  params: Promise<{ id: string }>; searchParams: Promise<{ page?: string; per?: string }>;
+}) {
   const { id } = await params;
+  const sp = await searchParams;
   const lingua = await linguaPagina();
   const c = await leggiCarta(id, lingua);
   if (!c) notFound();
   if (c.slug && id !== c.slug) permanentRedirect(pubblico(lingua, `/cards/${c.slug}`));
 
-  const valori = await precarica([P.carta(id, lingua), P.carte(lingua), P.nove({ carta: c.id })]);
+  // In fondo, l'elenco completo degli articoli su questa carta (v9.4, `ArticoliSu`), con la sua paginazione.
+  const valori = await precarica([
+    P.carta(id, lingua), P.carte(lingua), P.nove({ carta: c.id }),
+    P.elencoSu("carta", c.id, numeroPagina(sp.page), perPagina(sp.per)),
+  ]);
   const s = seoCarta(c);
   const url = urlPubblico(lingua, `/cards/${c.slug ?? c.id}`);
   const dati = grafo(

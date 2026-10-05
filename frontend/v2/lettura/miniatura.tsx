@@ -1,9 +1,12 @@
 /* La stesa in miniatura: le sue posizioni vere, in scala, in ottone su prugna. Le posizioni calcolate (la sintesi
  * della Croce semplice) in verderame. */
 
-import type { Stesa } from "@/lib/api";
+import type { Posizione } from "@/lib/api";
 
-export function MiniaturaStesa({ stesa, className }: { stesa: Stesa; className?: string }) {
+/** Basta la geometria delle posizioni: una `Stesa` dell'API o un elemento di una sezione «stese» del Journal. */
+type PosizioneSchema = Pick<Posizione, "n" | "x" | "y"> & Partial<Pick<Posizione, "rotazione" | "calcolata">>;
+
+export function MiniaturaStesa({ stesa, className }: { stesa: { posizioni: PosizioneSchema[] }; className?: string }) {
   return (
     <svg viewBox="0 0 100 64" className={className} aria-hidden="true">
       {stesa.posizioni.map((p) => {

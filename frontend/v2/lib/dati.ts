@@ -19,7 +19,9 @@ export async function leggiPubblico<T>(percorso: string): Promise<T> {
   return (await r.json()) as T;
 }
 
-export { P, PER_PAGINA_BLOG, linguaContenuti } from "./api-percorsi";
+export {
+  P, PER_PAGINA_BLOG, SCELTE_PER_PAGINA, linguaContenuti, numeroPagina, perPagina, recentiDiario,
+} from "./api-percorsi";
 
 type Parametri = Record<string, string | number | undefined>;
 

@@ -7,6 +7,7 @@
  * lo schema, dopo le regole e dopo le altre stese, prima del diario. */
 
 import { elencaStese, type Categoria, type Stesa, type Stile } from "@/lib/api";
+import { urlMedia } from "@/lib/blog";
 import { nomePosizione, nomeStesa } from "@/lib/i18n/nomi";
 import { f, plurale } from "@/v2/i18n";
 import LinkV2 from "@/v2/componenti/link";
@@ -17,7 +18,7 @@ import { P, linguaContenuti } from "@/v2/lib/dati";
 import { useLingua } from "@/v2/lib/lingua";
 import { R } from "@/v2/lib/percorsi";
 import { useCarica } from "@/v2/lib/usa";
-import { DiarioNove } from "./blog";
+import { ArticoliSu, DiarioNove } from "./blog";
 
 const ORDINE_STILI: Stile[] = ["tradizionale", "moderna", "tendenza"];
 
@@ -28,9 +29,17 @@ function nomeSt(s: Stesa, lingua: string) {
 function Tessera({ stesa }: { stesa: Stesa }) {
   const { t, lingua } = useLingua();
   const k = t.stese;
+  // v9.4: l'illustrazione della stesa, se c'è, con lo schema sovrapposto in una lastra prugna; altrimenti lo schema.
+  const illustrazione = urlMedia(stesa.immagine?.mini ?? stesa.immagine?.url);
   return (
     <LinkV2 className="difference" href={R.stesa(stesa.slug ?? stesa.id)}>
-      <MiniaturaStesa stesa={stesa} className="spread-mini" />
+      {illustrazione ? (
+        <span className="spread-illustrata">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={illustrazione} alt="" loading="lazy" width={480} height={300} />
+          <span className="scheda-stesa-schema"><MiniaturaStesa stesa={stesa} /></span>
+        </span>
+      ) : <MiniaturaStesa stesa={stesa} className="spread-mini" />}
       <h3>{nomeSt(stesa, lingua)}</h3>
       <p>{plurale(stesa.posizioni.length, t.lettura.n_carte)} · {stesa.mazzo === "maggiori" ? k.maggiori : k.completo}</p>
     </LinkV2>
@@ -153,7 +162,9 @@ export function SchedaStesa({ id }: { id: string }) {
           <Pubblicita posizione="fine" />
         </>
       )}
-      <DiarioNove contesto={{ stesa: s.id }} />
+      {/* Le scelte per pertinenza prima degli ultimi articoli (v9.4), poi l'elenco completo di quelli su questa stesa. */}
+      <DiarioNove contesto={{ stesa: s.id }} ordine="scelti" />
+      <ArticoliSu tipo="stesa" id={s.id} nome={nomeSt(s, lingua)} base={R.stesa(s.slug ?? s.id)} />
     </>
   );
 }

@@ -9,22 +9,34 @@
 
 import { Fragment, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { leggiApi, type Carta, type Stesa } from "@/lib/api";
-import { dataLeggibile, urlMedia, type ArticoloBreve, type NodoSezione } from "@/lib/blog";
-import { f, plurale } from "@/v2/i18n";
+import { leggiApi, type Carta } from "@/lib/api";
+import {
+  dataLeggibile, urlMedia, type ArticoloBreve, type ElementoStesa, type ElencoArticoli, type NodoSezione,
+} from "@/lib/blog";
+import { nomeStesaDaNomi } from "@/lib/i18n/nomi";
+import { f, plurale, type Lingua } from "@/v2/i18n";
 import { BlogMarkdownV2, type Riferimenti } from "@/v2/componenti/blog-markdown";
 import { ImmagineCarta } from "@/v2/componenti/carta";
 import LinkV2 from "@/v2/componenti/link";
 import { ConPubblicita, Pubblicita, usePubblicitaVisibile } from "@/v2/componenti/pubblicita";
-import { P, PER_PAGINA_BLOG, articoli, articolo, etichette, sezione, sezioni } from "@/v2/lib/dati";
+import { MiniaturaStesa } from "@/v2/lettura/miniatura";
+import {
+  P, PER_PAGINA_BLOG, SCELTE_PER_PAGINA, articoli, articolo, etichette, linguaContenuti, numeroPagina, perPagina,
+  recentiDiario, sezione, sezioni,
+} from "@/v2/lib/dati";
 import { linguaPubblica } from "@/lib/indirizzi";
 import { urlPubblico } from "@/lib/seo";
 import { useLingua } from "@/v2/lib/lingua";
 import { R, indirizzoV2 } from "@/v2/lib/percorsi";
-import { useCarica } from "@/v2/lib/usa";
+import { useCarica, usePubblico } from "@/v2/lib/usa";
 import { nomeDi } from "./carte";
 
-const PER_PAGINA = PER_PAGINA_BLOG;
+/** La pagina e gli articoli per pagina dall'indirizzo (`?page=`, `?per=`): solo nelle pagine del Journal e negli
+ *  elenchi completi delle pagine di carte e stese. */
+function usePaginazione() {
+  const parametri = useSearchParams();
+  return { pagina: numeroPagina(parametri.get("page")), per: perPagina(parametri.get("per")) };
+}
 
 export function Tessera({ a, grande = false }: { a: ArticoloBreve; grande?: boolean }) {
   const { t } = useLingua();
@@ -46,25 +58,54 @@ export interface Nove {
 }
 
 /** I nove articoli di ogni pagina (v8.5): i 3 più recenti, col link all'elenco in ordine cronologico, e 6 scelti
- *  a caso fra quelli attinenti alla pagina, ciascuno col link alla sezione da cui viene. `vuoto` si mostra se il
- *  diario non ha ancora articoli. */
+ *  fra quelli attinenti alla pagina, ciascuno col link alla sezione da cui viene. `vuoto` si mostra se il diario non
+ *  ha ancora articoli.
+ *
+ *  `ordine` (v9.4): nelle pagine di un articolo, di una carta e di una stesa le scelte sono per pertinenza (l'articolo
+ *  su quella carta prima di tutto) e vengono **prima** degli ultimi articoli (`"scelti"`); altrove (home, Explore,
+ *  carta del giorno) restano dopo (`"recenti"`, il predefinito). `lang` tiene solo gli articoli in quella lingua. */
 export function DiarioNove({
-  contesto = {}, eyebrow, titolo, vuoto = null, inMezzo = null,
+  contesto = {}, eyebrow, titolo, vuoto = null, inMezzo = null, ordine = "recenti", lang,
 }: {
   contesto?: { carta?: string; stesa?: string; sezione?: string; articolo?: string };
   eyebrow?: string;
   titolo?: string;
   vuoto?: React.ReactNode;
-  /** Fra i recenti e gli attinenti: uno spazio pubblicitario nelle pagine corte, dove il diario è metà del contenuto. */
+  /** Fra i due gruppi: uno spazio pubblicitario nelle pagine corte, dove il diario è metà del contenuto. */
   inMezzo?: React.ReactNode;
+  ordine?: "recenti" | "scelti";
+  lang?: string;
 }) {
   const { t } = useLingua();
   const b = t.blog;
-  const percorso = P.nove(contesto);
+  const percorso = P.nove({ ...contesto, lang });
   const nove = useCarica(() => leggiApi<Nove>(percorso), [percorso], { pubblico: true, iniziale: percorso });
   const recenti = nove.dati?.recenti ?? [];
   const scelti = nove.dati?.scelti ?? [];
   if (!recenti.length && !scelti.length) return vuoto ? <>{vuoto}</> : null;
+  const gruppoScelti = scelti.length > 0 && (
+    <Fragment key="scelti">
+      <h3 className="diario-nove-sotto">{b.nove_attinenti}</h3>
+      <div className="content-grid">
+        {scelti.map((a) => (
+          <div key={a.slug} className="diario-nove-voce">
+            <Tessera a={a} />
+            {a.sezione && (
+              <LinkV2 className="inline small" href={R.blogSezione(a.sezione.slug)}>{f(b.nove_sezione, { sezione: a.sezione.nome })}</LinkV2>
+            )}
+          </div>
+        ))}
+      </div>
+    </Fragment>
+  );
+  const gruppoRecenti = recenti.length > 0 && (
+    <Fragment key="recenti">
+      {/* Prima delle scelte bastano il titolo della fascia e il pulsante; dopo, un titolo come quello delle scelte. */}
+      {ordine === "scelti" && scelti.length > 0 && <h3 className="diario-nove-sotto">{b.ultimi}</h3>}
+      <div className="content-grid">{recenti.map((a) => <Tessera key={a.slug} a={a} />)}</div>
+    </Fragment>
+  );
+  const [primo, secondo] = ordine === "scelti" ? [gruppoScelti, gruppoRecenti] : [gruppoRecenti, gruppoScelti];
   return (
     <section className="band band-tight diario-nove" aria-labelledby="titolo-nove">
       <div className="section-head">
@@ -74,42 +115,83 @@ export function DiarioNove({
         </div>
         <LinkV2 className="button button-quiet" href={R.blog}>{b.nove_ultimi}</LinkV2>
       </div>
-      <div className="content-grid">{recenti.map((a) => <Tessera key={a.slug} a={a} />)}</div>
-      {scelti.length > 0 && inMezzo}
-      {scelti.length > 0 && (
-        <>
-          <h3 className="diario-nove-sotto">{b.nove_attinenti}</h3>
-          <div className="content-grid">
-            {scelti.map((a) => (
-              <div key={a.slug} className="diario-nove-voce">
-                <Tessera a={a} />
-                {a.sezione && (
-                  <LinkV2 className="inline small" href={R.blogSezione(a.sezione.slug)}>{f(b.nove_sezione, { sezione: a.sezione.nome })}</LinkV2>
-                )}
-              </div>
-            ))}
-          </div>
-        </>
-      )}
+      {primo}
+      {primo && secondo && inMezzo}
+      {secondo}
     </section>
   );
 }
 
-function Pagine({ pagina, pagine, base, q }: { pagina: number; pagine: number; base: string; q?: string }) {
-  const { t } = useLingua();
-  if (pagine <= 1) return null;
-  const href = (p: number) => {
+/** I numeri da mostrare: la prima e l'ultima pagina, la corrente con `vicine` pagine per lato; `null` è un salto
+ *  («…»). Un salto di una pagina sola si scrive col suo numero. */
+function finestra(pagina: number, pagine: number, vicine: number): (number | null)[] {
+  const scelte = new Set([1, pagine]);
+  for (let k = pagina - vicine; k <= pagina + vicine; k++) if (k >= 1 && k <= pagine) scelte.add(k);
+  const ordinate = [...scelte].sort((x, y) => x - y);
+  const fuori: (number | null)[] = [];
+  ordinate.forEach((k, i) => {
+    const salto = i > 0 ? k - ordinate[i - 1] : 1;
+    if (salto === 2) fuori.push(k - 1);
+    else if (salto > 2) fuori.push(null);
+    fuori.push(k);
+  });
+  return fuori;
+}
+
+/** La paginazione degli elenchi del Journal e degli elenchi completi di carte e stese (v9.4): precedente e
+ *  successiva, i numeri con la prima e l'ultima pagina, e la scelta di 10 / 25 / 50 articoli per pagina (`?per=`,
+ *  conservata in ogni link; 25 non si scrive). Due righe di numeri: più ampia sul computer, più corta sul telefono
+ *  (la prima, la corrente, l'ultima), così non si scorre mai di lato. `ancora` riporta all'elenco dopo il clic. */
+export function Pagine({
+  pagina, pagine, totale, base, q, per, ancora,
+}: {
+  pagina: number; pagine: number; totale: number; base: string; q?: string; per: number; ancora?: string;
+}) {
+  const { t, prefissoIt } = useLingua();
+  const b = t.blog;
+  const router = useRouter();
+  if (pagine <= 1 && totale <= SCELTE_PER_PAGINA[0]) return null;
+  const href = (p: number, n = per) => {
     const s = new URLSearchParams();
     if (q) s.set("q", q);
     if (p > 1) s.set("page", String(p));
+    if (n !== PER_PAGINA_BLOG) s.set("per", String(n));
     const qs = s.toString();
-    return qs ? `${base}?${qs}` : base;
+    return `${qs ? `${base}?${qs}` : base}${ancora ? `#${ancora}` : ""}`;
   };
+  const numeri = (vicine: number, classe: string) => (
+    <ol className={`paginatore-numeri ${classe}`}>
+      <li>
+        {pagina > 1
+          ? <LinkV2 className="paginatore-voce paginatore-passo" href={href(pagina - 1)} rel="prev" aria-label={b.pagina_precedente}><span aria-hidden="true">‹</span></LinkV2>
+          : <span className="paginatore-voce paginatore-passo" aria-hidden="true">‹</span>}
+      </li>
+      {finestra(pagina, pagine, vicine).map((n, i) => (n === null ? (
+        <li key={`salto-${i}`} className="paginatore-salto" aria-hidden="true">…</li>
+      ) : (
+        <li key={n}>
+          <LinkV2
+            className="paginatore-voce" href={href(n)} aria-current={n === pagina ? "page" : undefined}
+            aria-label={n === 1 ? `${b.pagina_prima}, ${n}` : n === pagine ? `${b.pagina_ultima}, ${n}` : f(b.pagina_n, { p: n })}
+          >{n}</LinkV2>
+        </li>
+      )))}
+      <li>
+        {pagina < pagine
+          ? <LinkV2 className="paginatore-voce paginatore-passo" href={href(pagina + 1)} rel="next" aria-label={b.pagina_successiva}><span aria-hidden="true">›</span></LinkV2>
+          : <span className="paginatore-voce paginatore-passo" aria-hidden="true">›</span>}
+      </li>
+    </ol>
+  );
   return (
-    <nav className="pager" aria-label={f(t.blog.pagina, { p: pagina, n: pagine })}>
-      {pagina > 1 ? <LinkV2 className="button button-quiet button-small" href={href(pagina - 1)} rel="prev">{t.blog.piu_recenti}</LinkV2> : <span />}
-      <span className="small muted">{f(t.blog.pagina, { p: pagina, n: pagine })}</span>
-      {pagina < pagine ? <LinkV2 className="button button-quiet button-small" href={href(pagina + 1)} rel="next">{t.blog.meno_recenti}</LinkV2> : <span />}
+    <nav className="paginatore" aria-label={f(b.pagina, { p: pagina, n: pagine })}>
+      {pagine > 1 && <>{numeri(2, "paginatore-ampio")}{numeri(0, "paginatore-stretto")}</>}
+      <label className="paginatore-per">
+        <span>{b.per_pagina}</span>
+        <select value={per} onChange={(e) => router.push(indirizzoV2(href(1, Number(e.target.value)), prefissoIt))}>
+          {SCELTE_PER_PAGINA.map((n) => <option key={n} value={n}>{n}</option>)}
+        </select>
+      </label>
     </nav>
   );
 }
@@ -149,6 +231,116 @@ function Albero({ nodi, corrente, livello = 0 }: { nodi: NodoSezione[]; corrente
   );
 }
 
+/** I gradi delle carte minori in numeri romani, per il sigillo delle sezioni «By number» (`aces` → I). */
+const ROMANI: Record<string, string> = {
+  asso: "I", ace: "I", aces: "I", "1": "I", due: "II", two: "II", twos: "II", "2": "II",
+  tre: "III", three: "III", threes: "III", "3": "III", quattro: "IV", four: "IV", fours: "IV", "4": "IV",
+  cinque: "V", five: "V", fives: "V", "5": "V", sei: "VI", six: "VI", sixes: "VI", "6": "VI",
+  sette: "VII", seven: "VII", sevens: "VII", "7": "VII", otto: "VIII", eight: "VIII", eights: "VIII", "8": "VIII",
+  nove: "IX", nine: "IX", nines: "IX", "9": "IX", dieci: "X", ten: "X", tens: "X", "10": "X",
+  // Le figure: principessa e principe cominciano con la stessa lettera, il principe ne prende due.
+  principe: "Pr", prince: "Pr", princes: "Pr",
+};
+
+/** Il segno nel sigillo di una sezione senza immagine: il numero romano di un grado, il quadrato delle stese,
+ *  altrimenti l'iniziale del nome. */
+function sigla(n: NodoSezione): string {
+  const rango = n.filtro?.rango;
+  if (rango && ROMANI[String(rango).toLowerCase()]) return ROMANI[String(rango).toLowerCase()];
+  if (n.tipo === "stese") return "▦";
+  return (n.nome.trim()[0] ?? "✦").toUpperCase();
+}
+
+/** Il segnaposto di un'immagine che non c'è ancora: una lastra prugna con un sigillo d'ottone (lo stesso cerchio del
+ *  rito in home) e il segno della sezione. Decorativo: il nome sta già nel riquadro. */
+function Sigillo({ segno }: { segno: string }) {
+  return (
+    <span className="sigillo" aria-hidden="true">
+      <span className="sigillo-cerchio"><span className="sigillo-segno">{segno}</span></span>
+    </span>
+  );
+}
+
+/** L'alt di un'immagine dentro un link che ha già il nome scritto: vuoto se ripete solo il nome. */
+const altUtile = (alt: string | null | undefined, nome: string) => (alt && alt.trim() !== nome.trim() ? alt : "");
+
+/* Le sotto-sezioni come riquadri (v9.4, al posto dell'albero): l'immagine della sezione (o il sigillo), il nome, cosa
+ * contiene (`Conti`) e 3 articoli del suo ramo scelti per la giornata. Immagine e nome sono un solo link; gli
+ * articoli i loro, alti 44 px. */
+function RiquadriSezioni({ nodi }: { nodi: NodoSezione[] }) {
+  return (
+    <ul className="riquadri-sezioni">
+      {nodi.map((n) => {
+        const img = urlMedia(n.immagine?.mini ?? n.immagine?.url);
+        return (
+          <li key={n.id} className="riquadro-sezione">
+            <LinkV2 className="riquadro-testa" href={R.blogSezione(n.slug)}>
+              <span className="riquadro-immagine">
+                {img
+                  // eslint-disable-next-line @next/next/no-img-element
+                  ? <img src={img} alt={altUtile(n.immagine?.alt, n.nome)} loading="lazy" width={480} height={270} />
+                  : <Sigillo segno={sigla(n)} />}
+              </span>
+              <span className="riquadro-nome">{n.nome}<span className="riquadro-freccia" aria-hidden="true">→</span></span>
+            </LinkV2>
+            <Conti n={n} />
+            {(n.articoli ?? []).length > 0 && (
+              <ul className="riquadro-articoli">
+                {(n.articoli ?? []).slice(0, 3).map((a) => (
+                  <li key={a.slug}><LinkV2 href={R.articolo(a.slug)}>{a.titolo}</LinkV2></li>
+                ))}
+              </ul>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/* Le stese di una sezione «stese» (v9.4), in schede ricche: l'illustrazione con lo schema della stesa sovrapposto in
+ * una lastra prugna (senza illustrazione lo schema occupa tutta la lastra), la tradizione e il numero di carte, il
+ * nome, l'introduzione breve, la lettura con quella stesa e il link alla sua pagina. */
+function SchedeStese({ elementi }: { elementi: ElementoStesa[] }) {
+  const { t, lingua } = useLingua();
+  const b = t.blog;
+  const nome = (s: ElementoStesa) =>
+    s.lang === linguaContenuti(lingua) ? s.nome : nomeStesaDaNomi(s.nome, s.nomi, lingua as Lingua);
+  return (
+    <ul className="schede-stese">
+      {elementi.map((s) => {
+        const n = nome(s);
+        const img = urlMedia(s.immagine?.mini ?? s.immagine?.url);
+        // La tradizione nella lingua della pagina; per una lingua senza traduzione, quella dei testi (l'inglese).
+        const tradizione = s.tradizioni?.[lingua] ?? s.tradizioni?.[linguaContenuti(lingua)] ?? s.tradizione;
+        const pagina = R.stesa(s.slug ?? s.id);
+        return (
+          <li key={s.id} className="scheda-stesa">
+            <LinkV2 className={`scheda-stesa-lastra ${img ? "con-immagine" : ""}`} href={pagina} tabIndex={-1} aria-hidden="true">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {img && <img src={img} alt="" loading="lazy" width={480} height={300} />}
+              <span className="scheda-stesa-schema"><MiniaturaStesa stesa={s} /></span>
+            </LinkV2>
+            <div className="scheda-stesa-corpo">
+              <p className="scheda-stesa-sopra">
+                {[tradizione, plurale(s.n_carte, t.lettura.n_carte)].filter(Boolean).join(" · ")}
+              </p>
+              <h3><LinkV2 href={pagina}>{n}</LinkV2></h3>
+              {s.descrizione_breve && <p className="scheda-stesa-intro">{s.descrizione_breve}</p>}
+              <div className="scheda-stesa-azioni">
+                <LinkV2 className="button button-brass button-small" href={`${R.leggi}?spread=${encodeURIComponent(s.id)}&source=journal`}>
+                  {b.stesa_inizia}
+                </LinkV2>
+                <LinkV2 className="inline small" href={pagina}>{b.stesa_posizioni}</LinkV2>
+              </div>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 function Laterale({ corrente }: { corrente?: string }) {
   const { t } = useLingua();
   const albero = useCarica(sezioni, [], { pubblico: true, iniziale: P.sezioni() });
@@ -173,11 +365,13 @@ function Laterale({ corrente }: { corrente?: string }) {
 
 /** I 10 a caso delle pagine del Diario (v8.5): sotto gli ultimi articoli, solo in prima pagina, ognuno col link alla
  *  sua sezione. Stessa scelta per tutta la giornata (la decide il server). */
-function SceltiACaso({ percorso }: { percorso: string }) {
+function SceltiACaso({ percorso, escludi = [] }: { percorso: string; escludi?: ArticoloBreve[] }) {
   const { t } = useLingua();
   const b = t.blog;
   const nove = useCarica(() => leggiApi<Nove>(percorso), [percorso], { pubblico: true, iniziale: percorso });
-  const scelti = nove.dati?.scelti ?? [];
+  // L'API esclude al più 12 recenti (`recentiDiario`): gli altri articoli della prima pagina si tolgono qui.
+  const visti = new Set(escludi.map((a) => a.slug));
+  const scelti = (nove.dati?.scelti ?? []).filter((a) => !visti.has(a.slug));
   if (!scelti.length) return null;
   return (
     <section className="journal-a-caso" aria-labelledby="titolo-a-caso">
@@ -216,9 +410,9 @@ function DiarioContenuto() {
   const router = useRouter();
   const parametri = useSearchParams();
   const q = parametri.get("q") ?? "";
-  const pagina = Math.max(1, Number(parametri.get("page") ?? 1) || 1);
+  const { pagina, per } = usePaginazione();
   const [testo, setTesto] = useState(q);
-  const elenco = useCarica(() => articoli(lingua, { q, pagina, per_pagina: PER_PAGINA }), [lingua, q, pagina], { pubblico: true, iniziale: P.articoli(lingua, { q, pagina, per_pagina: PER_PAGINA }) });
+  const elenco = useCarica(() => articoli(lingua, { q, pagina, per_pagina: per }), [lingua, q, pagina, per], { pubblico: true, iniziale: P.articoli(lingua, { q, pagina, per_pagina: per }) });
   const evidenza = useCarica(() => (q || pagina > 1 ? Promise.resolve(null) : articoli(lingua, { evidenza: "true", per_pagina: 1 })), [lingua, q, pagina], { pubblico: true, iniziale: q || pagina > 1 ? null : P.articoli(lingua, { evidenza: "true", per_pagina: 1 }) });
   const primo = evidenza.dati?.articoli[0] ?? null;
   const lista = (elenco.dati?.articoli ?? []).filter((a) => a.slug !== primo?.slug);
@@ -247,12 +441,12 @@ function DiarioContenuto() {
               <Fragment key="lista">
                 {!q && <p className="eyebrow">{b.ultimi}</p>}
                 <div className="journal-grid">{lista.map((a) => <Tessera key={a.slug} a={a} />)}</div>
-                {elenco.dati && <Pagine pagina={pagina} pagine={elenco.dati.pagine} base={R.blog} q={q} />}
+                {elenco.dati && <Pagine pagina={pagina} pagine={elenco.dati.pagine} totale={elenco.dati.totale} base={R.blog} q={q} per={per} />}
               </Fragment>
             )}
-            {!q && pagina === 1 && <SceltiACaso key="caso" percorso={P.nove({ recenti: PER_PAGINA, scelti: 10 })} />}
+            {!q && pagina === 1 && <SceltiACaso key="caso" percorso={P.nove({ recenti: recentiDiario(per), scelti: 10 })} escludi={[...lista, ...(primo ? [primo] : [])]} />}
           </ConPubblicita>
-          {elenco.dati && lista.length === 0 && <Pagine pagina={pagina} pagine={elenco.dati.pagine} base={R.blog} q={q} />}
+          {elenco.dati && lista.length === 0 && <Pagine pagina={pagina} pagine={elenco.dati.pagine} totale={elenco.dati.totale} base={R.blog} q={q} per={per} />}
           <Ponte />
         </div>
         <Laterale />
@@ -268,14 +462,15 @@ export function SezioneDiario({ slug }: { slug: string }) {
 function SezioneContenuto({ slug }: { slug: string }) {
   const { t, lingua } = useLingua();
   const b = t.blog;
-  const parametri = useSearchParams();
-  const pagina = Math.max(1, Number(parametri.get("page") ?? 1) || 1);
+  const { pagina, per } = usePaginazione();
   const s = useCarica(() => sezione(slug, lingua), [slug, lingua], { pubblico: true, iniziale: P.sezione(slug, lingua) });
-  const elenco = useCarica(() => articoli(lingua, { sezione: slug, pagina, per_pagina: PER_PAGINA }), [slug, lingua, pagina], { pubblico: true, iniziale: P.articoli(lingua, { sezione: slug, pagina, per_pagina: PER_PAGINA }) });
+  const elenco = useCarica(() => articoli(lingua, { sezione: slug, pagina, per_pagina: per }), [slug, lingua, pagina, per], { pubblico: true, iniziale: P.articoli(lingua, { sezione: slug, pagina, per_pagina: per }) });
   if (s.errore) return <section className="band band-tight"><p className="notice">{b.vuoto}</p></section>;
   if (!s.dati) return <section className="band band-tight"><p className="muted">{t.comune.carica}</p></section>;
   const d = s.dati;
   const lista = elenco.dati?.articoli ?? [];
+  const carte = d.tipo === "carte" ? (d.elementi as unknown as Carta[]) : [];
+  const stese = d.tipo === "stese" ? (d.elementi as unknown as ElementoStesa[]) : [];
   return (
     <>
       <section className="subhero subhero-compact">
@@ -285,44 +480,51 @@ function SezioneContenuto({ slug }: { slug: string }) {
         </nav>
         <h1 className="display">{d.nome}</h1>
         {d.descrizione && <p className="section-intro">{d.descrizione}</p>}
+        <div className="sezione-conti"><Conti n={d} /></div>
       </section>
+      {/* Il contenuto della sezione a tutta larghezza (v9.4): le sotto-sezioni in riquadri, le carte, le stese. Poi gli
+          articoli nella colonna, con le sezioni e le etichette accanto. */}
+      {(d.figli.length > 0 || carte.length > 0 || stese.length > 0) && (
+        <section className="band band-tight sezione-catalogo">
+          {d.figli.length > 0 && (
+            <div className="sezione-blocco" aria-labelledby="titolo-sottosezioni">
+              <h2 id="titolo-sottosezioni" className="sezione-blocco-titolo">{b.sottosezioni}</h2>
+              <RiquadriSezioni nodi={d.figli} />
+            </div>
+          )}
+          {carte.length > 0 && (
+            <div className="sezione-blocco" aria-labelledby="titolo-carte-sezione">
+              <h2 id="titolo-carte-sezione" className="sezione-blocco-titolo">{b.carte_sezione}</h2>
+              <div className="cards-grid cards-grid-sezione">
+                {carte.map((c) => (
+                  <LinkV2 key={c.id} className="card-tile" href={R.carta(c.slug ?? c.id)}>
+                    <ImmagineCarta id={c.id} alt="" mazzo={null} />
+                    <span>{nomeDi(c, lingua)}</span>
+                    {c.arcano_label && <small>{c.arcano === "maggiore" ? c.numero_romano : c.seme_label}</small>}
+                  </LinkV2>
+                ))}
+              </div>
+            </div>
+          )}
+          {stese.length > 0 && (
+            <div className="sezione-blocco" aria-labelledby="titolo-stese-sezione">
+              <h2 id="titolo-stese-sezione" className="sezione-blocco-titolo">{b.stese_sezione}</h2>
+              <SchedeStese elementi={stese} />
+            </div>
+          )}
+        </section>
+      )}
       <section className="band band-tight story-grid journal-layout">
         <div>
           <ConPubblicita dentro>
-            {d.figli.length > 0 && (
-              <section key="figli" className="sezioni-box" aria-labelledby="titolo-sottosezioni">
-                <h2 id="titolo-sottosezioni">{b.sottosezioni}</h2>
-                <Albero nodi={d.figli} />
-              </section>
-            )}
-            {d.tipo === "carte" && (
-              <Fragment key="carte">
-                <p className="eyebrow" style={{ marginTop: ".5rem" }}>{b.carte_sezione}</p>
-                <div className="cards-grid">
-                  {(d.elementi as unknown as Carta[]).map((c) => (
-                    <LinkV2 key={c.id} className="card-tile" href={R.carta(c.slug ?? c.id)}>
-                      <ImmagineCarta id={c.id} alt="" mazzo={null} /><span>{nomeDi(c, lingua)}</span>
-                    </LinkV2>
-                  ))}
-                </div>
-              </Fragment>
-            )}
-            {d.tipo === "stese" && (
-              <Fragment key="stese">
-                <p className="eyebrow" style={{ marginTop: ".5rem" }}>{b.stese_sezione}</p>
-                <ul className="chips">
-                  {(d.elementi as unknown as Stesa[]).map((x) => <li key={x.id}><LinkV2 className="chip" href={R.stesa(x.slug ?? x.id)}>{x.nome}</LinkV2></li>)}
-                </ul>
-              </Fragment>
-            )}
             {lista.length > 0 && (
               <Fragment key="lista">
-                <p className="eyebrow" style={{ marginTop: ".65rem" }}>{b.articoli}</p>
+                <p className="eyebrow">{b.articoli}</p>
                 <div className="journal-grid">{lista.map((a) => <Tessera key={a.slug} a={a} />)}</div>
-                {elenco.dati && <Pagine pagina={pagina} pagine={elenco.dati.pagine} base={R.blogSezione(slug)} />}
+                {elenco.dati && <Pagine pagina={pagina} pagine={elenco.dati.pagine} totale={elenco.dati.totale} base={R.blogSezione(slug)} per={per} />}
               </Fragment>
             )}
-            {pagina === 1 && <SceltiACaso key="caso" percorso={P.nove({ sezione: slug, recenti: PER_PAGINA, scelti: 10, completa: false })} />}
+            {pagina === 1 && <SceltiACaso key="caso" percorso={P.nove({ sezione: slug, recenti: recentiDiario(per), scelti: 10, completa: false })} escludi={lista} />}
           </ConPubblicita>
           {/* «Ancora nessun articolo» se il ramo non ha né articoli né carte o stese (un contenitore di sezioni vuote). */}
           {elenco.dati && lista.length === 0 && (d.tipo === "articoli" || d.tipo === "contenitore") && !d.n_carte && !d.n_stese
@@ -342,10 +544,9 @@ export function EtichettaDiario({ slug }: { slug: string }) {
 function EtichettaContenuto({ slug }: { slug: string }) {
   const { t, lingua } = useLingua();
   const b = t.blog;
-  const parametri = useSearchParams();
-  const pagina = Math.max(1, Number(parametri.get("page") ?? 1) || 1);
+  const { pagina, per } = usePaginazione();
   const tag = useCarica(etichette, [], { pubblico: true, iniziale: P.etichette() });
-  const elenco = useCarica(() => articoli(lingua, { tag: slug, pagina, per_pagina: PER_PAGINA }), [slug, lingua, pagina], { pubblico: true, iniziale: P.articoli(lingua, { tag: slug, pagina, per_pagina: PER_PAGINA }) });
+  const elenco = useCarica(() => articoli(lingua, { tag: slug, pagina, per_pagina: per }), [slug, lingua, pagina, per], { pubblico: true, iniziale: P.articoli(lingua, { tag: slug, pagina, per_pagina: per }) });
   const nome = tag.dati?.find((e) => e.slug === slug)?.nome ?? slug;
   const lista = elenco.dati?.articoli ?? [];
   return (
@@ -361,15 +562,44 @@ function EtichettaContenuto({ slug }: { slug: string }) {
           <ConPubblicita dentro>
             <Fragment key="lista">
               <div className="journal-grid">{lista.map((a) => <Tessera key={a.slug} a={a} />)}</div>
-              {elenco.dati && <Pagine pagina={pagina} pagine={elenco.dati.pagine} base={R.blogTag(slug)} />}
+              {elenco.dati && <Pagine pagina={pagina} pagine={elenco.dati.pagine} totale={elenco.dati.totale} base={R.blogTag(slug)} per={per} />}
             </Fragment>
-            {pagina === 1 && <SceltiACaso key="caso" percorso={P.nove({ tag: slug, recenti: PER_PAGINA, scelti: 10, completa: false })} />}
+            {pagina === 1 && <SceltiACaso key="caso" percorso={P.nove({ tag: slug, recenti: recentiDiario(per), scelti: 10, completa: false })} escludi={lista} />}
           </ConPubblicita>
           <Ponte />
         </div>
         <Laterale />
       </section>
     </>
+  );
+}
+
+/** L'elenco completo degli articoli su una carta o una stesa, in fondo alla sua pagina (v9.4): prima quelli che ne
+ *  parlano come soggetto, poi quelli che la citano (`GET /blog/posts?carta=` / `?stesa=`), con la paginazione del
+ *  Journal. Niente se non ce n'è nessuno. */
+export function ArticoliSu(props: { tipo: "carta" | "stesa"; id: string; nome: string; base: string }) {
+  return <Suspense fallback={null}><ArticoliSuContenuto {...props} /></Suspense>;
+}
+
+function ArticoliSuContenuto({ tipo, id, nome, base }: { tipo: "carta" | "stesa"; id: string; nome: string; base: string }) {
+  const { t } = useLingua();
+  const b = t.blog;
+  const { pagina, per } = usePaginazione();
+  const elenco = usePubblico<ElencoArticoli>(P.elencoSu(tipo, id, pagina, per));
+  const dati = elenco.dati;
+  if (!dati || dati.totale === 0) return null;
+  return (
+    <section id="articoli-su" className="band band-tight articoli-su" aria-labelledby="titolo-articoli-su">
+      <div className="section-head">
+        <div>
+          <p className="eyebrow">{b.eyebrow}</p>
+          <h2 id="titolo-articoli-su" className="section-title">{f(b.articoli_su, { nome })}</h2>
+        </div>
+        <span className="albero-conta articoli-su-conta">{plurale(dati.totale, b.conta_articoli)}</span>
+      </div>
+      <div className="journal-grid">{dati.articoli.map((a) => <Tessera key={a.slug} a={a} />)}</div>
+      <Pagine pagina={pagina} pagine={dati.pagine} totale={dati.totale} base={base} per={per} ancora="articoli-su" />
+    </section>
   );
 }
 
@@ -476,7 +706,7 @@ export function ArticoloDiario({ slug }: { slug: string }) {
           {f(b.copyright, { anno: (x.pubblicato_il ?? x.aggiornato_il ?? "").slice(0, 4) })}
         </p>
       </section>
-      <DiarioNove contesto={{ articolo: x.slug }} />
+      <DiarioNove contesto={{ articolo: x.slug }} ordine="scelti" lang={x.lang} />
     </article>
   );
 }

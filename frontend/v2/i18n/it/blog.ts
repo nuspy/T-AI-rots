@@ -48,6 +48,16 @@ export const blog: typeof Base = {
   ponte_testo: "Un articolo apre una porta; una lettura la attraversa. Chiedi che cosa significa per te, nella tua situazione.",
   ponte_cta: "Fai la tua domanda",
   non_trovato: "Questo articolo non esiste, oppure non è più pubblicato.",
+  /* v9.4: la paginazione del Journal, le schede ricche delle stese, l'elenco completo su carte e stese */
+  pagina_prima: "Prima pagina",
+  pagina_ultima: "Ultima pagina",
+  pagina_precedente: "Pagina precedente",
+  pagina_successiva: "Pagina successiva",
+  pagina_n: "Pagina {p}",
+  per_pagina: "Per pagina",
+  stesa_inizia: "Comincia una lettura con questa stesa",
+  stesa_posizioni: "Vedi le posizioni",
+  articoli_su: "Tutti gli articoli su {nome}",
 
   esplora_meta_titolo: "Esplora i Tarocchi",
   esplora_meta_descrizione: "Il diario, le carte, le stese e i mazzi come un'unica rete che riporta alla tua domanda.",

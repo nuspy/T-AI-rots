@@ -46,6 +46,16 @@ export const blog = {
   ponte_testo: "An article opens a door; a reading walks through it. Ask what this means for you, in your situation.",
   ponte_cta: "Ask your own question",
   non_trovato: "This article does not exist, or it is no longer published.",
+  /* v9.4: the Journal's pagination, the rich spread cards, the full list on card and spread pages */
+  pagina_prima: "First page",
+  pagina_ultima: "Last page",
+  pagina_precedente: "Previous page",
+  pagina_successiva: "Next page",
+  pagina_n: "Page {p}",
+  per_pagina: "Per page",
+  stesa_inizia: "Begin a reading with this spread",
+  stesa_posizioni: "See the positions",
+  articoli_su: "Every article about {nome}",
 
   /* explore */
   esplora_meta_titolo: "Explore the Tarot",
