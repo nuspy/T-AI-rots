@@ -43,7 +43,7 @@ The picture rules, checked before anything is generated or sent (`--dry-run` inc
     - a new form: four dimensions are declared for every picture (--kind, --shot, --light from the catalogs below,
       --setting in free text) and recorded; the kind of the last 3 pictures, a kind+shot pair of the last 20, the
       light of the last 2 (firelight: of the last 10) and a setting of the last 10 are refused. The prompt must show
-      the declared light, composition and setting;
+      the declared light and composition (the setting is recorded, not required in the text);
     - a new scene: a prompt 45% or more similar (Jaccard, content words) to one already generated is refused;
     - a new file: a picture already used for another article is refused (sha256, kept in the progress file).
 
@@ -753,12 +753,8 @@ def dimension_problems(prompt: str, dims: Dict[str, str], history: List[Dict[str
             f"the prompt does not show the composition declared with --shot {shot}: write it into the scene with one "
             f"of {', '.join(repr(k) for k in SHOTS[shot][1])}."
         )
-    setting_words = {w for w in _words(setting) if w not in _EMPTY and len(w) > 2}
-    if setting_words and not setting_words & set(_words(scene)):
-        problems.append(
-            f"the prompt does not name the setting declared with --setting «{setting}»: put that place, culture or "
-            f"era in the scene (one of the words {', '.join(sorted(setting_words))})."
-        )
+    # Il luogo dichiarato con --setting non deve per forza comparire nel prompt (decisione dell'operatore, 5/10):
+    # conta per la varietà, nel registro, non come parola obbligatoria.
     return problems
 
 

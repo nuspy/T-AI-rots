@@ -218,6 +218,30 @@ def test_when_the_api_cannot_be_reached_the_copy_is_used_with_a_warning(api, cap
     assert "Using the local copy" in captured.err and len(_lines(captured.out)) == 5
 
 
+def test_a_server_without_titles_falls_back_on_this_keys_posts_and_says_so(api, monkeypatch, capsys):
+    """Server older than the script (no `GET /titles`, 404): topic-check still works, on `GET /posts` (this key's
+    articles), with a warning; the copy is marked partial and reloaded in full once `/titles` exists."""
+    mine = {"id": "00000000-0000-0000-0000-000000000099", "slug": "nine-of-cups-wish-card", "titolo": "Nine of Cups",
+            "sottotitolo": "The wish card", "seo_parola_chiave": "nine of cups meaning", "lang": "en",
+            "stato": "bozza", "pubblicato_il": None, "aggiornato": T0}
+
+    def vecchio(method, path, query=None, **kwargs):
+        if path == "/titles":
+            raise tb.NotFound("HTTP 404: Not Found")
+        assert (method, path) == ("GET", "/posts")
+        return {"totale": 1, "pagina": 1, "articoli": [mine]}
+
+    monkeypatch.setattr(tb, "call", vecchio)
+    assert tb.main(["topic-check", "Nine of Cups meaning"]) == tb.EXIT_TAKEN
+    captured = capsys.readouterr()
+    assert "no GET /titles yet" in captured.err and "nine-of-cups-wish-card" in captured.out
+    assert _cache()["partial"] is True
+    monkeypatch.setattr(tb, "call", api)  # the server now has /titles: full reload, every key's articles
+    assert tb.main(["titles"]) == tb.EXIT_OK
+    captured = capsys.readouterr()
+    assert "without GET /titles" in captured.err and _cache()["partial"] is False and len(_lines(captured.out)) == 5
+
+
 def test_mine_is_unchanged(api, monkeypatch, capsys):
     calls = []
     monkeypatch.setattr(tb, "call", lambda method, path, **kw: calls.append((method, path, kw)) or

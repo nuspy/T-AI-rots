@@ -99,6 +99,8 @@ python scripts/tarots_blog.py catalog --grep tower   # link shortcuts for cards 
     the close article and why yours is different.
   - `FREE` (< 0.40): go ahead.
   `titles --grep <word>` helps to see the neighbourhood of a topic; `topic-check` is the decision.
+  On a server that does not have `GET /titles` yet, both commands print `warning: this server has no GET /titles
+  yet` and check only this key's own articles: say so in the report (the verdict covers fewer articles).
 
 ### 3. Outline for search intent
 - The first 100 words answer the question directly and contain the primary keyword.

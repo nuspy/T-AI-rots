@@ -177,6 +177,10 @@ class Unreachable(Failure):
     """The API could not be reached at all (network, DNS, timeout): the only failure a local cache may cover for."""
 
 
+class NotFound(Failure):
+    """HTTP 404: the resource, or the whole endpoint on a server older than this script."""
+
+
 # ---- configuration and HTTP ------------------------------------------------------------------------------------
 
 
@@ -274,7 +278,7 @@ def call(
                 payload = response.read()
                 return json.loads(payload) if payload else None
         except urllib.error.HTTPError as exc:
-            raise Failure(explain(exc)) from None
+            raise (NotFound if exc.code == 404 else Failure)(explain(exc)) from None
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
             if attempt == 0 and method == "GET":
                 time.sleep(2)
@@ -526,13 +530,42 @@ def _fetch_titles(since: Optional[datetime.datetime]) -> Any:
         query: Dict[str, Any] = {"archiviati": "true", "pagina": page, "per_pagina": TITLES_PAGE}
         if since is not None:
             query["dal"] = since.isoformat()
-        data = call("GET", "/titles", query=query)
+        try:
+            data = call("GET", "/titles", query=query)
+        except NotFound:
+            if page > 1:
+                raise
+            return _fetch_own_posts(), None
         if page == 1:
             server_now = data.get("adesso")
         batch = data.get("articoli") or []
         rows.extend(batch)
         if len(batch) < TITLES_PAGE or len(rows) >= int(data.get("totale") or 0):
             return rows, server_now
+        page += 1
+
+
+def _fetch_own_posts() -> List[Dict[str, Any]]:
+    """Fallback for a server without `GET /titles` (older than this script): this key's articles from `GET /posts`,
+    in the same shape as the rows of `/titles`. Said every time: the other keys' articles are missing. The copy is
+    marked partial, so the first run against a newer server reloads it in full."""
+    print("warning: this server has no GET /titles yet: topics are checked only against the articles of THIS key "
+          "(`mine`), not the whole blog.", file=sys.stderr)
+    rows: List[Dict[str, Any]] = []
+    page = 1
+    while True:
+        data = call("GET", "/posts", query={"pagina": page, "per_pagina": 100})
+        batch = data.get("articoli") or []
+        for p in batch:
+            rows.append({
+                "id": p["id"], "slug": p.get("slug"), "titolo": p.get("titolo"),
+                "estratto": p.get("sottotitolo") or p.get("seo_descrizione") or "",
+                "parola_chiave": p.get("seo_parola_chiave"), "sezione": None, "lang": p.get("lang"),
+                "stato": p.get("stato"), "pubblicato_il": p.get("pubblicato_il"), "aggiornato": p.get("aggiornato"),
+                "mio": True, "tradotto_da_id": p.get("tradotto_da_id"),
+            })
+        if len(batch) < 100 or len(rows) >= int(data.get("totale") or 0):
+            return rows
         page += 1
 
 
@@ -550,6 +583,8 @@ def sync_titles(*, refresh: bool = False) -> Dict[str, Any]:
         reason = "no local copy yet"
     elif cache.get("identity") != identity:
         reason = "the copy is of another site or key"
+    elif cache.get("partial"):
+        reason = "the copy came from a server without GET /titles (only this key's articles)"
     elif full_at is None or _utcnow() - full_at > TITLES_FULL_EVERY:
         reason = "the copy is older than 7 days: this also drops deleted articles"
     try:
@@ -569,6 +604,8 @@ def sync_titles(*, refresh: bool = False) -> Dict[str, Any]:
         return cache
     for row in rows:
         cache["articles"][str(row["id"])] = row
+    # Only the fallback on `GET /posts` has no server clock: that copy holds this key's articles alone.
+    cache["partial"] = server_now is None
     cache["synced_at"] = server_now or _utcnow().isoformat(timespec="seconds")
     _write_titles_cache(cache)
     return cache

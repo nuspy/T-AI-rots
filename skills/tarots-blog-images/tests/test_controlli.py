@@ -401,13 +401,13 @@ def test_a_setting_of_the_last_ten_is_refused_after_normalisation():
     assert ti.setting_key("Café de Flore") == ti.setting_key("cafe  de flore")
 
 
-def test_the_prompt_must_show_the_declared_light_shot_and_setting():
+def test_the_prompt_must_show_the_declared_light_and_shot_not_the_setting():
     dims = dict(DIMS[3], light="dawn", shot="over-the-shoulder", setting="Kyoto temple")
     problems = ti.dimension_problems(GOOD[3], dims, [])
-    assert len(problems) == 3
+    assert len(problems) == 2  # il luogo dichiarato non deve comparire nel prompt (decisione del 5/10)
     assert "does not show the light declared with --light dawn" in problems[0] and "'sunrise'" in problems[0]
     assert "does not show the composition declared with --shot over-the-shoulder" in problems[1]
-    assert "does not name the setting declared with --setting «Kyoto temple»" in problems[2]
+    assert not any("setting" in p for p in problems)
     # the house style's "soft natural light" never counts as a declared light
     assert ti.dimension_problems("a field, wide, " + STYLE, dict(DIMS[1], setting="field"), []) != []
 

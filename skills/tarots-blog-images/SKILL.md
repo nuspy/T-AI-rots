@@ -37,7 +37,8 @@ library only. The script is `scripts/tarots_images.py` (paths below are relative
 - **A new form**: `generate` and `prompt-check` require `--kind` (17 values), `--shot` (12), `--light` (10) and
   `--setting` (a place, culture or era in free text); `catalog` lists them. Refused: a kind of the **last 3**
   pictures, a kind+shot pair of the **last 20**, a light of the **last 2** (firelight: of the **last 10**), a
-  setting of the **last 10**. The prompt must contain a word of the declared light and shot and name the setting.
+  setting of the **last 10**. The prompt must contain a word of the declared light and shot (the setting is recorded for variety; it does not
+  have to appear in the prompt).
   Each refusal says what to change and lists what is free.
 - **A new scene**: a prompt sharing 45% or more of its content words with any prompt already generated is refused,
   with the closest one shown. Change the scene, not three words.
