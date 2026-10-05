@@ -17,7 +17,10 @@ param(
 $repo = Split-Path -Parent $PSScriptRoot
 $python = Join-Path $repo 'backend\.venv\Scripts\python.exe'
 if (-not (Test-Path $python)) { $python = (Get-Command python -ErrorAction Stop).Source }
-$ciclo = Join-Path $repo 'skills\tarots-blog-images\scripts\redo_covers_loop.py'
+# La copia di Hermes (aggiornata a mano con tools\aggiorna_skill_hermes.ps1), non l'originale del repository: così anche
+# i comandi che il ciclo scrive nel prompt di Hermes puntano alle sue copie (decisione dell'operatore, 5/10).
+$ciclo = Join-Path $env:LOCALAPPDATA 'hermes\skills\tarots-blog-images\scripts\redo_covers_loop.py'
+if (-not (Test-Path $ciclo)) { throw "Manca la copia di Hermes della skill: lancia prima tools\aggiorna_skill_hermes.ps1" }
 $cartella = Join-Path $env:USERPROFILE '.tarots-blog\loop-covers'
 New-Item -ItemType Directory -Force $cartella | Out-Null
 $uscita = Join-Path $cartella ('giro-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.txt')
