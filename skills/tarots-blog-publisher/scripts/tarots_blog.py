@@ -33,8 +33,11 @@ Commands (run `tarots_blog.py <command> -h` for the options):
                            Counts its rounds in the work folder (.checks): a 5th round still below the score is a STOP
     upload IMAGE [--for SLUG_OR_ID] [--operator-image]
                            upload a cover OR an inline image, print its id and reusable url
-    post ARTICLE [--cover IMAGE [--operator-image]]
-                           check, then create the article (draft unless the JSON says "published")
+    post ARTICLE [--cover IMAGE [--operator-image] | --no-cover]
+                           check, then create the article (draft unless the JSON says "published"). Without
+                           --cover it takes the cover.* (jpg/jpeg/png/webp) of the work folder's foto/, with a
+                           note; with no cover there it stops (exit 11): generate one, or --no-cover only when the
+                           generation failed (say why in the report)
     update ID PATCH.json   change fields of an article this key created
     delete-draft ID        delete a draft this key created
 
@@ -59,7 +62,9 @@ Exit codes: 0 ok · 2 usage, bad or missing article file · 3 SEO score below th
 (nothing saved) · 4 the API refused (message printed) · 5 configuration missing or unsafe · 7 a picture rule refused
 the file (nothing uploaded) · 8 the topic (`topic-check`) or the focus_keyword (`check`, `post`) is TAKEN
 · 9 the focus_keyword is not a search phrase (more than 6 words, or a repeated word) · 10 STOP: 4 rounds of `check`
-did not reach the score; `check` and `post` refuse this article from now on (the operator can delete its .checks).
+did not reach the score; `check` and `post` refuse this article from now on (the operator can delete its .checks)
+· 11 `post` without --cover found no cover.* in the work folder's foto/ (nothing saved): generate it with
+`tarots_images.py generate --article <slug>`, or pass --no-cover if the generation failed.
 
 The full key is only ever sent to TAROTS_API_URL, never printed (only its 12-character prefix is, to tell keys
 apart), and redirects are not followed (a redirect would carry the key to another host): if the server redirects,
@@ -85,7 +90,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 EXIT_OK, EXIT_USAGE, EXIT_SCORE, EXIT_API, EXIT_CONFIG, EXIT_RULE, EXIT_TAKEN = 0, 2, 3, 4, 5, 7, 8
-EXIT_KEYWORD, EXIT_STOP = 9, 10
+EXIT_KEYWORD, EXIT_STOP, EXIT_NO_COVER = 9, 10, 11
 
 MAX_IMAGE_BYTES = 8_000_000
 IMAGE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
@@ -507,6 +512,51 @@ def resolve_picture(arg: str, folder: Optional[Path]) -> str:
     return arg
 
 
+# ---- the cover `post` must not forget -----------------------------------------------------------------------------
+# 5/10/2026: an agent generated foto/cover.jpg with `generate --article <slug>`, then ran `post <slug>` without
+# --cover; the article was saved with no picture and the WARN «immagine» did not stop it. Without --cover, `post`
+# now takes the cover.* of foto/ (every check of --cover still applies), and with none there it stops (exit 11)
+# unless --no-cover says the generation failed.
+
+COVER_NAMES = ("cover.jpg", "cover.jpeg", "cover.png", "cover.webp")  # what `generate` writes first
+
+
+def covers_in(folder: Path) -> List[Path]:
+    """The cover.jpg / .jpeg / .png / .webp in the article's foto/ (any case), in that order."""
+    foto = folder / "foto"
+    try:
+        by_name = {p.name.lower(): p for p in foto.iterdir() if p.is_file()}
+    except OSError:
+        return []
+    return [by_name[name] for name in COVER_NAMES if name in by_name]
+
+
+def cover_for_post(path: Path) -> Optional[str]:
+    """`post` without --cover: the one cover.* of foto/, said in a note; None when there is none (`post` then stops
+    with `no_cover()`, after the free checks); two or more: EXIT_USAGE (choose one with --cover)."""
+    folder = in_work_folder(path) or path.resolve().parent
+    found = covers_in(folder)
+    if len(found) > 1:
+        raise Failure(f"foto/ of {folder} has more than one cover ({', '.join(p.name for p in found)}): choose it "
+                      "with --cover <name>.", EXIT_USAGE)
+    if found:
+        print(f"note: no --cover given: using {found[0]} (the cover in foto/); every picture check still applies.",
+              file=sys.stderr)
+        return str(found[0])
+    return None
+
+
+def no_cover(path: Path, slug: str) -> Failure:
+    """The stop of `post` with no --cover, no cover.* in foto/ and no --no-cover: what to do, and nothing saved."""
+    folder = in_work_folder(path) or path.resolve().parent
+    return Failure(
+        f"no cover: --cover was not given and {folder / 'foto'} has no cover.jpg/.jpeg/.png/.webp. Nothing was saved. "
+        f"Generate it first: tarots_images.py generate --article {slug} --kind … --shot … --light … --setting \"…\" "
+        "--prompt \"…\" (it saves foto/cover.jpg), then run `post` again. Only if the generation FAILED (LitMedia "
+        "error, no credits), run `post` with --no-cover and write the reason in the report.", EXIT_NO_COVER,
+    )
+
+
 def skeleton(slug: str) -> Dict[str, Any]:
     """The article.json written by `new`: every field to fill, nothing that the API would refuse once filled."""
     return {
@@ -695,7 +745,8 @@ def next_steps(seo: Dict[str, Any], payload: Dict[str, Any]) -> List[tuple]:
                 text = 'cover_alt is empty or too short: write what the cover shows (8-125 chars) in "cover_alt"'
             else:
                 now = False
-                text = "no cover yet: normal in `check`; `post <slug> --cover <file in foto/>` adds it"
+                text = ("no cover yet: normal in `check`; generate it (`tarots_images.py generate --article <slug>`), "
+                        "then `post <slug>` takes foto/cover.jpg by itself")
         elif cid == "etichette":
             n = int(d.get("etichette", len(payload.get("tags") or [])))
             text = (f"there are {n} tags: run `tarots_blog.py tags` and reuse 2-4 existing ones in \"tags\"" if n < 2
@@ -1232,7 +1283,7 @@ def cmd_new(a) -> int:
     print(f"  {blog} catalog --grep <word>")
     print(f"  {blog} check {slug}")
     print(f'  {images} generate --article {slug} --kind <k> --shot <s> --light <l> --setting "<place>" --prompt "<scene>"')
-    print(f"  {blog} post {slug} --cover cover.jpg")
+    print(f"  {blog} post {slug}   (uses foto/cover.jpg; with no cover it stops)")
     return EXIT_OK
 
 
@@ -1677,11 +1728,22 @@ def cmd_post(a) -> int:
         return EXIT_STOP
     payload = load_article(str(path))
     require_filled(payload, path)
-    cover = resolve_picture(a.cover, in_work_folder(path)) if a.cover else None
+    folder = in_work_folder(path)
+    if a.cover:
+        cover: Optional[str] = resolve_picture(a.cover, folder)
+    elif a.no_cover:
+        cover = None
+        left = covers_in(folder or path.resolve().parent)
+        print("note: --no-cover: the article is saved WITHOUT a cover. Allowed only when the generation failed: write "
+              "the reason in the report." + (f" foto/ has {left[0].name}, NOT used." if left else ""), file=sys.stderr)
+    else:
+        cover = cover_for_post(path)
     title = str(payload.get("titolo") or "")
     about = ([t for t in (title, payload.get("seo_parola_chiave")) if t], title)
     sha = check_picture(cover, article=None, operator_image=a.operator_image, about=about) if cover else None
     check_keyword(payload)
+    if not cover and not a.no_cover:  # after the free checks: a refused keyword is fixed before a cover is generated
+        raise no_cover(path, str(payload.get("slug") or (folder.name[11:] if folder else "") or "<slug>"))
     if cover:
         image = upload(cover)
         payload["immagine_id"] = image["id"]
@@ -1830,8 +1892,13 @@ def parser() -> argparse.ArgumentParser:
     u.set_defaults(run=cmd_upload)
     r = sub.add_parser("post", help="check, then create the article")
     r.add_argument("article", metavar="ARTICLE", help="a slug, a work folder or an article.json")
-    r.add_argument("--cover", help="an image file made by tarots_images.py generate (a bare name is looked for in the "
-                                   "work folder's foto/), to upload and use as the cover")
+    covers = r.add_mutually_exclusive_group()
+    covers.add_argument("--cover", help="an image file made by tarots_images.py generate (a bare name is looked for in "
+                                        "the work folder's foto/), to upload and use as the cover. Without it, the "
+                                        "cover.* of foto/ is used; none there: exit 11")
+    covers.add_argument("--no-cover", action="store_true",
+                        help="save without a cover: ONLY when the generation of the cover failed (say why in the "
+                             "report)")
     r.add_argument("--operator-image", action="store_true",
                    help="the --cover file was supplied by the operator, not made by tarots_images.py generate")
     r.add_argument("--min-score", type=int, default=85, help="refuse to save below this SEO score (default 85)")

@@ -30,12 +30,15 @@ For example:
 ```
 python ../tarots-blog-images/scripts/tarots_images.py generate --kind architecture --shot low-angle --light storm-light --setting "Breton fishing coast" --article the-tower-tarot-card-meaning-thoth --prompt "A lighthouse on a black basalt cliff of the Breton coast in a winter storm, one bolt of lightning splitting the sky, a crack running down the white tower and warm light pouring out through it, seen from the fishing harbour below, looking up, the sudden energy of the Tower, <house style>"
 ```
-Then `python scripts/tarots_blog.py post <slug> --cover cover.jpg` for the cover, and
-`python scripts/tarots_blog.py upload inline-1.jpg --for <slug>` for an inline picture (it prints the `url` to
-write as `![alt](url)` in the body): a bare name is looked for in the work folder's `foto/`. If `tarots-blog-images` is not next to this skill, find its folder by name in
-the agent's skills directories; if it is not installed, publish without pictures and say so.
+Then `python scripts/tarots_blog.py post <slug>`: without `--cover` it takes `foto/cover.jpg` (or `.jpeg`, `.png`,
+`.webp`) by itself, with a `note:`; with no cover in `foto/` it stops with exit 11 and saves nothing. `--cover NAME`
+chooses another file; `--no-cover` saves without a cover, only when the generation failed (say why in the report).
+`python scripts/tarots_blog.py upload inline-1.jpg --for <slug>` uploads an inline picture (it prints the `url` to
+write as `![alt](url)` in the body): a bare name is looked for in the work folder's `foto/`. If `tarots-blog-images`
+is not next to this skill, find its folder by name in the agent's skills directories; if it is not installed,
+`post --no-cover` and say so.
 
-## What `post --cover` and `upload` check
+## What `post` (its cover) and `upload` check
 Both read the record `tarots_images.py` writes (`~/.tarots-blog/images-progress.json`, or `TAROTS_IMAGES_PROGRESS`)
 and refuse the file before uploading anything (exit 7) when:
 - it was not made by `tarots_images.py generate`. A picture **the operator supplied** passes with

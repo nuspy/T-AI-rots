@@ -102,30 +102,41 @@ Every picture of an article lives in its work folder, the one `tarots_blog.py ne
 ## Setup (once)
 
 `generate`, `prompt-check`, `catalog`, `progress` and `balance` need **no blog key** (only the LitMedia login of
-`litmedia-skill`): a cover for a new article (tarots-blog-publisher) needs nothing from this section. The `blog:media`
-key below is only for `list`, `show`, `cover` and `inline` on existing articles. Try the command first: if it works,
-never ask the operator for a key.
+`litmedia-skill`): a cover for a new article (tarots-blog-publisher) needs nothing from this section. A key with the
+media permission is only for `list`, `show`, `cover` and `inline` on existing articles. Try the command first: if it
+works, never ask the operator for a key.
 
-1. An admin creates a key in the console: **Blog → Keys**, permission **«Cambiare le immagini» (`blog:media`)**.
-   That permission touches only pictures, but on **every** article: keep the key for this job alone.
-2. For the first run only:
+**The recommended setup: ONE key for both skills.** A key's permissions are chosen only when it is created.
+1. An admin creates in the console (**Blog → Keys**) **one** key with the three permissions **write + publish +
+   media** (`blog:write`, `blog:publish`, `blog:media` — «Cambiare le immagini»). The media permission touches only
+   pictures, but on **every** article: keep the key for these two skills alone.
+2. It is saved once, for both skills, with the publisher:
    ```
    TAROTS_API_URL=https://tarots.chat/api
-   TAROTS_MEDIA_KEY=tk_live_…
+   TAROTS_API_KEY=tk_live_…
+   python ../tarots-blog-publisher/scripts/tarots_blog.py key save
    ```
-   The key is then remembered in `~/.tarots-blog/media-credentials.json` (outside any repository). Never put it in a
-   file of a project, a prompt or a message; only its 12-character prefix may appear in output.
+   It goes in `~/.tarots-blog/credentials.json` (outside any repository). With **no media key** (neither
+   `TAROTS_MEDIA_KEY` nor `~/.tarots-blog/media-credentials.json`), `tarots_images.py` uses that key, read as
+   `tarots_blog.py` reads it (`TAROTS_API_KEY`, else the saved file), and says so in a `note:` line. A separate media
+   key, if one is set or saved, still wins: `tarots_images.py key clear` forgets an old one; `key show` shows both.
 3. Check: `python scripts/tarots_images.py list` and `python scripts/tarots_images.py balance`.
+
+If the key in use lacks the media permission, the server answers **403** and the script says: *this key cannot change
+pictures: create in the console (Blog → Keys) ONE key with the three permissions write + publish + media, and save it
+with `tarots_blog.py key save`; both skills will use it*. Report that line to the operator: do not look for another
+key. Never put a key in a file of a project, a prompt or a message; only its 12-character prefix may appear in output.
 
 (`generate` and `prompt-check` need no key: `tarots-blog-publisher` uses them without one. Only for a prompt that
 draws a card, and only when its article is neither in a work folder nor in the titles copy, do they read the article
-through the API with this key, if it is set.)
+through the API with the key above, if there is one.)
 
 ## Workflow
 
 ### 1. Decide the scope with the operator
 - Which articles: all, only published, one language, or the ids the operator names. `list --todo` shows what this
-  tool has not redone yet.
+  tool has not redone yet. Many covers (all the drafts, say): not in this session, but with the loop of
+  "Redo many covers" below, which the operator starts.
 - Cover only, or cover **and** pictures in the text (the operator's standing choice for this blog: both).
 - **Budget**: each picture costs **10 credits** (Seedream 5.0, 2K; there is no 1K). Tell the operator:
   *N articles × (1 cover + k inline) × 10 = total*, and the current `balance`. Get a yes before spending. If the
@@ -188,6 +199,36 @@ of each picture, credits spent,
 balance left, and anything the operator should look at (a picture you rejected, a prompt the script refused and
 why, an article whose text made a good picture hard, LitMedia failing).
 
+## Redo many covers: the loop
+Each prompt has to be written by a model that read that article, and a model's work degrades over a long session
+with many articles. So many covers are redone **only** with `scripts/redo_covers_loop.py`: a deterministic loop,
+outside the agent, that starts the agent **once per article**, with a clean context and a short prompt about that
+article alone. It is the **only** way allowed to work on many articles; an agent never loops over articles itself.
+```
+python scripts/redo_covers_loop.py --dry-run                 # the list, and the prompt of the first article
+python scripts/redo_covers_loop.py --limit 10 --budget 200   # ten articles at most, 200 credits at most
+```
+- **What it takes**: `tarots_images.py list --status draft --todo --json` (drafts whose cover was not redone yet),
+  minus what its log has as done (and as failed, unless `--retry-failed`).
+- **For each article**: `balance` first (it stops if the article could pass `--budget`, or go below `--reserve`; each
+  article counts `--cost` 20 credits: a cover and at most one new try), the cover on the site (`show`) and the
+  progress record; then the agent, by default `hermes -z "<prompt>" --skills tarots-blog-images` (`--agent-cmd` for
+  another one), stopped after `--timeout` minutes (default 15). The prompt (Italian, `--prompt-file` to change it)
+  says: read the article with `show`, choose the form with `progress` / `catalog`, write the prompt from the text,
+  `generate --article <id>` at 3:2 and 2K, `cover <id> <file> --alt "…"`; no questions, no other article, no script
+  of its own; if a step fails, stop and say so.
+- **The check, after each article**: the cover on the site must have changed **and** `tarots_images.py cover` must
+  have recorded it; anything else (the agent's word included) is a failure. Each article is one line of
+  `~/.tarots-blog/loop-covers-log.jsonl` (article, outcome, reason, seconds, credits before and after) and the
+  agent's output is kept in `~/.tarots-blog/loop-covers/`.
+- **Limits**: `--limit` articles per run (default 10); it stops after 2 failures in a row (`--max-failures`, exit 3).
+- **Starting again** goes on from where it stopped: done articles leave `--todo` and are in the log. At the end it
+  prints redone, failed and credits spent.
+- **The agent inside the loop does one article**: the one in its prompt, cover only, with this skill's commands, and
+  then it stops. It never starts the loop itself, never takes another article.
+- The operator starts it by hand: `tools/rifai_copertine_bozze.ps1` in the repository (the default values, the
+  output saved next to the log).
+
 ## Hard rules
 - Only pictures: never try to change text, title, SEO fields or status (the key cannot, and should not try).
 - **Never a picture of cards** (a card at most as a small detail, and only in an article about that very card). No text in pictures. No recognisable real people, no fake photos of real
@@ -195,7 +236,8 @@ why, an article whose text made a good picture hard, LitMedia failing).
 - **Only `tarots_images.py generate`** makes pictures (through `litmedia-skill`). Never `browser-image-gen`, never a
   built-in image tool, never the LitMedia website.
 - **Never write your own script** (a loop, a batch, a "publish_sequential" helper) to generate or swap pictures in
-  series: one article at a time, with these commands, looking at each result.
+  series: one article at a time, with these commands, looking at each result. Many articles: only
+  `scripts/redo_covers_loop.py`, started by the operator, one agent run per article.
 - Never reuse a picture on two articles; never work around a refusal by renaming a file or padding a prompt.
 - Spend only the credits the operator agreed to. Check `balance` when in doubt.
 - Never disable TLS verification, never follow a redirect with the key, never send the key anywhere but
@@ -203,6 +245,7 @@ why, an article whose text made a good picture hard, LitMedia failing).
 
 ## Files
 - `scripts/tarots_images.py`: the CLI (`-h` on every command).
+- `scripts/redo_covers_loop.py`: the loop for many covers, one agent run per article (`-h` for the options).
 - `references/prompts.md`: cards as context and never as the picture, the four dimensions with their catalogs and
   rules, the house style, examples.
 - `references/api.md`: the four endpoints, if you would rather call them directly.
@@ -210,3 +253,6 @@ why, an article whose text made a good picture hard, LitMedia failing).
 - `tests/test_cartella_e_python.py`: offline tests of the work folder (`--article`, `foto/`) and of the choice of
   the Python that runs LitMedia.
 - `tests/test_carta_articolo.py`: offline tests of the card rule (a card only for an article about that very card).
+- `tests/test_una_chiave.py`: offline tests of the one key for both skills (the publisher's key, the 403 message).
+- `tests/test_ciclo_copertine.py`: offline tests of the loop (fake blog, fake agent: budget, limits, stops, restart,
+  log).

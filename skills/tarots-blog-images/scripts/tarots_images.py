@@ -5,7 +5,8 @@ Standard library only (Python 3.8+), plus the separate `litmedia-skill` for gene
 from the environment, or from a small local cache this tool manages — never from a command argument or a prompt:
 
     TAROTS_API_URL     the API base, e.g. https://tarots.chat/api   (https only; http is accepted for localhost)
-    TAROTS_MEDIA_KEY   a `tk_live_...` key with the `blog:media` permission (console: Blog > Keys > "Change images")
+    TAROTS_MEDIA_KEY   optional: a `tk_live_...` key with the `blog:media` permission (console: Blog > Keys > "Change
+                       images"). Without it, the key of tarots_blog.py (TAROTS_API_KEY or its saved file)
     LITMEDIA_SKILL     optional: the litmedia-skill folder (default: ~/.claude/skills/litmedia-skill, then
                        ~/.agents/skills/litmedia-skill, then %LOCALAPPDATA%/hermes/skills/litmedia-skill)
     LITMEDIA_PYTHON    optional: the Python that runs LitMedia's scripts. Otherwise the first that can import
@@ -15,15 +16,22 @@ from the environment, or from a small local cache this tool manages — never fr
     TAROTS_WORK_DIR    optional: the root of the articles' work folders (default ~/.tarots-blog/work)
 
 The key is remembered in `~/.tarots-blog/media-credentials.json` (or `TAROTS_MEDIA_KEY_CACHE`), outside any
-repository, the same way `tarots_blog.py` remembers its own. A `blog:media` key can touch **only images** — cover
-and inline pictures — of any article, published or not; it cannot change text, SEO fields or status.
+repository, the same way `tarots_blog.py` remembers its own. With no media key (neither the variable nor the file),
+the key of `tarots_blog.py` is used, read as that script reads it (`TAROTS_API_KEY`, else `~/.tarots-blog/
+credentials.json` or `TAROTS_KEY_CACHE`), with a `note:` line: the recommended setup is ONE key with the three
+permissions blog:write + blog:publish + blog:media, saved once with `tarots_blog.py key save`, for both skills. A
+key without blog:media gets a 403 from the server on `list`, `show`, `cover`, `inline`: the message says how to
+make the one key. The media permission touches **only images** — cover and inline pictures — of any article,
+published or not.
 
 Commands (run `tarots_images.py <command> -h` for the options):
 
-    key show|save|clear     the saved key: prefix and origin, save the one in TAROTS_MEDIA_KEY, or forget it
-    list [--todo]           every article with its cover and inline images (--todo: not redone yet by this tool)
+    key show|save|clear     the saved media key: prefix and origin (and the key of tarots_blog.py, used when there is
+                            no media key), save the one in TAROTS_MEDIA_KEY, or forget it
+    list [--status S] [--lang L] [--todo] [--json]
+                            every article with its cover and inline images (--todo: cover not redone yet by this tool)
     show ID                 one article with its full text: read it before writing a prompt
-    balance                 LitMedia credits left
+    balance [--json]        LitMedia credits left
     catalog                 the values of --kind, --shot and --light, and which ones are free for the next picture
     prompt-check --prompt P --kind K --shot S --light L --setting TEXT [--alt TEXT] [--article SLUG_OR_ID]
                             every check `generate` makes on a prompt, offline: nothing generated, nothing spent
@@ -97,6 +105,11 @@ COST = {"2K": 10, "4K": 20}
 
 HOME = Path.home()
 CACHE_PATH = Path(os.environ["TAROTS_MEDIA_KEY_CACHE"]) if os.environ.get("TAROTS_MEDIA_KEY_CACHE") else HOME / ".tarots-blog" / "media-credentials.json"
+#: The key of `tarots_blog.py` (same file format), used when no media key is set or saved: the operator keeps ONE key
+#: with blog:write + blog:publish + blog:media for both skills.
+BLOG_CACHE_PATH = Path(os.environ["TAROTS_KEY_CACHE"]) if os.environ.get("TAROTS_KEY_CACHE") else HOME / ".tarots-blog" / "credentials.json"
+ONE_KEY = ("create in the console (Blog → Keys) ONE key with the three permissions write + publish + media, and save "
+           "it with `tarots_blog.py key save`; both skills will use it")
 PROGRESS_PATH = Path(os.environ["TAROTS_IMAGES_PROGRESS"]) if os.environ.get("TAROTS_IMAGES_PROGRESS") else HOME / ".tarots-blog" / "images-progress.json"
 _noted = False
 
@@ -316,13 +329,42 @@ def _write_cache(base: str, key: str) -> None:
         pass
 
 
+def _read_blog_cache() -> Optional[Dict[str, str]]:
+    try:
+        data = json.loads(BLOG_CACHE_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return data if isinstance(data, dict) and str(data.get("key", "")).startswith("tk_live_") else None
+
+
+def blog_key() -> Optional[Dict[str, str]]:
+    """The key of tarots_blog.py, read as it reads it: TAROTS_API_KEY wins, else its saved file; a TAROTS_API_KEY that
+    differs from the saved one is refused, as there. Never written from here. None when there is neither."""
+    env_key = os.environ.get("TAROTS_API_KEY", "").strip()
+    cached = _read_blog_cache()
+    if env_key and cached and cached.get("key") != env_key:
+        raise Failure(
+            f"No media key, and the blog key of tarots_blog.py is ambiguous: a different key is saved (prefix "
+            f"{cached['key'][:12]}...) than the one in TAROTS_API_KEY (prefix {env_key[:12]}...). Run "
+            "`tarots_blog.py key show` to compare, `tarots_blog.py key save` to keep the new one, or unset "
+            "TAROTS_API_KEY.", EXIT_CONFIG,
+        )
+    if env_key:
+        return {"url": "", "key": env_key, "origin": "TAROTS_API_KEY"}
+    if cached:
+        return {"url": cached.get("url", ""), "key": cached["key"], "origin": str(BLOG_CACHE_PATH)}
+    return None
+
+
 def config() -> Dict[str, str]:
-    """Env vars win when present; otherwise the saved key/URL. A different key than the saved one is never swapped in
+    """Env vars win when present; otherwise the saved key/URL; with no media key at all, the blog key of
+    tarots_blog.py (`source` "blog", said in a note). A different key than the saved one is never swapped in
     silently."""
     global _noted
     env_base = os.environ.get("TAROTS_API_URL", "").strip().rstrip("/")
     env_key = os.environ.get("TAROTS_MEDIA_KEY", "").strip()
     cached = _read_cache()
+    source = "media"
     if env_key and cached and cached.get("key") != env_key:
         raise Failure(
             f"A different key is already saved (prefix {cached['key'][:12]}...) than the one in TAROTS_MEDIA_KEY "
@@ -339,6 +381,13 @@ def config() -> Dict[str, str]:
         if not _noted:
             print(f"note: using the saved key (prefix {key[:12]}...); set TAROTS_MEDIA_KEY to use another.", file=sys.stderr)
             _noted = True
+    elif (blog := blog_key()) is not None:
+        base, key, source = env_base or blog["url"], blog["key"], "blog"
+        if not _noted:
+            print(f"note: no media key (TAROTS_MEDIA_KEY, {CACHE_PATH}): using the key of tarots_blog.py (prefix "
+                  f"{key[:12]}..., from {blog['origin']}); to change pictures it needs the media permission.",
+                  file=sys.stderr)
+            _noted = True
     else:
         base, key = env_base, env_key
     if not base:
@@ -348,9 +397,9 @@ def config() -> Dict[str, str]:
     if url.scheme != "https" and not (url.scheme == "http" and local):
         raise Failure("TAROTS_API_URL must be https (http only for localhost): the key would travel in clear text.", EXIT_CONFIG)
     if not key.startswith("tk_live_"):
-        raise Failure("TAROTS_MEDIA_KEY is not set (and none is saved). Create a key with the «Change images» "
-                      "(blog:media) permission in the console: Blog > Keys.", EXIT_CONFIG)
-    return {"base": base, "key": key}
+        raise Failure(f"No key: neither a media key (TAROTS_MEDIA_KEY, {CACHE_PATH}) nor the key of tarots_blog.py "
+                      f"(TAROTS_API_KEY, {BLOG_CACHE_PATH}). The way to go: {ONE_KEY}.", EXIT_CONFIG)
+    return {"base": base, "key": key, "source": source}
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -382,6 +431,10 @@ def call(method: str, path: str, *, body: Any = None, raw: Optional[bytes] = Non
                 payload = response.read()
                 return json.loads(payload) if payload else None
         except urllib.error.HTTPError as exc:
+            if exc.code == 403 and cfg.get("source") == "blog":
+                raise Failure(f"HTTP 403: the key of tarots_blog.py (prefix {cfg['key'][:12]}...), used because no "
+                              f"media key is set, has no media permission. This key cannot change pictures: "
+                              f"{ONE_KEY}.") from None
             raise Failure(explain(exc)) from None
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
             if attempt == 0 and method == "GET":
@@ -400,7 +453,7 @@ def explain(exc: urllib.error.HTTPError) -> str:
         detail = json.dumps(detail, ensure_ascii=False)
     hints = {
         401: "The key was rejected: wrong or revoked. Create a new one in the console (Blog > Keys).",
-        403: "This key lacks the «Change images» (blog:media) permission.",
+        403: f"This key cannot change pictures (no «Change images», blog:media, permission): {ONE_KEY}.",
         404: "Not found: wrong article id.",
         413: "The file is too large (8 MB at most).",
         415: "Unsupported file type: send PNG, JPEG or WebP.",
@@ -1224,6 +1277,14 @@ def cmd_key(a) -> int:
     if a.action == "show":
         print(f"saved: {cached['key'][:12]}... for {cached.get('url')} ({CACHE_PATH})" if cached else "saved: none")
         print(f"TAROTS_MEDIA_KEY: {env_key[:12]}..." if env_key else "TAROTS_MEDIA_KEY: not set")
+        try:
+            blog = blog_key()
+        except Failure as exc:
+            print(f"key of tarots_blog.py: {exc}")
+        else:
+            used = "used now: no media key" if not (env_key or cached) else "not used: a media key wins"
+            print(f"key of tarots_blog.py: {blog['key'][:12]}... from {blog['origin']} ({used})" if blog
+                  else "key of tarots_blog.py: none")
     elif a.action == "save":
         base = os.environ.get("TAROTS_API_URL", "").strip().rstrip("/") or (cached or {}).get("url", "")
         if not env_key.startswith("tk_live_") or not base:
@@ -1276,8 +1337,9 @@ def cmd_show(a) -> int:
     return EXIT_OK
 
 
-def cmd_balance(_a) -> int:
-    print(f"LitMedia credits: {balance()}")
+def cmd_balance(a) -> int:
+    credits = balance()
+    print(json.dumps({"credit": credits}) if getattr(a, "json", False) else f"LitMedia credits: {credits}")
     return EXIT_OK
 
 
@@ -1620,7 +1682,9 @@ def parser() -> argparse.ArgumentParser:
     sh = sub.add_parser("show", help="one article with its full text")
     sh.add_argument("id")
     sh.set_defaults(fn=cmd_show)
-    sub.add_parser("balance", help="LitMedia credits left").set_defaults(fn=cmd_balance)
+    bl = sub.add_parser("balance", help="LitMedia credits left")
+    bl.add_argument("--json", action="store_true", help='print {"credit": N}')
+    bl.set_defaults(fn=cmd_balance)
     sub.add_parser("catalog", help="the values of --kind, --shot, --light, and which are free now").set_defaults(fn=cmd_catalog)
     pc = sub.add_parser("prompt-check", help="check a prompt (and an alt text) offline, before spending anything")
     pc.add_argument("--prompt", required=True)

@@ -32,7 +32,9 @@ set, go on and **never ask the operator for a key or a URL**. `guide` (and `new`
 them for **every** command, from any folder (the work folder too). The `scripts/…` paths in this file are only
 short names for those: **never search the disk for a script** (`os.walk`, `dir /s`, `find`). `guide` also prints today's date (`note: today is …`):
 use it for every "timely" decision. Only if `guide` fails with a message about a missing key, follow
-`references/setup.md` (first setup, and what to do when a different key is offered).
+`references/setup.md` (first setup, and what to do when a different key is offered). The recommended key is **one
+key with the three permissions write + publish + media**, saved with `key save`: `tarots-blog-images` uses the same
+key, so there is nothing else to set up for pictures.
 
 ## The work folder: the only place for this article's files
 ```
@@ -49,7 +51,8 @@ Rules:
 - The article's files live **only** there: **never** in this skill's folder, never in a repository, never in the
   current directory. `check` and `post` refuse an article.json inside the skill's folder.
 - Every command takes the **slug** (or the folder, or the path) instead of a path: `check samhain-tarot-spread`,
-  `post samhain-tarot-spread --cover cover.jpg`. A bare picture name is looked for in `foto/`.
+  `post samhain-tarot-spread`. A bare picture name (`--cover inline-2.jpg`) is looked for in `foto/`, and `post`
+  without `--cover` takes `foto/cover.jpg` (or `.jpeg`, `.png`, `.webp`) by itself.
 - If a command says the article is not found, its message names the work folder and lists the newest ones.
   **Never search the disk** (`os.walk`, `dir /s`, `find /`) for an article file.
 
@@ -67,9 +70,12 @@ python scripts/tarots_blog.py check samhain-tarot-spread                    # 6.
 python ../tarots-blog-images/scripts/tarots_images.py progress              # 7. pictures: what form is free
 python ../tarots-blog-images/scripts/tarots_images.py generate --article samhain-tarot-spread --kind landscape --shot wide --light blue-hour --setting "Irish hillside" --prompt "…"
 #                                                                              → foto/cover.jpg
-python scripts/tarots_blog.py post samhain-tarot-spread --cover cover.jpg   # 8. re-check, upload the cover, save (draft)
+python scripts/tarots_blog.py post samhain-tarot-spread                     # 8. re-check, upload foto/cover.jpg, save (draft)
 ```
-Then the report (step 9).
+Then the report (step 9). `post` without `--cover` uses the cover in `foto/` (a `note:` line names it); if `foto/`
+has no cover it **stops with exit 11** and saves nothing: generate the cover (step 7) and run `post` again.
+`--no-cover` saves without one, **only** when the generation failed (LitMedia error, no credits): say why in the
+report.
 
 ## Workflow
 
@@ -154,11 +160,12 @@ python ../tarots-blog-images/scripts/tarots_images.py prompt-check --prompt "<pr
 python ../tarots-blog-images/scripts/tarots_images.py generate --article <slug> --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>"
 ```
 `--article <slug>` saves into the work folder's `foto/`: `cover.jpg` for a 3:2 picture, `inline-1.jpg`… for
-`--aspect 4:3`; it never overwrites a file. Then `post <slug> --cover cover.jpg`, and for an inline picture
-`upload inline-1.jpg --for <slug>` (prints the url for `![alt](url)`). Prompt rules, the four dimensions, what
-`post --cover` and `upload` refuse (exit 7), cost and consent: `references/image-generation.md`. If the other skill
-is not next to this one, find its folder `tarots-blog-images` among the agent's skills; if it is not installed, or
-LitMedia fails, say so (attended run: publish without pictures; unattended: see below). Never another image tool.
+`--aspect 4:3`; it never overwrites a file. Then `post <slug>` (it takes `foto/cover.jpg` by itself; `--cover NAME`
+for another file of `foto/`), and for an inline picture `upload inline-1.jpg --for <slug>` (prints the url for
+`![alt](url)`). Prompt rules, the four dimensions, what `post` and `upload` refuse (exit 7), cost and consent:
+`references/image-generation.md`. If the other skill is not next to this one, find its folder `tarots-blog-images`
+among the agent's skills; if it is not installed, or LitMedia fails, say so (attended run: `post <slug> --no-cover`;
+unattended: see below). Never another image tool.
 
 ### 7. Check: fix only what NEXT says, at most 4 rounds
 ```
@@ -183,10 +190,15 @@ alt) are left as they are.
 The target is always the TAROTS chat blog through this script — never a social platform, a CMS or another
 publishing tool you may have loaded.
 ```
-python scripts/tarots_blog.py post <slug> --cover cover.jpg
+python scripts/tarots_blog.py post <slug>
 ```
 `post` re-checks, refuses to save below 85 or with a `FIX` (and prints NEXT), uploads the cover, creates the article
 and prints the URL.
+- **The cover**: without `--cover`, `post` takes the `cover.*` (jpg, jpeg, png, webp) of the work folder's `foto/`,
+  with a `note:` line; every check of the record still applies (made by `generate`, not used by another article, no
+  card outside the rule). With no cover there it **stops (exit 11)**, nothing saved: generate it with
+  `tarots_images.py generate --article <slug> …`, then `post` again. `--no-cover` saves without a cover **only if
+  the generation failed**: write the reason in the report. The `WARN immagine` of `check` is not a reason to skip it.
 - `"status": "draft"` (the default) saves a draft an editor can publish. `"status": "published"` **only if the
   operator's (or the job's) instructions say to publish**; `"publish_at": "2026-10-12T08:00:00Z"` schedules it. With
   a key that lacks `blog:publish` the server saves a draft anyway and prints a `note:`: report it.
@@ -208,9 +220,13 @@ never the article body.
 - **One article per run.** Status `draft`, unless the job's instructions say `published`.
 - The job's instructions are the operator's standing ok for this article's pictures: a cover and at most one inline
   picture (10 credits each); pass the job's budget with `--budget` if it sets one.
-- **If a step fails, nothing is saved**: `guide` errors, `topic-check` leaves no free topic, LitMedia fails (no
-  cover), the keyword is refused, `check` says `STOP` (exit 10), `post` refuses. Do not retry in a loop, do not use
-  `--save-anyway`; write the report with the reason and the work folder path.
+- **The cover is part of the article.** Run `generate --article <slug>` before `post`; `post <slug>` takes
+  `foto/cover.jpg` by itself. A post without a cover is saved **only with `--no-cover`, and only if the generation
+  failed** (LitMedia error, credits, exit 5/6 of `tarots_images.py`): the report says so, with the error line. If
+  `post` stops with exit 11 (no cover in `foto/`), the cover was forgotten: generate it, then `post` again.
+- **If a step fails, nothing is saved**: `guide` errors, `topic-check` leaves no free topic, the keyword is refused,
+  `check` says `STOP` (exit 10), `post` refuses. Do not retry in a loop, do not use `--save-anyway`; write the report
+  with the reason and the work folder path.
 - `ModuleNotFoundError: requests` from LitMedia: `tarots_images.py` now finds a Python that has LitMedia's
   dependencies by itself; if there is none it exits 5 naming the `pip install -r …requirements.txt` command and the
   interpreter: report that line, do not install anything.
@@ -219,7 +235,8 @@ never the article body.
 ## Exit codes of `tarots_blog.py`
 `0` ok · `2` usage, article file missing/unfilled/in the skill folder · `3` below the score or a `FIX` left (nothing
 saved) · `4` the API refused · `5` configuration (key, URL) · `7` a picture rule refused the file · `8` topic or
-keyword TAKEN · `9` the focus keyword is not a search phrase (> 6 words, a repeated word) · `10` STOP after 4 rounds.
+keyword TAKEN · `9` the focus keyword is not a search phrase (> 6 words, a repeated word) · `10` STOP after 4 rounds · `11` `post` found no cover
+in `foto/` and no `--cover` / `--no-cover` was given (nothing saved).
 
 ## Edit an existing article
 `mine`, `update <id> patch.json`, `delete-draft <id>`: only articles this key created. Details and limits:

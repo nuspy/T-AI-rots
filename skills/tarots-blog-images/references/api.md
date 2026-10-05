@@ -12,7 +12,10 @@ only on the lines that hold a picture, and the previous version is kept by the s
 | `PUT /posts/{id}/cover` | `{"immagine_id": "…" or "immagine_base64": "…", "alt": "…"}` → the cover and its alt text change; nothing else. |
 | `PUT /posts/{id}/inline` | `{"sostituisci": [{"indice": 0 or "url_attuale": "…", "immagine_id"/"immagine_base64", "alt"?}], "aggiungi": [{"dopo_paragrafo": 0, "immagine_id"/"immagine_base64", "alt"}], "rimuovi": [2]}`. Indices refer to the text **before** the change. Paragraphs are blocks separated by a blank line, from 0. Answers the article with the new `testo` and `immagini_nel_testo`. |
 
-Errors: `401` wrong or revoked key · `403` the key lacks `blog:media` · `404` no such article or picture ·
+The recommended key is ONE key with `blog:write` + `blog:publish` + `blog:media`, saved with
+`tarots_blog.py key save`: `tarots_images.py` uses it when no separate media key is set.
+
+Errors: `401` wrong or revoked key · `403` the key lacks `blog:media` (make the one key above) · `404` no such article or picture ·
 `422` a picture number or paragraph that does not exist (nothing is changed) · `429` too many requests.
 
 Pictures in the text are ordinary Markdown on a line of their own: `![alt text](/blog/media/<id>.webp)`.

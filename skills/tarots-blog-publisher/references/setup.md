@@ -5,8 +5,12 @@
 Only when `guide` fails with a message about a missing key, follow the steps below.
 
 ## First setup
-1. An editor creates a key in the console: **Blog → Keys**. The key is shown once. Permissions: `blog:write`
-   (drafts) or `blog:write` + `blog:publish` (can publish). Ask the operator which one this agent should have.
+1. An editor creates a key in the console: **Blog → Keys**. The key is shown once, and its permissions are chosen
+   only now: they cannot be added later. **Recommended: ONE key with the three permissions write + publish + media**
+   (`blog:write`, `blog:publish`, `blog:media`): this skill writes and publishes with it, and `tarots-blog-images`
+   uses the same saved key for the pictures of existing articles (it reads this skill's key when it has no media key
+   of its own). A key with `blog:write` alone saves drafts only; without `blog:media` the picture skill gets a 403
+   that says to make the one key.
 2. Put it in the environment for this run only:
    ```
    TAROTS_API_URL=https://tarots.chat/api        # the API base of the site
@@ -16,6 +20,9 @@ Only when `guide` fails with a message about a missing key, follow the steps bel
    outside any repository, never inside this project, `chmod 600` where the OS supports it. Every run after
    that needs neither variable: omit them and the saved ones are used automatically (a one-line `note:` on
    stderr says so, every time, so it is never silently invisible).
+   Or save it explicitly: `python scripts/tarots_blog.py key save` with the two variables set. Both skills then use
+   it: `python ../tarots-blog-images/scripts/tarots_images.py key show` names it as the key in use (an old separate
+   media key, if one is saved, wins: `tarots_images.py key clear` forgets it).
 3. Check: `python scripts/tarots_blog.py guide` prints what the key can do and the SEO thresholds.
 
 If `guide` fails with `error: …`, read the message: it says what is wrong (URL, key, network). Do not work around it.

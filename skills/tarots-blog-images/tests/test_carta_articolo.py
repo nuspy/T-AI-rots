@@ -43,9 +43,10 @@ def isolated(tmp_path, monkeypatch):
     """Own progress file, work folders and titles copy; no key saved; any network call fails loudly."""
     monkeypatch.setattr(ti, "PROGRESS_PATH", tmp_path / "images-progress.json")
     monkeypatch.setattr(ti, "CACHE_PATH", tmp_path / "no-media-key.json")
+    monkeypatch.setattr(ti, "BLOG_CACHE_PATH", tmp_path / "no-blog-key.json")  # nor the key of tarots_blog.py
     monkeypatch.setenv("TAROTS_WORK_DIR", str(tmp_path / "work"))
     monkeypatch.setenv("TAROTS_TITLES_CACHE", str(tmp_path / "titles-cache.json"))
-    for name in ("TAROTS_MEDIA_KEY", "TAROTS_API_URL"):
+    for name in ("TAROTS_MEDIA_KEY", "TAROTS_API_KEY", "TAROTS_API_URL"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setattr(ti, "_articles_found", {})
 

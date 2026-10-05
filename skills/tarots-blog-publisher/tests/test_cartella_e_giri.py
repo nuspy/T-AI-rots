@@ -226,6 +226,96 @@ def test_post_finds_a_bare_cover_name_in_foto(blog):
     assert used["file"] == str(cover) and used["post"] == "post-new"
 
 
+# ---- post without --cover: the cover of foto/, or a stop (seen on 5/10/2026) -------------------------------------------
+
+
+COVER_PROMPT = ("An orchard of old apple trees at the edge of a village, lanterns hung in the branches for a harvest "
+                "feast, seen from above, " + ti.HOUSE_STYLE)
+
+
+def _generated_cover(folder, name="cover.jpg", content=b"\xff\xd8 lantern orchard", prompt=COVER_PROMPT):
+    """foto/<name> as `tarots_images.py generate --article` leaves it: the file and its record in `_generated`."""
+    cover = folder / "foto" / name
+    cover.write_bytes(content)
+    data = json.loads(tb.PROGRESS_PATH.read_text(encoding="utf-8")) if tb.PROGRESS_PATH.exists() else {}
+    data.setdefault("_generated", []).append({"prompt": prompt, "file": str(cover), "sha256": tb.sha256_of(cover)})
+    tb.PROGRESS_PATH.write_text(json.dumps(data), encoding="utf-8")
+    return cover
+
+
+def test_post_without_cover_uses_the_cover_in_foto_with_a_note(blog, capsys):
+    folder = make_article()
+    cover = _generated_cover(folder)
+    assert tb.main(["post", "samhain-tarot-spread"]) == tb.EXIT_OK
+    assert f"no --cover given: using {cover}" in capsys.readouterr().err
+    assert "/media" in blog.paths()
+    assert json.loads(tb.PROGRESS_PATH.read_text(encoding="utf-8"))["_used"][tb.sha256_of(cover)]["post"] == "post-new"
+
+
+@pytest.mark.parametrize("name", ["cover.jpeg", "cover.png", "COVER.webp"])
+def test_every_cover_extension_is_found(blog, name):
+    folder = make_article()
+    _generated_cover(folder, name)
+    assert tb.main(["post", "samhain-tarot-spread"]) == tb.EXIT_OK
+    assert "/media" in blog.paths()
+
+
+def test_post_without_any_cover_stops_and_says_what_to_do(blog, capsys):
+    folder = make_article()
+    (folder / "foto" / "inline-1.jpg").write_bytes(b"\xff\xd8 not a cover")
+    assert tb.main(["post", "samhain-tarot-spread"]) == tb.EXIT_NO_COVER == 11
+    err = capsys.readouterr().err
+    assert "no cover" in err and str(folder / "foto") in err and "Nothing was saved" in err
+    assert "generate --article samhain-tarot-spread" in err and "--no-cover" in err and "report" in err
+    assert "/posts" not in blog.paths() and "/media" not in blog.paths()  # stopped before the check: nothing saved
+    assert tb.main(["post", "samhain-tarot-spread", "--dry-run"]) == tb.EXIT_NO_COVER  # the dry run says the same
+
+
+def test_the_cover_found_in_foto_passes_every_check_of_the_record(blog, capsys):
+    folder = make_article()
+    # not made by generate: refused, as with --cover
+    (folder / "foto" / "cover.jpg").write_bytes(b"\xff\xd8 downloaded from somewhere")
+    assert tb.main(["post", "samhain-tarot-spread"]) == tb.EXIT_RULE
+    assert "was not made by `tarots_images.py generate`" in capsys.readouterr().err
+    (folder / "foto" / "cover.jpg").unlink()
+    # already the cover of another article: refused
+    cover = _generated_cover(folder)
+    data = json.loads(tb.PROGRESS_PATH.read_text(encoding="utf-8"))
+    data["_used"] = {tb.sha256_of(cover): {"post": "another-article", "kind": "cover", "file": "x"}}
+    tb.PROGRESS_PATH.write_text(json.dumps(data), encoding="utf-8")
+    assert tb.main(["post", "samhain-tarot-spread"]) == tb.EXIT_RULE
+    assert "already a picture of article another-article" in capsys.readouterr().err
+    cover.unlink()
+    # a card outside the rule (this article is about no card): refused
+    _generated_cover(folder, content=b"\xff\xd8 fool", prompt=(
+        "A quiet garden at dawn with a stone bench and a cup of tea, and beside it a single small card of the Fool, "
+        "seen from above, " + ti.HOUSE_STYLE))
+    assert tb.main(["post", "samhain-tarot-spread"]) == tb.EXIT_RULE
+    assert "/posts" not in blog.paths() and "/media" not in blog.paths()
+
+
+def test_two_covers_in_foto_ask_to_choose(blog, capsys):
+    folder = make_article()
+    _generated_cover(folder, "cover.jpg", b"\xff\xd8 one")
+    _generated_cover(folder, "cover.png", b"\x89PNG two", prompt=COVER_PROMPT.replace("apple", "pear"))
+    assert tb.main(["post", "samhain-tarot-spread"]) == tb.EXIT_USAGE
+    assert "more than one cover (cover.jpg, cover.png)" in capsys.readouterr().err and "/posts" not in blog.paths()
+    assert tb.main(["post", "samhain-tarot-spread", "--cover", "cover.png"]) == tb.EXIT_OK
+
+
+def test_no_cover_saves_without_a_picture_and_says_so(blog, capsys):
+    make_article()
+    assert tb.main(["post", "samhain-tarot-spread", "--no-cover"]) == tb.EXIT_OK
+    assert "saved WITHOUT a cover" in capsys.readouterr().err and "/media" not in blog.paths()
+    # with a cover still in foto/, --no-cover leaves it out and says so
+    folder = make_article("lantern-night", keyword="lantern night tarot")
+    _generated_cover(folder)
+    assert tb.main(["post", "lantern-night", "--no-cover"]) == tb.EXIT_OK
+    assert "foto/ has cover.jpg, NOT used" in capsys.readouterr().err
+    with pytest.raises(SystemExit):                          # --cover and --no-cover together: a usage error
+        tb.main(["post", "lantern-night", "--no-cover", "--cover", "cover.jpg"])
+
+
 # ---- NEXT: what to do, with the real values --------------------------------------------------------------------------
 
 
@@ -303,7 +393,7 @@ def test_an_empty_alt_is_an_action(blog):
 def test_post_below_the_score_prints_next_and_saves_nothing(blog, capsys):
     make_article()
     blog.seo = report(70, item("collegamenti_esterni", esterni=0))
-    assert tb.main(["post", "samhain-tarot-spread"]) == tb.EXIT_SCORE
+    assert tb.main(["post", "samhain-tarot-spread", "--no-cover"]) == tb.EXIT_SCORE
     captured = capsys.readouterr()
     assert "no external link" in captured.out and "Not saved" in captured.err
     assert ("POST", "/posts") in blog.calls and blog.paths().count("/posts") == 1   # the dry run only
@@ -313,7 +403,7 @@ def test_a_fix_left_is_not_a_pass_even_above_the_score(blog, capsys):
     make_article()
     blog.seo = report(88, item("descrizione_seo", "errore", 2, caratteri=0))
     assert tb.main(["check", "samhain-tarot-spread"]) == tb.EXIT_SCORE
-    assert tb.main(["post", "samhain-tarot-spread"]) == tb.EXIT_SCORE
+    assert tb.main(["post", "samhain-tarot-spread", "--no-cover"]) == tb.EXIT_SCORE
     blog.seo = report(88, item("collegamenti_esterni", esterni=0))
     assert tb.main(["check", "samhain-tarot-spread"]) == tb.EXIT_OK
     assert "PASS (round 2)" in capsys.readouterr().out
@@ -394,7 +484,7 @@ def test_a_pass_on_the_fifth_round_is_not_a_stop(blog, capsys):
     blog.seo = report(90)
     assert tb.main(["check", "samhain-tarot-spread"]) == tb.EXIT_OK
     assert "PASS (round 5)" in capsys.readouterr().out
-    assert tb.main(["post", "samhain-tarot-spread"]) == tb.EXIT_OK
+    assert tb.main(["post", "samhain-tarot-spread", "--no-cover"]) == tb.EXIT_OK
 
 
 def test_check_json_carries_round_next_and_stop(blog, capsys):

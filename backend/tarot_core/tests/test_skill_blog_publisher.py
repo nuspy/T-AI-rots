@@ -236,7 +236,7 @@ def _articolo(tmp_path, **extra):
 
 def test_sotto_la_soglia_non_si_salva_niente(cli, api, tmp_path, capsys):
     api.risposte[("POST", "/v1/blog/posts")] = (201, {"dry_run": True, "seo": rapporto(60), "avvisi": []}, {})
-    assert cli.main(["post", _articolo(tmp_path)]) == cli.EXIT_SCORE
+    assert cli.main(["post", _articolo(tmp_path), "--no-cover"]) == cli.EXIT_SCORE
     veri = [r for r in api.richieste if json.loads(r["corpo"] or b"{}").get("dry_run") is not True]
     assert veri == []                                      # solo la prova, nessun salvataggio
     assert "Not saved" in capsys.readouterr().err
@@ -251,7 +251,7 @@ def test_sopra_la_soglia_si_prova_e_poi_si_salva_una_volta(cli, api, tmp_path, c
 
     # Il finto server risponde alla prova (dry_run) e al salvataggio con la stessa rotta: si distingue dal corpo.
     api.risposte[("POST", "/v1/blog/posts")] = (201, {**esito("bozza"), "dry_run": True}, {})
-    assert cli.main(["post", _articolo(tmp_path, status="published")]) == cli.EXIT_OK
+    assert cli.main(["post", _articolo(tmp_path, status="published"), "--no-cover"]) == cli.EXIT_OK
     posts = [r for r in api.richieste if r["metodo"] == "POST" and r["percorso"] == "/v1/blog/posts"]
     assert len(posts) == 2                                 # prova + salvataggio, mai di più (niente retry su POST)
     prima, seconda = (json.loads(r["corpo"]) for r in posts)
@@ -266,14 +266,14 @@ def test_save_anyway_tiene_una_bozza_anche_sotto_la_soglia(cli, api, tmp_path):
     api.risposte[("POST", "/v1/blog/posts")] = (
         201, {"dry_run": True, "seo": rapporto(50), "articolo": {"id": "1", "stato": "bozza", "lang": "en"}, "url": "u", "avvisi": []}, {},
     )
-    assert cli.main(["post", _articolo(tmp_path, status="published", publish_at="2030-01-01T00:00:00Z"), "--save-anyway"]) == cli.EXIT_OK
+    assert cli.main(["post", _articolo(tmp_path, status="published", publish_at="2030-01-01T00:00:00Z"), "--save-anyway", "--no-cover"]) == cli.EXIT_OK
     reale = json.loads([r for r in api.richieste if r["metodo"] == "POST"][-1]["corpo"])
     assert reale["stato"] == "bozza" and "pubblicato_il" not in reale
 
 
 def test_dry_run_non_salva(cli, api, tmp_path):
     api.risposte[("POST", "/v1/blog/posts")] = (201, {"dry_run": True, "seo": rapporto(90), "avvisi": []}, {})
-    assert cli.main(["post", _articolo(tmp_path), "--dry-run"]) == cli.EXIT_OK
+    assert cli.main(["post", _articolo(tmp_path), "--dry-run", "--no-cover"]) == cli.EXIT_OK
     assert len([r for r in api.richieste if r["metodo"] == "POST"]) == 1
 
 
