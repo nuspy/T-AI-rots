@@ -501,8 +501,30 @@ def litmedia_dir() -> Path:
         candidates.append(str(Path(os.environ["LOCALAPPDATA"]) / "hermes" / "skills" / "litmedia-skill"))
     for c in candidates:
         if c and (Path(c) / "scripts" / "ai_image.py").exists():
+            _check_litmedia_version(Path(c))
             return Path(c)
     raise Failure("litmedia-skill not found. Install it, or set LITMEDIA_SKILL to its folder.", EXIT_CONFIG)
+
+
+#: Seedream 5.0 on the LitMedia API works only with the fix of 2026-09-30 in `ai_image.py`: the model's id (8) and
+#: `quality` sent lowercase ("2k"), as the litmedia.ai website does. An older copy creates the task and then fails
+#: ("Image generation failed"). These markers are in the fixed script and in no older one.
+LITMEDIA_FIX_MARKERS = ("def quality_param(", '"Seedream 5.0":', '"model_id": 8')
+
+
+def _check_litmedia_version(folder: Path) -> None:
+    try:
+        source = (folder / "scripts" / "ai_image.py").read_text(encoding="utf-8")
+    except OSError as exc:
+        raise Failure(f"Cannot read {folder / 'scripts' / 'ai_image.py'}: {exc}", EXIT_CONFIG) from None
+    missing = [m for m in LITMEDIA_FIX_MARKERS if m not in source]
+    if missing:
+        raise Failure(
+            f"The litmedia-skill in {folder} is an old version: its scripts/ai_image.py lacks the Seedream 5.0 fix "
+            "(model id 8, quality sent lowercase), so the task would be created and then fail. Copy scripts/ai_image.py "
+            r"from the up-to-date litmedia-skill (source: E:\Projects\litmedia_skill) and run again; nothing was spent.",
+            EXIT_CONFIG,
+        )
 
 
 def _litmedia(script: str, args: List[str], timeout: int) -> subprocess.CompletedProcess:

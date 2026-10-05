@@ -23,6 +23,26 @@ library only. The script is `scripts/tarots_images.py` (paths below are relative
   never `litmedia-skill`'s `ai_image.py` called directly (it would skip every check below).
 - If LitMedia does not answer, fails or the credits are not enough: **no picture**. Say so in the report; do not
   look for another way to make one.
+- **Fixed settings, nothing to choose**: the model is always **Seedream 5.0** (set in the script, not an option);
+  `--aspect` is **3:2** for a cover (the default) and 4:3 or 1:1 inside the text; `--resolution` stays **2K**, the
+  cheapest (10 credits: Seedream 5.0 has no 1K; 4K costs 20 and is never needed, the site shrinks every picture to
+  1600 px). The LitMedia `quality` is derived by the script from the resolution: never pass it yourself.
+
+## If LitMedia fails (problems already met and solved)
+- **"Image generation failed" right after the task is created, with Seedream 5.0**: the installed `litmedia-skill`
+  is an old copy. Its `scripts/ai_image.py` must send Seedream 5.0's model id (8) and `quality` in lowercase (`2k`),
+  as the litmedia.ai website does (fix of 2026-09-30). `tarots_images.py` checks this before spending anything and
+  stops with a message naming the folder to update; the up-to-date source is `E:\Projects\litmedia_skill`. Failed
+  tasks are not charged.
+- **`ModuleNotFoundError: alibabacloud_oss_v2`** from `ai_image.py`: a dependency missing from LitMedia's
+  requirements. Install it for the interpreter that runs the script: `python3 -m pip install alibabacloud_oss_v2`
+  (on this Windows host `pip` alone installs into another Python).
+- **Login or credits errors**: run `python scripts/tarots_images.py balance`; `litmedia-skill`'s
+  `python scripts/auth.py status` tells whether the login is still valid, `auth.py login` renews it (it opens the
+  LitMedia sign-in page for the operator: ask first, see its `SKILL.md`).
+- **Nano Banana**: never through the API (accepted, then fails on LitMedia's side). This skill never uses it anyway.
+- **A certificate / TLS error**: report it; never disable verification.
+- After any failure: `balance`, then `show <id>` for the article, then at most **one** new attempt. Never a loop.
 
 ## The picture rules (the script enforces them, with no option to skip)
 - **Cards as context, never as the picture.** Refused: a card as the **subject** (the prompt starts with it, the
