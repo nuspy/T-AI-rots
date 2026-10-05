@@ -1,34 +1,43 @@
 #!/usr/bin/env python3
-"""redo_covers_loop.py: redo the covers of many blog articles, ONE article per agent run, each with a clean context.
+"""redo_covers_loop.py: redo the covers of many blog articles, ONE article per agent run, each with a clean context;
+with --sections or --spreads, the same for the pictures of the sections of the Journal and of the spreads.
 
 Standard library only (Python 3.8+). This is the only way allowed to work on many articles: the prompt of every
 picture has to be written by an LLM that read that article, and a small model degrades over a long session with many
 articles. So this deterministic loop, outside the agent, does the bookkeeping and launches the agent once per
-article, with a short prompt about that article alone:
+article (or section, or spread), with a short prompt about that one alone:
 
-    1. the articles to redo: `tarots_images.py list --status draft --todo --json` (cover not redone yet), minus the
-       ones the log already has as done (and, unless --retry-failed, as failed);
-    2. before each article: `balance` (LitMedia credits); stop if this article could pass --budget or go below
-       --reserve; the cover before (`show ID`) and the progress record of the article (images-progress.json);
+    1. what to do. Articles: `tarots_images.py list --status draft --todo --json` (cover not redone yet; --status
+       all|draft|published), and with --missing also `list --no-cover --json` (no cover at all, in every status: a
+       published «Wheel of Fortune» with no picture). Sections: `sections --missing --json`; spreads: `spreads
+       --missing --json` (those without a picture). Minus the ones the log already has as done (and, unless
+       --retry-failed, as failed);
+    2. before each one: `balance` (LitMedia credits); stop if it could pass --budget or go below --reserve; the
+       picture before (`show ID`, or the list of sections / spreads) and the progress record (images-progress.json);
     3. the agent, by default `hermes -z "<prompt>" --skills tarots-blog-images`, with a timeout (--timeout);
-    4. after: the cover again (`show ID`), the progress record and `balance`. The article is done only if the cover
-       on the site changed AND `tarots_images.py cover` recorded it; anything else is a failure;
-    5. one line per article in ~/.tarots-blog/loop-covers-log.jsonl (article, outcome, reason, seconds, credits
-       before and after) and the agent's output in ~/.tarots-blog/loop-covers/; stop after 2 failures in a row.
+    4. after: the picture again, the progress record and `balance`. It is done only if the picture on the site
+       changed (from none to one counts) AND `tarots_images.py cover` / `section-cover` / `spread-cover` recorded
+       it; anything else is a failure;
+    5. one line each in ~/.tarots-blog/loop-covers-log.jsonl (event article / section / spread, outcome, reason,
+       seconds, credits before and after) and the agent's output in ~/.tarots-blog/loop-covers/; stop after 2
+       failures in a row.
 
-Run it again to go on: the articles done leave `--todo` and are in the log. At the end it prints a summary: redone,
+Run it again to go on: what is done leaves the lists and is in the log. At the end it prints a summary: redone,
 failed, credits spent.
 
     python redo_covers_loop.py --dry-run                  the list and the prompt of the first article; nothing run
     python redo_covers_loop.py --limit 10 --budget 150    ten articles at most, 150 credits at most
+    python redo_covers_loop.py --missing --dry-run        also the articles with no cover, in every status
+    python redo_covers_loop.py --sections --limit 25 --budget 500    the sections without a picture (about 25)
+    python redo_covers_loop.py --spreads --limit 19 --budget 380     the spreads without an illustration (19)
     python redo_covers_loop.py --agent-cmd "myagent --once {prompt}"   another agent ({prompt}, {id}, {slug}, {title})
 
 The prompt is a template (--prompt-file to change it) with {id}, {slug}, {title} and {images} (the command that runs
-tarots_images.py, absolute paths). The agent runs in ~/.tarots-blog (--cwd), never in a repository.
+tarots_images.py, absolute paths); for sections and spreads also {kind}, {description}, {tradition}, {cards} and
+{guidance} (what the picture of that type shows). The agent runs in ~/.tarots-blog (--cwd), never in a repository.
 
-Exit codes: 0 finished (no article left, or --limit, --budget or --reserve reached) · 2 usage · 3 stopped after
-consecutive failures · 4 tarots_images.py could not list the articles or read the balance · 5 the agent command was
-not found.
+Exit codes: 0 finished (nothing left, or --limit, --budget or --reserve reached) · 2 usage · 3 stopped after
+consecutive failures · 4 tarots_images.py could not list or read the balance · 5 the agent command was not found.
 """
 from __future__ import annotations
 
@@ -51,7 +60,7 @@ EXIT_OK, EXIT_USAGE, EXIT_FAILURES, EXIT_IMAGES, EXIT_AGENT = 0, 2, 3, 4, 5
 IMAGES = Path(__file__).resolve().with_name("tarots_images.py")
 HOME_DIR = Path.home() / ".tarots-blog"
 LOG_PATH = HOME_DIR / "loop-covers-log.jsonl"
-ARTICLE_COST = 20         # the most one article may cost: a cover (10 credits, Seedream 5.0 2K) and one new try
+ARTICLE_COST = 20         # the most one item may cost: a picture (10 credits, Seedream 5.0 2K) and one new try
 MAX_FAILURES = 2          # failures in a row that stop the loop
 DEFAULT_LIMIT = 10
 DEFAULT_TIMEOUT_MIN = 15.0
@@ -68,6 +77,44 @@ Articolo: «{title}» (id {id}, slug {slug}).
 Regole: nessuna domanda, nessun altro articolo, nessuno script tuo, niente immagini nel testo.
 Se un passo fallisce, fermati e scrivi quale passo e perché.
 """
+
+#: The picture of a section of the Journal: the tile that leads to it. Its world, never a picture of cards.
+SECTION_PROMPT = """\
+Crea SOLO l'immagine di UNA sezione del Journal di TAROTS chat, con la skill tarots-blog-images.
+Sezione: «{title}» (slug {slug}, tipo {kind}). Descrizione: {description}
+1. Scegli una forma libera: {images} progress   e   {images} catalog
+2. Scrivi il prompt: {guidance}
+3. Genera: {images} generate --section {slug} --aspect 3:2 --resolution 2K --kind <kind> --shot <shot> --light <light> --setting "<luogo>" --prompt "<prompt>"
+4. Guarda l'immagine, poi impostala: {images} section-cover {slug} <il file stampato da generate> --alt "<cosa mostra>"
+Regole: nessuna domanda, nessun'altra sezione, nessuno script tuo, nessun articolo toccato.
+Se un passo fallisce, fermati e scrivi quale passo e perché.
+"""
+
+#: The illustration of a spread, next to the scheme of its positions that the site draws by itself.
+SPREAD_PROMPT = """\
+Crea SOLO l'illustrazione di UNA stesa di TAROTS chat, con la skill tarots-blog-images.
+Stesa: «{title}» (id {id}, {cards} carte, tradizione: {tradition}). Descrizione: {description}
+1. Scegli una forma libera: {images} progress   e   {images} catalog
+2. Scrivi il prompt: {guidance}
+3. Genera: {images} generate --spread {id} --aspect 3:2 --resolution 2K --kind <kind> --shot <shot> --light <light> --setting "<luogo>" --prompt "<prompt>"
+4. Guarda l'immagine, poi impostala: {images} spread-cover {id} <il file stampato da generate> --alt "<cosa mostra>"
+Regole: nessuna domanda, nessun'altra stesa, nessuno script tuo, nessun articolo toccato.
+Se un passo fallisce, fermati e scrivi quale passo e perché.
+"""
+
+#: What the picture shows, by type of section (`tipo`), and for a spread.
+GUIDANCE = {
+    "carte": ("è una sezione di carte: mostra il MONDO di queste carte (i luoghi, l'elemento, le stagioni, i gesti che "
+              "evocano), con una scena concreta, mai le carte. Un nome di carta al massimo come contesto, senza la "
+              "parola «carta», mai come soggetto."),
+    "stese": ("è una sezione di stese: mostra il mondo delle letture (una domanda, un cammino, una scelta) con una "
+              "scena concreta, mai carte disposte su un tavolo, mai uno schema di posizioni."),
+    "": ("mostra il tema della sezione, dalla sua descrizione, con una scena concreta: un luogo, un gesto, una "
+         "stagione; mai una foto di carte."),
+    "spread": ("un'illustrazione evocativa del tema della stesa (la domanda a cui risponde, la sua tradizione) con una "
+               "scena concreta. Lo schema delle posizioni lo disegna il sito: mai carte, mai carte disposte, mai un "
+               "tavolo con le carte, mai le posizioni."),
+}
 
 
 class LoopError(Exception):
@@ -92,14 +139,41 @@ def images(args: List[str], timeout: int = 300) -> str:
     return done.stdout
 
 
-def articles_todo(status: str) -> List[Dict[str, Any]]:
-    """The articles whose cover tarots_images.py has not redone yet (`list --todo`), as the API lists them."""
-    out = images(["list", "--status", status, "--todo", "--json"])
+def _json_rows(args: List[str]) -> List[Dict[str, Any]]:
+    out = images(args)
     try:
         rows = json.loads(out)
     except ValueError:
-        raise LoopError(f"`list --json` did not print JSON: {out.strip()[:300]}", EXIT_IMAGES) from None
-    return [r for r in rows if isinstance(r, dict) and r.get("id")]
+        raise LoopError(f"`{' '.join(args)}` did not print JSON: {out.strip()[:300]}", EXIT_IMAGES) from None
+    return [r for r in rows if isinstance(r, dict)]
+
+
+def _status_args(status: str) -> List[str]:
+    return [] if status == "all" else ["--status", status]
+
+
+def articles_todo(status: str, missing: bool = False) -> List[Dict[str, Any]]:
+    """The articles whose cover tarots_images.py has not redone yet (`list --todo`, of `status`), as the API lists
+    them; with `missing`, followed by the articles with no cover at all, in every status (`list --no-cover`)."""
+    rows = [r for r in _json_rows(["list", *_status_args(status), "--todo", "--json"]) if r.get("id")]
+    if missing:
+        seen = {str(r["id"]) for r in rows}
+        rows += [r for r in _json_rows(["list", "--no-cover", "--json"]) if r.get("id") and str(r["id"]) not in seen]
+    return rows
+
+
+def sections_todo() -> List[Dict[str, Any]]:
+    """The sections without a picture, as items of the loop: id = slug."""
+    return [{"id": r["slug"], "slug": r["slug"], "titolo": r.get("nome") or r["slug"], "tipo": r.get("tipo") or "",
+             "descrizione": r.get("descrizione") or ""}
+            for r in _json_rows(["sections", "--missing", "--json"]) if r.get("slug")]
+
+
+def spreads_todo() -> List[Dict[str, Any]]:
+    """The spreads without an illustration, as items of the loop: id = slug = the spread's id."""
+    return [{"id": r["id"], "slug": r["id"], "titolo": r.get("nome") or r["id"], "descrizione": r.get("descrizione") or "",
+             "tradizione": r.get("tradizione") or "", "n_carte": r.get("n_carte")}
+            for r in _json_rows(["spreads", "--missing", "--json"]) if r.get("id")]
 
 
 def credits() -> int:
@@ -116,6 +190,18 @@ def cover_of(post_id: str) -> Optional[Dict[str, Any]]:
     return data.get("copertina") or None
 
 
+def picture_of(mode: str, key: str) -> Optional[Dict[str, Any]]:
+    """The picture on the site now: the cover of an article, or the `immagine` of a section or a spread (from the
+    whole list, `sections --json` / `spreads --json`). A section or spread missing from the list: LoopError."""
+    if mode == "articles":
+        return cover_of(key)
+    field = "slug" if mode == "sections" else "id"
+    for row in _json_rows([mode, "--json"]):
+        if str(row.get(field)) == key:
+            return row.get("immagine") or None
+    raise LoopError(f"the {MODES[mode]['noun']} {key} is not in `{mode} --json` any more", EXIT_IMAGES)
+
+
 def cover_key(cover: Optional[Dict[str, Any]]) -> Optional[str]:
     return str(cover.get("id") or cover.get("url") or "") or None if cover else None
 
@@ -128,12 +214,31 @@ def progress_path() -> Path:
 
 def recorded_cover(post_id: str) -> Optional[Dict[str, Any]]:
     """What `tarots_images.py cover` recorded for this article (file, sha256, url, alt, prompt, when), or None."""
+    return recorded("articles", post_id)
+
+
+def recorded(mode: str, key: str) -> Optional[Dict[str, Any]]:
+    """What tarots_images.py recorded for this item: `cover` of an article, `section-cover` under `_sections`,
+    `spread-cover` under `_spreads`; None when nothing."""
     try:
         data = json.loads(progress_path().read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
-    entry = data.get(post_id) if isinstance(data, dict) else None
-    return entry.get("cover") if isinstance(entry, dict) else None
+    if not isinstance(data, dict):
+        return None
+    if mode == "articles":
+        entry = data.get(key)
+        return entry.get("cover") if isinstance(entry, dict) else None
+    entry = (data.get("_sections" if mode == "sections" else "_spreads") or {}).get(key)
+    return entry if isinstance(entry, dict) else None
+
+
+#: The three things the loop can work on: how they are listed and named, and their prompt.
+MODES: Dict[str, Dict[str, Any]] = {
+    "articles": {"noun": "article", "event": "article", "prompt": DEFAULT_PROMPT, "what": "the cover still to redo"},
+    "sections": {"noun": "section", "event": "section", "prompt": SECTION_PROMPT, "what": "no picture"},
+    "spreads": {"noun": "spread", "event": "spread", "prompt": SPREAD_PROMPT, "what": "no illustration"},
+}
 
 
 # ---- the log ---------------------------------------------------------------------------------------------------------
@@ -161,11 +266,11 @@ def write_log(path: Path, entry: Dict[str, Any]) -> None:
         fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
-def outcomes(entries: List[Dict[str, Any]]) -> Dict[str, str]:
-    """The last outcome of every article in the log: "ok" or "failed"."""
+def outcomes(entries: List[Dict[str, Any]], event: str = "article") -> Dict[str, str]:
+    """The last outcome of every item of this kind (`event`: article, section, spread) in the log: "ok" or "failed"."""
     last: Dict[str, str] = {}
     for e in entries:
-        if e.get("event") == "article" and e.get("id"):
+        if e.get("event") == event and e.get("id"):
             last[str(e["id"])] = str(e.get("outcome"))
     return last
 
@@ -198,7 +303,7 @@ def split_command(text: str) -> List[str]:
 
 
 def agent_command(template: Optional[str], prompt: str, post: Dict[str, Any]) -> List[str]:
-    """The agent's argv for one article. Default: hermes -z PROMPT --skills tarots-blog-images. With --agent-cmd,
+    """The agent's argv for one item. Default: hermes -z PROMPT --skills tarots-blog-images. With --agent-cmd,
     {prompt} (one argument), {id}, {slug} and {title} are replaced; without {prompt} the prompt goes last."""
     if template is None:
         hermes = find_hermes()
@@ -269,64 +374,73 @@ def images_command() -> str:
     return f"{one(sys.executable)} {one(str(IMAGES))}"
 
 
-def make_prompt(template: str, post: Dict[str, Any]) -> str:
+def make_prompt(template: str, post: Dict[str, Any], mode: str = "articles") -> str:
+    kind = str(post.get("tipo") or "")
+    guidance = GUIDANCE["spread"] if mode == "spreads" else GUIDANCE.get(kind, GUIDANCE[""])
     return template.format(id=post.get("id", ""), slug=post.get("slug") or "", title=post.get("titolo") or "",
-                           images=images_command())
+                           images=images_command(), kind=kind or "articoli", description=post.get("descrizione") or "-",
+                           tradition=post.get("tradizione") or "-", cards=post.get("n_carte") or "?", guidance=guidance)
 
 
-# ---- one article -------------------------------------------------------------------------------------------------
+# ---- one item ------------------------------------------------------------------------------------------------------
 
 
-def do_article(post: Dict[str, Any], a, template: str, log: Path, before_credits: int) -> Dict[str, Any]:
-    """Launch the agent for one article and check, without trusting what it says, whether the cover changed."""
-    post_id = str(post["id"])
+def do_article(post: Dict[str, Any], a, template: str, log: Path, before_credits: int,
+               mode: str = "articles") -> Dict[str, Any]:
+    """Launch the agent for one item (an article, a section, a spread) and check, without trusting what it says,
+    whether its picture changed and was recorded."""
+    key = str(post["id"])
+    noun = MODES[mode]["noun"]
     started = _now()
-    base = {"event": "article", "when": started, "id": post_id, "slug": post.get("slug"), "title": post.get("titolo")}
+    base = {"event": MODES[mode]["event"], "when": started, "id": key, "slug": post.get("slug"), "title": post.get("titolo")}
     try:
-        before_cover = cover_of(post_id)
-    except (LoopError, ValueError) as exc:  # the article cannot be read: no agent, a failure like any other
-        entry = {**base, "outcome": "failed", "reason": f"cannot read the article before the agent: {exc}",
+        before_cover = picture_of(mode, key)
+    except (LoopError, ValueError) as exc:  # the item cannot be read: no agent, a failure like any other
+        entry = {**base, "outcome": "failed", "reason": f"cannot read the {noun} before the agent: {exc}",
                  "seconds": 0, "agent_exit": None, "credits_before": before_credits, "credits_after": before_credits,
                  "spent": 0, "cover_before": None, "cover_after": None, "output": None}
         write_log(log, entry)
-        print(f"\n→ {post.get('titolo')} ({post_id})\n  FAILED: {entry['reason']}", flush=True)
+        print(f"\n→ {post.get('titolo')} ({key})\n  FAILED: {entry['reason']}", flush=True)
         return entry
-    before_record = recorded_cover(post_id)
-    prompt = make_prompt(template, post)
+    before_record = recorded(mode, key)
+    prompt = make_prompt(template, post, mode)
     cmd = agent_command(a.agent_cmd, prompt, post)
     t0 = time.monotonic()
-    print(f"\n→ {post.get('titolo')} ({post_id}): agent started at {started[11:19]} UTC, at most {a.timeout:g} min",
+    print(f"\n→ {post.get('titolo')} ({key}): agent started at {started[11:19]} UTC, at most {a.timeout:g} min",
           flush=True)
     code, output = run_agent(cmd, a.timeout * 60, a.cwd)
     seconds = round(time.monotonic() - t0, 1)
     outputs = log.parent / "loop-covers"
     outputs.mkdir(parents=True, exist_ok=True)
-    out_file = outputs / f"{started[:19].replace(':', '').replace('-', '')}-{post.get('slug') or post_id}.txt"
+    prefix = "" if mode == "articles" else f"{noun}-"
+    out_file = outputs / f"{started[:19].replace(':', '').replace('-', '')}-{prefix}{post.get('slug') or key}.txt"
     out_file.write_text(output, encoding="utf-8")
     try:
-        after_cover = cover_of(post_id)
+        after_cover = picture_of(mode, key)
     except (LoopError, ValueError) as exc:
         after_cover, cover_error = None, str(exc)
     else:
         cover_error = ""
-    after_record = recorded_cover(post_id)
+    after_record = recorded(mode, key)
     try:
         after_credits: Optional[int] = credits()
     except LoopError:
         after_credits = None
     changed = after_cover is not None and cover_key(after_cover) != cover_key(before_cover)
-    recorded = after_record is not None and after_record != before_record
-    if changed and recorded:
-        outcome, reason = "ok", "cover replaced and recorded" + (f" (agent exit {code})" if code else "")
+    is_recorded = after_record is not None and after_record != before_record
+    what = "cover" if mode == "articles" else "picture"
+    command = {"articles": "cover", "sections": "section-cover", "spreads": "spread-cover"}[mode]
+    if changed and is_recorded:
+        outcome, reason = "ok", f"{what} replaced and recorded" + (f" (agent exit {code})" if code else "")
     elif code is None:
         outcome, reason = "failed", f"timeout after {a.timeout:g} min: the agent was stopped"
     elif cover_error:
-        outcome, reason = "failed", f"cannot read the article after the agent: {cover_error}"
+        outcome, reason = "failed", f"cannot read the {noun} after the agent: {cover_error}"
     elif not changed:
-        outcome, reason = "failed", f"the cover on the site did not change (agent exit {code})"
+        outcome, reason = "failed", f"the {what} on the site did not change (agent exit {code})"
     else:
-        outcome, reason = "failed", ("the cover changed but tarots_images.py `cover` did not record it: not made with "
-                                     "the skill's commands")
+        outcome, reason = "failed", (f"the {what} changed but tarots_images.py `{command}` did not record it: not "
+                                     "made with the skill's commands")
     entry = {
         **base, "outcome": outcome, "reason": reason, "seconds": seconds, "agent_exit": code,
         "credits_before": before_credits, "credits_after": after_credits,
@@ -345,24 +459,32 @@ def do_article(post: Dict[str, Any], a, template: str, log: Path, before_credits
 def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="redo_covers_loop.py", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--limit", type=int, default=DEFAULT_LIMIT, help=f"articles in this run (default {DEFAULT_LIMIT})")
-    p.add_argument("--budget", type=int, help="credits this run may spend: stop before an article that could pass it")
+    p.add_argument("--limit", type=int, default=DEFAULT_LIMIT, help=f"items in this run (default {DEFAULT_LIMIT})")
+    p.add_argument("--budget", type=int, help="credits this run may spend: stop before an item that could pass it")
     p.add_argument("--reserve", type=int, default=0, help="credits that must stay on the LitMedia account")
     p.add_argument("--cost", type=int, default=ARTICLE_COST,
-                   help=f"credits counted for the next article in --budget and --reserve (default {ARTICLE_COST}: a "
-                        "cover and at most one new try)")
+                   help=f"credits counted for the next item in --budget and --reserve (default {ARTICLE_COST}: a "
+                        "picture and at most one new try)")
     p.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT_MIN,
-                   help=f"minutes per article before the agent is stopped (default {DEFAULT_TIMEOUT_MIN:g})")
+                   help=f"minutes per item before the agent is stopped (default {DEFAULT_TIMEOUT_MIN:g})")
     p.add_argument("--max-failures", type=int, default=MAX_FAILURES, help=f"failures in a row that stop the loop "
                                                                           f"(default {MAX_FAILURES})")
-    p.add_argument("--status", choices=["draft", "published"], default="draft", help="which articles (default draft)")
-    p.add_argument("--retry-failed", action="store_true", help="also the articles the log has as failed")
+    mode = p.add_mutually_exclusive_group()
+    mode.add_argument("--sections", action="store_true",
+                      help="the sections of the Journal without a picture, instead of the articles")
+    mode.add_argument("--spreads", action="store_true",
+                      help="the spreads without an illustration, instead of the articles")
+    p.add_argument("--status", choices=["all", "draft", "published"],
+                   help="articles: whose cover not redone yet (default draft; all = every status)")
+    p.add_argument("--missing", action="store_true",
+                   help="articles: also those with no cover at all, in every status (a published one too)")
+    p.add_argument("--retry-failed", action="store_true", help="also the items the log has as failed")
     p.add_argument("--agent-cmd", help="another agent: a command line with {prompt} (else appended), {id}, {slug}, "
                                        "{title}. Default: hermes -z {prompt} --skills tarots-blog-images")
-    p.add_argument("--prompt-file", help="a prompt template ({id}, {slug}, {title}, {images}) instead of the default")
+    p.add_argument("--prompt-file", help="a prompt template ({id}, {slug}, {title}, {images}…) instead of the default")
     p.add_argument("--log", default=str(LOG_PATH), help=f"the JSONL log (default {LOG_PATH})")
     p.add_argument("--cwd", default=str(HOME_DIR), help=f"the folder the agent runs in (default {HOME_DIR})")
-    p.add_argument("--dry-run", action="store_true", help="print the list and the prompt of the first article; run nothing")
+    p.add_argument("--dry-run", action="store_true", help="print the list and the prompt of the first item; run nothing")
     return p
 
 
@@ -377,32 +499,48 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("error: --limit, --timeout and --max-failures must be positive; --budget and --cost not negative",
               file=sys.stderr)
         return EXIT_USAGE
+    if (a.sections or a.spreads) and (a.status or a.missing):
+        print("error: --status and --missing are for the articles, not with --sections or --spreads", file=sys.stderr)
+        return EXIT_USAGE
+    a.mode = "sections" if a.sections else "spreads" if a.spreads else "articles"
+    a.status = a.status or "draft"
     try:
         return loop(a)
     except LoopError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return exc.code
     except KeyboardInterrupt:
-        print("\ninterrupted: the agent was stopped; the log has every article finished before", file=sys.stderr)
+        print("\ninterrupted: the agent was stopped; the log has every item finished before", file=sys.stderr)
         return 130
+
+
+def todo_of(a) -> List[Dict[str, Any]]:
+    if a.mode == "sections":
+        return sections_todo()
+    if a.mode == "spreads":
+        return spreads_todo()
+    return articles_todo(a.status, a.missing)
 
 
 def loop(a) -> int:
     log = Path(a.log).expanduser()
     a.cwd = Path(a.cwd).expanduser()
-    template = DEFAULT_PROMPT
+    mode = MODES[a.mode]
+    noun = mode["noun"]
+    template = mode["prompt"]
     if a.prompt_file:
         try:
             template = Path(a.prompt_file).read_text(encoding="utf-8")
         except OSError as exc:
             raise LoopError(f"cannot read --prompt-file: {exc}", EXIT_USAGE) from None
-    last = outcomes(read_log(log))
-    todo = articles_todo(a.status)
+    last = outcomes(read_log(log), mode["event"])
+    todo = todo_of(a)
     done_before = [p for p in todo if last.get(str(p["id"])) == "ok"]
     failed_before = [p for p in todo if last.get(str(p["id"])) == "failed"]
     queue = [p for p in todo if last.get(str(p["id"])) != "ok"
              and (a.retry_failed or last.get(str(p["id"])) != "failed")]
-    print(f"{len(todo)} article(s) with the cover still to redo ({a.status}); {len(queue)} in the queue"
+    which = (f"{a.status}" + (", and with no cover in every status" if a.missing else "")) if a.mode == "articles" else a.mode
+    print(f"{len(todo)} {noun}(s) with {mode['what']} ({which}); {len(queue)} in the queue"
           + (f", {len(failed_before)} failed before (skipped: --retry-failed to include them)"
              if failed_before and not a.retry_failed else "")
           + (f", {len(done_before)} done according to the log but still listed (skipped)" if done_before else ""))
@@ -411,14 +549,16 @@ def loop(a) -> int:
         print(f" {mark}{n:>3}. {p['id']}  {p.get('titolo')}")
     if a.dry_run:
         if queue:
-            print(f"\n* = this run (--limit {a.limit}). Prompt of the first article:\n")
-            print(make_prompt(template, queue[0]))
+            print(f"\n* = this run (--limit {a.limit}). Prompt of the first {noun}:\n")
+            print(make_prompt(template, queue[0], a.mode))
             try:
                 cmd = agent_command(a.agent_cmd, "<prompt>", queue[0])
             except LoopError as exc:
                 print(f"\nagent: {exc}")
             else:
                 print("agent: " + subprocess.list2cmdline(cmd) + f"   (in {a.cwd}, at most {a.timeout:g} min)")
+            print(f"cost: at most {min(len(queue), a.limit) * a.cost} credits for this run "
+                  f"({min(len(queue), a.limit)} × {a.cost}; one picture is 10)")
         print("\ndry run: nothing was launched")
         return EXIT_OK
     if not queue:
@@ -431,26 +571,26 @@ def loop(a) -> int:
     done: List[str] = []
     failed: List[str] = []
     in_a_row = 0
-    stop = "no article left"
+    stop = f"no {noun} left"
     code = EXIT_OK
     for n, post in enumerate(queue):
         if n >= a.limit:
             stop = f"--limit {a.limit} reached"
             break
         try:
-            current = credits()  # before every article: the budget is measured, not estimated
+            current = credits()  # before every item: the budget is measured, not estimated
         except LoopError as exc:
             stop, code = f"the balance cannot be read ({exc}): nothing more is launched", EXIT_IMAGES
             break
         first = current if first is None else first
         spent = first - current
         if a.budget is not None and spent + a.cost > a.budget:
-            stop = f"--budget {a.budget}: spent {spent}, the next article could cost {a.cost}"
+            stop = f"--budget {a.budget}: spent {spent}, the next {noun} could cost {a.cost}"
             break
         if current - a.cost < a.reserve:
-            stop = f"--reserve {a.reserve}: balance {current}, the next article could cost {a.cost}"
+            stop = f"--reserve {a.reserve}: balance {current}, the next {noun} could cost {a.cost}"
             break
-        entry = do_article(post, a, template, log, current)
+        entry = do_article(post, a, template, log, current, a.mode)
         if entry["credits_after"] is not None:
             current = entry["credits_after"]
         if entry["outcome"] == "ok":
@@ -465,8 +605,8 @@ def loop(a) -> int:
                 break
     spent_total = (first - current) if first is not None and current is not None else 0
     left = len(queue) - len(done) - len(failed)
-    summary = {"event": "run", "when": _now(), "redone": len(done), "failed": len(failed), "spent": spent_total,
-               "credits_left": current, "left_in_queue": left, "stop": stop}
+    summary = {"event": "run", "mode": a.mode, "when": _now(), "redone": len(done), "failed": len(failed),
+               "spent": spent_total, "credits_left": current, "left_in_queue": left, "stop": stop}
     write_log(log, summary)
     print(f"\nSummary: redone {len(done)}, failed {len(failed)}, credits spent {spent_total}"
           + (f" (balance {current})" if current is not None else "") + f"; still to do {left}. Stopped: {stop}.")

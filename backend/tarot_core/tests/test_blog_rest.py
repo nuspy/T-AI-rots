@@ -176,12 +176,14 @@ async def test_una_sezione_sbagliata_dice_quali_sono_valide(admin):
     chiave, _ = await _chiave(admin)
     valida = (await admin.post("/admin/blog/sections", json={"nome": "Love", "tipo": "articoli"})).json()
     await admin.post("/admin/blog/sections", json={"nome": "Cards", "tipo": "carte"})
-    r = await admin.post("/v1/blog/posts", json={**ARTICOLO, "sezione": "cards"}, headers=_h(chiave))
-    assert r.status_code == 422 and r.json()["detail"]["sezioni_valide"] == ["love"]
+    await admin.post("/admin/blog/sections", json={"nome": "Group", "tipo": "contenitore"})
+    r = await admin.post("/v1/blog/posts", json={**ARTICOLO, "sezione": "group"}, headers=_h(chiave))
+    # v9.4: anche le sezioni di carte e di stese accettano articoli; i contenitori no.
+    assert r.status_code == 422 and r.json()["detail"]["sezioni_valide"] == ["cards", "love"]
     ok = await admin.post("/v1/blog/posts", json={**ARTICOLO, "sezione": "love"}, headers=_h(chiave))
     assert ok.status_code == 201 and ok.json()["articolo"]["sezione_id"] == valida["id"]
     sezioni = (await admin.get("/v1/blog/sections", headers=_h(chiave))).json()
-    assert [s["slug"] for s in sezioni] == ["love"]
+    assert sorted((s["slug"], s["tipo"]) for s in sezioni) == [("cards", "carte"), ("love", "articoli")]
 
 
 async def test_l_immagine_si_carica_come_corpo_o_in_base64_ma_mai_da_un_indirizzo(admin):
@@ -225,36 +227,111 @@ async def test_un_tetto_di_articoli_al_giorno(admin):
     assert r.status_code == 429 and "Limite giornaliero" in r.json()["detail"]
 
 
-# ---- modificare e cancellare: solo i propri ------------------------------------------------------------------------
+# ---- modificare e cancellare: qualunque articolo (v9.4) -------------------------------------------------------------
 
 
-async def test_una_chiave_tocca_solo_i_propri_articoli(admin):
+async def test_una_chiave_legge_e_modifica_anche_gli_articoli_di_altri_e_il_registro_ha_prima_e_dopo(admin):
     a, _ = await _chiave(admin, ("blog:write", "blog:publish"))
-    b, _ = await _chiave(admin, ("blog:write", "blog:publish"))
+    b, _ = await _chiave(admin, ("blog:write",))
     creato = (await admin.post("/v1/blog/posts", json={**ARTICOLO, "titolo": "Di A"}, headers=_h(a))).json()["articolo"]
-    assert (await admin.get(f"/v1/blog/posts/{creato['id']}", headers=_h(b))).status_code == 404
-    assert (await admin.patch(f"/v1/blog/posts/{creato['id']}", json={"titolo": "Rubato"}, headers=_h(b))).status_code == 404
-    assert (await admin.delete(f"/v1/blog/posts/{creato['id']}", headers=_h(b))).status_code == 404
-    r = await admin.patch(f"/v1/blog/posts/{creato['id']}", json={"testo": "Nuovo testo.", "seo_titolo": "Un titolo SEO"}, headers=_h(a))
-    assert r.status_code == 200 and r.json()["articolo"]["testo"] == "Nuovo testo." and r.json()["articolo"]["titolo"] == "Di A"
-    assert [x["titolo"] for x in (await admin.get("/v1/blog/posts", headers=_h(a))).json()["articoli"]] == ["Di A"]
-    assert (await admin.get("/v1/blog/posts", headers=_h(b))).json()["totale"] == 0
+    # Anche uno scritto dalla console.
+    console = (await admin.post("/admin/blog/posts", json={"titolo": "Dalla console", "testo": "x", "lang": "en"})).json()
+
+    letto = await admin.get(f"/v1/blog/posts/{creato['id']}", headers=_h(b))
+    assert letto.status_code == 200 and letto.json()["articolo"]["titolo"] == "Di A" and letto.json()["seo"]["controlli"]
+    r = await admin.patch(f"/v1/blog/posts/{creato['id']}", json={"titolo": "Di A, rivisto da B", "testo": "Nuovo."}, headers=_h(b))
+    assert r.status_code == 200 and r.json()["articolo"]["titolo"] == "Di A, rivisto da B"
+    assert (await admin.patch(f"/v1/blog/posts/{console['id']}", json={"sottotitolo": "Da B"}, headers=_h(b))).status_code == 200
+
+    voci = (await admin.get("/admin/audit?azione=blog.rest.update&limite=20")).json()
+    di_b = next(v for v in voci if v["target"] == creato["id"])
+    assert di_b["dopo"]["autrice"] is False and di_b["dopo"]["campi"]["titolo"] == "Di A, rivisto da B"
+    assert di_b["prima"]["titolo"] == "Di A" and set(di_b["prima"]) == set(di_b["dopo"]["campi"]) == {"titolo", "testo"}
+    # La chiave autrice non porta il prima e il dopo: è il suo articolo.
+    await admin.patch(f"/v1/blog/posts/{creato['id']}", json={"sottotitolo": "Di nuovo A"}, headers=_h(a))
+    voci = (await admin.get("/admin/audit?azione=blog.rest.update&limite=20")).json()
+    di_a = next(v for v in voci if v["target"] == creato["id"] and v["dopo"]["autrice"])
+    assert di_a["prima"] is None and "campi" not in di_a["dopo"]
+
+    # L'elenco: tutti gli articoli, con `mio`; `mine=true` solo quelli della chiave.
+    tutti = (await admin.get("/v1/blog/posts", headers=_h(b))).json()
+    assert tutti["totale"] == 2 and {x["titolo"]: x["mio"] for x in tutti["articoli"]} == {
+        "Di A, rivisto da B": False, "Dalla console": False,
+    }
+    assert (await admin.get("/v1/blog/posts", params={"mine": "true"}, headers=_h(b))).json()["totale"] == 0
+    miei = (await admin.get("/v1/blog/posts", params={"mine": "true"}, headers=_h(a))).json()
+    assert [x["titolo"] for x in miei["articoli"]] == ["Di A, rivisto da B"] and miei["articoli"][0]["mio"] is True
 
 
-async def test_si_cancellano_solo_le_bozze_e_una_chiave_senza_permesso_non_tocca_il_pubblicato(admin):
+async def test_le_bozze_si_cancellano_con_blog_write_i_pubblicati_solo_con_blog_publish(admin):
     scrittore, _ = await _chiave(admin)
     editor, _ = await _chiave(admin, ("blog:write", "blog:publish"))
-    bozza = (await admin.post("/v1/blog/posts", json={**ARTICOLO, "titolo": "Bozza"}, headers=_h(scrittore))).json()["articolo"]
+    # Una bozza di un'altra chiave: la cancella anche lo scrittore, e il registro la conserva.
+    bozza = (await admin.post("/v1/blog/posts", json={**ARTICOLO, "titolo": "Bozza"}, headers=_h(editor))).json()["articolo"]
     assert (await admin.delete(f"/v1/blog/posts/{bozza['id']}", headers=_h(scrittore))).status_code == 204
+    voce = next(v for v in (await admin.get("/admin/audit?azione=blog.rest.delete&limite=5")).json() if v["target"] == bozza["id"])
+    assert voce["prima"]["autrice"] is False and voce["prima"]["articolo"]["titolo"] == "Bozza"
+
     pubblicato = (await admin.post("/v1/blog/posts", json={**ARTICOLO, "titolo": "Uscito", "stato": "pubblicato"}, headers=_h(editor))).json()["articolo"]
-    assert (await admin.delete(f"/v1/blog/posts/{pubblicato['id']}", headers=_h(editor))).status_code == 409
-    # La stessa chiave, se poi perde il permesso, non può più modificare ciò che è uscito: qui una chiave a sola scrittura
-    # non può nemmeno vederlo (non è sua). E se fosse sua e già pubblicata:
-    solo_scrittura, dati = await _chiave(admin)
-    mio = (await admin.post("/v1/blog/posts", json={**ARTICOLO, "titolo": "Mio"}, headers=_h(solo_scrittura))).json()["articolo"]
-    await admin.post(f"/admin/blog/posts/{mio['id']}/pubblica")
-    r = await admin.patch(f"/v1/blog/posts/{mio['id']}", json={"testo": "Cambio"}, headers=_h(solo_scrittura))
-    assert r.status_code == 403
+    # Lo scrittore non lo modifica né lo cancella; l'editor sì.
+    assert (await admin.patch(f"/v1/blog/posts/{pubblicato['id']}", json={"testo": "Cambio"}, headers=_h(scrittore))).status_code == 403
+    assert (await admin.delete(f"/v1/blog/posts/{pubblicato['id']}", headers=_h(scrittore))).status_code == 403
+    assert (await admin.get(f"/blog/posts/{pubblicato['slug']}")).status_code == 200
+    assert (await admin.delete(f"/v1/blog/posts/{pubblicato['id']}", headers=_h(editor))).status_code == 204
+    assert (await admin.get(f"/blog/posts/{pubblicato['slug']}")).status_code == 404
+    # Un articolo della console pubblicato: l'editor lo modifica.
+    console = (await admin.post("/admin/blog/posts", json={"titolo": "Console", "testo": "x", "stato": "pubblicato"})).json()
+    r = await admin.patch(f"/v1/blog/posts/{console['id']}", json={"testo": "Rivisto."}, headers=_h(editor))
+    assert r.status_code == 200 and r.json()["articolo"]["stato"] == "pubblicato"
+    assert (await admin.get(f"/v1/blog/posts/{'0b1c2d3e-0000-4000-8000-000000000000'}", headers=_h(editor))).status_code == 404
+
+
+# ---- il soggetto (v9.4) ------------------------------------------------------------------------------------------
+
+
+async def test_il_soggetto_si_ricava_da_solo_si_indica_e_si_toglie(admin):
+    chiave, _ = await _chiave(admin, ("blog:write", "blog:publish"))
+    ruota = (await admin.post("/v1/blog/posts", json={"titolo": "Wheel of Fortune Tarot Meaning", "testo": "x"}, headers=_h(chiave))).json()
+    assert ruota["articolo"]["subject"] == {"tipo": "carta", "ref": "maj-10", "nome": "Fortune", "slug": "fortune"}
+    # Indicato a mano, anche per slug e col tipo in inglese.
+    r = await admin.post("/v1/blog/posts", json={"titolo": "A reading for the new year", "testo": "x",
+                                                  "subject": {"tipo": "spread", "ref": "celtic-cross"}}, headers=_h(chiave))
+    assert r.json()["articolo"]["subject"]["ref"] == "croce-celtica" and r.json()["articolo"]["subject"]["tipo"] == "stesa"
+    # `null`: nessuno, anche se il titolo nomina una carta; e un riferimento sconosciuto è un 422.
+    r = await admin.post("/v1/blog/posts", json={"titolo": "The Tower and the Star", "testo": "x", "subject": None}, headers=_h(chiave))
+    assert r.json()["articolo"]["subject"] is None
+    assert (await admin.post("/v1/blog/posts", json={"titolo": "x", "subject": {"tipo": "carta", "ref": "maj-99"}}, headers=_h(chiave))).status_code == 422
+    # In modifica: senza soggetto, il titolo nuovo lo dà.
+    senza = (await admin.post("/v1/blog/posts", json={"titolo": "Tarot and patience", "testo": "x"}, headers=_h(chiave))).json()["articolo"]
+    assert senza["subject"] is None
+    m = await admin.patch(f"/v1/blog/posts/{senza['id']}", json={"titolo": "Ace of Cups and patience"}, headers=_h(chiave))
+    assert m.json()["articolo"]["subject"]["ref"] == "coppe-01"
+    # `titles` lo dice in forma compatta.
+    titoli = (await admin.get("/v1/blog/titles", headers=_h(chiave))).json()["articoli"]
+    assert {t["titolo"]: t["subject"] for t in titoli}["Wheel of Fortune Tarot Meaning"] == {"tipo": "carta", "ref": "maj-10"}
+
+
+async def test_un_articolo_su_una_carta_senza_sezione_va_nella_sezione_della_carta(admin):
+    chiave, _ = await _chiave(admin, ("blog:write", "blog:publish"))
+    maggiori = (await admin.post("/admin/blog/sections", json={"nome": "Major Arcana", "tipo": "carte", "filtro": {"arcano": "maggiore"}})).json()
+    coppe = (await admin.post("/admin/blog/sections", json={"nome": "Cups", "tipo": "carte", "filtro": {"seme": "coppe"}})).json()
+    love = (await admin.post("/admin/blog/sections", json={"nome": "Love", "tipo": "articoli"})).json()
+    r = await admin.post("/v1/blog/posts", json={"titolo": "Wheel of Fortune Tarot Meaning", "testo": "x"}, headers=_h(chiave))
+    assert r.json()["articolo"]["sezione_id"] == maggiori["id"]
+    r = await admin.post("/v1/blog/posts", json={"titolo": "Ace of Cups in Love", "testo": "x"}, headers=_h(chiave))
+    assert r.json()["articolo"]["sezione_id"] == coppe["id"]
+    # Con la sezione indicata resta lì; senza soggetto carta nessuna sezione d'ufficio.
+    r = await admin.post("/v1/blog/posts", json={"titolo": "The Lovers tarot card in love", "testo": "x", "sezione": "love"}, headers=_h(chiave))
+    assert r.json()["articolo"]["sezione_id"] == love["id"]
+    r = await admin.post("/v1/blog/posts", json={"titolo": "Full Moon Tarot Spread", "testo": "x"}, headers=_h(chiave))
+    assert r.json()["articolo"]["sezione_id"] is None and r.json()["articolo"]["subject"] is None
+    # Anche dalla console.
+    c = await admin.post("/admin/blog/posts", json={"titolo": "The Tower tarot card", "testo": "x"})
+    assert c.json()["sezione_id"] == maggiori["id"] and c.json()["soggetto"]["ref"] == "maj-16"
+    m = await admin.patch(f"/admin/blog/posts/{c.json()['id']}", json={"soggetto": None})
+    assert m.json()["soggetto"] is None
+    m = await admin.patch(f"/admin/blog/posts/{c.json()['id']}", json={"soggetto": {"tipo": "stesa", "ref": "croce-celtica"}})
+    assert m.json()["soggetto"]["ref"] == "croce-celtica" and m.json()["sezione_id"] == maggiori["id"]
 
 
 async def test_il_catalogo_da_le_scorciatoie_pronte_e_le_etichette_esistenti(admin):

@@ -8,9 +8,9 @@ Only when `guide` fails with a message about a missing key, follow the steps bel
 1. An editor creates a key in the console: **Blog → Keys**. The key is shown once, and its permissions are chosen
    only now: they cannot be added later. **Recommended: ONE key with the three permissions write + publish + media**
    (`blog:write`, `blog:publish`, `blog:media`): this skill writes and publishes with it, and `tarots-blog-images`
-   uses the same saved key for the pictures of existing articles (it reads this skill's key when it has no media key
-   of its own). A key with `blog:write` alone saves drafts only; without `blog:media` the picture skill gets a 403
-   that says to make the one key.
+   uses the same saved key for the pictures of existing articles, of the sections and of the spreads (it reads this
+   skill's key when it has no media key of its own). A key with `blog:write` alone saves drafts only (and changes
+   any draft, not only its own); without `blog:media` the picture skill gets a 403 that says to make the one key.
 2. Put it in the environment for this run only:
    ```
    TAROTS_API_URL=https://tarots.chat/api        # the API base of the site

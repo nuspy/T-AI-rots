@@ -28,6 +28,7 @@ from ...tarot.lingue import in_lingua, lingua_per_paese
 from ...tarot.stampa_mazzo import pdf_per_mazzo
 from ...tarot.testi import DISCLAIMER, QUALCUNO_DI_SPECIALE
 from ..deps import get_conoscenza
+from .blog import immagini_catalogo
 
 router = APIRouter(tags=["pubblico"])
 
@@ -53,7 +54,8 @@ Lang = Query(default=None, max_length=10, description="it o en: la lingua dei te
 
 
 @router.get("/spreads")
-def stese(
+async def stese(
+    session: DbSession,
     categoria: Optional[str] = Query(default=None, pattern="^(standard|lavoro|compatibilita|coppia)$"),
     tema: Optional[str] = Query(default=None, pattern="^(lavoro)$"),
     lang: Optional[str] = Lang,
@@ -64,24 +66,28 @@ def stese(
 
     Con `?tema=lavoro` le stese che il sito propone per quel tema: quelle della categoria
     `lavoro` e poi le standard con `"lavoro"` in `temi` (ogni stesa porta `temi`, per chi
-    preferisce filtrare da sé l'elenco completo). `tema` vince su `categoria`."""
+    preferisce filtrare da sé l'elenco completo). `tema` vince su `categoria`.
+
+    Ogni stesa porta `immagine` (v9.4): l'illustrazione del catalogo, `{url, mini, alt}`, o null."""
     conoscenza = get_conoscenza()
     if tema:
         scelte = conoscenza.stese_per_tema(tema)
     else:
         scelte = conoscenza.stese_per(categoria) if categoria else conoscenza.stese.values()
-    return [conoscenza.stesa_pubblica(s, lang) for s in scelte]
+    immagini = await immagini_catalogo(session, "stesa")
+    return [conoscenza.stesa_pubblica(s, lang) | {"immagine": immagini.get(s["id"])} for s in scelte]
 
 
 @router.get("/spreads/{spread_id}")
-def stesa(spread_id: str, lang: Optional[str] = Lang) -> Dict[str, Any]:
-    """Una stesa, per la sua pagina pubblica: posizioni, significati, regole. Si trova per id
-    (`croce-celtica`) o per slug (`celtic-cross`)."""
+async def stesa(spread_id: str, session: DbSession, lang: Optional[str] = Lang) -> Dict[str, Any]:
+    """Una stesa, per la sua pagina pubblica: posizioni, significati, regole e l'illustrazione (`immagine`, o null).
+    Si trova per id (`croce-celtica`) o per slug (`celtic-cross`)."""
     conoscenza = get_conoscenza()
     trovata = conoscenza.stesa(conoscenza.risolvi_stesa(spread_id) or "")
     if trovata is None:
         raise HTTPException(status_code=404, detail="Stesa sconosciuta")
-    return conoscenza.stesa_pubblica(trovata, lang)
+    immagini = await immagini_catalogo(session, "stesa")
+    return conoscenza.stesa_pubblica(trovata, lang) | {"immagine": immagini.get(trovata["id"])}
 
 
 @router.get("/cards")

@@ -88,7 +88,7 @@ async def test_ci_sono_gli_articoli_di_tutti_con_i_campi_compatti_e_mio(admin):
     assert set(per_id) == {mio["id"], altrui["id"], console["id"]}
     m = per_id[mio["id"]]
     assert set(m) == {"id", "slug", "titolo", "estratto", "parola_chiave", "sezione", "lang", "stato", "pubblicato_il",
-                      "aggiornato", "mio", "tradotto_da_id"}
+                      "aggiornato", "mio", "tradotto_da_id", "subject"}
     assert m["mio"] is True and m["slug"] == "the-star-meaning" and m["parola_chiave"] == "star tarot meaning"
     assert m["sezione"] == "love" and m["lang"] == "en" and m["stato"] == "bozza" and m["pubblicato_il"] is None
     assert m["aggiornato"] and m["tradotto_da_id"] is None

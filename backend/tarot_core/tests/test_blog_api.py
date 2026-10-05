@@ -191,10 +191,13 @@ async def test_un_articolo_programmato_compare_solo_dalla_sua_data(admin, sessio
     assert (await admin.get(f"/blog/posts/{a['slug']}")).status_code == 200
 
 
-async def test_gli_articoli_stanno_solo_nelle_sezioni_di_articoli(admin):
+async def test_gli_articoli_stanno_nelle_sezioni_di_articoli_carte_e_stese_mai_in_un_contenitore(admin):
+    gruppo = await _sezione(admin, "Gruppo", tipo="contenitore")
+    r = await admin.post("/admin/blog/posts", json={"titolo": "x", "sezione_id": gruppo["id"]})
+    assert r.status_code == 422 and "contenitore" in r.json()["detail"]
+    # v9.4: una sezione di carte (o di stese) accetta gli articoli su quelle carte.
     carte = await _sezione(admin, "Carte", tipo="carte", filtro={"arcano": "maggiore"})
-    r = await admin.post("/admin/blog/posts", json={"titolo": "x", "sezione_id": carte["id"]})
-    assert r.status_code == 422 and "articoli" in r.json()["detail"]
+    assert (await admin.post("/admin/blog/posts", json={"titolo": "x", "sezione_id": carte["id"]})).status_code == 201
     assert (await admin.post("/admin/blog/posts", json={"titolo": "x", "sezione_id": 424242})).status_code == 422
     assert (await admin.post("/admin/blog/posts", json={"titolo": "x", "immagine_id": "0b1c2d3e-0000-4000-8000-000000000000"})).status_code == 422
 
@@ -484,13 +487,22 @@ async def test_il_seed_scrive_l_albero_una_volta_e_non_disfa_le_modifiche(admin,
 
     creati = await scrivi_sezioni_blog(session)
     await session.commit()
-    assert creati == 17 and await scrivi_sezioni_blog(session) == 0
+    # 17 sezioni di prima + «By suit» e «By number» + le 14 collezioni per numero (v9.4)
+    assert creati == 33 and await scrivi_sezioni_blog(session) == 0
     albero = (await admin.get("/blog/sections")).json()
     assert [n["slug"] for n in albero] == ["tarot"]
     figli = {f["slug"]: f for f in albero[0]["figli"]}
     assert list(figli) == ["major-arcana", "minor-arcana", "learn-tarot", "tarot-journal", "articles"]
     assert figli["major-arcana"]["n_elementi"] == 22 and figli["major-arcana"]["tipo"] == "carte"
-    assert [f["slug"] for f in figli["minor-arcana"]["figli"]] == ["wands", "cups", "swords", "disks"]
+    # v9.4: i minori per seme (gli slug di sempre) e per numero.
+    minori = {f["slug"]: f for f in figli["minor-arcana"]["figli"]}
+    assert list(minori) == ["by-suit", "by-number"]
+    assert [f["slug"] for f in minori["by-suit"]["figli"]] == ["wands", "cups", "swords", "disks"]
+    assert [f["slug"] for f in minori["by-number"]["figli"]] == [
+        "aces", "twos", "threes", "fours", "fives", "sixes", "sevens", "eights", "nines", "tens",
+        "princesses", "princes", "queens", "knights",
+    ]
+    assert all(f["n_elementi"] == 4 for f in minori["by-number"]["figli"]) and minori["by-number"]["n_carte"] == 56
     assert [f["slug"] for f in figli["learn-tarot"]["figli"]] == ["tarot-spreads"]
     assert figli["learn-tarot"]["figli"][0]["n_elementi"] == 19
     assert [f["slug"] for f in figli["articles"]["figli"]] == [

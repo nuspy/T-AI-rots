@@ -4,6 +4,7 @@
     "nome": "Station for Two (Thoughts, Feelings, Actions)",
     "origine": "A symmetrical spread from the Italian tradition for relationships: the cards are read in mirrored pairs, and the central one last.",
     "descrizione": "Each person's thoughts, feelings and actions, read in mirrored pairs; at the centre the current situation, which is uncovered last.",
+    "tradizione": "love, Italian tradition",
     "regole": [
       "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
       "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
@@ -25,6 +26,7 @@
     "nome": "Seven-Card Relationship Spread",
     "origine": "The canonical 'relationship spread' of modern cartomancy: the two people, the bond, what works, what chafes, the advice and the outcome.",
     "descrizione": "You, the other person, the bond; then a strength and a friction, the advice and the outcome if it is followed.",
+    "tradizione": "love",
     "regole": [
       "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
       "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
@@ -45,6 +47,7 @@
     "nome": "Relationship Mirror Spread",
     "origine": "The 'mirror': a modern spread for relationships already under way, which compares how you see each other and what you represent to one another.",
     "descrizione": "How you see the other person and how they see themselves, what they represent to you and what you represent to them; in the middle the obstacles, then strengths and the probable result.",
+    "tradizione": "love",
     "regole": [
       "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
       "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",
@@ -66,6 +69,7 @@
     "nome": "Crossroads Spread",
     "origine": "The 'crossroads': a forked spread, widely used for moments of decision, with two roads starting from one point.",
     "descrizione": "Where you are and what brought you here, then two roads: for each the energy, the challenge and the outcome. It is for understanding, not for making the cards choose.",
+    "tradizione": "love and choices",
     "regole": [
       "Kings, Queens, Knights and Pages point to energies and attitudes, not to the gender of the people.",
       "The cards speak about the querent and the relationship: what concerns the other person is a tendency, not a reading of their mind.",

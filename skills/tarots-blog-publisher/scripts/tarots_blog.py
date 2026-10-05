@@ -16,12 +16,15 @@ Commands (run `tarots_blog.py <command> -h` for the options):
     key show|save|clear    the saved key: show its prefix and origin, save the one in TAROTS_API_KEY, or forget it
     guide                  what the blog accepts and the SEO thresholds (read once, before writing)
     new "SLUG OR TITLE"    create the work folder of one article: ~/.tarots-blog/work/<YYYY-MM-DD>-<slug>/ with
-                           article.json (empty SEO fields, status draft), article.md (empty) and foto/ (its pictures).
-                           TAROTS_WORK_DIR moves the root. Article files live there and nowhere else.
-    sections               the sections articles can go in
+                           article.json (empty SEO fields and subject, status draft), article.md (empty) and foto/
+                           (its pictures). TAROTS_WORK_DIR moves the root. Article files live there and nowhere else.
+    sections               the sections articles can go in (an article about one card goes in that card's section)
     tags                   tags already in use (reuse them)
-    catalog [--grep TEXT]  cards and spreads with the ready-made internal-link shortcut
-    mine                   articles this key created (avoid duplicates, pick an unused keyword)
+    catalog [--grep TEXT]  cards and spreads with the ready-made internal-link shortcut (and the id for "subject")
+    list-posts [--status S] [--mine] [--page N] [--per-page N]
+                           every article of the blog with its id (any key's, the console's too): the id that `update`
+                           and `delete-draft` take. --mine: only the articles of this key
+    mine                   the articles of this key (= list-posts --mine)
     titles [--lang en] [--status S] [--section SLUG] [--grep TEXT] [--all] [--refresh]
                            one line per article of the WHOLE blog (any author): slug | title | keyword | lang |
                            status | date. Kept in a local copy (~/.tarots-blog/titles-cache.json, or
@@ -29,21 +32,37 @@ Commands (run `tarots_blog.py <command> -h` for the options):
                            full reload (--refresh, or by itself when the copy is older than 7 days)
     topic-check "TOPIC" [--lang en]
                            the 5 articles closest to a proposed title/keyword and a verdict FREE / CLOSE / TAKEN
-    check ARTICLE          SEO report without saving anything, then NEXT: the exact fixes, one per open item.
-                           Counts its rounds in the work folder (.checks): a 5th round still below the score is a STOP
+    check ARTICLE          SEO report without saving anything, then NEXT: the exact fixes, one per open item; a
+                           warning when the subject and the section do not match. Counts its rounds in the work
+                           folder (.checks): a 5th round still below the score is a STOP
     upload IMAGE [--for SLUG_OR_ID] [--operator-image]
                            upload a cover OR an inline image, print its id and reusable url
     post ARTICLE [--cover IMAGE [--operator-image] | --no-cover]
                            check, then create the article (draft unless the JSON says "published"). Without
-                           --cover it takes the cover.* (jpg/jpeg/png/webp) of the work folder's foto/, with a
-                           note; with no cover there it stops (exit 11): generate one, or --no-cover only when the
-                           generation failed (say why in the report)
-    update ID PATCH.json   change fields of an article this key created
-    delete-draft ID        delete a draft this key created
+                           --cover it takes the LAST cover `tarots_images.py generate --article <slug>` recorded for
+                           this slug whose file is still there (cover-<date-time>.jpg), and names it; a work folder
+                           from before the pictures had names of their own: its foto/cover.* with a warning. No
+                           cover: it stops (exit 11), naming the file that is missing if there was one; generate it,
+                           or --no-cover only when the generation failed (say why in the report)
+    update ID PATCH.json   change fields of any article: a draft with blog:write, a published or archived one with
+                           blog:publish (only an article the operator or the job names)
+    delete-draft ID        delete a draft (any key's, with blog:write; a published one needs blog:publish and the
+                           operator's explicit request)
 
 ARTICLE is the article's slug (the newest work folder with that slug is used), its work folder, or the path of its
 article.json. When it is not found the error says where article files live: never search the disk for them. A bare
-picture name (`--cover cover.jpg`, `upload inline-1.jpg --for SLUG`) is looked for in that work folder's foto/.
+picture name (`--cover cover-20261005-143012.jpg`, `upload inline-20261005-143512.jpg --for SLUG`) is looked for in
+that work folder's foto/.
+
+The subject of an article (`"subject": {"type": "card" | "spread", "ref": "<id or slug>"}` in article.json, sent as
+the API's `subject` {"tipo": "carta" | "stesa", "ref": …}): the card or spread it is about. Empty ({"type": "",
+"ref": ""}), nothing is sent and the server works it out from the title and the focus keyword; `null` says «about no
+card or spread». An article about one card belongs in that card's section (Major Arcana, or its suit under «By
+suit»): `check` and `post` warn when the subject and the section do not match.
+
+One key reads, changes and deletes any draft of the blog (blog:write), and published articles too with
+blog:publish: there is no «articles of another key» any more. Which article to touch is the operator's (or the
+job's) choice, never the agent's.
 
 `check` and `post` refuse, before calling the API, a focus_keyword longer than 6 words or with a repeated word
 (exit 9), or one already TAKEN by another article according to the same comparison as `topic-check` (exit 8).
@@ -54,8 +73,9 @@ not made by `tarots_images.py generate` (unless `--operator-image`: a picture th
 warning), if it was already used for another article (same sha256, whatever the file name), or if the prompt it
 was generated from makes cards the picture (a card as the subject, two or more cards, a spread, a hand holding a
 card: the rules of `tarots_images.py`, copied here), or if that prompt draws a card (one single small card) and the
-article is not about that very card: its title or focus keyword (article.json for `post`; for `upload --for`, the
-work folder or the titles copy) must name the card the prompt names, and `upload` without `--for` refuses it.
+article is not about that very card: its title, focus keyword or subject (article.json for `post`; for `upload
+--for`, the work folder or the titles copy) must name the card the prompt names, and `upload` without `--for`
+refuses it.
 After a successful `post` or `upload` its sha256 is recorded with the article.
 
 Exit codes: 0 ok · 2 usage, bad or missing article file · 3 SEO score below the threshold, or an error (FIX) left
@@ -63,7 +83,7 @@ Exit codes: 0 ok · 2 usage, bad or missing article file · 3 SEO score below th
 the file (nothing uploaded) · 8 the topic (`topic-check`) or the focus_keyword (`check`, `post`) is TAKEN
 · 9 the focus_keyword is not a search phrase (more than 6 words, or a repeated word) · 10 STOP: 4 rounds of `check`
 did not reach the score; `check` and `post` refuse this article from now on (the operator can delete its .checks)
-· 11 `post` without --cover found no cover.* in the work folder's foto/ (nothing saved): generate it with
+· 11 `post` without --cover found no cover generated for the article (nothing saved): generate it with
 `tarots_images.py generate --article <slug>`, or pass --no-cover if the generation failed.
 
 The full key is only ever sent to TAROTS_API_URL, never printed (only its 12-character prefix is, to tell keys
@@ -185,8 +205,10 @@ FIELDS = {
     "secondary_keywords": "seo_parole_chiave", "status": "stato", "publish_at": "pubblicato_il",
     "featured": "in_evidenza",
 }
-#: Fields with the same name in both vocabularies.
-SAME = {"lang", "tags", "slug", "canonical_url", "noindex", "faq", "dry_run"}
+#: Fields with the same name in both vocabularies. `subject` too, but its inside is translated (`subject_fields`):
+#: {"type": "card"|"spread", "ref": …} in an article file → {"tipo": "carta"|"stesa", "ref": …} for the API.
+SAME = {"lang", "tags", "slug", "canonical_url", "noindex", "faq", "dry_run", "subject"}
+SUBJECT_TYPES = {"card": "carta", "carta": "carta", "spread": "stesa", "stesa": "stesa"}
 API_FIELDS = set(FIELDS.values()) | SAME
 STATUS = {"draft": "bozza", "published": "pubblicato", "archived": "archiviato"}
 
@@ -323,8 +345,8 @@ def explain(exc: urllib.error.HTTPError) -> str:
     hints = {
         301: redirect, 302: redirect, 307: redirect, 308: redirect,
         401: "The key was rejected: wrong, revoked or expired. Create a new one in the console (Blog > Keys).",
-        403: "This key lacks the permission for that action (or the article is not yours to change).",
-        404: "Not found: wrong id, or the article was created by another key.",
+        403: "This key lacks the permission for that action: a published or archived article needs blog:publish.",
+        404: "Not found: wrong id (`list-posts` gives the ids of every article), or a deleted article.",
         413: "The file is too large (8 MB at most).",
         415: "Unsupported file type: send PNG, JPEG or WebP.",
         429: "Rate limit or daily limit reached. Wait, and do not retry in a loop.",
@@ -345,6 +367,9 @@ def normalize(article: Dict[str, Any], base_dir: Optional[Path] = None) -> Dict[
     unknown: List[str] = []
     for key, value in article.items():
         if key == "body_file":
+            continue
+        if key == "subject":
+            out.update(subject_fields(value))
             continue
         target = FIELDS.get(key, key if key in API_FIELDS else None)
         if target is None:
@@ -377,6 +402,29 @@ def normalize(article: Dict[str, Any], base_dir: Optional[Path] = None) -> Dict[
     if isinstance(out.get("tags"), str):
         out["tags"] = [p.strip() for p in out["tags"].split(",") if p.strip()]
     return out
+
+
+def subject_fields(value: Any) -> Dict[str, Any]:
+    """`"subject": {"type": "card"|"spread", "ref": "<id or slug>"}` → the API's `subject`, {"tipo": "carta"|"stesa",
+    "ref": …}. Empty ({"type": "", "ref": ""}, {}, ""): nothing is sent, and the server works the subject out from the
+    title and the focus keyword. `null`: sent as null, «about no card or spread» (the server does not work it out).
+    A half-filled or unknown one is an error: a typo must not silently vanish."""
+    if value is None:
+        return {"subject": None}
+    if value in ("", {}):
+        return {}
+    if not isinstance(value, dict) or set(value) - {"type", "tipo", "ref"}:
+        raise Failure('"subject" must be {"type": "card" or "spread", "ref": "<id or slug from `catalog`>"} '
+                      '(or {"type": "", "ref": ""} to let the server work it out).', EXIT_USAGE)
+    kind = str(value.get("type") or value.get("tipo") or "").strip().lower()
+    ref = str(value.get("ref") or "").strip()
+    if not kind and not ref:
+        return {}
+    if kind not in SUBJECT_TYPES or not ref:
+        raise Failure(f'"subject" {json.dumps(value, ensure_ascii=False)}: "type" must be "card" or "spread" and '
+                      '"ref" the id or slug of that card or spread (`catalog --grep <word>` prints them), e.g. '
+                      '{"type": "card", "ref": "maj-16"}.', EXIT_USAGE)
+    return {"subject": {"tipo": SUBJECT_TYPES[kind], "ref": ref}}
 
 
 def _without_leading_h1(body: str) -> str:
@@ -515,14 +563,18 @@ def resolve_picture(arg: str, folder: Optional[Path]) -> str:
 # ---- the cover `post` must not forget -----------------------------------------------------------------------------
 # 5/10/2026: an agent generated foto/cover.jpg with `generate --article <slug>`, then ran `post <slug>` without
 # --cover; the article was saved with no picture and the WARN «immagine» did not stop it. Without --cover, `post`
-# now takes the cover.* of foto/ (every check of --cover still applies), and with none there it stops (exit 11)
+# takes the cover of the article by itself (every check of --cover still applies), and with none it stops (exit 11)
 # unless --no-cover says the generation failed.
+# Later the same day every picture got a name of its own (cover-<YYYYMMDD-HHMMSS>.jpg) and the record of
+# `tarots_images.py` says which article and which role each one is for: `post` takes the LAST cover recorded for the
+# article's slug whose file is still on disk. The cover.* of foto/ is only the way back for the work folders made
+# before that, with a warning.
 
-COVER_NAMES = ("cover.jpg", "cover.jpeg", "cover.png", "cover.webp")  # what `generate` writes first
+COVER_NAMES = ("cover.jpg", "cover.jpeg", "cover.png", "cover.webp")  # what `generate` wrote before 5/10/2026
 
 
 def covers_in(folder: Path) -> List[Path]:
-    """The cover.jpg / .jpeg / .png / .webp in the article's foto/ (any case), in that order."""
+    """The old-style cover.jpg / .jpeg / .png / .webp in the article's foto/ (any case), in that order."""
     foto = folder / "foto"
     try:
         by_name = {p.name.lower(): p for p in foto.iterdir() if p.is_file()}
@@ -531,38 +583,75 @@ def covers_in(folder: Path) -> List[Path]:
     return [by_name[name] for name in COVER_NAMES if name in by_name]
 
 
-def cover_for_post(path: Path) -> Optional[str]:
-    """`post` without --cover: the one cover.* of foto/, said in a note; None when there is none (`post` then stops
-    with `no_cover()`, after the free checks); two or more: EXIT_USAGE (choose one with --cover)."""
+def _slugs_of(path: Path, slug: Optional[str]) -> List[str]:
+    """The names an article goes by in the record: the slug of article.json and the one in its folder's name."""
+    folder = in_work_folder(path)
+    names = [slug, WORK_NAME.match(folder.name).group(2) if folder is not None else None]
+    return [n for i, n in enumerate(names) if n and n not in names[:i]]
+
+
+def recorded_covers(path: Path, slug: Optional[str]) -> List[Dict[str, Any]]:
+    """The covers `tarots_images.py generate --article` recorded for this article, oldest first."""
+    slugs = _slugs_of(path, slug)
+    return [e for e in _progress().get("_generated") or []
+            if isinstance(e, dict) and e.get("role") == "cover" and e.get("article") in slugs and e.get("file")]
+
+
+def cover_for_post(path: Path, slug: Optional[str] = None) -> Optional[str]:
+    """`post` without --cover: the LAST cover recorded for the article whose file is still on disk, named in a note.
+    With none recorded at all, the old-style cover.* of foto/ with a warning (two of them: EXIT_USAGE, choose one
+    with --cover). None when there is no cover: `post` then stops with `no_cover()`, after the free checks."""
+    entries = recorded_covers(path, slug)
+    present = [e for e in entries if Path(e["file"]).is_file()]
+    if present:
+        last = present[-1]
+        older = f"; {len(present) - 1} older one(s) left aside" if len(present) > 1 else ""
+        print(f"note: no --cover given: using {last['file']}, the last cover generated for {_slugs_of(path, slug)[0]} "
+              f"({str(last.get('when') or '')[:19]}{older}); every picture check still applies.", file=sys.stderr)
+        return str(last["file"])
+    if entries:
+        return None  # recorded, but the files are gone: no_cover() names them
     folder = in_work_folder(path) or path.resolve().parent
     found = covers_in(folder)
     if len(found) > 1:
         raise Failure(f"foto/ of {folder} has more than one cover ({', '.join(p.name for p in found)}): choose it "
                       "with --cover <name>.", EXIT_USAGE)
     if found:
-        print(f"note: no --cover given: using {found[0]} (the cover in foto/); every picture check still applies.",
-              file=sys.stderr)
+        print(f"warning: no --cover given: using {found[0]} (the cover.* of a work folder from before the pictures "
+              "had names of their own: no cover is recorded for this article by `tarots_images.py generate`); every "
+              "picture check still applies.", file=sys.stderr)
         return str(found[0])
     return None
 
 
 def no_cover(path: Path, slug: str) -> Failure:
-    """The stop of `post` with no --cover, no cover.* in foto/ and no --no-cover: what to do, and nothing saved."""
+    """The stop of `post` with no --cover, no cover for the article and no --no-cover: which file is missing, what
+    to do, and nothing saved."""
     folder = in_work_folder(path) or path.resolve().parent
+    missing = [e["file"] for e in recorded_covers(path, slug)]
+    if missing:
+        what = (f"the cover generated for {slug} is no longer on disk: {missing[-1]}"
+                + (f" (nor the {len(missing) - 1} older one(s): {', '.join(missing[:-1])})" if len(missing) > 1 else "")
+                + f", recorded in {PROGRESS_PATH}")
+    else:
+        what = (f"no cover was generated for {slug} (the record {PROGRESS_PATH} has no cover for it) and "
+                f"{folder / 'foto'} has no old-style cover.jpg/.jpeg/.png/.webp")
     return Failure(
-        f"no cover: --cover was not given and {folder / 'foto'} has no cover.jpg/.jpeg/.png/.webp. Nothing was saved. "
-        f"Generate it first: tarots_images.py generate --article {slug} --kind … --shot … --light … --setting \"…\" "
-        "--prompt \"…\" (it saves foto/cover.jpg), then run `post` again. Only if the generation FAILED (LitMedia "
-        "error, no credits), run `post` with --no-cover and write the reason in the report.", EXIT_NO_COVER,
+        f"no cover: --cover was not given and {what}. Nothing was saved. Generate it first: tarots_images.py "
+        f"generate --article {slug} --kind … --shot … --light … --setting \"…\" --prompt \"…\" (it saves "
+        "foto/cover-<date-time>.jpg and records it for this article), then run `post` again. Only if the generation "
+        "FAILED (LitMedia error, no credits), run `post` with --no-cover and write the reason in the report.",
+        EXIT_NO_COVER,
     )
 
 
 def skeleton(slug: str) -> Dict[str, Any]:
-    """The article.json written by `new`: every field to fill, nothing that the API would refuse once filled."""
+    """The article.json written by `new`: every field to fill, nothing that the API would refuse once filled. The
+    subject left empty is worked out by the server from the title and the focus keyword."""
     return {
         "title": "", "subtitle": "", "slug": slug, "language": "en", "focus_keyword": "", "seo_title": "",
-        "seo_description": "", "secondary_keywords": [], "tags": [], "cover_alt": "", "faq": [], "status": "draft",
-        "body_file": "article.md",
+        "seo_description": "", "secondary_keywords": [], "tags": [], "section": "", "subject": {"type": "", "ref": ""},
+        "cover_alt": "", "faq": [], "status": "draft", "body_file": "article.md",
     }
 
 
@@ -746,7 +835,7 @@ def next_steps(seo: Dict[str, Any], payload: Dict[str, Any]) -> List[tuple]:
             else:
                 now = False
                 text = ("no cover yet: normal in `check`; generate it (`tarots_images.py generate --article <slug>`), "
-                        "then `post <slug>` takes foto/cover.jpg by itself")
+                        "then `post <slug>` takes the last cover generated for it by itself")
         elif cid == "etichette":
             n = int(d.get("etichette", len(payload.get("tags") or [])))
             text = (f"there are {n} tags: run `tarots_blog.py tags` and reuse 2-4 existing ones in \"tags\"" if n < 2
@@ -846,8 +935,8 @@ def cmd_sections(a) -> int:
     if a.json:
         show(rows)
     else:
-        for r in rows:
-            print(f"{r['slug']:32} {r['percorso']}")
+        for r in rows:  # `tipo` (articoli, carte, stese) on a server that says it
+            print(f"{r['slug']:32} " + (f"{r['tipo']:10} " if r.get("tipo") else "") + f"{r['percorso']}")
         if not rows:
             print("(no sections: publish without `section`)")
     return EXIT_OK
@@ -874,21 +963,33 @@ def cmd_catalog(a) -> int:
         show({"cards": cards, "spreads": spreads})
         return EXIT_OK
     for title, rows in (("Cards", cards), ("Spreads", spreads)):
-        print(f"{title}:")
+        print(f"{title}:  shortcut for the text, id for \"subject\", name")
         for r in rows:
-            print(f"  {r['scorciatoia']:36} {r['nome']}")
+            print(f"  {r['scorciatoia']:36} {str(r.get('id') or ''):22} {r['nome']}")
+    return EXIT_OK
+
+
+def cmd_list_posts(a) -> int:
+    """`GET /posts`: every article of the blog (5/10/2026: a key no longer sees only its own), or with `mine`
+    (`?mine=true`) the articles of this key. A server older than that answers this key's articles either way."""
+    mine = bool(getattr(a, "mine", False))
+    query = {"stato": a.status, "pagina": a.page, "per_pagina": a.per_page, **({"mine": "true"} if mine else {})}
+    data = call("GET", "/posts", query=query)
+    if a.json:
+        show(data)
+        return EXIT_OK
+    whose = "of this key" if mine else "of the whole blog"
+    print(f"{data['totale']} article(s) {whose}, page {data['pagina']}: id  status  lang  slug | title | keyword")
+    for p in data["articoli"]:
+        print(f"  {p['id']}  {p['stato']:10} {p['lang']}  {p['slug']}  | {p['titolo']}  | keyword: {p.get('seo_parola_chiave') or '-'}")
+    if int(data.get("totale") or 0) > a.page * a.per_page:
+        print(f"  ... more on --page {a.page + 1}")
     return EXIT_OK
 
 
 def cmd_mine(a) -> int:
-    data = call("GET", "/posts", query={"stato": a.status, "pagina": a.page, "per_pagina": a.per_page})
-    if a.json:
-        show(data)
-        return EXIT_OK
-    print(f"{data['totale']} article(s), page {data['pagina']}")
-    for p in data["articoli"]:
-        print(f"  {p['id']}  {p['stato']:10} {p['lang']}  {p['slug']}  | {p['titolo']}  | keyword: {p.get('seo_parola_chiave') or '-'}")
-    return EXIT_OK
+    a.mine = True
+    return cmd_list_posts(a)
 
 
 # ---- every article of the blog, compact: titles and topic-check --------------------------------------------------
@@ -968,7 +1069,7 @@ def _fetch_own_posts() -> List[Dict[str, Any]]:
     rows: List[Dict[str, Any]] = []
     page = 1
     while True:
-        data = call("GET", "/posts", query={"pagina": page, "per_pagina": 100})
+        data = call("GET", "/posts", query={"pagina": page, "per_pagina": 100, "mine": "true"})
         batch = data.get("articoli") or []
         for p in batch:
             rows.append({
@@ -1273,7 +1374,7 @@ def cmd_new(a) -> int:
     if existed:
         print("note: this work folder already exists: nothing was overwritten.")
     print(f"work folder: {paths['folder']}")
-    print(f"article:     {paths['article']}   (fill every empty field)")
+    print(f"article:     {paths['article']}   (fill every empty field; \"subject\" and \"section\" may stay empty)")
     print(f"text:        {paths['body']}   (Markdown, no `# H1`, sections start at `##`)")
     print(f"pictures:    {paths['foto']}   (tarots_images.py generate ... --article {slug})")
     p = script_paths()
@@ -1283,7 +1384,7 @@ def cmd_new(a) -> int:
     print(f"  {blog} catalog --grep <word>")
     print(f"  {blog} check {slug}")
     print(f'  {images} generate --article {slug} --kind <k> --shot <s> --light <l> --setting "<place>" --prompt "<scene>"')
-    print(f"  {blog} post {slug}   (uses foto/cover.jpg; with no cover it stops)")
+    print(f"  {blog} post {slug}   (uses the last cover generated for {slug}; with none it stops)")
     return EXIT_OK
 
 
@@ -1303,11 +1404,14 @@ def cmd_check(a) -> int:
     rounds["stopped"] = not ok and n > MAX_ROUNDS
     write_rounds(path, rounds)
     steps = next_steps(seo, payload)
+    notes = subject_notes(payload)
     if a.json:
         show({**seo, "round": n, "max_rounds": MAX_ROUNDS, "pass": ok, "stop": rounds["stopped"],
-              "next": [t for now, t in steps if now], "no_action": [t for now, t in steps if not now]})
+              "next": [t for now, t in steps if now], "no_action": [t for now, t in steps if not now],
+              "subject": [{"level": level, "text": text} for level, text in notes]})
     else:
         report(seo)
+        print_subject_notes(notes)
         if rounds["stopped"]:
             print_stop(path, rounds, a.min_score)
         elif ok:
@@ -1606,6 +1710,116 @@ def card_rule_problems(prompt: str, texts: List[str], title: str = "") -> tuple:
     return problems, warnings
 
 
+# ---- the subject of an article: the card it is about, declared ------------------------------------------------
+# (5/10/2026) article.json may say what the article is about: `"subject": {"type": "card", "ref": "maj-16"}` (or
+# a catalog slug, "the-tower"; a spread: {"type": "spread", "ref": "croce-celtica"}); empty, the server works it out
+# from the title and the keyword. A card subject counts for the card rule as a title naming that card would.
+# CARD_ID_RANKS, CARD_ID_SUITS and `subject_card()` are the same in both scripts too (the same test).
+
+#: The ids of the site's cards (backend knowledge/deck.json): maj-00 … maj-21 in the order of MAJOR_ARCANA, then
+#: <suit>-01 … <suit>-10 and <suit>-cavaliere / -regina / -principe / -principessa.
+CARD_ID_RANKS = {"01": "Ace", "02": "Two", "03": "Three", "04": "Four", "05": "Five", "06": "Six", "07": "Seven",
+                 "08": "Eight", "09": "Nine", "10": "Ten", "cavaliere": "Knight", "regina": "Queen",
+                 "principe": "Prince", "principessa": "Princess"}
+CARD_ID_SUITS = {"bastoni": "Wands", "coppe": "Cups", "spade": "Swords", "dischi": "Disks"}
+
+
+def subject_card(subject: Any) -> Optional[str]:
+    """The card a subject names, as `named_cards()` names it ("the Tower", "the Ace of Cups"), or None: no subject,
+    a spread, or a ref that is no card. `subject` is {"type": "card", "ref": …} (also the API's "tipo": "carta");
+    the ref is a card id (maj-16, coppe-01) or a name or slug that names one card only (the-tower, ace-of-cups)."""
+    if not isinstance(subject, dict):
+        return None
+    kind = _card_plain(subject.get("type") or subject.get("tipo") or "")
+    ref = _card_plain(subject.get("ref") or "")
+    if kind not in ("card", "carta") or not ref:
+        return None
+    m = re.match(r"^maj (\d{1,2})$", ref)
+    if m:
+        names = list(MAJOR_ARCANA)
+        return names[int(m.group(1))] if int(m.group(1)) < len(names) else None
+    m = re.match(r"^(" + "|".join(CARD_ID_SUITS) + r") (\w+)$", ref)
+    if m and m.group(2) in CARD_ID_RANKS:
+        return f"the {CARD_ID_RANKS[m.group(2)]} of {CARD_ID_SUITS[m.group(1)]}"
+    found = {card for card, _n in named_cards(ref, need_context=False)}
+    return found.pop() if len(found) == 1 else None
+
+
+# ---- the subject and the section: an article about a card goes in that card's section -------------------------
+# Operator's rule (5/10/2026): an article about one card goes in the section of that card — the Major Arcana, or its
+# suit under «By suit» (wands, cups, swords, disks: the slugs of backend tools/seed.py) — and one about a spread in a
+# section of spreads. The server assigns that section when none is given; `check` and `post` only warn when the
+# article.json says something else, so the agent fixes article.json before saving.
+
+MAJOR_SECTION = "major-arcana"
+SUIT_SECTIONS = {"Wands": "wands", "Cups": "cups", "Swords": "swords", "Disks": "disks"}
+
+
+def card_section(card: str) -> str:
+    """The section of a card named as `named_cards()` names it: major-arcana, or the slug of its suit."""
+    if card in MAJOR_ARCANA:
+        return MAJOR_SECTION
+    return SUIT_SECTIONS.get(card.rsplit(" of ", 1)[-1], "")
+
+
+def _spread_section(section: str) -> Optional[bool]:
+    """Is `section` a section of spreads? From `GET /sections` (its `tipo`, on a server that says it), else from the
+    slug; None when the API cannot be asked."""
+    try:
+        rows = call("GET", "/sections") or []
+    except Failure:
+        return None
+    row = next((r for r in rows if isinstance(r, dict) and section in (r.get("slug"), str(r.get("id")))), None)
+    if row is not None and row.get("tipo"):
+        return row["tipo"] == "stese"
+    return "spread" in section
+
+
+def subject_notes(payload: Dict[str, Any]) -> List[tuple]:
+    """("WARN" | "note", text) about the subject and the section of an article, [] when they agree. A card subject
+    comes from `subject`, else from the one card the title and the focus keyword name (what the server would take)."""
+    subject = payload.get("subject") if isinstance(payload.get("subject"), dict) else {}
+    kind, ref = subject.get("tipo"), str(subject.get("ref") or "")
+    section = str(payload.get("sezione") or "").strip()
+    if "subject" in payload and payload["subject"] is None:
+        return []  # «about no card or spread», said explicitly
+    notes: List[tuple] = []
+    if kind == "stesa":
+        if not section:
+            notes.append(("note", f"the subject is the spread «{ref}»: with no \"section\" the server puts the article "
+                                  "in a section of spreads"))
+        elif _spread_section(section) is False:
+            notes.append(("WARN", f"the subject is the spread «{ref}», but \"section\" «{section}» is not a section "
+                                  "of spreads: an article about a spread goes in a section of spreads (see "
+                                  "`sections`); change \"section\" in article.json, or the subject"))
+        return notes
+    if kind == "carta":
+        card, how = subject_card({"tipo": kind, "ref": ref}), "the subject is"
+        if card is None:
+            return [("WARN", f"\"subject\" ref «{ref}» is not a card the script knows: use its id (maj-16, coppe-01, "
+                             "bastoni-cavaliere) or its slug from `catalog --grep <word>`")]
+    else:
+        cards = cards_of_article([str(payload.get("titolo") or ""), str(payload.get("seo_parola_chiave") or "")])
+        if len(cards) != 1:
+            return notes  # about no card, or about several: no section of one card to expect
+        card, how = cards[0], "no \"subject\" is set, and the title or the focus keyword names"
+    expected = card_section(card)
+    if not section:
+        notes.append(("note", f"{how} {card}: with no \"section\" the server puts the article in «{expected}», the "
+                              "section of that card"))
+    elif section != expected:
+        notes.append(("WARN", f"{how} {card}, but \"section\" is «{section}»: an article about a card goes in that "
+                              f"card's section. Set \"section\": \"{expected}\" in article.json"
+                              + (", or set the subject it is really about" if kind != "carta" else
+                                 ", or change the subject")))
+    return notes
+
+
+def print_subject_notes(notes: List[tuple], *, stream=None) -> None:
+    for level, text in notes:
+        print(f"  {level} [subject] {text}.", file=stream or sys.stdout)
+
+
 def _used_by(data: Dict[str, Any], sha: str) -> Optional[str]:
     """The article a picture already belongs to: from `_used`, or from the per-article records of
     `tarots_images.py` (older ones without a hash are hashed from their file, if it is still there)."""
@@ -1623,8 +1837,9 @@ def _used_by(data: Dict[str, Any], sha: str) -> Optional[str]:
 
 
 def article_texts(arg: str) -> Optional[tuple]:
-    """(title and focus keyword, title) of the article `arg` (a slug or an id): from its work folder's article.json,
-    else from the titles copy (TITLES_CACHE_PATH). None when neither knows it. Nothing is asked to the API."""
+    """(title, focus keyword and the card of the subject; title) of the article `arg` (a slug or an id): from its
+    work folder's article.json, else from the titles copy (TITLES_CACHE_PATH). None when neither knows it. Nothing
+    is asked to the API."""
     folder = find_work_folder(slugify(arg))
     if folder is not None:
         try:
@@ -1633,13 +1848,14 @@ def article_texts(arg: str) -> Optional[tuple]:
             data = {}
         if isinstance(data, dict):
             title = data.get("title") or data.get("titolo") or ""
-            texts = [t for t in (title, data.get("focus_keyword") or data.get("seo_parola_chiave")) if t]
+            texts = [t for t in (title, data.get("focus_keyword") or data.get("seo_parola_chiave"),
+                                 subject_card(data.get("subject"))) if t]
             if texts:
                 return texts, title
     cache = _read_titles_cache() or {"articles": {}}
     rows = [r for r in cache["articles"].values()
             if isinstance(r, dict) and (str(r.get("id")) == arg or r.get("slug") in (arg, slugify(arg)))]
-    texts = [t for r in rows for t in (r.get("titolo"), r.get("parola_chiave")) if t]
+    texts = [t for r in rows for t in (r.get("titolo"), r.get("parola_chiave"), subject_card(r.get("subject"))) if t]
     return (texts, rows[0].get("titolo") or "") if texts else None
 
 
@@ -1729,25 +1945,29 @@ def cmd_post(a) -> int:
     payload = load_article(str(path))
     require_filled(payload, path)
     folder = in_work_folder(path)
+    slug = str(payload.get("slug") or (folder.name[11:] if folder else "") or "<slug>")
     if a.cover:
         cover: Optional[str] = resolve_picture(a.cover, folder)
     elif a.no_cover:
         cover = None
-        left = covers_in(folder or path.resolve().parent)
+        left = [Path(e["file"]) for e in recorded_covers(path, slug) if Path(e["file"]).is_file()]
+        left = left[-1:] or covers_in(folder or path.resolve().parent)
         print("note: --no-cover: the article is saved WITHOUT a cover. Allowed only when the generation failed: write "
               "the reason in the report." + (f" foto/ has {left[0].name}, NOT used." if left else ""), file=sys.stderr)
     else:
-        cover = cover_for_post(path)
+        cover = cover_for_post(path, slug)
     title = str(payload.get("titolo") or "")
-    about = ([t for t in (title, payload.get("seo_parola_chiave")) if t], title)
+    subject = subject_card(payload.get("subject"))
+    about = ([t for t in (title, payload.get("seo_parola_chiave"), subject) if t], title)
     sha = check_picture(cover, article=None, operator_image=a.operator_image, about=about) if cover else None
     check_keyword(payload)
     if not cover and not a.no_cover:  # after the free checks: a refused keyword is fixed before a cover is generated
-        raise no_cover(path, str(payload.get("slug") or (folder.name[11:] if folder else "") or "<slug>"))
+        raise no_cover(path, slug)
+    print_subject_notes(subject_notes(payload), stream=sys.stderr)
     if cover:
         image = upload(cover)
         payload["immagine_id"] = image["id"]
-        print(f"cover uploaded: {image['id']}", file=sys.stderr)
+        print(f"cover uploaded: {image['id']} (from {cover})", file=sys.stderr)
     payload.pop("dry_run", None)
     trial = call("POST", "/posts", body={**payload, "dry_run": True})
     seo = trial["seo"]
@@ -1773,6 +1993,7 @@ def cmd_post(a) -> int:
     else:
         print(f"saved: id={article['id']} status={article['stato']} lang={article['lang']}")
         print(f"url:   {result['url']}" + ("" if article["stato"] == "pubblicato" else "   (not public until an editor publishes it)"))
+        print(f"cover: {cover}" if cover else "cover: none (--no-cover)")
         for warning in result.get("avvisi", []):
             print(f"note:  {warning}")
     return EXIT_OK
@@ -1814,12 +2035,21 @@ def parser() -> argparse.ArgumentParser:
     ky.add_argument("action", choices=["show", "save", "clear"])
     ky.set_defaults(run=cmd_key)
     sub.add_parser("guide", help="what the blog accepts and the SEO thresholds").set_defaults(run=cmd_guide)
-    sub.add_parser("sections", help="sections articles can go in").set_defaults(run=cmd_sections)
+    sub.add_parser("sections", help="sections articles can go in (one about a card: that card's section)").set_defaults(run=cmd_sections)
     sub.add_parser("tags", help="tags already in use").set_defaults(run=cmd_tags)
-    c = sub.add_parser("catalog", help="cards and spreads with their link shortcuts")
+    c = sub.add_parser("catalog", help="cards and spreads with their link shortcuts (and the id for \"subject\")")
     c.add_argument("--grep", help="only entries whose slug or name contains this text")
     c.set_defaults(run=cmd_catalog)
-    m = sub.add_parser("mine", help="articles this key created")
+    lp = sub.add_parser("list-posts", help="every article of the blog with its id (for update and delete-draft)",
+                        description="Every article of the blog, whoever wrote it (any key, the console), with the id "
+                                    "that `update` and `delete-draft` take, newest first, one page at a time. To find "
+                                    "an article by topic, `titles --grep <word> --json` also prints the ids.")
+    lp.add_argument("--status", choices=["bozza", "pubblicato", "archiviato"])
+    lp.add_argument("--mine", action="store_true", help="only the articles of this key (GET /posts?mine=true)")
+    lp.add_argument("--page", type=int, default=1)
+    lp.add_argument("--per-page", type=int, default=25)
+    lp.set_defaults(run=cmd_list_posts)
+    m = sub.add_parser("mine", help="the articles of this key (the same as list-posts --mine)")
     m.add_argument("--status", choices=["bozza", "pubblicato", "archiviato"])
     m.add_argument("--page", type=int, default=1)
     m.add_argument("--per-page", type=int, default=25)
@@ -1895,7 +2125,8 @@ def parser() -> argparse.ArgumentParser:
     covers = r.add_mutually_exclusive_group()
     covers.add_argument("--cover", help="an image file made by tarots_images.py generate (a bare name is looked for in "
                                         "the work folder's foto/), to upload and use as the cover. Without it, the "
-                                        "cover.* of foto/ is used; none there: exit 11")
+                                        "last cover generated for this article's slug is used (named in a note); "
+                                        "none: exit 11")
     covers.add_argument("--no-cover", action="store_true",
                         help="save without a cover: ONLY when the generation of the cover failed (say why in the "
                              "report)")
@@ -1905,11 +2136,13 @@ def parser() -> argparse.ArgumentParser:
     r.add_argument("--save-anyway", action="store_true", help="below the score, keep it as a draft instead of refusing")
     r.add_argument("--dry-run", action="store_true", help="check only; save nothing")
     r.set_defaults(run=cmd_post)
-    x = sub.add_parser("update", help="change fields of an article this key created")
+    x = sub.add_parser("update", help="change fields of any article (a published one needs blog:publish); only one "
+                                      "the operator or the job names")
     x.add_argument("id")
     x.add_argument("patch")
     x.set_defaults(run=cmd_update)
-    d = sub.add_parser("delete-draft", help="delete a draft this key created")
+    d = sub.add_parser("delete-draft", help="delete a draft, whoever wrote it (a published article: blog:publish and "
+                                            "the operator's explicit request)")
     d.add_argument("id")
     d.set_defaults(run=cmd_delete)
     return p

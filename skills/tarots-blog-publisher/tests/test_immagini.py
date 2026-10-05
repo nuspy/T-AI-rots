@@ -89,10 +89,12 @@ def test_card_patterns_are_the_same_as_in_tarots_images():
 
 def test_the_card_rule_of_the_article_is_the_same_as_in_tarots_images():
     for name in ("MAJOR_ARCANA", "CONTEXT_NAMES", "MINOR_RANKS", "MINOR_SUITS", "CARD_CONTEXT", "NAME_GAP",
-                 "NOT_A_CARD_NAME", "COPY_OF_ARTWORK", "CLAUSE_BREAK", "_MINOR_NAME", "_MAJOR_NAMES", "_ARTICLES"):
+                 "NOT_A_CARD_NAME", "COPY_OF_ARTWORK", "CLAUSE_BREAK", "_MINOR_NAME", "_MAJOR_NAMES", "_ARTICLES",
+                 "CARD_ID_RANKS", "CARD_ID_SUITS"):
         assert getattr(tb, name) == getattr(ti, name), name
     import inspect
-    for name in ("_card_plain", "named_cards", "cards_of_article", "cards_shown", "shows_a_card", "card_rule_problems"):
+    for name in ("_card_plain", "named_cards", "cards_of_article", "cards_shown", "shows_a_card", "card_rule_problems",
+                 "subject_card"):
         assert inspect.getsource(getattr(tb, name)) == inspect.getsource(getattr(ti, name)), name
 
 
@@ -154,6 +156,20 @@ def test_post_refuses_a_card_that_is_not_the_one_of_the_article(env, capsys, pro
     cover = _generated(tmp, "cover.jpg", b"\xff\xd8 lighthouse", prompt=prompt)
     assert tb.main(["post", article, "--cover", cover]) == tb.EXIT_RULE
     assert words in capsys.readouterr().err and api.calls == []
+
+
+def test_the_subject_of_the_article_lets_its_card_in(env, capsys):
+    tmp, api, _ = env
+    article = tmp / "falls.json"
+    article.write_text(json.dumps({"title": "When everything falls at once", "body": "text", "status": "draft",
+                                   "subject": {"type": "card", "ref": "maj-16"}}), encoding="utf-8")
+    cover = _generated(tmp, "cover.jpg", b"\xff\xd8 lighthouse", prompt=TOWER_CARD)
+    assert tb.main(["post", str(article), "--cover", cover]) == tb.EXIT_OK
+    sent = [c for c in api.calls if c[1] == "/posts"]
+    assert len(sent) == 2
+    other = _generated(tmp, "cover-2.jpg", b"\xff\xd8 fool", prompt=FOOL_CARD)
+    assert tb.main(["post", str(article), "--cover", other]) == tb.EXIT_RULE   # the subject is the Tower, not the Fool
+    assert "is not a card of this article" in capsys.readouterr().err
 
 
 def test_post_refuses_any_card_for_an_article_about_no_card(env, capsys):

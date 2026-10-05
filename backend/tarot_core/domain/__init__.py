@@ -21,7 +21,7 @@ from .backup_models import BackupEsecuzione, ImpostazioniBackup
 from .base import Base, OwnedMixin, TimestampMixin, utcnow
 from .billing_models import Coupon, CouponRedemption, CreditEntry, PaymentCheckout, PaymentEvent, Plan, Subscription
 from .blog_models import (
-    ApiKey, BlogPost, BlogPostLink, BlogPostRevision, BlogPostTag, BlogSection, BlogTag, MediaImage,
+    ApiKey, BlogPost, BlogPostLink, BlogPostRevision, BlogPostTag, BlogSection, BlogTag, CatalogoImmagine, MediaImage,
 )
 from .chat_models import ChatProattivaTurno
 from .config_models import ImpostazioniCrediti, LlmProvider, ModelAssignment
@@ -47,6 +47,7 @@ __all__ = [
     "BlogPostTag",
     "BlogSection",
     "BlogTag",
+    "CatalogoImmagine",
     "ChatProattivaTurno",
     "ConsensoStorico",
     "MediaImage",

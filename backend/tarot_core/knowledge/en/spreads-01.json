@@ -4,6 +4,7 @@
     "nome": "Three-Card Spread",
     "origine": "The most widespread spread in the world: a timeline of three Major Arcana.",
     "descrizione": "Past, present and future: the trajectory of the matter read through the archetypal forces of the 22 Major Arcana alone.",
+    "tradizione": "classic",
     "regole": [
       "Read it from left to right like a story: the central card is the pivot and colours the other two.",
       "Dignities are calculated along the line: the present card is modulated by the past and the future.",
@@ -20,6 +21,7 @@
     "nome": "Simple Cross (Wirth)",
     "origine": "A method popularised by Oswald Wirth and a cornerstone of the Italian tradition: four Major Arcana and a calculated synthesis.",
     "descrizione": "For, against, the why and the judge; at the centre the synthesis, which is not drawn but calculated by adding up the Arcana.",
+    "tradizione": "Italian tradition",
     "regole": [
       "The fifth card is not chosen: it is the theosophical reduction of the sum of the numbers of cards 1–4 (the Fool counts as 0; if the sum is 0 it counts as 22, that is, the Fool).",
       "If the synthesis Arcanum has already appeared in the spread, it carries a double weight: its message is reinforced and becomes the key to the reading.",
@@ -38,6 +40,7 @@
     "nome": "Horseshoe Spread",
     "origine": "A traditional seven-card spread laid out in a V, widespread in European cartomancy for practical questions.",
     "descrizione": "Seven cards in a horseshoe: from the past to the outcome, by way of what is hidden, the obstacles, the surroundings and the advice.",
+    "tradizione": "European cartomancy",
     "regole": [
       "Card 4 is the apex: every reading of the horseshoe revolves around the obstacle.",
       "A court card in position 5 usually points to a real person in the querent's surroundings.",
@@ -58,6 +61,7 @@
     "nome": "Celtic Cross",
     "origine": "Published by A. E. Waite in 1910 and become the most famous spread of the modern tarot.",
     "descrizione": "Ten cards: the cross describes the situation and its timing, the staff on the right describes the querent, the surroundings and the outcome.",
+    "tradizione": "Celtic tradition",
     "regole": [
       "The cross (1–6) describes the situation; the staff (7–10) describes the querent and the evolution.",
       "Card 2 is never read as reversed in the strict sense: laid across the first, it is by nature what opposes or adds to the present.",
@@ -82,6 +86,7 @@
     "nome": "Astrological Wheel",
     "origine": "A twelve-house spread modelled on the birth chart, traditionally used for the year ahead; here with a significator at the centre.",
     "descrizione": "One card for each of the twelve astrological houses and one at the centre as the dominant theme: a complete panorama of life.",
+    "tradizione": "astrology",
     "regole": [
       "The houses are read counter-clockwise starting from the Ascendant (House I, on the left).",
       "A strong card in an angular house (I, IV, VII, X) weighs more than the others.",

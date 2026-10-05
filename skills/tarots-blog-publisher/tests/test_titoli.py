@@ -242,12 +242,32 @@ def test_a_server_without_titles_falls_back_on_this_keys_posts_and_says_so(api, 
     assert "without GET /titles" in captured.err and _cache()["partial"] is False and len(_lines(captured.out)) == 5
 
 
-def test_mine_is_unchanged(api, monkeypatch, capsys):
+def test_mine_asks_for_this_keys_articles_and_list_posts_for_all(api, monkeypatch, capsys):
+    """5/10/2026: GET /posts lists every article; `mine` adds `mine=true` (a key's own), `list-posts` does not."""
     calls = []
+    row = {"id": "id-7", "stato": "bozza", "lang": "en", "slug": "the-tower", "titolo": "The Tower",
+           "seo_parola_chiave": "tower tarot meaning"}
     monkeypatch.setattr(tb, "call", lambda method, path, **kw: calls.append((method, path, kw)) or
-                        {"totale": 0, "pagina": 1, "articoli": []})
+                        {"totale": 30, "pagina": 1, "articoli": [row]})
     assert tb.main(["mine", "--status", "bozza"]) == tb.EXIT_OK
-    assert calls == [("GET", "/posts", {"query": {"stato": "bozza", "pagina": 1, "per_pagina": 25}})]
+    assert calls[-1] == ("GET", "/posts", {"query": {"stato": "bozza", "pagina": 1, "per_pagina": 25, "mine": "true"}})
+    assert "30 article(s) of this key" in capsys.readouterr().out
+    assert tb.main(["list-posts"]) == tb.EXIT_OK
+    assert calls[-1] == ("GET", "/posts", {"query": {"stato": None, "pagina": 1, "per_pagina": 25}})
+    out = capsys.readouterr().out
+    assert "30 article(s) of the whole blog" in out and "id-7  bozza" in out and "--page 2" in out
+    assert tb.main(["list-posts", "--mine", "--page", "2"]) == tb.EXIT_OK
+    assert calls[-1][2]["query"]["mine"] == "true" and calls[-1][2]["query"]["pagina"] == 2
+
+
+def test_the_404_and_403_hints_no_longer_speak_of_another_keys_articles():
+    import io
+    import urllib.error
+    for code in (403, 404):
+        exc = urllib.error.HTTPError("u", code, "x", {}, io.BytesIO(b'{"detail": "no"}'))
+        text = tb.explain(exc)
+        assert "another key" not in text and "not yours" not in text
+    assert "list-posts" in tb.explain(urllib.error.HTTPError("u", 404, "x", {}, io.BytesIO(b"{}")))
 
 
 # ---- topic-check ------------------------------------------------------------------------------------------------

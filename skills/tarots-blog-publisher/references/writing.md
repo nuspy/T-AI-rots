@@ -19,11 +19,12 @@ stones, a constellation: never a layout of cards) or a close-up of a symbol woul
 about a spread or a specific symbol do benefit from one. If yes:
 ```
 python ../tarots-blog-images/scripts/tarots_images.py generate --article <slug> --aspect 4:3 --kind … --shot … --light … --setting "…" --prompt "…"
-python scripts/tarots_blog.py upload inline-1.jpg --for <slug>
+python scripts/tarots_blog.py upload "<the file generate printed>" --for <slug>
 ```
-`generate` saves it as `foto/inline-1.jpg` in the work folder (a different form from the cover); `upload` finds the
-bare name there and prints the `url`. Paste it into `article.md` as ordinary Markdown: `![alt text](url)`. One is
-normally enough, not one per paragraph. State the decision either way in the report.
+`generate` saves it in the work folder's `foto/` with a name of its own, `inline-<YYYYMMDD-HHMMSS>.jpg` (a
+different form from the cover), and prints the exact `upload` command to run; `upload` also finds a bare name there,
+and prints the `url`. Paste it into `article.md` as ordinary Markdown: `![alt text](url)`. One is normally enough,
+not one per paragraph. State the decision either way in the report.
 
 ## Captions
 Put the caption in the image title — `![alt text](url "The caption under the picture")`. Alt describes the picture

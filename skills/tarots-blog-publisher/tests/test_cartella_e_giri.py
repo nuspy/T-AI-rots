@@ -316,6 +316,161 @@ def test_no_cover_saves_without_a_picture_and_says_so(blog, capsys):
         tb.main(["post", "lantern-night", "--no-cover", "--cover", "cover.jpg"])
 
 
+# ---- covers with names of their own: the LAST one recorded for the slug (5/10/2026) -----------------------------------
+
+
+def _named_cover(folder, name, content, *, article="samhain-tarot-spread", role="cover", prompt=COVER_PROMPT,
+                 when="2026-10-05T10:00:00+00:00"):
+    """foto/<name> as `tarots_images.py generate --article` leaves it now: the record says article and role."""
+    cover = folder / "foto" / name
+    cover.write_bytes(content)
+    data = json.loads(tb.PROGRESS_PATH.read_text(encoding="utf-8")) if tb.PROGRESS_PATH.exists() else {}
+    data.setdefault("_generated", []).append({"prompt": prompt, "file": str(cover), "sha256": tb.sha256_of(cover),
+                                              "role": role, "article": article, "article_id": None, "when": when})
+    tb.PROGRESS_PATH.write_text(json.dumps(data), encoding="utf-8")
+    return cover
+
+
+def test_post_takes_the_last_cover_recorded_for_the_slug_and_names_it(blog, capsys):
+    folder = make_article()
+    _named_cover(folder, "cover-20261005-100000.jpg", b"\xff\xd8 first")
+    _named_cover(folder, "inline-20261005-101000.jpg", b"\xff\xd8 inline", role="inline",
+                 prompt=COVER_PROMPT.replace("apple", "plum"))
+    last = _named_cover(folder, "cover-20261005-102000.jpg", b"\xff\xd8 second",
+                        prompt=COVER_PROMPT.replace("apple", "pear"))
+    _named_cover(folder, "cover-20261005-103000.jpg", b"\xff\xd8 of another article", article="another-one",
+                 prompt=COVER_PROMPT.replace("apple", "cherry"))
+    (folder / "foto" / "cover.jpg").write_bytes(b"\xff\xd8 an old-style file, not used")
+    assert tb.main(["post", "samhain-tarot-spread"]) == tb.EXIT_OK
+    captured = capsys.readouterr()
+    assert f"no --cover given: using {last}, the last cover generated for samhain-tarot-spread" in captured.err
+    assert "1 older one(s) left aside" in captured.err and "warning" not in captured.err
+    assert f"cover: {last}" in captured.out
+    assert json.loads(tb.PROGRESS_PATH.read_text(encoding="utf-8"))["_used"][tb.sha256_of(last)]["post"] == "post-new"
+
+
+def test_a_cover_whose_file_is_gone_is_skipped_and_named_when_none_is_left(blog, capsys):
+    folder = make_article()
+    first = _named_cover(folder, "cover-20261005-100000.jpg", b"\xff\xd8 first")
+    gone = _named_cover(folder, "cover-20261005-102000.jpg", b"\xff\xd8 second", prompt=COVER_PROMPT.replace("apple", "pear"))
+    gone.unlink()
+    assert tb.main(["post", "samhain-tarot-spread", "--dry-run"]) == tb.EXIT_OK
+    assert f"using {first}" in capsys.readouterr().err                    # the last one still on disk
+    first.unlink()
+    blog.calls.clear()
+    assert tb.main(["post", "samhain-tarot-spread"]) == tb.EXIT_NO_COVER
+    err = capsys.readouterr().err
+    assert f"the cover generated for samhain-tarot-spread is no longer on disk: {gone}" in err
+    assert str(first) in err and "Nothing was saved" in err and "/media" not in blog.paths()
+
+
+def test_the_cover_is_found_also_by_the_slug_in_the_folder_name(blog, capsys):
+    folder = make_article("lantern-night", keyword="lantern night tarot")
+    data = json.loads((folder / "article.json").read_text(encoding="utf-8"))
+    (folder / "article.json").write_text(json.dumps({**data, "slug": "lantern-night-tarot"}), encoding="utf-8")
+    # generated with --article lantern-night before article.json had its final slug
+    cover = _named_cover(folder, "cover-20261005-100000.jpg", b"\xff\xd8 lanterns", article="lantern-night")
+    assert tb.main(["post", "lantern-night"]) == tb.EXIT_OK
+    assert f"using {cover}" in capsys.readouterr().err
+
+
+def test_an_explicit_cover_still_wins(blog, capsys):
+    folder = make_article()
+    _named_cover(folder, "cover-20261005-100000.jpg", b"\xff\xd8 first")
+    chosen = _named_cover(folder, "cover-20261005-090000.jpg", b"\xff\xd8 chosen", prompt=COVER_PROMPT.replace("apple", "fig"))
+    assert tb.main(["post", "samhain-tarot-spread", "--cover", chosen.name]) == tb.EXIT_OK
+    captured = capsys.readouterr()
+    assert "no --cover given" not in captured.err and f"cover: {chosen}" in captured.out
+
+
+def test_an_old_work_folder_falls_back_on_cover_jpg_with_a_warning(blog, capsys):
+    folder = make_article()
+    cover = _generated_cover(folder)                    # recorded without article and role, as before 5/10/2026
+    assert tb.main(["post", "samhain-tarot-spread"]) == tb.EXIT_OK
+    err = capsys.readouterr().err
+    assert f"warning: no --cover given: using {cover}" in err and "names of their own" in err
+
+
+# ---- the subject, the skeleton and the section ----------------------------------------------------------------------
+
+
+def test_the_skeleton_has_an_empty_subject_and_empty_means_the_server_decides():
+    data = tb.skeleton("x")
+    assert data["subject"] == {"type": "", "ref": ""} and data["section"] == ""
+    data.pop("body_file")
+    payload = tb.normalize({**data, "title": "T", "body": "B"})
+    assert "subject" not in payload                     # not sent: the server works it out
+
+
+@pytest.mark.parametrize("subject, sent", [
+    ({"type": "card", "ref": "maj-16"}, {"subject": {"tipo": "carta", "ref": "maj-16"}}),
+    ({"type": "Spread", "ref": "croce-celtica"}, {"subject": {"tipo": "stesa", "ref": "croce-celtica"}}),
+    ({"tipo": "carta", "ref": "the-tower"}, {"subject": {"tipo": "carta", "ref": "the-tower"}}),
+    ({"type": "", "ref": ""}, {}), ({}, {}), ("", {}),
+    (None, {"subject": None}),                          # null: «about no card or spread», said explicitly
+])
+def test_the_subject_becomes_the_api_subject(subject, sent):
+    payload = tb.normalize({"title": "T", "subject": subject})
+    assert {k: v for k, v in payload.items() if k == "subject"} == sent
+
+
+@pytest.mark.parametrize("subject", [{"type": "card"}, {"type": "deck", "ref": "x"}, {"ref": "maj-16"}, "maj-16",
+                                     {"type": "card", "ref": "maj-16", "extra": 1}])
+def test_a_half_filled_subject_is_an_error(subject):
+    with pytest.raises(tb.Failure) as err:
+        tb.normalize({"title": "T", "subject": subject})
+    assert err.value.code == tb.EXIT_USAGE and "subject" in str(err.value)
+
+
+@pytest.mark.parametrize("fields, level, words", [
+    ({"subject": {"type": "card", "ref": "maj-16"}, "section": "love"}, "WARN",
+     'the subject is the Tower, but "section" is «love»: an article about a card goes in that card\'s section. '
+     'Set "section": "major-arcana"'),
+    ({"subject": {"type": "card", "ref": "coppe-01"}, "section": "major-arcana"}, "WARN", 'Set "section": "cups"'),
+    ({"subject": {"type": "card", "ref": "maj-16"}}, "note", "the server puts the article in «major-arcana»"),
+    ({"title": "The Hermit in the Thoth deck", "section": "love"}, "WARN",
+     'no "subject" is set, and the title or the focus keyword names the Hermit, but "section" is «love»'),
+    ({"subject": {"type": "card", "ref": "maj-99"}}, "WARN", "is not a card the script knows"),
+])
+def test_check_warns_when_subject_and_section_do_not_match(blog, capsys, fields, level, words):
+    make_article(**fields)
+    assert tb.main(["check", "samhain-tarot-spread"]) == tb.EXIT_OK          # a warning, not a refusal
+    out = capsys.readouterr().out
+    assert f"  {level} [subject] " in out and words in out
+
+
+@pytest.mark.parametrize("fields", [
+    {"subject": {"type": "card", "ref": "maj-16"}, "section": "major-arcana"},
+    {"subject": {"type": "card", "ref": "dischi-principessa"}, "section": "disks"},
+    {},                                                                       # about no card: nothing to say
+    {"title": "The Hermit in love readings", "section": "love", "subject": None},   # null: no subject, said so
+])
+def test_check_says_nothing_when_they_match(blog, capsys, fields):
+    make_article(**fields)
+    assert tb.main(["check", "samhain-tarot-spread"]) == tb.EXIT_OK
+    assert "[subject]" not in capsys.readouterr().out
+
+
+def test_a_spread_subject_needs_a_section_of_spreads(blog, monkeypatch, capsys):
+    sections = [{"slug": "tarot-spreads", "tipo": "stese", "percorso": "Tarot › Spreads"},
+                {"slug": "love", "tipo": "articoli", "percorso": "Articles › Love"}]
+    real = blog.__call__
+
+    def with_sections(method, path, body=None, query=None, **kw):
+        if path == "/sections":
+            return sections
+        return real(method, path, body=body, query=query, **kw)
+    monkeypatch.setattr(tb, "call", with_sections)
+    make_article(subject={"type": "spread", "ref": "croce-celtica"}, section="love")
+    assert tb.main(["check", "samhain-tarot-spread"]) == tb.EXIT_OK
+    assert "WARN [subject] the subject is the spread «croce-celtica»" in capsys.readouterr().out
+    make_article(subject={"type": "spread", "ref": "croce-celtica"}, section="tarot-spreads")
+    assert tb.main(["check", "samhain-tarot-spread"]) == tb.EXIT_OK
+    assert "[subject]" not in capsys.readouterr().out
+    assert tb.main(["--json", "check", "samhain-tarot-spread"]) == tb.EXIT_OK
+    assert json.loads(capsys.readouterr().out)["subject"] == []
+
+
 # ---- NEXT: what to do, with the real values --------------------------------------------------------------------------
 
 

@@ -53,11 +53,14 @@ copy of the artwork): without "Thoth" the check passes with a warning, and the m
 best, Rider-Waite. A card's name **without the word "card"** (*the energy of the Tower*) is a world or a symbol and
 stays allowed in any article.
 
-**Which article.** `--article` is looked for in the work folder (`article.json`: `title`, `focus_keyword`, `slug`),
-then in the titles copy that `tarots_blog.py titles` keeps (`~/.tarots-blog/titles-cache.json`, by slug or id),
-then, with a media key, through the API (`GET /media-posts/{id}`). Only a prompt that draws a card needs it.
+**Which article.** `--article` is looked for in the work folder (`article.json`: `title`, `focus_keyword`,
+`subject`, `slug`), then in the titles copy that `tarots_blog.py titles` keeps (`~/.tarots-blog/titles-cache.json`,
+by slug or id), then, with a media key, through the API (`GET /media-posts/{id}`). Only a prompt that draws a card
+needs it.
 
-**Which cards an article is about**: those named in its **title** or its **focus keyword**:
+**Which cards an article is about**: those named in its **title** or its **focus keyword**, and the card of its
+**subject** when article.json declares one (`"subject": {"type": "card", "ref": "maj-16"}`: a card id of the site —
+maj-00…maj-21, coppe-01, bastoni-cavaliere… — or a slug such as `the-tower`):
 - the 22 major arcana under their Thoth names and the Rider-Waite/Marseille ones, as the same card: Adjustment =
   Justice, Lust = Strength, Art = Temperance, Aeon = Judgement, Universe = World, Fortune = Wheel of Fortune, Magus =
   Magician, Priestess = High Priestess (and the Italian names: la Torre, il Matto…);
@@ -285,6 +288,27 @@ the other; in a real run the options must also be free in `progress`.
   "A lone figure in a dark coat on a stone bridge over the Vltava in Prague at dusk, three overturned glasses on
   the parapet, two full glasses still standing behind them, the river and the old town far away, seen from a
   distance, the sorrow of the Five of Cups"
+
+## The pictures of the sections and of the spreads
+The same rules, the same four dimensions, the same house style; `generate --section <slug>` or `--spread <id>`
+instead of `--article`. **No card is ever drawn** (the word *card* in the scene is refused): a section is about many
+cards, a spread about positions that the site draws itself.
+- *A section of cards* shows the **world** of its cards: for **Cups**, water and feeling (a tidal pool at dawn, a
+  well in a cloister garden); for **Wands**, fire and will (a forge, a dry hillside at noon); for **Swords**, air and
+  thought (a windy ridge, a scriptorium); for **Disks**, earth and work (a terraced vineyard, a bakery at first
+  light); for the **Major Arcana**, the great passages (a road between mountains at dawn, a lighthouse, a starry
+  pass). A card's name at most as context ("the energy of the Tower"), never as the subject. «By number» (Aces,
+  Twos… Princesses): what that number or rank means across the four suits (a seed for the Aces, a crossroads for the
+  Twos).
+- *A section of spreads or of articles* shows its theme, from its description: love, career, journaling, symbolism.
+- *A spread* gets an **evocative** illustration of its question and its tradition: a Celtic stone crossroads for
+  the Celtic Cross, a horseshoe on a stable door for the Horseshoe, two paths in a wood for a choice. Never cards,
+  never a layout, never the positions: the site draws the scheme next to it.
+
+Example, *Cups* (`generate --section cups`):
+`--kind water-and-reflection --shot reflection --light dawn --setting "Breton tidal pool"`
+"A tidal pool among granite rocks on the Breton coast at dawn, still water mirroring the pink sky, a single
+abalone shell at the bottom, sea anemones open like small cups, a gull's feather floating, reflected in the pool"
 
 ## Refuse, regenerate or rewrite if
 - the picture is a picture of cards anyway (a card filling the frame, a spread, a deck, hands holding cards), or a

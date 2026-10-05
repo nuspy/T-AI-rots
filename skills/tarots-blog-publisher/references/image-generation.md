@@ -22,19 +22,25 @@ python ../tarots-blog-images/scripts/tarots_images.py generate --article <slug> 
 python ../tarots-blog-images/scripts/tarots_images.py generate --article <slug> --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --aspect 4:3
 ```
 `--article <slug>` saves into the article's work folder (made by `tarots_blog.py new`):
-`~/.tarots-blog/work/<YYYY-MM-DD>-<slug>/foto/`, as `cover.jpg` for a 3:2 picture and `inline-1.jpg`, `inline-2.jpg`...
-for the others (`--out NAME` chooses the name; a bare name without `--article` goes in the newest work folder). The
-full path is printed; an existing file is never overwritten. Never `--out work/...` or any path inside a skill's
-folder.
+`~/.tarots-blog/work/<YYYY-MM-DD>-<slug>/foto/`, with **a name of its own that is never used again**:
+`cover-<YYYYMMDD-HHMMSS>.jpg` for a 3:2 picture, `inline-<YYYYMMDD-HHMMSS>.jpg` for the others (`-2`, `-3`… within
+the same second; `--role cover|inline` says it explicitly; `--out NAME` chooses the name; a bare name without
+`--article` goes in the newest work folder). The record (`~/.tarots-blog/images-progress.json`) keeps, for every
+picture, the article's slug (and id when known) and its role. The full path is printed, followed by **the exact
+command that uses that file** (`post <slug> --cover "<file>"`, `upload "<file>" --for <slug>`, or `cover <id> …` for
+an article already on the site); an existing file is never overwritten. Never `--out work/...` or any path inside a
+skill's folder.
 For example:
 ```
 python ../tarots-blog-images/scripts/tarots_images.py generate --kind architecture --shot low-angle --light storm-light --setting "Breton fishing coast" --article the-tower-tarot-card-meaning-thoth --prompt "A lighthouse on a black basalt cliff of the Breton coast in a winter storm, one bolt of lightning splitting the sky, a crack running down the white tower and warm light pouring out through it, seen from the fishing harbour below, looking up, the sudden energy of the Tower, <house style>"
 ```
-Then `python scripts/tarots_blog.py post <slug>`: without `--cover` it takes `foto/cover.jpg` (or `.jpeg`, `.png`,
-`.webp`) by itself, with a `note:`; with no cover in `foto/` it stops with exit 11 and saves nothing. `--cover NAME`
-chooses another file; `--no-cover` saves without a cover, only when the generation failed (say why in the report).
-`python scripts/tarots_blog.py upload inline-1.jpg --for <slug>` uploads an inline picture (it prints the `url` to
-write as `![alt](url)` in the body): a bare name is looked for in the work folder's `foto/`. If `tarots-blog-images`
+Then `python scripts/tarots_blog.py post <slug>`: without `--cover` it takes the **last cover recorded for the
+slug** whose file is still in `foto/`, with a `note:` naming it (a second cover generated later simply wins; a work
+folder from before 5/10/2026 falls back on its `foto/cover.*` with a `warning:`); with no cover it stops with exit 11,
+saves nothing and names the recorded file that is missing, if any. `--cover NAME` chooses another file;
+`--no-cover` saves without a cover, only when the generation failed (say why in the report).
+`python scripts/tarots_blog.py upload inline-20261005-144501.jpg --for <slug>` uploads an inline picture (it prints
+the `url` to write as `![alt](url)` in the body): a bare name is looked for in the work folder's `foto/`. If `tarots-blog-images`
 is not next to this skill, find its folder by name in the agent's skills directories; if it is not installed,
 `post --no-cover` and say so.
 
@@ -47,7 +53,7 @@ and refuse the file before uploading anything (exit 7) when:
 - the prompt it was generated from makes cards the picture (the same rules as `generate`, copied in
   `tarots_blog.py`: a card as the subject, two or more cards, a spread, a hand holding a card);
 - the prompt draws one small card and the article is not about that very card (the same card rule as `generate`,
-  copied too): for `post` the article is its article.json (`title`, `focus_keyword`); for `upload` it is the
+  copied too): for `post` the article is its article.json (`title`, `focus_keyword`, `subject`); for `upload` it is the
   `--for` slug or id, looked for in its work folder, then in the titles copy (`titles` refreshes it). `upload`
   without `--for` refuses a picture with a card.
 
@@ -68,7 +74,7 @@ line, examples. In short:
   Accepted: "tarot" as an adjective, the names of the cards as a world or a symbol, without the word *card* ("a
   lighthouse struck by lightning, the energy of the Tower").
 - **A card in the picture only for an article about that very card.** One single small card later in the scene
-  is allowed only when the article's **title or focus keyword names that card** (Thoth and Rider-Waite names are the
+  is allowed only when the article's **title, focus keyword or `subject` names that card** (Thoth and Rider-Waite names are the
   same card: Adjustment = Justice, Lust = Strength, Art = Temperance, Aeon = Judgement, Universe = World…), the
   prompt **names it in the same phrase** and draws it **in the style of the Thoth deck** (a new drawing, never a
   copy, never Rider-Waite or Marseille). `generate` and `prompt-check` then need `--article <slug or id>`.
@@ -86,7 +92,8 @@ line, examples. In short:
   top-down), `--light` (10: dawn, golden-hour, midday, overcast, blue-hour, moonlight, starlight, storm-light,
   fog-or-mist, firelight) and `--setting` (a place, culture or era in a few words). Refused: a kind of the last 3
   pictures, a kind+shot pair of the last 20, a light of the last 2 (firelight: of the last 10), a setting of the
-  last 10; and a prompt that does not show the declared light, shot and setting in its own words.
+  last 10; and a prompt that does not show the declared light and shot in its own words (the setting is recorded
+  for variety, not required in the text).
 
 `generate` refuses a prompt that breaks these rules (exit 7) and says what to change, with the values still free:
 rewrite it, do not work around it. The cover and the inline picture of one article get two different forms.

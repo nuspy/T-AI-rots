@@ -1,6 +1,6 @@
 ---
 name: tarots-blog-images
-description: Generate and swap the images of TAROTS chat (tarots.chat) blog articles — the cover and the pictures inside the text — with the LitMedia skill (litmedia-skill, API, Seedream 5.0 2K) through this skill's own `tarots_images.py generate`, one article at a time. Every picture is a scene written for that article, different in form from the previous ones (kind, shot, light and setting declared and checked), and never a picture of cards (one small card only in an article about that very card). Use when asked to replace, refresh, fix, vary or add images on TAROTS blog posts, to give an article a picture inside its text, or when tarots-blog-publisher needs a cover. Not browser-image-gen, not the agent's own image tool.
+description: Generate and swap the images of TAROTS chat (tarots.chat) blog articles — the cover and the pictures inside the text — with the LitMedia skill (litmedia-skill, API, Seedream 5.0 2K) through this skill's own `tarots_images.py generate`, one article at a time. Every picture is a scene written for that article, different in form from the previous ones (kind, shot, light and setting declared and checked), and never a picture of cards (one small card only in an article about that very card). Use when asked to replace, refresh, fix, vary or add images on TAROTS blog posts, to give an article a picture inside its text, to give the Journal's sections and the spreads their pictures, or when tarots-blog-publisher needs a cover. Not browser-image-gen, not the agent's own image tool.
 ---
 
 # TAROTS chat blog images
@@ -10,7 +10,8 @@ about fifty covers from one fixed prompt per section, with cards in almost all o
 again, sometimes the same file on two articles. This skill gives every article **its own** picture — a scene, a
 place, a person, a season, an object or a metaphor from what the article is actually about, **never a picture of
 cards** — in a form (kind, shot, light, setting) that differs from the last pictures, and replaces cover and inline
-pictures through the REST API, without touching the text, the SEO fields or the status.
+pictures through the REST API, without touching the text, the SEO fields or the status. It also makes the pictures
+of the Journal's sections and the illustrations of the spreads (see the section about them below).
 
 Works for any agent that can run a shell command (Hermes, OpenClaw, Codex, Claude Code). Python 3.8+, standard
 library only. The script is `scripts/tarots_images.py` (paths below are relative to this skill). It is also the
@@ -50,14 +51,25 @@ library only. The script is `scripts/tarots_images.py` (paths below are relative
 - **A certificate / TLS error**: report it; never disable verification.
 - After any failure: `balance`, then `show <id>` for the article, then at most **one** new attempt. Never a loop.
 
-## Where the pictures go: the article's work folder
+## Where the pictures go: the article's work folder, with a name of its own
 Every picture of an article lives in its work folder, the one `tarots_blog.py new "<slug>"` creates:
 `~/.tarots-blog/work/<YYYY-MM-DD>-<slug>/foto/` (`TAROTS_WORK_DIR` moves the root).
-- `generate --article <slug> …` saves there: `cover.jpg` for a 3:2 picture, `inline-1.jpg`, `inline-2.jpg`… for
-  `--aspect 4:3` or `1:1`; `--out NAME` chooses the name. A bare `--out NAME` without `--article` goes in the newest
-  work folder. An article with no work folder yet (an existing article whose pictures you redo) gets one for today.
-- `generate` prints the full path of the file: use that path with `cover` and `inline`. An existing file is never
-  overwritten (a picture already paid for).
+- `generate --article <slug> …` saves there with **a name of its own, never used before**:
+  `cover-<YYYYMMDD-HHMMSS>.jpg` for a 3:2 picture, `inline-<YYYYMMDD-HHMMSS>.jpg` for `--aspect 4:3` or `1:1`
+  (`-2`, `-3`… within the same second; a name stays taken even after its file is deleted). `--role cover|inline`
+  says what the picture is for when the aspect does not; `--out NAME` chooses the name. A bare `--out NAME` without
+  `--article` goes in the newest work folder. An article with no work folder yet (an existing article whose
+  pictures you redo) gets one for today.
+- The record keeps, for every picture, **the article** (its slug, and its id when known) **and the role** (cover or
+  inline): `tarots_blog.py post <slug>` takes by itself the last cover recorded for the slug. A second cover for the
+  same article is simply generated again: the newer one wins, the older stays on disk, unused.
+- `generate` prints the full path of the file **and the exact next command with that file**: `cover <id> "<file>"
+  --alt …` / `inline <id> --add …` for an article already on the site, `tarots_blog.py post <slug> --cover "<file>"`
+  / `upload "<file>" --for <slug>` for a new one. Copy it. An existing file is never overwritten (a picture already
+  paid for).
+- The picture of a section goes in `work/sezioni/<slug>/foto/section-<YYYYMMDD-HHMMSS>.jpg` (`generate --section
+  <slug>`), the illustration of a spread in `work/stese/<id>/foto/spread-<YYYYMMDD-HHMMSS>.jpg` (`generate --spread
+  <id>`): see "Pictures of the sections and of the spreads" below.
 - Never relative paths like `work/<slug>-cover.jpg`: they land in whatever folder the agent runs in, often this
   skill's, and get lost. Never search the disk for a picture: it is in `foto/` of its work folder.
 
@@ -71,9 +83,10 @@ Every picture of an article lives in its work folder, the one `tarots_blog.py ne
   gets a warning. Details and examples: `references/prompts.md`.
 - **A card in the picture only for an article about that very card.** A prompt that draws one single small card
   (the word *card* later in the scene) needs `--article <slug or id>` (also on `prompt-check`), and is refused
-  (exit 7) unless the article's **title or focus keyword names that card** (looked for in the work folder's
-  article.json, then in the titles copy `~/.tarots-blog/titles-cache.json`, then through the API with the media
-  key) and the prompt **names it in the same phrase**: "a single small card of the Tower". The card is drawn **in the
+  (exit 7) unless the article's **title, focus keyword or subject names that card** (`"subject": {"type": "card",
+  "ref": "maj-16"}` of article.json; looked for in the work folder's article.json, then in the titles copy
+  `~/.tarots-blog/titles-cache.json`, then through the API with the media key) and the prompt **names it in the
+  same phrase**: "a single small card of the Tower". The card is drawn **in the
   style of the Thoth deck** (say it, or you get a warning; never a copy, never Rider-Waite or Marseille). Thoth and
   Rider-Waite names are the same card (Adjustment = Justice, Lust = Strength, Art = Temperance, Aeon = Judgement,
   Universe = World…). Accepted, for *The Tower tarot card meaning*: "…seen through the window, on the shelf a single
@@ -81,6 +94,9 @@ Every picture of an article lives in its work folder, the one `tarots_blog.py ne
   Libra Season Balance* (an agent added a small Fool there "as context" and got a large Rider-Waite Fool): "…and
   beside it a single small card of the Fool" → *this article is not about a specific card: no card in its picture;
   show its world instead*. Not sure? Leave the card out: the world of the article is always the better picture.
+- **The picture of a section or of a spread never draws a card** (`generate --section` / `--spread`, `prompt-check
+  --section` / `--spread`, `section-cover`, `spread-cover`): it shows the world of the section or the theme of the
+  spread; a card's name only as a world or a symbol, without the word *card*.
 - **A concrete scene from this article**: at least 12 content words once the house style and the empty words
   ("mystical", "ethereal", "professional photography"…) are out.
 - **A new form**: `generate` and `prompt-check` require `--kind` (17 values), `--shot` (12), `--light` (10) and
@@ -91,20 +107,21 @@ Every picture of an article lives in its work folder, the one `tarots_blog.py ne
   Each refusal says what to change and lists what is free.
 - **A new scene**: a prompt sharing 45% or more of its content words with any prompt already generated is refused,
   with the closest one shown. Change the scene, not three words.
-- **A new file**: `cover` and `inline` refuse a picture (same bytes, whatever the name) already used for another
-  article.
+- **A new file**: `cover`, `inline`, `section-cover` and `spread-cover` refuse a picture (same bytes, whatever the
+  name) already used for another article, section or spread.
 - These checks run on `generate`, on `generate --dry-run` and on `prompt-check`; refusals exit with code **7**
   (a value outside the catalogs: code 2). Everything is recorded in `~/.tarots-blog/images-progress.json` (prompts,
-  the four dimensions, files, sha256, dates). The publisher's `tarots_blog.py post --cover` / `upload` read and
-  write the same record: they accept only pictures made by `generate` (or explicitly supplied by the operator) and
-  never one already used by another article.
+  the four dimensions, files, sha256, dates, the article or section or spread and the role of each picture). The
+  publisher's `tarots_blog.py post` / `upload` read and write the same record: `post` finds there the last cover
+  of the slug; both accept only pictures made by `generate` (or explicitly supplied by the operator) and never one
+  already used by another article.
 
 ## Setup (once)
 
 `generate`, `prompt-check`, `catalog`, `progress` and `balance` need **no blog key** (only the LitMedia login of
 `litmedia-skill`): a cover for a new article (tarots-blog-publisher) needs nothing from this section. A key with the
-media permission is only for `list`, `show`, `cover` and `inline` on existing articles. Try the command first: if it
-works, never ask the operator for a key.
+media permission is only for `list`, `show`, `cover` and `inline` on existing articles and for `sections`,
+`spreads`, `section-cover` and `spread-cover`. Try the command first: if it works, never ask the operator for a key.
 
 **The recommended setup: ONE key for both skills.** A key's permissions are chosen only when it is created.
 1. An admin creates in the console (**Blog → Keys**) **one** key with the three permissions **write + publish +
@@ -135,8 +152,8 @@ through the API with the key above, if there is one.)
 
 ### 1. Decide the scope with the operator
 - Which articles: all, only published, one language, or the ids the operator names. `list --todo` shows what this
-  tool has not redone yet. Many covers (all the drafts, say): not in this session, but with the loop of
-  "Redo many covers" below, which the operator starts.
+  tool has not redone yet, `list --no-cover` the articles with no cover at all (in every status). Many covers (all
+  the drafts, say): not in this session, but with the loop of "Redo many covers" below, which the operator starts.
 - Cover only, or cover **and** pictures in the text (the operator's standing choice for this blog: both).
 - **Budget**: each picture costs **10 credits** (Seedream 5.0, 2K; there is no 1K). Tell the operator:
   *N articles × (1 cover + k inline) × 10 = total*, and the current `balance`. Get a yes before spending. If the
@@ -173,13 +190,14 @@ For the first run with an operator, show the prompts for **three** articles and 
 
 ### 5. Generate and swap
 ```
-python scripts/tarots_images.py generate --article <slug> --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --budget <left>
-python scripts/tarots_images.py cover <id> <the path generate printed: …/foto/cover.jpg> --alt "<what the picture shows>"
+python scripts/tarots_images.py generate --article <id> --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --budget <left>
+python scripts/tarots_images.py cover <id> "<the path generate printed: …/foto/cover-20261005-143012.jpg>" --alt "<what the picture shows>"
 
-python scripts/tarots_images.py generate --article <slug> --prompt "<prompt>" --kind <other kind> --shot <shot> --light <other light> --setting "<other setting>" --aspect 4:3 --budget <left>
-python scripts/tarots_images.py inline <id> --replace 0 <the path generate printed: …/foto/inline-1.jpg> "<alt>"
+python scripts/tarots_images.py generate --article <id> --prompt "<prompt>" --kind <other kind> --shot <shot> --light <other light> --setting "<other setting>" --aspect 4:3 --budget <left>
+python scripts/tarots_images.py inline <id> --replace 0 "<the path generate printed: …/foto/inline-20261005-144501.jpg>" "<alt>"
 ```
-(`cover <id> <file> --dry-run` shows what would change before the real swap.)
+(`generate --article <id>` prints these `cover` / `inline` lines ready, with the file; `cover <id> <file>
+--dry-run` shows what would change before the real swap.)
 - **Look at every picture before swapping it in** (open the file). Reject it if it is a picture of cards anyway (a
   card filling the frame, a spread, a deck, cards in a hand), has text or letters, a malformed hand or face, or has
   nothing to do with the article. A second try is a **rewritten** prompt with a new form (the same prompt and the
@@ -207,9 +225,13 @@ article alone. It is the **only** way allowed to work on many articles; an agent
 ```
 python scripts/redo_covers_loop.py --dry-run                 # the list, and the prompt of the first article
 python scripts/redo_covers_loop.py --limit 10 --budget 200   # ten articles at most, 200 credits at most
+python scripts/redo_covers_loop.py --missing --dry-run       # also the articles with no cover, in every status
 ```
-- **What it takes**: `tarots_images.py list --status draft --todo --json` (drafts whose cover was not redone yet),
-  minus what its log has as done (and as failed, unless `--retry-failed`).
+- **What it takes**: `tarots_images.py list --status draft --todo --json` (drafts whose cover was not redone yet;
+  `--status all|draft|published` chooses the status, `all` = every one) and, with **`--missing`**, also
+  `list --no-cover --json`: the articles with **no cover at all, in every status** (a published «Wheel of Fortune»
+  with no picture), each listed once; minus what its log has as done (and as failed, unless `--retry-failed`). A
+  cover that goes from none to one counts as changed.
 - **For each article**: `balance` first (it stops if the article could pass `--budget`, or go below `--reserve`; each
   article counts `--cost` 20 credits: a cover and at most one new try), the cover on the site (`show`) and the
   progress record; then the agent, by default `hermes -z "<prompt>" --skills tarots-blog-images` (`--agent-cmd` for
@@ -227,7 +249,45 @@ python scripts/redo_covers_loop.py --limit 10 --budget 200   # ten articles at m
 - **The agent inside the loop does one article**: the one in its prompt, cover only, with this skill's commands, and
   then it stops. It never starts the loop itself, never takes another article.
 - The operator starts it by hand: `tools/rifai_copertine_bozze.ps1` in the repository (the default values, the
-  output saved next to the log).
+  output saved next to the log): `-Prova` for the dry run, `-SenzaCopertina` for `--missing` (the articles with no
+  cover in every status, besides the drafts), `-Sezioni` / `-Stese` for the modes below, `-Articoli N` for
+  `--limit`, `-Budget` and `-Riserva`.
+
+## Pictures of the sections and of the spreads
+The Journal shows each section as a tile with a picture, and the page of the spreads shows each spread with an
+illustration next to the scheme of its positions. Both are made here, with the same rules as a cover, and set
+through the REST API (permission `blog:media`).
+```
+python scripts/tarots_images.py sections --missing          # the sections without a picture (slug, type, description)
+python scripts/tarots_images.py spreads --missing           # the spreads without an illustration (id, cards, tradition)
+python scripts/tarots_images.py generate --section cups --kind water-and-reflection --shot reflection --light dawn --setting "Breton tidal pool" --prompt "…"
+python scripts/tarots_images.py section-cover cups "<the file generate printed>" --alt "<what the picture shows>"
+python scripts/tarots_images.py generate --spread croce-celtica --kind journey-or-path --shot aerial --light fog-or-mist --setting "Irish crossroads" --prompt "…"
+python scripts/tarots_images.py spread-cover croce-celtica "<the file generate printed>" --alt "<what the picture shows>"
+```
+- **What the picture shows.** A section of cards (Major Arcana, a suit, «By number»): the **world** of those cards
+  — the element, the places, the seasons, the gestures they evoke — never the cards; a card's name at most as
+  context, without the word *card*, never as the subject. A section of spreads or of articles: its theme, from its
+  description. A spread: an **evocative** illustration of its question and tradition (a crossroads, a doorway, a
+  horseshoe on a stable door), **never cards, never a layout, never the positions**: the site draws the scheme of
+  the positions itself. Every rule of "The picture rules" applies; a drawn card is refused outright.
+- `generate --section <slug>` saves in `~/.tarots-blog/work/sezioni/<slug>/foto/section-<date-time>.jpg`,
+  `generate --spread <id>` in `…/work/stese/<id>/foto/spread-<date-time>.jpg`, and both print the exact
+  `section-cover` / `spread-cover` command. `section-cover` and `spread-cover` check the alt, the file (never a
+  picture used elsewhere) and the prompt it came from, upload it and set it (`--dry-run` shows what would change);
+  the record keeps it under `_sections` / `_spreads`.
+- **Many of them: the same loop**, `redo_covers_loop.py --sections` or `--spreads` (`-Sezioni` / `-Stese` in
+  `tools/rifai_copertine_bozze.ps1`): only those without a picture, one agent run each, with an Italian prompt for
+  that type; the same checks (the picture on the site changed **and** `section-cover` / `spread-cover` recorded
+  it), limits, budget, log (events `section` / `spread` in the same JSONL) and restart.
+  ```
+  python scripts/redo_covers_loop.py --sections --dry-run
+  python scripts/redo_covers_loop.py --sections --limit 25 --budget 500
+  python scripts/redo_covers_loop.py --spreads --limit 19 --budget 380
+  ```
+- **Cost**: about **25 sections** and **19 spreads**, **10 credits** each (Seedream 5.0, 2K): about **250 + 190 =
+  440 credits**; the loop counts 20 per item in `--budget` (a picture and at most one new try). **Only with the
+  operator's go**: tell them the number and the `balance` first.
 
 ## Hard rules
 - Only pictures: never try to change text, title, SEO fields or status (the key cannot, and should not try).
@@ -245,14 +305,19 @@ python scripts/redo_covers_loop.py --limit 10 --budget 200   # ten articles at m
 
 ## Files
 - `scripts/tarots_images.py`: the CLI (`-h` on every command).
-- `scripts/redo_covers_loop.py`: the loop for many covers, one agent run per article (`-h` for the options).
+- `scripts/redo_covers_loop.py`: the loop for many covers (and, with `--sections` / `--spreads`, for the pictures of
+  the sections and spreads), one agent run per item (`-h` for the options).
 - `references/prompts.md`: cards as context and never as the picture, the four dimensions with their catalogs and
   rules, the house style, examples.
-- `references/api.md`: the four endpoints, if you would rather call them directly.
+- `references/api.md`: the endpoints, if you would rather call them directly.
 - `tests/test_controlli.py`: offline tests of the picture rules (`python -m pytest tests -q`).
-- `tests/test_cartella_e_python.py`: offline tests of the work folder (`--article`, `foto/`) and of the choice of
-  the Python that runs LitMedia.
-- `tests/test_carta_articolo.py`: offline tests of the card rule (a card only for an article about that very card).
+- `tests/test_cartella_e_python.py`: offline tests of the work folder (`--article`, `foto/`, names of their own,
+  article and role in the record, the next command; `--section`, `--spread`) and of the choice of the Python that
+  runs LitMedia.
+- `tests/test_carta_articolo.py`: offline tests of the card rule (a card only for an article about that very card,
+  also by its subject; never on a section or a spread).
+- `tests/test_sezioni_e_stese.py`: offline tests of `sections`, `spreads`, `section-cover`, `spread-cover` and
+  `list --no-cover`.
 - `tests/test_una_chiave.py`: offline tests of the one key for both skills (the publisher's key, the 403 message).
 - `tests/test_ciclo_copertine.py`: offline tests of the loop (fake blog, fake agent: budget, limits, stops, restart,
-  log).
+  log, `--missing`, `--status`, `--sections`, `--spreads`).

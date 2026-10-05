@@ -32,7 +32,26 @@ class FakeBlog:
                       for i in range(1, n + 1)}
         self.balance = balance
         self.calls = []
+        self.lists = []
         self.broken_show = set()
+        self.sections = [{"slug": "major-arcana", "nome": "Major Arcana", "tipo": "carte",
+                          "descrizione": "The great themes.", "immagine": None},
+                         {"slug": "cups", "nome": "Cups", "tipo": "carte", "descrizione": "Water.",
+                          "immagine": {"id": "s-old", "url": "/m/s-old.webp"}},
+                         {"slug": "love", "nome": "Love", "tipo": "articoli", "descrizione": "Love read through the cards.",
+                          "immagine": None}]
+        self.spreads = [{"id": "croce-celtica", "nome": "Celtic Cross", "descrizione": "Ten cards.",
+                         "tradizione": "Celtic tradition", "n_carte": 10, "immagine": None}]
+
+    def set_picture(self, mode: str, key: str, *, record: bool = True, cost: int = 10) -> None:
+        """What an agent does with `section-cover` / `spread-cover`."""
+        self.balance -= cost
+        rows, field = (self.sections, "slug") if mode == "sections" else (self.spreads, "id")
+        next(r for r in rows if r[field] == key)["immagine"] = {"id": f"new-{key}", "url": f"/m/new-{key}.webp"}
+        if record:
+            data = self.record()
+            data.setdefault("_sections" if mode == "sections" else "_spreads", {})[key] = {"file": "x.jpg", "sha256": key}
+            self.progress.write_text(json.dumps(data), encoding="utf-8")
 
     def record(self) -> dict:
         return json.loads(self.progress.read_text(encoding="utf-8")) if self.progress.exists() else {}
@@ -40,9 +59,18 @@ class FakeBlog:
     def images(self, args, timeout=300):
         self.calls.append(args[0])
         if args[0] == "list":
-            assert args[1:] == ["--status", "draft", "--todo", "--json"]
+            self.lists.append(args[1:])
+            status = {"draft": "bozza", "published": "pubblicato"}.get(args[2]) if args[1] == "--status" else None
+            rows = [p for p in self.posts.values() if status is None or p["stato"] == status]
+            if "--no-cover" in args:
+                assert args[1:] == ["--no-cover", "--json"]               # in every status
+                return json.dumps([p for p in rows if not p["copertina"]])
+            assert args[-2:] == ["--todo", "--json"]
             done = self.record()
-            return json.dumps([p for i, p in self.posts.items() if not (done.get(i) or {}).get("cover")])
+            return json.dumps([p for p in rows if not (done.get(p["id"]) or {}).get("cover")])
+        if args[0] in ("sections", "spreads"):
+            rows = self.sections if args[0] == "sections" else self.spreads
+            return json.dumps([r for r in rows if "--missing" not in args or not r["immagine"]])
         if args[0] == "show":
             if args[1] in self.broken_show:
                 raise rl.LoopError("tarots_images.py show failed (exit 4): HTTP 404", rl.EXIT_IMAGES)
@@ -288,6 +316,125 @@ def test_bad_numbers_are_a_usage_error(world):
     *_, base = world
     for bad in (["--limit", "0"], ["--timeout", "0"], ["--budget", "-1"]):
         assert rl.main([*base, *bad]) == rl.EXIT_USAGE
+
+
+# ---- --status and --missing: the articles with no cover, in every status (5/10/2026) ------------------------------------
+
+
+def test_missing_adds_the_articles_with_no_cover_in_every_status(world, capsys):
+    blog, agent, log, base = world
+    blog.posts["id-5"] = {"id": "id-5", "slug": "wheel-of-fortune", "titolo": "Wheel of Fortune", "stato": "pubblicato",
+                          "copertina": None}
+    blog.posts["id-2"]["copertina"] = None                                  # a draft with no cover: listed once
+    assert rl.main([*base, "--dry-run"]) == rl.EXIT_OK
+    assert "id-5" not in capsys.readouterr().out                           # drafts only, by default
+    assert rl.main([*base, "--missing", "--dry-run"]) == rl.EXIT_OK
+    out = capsys.readouterr().out
+    assert "5 article(s) with the cover still to redo (draft, and with no cover in every status); 5 in the queue" in out
+    assert out.count("id-2 ") == 1 and "  5. id-5  Wheel of Fortune" in out
+    assert blog.lists[-2:] == [["--status", "draft", "--todo", "--json"], ["--no-cover", "--json"]]
+
+
+def test_a_cover_from_none_to_one_is_a_success(world):
+    blog, agent, log, base = world
+    blog.posts = {"id-5": {"id": "id-5", "slug": "wheel-of-fortune", "titolo": "Wheel of Fortune",
+                           "stato": "pubblicato", "copertina": None}}
+    assert rl.main([*base, "--missing"]) == rl.EXIT_OK
+    got = entries(log)
+    assert [(e["id"], e["outcome"]) for e in got] == [("id-5", "ok")]
+    assert got[0]["cover_before"] is None and got[0]["cover_after"] == "new-id-5"
+
+
+@pytest.mark.parametrize("status, expected", [("all", []), ("published", ["--status", "published"])])
+def test_status_all_and_published(world, status, expected):
+    blog, agent, log, base = world
+    assert rl.main([*base, "--status", status, "--dry-run"]) == rl.EXIT_OK
+    assert blog.lists[-1] == [*expected, "--todo", "--json"]
+
+
+def test_status_and_missing_are_for_articles_only(world, capsys):
+    *_, base = world
+    assert rl.main([*base, "--sections", "--missing"]) == rl.EXIT_USAGE
+    assert rl.main([*base, "--spreads", "--status", "all"]) == rl.EXIT_USAGE
+    with pytest.raises(SystemExit):
+        rl.main([*base, "--sections", "--spreads"])
+
+
+# ---- --sections and --spreads: one agent per section or spread without a picture -----------------------------------------
+
+
+class TargetAgent:
+    """Sets the picture of the section or spread its prompt names, as `plan` says (default: set and recorded)."""
+
+    def __init__(self, blog: FakeBlog, mode: str, plan=None):
+        self.blog, self.mode, self.plan, self.prompts = blog, mode, plan or {}, []
+
+    def __call__(self, cmd, timeout, cwd):
+        prompt = cmd[-1]
+        self.prompts.append(prompt)
+        rows = self.blog.sections if self.mode == "sections" else self.blog.spreads
+        key = next(r.get("slug") or r["id"] for r in rows
+                   if f"(slug {r.get('slug')}," in prompt or f"(id {r.get('id')}," in prompt)
+        what = self.plan.get(key, "ok")
+        if what == "ok":
+            self.blog.set_picture(self.mode, key)
+            return 0, "done"
+        if what == "unrecorded":
+            self.blog.set_picture(self.mode, key, record=False)
+            return 0, "done my way"
+        return 1, "failed"
+
+
+def test_sections_one_agent_per_section_without_a_picture(world, monkeypatch, capsys):
+    blog, _agent, log, base = world
+    agent = TargetAgent(blog, "sections", {"love": "unrecorded"})
+    monkeypatch.setattr(rl, "run_agent", agent)
+    assert rl.main([*base, "--sections", "--dry-run"]) == rl.EXIT_OK
+    out = capsys.readouterr().out
+    assert "2 section(s) with no picture (sections); 2 in the queue" in out and "cups" not in out
+    images = rl.images_command()
+    assert "Sezione: «Major Arcana» (slug major-arcana, tipo carte)" in out
+    assert f"{images} generate --section major-arcana --aspect 3:2 --resolution 2K" in out
+    assert f"{images} section-cover major-arcana <il file stampato da generate>" in out
+    assert "mostra il MONDO di queste carte" in out and "mai come soggetto" in out
+    assert "cost: at most 40 credits for this run (2 × 20; one picture is 10)" in out
+    assert rl.main([*base, "--sections"]) == rl.EXIT_OK
+    got = entries(log, "section")
+    assert [(e["id"], e["outcome"]) for e in got] == [("major-arcana", "ok"), ("love", "failed")]
+    assert got[0]["cover_before"] is None and got[0]["cover_after"] == "new-major-arcana"
+    assert "`section-cover` did not record it" in got[1]["reason"]
+    assert "mostra il tema della sezione" not in agent.prompts[0] and "mostra il tema della sezione" in agent.prompts[1]
+    assert entries(log) == []                                             # no article event
+    assert "Summary: redone 1, failed 1, credits spent 20" in capsys.readouterr().out
+    # run again: the section done is no longer listed, the failed one is skipped
+    assert rl.main([*base, "--sections"]) == rl.EXIT_OK
+    assert "nothing to do" in capsys.readouterr().out
+
+
+def test_spreads_with_their_own_prompt_and_the_log_kept_apart(world, monkeypatch, capsys):
+    blog, _agent, log, base = world
+    rl.write_log(log, {"event": "article", "id": "croce-celtica", "outcome": "ok"})   # an article event: not this
+    agent = TargetAgent(blog, "spreads")
+    monkeypatch.setattr(rl, "run_agent", agent)
+    assert rl.main([*base, "--spreads"]) == rl.EXIT_OK
+    prompt = agent.prompts[0]
+    assert "Stesa: «Celtic Cross» (id croce-celtica, 10 carte, tradizione: Celtic tradition)" in prompt
+    assert "spread-cover croce-celtica" in prompt and "--spread croce-celtica" in prompt
+    assert "Lo schema delle posizioni lo disegna il sito" in prompt
+    assert [(e["id"], e["outcome"]) for e in entries(log, "spread")] == [("croce-celtica", "ok")]
+    assert "Stopped: no spread left" in capsys.readouterr().out
+
+
+def test_a_section_that_disappears_is_a_failure_not_a_crash(world, monkeypatch):
+    blog, _agent, log, base = world
+
+    def vanish(cmd, timeout, cwd):
+        blog.sections = [s for s in blog.sections if s["slug"] != "major-arcana"]
+        return 0, "deleted it"
+    monkeypatch.setattr(rl, "run_agent", vanish)
+    assert rl.main([*base, "--sections", "--limit", "1"]) == rl.EXIT_OK
+    got = entries(log, "section")[0]
+    assert got["outcome"] == "failed" and "cannot read the section after the agent" in got["reason"]
 
 
 # ---- the real agent process ----------------------------------------------------------------------------------------------

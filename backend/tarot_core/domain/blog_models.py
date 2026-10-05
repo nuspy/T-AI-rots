@@ -6,9 +6,14 @@ Amore…). Una sezione ha un `tipo`:
 
 - `articoli`: contiene articoli;
 - `carte`: elenca da sola le carte del catalogo che soddisfano `filtro` (per esempio
-  `{"arcano": "maggiore"}` o `{"seme": "bastoni"}`), che restano pagine `/carte/{id}`;
-- `stese`: elenca da sola le stese (`{"categoria": "coppia"}`), pagine `/stese/{id}`;
-- `contenitore`: raggruppa altre sezioni.
+  `{"arcano": "maggiore"}`, `{"seme": "bastoni"}` o `{"rango": "asso"}`), che restano pagine `/carte/{id}`; dalla
+  v9.4 contiene anche gli articoli su quelle carte;
+- `stese`: elenca da sola le stese (`{"categoria": "coppia"}`), pagine `/stese/{id}`; anche lei con i suoi articoli;
+- `contenitore`: raggruppa altre sezioni (e non contiene articoli).
+
+**Il soggetto** (v9.4). Un articolo può parlare di una carta o di una stesa (`soggetto_tipo`, `soggetto_ref`): si
+ricava da titolo e parola chiave (`tarot/soggetto.py`) se chi scrive non lo indica, e fa comparire l'articolo per
+primo nelle pagine di quella carta o stesa.
 
 **Collegamenti interni.** Ogni articolo può citare carte, stese e altri articoli: le citazioni
 si estraggono dal testo quando si salva (`tarot/blog.estrai_collegamenti`) e stanno in
@@ -35,6 +40,11 @@ from .base import Base, TimestampMixin
 TIPI_SEZIONE = ("articoli", "carte", "stese", "contenitore")
 STATI_ARTICOLO = ("bozza", "pubblicato", "archiviato")
 TIPI_COLLEGAMENTO = ("carta", "stesa", "articolo")
+#: Le sezioni che accettano articoli (un contenitore no).
+TIPI_SEZIONE_CON_ARTICOLI = ("articoli", "carte", "stese")
+TIPI_SOGGETTO = ("carta", "stesa")
+#: Le immagini del catalogo fuori dalle sezioni (che hanno la loro `immagine_id`): oggi le illustrazioni delle stese.
+TIPI_CATALOGO_IMMAGINI = ("stesa",)
 USI_IMMAGINE = ("blog", "avatar")
 
 
@@ -81,6 +91,8 @@ class BlogSection(Base, TimestampMixin):
     ordine: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
     visibile: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true(), nullable=False)
     immagine_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("media_images.id", ondelete="SET NULL"))
+    #: Il testo alternativo dell'immagine (v9.4): senza, si usa il nome della sezione.
+    immagine_alt: Mapped[Optional[str]] = mapped_column(String(200))
     seo_titolo: Mapped[Optional[str]] = mapped_column(String(200))
     seo_descrizione: Mapped[Optional[str]] = mapped_column(String(320))
 
@@ -136,7 +148,8 @@ class BlogPost(Base, TimestampMixin):
     canonical_url: Mapped[Optional[str]] = mapped_column(String(500))
     #: Domande frequenti: `[{"domanda": …, "risposta": …}]`. Si vedono in pagina e diventano dati strutturati FAQ.
     faq: Mapped[List[Dict[str, str]]] = mapped_column(JSONB, default=list, server_default=text("'[]'::jsonb"), nullable=False)
-    #: Se l'articolo è arrivato dalla pubblicazione via REST, con quale chiave (una chiave modifica solo i suoi).
+    #: Se l'articolo è arrivato dalla pubblicazione via REST, con quale chiave. Dalla v9.4 è solo un'informazione
+    #: (`GET /v1/blog/posts?mine=true`, il registro): una chiave modifica anche gli articoli che non ha creato.
     creato_da_chiave_id: Mapped[Optional[int]] = mapped_column(ForeignKey("api_keys.id", ondelete="SET NULL"), index=True)
     #: Minuti di lettura, calcolati dal testo a ogni salvataggio.
     tempo_lettura: Mapped[int] = mapped_column(Integer, default=1, server_default="1", nullable=False)
@@ -148,11 +161,22 @@ class BlogPost(Base, TimestampMixin):
         ForeignKey("blog_posts.id", ondelete="SET NULL"), index=True,
     )
 
+    #: Il soggetto (v9.4): la carta (`maj-10`, `coppe-01`) o la stesa (`croce-celtica`) di cui l'articolo parla, con
+    #: l'id canonico; `None` per un articolo che non parla di una carta o di una stesa sola. Vedi `tarot/soggetto.py`.
+    soggetto_tipo: Mapped[Optional[str]] = mapped_column(String(10))
+    soggetto_ref: Mapped[Optional[str]] = mapped_column(String(60))
+
     tags: Mapped[list[BlogTag]] = relationship(secondary="blog_post_tags", lazy="selectin", order_by="BlogTag.nome")
 
     __table_args__ = (
         CheckConstraint("stato in ('bozza', 'pubblicato', 'archiviato')", name="ck_blog_posts_stato"),
+        CheckConstraint(
+            "(soggetto_tipo is null and soggetto_ref is null) or "
+            "(soggetto_tipo in ('carta', 'stesa') and soggetto_ref is not null)",
+            name="ck_blog_posts_soggetto",
+        ),
         Index("ix_blog_posts_stato_data", "stato", "pubblicato_il"),
+        Index("ix_blog_posts_soggetto", "soggetto_tipo", "soggetto_ref"),
     )
 
 
@@ -161,9 +185,12 @@ class ApiKey(Base):
     Keycloak. Si genera dalla console e si mostra **una volta sola**: nel database resta l'impronta (SHA-256), mai
     la chiave. Ha dei permessi (`scopes`) e si revoca senza cancellare (le tracce restano nel registro).
 
-    Scopes: `blog:write` crea bozze, modifica **solo i propri** articoli, carica immagini, legge le sezioni e
-    controlla il SEO; `blog:publish` in più pubblica e programma. Senza `blog:publish` uno `stato` diverso da
-    `bozza` viene riportato a `bozza` e l'agente ne è avvisato.
+    Scopes: `blog:write` crea bozze, legge e modifica **qualunque articolo in bozza** (anche scritto da un'altra
+    chiave o dalla console: è un'API interna, v9.4), cancella le bozze, carica immagini, legge le sezioni e controlla
+    il SEO; `blog:publish` in più pubblica e programma, modifica gli articoli già usciti e li cancella; `blog:media`
+    cambia le sole immagini di articoli, sezioni e stese. Senza `blog:publish` uno `stato` diverso da `bozza` viene
+    riportato a `bozza` e l'agente ne è avvisato. Quando una chiave tocca un articolo che non ha creato, il registro
+    ne conserva il prima e il dopo.
     """
 
     __tablename__ = "api_keys"
@@ -200,6 +227,25 @@ class BlogPostLink(Base):
         CheckConstraint("tipo in ('carta', 'stesa', 'articolo')", name="ck_blog_post_links_tipo"),
         Index("ix_blog_post_links_riferimento", "tipo", "riferimento"),
     )
+
+
+class CatalogoImmagine(Base, TimestampMixin):
+    """L'immagine di un elemento del catalogo che non è una sezione (v9.4): oggi l'illustrazione di una stesa,
+    generata dalla skill delle immagini (`PUT /v1/blog/media-spreads/{id}`) o scelta dalla console. Le pagine pubbliche
+    della stesa (`/spreads`, `/spreads/{id}`) e gli elementi delle sezioni «stese» la restituiscono come
+    `immagine: {url, mini, alt}`. Le sezioni hanno la loro `immagine_id` e non passano da qui."""
+
+    __tablename__ = "catalogo_immagini"
+
+    tipo: Mapped[str] = mapped_column(String(10), primary_key=True)
+    #: L'id canonico dell'elemento (`croce-celtica`).
+    riferimento: Mapped[str] = mapped_column(String(80), primary_key=True)
+    immagine_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("media_images.id", ondelete="CASCADE"), nullable=False, index=True,
+    )
+    alt: Mapped[Optional[str]] = mapped_column(String(200))
+
+    __table_args__ = (CheckConstraint("tipo in ('stesa')", name="ck_catalogo_immagini_tipo"),)
 
 
 class BlogPostRevision(Base):

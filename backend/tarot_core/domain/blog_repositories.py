@@ -11,14 +11,15 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
-from sqlalchemy import Select, and_, delete, func, or_, select
+from sqlalchemy import Select, and_, case, delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..tarot import blog as regole
 from ..tarot import blog_seo
+from ..tarot import soggetto as regole_soggetto
 from .base import utcnow
 from .blog_models import (
-    BlogPost, BlogPostLink, BlogPostRevision, BlogPostTag, BlogSection, BlogTag, MediaImage,
+    TIPI_SEZIONE_CON_ARTICOLI, BlogPost, BlogPostLink, BlogPostRevision, BlogPostTag, BlogSection, BlogTag, MediaImage,
 )
 
 MAX_REVISIONI = 20
@@ -154,8 +155,18 @@ class BlogRepository:
         self, *, pubblico: bool = True, sezioni: Optional[Iterable[int]] = None, tag: Optional[str] = None,
         testo: str = "", lang: Optional[str] = None, evidenza: Optional[bool] = None, stato: Optional[str] = None,
         autore_id: Optional[int] = None, pagina: int = 1, per_pagina: int = 12,
+        riferimento: Optional[Tuple[str, str]] = None,
     ) -> Tuple[List[BlogPost], int]:
+        """Gli articoli, dal più recente. Con `riferimento=("carta", "maj-10")` (o una stesa) quelli che hanno quella
+        carta come **soggetto**, per primi, e poi quelli che la **citano** (v9.4)."""
         q = await self._base(pubblico=pubblico)
+        sul_soggetto = None
+        if riferimento is not None:
+            tipo, rif = riferimento
+            sul_soggetto = and_(BlogPost.soggetto_tipo == tipo, BlogPost.soggetto_ref == rif)
+            q = q.where(or_(sul_soggetto, BlogPost.id.in_(
+                select(BlogPostLink.post_id).where(BlogPostLink.tipo == tipo, BlogPostLink.riferimento == rif)
+            )))
         if sezioni is not None:
             q = q.where(BlogPost.sezione_id.in_(list(sezioni)))
         if tag:
@@ -180,6 +191,8 @@ class BlogRepository:
         ordine = (BlogPost.pubblicato_il.desc().nulls_last(), BlogPost.created_at.desc()) if pubblico else (
             BlogPost.updated_at.desc(),
         )
+        if sul_soggetto is not None:
+            ordine = (case((sul_soggetto, 0), else_=1), *ordine)
         q = q.order_by(*ordine).limit(per_pagina).offset((max(pagina, 1) - 1) * per_pagina)
         return list((await self._session.execute(q)).scalars()), totale
 
@@ -201,15 +214,30 @@ class BlogRepository:
         )
         return [(t, int(n)) for t, n in (await self._session.execute(q)).all()]
 
-    async def per_riferimento(self, tipo: str, riferimento: str, limite: int = 6) -> List[BlogPost]:
+    async def per_riferimento(
+        self, tipo: str, riferimento: str, limite: int = 6, *, lang: Optional[str] = None,
+    ) -> List[BlogPost]:
         """Gli articoli che citano una carta, una stesa o un altro articolo."""
         q = (
             select(BlogPost)
             .join(BlogPostLink, BlogPostLink.post_id == BlogPost.id)
             .where(BlogPostLink.tipo == tipo, BlogPostLink.riferimento == riferimento, await self.pubblico())
-            .order_by(BlogPost.pubblicato_il.desc().nulls_last())
-            .limit(limite)
         )
+        if lang:
+            q = q.where(BlogPost.lang == lang)
+        q = q.order_by(BlogPost.pubblicato_il.desc().nulls_last()).limit(limite)
+        return list((await self._session.execute(q)).scalars())
+
+    async def per_soggetto(
+        self, tipo: str, riferimento: str, limite: int = 60, *, lang: Optional[str] = None,
+    ) -> List[BlogPost]:
+        """Gli articoli pubblici il cui soggetto è quella carta o quella stesa (v9.4), dal più recente."""
+        q = select(BlogPost).where(
+            BlogPost.soggetto_tipo == tipo, BlogPost.soggetto_ref == riferimento, await self.pubblico(),
+        )
+        if lang:
+            q = q.where(BlogPost.lang == lang)
+        q = q.order_by(BlogPost.pubblicato_il.desc().nulls_last()).limit(limite)
         return list((await self._session.execute(q)).scalars())
 
     async def collegamenti(self, post: BlogPost) -> List[BlogPostLink]:
@@ -218,6 +246,17 @@ class BlogRepository:
 
     async def correlati(self, post: BlogPost, limite: int = 3) -> List[BlogPost]:
         """Altri articoli affini: stesse etichette, stessa sezione, stesse carte citate."""
+        punteggio = await self.punteggi_correlati(post)
+        if not punteggio:
+            return []
+        q = select(BlogPost).where(BlogPost.id.in_(list(punteggio)), await self.pubblico())
+        trovati = list((await self._session.execute(q)).scalars())
+        trovati.sort(key=lambda p: (-punteggio[p.id], -(p.pubblicato_il.timestamp() if p.pubblicato_il else 0)))
+        return trovati[:limite]
+
+    async def punteggi_correlati(self, post: BlogPost) -> Dict[uuid.UUID, int]:
+        """Quanto un altro articolo è affine a questo (id → punti, anche di articoli non pubblici: chi li usa filtra):
+        3 per etichetta in comune, 2 per la stessa sezione, 2 per ogni carta o stesa citata da entrambi."""
         etichette = [t.id for t in post.tags]
         collegamenti = [(c.tipo, c.riferimento) for c in await self.collegamenti(post) if c.tipo != "articolo"]
         punteggio: Dict[uuid.UUID, int] = {}
@@ -238,12 +277,7 @@ class BlogRepository:
                     BlogPostLink.tipo == tipo, BlogPostLink.riferimento == rif, BlogPostLink.post_id != post.id,
                 ), 2,
             )
-        if not punteggio:
-            return []
-        q = select(BlogPost).where(BlogPost.id.in_(list(punteggio)), await self.pubblico())
-        trovati = list((await self._session.execute(q)).scalars())
-        trovati.sort(key=lambda p: (-punteggio[p.id], -(p.pubblicato_il.timestamp() if p.pubblicato_il else 0)))
-        return trovati[:limite]
+        return punteggio
 
     async def vicini(self, post: BlogPost) -> Tuple[Optional[BlogPost], Optional[BlogPost]]:
         """L'articolo precedente e il successivo, per data, nella stessa sezione (se ha una)."""
@@ -321,8 +355,8 @@ class BlogRepository:
             sezione = await self.sezione(sezione_id)
             if sezione is None:
                 raise ErroreBlog("la sezione non esiste")
-            if sezione.tipo != "articoli":
-                raise ErroreBlog("gli articoli stanno nelle sezioni di tipo «articoli»")
+            if sezione.tipo not in TIPI_SEZIONE_CON_ARTICOLI:
+                raise ErroreBlog("gli articoli stanno nelle sezioni di tipo «articoli», «carte» o «stese», non in un contenitore")
         immagine_id = dati.get("immagine_id")
         if immagine_id is not None:
             img = await self._session.get(MediaImage, immagine_id)
@@ -339,7 +373,8 @@ class BlogRepository:
 
         Alla modifica del testo o del titolo si conserva la versione precedente. Ogni salvataggio
         ricalcola il tempo di lettura, l'elenco dei collegamenti interni e la data di pubblicazione
-        (un articolo che diventa `pubblicato` senza data parte da adesso).
+        (un articolo che diventa `pubblicato` senza data parte da adesso). Un articolo senza soggetto lo riceve da
+        titolo e parola chiave, e uno su una carta senza sezione va nella sezione della carta (`_soggetto_e_sezione`).
         """
         await self._controlla_riferimenti(dati)
         nuovo = post is None
@@ -383,6 +418,8 @@ class BlogRepository:
         if not (post.titolo or "").strip():
             raise ErroreBlog("serve un titolo")
 
+        await self._soggetto_e_sezione(post, dati)
+
         if "stato" in dati:
             post.stato = dati["stato"]
         if "pubblicato_il" in dati:
@@ -407,6 +444,47 @@ class BlogRepository:
         await self._sincronizza_collegamenti(post)
         await self._session.flush()
         return post
+
+    async def _soggetto_e_sezione(self, post: BlogPost, dati: Dict[str, Any]) -> None:
+        """Il soggetto dell'articolo e, per una carta, la sua sezione (v9.4).
+
+        - `dati["soggetto"]` presente: è quello indicato a mano, `{"tipo": "carta"|"stesa", "ref": id o slug}`, o
+          `None` per «nessun soggetto» (in questo salvataggio non si ricalcola);
+        - assente, con l'articolo senza soggetto: si ricava da titolo e parola chiave (`tarot/soggetto.calcola`);
+        - un articolo su una carta che resta senza sezione va nella sezione di quella carta (`sezione_della_carta`).
+        """
+        if "soggetto" in dati:
+            valore = dati["soggetto"] or {}
+            try:
+                scelto = regole_soggetto.normalizza(valore.get("tipo"), valore.get("ref"))
+            except regole_soggetto.SoggettoNonValido as exc:
+                raise ErroreBlog(str(exc)) from exc
+            post.soggetto_tipo, post.soggetto_ref = scelto or (None, None)
+        elif post.soggetto_tipo is None:
+            calcolato = regole_soggetto.calcola(post.titolo, post.seo_parola_chiave)
+            if calcolato is not None:
+                post.soggetto_tipo, post.soggetto_ref = calcolato
+        if post.sezione_id is None and post.soggetto_tipo == "carta" and post.soggetto_ref:
+            post.sezione_id = await self.sezione_della_carta(post.soggetto_ref)
+
+    async def sezione_della_carta(self, card_id: str) -> Optional[int]:
+        """La sezione «carte» di una carta: quella dei maggiori (`{"arcano": "maggiore"}`) o quella del suo seme
+        (`{"seme": "coppe"}`, dentro «By suit»). Prima le visibili, poi in ordine; None se non c'è."""
+        from ..tarot.conoscenza import condivisa
+
+        carta = condivisa().carte.get(card_id)
+        if carta is None:
+            return None
+        cercato = {"arcano": "maggiore"} if carta["arcano"] == "maggiore" else {"seme": carta.get("seme")}
+        candidate = [
+            s for s in await self.sezioni(solo_visibili=False)
+            if s.tipo == "carte" and dict(s.filtro or {}) == cercato
+        ]
+        if not candidate:
+            return None
+        visibili = {s.id for s in await self.sezioni()}
+        candidate.sort(key=lambda s: (s.id not in visibili, s.ordine, s.id))
+        return candidate[0].id
 
     async def _archivia_versione(self, post: BlogPost, versione: Tuple[str, Optional[str], str], autore_id: Optional[int]) -> None:
         titolo, sottotitolo, testo = versione

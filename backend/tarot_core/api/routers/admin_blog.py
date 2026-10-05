@@ -15,23 +15,24 @@ from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import delete, func, select
 
 from ...auth.chiavi import SCOPES_VALIDI, genera_chiave
 from ...auth.dependencies import CurrentUser, DbSession, require_role
 from ...domain.base import utcnow
-from ...domain.blog_models import ApiKey, BlogPost, BlogSection, BlogTag, MediaImage
+from ...domain.blog_models import ApiKey, BlogPost, BlogSection, BlogTag, CatalogoImmagine, MediaImage
 from ...domain.blog_repositories import BlogRepository, ErroreBlog, assicura_miniatura
 from ...domain.models import User
 from ...domain.repositories import AuditRepository
 from ...domain.session import get_session_factory
 from ...llm.compiti import Compito
-from ..deps import provider_per, verifica_modello
+from ..deps import get_conoscenza, provider_per, verifica_modello
 from ...tarot import blog as regole
 from ...tarot import blog_seo
 from ...tarot import reddit, traduzione_blog
-from .blog import url_immagine, url_miniatura
+from ...tarot import soggetto as regole_soggetto
+from .blog import immagine_json, rango_canonico, url_immagine, url_miniatura
 
 router = APIRouter(prefix="/admin/blog", tags=["console-blog"], dependencies=[Depends(require_role("admin"))])
 
@@ -46,20 +47,40 @@ def _errore(exc: ErroreBlog) -> HTTPException:
 # ---- sezioni ------------------------------------------------------------------------------------
 
 
+def _filtro_valido(filtro: Optional[Dict[str, str]]) -> Optional[Dict[str, str]]:
+    """Il filtro di una sezione «carte» o «stese». `rango` (v9.4, le sezioni «By number») accetta un grado di
+    deck.json o un suo nome (`asso`, `ace`, `1`, `page` = `principessa`…) e si salva nella forma di deck.json."""
+    if not filtro:
+        return filtro
+    if "rango" in filtro:
+        rango = rango_canonico(filtro["rango"])
+        if rango is None:
+            raise ValueError(f"rango sconosciuto «{filtro['rango']}»: asso, due… dieci, principessa, principe, regina, cavaliere")
+        filtro = {**filtro, "rango": rango}
+    return filtro
+
+
 class SezioneIn(BaseModel):
     nome: str = Field(min_length=1, max_length=120)
     slug: Optional[str] = Field(default=None, max_length=80)
     descrizione: Optional[str] = Field(default=None, max_length=2000)
     tipo: TipoSezione = "articoli"
-    #: Per `carte`: `{"arcano": "maggiore"}` o `{"seme": "bastoni"}`; per `stese`: `{"categoria": "coppia"}`
-    #: o `{"tema": "lavoro"}` (le stese di lavoro e affari più le standard adatte anche al lavoro).
+    #: Per `carte`: `{"arcano": "maggiore"}`, `{"seme": "bastoni"}` o `{"rango": "asso"}` (v9.4: le carte di quel
+    #: grado di tutti i semi; Page = Knave = Princess); per `stese`: `{"categoria": "coppia"}` o `{"tema": "lavoro"}`
+    #: (le stese di lavoro e affari più le standard adatte anche al lavoro).
     filtro: Optional[Dict[str, str]] = None
     parent_id: Optional[int] = None
     ordine: int = 0
     visibile: bool = True
     immagine_id: Optional[uuid.UUID] = None
+    immagine_alt: Optional[str] = Field(default=None, max_length=200)
     seo_titolo: Optional[str] = Field(default=None, max_length=200)
     seo_descrizione: Optional[str] = Field(default=None, max_length=320)
+
+    @field_validator("filtro")
+    @classmethod
+    def _filtro(cls, valore):
+        return _filtro_valido(valore)
 
 
 class SezioneMod(BaseModel):
@@ -72,8 +93,14 @@ class SezioneMod(BaseModel):
     ordine: Optional[int] = None
     visibile: Optional[bool] = None
     immagine_id: Optional[uuid.UUID] = None
+    immagine_alt: Optional[str] = Field(default=None, max_length=200)
     seo_titolo: Optional[str] = Field(default=None, max_length=200)
     seo_descrizione: Optional[str] = Field(default=None, max_length=320)
+
+    @field_validator("filtro")
+    @classmethod
+    def _filtro(cls, valore):
+        return _filtro_valido(valore)
 
 
 class Riordino(BaseModel):
@@ -87,6 +114,7 @@ def _sezione_json(s: BlogSection, n_articoli: int = 0) -> Dict[str, Any]:
         "id": s.id, "parent_id": s.parent_id, "slug": s.slug, "nome": s.nome, "descrizione": s.descrizione,
         "tipo": s.tipo, "filtro": s.filtro, "ordine": s.ordine, "visibile": s.visibile,
         "immagine_id": str(s.immagine_id) if s.immagine_id else None, "immagine": url_immagine(s.immagine_id),
+        "immagine_mini": url_miniatura(s.immagine_id), "immagine_alt": s.immagine_alt,
         "seo_titolo": s.seo_titolo, "seo_descrizione": s.seo_descrizione, "n_articoli": n_articoli,
     }
 
@@ -216,6 +244,15 @@ class FaqIn(BaseModel):
     risposta: str = Field(min_length=1, max_length=blog_seo.FAQ_RISPOSTA_MAX)
 
 
+class SoggettoIn(BaseModel):
+    """Il soggetto di un articolo (v9.4): la carta o la stesa di cui parla. `ref` è l'id o uno slug in qualunque lingua
+    (`maj-10`, `fortune`; `croce-celtica`, `celtic-cross`); il tipo si accetta anche in inglese. `tipo` vuoto o `null`
+    al posto dell'oggetto: nessun soggetto."""
+
+    tipo: Optional[Literal["carta", "stesa", "card", "spread"]] = None
+    ref: Optional[str] = Field(default=None, max_length=80)
+
+
 class ArticoloIn(BaseModel):
     titolo: str = Field(min_length=1, max_length=200)
     sottotitolo: Optional[str] = Field(default=None, max_length=300)
@@ -223,6 +260,8 @@ class ArticoloIn(BaseModel):
     slug: Optional[str] = Field(default=None, max_length=160)
     lang: str = Field(default="it", pattern="^[a-z]{2}(-[A-Za-z]{2})?$")
     sezione_id: Optional[int] = None
+    #: Non mandato: lo ricava il server da titolo e parola chiave; `null`: nessun soggetto.
+    soggetto: Optional[SoggettoIn] = None
     immagine_id: Optional[uuid.UUID] = None
     immagine_alt: Optional[str] = Field(default=None, max_length=200)
     tags: List[str] = Field(default_factory=list, max_length=10)
@@ -246,6 +285,7 @@ class ArticoloMod(BaseModel):
     slug: Optional[str] = Field(default=None, max_length=160)
     lang: Optional[str] = Field(default=None, pattern="^[a-z]{2}(-[A-Za-z]{2})?$")
     sezione_id: Optional[int] = None
+    soggetto: Optional[SoggettoIn] = None
     immagine_id: Optional[uuid.UUID] = None
     immagine_alt: Optional[str] = Field(default=None, max_length=200)
     tags: Optional[List[str]] = Field(default=None, max_length=10)
@@ -262,7 +302,11 @@ class ArticoloMod(BaseModel):
     pubblicato_il: Optional[datetime] = None
 
 
-async def articolo_admin_json(session, p: BlogPost, *, con_testo: bool = True) -> Dict[str, Any]:
+async def articolo_admin_json(
+    session, p: BlogPost, *, con_testo: bool = True, chiave_soggetto: str = "soggetto",
+) -> Dict[str, Any]:
+    """L'articolo per la console (e per la REST, che chiama il soggetto `subject`). Il soggetto è
+    `{"tipo", "ref", "nome", "slug"}` (nome e slug nella lingua dell'articolo) o None."""
     # Date e valori calcolati dal database (`updated_at`, l'etichetta appena scritta) dopo un
     # salvataggio sono scaduti: si rileggono qui invece di lasciare che il primo accesso lo faccia
     # fuori dal contesto asincrono.
@@ -279,6 +323,7 @@ async def articolo_admin_json(session, p: BlogPost, *, con_testo: bool = True) -
         "seo_parola_chiave": p.seo_parola_chiave, "seo_parole_chiave": list(p.seo_parole_chiave or []),
         "noindex": bool(p.noindex), "canonical_url": p.canonical_url, "faq": list(p.faq or []),
         "creato_da_chiave_id": p.creato_da_chiave_id,
+        chiave_soggetto: regole_soggetto.soggetto_json(p.soggetto_tipo, p.soggetto_ref, p.lang),
         "tradotto_da_id": str(p.tradotto_da_id) if p.tradotto_da_id else None,
         "autore": {"id": autore.id, "nome": autore.display_name or autore.email} if autore else None,
         "creato": p.created_at.isoformat() if p.created_at else None,
@@ -335,6 +380,8 @@ async def crea_articolo(
 ) -> Dict[str, Any]:
     repo = BlogRepository(session)
     dati = payload.model_dump(exclude={"tags"})
+    if "soggetto" not in payload.model_fields_set:
+        del dati["soggetto"]  # non mandato: lo ricava il server
     try:
         p = await repo.salva(None, dati, autore_id=user.id, tag=payload.tags)
     except ErroreBlog as exc:
@@ -420,6 +467,8 @@ async def traduci_articolo(post_id: uuid.UUID, payload: TraduciIn, user: Current
         "tradotto_da_id": originale.id,
         "stato": "bozza",
     }
+    if originale.soggetto_tipo:  # la traduzione parla della stessa carta o stesa
+        dati["soggetto"] = {"tipo": originale.soggetto_tipo, "ref": originale.soggetto_ref}
     try:
         nuovo = await repo.salva(None, dati, autore_id=user.id, tag=[t.nome for t in originale.tags])
     except ErroreBlog as exc:
@@ -523,12 +572,125 @@ async def elimina_immagine(immagine_id: uuid.UUID, user: CurrentUser, session: D
         raise HTTPException(status_code=404, detail="Immagine non trovata")
     usata = (await session.execute(select(func.count()).select_from(BlogPost).where(BlogPost.immagine_id == img.id))).scalar_one()
     usata += (await session.execute(select(func.count()).select_from(BlogSection).where(BlogSection.immagine_id == img.id))).scalar_one()
+    usata += (await session.execute(
+        select(func.count()).select_from(CatalogoImmagine).where(CatalogoImmagine.immagine_id == img.id)
+    )).scalar_one()
     if usata:
         raise HTTPException(status_code=409, detail={"motivo": "immagine_in_uso", "usi": int(usata)})
     await AuditRepository(session).record(
         action="blog.media.delete", actor_id=user.id, target_type="media_image", target_id=str(img.id),
     )
     await session.delete(img)
+    await session.commit()
+    return Response(status_code=204)
+
+
+# ---- le immagini del catalogo (v9.4) ------------------------------------------------------------------
+#
+# Una pagina sola per le illustrazioni delle stese (tabella `catalogo_immagini`) e le immagini delle sezioni (che
+# stanno nella sezione: `immagine_id`, `immagine_alt`). L'immagine si carica prima con `POST /admin/blog/media`.
+
+TipoCatalogo = Literal["stesa", "sezione"]
+
+
+class ImmagineCatalogoIn(BaseModel):
+    immagine_id: uuid.UUID
+    alt: Optional[str] = Field(default=None, max_length=200)
+
+
+def _voce_catalogo(tipo: str, riferimento: str, nome: str, immagine_id: Optional[uuid.UUID], alt: Optional[str],
+                   aggiornata: Optional[datetime] = None) -> Dict[str, Any]:
+    return {
+        "tipo": tipo, "riferimento": riferimento, "nome": nome,
+        "immagine_id": str(immagine_id) if immagine_id else None, "immagine": immagine_json(immagine_id, alt),
+        "aggiornata": aggiornata.isoformat() if aggiornata else None,
+    }
+
+
+@router.get("/catalogo-immagini")
+async def catalogo_immagini(session: DbSession, tipo: Optional[TipoCatalogo] = None) -> List[Dict[str, Any]]:
+    """Ogni stesa e ogni sezione con la sua immagine (`immagine: null` se manca): prima le stese, nell'ordine del
+    catalogo, poi le sezioni. `?tipo=stesa` o `?tipo=sezione` per una sola delle due."""
+    voci: List[Dict[str, Any]] = []
+    if tipo in (None, "stesa"):
+        conoscenza = get_conoscenza()
+        righe = {
+            r.riferimento: r for r in (await session.execute(
+                select(CatalogoImmagine).where(CatalogoImmagine.tipo == "stesa")
+            )).scalars()
+        }
+        for s in conoscenza.stese.values():
+            r = righe.get(s["id"])
+            voci.append(_voce_catalogo(
+                "stesa", s["id"], conoscenza.nome_stesa(s, "en"), r.immagine_id if r else None, r.alt if r else None,
+                r.updated_at if r else None,
+            ))
+    if tipo in (None, "sezione"):
+        for s in await BlogRepository(session).sezioni(solo_visibili=False):
+            voci.append(_voce_catalogo("sezione", s.slug, s.nome, s.immagine_id, s.immagine_alt or s.nome if s.immagine_id else None))
+    return voci
+
+
+@router.put("/catalogo-immagini/{tipo}/{riferimento}")
+async def imposta_immagine_catalogo(
+    tipo: TipoCatalogo, riferimento: str, payload: ImmagineCatalogoIn, user: CurrentUser, session: DbSession,
+) -> Dict[str, Any]:
+    """Assegna un'immagine già caricata a una stesa (id o slug) o a una sezione (slug)."""
+    img = await session.get(MediaImage, payload.immagine_id)
+    if img is None:
+        raise HTTPException(status_code=422, detail="l'immagine non esiste")
+    await assicura_miniatura(img)
+    alt = (payload.alt or "").strip() or None
+    if tipo == "sezione":
+        sezione = await BlogRepository(session).sezione_per_slug(riferimento)
+        if sezione is None:
+            raise HTTPException(status_code=404, detail="Sezione non trovata")
+        prima = {"immagine_id": str(sezione.immagine_id) if sezione.immagine_id else None, "alt": sezione.immagine_alt}
+        sezione.immagine_id, sezione.immagine_alt = img.id, alt
+        voce = _voce_catalogo("sezione", sezione.slug, sezione.nome, img.id, alt or sezione.nome)
+    else:
+        conoscenza = get_conoscenza()
+        stesa = conoscenza.stesa(conoscenza.risolvi_stesa(riferimento) or "")
+        if stesa is None:
+            raise HTTPException(status_code=404, detail="Stesa sconosciuta")
+        riga = await session.get(CatalogoImmagine, ("stesa", stesa["id"]))
+        prima = {"immagine_id": str(riga.immagine_id), "alt": riga.alt} if riga is not None else None
+        if riga is None:
+            riga = CatalogoImmagine(tipo="stesa", riferimento=stesa["id"], immagine_id=img.id)
+            session.add(riga)
+        riga.immagine_id, riga.alt = img.id, alt
+        await session.flush()
+        voce = _voce_catalogo("stesa", stesa["id"], conoscenza.nome_stesa(stesa, "en"), img.id, alt)
+    await AuditRepository(session).record(
+        action="blog.catalogo_immagini.set", actor_id=user.id, target_type="catalogo_immagine",
+        target_id=f"{tipo}/{voce['riferimento']}", before=prima, after={"immagine_id": str(img.id), "alt": alt},
+    )
+    await session.commit()
+    return voce
+
+
+@router.delete("/catalogo-immagini/{tipo}/{riferimento}", status_code=204)
+async def togli_immagine_catalogo(tipo: TipoCatalogo, riferimento: str, user: CurrentUser, session: DbSession) -> Response:
+    """Toglie l'immagine di una stesa o di una sezione (l'immagine resta fra i media)."""
+    if tipo == "sezione":
+        sezione = await BlogRepository(session).sezione_per_slug(riferimento)
+        if sezione is None:
+            raise HTTPException(status_code=404, detail="Sezione non trovata")
+        prima = {"immagine_id": str(sezione.immagine_id) if sezione.immagine_id else None, "alt": sezione.immagine_alt}
+        sezione.immagine_id, sezione.immagine_alt = None, None
+        chiave = sezione.slug
+    else:
+        conoscenza = get_conoscenza()
+        chiave = conoscenza.risolvi_stesa(riferimento) or riferimento
+        riga = await session.get(CatalogoImmagine, ("stesa", chiave))
+        if riga is None:
+            raise HTTPException(status_code=404, detail="Nessuna immagine per questa stesa")
+        prima = {"immagine_id": str(riga.immagine_id), "alt": riga.alt}
+        await session.delete(riga)
+    await AuditRepository(session).record(
+        action="blog.catalogo_immagini.delete", actor_id=user.id, target_type="catalogo_immagine",
+        target_id=f"{tipo}/{chiave}", before=prima,
+    )
     await session.commit()
     return Response(status_code=204)
 

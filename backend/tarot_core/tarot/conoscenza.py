@@ -456,6 +456,21 @@ class Conoscenza:
                 })
         return base
 
+    def _tradizioni(self, stesa: Dict[str, Any]) -> Dict[str, str]:
+        """La tradizione di una stesa in ogni lingua che ce l'ha: italiano e inglese dai testi, le altre da `nomi.json`."""
+        tradizioni: Dict[str, str] = {}
+        if stesa.get("tradizione"):
+            tradizioni["it"] = stesa["tradizione"]
+        for codice, per_lingua in self.testi.items():
+            valore = per_lingua.get("stese", {}).get(stesa["id"], {}).get("tradizione")
+            if valore:
+                tradizioni[codice] = valore
+        for codice, per_lingua in self.nomi.items():
+            valore = per_lingua.get("stese", {}).get(stesa["id"], {}).get("tradizione")
+            if valore:
+                tradizioni[codice] = valore
+        return tradizioni
+
     def stesa_pubblica(self, stesa: Dict[str, Any], lang: Optional[str] = None) -> Dict[str, Any]:
         def nomi_di(nome_en: Optional[str], estrai) -> Dict[str, str]:
             nomi = {"en": nome_en} if nome_en else {}
@@ -482,6 +497,10 @@ class Conoscenza:
             "forma": stesa.get("forma", "standard"),
             "posizioni": posizioni,
             "nomi": nomi_di(stesa.get("nome_en"), lambda t: t.get("nome")),
+            # La tradizione in poche parole («love», «Celtic tradition», «work», v9.4): nella lingua dei testi, e in
+            # `tradizioni` in ogni lingua che ce l'ha (come `nomi`).
+            "tradizione": stesa.get("tradizione"),
+            "tradizioni": self._tradizioni(stesa),
             "sintesi_wirth": bool(stesa.get("sintesi_wirth")),
             "lang": codice,
             "slug": self.slug_stesa(stesa["id"], codice),
@@ -493,6 +512,7 @@ class Conoscenza:
             termini = per_lingua["termini"]
             pubblica |= {
                 "nome": scheda["nome"], "origine": scheda["origine"], "descrizione": scheda["descrizione"],
+                "tradizione": scheda.get("tradizione") or stesa.get("tradizione"),
                 "regole": scheda["regole"],
                 "mazzo_label": termini.get("mazzo", {}).get(stesa["mazzo"]),
                 "categoria_label": termini.get("categoria", {}).get(pubblica["categoria"]),

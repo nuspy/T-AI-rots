@@ -81,6 +81,121 @@ def test_le_migrazioni_si_applicano_da_zero_e_coincidono_con_i_modelli(database_
     assert differenze == [], f"le migrazioni non coincidono con i modelli: {differenze}"
 
 
+def _modulo_dati_v94():
+    """La migrazione dei dati del Journal v9.4, per chiamarne `applica` e `annulla` su una connessione qualunque."""
+    import importlib.util
+
+    percorso = BACKEND / "tarot_core" / "migrations" / "versions" / "20261022_1000_blog_sezioni_ricche_dati.py"
+    spec = importlib.util.spec_from_file_location("migrazione_dati_v94", percorso)
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    return modulo
+
+
+def test_la_migrazione_dei_dati_v94_e_idempotente_e_si_annulla(database_scratch):
+    """Minor Arcana per seme e per numero, il soggetto degli articoli, gli articoli su una carta nella sua sezione (solo
+    da una sezione generica): su un albero «di prima», poi di nuovo (niente cambia), poi giù e di nuovo su."""
+    import uuid
+
+    from alembic import command
+    from sqlalchemy import create_engine, text
+
+    cfg = _config()
+    command.upgrade(cfg, "d1f3a5c7e9b2")
+    motore = create_engine(database_scratch)
+
+    def sezione(conn, slug, nome, tipo, padre=None, filtro=None, descrizione=None):
+        return conn.execute(text(
+            "INSERT INTO blog_sections (slug, nome, tipo, filtro, parent_id, descrizione) "
+            "VALUES (:s, :n, :t, CAST(:f AS jsonb), :p, :d) RETURNING id"
+        ), {"s": slug, "n": nome, "t": tipo, "f": filtro, "p": padre, "d": descrizione}).scalar()
+
+    def articolo(conn, titolo, sezione_id=None, soggetto=None):
+        pid = uuid.uuid4()
+        conn.execute(text(
+            "INSERT INTO blog_posts (id, slug, titolo, testo, lang, stato, sezione_id, soggetto_tipo, soggetto_ref) "
+            "VALUES (:id, :slug, :titolo, '', 'en', 'pubblicato', :sez, :st, :sr)"
+        ), {"id": pid, "slug": str(pid), "titolo": titolo, "sez": sezione_id,
+            "st": soggetto[0] if soggetto else None, "sr": soggetto[1] if soggetto else None})
+        return pid
+
+    try:
+        with motore.begin() as conn:
+            tarot = sezione(conn, "tarot", "Tarot", "contenitore")
+            maggiori = sezione(conn, "major-arcana", "Major Arcana", "carte", tarot, '{"arcano": "maggiore"}')
+            minori = sezione(conn, "minor-arcana", "Minor Arcana", "contenitore", tarot,
+                             descrizione="The fifty-six cards of everyday life, divided into four suits.")
+            bastoni = sezione(conn, "wands", "Wands", "carte", minori, '{"seme": "bastoni"}')
+            coppe = sezione(conn, "cups", "Cups", "carte", minori, '{"seme": "coppe"}')
+            impara = sezione(conn, "learn-tarot", "Learn Tarot", "articoli", tarot)
+            amore = sezione(conn, "love", "Love", "articoli")
+            sezione(conn, "queens", "Queens of the blog", "articoli")         # uno slug già occupato: non si tocca
+            ruota = articolo(conn, "Wheel of Fortune Tarot Meaning", impara)
+            asso = articolo(conn, "Ace of Cups")
+            amanti = articolo(conn, "The Lovers tarot card in love", amore)
+            luna = articolo(conn, "Full Moon Tarot Spread", impara)
+            croce = articolo(conn, "How to read the Celtic Cross", impara)
+            scelto = articolo(conn, "The Tower tarot card", impara, soggetto=("carta", "maj-17"))
+
+        command.upgrade(cfg, "head")
+        with motore.connect() as conn:
+            def padre(slug):
+                return conn.execute(text("SELECT parent_id FROM blog_sections WHERE slug = :s"), {"s": slug}).scalar()
+
+            def post(pid):
+                return conn.execute(text("SELECT sezione_id, soggetto_tipo, soggetto_ref FROM blog_posts WHERE id = :i"),
+                                    {"i": pid}).one()
+
+            per_seme = conn.execute(text("SELECT id FROM blog_sections WHERE slug = 'by-suit'")).scalar()
+            per_numero = conn.execute(text("SELECT id FROM blog_sections WHERE slug = 'by-number'")).scalar()
+            assert padre("by-suit") == padre("by-number") == minori
+            assert padre("wands") == padre("cups") == per_seme
+            gradi = conn.execute(text(
+                "SELECT slug, filtro->>'rango' FROM blog_sections WHERE parent_id = :p ORDER BY ordine"
+            ), {"p": per_numero}).all()
+            assert [g[0] for g in gradi] == ["aces", "twos", "threes", "fours", "fives", "sixes", "sevens", "eights",
+                                            "nines", "tens", "princesses", "princes", "knights"]
+            assert dict(gradi)["aces"] == "asso" and padre("queens") is None
+            assert tuple(post(ruota)) == (maggiori, "carta", "maj-10")     # da una sezione generica alla sua
+            assert tuple(post(asso)) == (coppe, "carta", "coppe-01")       # da nessuna sezione alla sua
+            assert tuple(post(amanti)) == (amore, "carta", "maj-06")       # una sezione a tema resta
+            assert tuple(post(luna)) == (impara, None, None)
+            assert tuple(post(croce)) == (impara, "stesa", "croce-celtica")  # le stese non si spostano
+            assert tuple(post(scelto)) == (maggiori, "carta", "maj-17")    # il soggetto già scritto non si ricalcola
+            assert conn.execute(text("SELECT descrizione FROM blog_sections WHERE id = :i"), {"i": minori}).scalar() \
+                == "The fifty-six cards of everyday life, by suit and by number."
+            n_sezioni = conn.execute(text("SELECT count(*) FROM blog_sections")).scalar()
+
+        # Idempotente: una seconda volta non cambia niente e non lascia tracce.
+        modulo = _modulo_dati_v94()
+        with motore.begin() as conn:
+            traccia = modulo.applica(conn)
+        assert not any(traccia.values())
+        with motore.connect() as conn:
+            assert conn.execute(text("SELECT count(*) FROM blog_sections")).scalar() == n_sezioni
+
+        # Giù: tutto com'era.
+        command.downgrade(cfg, "d1f3a5c7e9b2")
+        with motore.connect() as conn:
+            assert conn.execute(text("SELECT count(*) FROM blog_sections WHERE slug IN ('by-suit', 'by-number', 'aces')")).scalar() == 0
+            assert conn.execute(text("SELECT parent_id FROM blog_sections WHERE id = :i"), {"i": bastoni}).scalar() == minori
+            assert conn.execute(text("SELECT slug FROM blog_sections WHERE slug = 'queens'")).scalar() == "queens"
+            righe = {r.id: r for r in conn.execute(text("SELECT id, sezione_id, soggetto_tipo, soggetto_ref FROM blog_posts"))}
+            assert (righe[ruota].sezione_id, righe[ruota].soggetto_ref) == (impara, None)
+            assert (righe[asso].sezione_id, righe[asso].soggetto_ref) == (None, None)
+            assert (righe[scelto].sezione_id, righe[scelto].soggetto_ref) == (impara, "maj-17")
+            assert conn.execute(text("SELECT descrizione FROM blog_sections WHERE id = :i"), {"i": minori}).scalar() \
+                == "The fifty-six cards of everyday life, divided into four suits."
+
+        # E di nuovo su: lo stesso risultato.
+        command.upgrade(cfg, "head")
+        with motore.connect() as conn:
+            assert conn.execute(text("SELECT sezione_id FROM blog_posts WHERE id = :i"), {"i": ruota}).scalar() == maggiori
+            assert conn.execute(text("SELECT count(*) FROM blog_sections")).scalar() == n_sezioni
+    finally:
+        motore.dispose()
+
+
 def _colonne(motore, tabella):
     from sqlalchemy import inspect
 

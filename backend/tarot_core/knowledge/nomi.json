@@ -83,6 +83,7 @@
   "stese": {
    "tre-carte": {
     "nome": "Három kártya",
+    "tradizione": "klasszikus",
     "posizioni": {
      "1": "Múlt",
      "2": "Jelen",
@@ -91,6 +92,7 @@
    },
    "croce-semplice": {
     "nome": "Egyszerű kereszt",
+    "tradizione": "olasz hagyomány",
     "posizioni": {
      "1": "Mellette",
      "2": "Ellene",
@@ -101,6 +103,7 @@
    },
    "ferro-di-cavallo": {
     "nome": "Patkó",
+    "tradizione": "európai kártyavetés",
     "posizioni": {
      "1": "Múlt",
      "2": "Jelen",
@@ -113,6 +116,7 @@
    },
    "croce-celtica": {
     "nome": "Kelta kereszt",
+    "tradizione": "kelta hagyomány",
     "posizioni": {
      "1": "A jelen",
      "2": "A kihívás",
@@ -128,6 +132,7 @@
    },
    "ruota-astrologica": {
     "nome": "Asztrológiai kerék",
+    "tradizione": "asztrológia",
     "posizioni": {
      "1": "I. ház",
      "2": "II. ház",
@@ -146,6 +151,7 @@
    },
    "compat-tre": {
     "nome": "Háromkártyás kompatibilitás",
+    "tradizione": "szerelem",
     "posizioni": {
      "1": "Te",
      "2": "A másik személy",
@@ -154,6 +160,7 @@
    },
    "compat-sette": {
     "nome": "Hétkártyás kompatibilitás",
+    "tradizione": "szerelem",
     "posizioni": {
      "1": "Amit keresel",
      "2": "Amit a másik személy keres",
@@ -166,6 +173,7 @@
    },
    "compat-nove": {
     "nome": "Kilenckártyás kompatibilitás (az igazság háromszöge)",
+    "tradizione": "szerelem",
     "posizioni": {
      "1": "Központi energia",
      "2": "Érzelmi összhang",
@@ -180,6 +188,7 @@
    },
    "compat-anime": {
     "nome": "Lelki társak",
+    "tradizione": "lelki társak",
     "posizioni": {
      "1": "A te leckéd",
      "2": "A másik személy leckéje",
@@ -192,6 +201,7 @@
    },
    "coppia-croce": {
     "nome": "A pár keresztje",
+    "tradizione": "szerelem",
     "posizioni": {
      "1": "Te",
      "2": "A másik személy",
@@ -202,6 +212,7 @@
    },
    "coppia-stazione": {
     "nome": "Állomás kettőnek",
+    "tradizione": "szerelem, olasz hagyomány",
     "posizioni": {
      "1": "Amit gondolsz a másikról",
      "2": "Amit a másik rólad gondol",
@@ -214,6 +225,7 @@
    },
    "coppia-sette": {
     "nome": "Hétkártyás kapcsolati kirakás",
+    "tradizione": "szerelem",
     "posizioni": {
      "1": "Te",
      "2": "A másik személy",
@@ -226,6 +238,7 @@
    },
    "coppia-specchio": {
     "nome": "Tükör",
+    "tradizione": "szerelem",
     "posizioni": {
      "1": "Te",
      "2": "Ahogy a másikat látod",
@@ -239,6 +252,7 @@
    },
    "coppia-bivio": {
     "nome": "Válaszút",
+    "tradizione": "szerelem és döntések",
     "posizioni": {
      "1": "Hol tartotok",
      "2": "Mi vezetett idáig",
@@ -252,6 +266,7 @@
    },
    "lavoro-trattativa": {
     "nome": "Tárgyalás",
+    "tradizione": "munka",
     "posizioni": {
      "1": "A te értéked",
      "2": "Ahogy a másik fél lát",
@@ -261,6 +276,7 @@
    },
    "lavoro-offerta": {
     "nome": "Állásajánlat",
+    "tradizione": "munka",
     "posizioni": {
      "1": "A szerep",
      "2": "Az emberek",
@@ -271,6 +287,7 @@
    },
    "lavoro-swot": {
     "nome": "SWOT-elemzés",
+    "tradizione": "munka és stratégia",
     "posizioni": {
      "1": "Erősségek",
      "2": "Gyengeségek",
@@ -282,6 +299,7 @@
    },
    "lavoro-restare-andare": {
     "nome": "Maradni vagy menni",
+    "tradizione": "munka",
     "posizioni": {
      "1": "A valódi ok",
      "2": "A félelem, ha maradsz",
@@ -294,6 +312,7 @@
    },
    "lavoro-impresa": {
     "nome": "Új vállalkozás",
+    "tradizione": "vállalkozás",
     "posizioni": {
      "1": "A szereped",
      "2": "A motiváció",
@@ -392,6 +411,7 @@
   "stese": {
    "tre-carte": {
     "nome": "Три карты",
+    "tradizione": "классика",
     "posizioni": {
      "1": "Прошлое",
      "2": "Настоящее",
@@ -400,6 +420,7 @@
    },
    "croce-semplice": {
     "nome": "Простой крест (Вирт)",
+    "tradizione": "итальянская традиция",
     "posizioni": {
      "1": "За",
      "2": "Против",
@@ -410,6 +431,7 @@
    },
    "ferro-di-cavallo": {
     "nome": "Подкова",
+    "tradizione": "европейская картомантия",
     "posizioni": {
      "1": "Прошлое",
      "2": "Настоящее",
@@ -422,6 +444,7 @@
    },
    "croce-celtica": {
     "nome": "Кельтский крест",
+    "tradizione": "кельтская традиция",
     "posizioni": {
      "1": "Настоящее",
      "2": "Вызов",
@@ -437,6 +460,7 @@
    },
    "ruota-astrologica": {
     "nome": "Астрологическое колесо",
+    "tradizione": "астрология",
     "posizioni": {
      "1": "Дом I",
      "2": "Дом II",
@@ -455,6 +479,7 @@
    },
    "compat-tre": {
     "nome": "Совместимость на три карты",
+    "tradizione": "любовь",
     "posizioni": {
      "1": "Ты",
      "2": "Другой человек",
@@ -463,6 +488,7 @@
    },
    "compat-sette": {
     "nome": "Совместимость на семь карт",
+    "tradizione": "любовь",
     "posizioni": {
      "1": "Что ищешь ты",
      "2": "Что ищет другой человек",
@@ -475,6 +501,7 @@
    },
    "compat-nove": {
     "nome": "Совместимость на девять карт",
+    "tradizione": "любовь",
     "posizioni": {
      "1": "Центральная энергия",
      "2": "Эмоциональная совместимость",
@@ -489,6 +516,7 @@
    },
    "compat-anime": {
     "nome": "Родственные души",
+    "tradizione": "родственные души",
     "posizioni": {
      "1": "Твой урок",
      "2": "Урок другого человека",
@@ -501,6 +529,7 @@
    },
    "coppia-croce": {
     "nome": "Крест пары",
+    "tradizione": "любовь",
     "posizioni": {
      "1": "Ты",
      "2": "Другой человек",
@@ -511,6 +540,7 @@
    },
    "coppia-stazione": {
     "nome": "Станция для двоих",
+    "tradizione": "любовь, итальянская традиция",
     "posizioni": {
      "1": "Что ты думаешь о другом человеке",
      "2": "Что другой человек думает о тебе",
@@ -523,6 +553,7 @@
    },
    "coppia-sette": {
     "nome": "Отношения на семь карт",
+    "tradizione": "любовь",
     "posizioni": {
      "1": "Ты",
      "2": "Другой человек",
@@ -535,6 +566,7 @@
    },
    "coppia-specchio": {
     "nome": "Зеркало",
+    "tradizione": "любовь",
     "posizioni": {
      "1": "Ты",
      "2": "Как ты видишь другого человека",
@@ -548,6 +580,7 @@
    },
    "coppia-bivio": {
     "nome": "Развилка",
+    "tradizione": "любовь и выбор",
     "posizioni": {
      "1": "Где вы сейчас",
      "2": "Что привело вас сюда",
@@ -561,6 +594,7 @@
    },
    "lavoro-trattativa": {
     "nome": "Переговоры",
+    "tradizione": "работа",
     "posizioni": {
      "1": "Твоя ценность",
      "2": "Как тебя видит другая сторона",
@@ -570,6 +604,7 @@
    },
    "lavoro-offerta": {
     "nome": "Предложение о работе",
+    "tradizione": "работа",
     "posizioni": {
      "1": "Роль",
      "2": "Люди",
@@ -580,6 +615,7 @@
    },
    "lavoro-swot": {
     "nome": "SWOT-анализ",
+    "tradizione": "работа и стратегия",
     "posizioni": {
      "1": "Сильные стороны",
      "2": "Слабые стороны",
@@ -591,6 +627,7 @@
    },
    "lavoro-restare-andare": {
     "nome": "Остаться или уйти",
+    "tradizione": "работа",
     "posizioni": {
      "1": "Настоящая причина",
      "2": "Страх, если останешься",
@@ -603,6 +640,7 @@
    },
    "lavoro-impresa": {
     "nome": "Новое дело",
+    "tradizione": "бизнес",
     "posizioni": {
      "1": "Твоя роль",
      "2": "Мотивация",
@@ -701,6 +739,7 @@
   "stese": {
    "tre-carte": {
     "nome": "Три карти",
+    "tradizione": "класика",
     "posizioni": {
      "1": "Минуле",
      "2": "Теперішнє",
@@ -709,6 +748,7 @@
    },
    "croce-semplice": {
     "nome": "Простий хрест (Вірт)",
+    "tradizione": "італійська традиція",
     "posizioni": {
      "1": "За",
      "2": "Проти",
@@ -719,6 +759,7 @@
    },
    "ferro-di-cavallo": {
     "nome": "Підкова",
+    "tradizione": "європейська картомантія",
     "posizioni": {
      "1": "Минуле",
      "2": "Теперішнє",
@@ -731,6 +772,7 @@
    },
    "croce-celtica": {
     "nome": "Кельтський хрест",
+    "tradizione": "кельтська традиція",
     "posizioni": {
      "1": "Теперішнє",
      "2": "Виклик",
@@ -746,6 +788,7 @@
    },
    "ruota-astrologica": {
     "nome": "Астрологічне колесо",
+    "tradizione": "астрологія",
     "posizioni": {
      "1": "Дім I",
      "2": "Дім II",
@@ -764,6 +807,7 @@
    },
    "compat-tre": {
     "nome": "Сумісність на три карти",
+    "tradizione": "кохання",
     "posizioni": {
      "1": "Ти",
      "2": "Інша людина",
@@ -772,6 +816,7 @@
    },
    "compat-sette": {
     "nome": "Сумісність на сім карт",
+    "tradizione": "кохання",
     "posizioni": {
      "1": "Що шукаєш ти",
      "2": "Що шукає інша людина",
@@ -784,6 +829,7 @@
    },
    "compat-nove": {
     "nome": "Сумісність на дев'ять карт",
+    "tradizione": "кохання",
     "posizioni": {
      "1": "Центральна енергія",
      "2": "Емоційна сумісність",
@@ -798,6 +844,7 @@
    },
    "compat-anime": {
     "nome": "Споріднені душі",
+    "tradizione": "споріднені душі",
     "posizioni": {
      "1": "Твій урок",
      "2": "Урок іншої людини",
@@ -810,6 +857,7 @@
    },
    "coppia-croce": {
     "nome": "Хрест пари",
+    "tradizione": "кохання",
     "posizioni": {
      "1": "Ти",
      "2": "Інша людина",
@@ -820,6 +868,7 @@
    },
    "coppia-stazione": {
     "nome": "Станція для двох",
+    "tradizione": "кохання, італійська традиція",
     "posizioni": {
      "1": "Що ти думаєш про іншу людину",
      "2": "Що інша людина думає про тебе",
@@ -832,6 +881,7 @@
    },
    "coppia-sette": {
     "nome": "Стосунки на сім карт",
+    "tradizione": "кохання",
     "posizioni": {
      "1": "Ти",
      "2": "Інша людина",
@@ -844,6 +894,7 @@
    },
    "coppia-specchio": {
     "nome": "Дзеркало",
+    "tradizione": "кохання",
     "posizioni": {
      "1": "Ти",
      "2": "Як ти бачиш іншу людину",
@@ -857,6 +908,7 @@
    },
    "coppia-bivio": {
     "nome": "Роздоріжжя",
+    "tradizione": "кохання і вибір",
     "posizioni": {
      "1": "Де ви зараз",
      "2": "Що привело вас сюди",
@@ -870,6 +922,7 @@
    },
    "lavoro-trattativa": {
     "nome": "Переговори",
+    "tradizione": "робота",
     "posizioni": {
      "1": "Твоя цінність",
      "2": "Як тебе бачить інша сторона",
@@ -879,6 +932,7 @@
    },
    "lavoro-offerta": {
     "nome": "Пропозиція роботи",
+    "tradizione": "робота",
     "posizioni": {
      "1": "Роль",
      "2": "Люди",
@@ -889,6 +943,7 @@
    },
    "lavoro-swot": {
     "nome": "SWOT-аналіз",
+    "tradizione": "робота і стратегія",
     "posizioni": {
      "1": "Сильні сторони",
      "2": "Слабкі сторони",
@@ -900,6 +955,7 @@
    },
    "lavoro-restare-andare": {
     "nome": "Залишитися чи піти",
+    "tradizione": "робота",
     "posizioni": {
      "1": "Справжня причина",
      "2": "Страх, якщо залишишся",
@@ -912,6 +968,7 @@
    },
    "lavoro-impresa": {
     "nome": "Нова справа",
+    "tradizione": "бізнес",
     "posizioni": {
      "1": "Твоя роль",
      "2": "Мотивація",
@@ -1010,6 +1067,7 @@
   "stese": {
    "tre-carte": {
     "nome": "Tres cartas",
+    "tradizione": "clásica",
     "posizioni": {
      "1": "Pasado",
      "2": "Presente",
@@ -1018,6 +1076,7 @@
    },
    "croce-semplice": {
     "nome": "Cruz simple (Wirth)",
+    "tradizione": "tradición italiana",
     "posizioni": {
      "1": "A favor",
      "2": "En contra",
@@ -1028,6 +1087,7 @@
    },
    "ferro-di-cavallo": {
     "nome": "Herradura",
+    "tradizione": "cartomancia europea",
     "posizioni": {
      "1": "Pasado",
      "2": "Presente",
@@ -1040,6 +1100,7 @@
    },
    "croce-celtica": {
     "nome": "Cruz Celta",
+    "tradizione": "tradición celta",
     "posizioni": {
      "1": "El presente",
      "2": "El desafío",
@@ -1055,6 +1116,7 @@
    },
    "ruota-astrologica": {
     "nome": "Rueda astrológica",
+    "tradizione": "astrología",
     "posizioni": {
      "1": "Casa I",
      "2": "Casa II",
@@ -1073,6 +1135,7 @@
    },
    "compat-tre": {
     "nome": "Compatibilidad de tres cartas",
+    "tradizione": "amor",
     "posizioni": {
      "1": "Tú",
      "2": "La otra persona",
@@ -1081,6 +1144,7 @@
    },
    "compat-sette": {
     "nome": "Compatibilidad de siete cartas",
+    "tradizione": "amor",
     "posizioni": {
      "1": "Lo que buscas",
      "2": "Lo que busca la otra persona",
@@ -1093,6 +1157,7 @@
    },
    "compat-nove": {
     "nome": "Compatibilidad de nueve cartas",
+    "tradizione": "amor",
     "posizioni": {
      "1": "Energía central",
      "2": "Compatibilidad emocional",
@@ -1107,6 +1172,7 @@
    },
    "compat-anime": {
     "nome": "Almas afines",
+    "tradizione": "almas afines",
     "posizioni": {
      "1": "Tu lección",
      "2": "La lección de la otra persona",
@@ -1119,6 +1185,7 @@
    },
    "coppia-croce": {
     "nome": "Cruz de la pareja",
+    "tradizione": "amor",
     "posizioni": {
      "1": "Tú",
      "2": "La otra persona",
@@ -1129,6 +1196,7 @@
    },
    "coppia-stazione": {
     "nome": "Estación para dos",
+    "tradizione": "amor, tradición italiana",
     "posizioni": {
      "1": "Lo que piensas de la otra persona",
      "2": "Lo que la otra persona piensa de ti",
@@ -1141,6 +1209,7 @@
    },
    "coppia-sette": {
     "nome": "Relación de siete cartas",
+    "tradizione": "amor",
     "posizioni": {
      "1": "Tú",
      "2": "La otra persona",
@@ -1153,6 +1222,7 @@
    },
    "coppia-specchio": {
     "nome": "Espejo",
+    "tradizione": "amor",
     "posizioni": {
      "1": "Tú",
      "2": "Cómo ves a la otra persona",
@@ -1166,6 +1236,7 @@
    },
    "coppia-bivio": {
     "nome": "Encrucijada",
+    "tradizione": "amor y decisiones",
     "posizioni": {
      "1": "Dónde están",
      "2": "Lo que los trajo aquí",
@@ -1179,6 +1250,7 @@
    },
    "lavoro-trattativa": {
     "nome": "Negociación",
+    "tradizione": "trabajo",
     "posizioni": {
      "1": "Tu valor",
      "2": "Cómo te ve la otra parte",
@@ -1188,6 +1260,7 @@
    },
    "lavoro-offerta": {
     "nome": "Oferta de trabajo",
+    "tradizione": "trabajo",
     "posizioni": {
      "1": "El puesto",
      "2": "Las personas",
@@ -1198,6 +1271,7 @@
    },
    "lavoro-swot": {
     "nome": "Análisis DAFO",
+    "tradizione": "trabajo y estrategia",
     "posizioni": {
      "1": "Fortalezas",
      "2": "Debilidades",
@@ -1209,6 +1283,7 @@
    },
    "lavoro-restare-andare": {
     "nome": "Quedarse o irse",
+    "tradizione": "trabajo",
     "posizioni": {
      "1": "El motivo real",
      "2": "El miedo si te quedas",
@@ -1221,6 +1296,7 @@
    },
    "lavoro-impresa": {
     "nome": "Nuevo emprendimiento",
+    "tradizione": "empresa",
     "posizioni": {
      "1": "Tu papel",
      "2": "La motivación",

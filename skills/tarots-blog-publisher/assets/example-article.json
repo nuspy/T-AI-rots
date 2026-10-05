@@ -4,6 +4,8 @@
   "body_file": "example-article.md",
   "language": "en",
   "tags": ["thoth tarot", "major arcana", "tarot card meanings"],
+  "subject": {"type": "card", "ref": "maj-16"},
+  "section": "major-arcana",
   "slug": "the-tower-tarot-card-meaning-thoth",
   "focus_keyword": "the tower tarot card meaning",
   "secondary_keywords": ["the tower thoth tarot", "tarot card XVI", "the tower upright meaning", "golden dawn tower peh"],

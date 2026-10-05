@@ -12,19 +12,29 @@ salvare niente.
 **Le regole di sicurezza** (nessuna si aggira con un parametro):
 - una chiave con `blog:write` crea **bozze**; `stato: "pubblicato"`, `pubblicato_il` e `in_evidenza` servono
   `blog:publish`, altrimenti l'articolo resta bozza e la risposta lo dice in `avvisi`;
-- una chiave modifica e cancella **solo gli articoli che ha creato**, e cancella solo le bozze;
-- l'eccezione è `blog:media`: cambia le **sole immagini** (copertina e immagini nel testo) di qualunque articolo;
+- una chiave legge, modifica e cancella **qualunque articolo** (v9.4: è un'API interna, le chiavi sono dei nostri
+  agenti), anche scritto da un'altra chiave o dalla console: con `blog:write` le bozze; modificare o cancellare un
+  articolo che non è più in bozza serve `blog:publish`. Quando la chiave non è quella che l'ha creato, il registro
+  conserva il prima e il dopo;
+- `blog:media` cambia le **sole immagini**: copertina e immagini nel testo di qualunque articolo, immagini delle
+  sezioni e illustrazioni delle stese;
 - niente scaricamento di immagini da un indirizzo (sarebbe una richiesta dal nostro server verso un indirizzo scelto
   da fuori): l'immagine arriva come corpo (`POST /v1/blog/media`) o come `immagine_base64`;
 - un tetto di articoli al giorno e di richieste al minuto per chiave.
 
 La lingua predefinita è l'**inglese** (`lang: "en"`): il sito è pensato per un pubblico internazionale.
+
+**Il soggetto** (`subject`, v9.4): la carta o la stesa di cui l'articolo parla, `{"tipo": "carta"|"stesa", "ref":
+id o slug}` (anche `"card"`/`"spread"`). Se non si manda, il server lo ricava da titolo e parola chiave
+(`tarot/soggetto.py`); `null` vuol dire «nessun soggetto» e in quel salvataggio non si ricalcola. Un articolo su una
+carta senza `sezione` va nella sezione di quella carta.
 """
 from __future__ import annotations
 
 import asyncio
 import base64
 import binascii
+import hashlib
 import re
 import uuid
 from datetime import datetime, timezone
@@ -38,16 +48,17 @@ from sqlalchemy import and_, case, func, or_, select
 from ...auth.chiavi import ChiaveVerificata, richiede
 from ...auth.dependencies import DbSession
 from ...domain.base import utcnow
-from ...domain.blog_models import BlogPost, BlogSection, MediaImage
+from ...domain.blog_models import TIPI_SEZIONE_CON_ARTICOLI, BlogPost, BlogSection, CatalogoImmagine, MediaImage
 from ...domain.blog_repositories import BlogRepository, ErroreBlog, _escape_like, assicura_miniatura
 from ...domain.repositories import AuditRepository
 from ...domain.session import get_session_factory
 from ...settings import get_settings
 from ...tarot import blog as regole
 from ...tarot import blog_seo, reddit
+from ...tarot import soggetto as regole_soggetto
 from ..deps import get_conoscenza
-from .admin_blog import FaqIn, articolo_admin_json
-from .blog import nome_riferimento, url_immagine, url_miniatura
+from .admin_blog import FaqIn, SoggettoIn, articolo_admin_json
+from .blog import immagine_json, immagine_sezione_json, nome_riferimento, url_immagine, url_miniatura
 
 router = APIRouter(prefix="/v1/blog", tags=["rest-blog"])
 
@@ -62,7 +73,8 @@ class ArticoloRest(BaseModel):
     sottotitolo: Optional[str] = Field(default=None, max_length=300)
     testo: str = Field(default="", max_length=200_000, description="Markdown. Non si esegue HTML. Scorciatoie: [[card:the-star]], [[spread:celtic-cross]], [[post:un-articolo]].")
     lang: str = Field(default="en", pattern="^[a-z]{2}(-[A-Za-z]{2})?$", description="La lingua dell'articolo. Predefinita: en.")
-    sezione: Optional[str] = Field(default=None, max_length=80, description="Lo slug (o l'id) di una sezione di tipo «articoli»: vedi GET /v1/blog/sections.")
+    sezione: Optional[str] = Field(default=None, max_length=80, description="Lo slug (o l'id) di una sezione di tipo «articoli», «carte» o «stese»: vedi GET /v1/blog/sections. Vuota, per un articolo su una carta: la sezione della carta.")
+    subject: Optional[SoggettoIn] = Field(default=None, description="La carta o la stesa di cui l'articolo parla: {\"tipo\": \"carta\"|\"stesa\", \"ref\": id o slug}. Non mandato: lo ricava il server; null: nessuno.")
     tags: List[str] = Field(default_factory=list, max_length=10)
     slug: Optional[str] = Field(default=None, max_length=160, description="Vuoto: lo ricava dal titolo.")
     immagine_id: Optional[uuid.UUID] = Field(default=None, description="L'id di un'immagine già caricata con POST /v1/blog/media.")
@@ -87,6 +99,7 @@ class ArticoloRestMod(BaseModel):
     testo: Optional[str] = Field(default=None, max_length=200_000)
     lang: Optional[str] = Field(default=None, pattern="^[a-z]{2}(-[A-Za-z]{2})?$")
     sezione: Optional[str] = Field(default=None, max_length=80)
+    subject: Optional[SoggettoIn] = None
     tags: Optional[List[str]] = Field(default=None, max_length=10)
     slug: Optional[str] = Field(default=None, max_length=160)
     immagine_id: Optional[uuid.UUID] = None
@@ -127,14 +140,15 @@ def _in_utc(quando: Optional[datetime]) -> Optional[datetime]:
 
 
 async def _sezione_id(repo: BlogRepository, valore: Optional[str]) -> Optional[int]:
-    """Da uno slug (o un id) alla sezione; deve essere di tipo «articoli». Altrimenti l'errore elenca quelle valide."""
+    """Da uno slug (o un id) alla sezione; deve accettare articoli («articoli», «carte», «stese»: non un contenitore).
+    Altrimenti l'errore elenca quelle valide."""
     if valore is None or not valore.strip():
         return None
     valore = valore.strip()
     sezioni = await repo.sezioni()
     trovata = next((s for s in sezioni if s.slug == valore or str(s.id) == valore), None)
-    valide = sorted(s.slug for s in sezioni if s.tipo == "articoli")
-    if trovata is None or trovata.tipo != "articoli":
+    valide = sorted(s.slug for s in sezioni if s.tipo in TIPI_SEZIONE_CON_ARTICOLI)
+    if trovata is None or trovata.tipo not in TIPI_SEZIONE_CON_ARTICOLI:
         raise _errore({"errore": "sezione_non_valida", "sezione": valore, "sezioni_valide": valide})
     return trovata.id
 
@@ -179,7 +193,7 @@ def _rapporto_di(p: BlogPost) -> Dict[str, Any]:
 
 
 async def _risposta(session, p: BlogPost, avvisi: List[str]) -> Dict[str, Any]:
-    articolo = await articolo_admin_json(session, p)
+    articolo = await articolo_admin_json(session, p, chiave_soggetto="subject")
     return {"articolo": articolo, "url": _url_pubblico(p), "seo": _rapporto_di(p), "avvisi": avvisi}
 
 
@@ -214,6 +228,9 @@ async def _dati_per_salvare(
         dati["faq"] = grezzi["faq"]
     if "sezione" in grezzi:
         dati["sezione_id"] = await _sezione_id(repo, grezzi["sezione"])
+    # Il soggetto solo se mandato davvero (anche `null`, «nessuno»): altrimenti lo ricava il server.
+    if "subject" in payload.model_fields_set:
+        dati["soggetto"] = grezzi.get("subject")
     if grezzi.get("immagine_base64"):
         dati["immagine_id"] = await _immagine_da_base64(session, grezzi["immagine_base64"])
     elif grezzi.get("immagine_id") is not None:
@@ -240,14 +257,18 @@ async def guida(chiave: ChiaveVerificata = Depends(richiede("blog:write", "blog:
         "limiti": {"faq": blog_seo.FAQ_MAX, "parole_chiave_secondarie": blog_seo.PAROLE_CHIAVE_MAX, "etichette": 10, "immagine": "8 MB, PNG/JPEG/WebP"},
         "regole": [
             "Con blog:write si creano bozze; per pubblicare serve blog:publish.",
-            "Una chiave modifica e cancella solo i propri articoli; cancella solo bozze.",
+            "Una chiave legge e modifica qualunque articolo, anche di altri: con blog:write le bozze, con blog:publish "
+            "anche quelli già usciti. Si cancellano le bozze con blog:write, gli articoli usciti con blog:publish.",
+            "Un articolo su una carta va nella sezione di quella carta: senza `sezione` ce lo mette il server.",
+            "Il soggetto (`subject`: la carta o la stesa dell'articolo) se non si manda lo ricava il server da titolo e parola chiave.",
             "Le immagini non si scaricano da un indirizzo: si caricano (POST /v1/blog/media) o arrivano in base64.",
         ],
         "percorsi": {
             "sezioni": "GET /v1/blog/sections", "catalogo_carte_e_stese": "GET /v1/blog/catalog", "etichette": "GET /v1/blog/tags",
-            "articoli_miei": "GET /v1/blog/posts", "titoli_di_tutti": "GET /v1/blog/titles", "controllo_seo": "POST /v1/blog/seo-check", "immagine": "POST /v1/blog/media",
-            "crea": "POST /v1/blog/posts", "modifica": "PATCH /v1/blog/posts/{id}", "elimina_bozza": "DELETE /v1/blog/posts/{id}",
+            "articoli": "GET /v1/blog/posts (tutti; ?mine=true i propri)", "titoli_di_tutti": "GET /v1/blog/titles", "controllo_seo": "POST /v1/blog/seo-check", "immagine": "POST /v1/blog/media",
+            "crea": "POST /v1/blog/posts", "modifica": "PATCH /v1/blog/posts/{id}", "elimina": "DELETE /v1/blog/posts/{id}",
             "immagini_di_tutti_con_blog_media": "GET /v1/blog/media-posts, GET /v1/blog/media-posts/{id}, PUT /v1/blog/posts/{id}/cover, PUT /v1/blog/posts/{id}/inline",
+            "immagini_di_sezioni_e_stese_con_blog_media": "GET /v1/blog/media-sections, PUT /v1/blog/media-sections/{slug}, GET /v1/blog/media-spreads, PUT /v1/blog/media-spreads/{id}",
         },
         "immagini": [
             "Nel testo: ![testo alternativo](/blog/media/<id>.webp), su una riga da sola, dove l'immagine serve al discorso.",
@@ -263,13 +284,15 @@ async def guida(chiave: ChiaveVerificata = Depends(richiede("blog:write", "blog:
 
 @router.get("/sections")
 async def sezioni(session: DbSession, chiave: ChiaveVerificata = Depends(richiede("blog:write"))) -> List[Dict[str, Any]]:
-    """Le sezioni in cui si può pubblicare (tipo «articoli»), con il percorso nell'albero."""
+    """Le sezioni in cui si può pubblicare (tipo «articoli», «carte», «stese»: non i contenitori), con il percorso
+    nell'albero, il tipo e il filtro (per le «carte»: `{"arcano": "maggiore"}`, `{"seme": "coppe"}`…)."""
     repo = BlogRepository(session)
     visibili = await repo.sezioni()
     per_id = {s.id: s for s in visibili}
     return [
-        {"id": s.id, "slug": s.slug, "nome": s.nome, "percorso": " › ".join(x.nome for x in repo.percorso(s, per_id)), "descrizione": s.descrizione}
-        for s in visibili if s.tipo == "articoli"
+        {"id": s.id, "slug": s.slug, "nome": s.nome, "percorso": " › ".join(x.nome for x in repo.percorso(s, per_id)),
+         "descrizione": s.descrizione, "tipo": s.tipo, "filtro": s.filtro}
+        for s in visibili if s.tipo in TIPI_SEZIONE_CON_ARTICOLI
     ]
 
 
@@ -354,12 +377,29 @@ async def carica_immagine(request: Request, session: DbSession, chiave: ChiaveVe
 # ---- gli articoli --------------------------------------------------------------------------------------------------
 
 
-async def _proprio(session, post_id: uuid.UUID, chiave: ChiaveVerificata) -> BlogPost:
-    p = await BlogRepository(session).per_id(post_id)
-    if p is None or p.creato_da_chiave_id != chiave.id:
-        # Lo stesso errore per «non esiste» e «non è tuo»: non si rivela quali articoli ci sono.
-        raise HTTPException(status_code=404, detail="Articolo non trovato")
-    return p
+#: Ciò che il registro conserva, prima e dopo, quando una chiave tocca un articolo che non ha creato (v9.4). Del testo
+#: solo lunghezza e impronta: la versione intera resta comunque fra le revisioni dell'articolo.
+_CAMPI_REGISTRO = (
+    "titolo", "sottotitolo", "slug", "lang", "stato", "pubblicato_il", "in_evidenza", "sezione_id", "immagine_id",
+    "immagine_alt", "seo_titolo", "seo_descrizione", "seo_parola_chiave", "canonical_url", "noindex",
+    "soggetto_tipo", "soggetto_ref",
+)
+
+
+def _istantanea(p: BlogPost) -> Dict[str, Any]:
+    dati: Dict[str, Any] = {}
+    for campo in _CAMPI_REGISTRO:
+        valore = getattr(p, campo)
+        dati[campo] = valore.isoformat() if isinstance(valore, datetime) else (str(valore) if isinstance(valore, uuid.UUID) else valore)
+    dati["testo"] = {"caratteri": len(p.testo or ""), "sha256": hashlib.sha256((p.testo or "").encode("utf-8")).hexdigest()[:16]}
+    dati["tags"] = sorted(t.nome for t in p.tags)
+    return dati
+
+
+def _differenze(prima: Dict[str, Any], dopo: Dict[str, Any]) -> tuple:
+    """Solo i campi cambiati, prima e dopo."""
+    cambiati = [k for k in dopo if prima.get(k) != dopo.get(k)]
+    return {k: prima.get(k) for k in cambiati}, {k: dopo.get(k) for k in cambiati}
 
 
 @router.post("/posts", status_code=201)
@@ -403,21 +443,27 @@ async def crea(
 async def elenco(
     session: DbSession,
     stato: Optional[Literal["bozza", "pubblicato", "archiviato"]] = None,
+    mine: bool = Query(default=False, description="Vero: solo gli articoli creati da questa chiave."),
     pagina: int = Query(default=1, ge=1),
     per_pagina: int = Query(default=25, ge=1, le=100),
     chiave: ChiaveVerificata = Depends(richiede("blog:write")),
 ) -> Dict[str, Any]:
-    """Gli articoli creati da questa chiave (per evitare doppioni e scegliere una parola chiave non ancora usata)."""
-    q = select(BlogPost).where(BlogPost.creato_da_chiave_id == chiave.id)
+    """Gli articoli del blog, di qualunque chiave e della console (v9.4), dal più recente; con `mine=true` solo quelli
+    creati da questa chiave. Ogni articolo dice `mio` (creato da questa chiave) e `subject`."""
+    q = select(BlogPost)
+    if mine:
+        q = q.where(BlogPost.creato_da_chiave_id == chiave.id)
     if stato:
         q = q.where(BlogPost.stato == stato)
     totale = int((await session.execute(select(func.count()).select_from(q.subquery()))).scalar_one())
-    q = q.order_by(BlogPost.created_at.desc()).limit(per_pagina).offset((pagina - 1) * per_pagina)
+    q = q.order_by(BlogPost.created_at.desc(), BlogPost.id.desc()).limit(per_pagina).offset((pagina - 1) * per_pagina)
     posts = list((await session.execute(q)).scalars())
-    return {
-        "totale": totale, "pagina": pagina, "per_pagina": per_pagina,
-        "articoli": [await articolo_admin_json(session, p, con_testo=False) for p in posts],
-    }
+    articoli = []
+    for p in posts:
+        articolo = await articolo_admin_json(session, p, con_testo=False, chiave_soggetto="subject")
+        articolo["mio"] = p.creato_da_chiave_id is not None and p.creato_da_chiave_id == chiave.id
+        articoli.append(articolo)
+    return {"totale": totale, "pagina": pagina, "per_pagina": per_pagina, "mine": mine, "articoli": articoli}
 
 
 #: Quanto testo serve per l'estratto calcolato: l'inizio basta, il resto non esce nemmeno dal database.
@@ -455,6 +501,7 @@ async def titoli(
         BlogPost.id, BlogPost.slug, BlogPost.titolo, BlogPost.sottotitolo, BlogPost.seo_descrizione,
         BlogPost.seo_parola_chiave, BlogSection.slug.label("sezione"), BlogPost.lang, BlogPost.stato,
         BlogPost.pubblicato_il, BlogPost.updated_at, BlogPost.creato_da_chiave_id, BlogPost.tradotto_da_id,
+        BlogPost.soggetto_tipo, BlogPost.soggetto_ref,
         case((and_(vuoto_sottotitolo, vuota_descrizione), func.left(BlogPost.testo, _INIZIO_TESTO)), else_=None).label("inizio"),
     )
     filtri = []
@@ -517,6 +564,7 @@ async def titoli(
                 "aggiornato": r.updated_at.isoformat() if r.updated_at else None,
                 "mio": r.creato_da_chiave_id is not None and r.creato_da_chiave_id == chiave.id,
                 "tradotto_da_id": str(r.tradotto_da_id) if r.tradotto_da_id else None,
+                "subject": {"tipo": r.soggetto_tipo, "ref": r.soggetto_ref} if r.soggetto_tipo else None,
             }
             for r in righe
         ],
@@ -525,7 +573,8 @@ async def titoli(
 
 @router.get("/posts/{post_id}")
 async def leggi(post_id: uuid.UUID, session: DbSession, chiave: ChiaveVerificata = Depends(richiede("blog:write"))) -> Dict[str, Any]:
-    p = await _proprio(session, post_id, chiave)
+    """Un articolo qualunque (anche di un'altra chiave o della console), con il rapporto SEO."""
+    p = await _articolo_qualunque(session, post_id)
     return await _risposta(session, p, [])
 
 
@@ -534,25 +583,34 @@ async def modifica(
     post_id: uuid.UUID, payload: ArticoloRestMod, session: DbSession, compiti: BackgroundTasks,
     fabbrica=Depends(get_session_factory), chiave: ChiaveVerificata = Depends(richiede("blog:write")),
 ) -> Dict[str, Any]:
-    """Modifica un articolo creato da questa chiave: si mandano solo i campi da cambiare."""
-    p = await _proprio(session, post_id, chiave)
-    repo = BlogRepository(session)
-    avvisi: List[str] = []
-    dati = await _dati_per_salvare(session, repo, payload, esclusi_none=True)
-    _regole_di_pubblicazione(chiave, dati, avvisi)
+    """Modifica un articolo qualunque: si mandano solo i campi da cambiare. Un articolo che non è più in bozza (o che
+    si vuole pubblicare) serve `blog:publish`. Se la chiave non è quella che l'ha creato, il registro conserva i campi
+    cambiati, prima e dopo."""
+    p = await _articolo_qualunque(session, post_id)
     # Un articolo già pubblicato da un editor non torna bozza per mano di una chiave senza permesso.
     if not chiave.puo("blog:publish") and p.stato != "bozza":
         raise HTTPException(status_code=403, detail="L'articolo è già stato pubblicato: modificarlo serve `blog:publish`.")
+    repo = BlogRepository(session)
+    autrice = p.creato_da_chiave_id is not None and p.creato_da_chiave_id == chiave.id
+    prima = _istantanea(p)
+    avvisi: List[str] = []
+    dati = await _dati_per_salvare(session, repo, payload, esclusi_none=True)
+    _regole_di_pubblicazione(chiave, dati, avvisi)
     try:
         await repo.salva(p, dati, autore_id=None, tag=payload.tags if payload.tags is not None else None)
     except ErroreBlog as exc:
         await session.rollback()
         raise _errore(str(exc)) from exc
+    risposta = await _risposta(session, p, avvisi)
+    dopo_ = {"chiave": chiave.prefisso, "slug": p.slug, "stato": p.stato, "autrice": autrice}
+    prima_registro: Optional[Dict[str, Any]] = None
+    if not autrice:
+        prima_registro, cambiati = _differenze(prima, _istantanea(p))
+        dopo_["campi"] = cambiati
     await AuditRepository(session).record(
         action="blog.rest.update", actor_id=None, target_type="blog_post", target_id=str(p.id),
-        after={"chiave": chiave.prefisso, "slug": p.slug, "stato": p.stato},
+        before=prima_registro, after=dopo_,
     )
-    risposta = await _risposta(session, p, avvisi)
     await session.commit()
     await reddit.dopo_pubblicazione(session, compiti, fabbrica, p)
     return risposta
@@ -560,13 +618,17 @@ async def modifica(
 
 @router.delete("/posts/{post_id}", status_code=204)
 async def elimina(post_id: uuid.UUID, session: DbSession, chiave: ChiaveVerificata = Depends(richiede("blog:write"))) -> None:
-    """Elimina una **bozza** creata da questa chiave. Un articolo pubblicato si toglie dalla console."""
-    p = await _proprio(session, post_id, chiave)
-    if p.stato != "bozza":
-        raise HTTPException(status_code=409, detail="Si cancellano solo le bozze; un articolo pubblicato si archivia dalla console.")
+    """Elimina un articolo qualunque: una **bozza** con `blog:write`, un articolo pubblicato (o archiviato) solo con
+    `blog:publish`. Se la chiave non è quella che l'ha creato, il registro conserva l'articolo com'era."""
+    p = await _articolo_qualunque(session, post_id)
+    if p.stato != "bozza" and not chiave.puo("blog:publish"):
+        raise HTTPException(status_code=403, detail="L'articolo non è una bozza: cancellarlo serve `blog:publish`.")
+    autrice = p.creato_da_chiave_id is not None and p.creato_da_chiave_id == chiave.id
+    prima: Dict[str, Any] = {"chiave": chiave.prefisso, "slug": p.slug, "stato": p.stato, "autrice": autrice}
+    if not autrice:
+        prima |= {"articolo": _istantanea(p), "creato_da_chiave_id": p.creato_da_chiave_id, "autore_id": p.autore_id}
     await AuditRepository(session).record(
-        action="blog.rest.delete", actor_id=None, target_type="blog_post", target_id=str(p.id),
-        before={"chiave": chiave.prefisso, "slug": p.slug},
+        action="blog.rest.delete", actor_id=None, target_type="blog_post", target_id=str(p.id), before=prima,
     )
     await BlogRepository(session).elimina(p)
     await session.commit()
@@ -774,5 +836,109 @@ async def cambia_immagini_nel_testo(
                "rimosse": len(payload.rimuovi)},
     )
     risposta = await _media_post_json(session, p, con_testo=True)
+    await session.commit()
+    return risposta
+
+
+# ---- le immagini delle sezioni e delle stese (`blog:media`, v9.4) ------------------------------------------------
+#
+# La skill delle immagini genera anche l'immagine di ogni sezione del Journal e l'illustrazione di ogni stesa. Le
+# sezioni la tengono nella loro `immagine_id` (con `immagine_alt`), le stese in `catalogo_immagini`. Il corpo è quello
+# della copertina di un articolo: `{"immagine_id": …, "alt": …}` o `{"immagine_base64": …, "alt": …}`.
+
+
+async def _media_sezioni_json(session) -> List[Dict[str, Any]]:
+    repo = BlogRepository(session)
+    tutte = await repo.sezioni(solo_visibili=False)
+    per_id = {s.id: s for s in tutte}
+    return [
+        {
+            "id": s.id, "slug": s.slug, "nome": s.nome, "tipo": s.tipo, "filtro": s.filtro, "descrizione": s.descrizione,
+            "percorso": " › ".join(x.nome for x in repo.percorso(s, per_id)), "visibile": s.visibile,
+            "immagine": immagine_sezione_json(s) if s.immagine_id else None,
+        }
+        for s in tutte
+    ]
+
+
+@router.get("/media-sections")
+async def media_sezioni(session: DbSession, chiave: ChiaveVerificata = Depends(richiede("blog:media"))) -> List[Dict[str, Any]]:
+    """Tutte le sezioni (anche nascoste), con l'immagine attuale (`null` se manca): per sapere quali fare."""
+    return await _media_sezioni_json(session)
+
+
+@router.put("/media-sections/{slug}")
+async def cambia_immagine_sezione(
+    slug: str, payload: CopertinaIn, session: DbSession, chiave: ChiaveVerificata = Depends(richiede("blog:media")),
+) -> Dict[str, Any]:
+    """Sostituisce l'immagine di una sezione (e il suo testo alternativo). Risponde `{slug, immagine: {url, mini, alt}}`."""
+    sezione = await BlogRepository(session).sezione_per_slug(slug)
+    if sezione is None:
+        raise HTTPException(status_code=404, detail="Sezione non trovata")
+    prima = {"immagine_id": str(sezione.immagine_id) if sezione.immagine_id else None, "alt": sezione.immagine_alt}
+    sezione.immagine_id = await _immagine_scelta(session, payload.immagine_id, payload.immagine_base64)
+    sezione.immagine_alt = _alt_pulito(payload.alt)
+    await AuditRepository(session).record(
+        action="blog.rest.section_image", actor_id=None, target_type="blog_section", target_id=str(sezione.id),
+        before=prima, after={"chiave": chiave.prefisso, "slug": sezione.slug, "immagine_id": str(sezione.immagine_id),
+                             "alt": sezione.immagine_alt},
+    )
+    risposta = {"slug": sezione.slug, "immagine": immagine_sezione_json(sezione)}
+    await session.commit()
+    return risposta
+
+
+def _stesa_canonica(spread_id: str) -> Dict[str, Any]:
+    conoscenza = get_conoscenza()
+    trovata = conoscenza.stesa(conoscenza.risolvi_stesa(spread_id) or "")
+    if trovata is None:
+        raise HTTPException(status_code=404, detail="Stesa sconosciuta")
+    return trovata
+
+
+@router.get("/media-spreads")
+async def media_stese(session: DbSession, chiave: ChiaveVerificata = Depends(richiede("blog:media"))) -> List[Dict[str, Any]]:
+    """Tutte le stese, in inglese, con ciò che serve a scrivere un'illustrazione (descrizione, origine, tradizione,
+    numero di carte) e l'immagine attuale (`null` se manca)."""
+    conoscenza = get_conoscenza()
+    immagini = {
+        r.riferimento: immagine_json(r.immagine_id, r.alt)
+        for r in (await session.execute(select(CatalogoImmagine).where(CatalogoImmagine.tipo == "stesa"))).scalars()
+    }
+    voci = []
+    for s in conoscenza.stese.values():
+        pubblica = conoscenza.stesa_pubblica(s, "en")
+        voci.append({
+            "id": s["id"], "slug": pubblica["slug"], "nome": pubblica["nome"], "descrizione": pubblica["descrizione"],
+            "origine": pubblica["origine"], "tradizione": pubblica.get("tradizione"), "categoria": pubblica["categoria"],
+            "n_carte": len(pubblica["posizioni"]), "immagine": immagini.get(s["id"]),
+        })
+    return voci
+
+
+@router.put("/media-spreads/{spread_id}")
+async def cambia_immagine_stesa(
+    spread_id: str, payload: CopertinaIn, session: DbSession, chiave: ChiaveVerificata = Depends(richiede("blog:media")),
+) -> Dict[str, Any]:
+    """Sostituisce l'illustrazione di una stesa (per id, `croce-celtica`, o per slug, `celtic-cross`). Risponde
+    `{id, slug, immagine: {url, mini, alt}}`."""
+    stesa = _stesa_canonica(spread_id)
+    nuova = await _immagine_scelta(session, payload.immagine_id, payload.immagine_base64)
+    riga = await session.get(CatalogoImmagine, ("stesa", stesa["id"]))
+    prima = {"immagine_id": str(riga.immagine_id), "alt": riga.alt} if riga is not None else None
+    if riga is None:
+        riga = CatalogoImmagine(tipo="stesa", riferimento=stesa["id"], immagine_id=nuova)
+        session.add(riga)
+    riga.immagine_id = nuova
+    riga.alt = _alt_pulito(payload.alt)
+    await session.flush()
+    await AuditRepository(session).record(
+        action="blog.rest.spread_image", actor_id=None, target_type="catalogo_immagine", target_id=f"stesa/{stesa['id']}",
+        before=prima, after={"chiave": chiave.prefisso, "immagine_id": str(nuova), "alt": riga.alt},
+    )
+    risposta = {
+        "id": stesa["id"], "slug": get_conoscenza().slug_stesa(stesa["id"], "en"),
+        "immagine": immagine_json(nuova, riga.alt),
+    }
     await session.commit()
     return risposta

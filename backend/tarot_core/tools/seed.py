@@ -110,6 +110,11 @@ async def scrivi_catalogo(session, *, forza: bool = False) -> int:
 #: articolo può collegare le carte e le stese di cui parla. Il sito è pensato per un pubblico internazionale e
 #: la lingua canonica è l'inglese: nomi, slug e descrizioni sono in inglese (gli indirizzi
 #: `/blog/sezione/major-arcana`, `/blog/sezione/wands`… si leggono nei risultati di ricerca).
+#:
+#: v9.4: «Minor Arcana» ha due gruppi, «By suit» (i quattro semi, con gli slug di sempre) e «By number» (le carte dello
+#: stesso grado nei quattro semi, filtro `rango`). Le sezioni hanno un nome solo, in inglese (il modello non ha
+#: traduzioni dei nomi delle sezioni). In produzione, dove le sezioni c'erano già, l'albero lo sistema la migrazione
+#: `20261022_1000_blog_sezioni_ricche_dati`: il seed non sposta sezioni esistenti.
 SEZIONI_BLOG: List[Dict[str, Any]] = [
     {"slug": "tarot", "nome": "Tarot", "tipo": "contenitore",
      "descrizione": "The cards, the spreads and the articles: everything you need to understand and read the tarot.",
@@ -117,16 +122,42 @@ SEZIONI_BLOG: List[Dict[str, Any]] = [
          {"slug": "major-arcana", "nome": "Major Arcana", "tipo": "carte", "filtro": {"arcano": "maggiore"},
           "descrizione": "The twenty-two cards of the great themes, from The Fool to The Universe."},
          {"slug": "minor-arcana", "nome": "Minor Arcana", "tipo": "contenitore",
-          "descrizione": "The fifty-six cards of everyday life, divided into four suits.",
+          "descrizione": "The fifty-six cards of everyday life, by suit and by number.",
           "figli": [
-              {"slug": "wands", "nome": "Wands", "tipo": "carte", "filtro": {"seme": "bastoni"},
-               "descrizione": "Fire: will, energy, initiative."},
-              {"slug": "cups", "nome": "Cups", "tipo": "carte", "filtro": {"seme": "coppe"},
-               "descrizione": "Water: emotions, relationships, intuition."},
-              {"slug": "swords", "nome": "Swords", "tipo": "carte", "filtro": {"seme": "spade"},
-               "descrizione": "Air: thought, speech, conflict."},
-              {"slug": "disks", "nome": "Disks", "tipo": "carte", "filtro": {"seme": "dischi"},
-               "descrizione": "Earth: work, money, the body."},
+              {"slug": "by-suit", "nome": "By suit", "tipo": "contenitore",
+               "descrizione": "The four suits, one element each: Wands, Cups, Swords and Disks.",
+               "figli": [
+                   {"slug": "wands", "nome": "Wands", "tipo": "carte", "filtro": {"seme": "bastoni"},
+                    "descrizione": "Fire: will, energy, initiative."},
+                   {"slug": "cups", "nome": "Cups", "tipo": "carte", "filtro": {"seme": "coppe"},
+                    "descrizione": "Water: emotions, relationships, intuition."},
+                   {"slug": "swords", "nome": "Swords", "tipo": "carte", "filtro": {"seme": "spade"},
+                    "descrizione": "Air: thought, speech, conflict."},
+                   {"slug": "disks", "nome": "Disks", "tipo": "carte", "filtro": {"seme": "dischi"},
+                    "descrizione": "Earth: work, money, the body."},
+               ]},
+              {"slug": "by-number", "nome": "By number", "tipo": "contenitore",
+               "descrizione": "The same number or court card across the four suits: the Aces, the Twos… the Knights.",
+               "figli": [
+                   {"slug": slug, "nome": nome, "tipo": "carte", "filtro": {"rango": rango}, "descrizione": descrizione}
+                   for slug, nome, rango, descrizione in (
+                       ("aces", "Aces", "asso", "The roots of the four elements: the seed of each suit."),
+                       ("twos", "Twos", "due", "The first movement of each element: dominion, love, peace, change."),
+                       ("threes", "Threes", "tre", "The element takes form: virtue, abundance, sorrow, work."),
+                       ("fours", "Fours", "quattro", "Order and stability in each suit."),
+                       ("fives", "Fives", "cinque", "Disruption and challenge in each suit."),
+                       ("sixes", "Sixes", "sei", "Balance regained: the harmony of each element."),
+                       ("sevens", "Sevens", "sette", "The test of each element: valour, debauch, futility, failure."),
+                       ("eights", "Eights", "otto", "Movement and method in each suit."),
+                       ("nines", "Nines", "nove", "The element at its fullest, for better or worse."),
+                       ("tens", "Tens", "dieci", "The end of each cycle: the element brought to its limit."),
+                       ("princesses", "Princesses", "principessa",
+                        "The earthy part of each element; the Pages of other decks."),
+                       ("princes", "Princes", "principe", "The airy part of each element, in motion."),
+                       ("queens", "Queens", "regina", "The watery part of each element: receptive and reflective."),
+                       ("knights", "Knights", "cavaliere", "The fiery part of each element: swift and decisive."),
+                   )
+               ]},
           ]},
          {"slug": "learn-tarot", "nome": "Learn Tarot", "tipo": "articoli",
           "descrizione": "How the tarot works and how to read it: guides to get started.",

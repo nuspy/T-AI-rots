@@ -266,7 +266,7 @@ def test_generate_refuses_before_litmedia_and_finds_the_folder_of_an_id(isolated
     assert "give --article" in capsys.readouterr().err
     assert ti.main(["generate", "--prompt", TOWER_NO_THOTH, *DIMS, "--article", TOWER_ID, "--dry-run"]) == ti.EXIT_OK
     captured = capsys.readouterr()
-    assert str(folder / "foto" / "cover.jpg") in captured.out
+    assert str(folder / "foto" / "cover-") in captured.out   # a name of its own: cover-<date-time>.jpg
     assert "warning: the prompt does not say the card is in the style of the Thoth deck" in captured.err
 
 
@@ -280,3 +280,59 @@ def test_a_file_whose_prompt_draws_another_card_cannot_go_on_an_article(isolated
     with pytest.raises(ti.Failure) as err:
         ti.check_file("libra-1", str(pic))
     assert err.value.code == ti.EXIT_RULE and "not about a specific card" in str(err.value)
+
+
+# ---- the subject of article.json counts as a title naming the card (5/10/2026) ------------------------------------
+
+
+@pytest.mark.parametrize("ref,card", [
+    ("maj-16", "the Tower"), ("maj-00", "the Fool"), ("maj-08", "Adjustment"), ("maj-10", "Fortune"),
+    ("coppe-01", "the Ace of Cups"), ("bastoni-cavaliere", "the Knight of Wands"),
+    ("dischi-principessa", "the Princess of Disks"), ("the-tower", "the Tower"), ("ace-of-cups", "the Ace of Cups"),
+    ("wheel-of-fortune", "Fortune"), ("maj-30", None), ("croce-celtica", None), ("", None),
+])
+def test_the_card_of_a_subject(ref, card):
+    assert ti.subject_card({"type": "card", "ref": ref}) == card
+    assert ti.subject_card({"tipo": "carta", "ref": ref}) == card          # the API's own words
+    assert ti.subject_card({"type": "spread", "ref": ref}) is None
+    assert ti.subject_card(None) is None and ti.subject_card({"type": "", "ref": ""}) is None
+
+
+def test_a_subject_card_lets_the_card_in_even_when_the_title_does_not_name_it(isolated, capsys):
+    folder = _work_folder(isolated, "sudden-change", "When everything falls at once", "sudden change tarot")
+    assert _check(TOWER_CARD, "--article", "sudden-change") == ti.EXIT_RULE    # no card named: refused
+    assert "not about a specific card" in capsys.readouterr().out
+    data = json.loads((folder / "article.json").read_text(encoding="utf-8"))
+    (folder / "article.json").write_text(json.dumps({**data, "subject": {"type": "card", "ref": "maj-16"}}),
+                                         encoding="utf-8")
+    ti._articles_found.clear()
+    assert _check(TOWER_CARD, "--article", "sudden-change") == ti.EXIT_OK      # the subject is the Tower
+    assert _check(FOOL_CARD, "--article", "sudden-change") == ti.EXIT_RULE     # but only the Tower
+    assert "is not a card of this article" in capsys.readouterr().out
+
+
+def test_the_subject_of_the_titles_copy_counts_too(isolated):
+    _titles(isolated, {"id": "x1", "slug": "falling-towers", "titolo": "When everything falls", "parola_chiave": "",
+                       "subject": {"tipo": "carta", "ref": "maj-16"}})          # as GET /titles gives it
+    assert _check(TOWER_CARD, "--article", "falling-towers") == ti.EXIT_OK
+
+
+# ---- a section or a spread never shows a card --------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("option", [["--section", "major-arcana"], ["--spread", "croce-celtica"]])
+def test_the_picture_of_a_section_or_a_spread_draws_no_card(option, capsys):
+    assert _check(TOWER_CARD, *option) == ti.EXIT_RULE
+    assert "never shows one" in capsys.readouterr().out
+    assert _check(SYMBOL_ONLY, *option) == ti.EXIT_OK                         # a card's name as a symbol: fine
+    with pytest.raises(SystemExit):                                           # one target at a time
+        _check(SYMBOL_ONLY, "--article", "x", *option)
+
+
+def test_a_file_of_a_section_drawing_a_card_is_refused(isolated):
+    pic = isolated / "section.jpg"
+    pic.write_bytes(b"\xff\xd8 section")
+    Path(str(pic) + ".prompt.txt").write_text(TOWER_CARD, encoding="utf-8")
+    with pytest.raises(ti.Failure) as err:
+        ti.check_file("", str(pic), target=("section", "major-arcana"))
+    assert err.value.code == ti.EXIT_RULE and "never shows one" in str(err.value)

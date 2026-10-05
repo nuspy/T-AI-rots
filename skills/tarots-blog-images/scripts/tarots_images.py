@@ -20,32 +20,49 @@ repository, the same way `tarots_blog.py` remembers its own. With no media key (
 the key of `tarots_blog.py` is used, read as that script reads it (`TAROTS_API_KEY`, else `~/.tarots-blog/
 credentials.json` or `TAROTS_KEY_CACHE`), with a `note:` line: the recommended setup is ONE key with the three
 permissions blog:write + blog:publish + blog:media, saved once with `tarots_blog.py key save`, for both skills. A
-key without blog:media gets a 403 from the server on `list`, `show`, `cover`, `inline`: the message says how to
-make the one key. The media permission touches **only images** — cover and inline pictures — of any article,
-published or not.
+key without blog:media gets a 403 from the server on `list`, `show`, `sections`, `spreads`, `cover`, `inline`,
+`section-cover`, `spread-cover`: the message says how to make the one key. The media permission touches **only
+images** — cover and inline pictures of any article, published or not, and the pictures of the sections and of the
+spreads.
 
 Commands (run `tarots_images.py <command> -h` for the options):
 
     key show|save|clear     the saved media key: prefix and origin (and the key of tarots_blog.py, used when there is
                             no media key), save the one in TAROTS_MEDIA_KEY, or forget it
-    list [--status S] [--lang L] [--todo] [--json]
-                            every article with its cover and inline images (--todo: cover not redone yet by this tool)
+    list [--status S] [--lang L] [--todo] [--no-cover] [--json]
+                            every article with its cover and inline images (--todo: cover not redone yet by this tool;
+                            --no-cover: no cover at all, in any status unless --status says one)
     show ID                 one article with its full text: read it before writing a prompt
+    sections [--missing] [--json]
+                            the sections of the Journal with their picture (--missing: only those without one)
+    spreads [--missing] [--json]
+                            the spreads with their illustration (--missing: only those without one)
     balance [--json]        LitMedia credits left
     catalog                 the values of --kind, --shot and --light, and which ones are free for the next picture
-    prompt-check --prompt P --kind K --shot S --light L --setting TEXT [--alt TEXT] [--article SLUG_OR_ID]
+    prompt-check --prompt P --kind K --shot S --light L --setting TEXT [--alt TEXT]
+                 [--article SLUG_OR_ID | --section SLUG | --spread ID]
                             every check `generate` makes on a prompt, offline: nothing generated, nothing spent
                             (only a prompt that draws a card may ask the API for its article, see below)
-    generate --prompt P --kind K --shot S --light L --setting TEXT (--article SLUG_OR_ID | --out FILE) [--aspect 3:2]
+    generate --prompt P --kind K --shot S --light L --setting TEXT
+             (--article SLUG_OR_ID | --section SLUG | --spread ID | --out FILE) [--role cover|inline] [--aspect 3:2]
              [--resolution 2K] [--budget N] [--dry-run]
                             one picture with Seedream 5.0 through litmedia-skill (checks the prompt, then the balance).
                             With --article, or a bare --out name, it goes in the article's work folder:
-                            ~/.tarots-blog/work/<YYYY-MM-DD>-<slug>/foto/ (TAROTS_WORK_DIR moves the root), as
-                            cover.jpg (3:2) or inline-N.jpg unless --out names it. An existing file is never overwritten
+                            ~/.tarots-blog/work/<YYYY-MM-DD>-<slug>/foto/ (TAROTS_WORK_DIR moves the root); with
+                            --section in work/sezioni/<slug>/foto/, with --spread in work/stese/<id>/foto/. Every file
+                            gets a name of its own, never used before: cover-<YYYYMMDD-HHMMSS>.jpg (role cover: 3:2,
+                            or --role cover), inline-<…>.jpg (any other aspect, or --role inline), section-<…>.jpg,
+                            spread-<…>.jpg (-2, -3… within the same second), unless --out names it. The record keeps
+                            the article (slug, and id when known) and the role; the command to use the file comes
+                            last. An existing file is never overwritten
     cover ID FILE --alt TEXT [--dry-run]
                             replace the cover
     inline ID [--replace N FILE ALT] [--add AFTER_PARAGRAPH FILE ALT] [--remove N] [--dry-run]
                             replace, add or remove pictures inside the text (N = 0 for the first picture)
+    section-cover SLUG FILE --alt TEXT [--dry-run]
+                            set the picture of a section of the Journal (the same rules as a cover)
+    spread-cover ID FILE --alt TEXT [--dry-run]
+                            set the illustration of a spread (the same rules; the site draws the positions itself)
     progress                the last 20 pictures generated with their four dimensions, what is free next, and what
                             this tool has already redone
 
@@ -57,10 +74,12 @@ The picture rules, checked before anything is generated or sent (`--dry-run` inc
       of the Tower", without the word "card"). An alt text that describes a spread is refused; one that mentions a
       card otherwise gets a warning;
     - a card drawn in the picture (the word "card" later in the scene, one single small card) only for an article
-      about that very card: --article is required, its title or focus keyword must name the card (work folder,
-      then the titles copy ~/.tarots-blog/titles-cache.json, then the API with the media key), the prompt names
-      it in the same phrase ("a single small card of the Tower") and the card is drawn in the style of the Thoth
-      deck (a warning when the prompt does not say so; never a copy, never Rider-Waite or Marseille);
+      about that very card: --article is required, its title, focus keyword or subject (`"subject": {"type":
+      "card", "ref": "maj-16"}` of article.json) must name the card (work folder, then the titles copy
+      ~/.tarots-blog/titles-cache.json, then the API with the media key), the prompt names it in the same phrase
+      ("a single small card of the Tower") and the card is drawn in the style of the Thoth deck (a warning when the
+      prompt does not say so; never a copy, never Rider-Waite or Marseille). The picture of a section or of a
+      spread never draws a card: their world, a card's name at most as a symbol;
     - a concrete scene: at least 12 content words once the house style line and the empty words are taken out;
     - a new form: four dimensions are declared for every picture (--kind, --shot, --light from the catalogs below,
       --setting in free text) and recorded; the kind of the last 3 pictures, a kind+shot pair of the last 20, the
@@ -454,7 +473,8 @@ def explain(exc: urllib.error.HTTPError) -> str:
     hints = {
         401: "The key was rejected: wrong or revoked. Create a new one in the console (Blog > Keys).",
         403: f"This key cannot change pictures (no «Change images», blog:media, permission): {ONE_KEY}.",
-        404: "Not found: wrong article id.",
+        404: "Not found: wrong article id, section slug or spread id (or a server older than this script, without "
+             "the pictures of sections and spreads).",
         413: "The file is too large (8 MB at most).",
         415: "Unsupported file type: send PNG, JPEG or WebP.",
         429: "Rate limit reached. Wait, and do not retry in a loop.",
@@ -470,10 +490,16 @@ def explain(exc: urllib.error.HTTPError) -> str:
 # One JSON object. Article ids map to {"cover": entry, "inline": [entries]} as before; two keys starting with "_"
 # were added later and never collide with an id (ids are uuids):
 #     "_generated": [{"prompt", "file", "sha256", "aspect", "when",          every picture `generate` made, oldest first
-#                     "kind", "shot", "light", "setting"}, ...]            (the four dimensions: only in newer entries)
+#                     "kind", "shot", "light", "setting",                  (the four dimensions: only in newer entries)
+#                     "role", "article", "article_id",                      (5/10/2026: what the file is for — cover,
+#                     "section", "spread"}, ...]                             inline, section or spread — and of whom)
 #     "_used":      {sha256: {"post", "kind", "file", "when"}}                every file swapped into an article
-# ("kind" in `_used` is cover/inline/upload; in `_generated` it is the kind of picture of KINDS.) Older `_generated`
-# entries without dimensions still count for the similarity of prompts, not for the dimension rules.
+#     "_sections":  {slug: {"file", "sha256", "url", "alt", "prompt", "when"}}   the picture set on each section
+#     "_spreads":   {id: {...the same}}                                           the illustration set on each spread
+# ("kind" in `_used` is cover/inline/upload/section/spread; in `_generated` it is the kind of picture of KINDS. A
+# picture of a section or of a spread is in `_used` as the post "section:<slug>" / "spread:<id>", so it is never
+# reused on an article.) Older `_generated` entries without dimensions still count for the similarity of prompts, not
+# for the dimension rules; those without "role" and "article" are not found by `tarots_blog.py post`.
 
 
 def _progress() -> Dict[str, Any]:
@@ -512,11 +538,31 @@ def _record(post_id: str, kind: str, entry: Dict[str, Any]) -> None:
     _save(data)
 
 
-def _record_generated(prompt: str, file: Path, aspect: str, dims: Optional[Dict[str, str]] = None) -> None:
+def _record_generated(prompt: str, file: Path, aspect: str, dims: Optional[Dict[str, str]] = None,
+                      target: Optional[Dict[str, Any]] = None) -> None:
+    """One picture `generate` made. `target` says what it is for: {"role": "cover"|"inline", "article": slug,
+    "article_id": id or None} or {"role": "section", "section": slug} or {"role": "spread", "spread": id}."""
     data = _progress()
     data.setdefault("_generated", []).append(
-        {"prompt": prompt, "file": str(file), "sha256": sha256_of(file), "aspect": aspect, "when": _now(), **(dims or {})}
+        {"prompt": prompt, "file": str(file), "sha256": sha256_of(file), "aspect": aspect, "when": _now(),
+         **(dims or {}), **(target or {})}
     )
+    _save(data)
+
+
+#: Where the picture of a section and the illustration of a spread are recorded, and their name in `_used`.
+TARGETS = {"section": "_sections", "spread": "_spreads"}
+
+
+def _record_target(kind: str, ref: str, entry: Dict[str, Any]) -> None:
+    """The picture set on a section or a spread: kept under `_sections` / `_spreads`, and in `_used` as the post
+    "section:<slug>" / "spread:<id>" (never an article's id), so it is never used again elsewhere."""
+    data = _progress()
+    entry = {**entry, "when": _now()}
+    data.setdefault(TARGETS[kind], {})[ref] = entry
+    if entry.get("sha256"):
+        data.setdefault("_used", {})[entry["sha256"]] = {"post": f"{kind}:{ref}", "kind": kind,
+                                                          "file": entry.get("file"), "when": entry["when"]}
     _save(data)
 
 
@@ -930,6 +976,41 @@ def card_rule_problems(prompt: str, texts: List[str], title: str = "") -> tuple:
     return problems, warnings
 
 
+# ---- the subject of an article: the card it is about, declared ------------------------------------------------
+# (5/10/2026) article.json may say what the article is about: `"subject": {"type": "card", "ref": "maj-16"}` (or
+# a catalog slug, "the-tower"; a spread: {"type": "spread", "ref": "croce-celtica"}); empty, the server works it out
+# from the title and the keyword. A card subject counts for the card rule as a title naming that card would.
+# CARD_ID_RANKS, CARD_ID_SUITS and `subject_card()` are the same in both scripts too (the same test).
+
+#: The ids of the site's cards (backend knowledge/deck.json): maj-00 … maj-21 in the order of MAJOR_ARCANA, then
+#: <suit>-01 … <suit>-10 and <suit>-cavaliere / -regina / -principe / -principessa.
+CARD_ID_RANKS = {"01": "Ace", "02": "Two", "03": "Three", "04": "Four", "05": "Five", "06": "Six", "07": "Seven",
+                 "08": "Eight", "09": "Nine", "10": "Ten", "cavaliere": "Knight", "regina": "Queen",
+                 "principe": "Prince", "principessa": "Princess"}
+CARD_ID_SUITS = {"bastoni": "Wands", "coppe": "Cups", "spade": "Swords", "dischi": "Disks"}
+
+
+def subject_card(subject: Any) -> Optional[str]:
+    """The card a subject names, as `named_cards()` names it ("the Tower", "the Ace of Cups"), or None: no subject,
+    a spread, or a ref that is no card. `subject` is {"type": "card", "ref": …} (also the API's "tipo": "carta");
+    the ref is a card id (maj-16, coppe-01) or a name or slug that names one card only (the-tower, ace-of-cups)."""
+    if not isinstance(subject, dict):
+        return None
+    kind = _card_plain(subject.get("type") or subject.get("tipo") or "")
+    ref = _card_plain(subject.get("ref") or "")
+    if kind not in ("card", "carta") or not ref:
+        return None
+    m = re.match(r"^maj (\d{1,2})$", ref)
+    if m:
+        names = list(MAJOR_ARCANA)
+        return names[int(m.group(1))] if int(m.group(1)) < len(names) else None
+    m = re.match(r"^(" + "|".join(CARD_ID_SUITS) + r") (\w+)$", ref)
+    if m and m.group(2) in CARD_ID_RANKS:
+        return f"the {CARD_ID_RANKS[m.group(2)]} of {CARD_ID_SUITS[m.group(1)]}"
+    found = {card for card, _n in named_cards(ref, need_context=False)}
+    return found.pop() if len(found) == 1 else None
+
+
 def _stem(word: str) -> str:
     if len(word) > 4 and word.endswith("ies"):
         return word[:-3] + "y"
@@ -1127,10 +1208,23 @@ def dimension_problems(prompt: str, dims: Dict[str, str], history: List[Dict[str
     return problems
 
 
-def check_prompt(prompt: str, dims: Dict[str, str], article: Optional[str] = None) -> List[str]:
-    """Refuse the prompt (EXIT_RULE) if it breaks a rule; return the warnings of the card rule."""
+def target_card_problems(prompt: str, kind: str, ref: str) -> List[str]:
+    """The picture of a section or of a spread never draws a card: it is about many cards, or about positions the
+    site draws itself. A card's name as a world or a symbol (without the word «card») stays allowed."""
+    if not shows_a_card(prompt):
+        return []
+    what = f"the section «{ref}»" if kind == "section" else f"the spread «{ref}»"
+    return [f"it draws a card, and the picture of {what} never shows one (a card may appear only in the picture of "
+            "an article about that very card): show the world of the " + ("section" if kind == "section" else
+            "spread") + " instead; a card's name without the word «card», as a world or a symbol, stays allowed"]
+
+
+def check_prompt(prompt: str, dims: Dict[str, str], article: Optional[str] = None,
+                 target: Optional[tuple] = None) -> List[str]:
+    """Refuse the prompt (EXIT_RULE) if it breaks a rule; return the warnings of the card rule. `target` is
+    ("section", slug) or ("spread", id) for the picture of a section or of a spread."""
     data = _progress()
-    cards, warnings = article_card_problems(prompt, article)
+    cards, warnings = (target_card_problems(prompt, *target), []) if target else article_card_problems(prompt, article)
     problems = (prompt_problems(prompt, _known_prompts(data)) + cards
                 + dimension_problems(prompt, dims, dimension_history(data)))
     if problems:
@@ -1140,7 +1234,7 @@ def check_prompt(prompt: str, dims: Dict[str, str], article: Optional[str] = Non
 
 # ---- the article a picture is for: its title and focus keyword name the cards it may show ---------------------
 # `--article <slug or id>` is looked for, in this order, in the work folders (article.json: title, focus_keyword,
-# slug), in the copy of the titles that `tarots_blog.py titles` keeps (~/.tarots-blog/titles-cache.json, or
+# subject, slug), in the copy of the titles that `tarots_blog.py titles` keeps (~/.tarots-blog/titles-cache.json, or
 # TAROTS_TITLES_CACHE), then, if a media key is set, through the API (GET /media-posts/{id}; a slug is looked for in
 # GET /media-posts). Only a prompt that draws a card needs it: every other prompt is checked without looking.
 
@@ -1154,11 +1248,14 @@ def titles_cache_path() -> Path:
     return Path(env).expanduser() if env else Path.home() / ".tarots-blog" / "titles-cache.json"
 
 
-def _article_entry(title: Any, keyword: Any, slug: Any, post_id: Any, source: str) -> Optional[Dict[str, Any]]:
-    texts = [str(t) for t in (title, keyword) if t and str(t).strip()]
+def _article_entry(title: Any, keyword: Any, slug: Any, post_id: Any, source: str,
+                   subject: Any = None) -> Optional[Dict[str, Any]]:
+    """{title, texts, slug, id, source}: `texts` are the title, the focus keyword and the card of the subject, if the
+    article declares one (the card rule reads them all)."""
+    texts = [str(t) for t in (title, keyword, subject_card(subject)) if t and str(t).strip()]
     if not texts:
         return None
-    return {"title": str(title or keyword), "texts": texts, "slug": slug or None, "id": post_id or None,
+    return {"title": str(title or keyword or texts[0]), "texts": texts, "slug": slug or None, "id": post_id or None,
             "source": source}
 
 
@@ -1175,7 +1272,8 @@ def _from_work_folder(arg: str) -> Optional[Dict[str, Any]]:
                 or (data.get("id") and str(data.get("id")) == arg)):
             found = _article_entry(data.get("title") or data.get("titolo"),
                                    data.get("focus_keyword") or data.get("seo_parola_chiave"),
-                                   data.get("slug") or slug, data.get("id"), f"{folder / 'article.json'}")
+                                   data.get("slug") or slug, data.get("id"), f"{folder / 'article.json'}",
+                                   data.get("subject"))
             if found:
                 return found
     return None
@@ -1193,7 +1291,7 @@ def _from_titles_cache(arg: str) -> Optional[Dict[str, Any]]:
     found = None
     for row in matches:
         entry = _article_entry(row.get("titolo"), row.get("parola_chiave"), row.get("slug"), row.get("id"),
-                               f"the titles copy {titles_cache_path()}")
+                               f"the titles copy {titles_cache_path()}", row.get("subject"))
         if entry and found:
             found["texts"] += [t for t in entry["texts"] if t not in found["texts"]]
         elif entry:
@@ -1216,7 +1314,8 @@ def _from_api(arg: str) -> Optional[Dict[str, Any]]:
         return None
     if not post:
         return None
-    return _article_entry(post.get("titolo"), post.get("parola_chiave"), post.get("slug"), post.get("id"), "the API")
+    return _article_entry(post.get("titolo"), post.get("parola_chiave"), post.get("slug"), post.get("id"), "the API",
+                          post.get("subject"))
 
 
 def find_article(arg: str) -> Optional[Dict[str, Any]]:
@@ -1233,8 +1332,8 @@ def article_card_problems(prompt: str, article: Optional[str]) -> tuple:
         return [], []
     if not article:
         return ["it draws a card, and a card may appear only in the picture of an article about that very card: "
-                "give --article <slug or id> (its title or focus keyword must name the card), or take the card out "
-                "and show the article's world instead"], []
+                "give --article <slug or id> (its title, focus keyword or subject must name the card), or take the "
+                "card out and show the article's world instead"], []
     found = find_article(article)
     if found is None:
         return [f"it draws a card, and the article «{article}» was not found (work folders in {work_root()}, the "
@@ -1244,22 +1343,29 @@ def article_card_problems(prompt: str, article: Optional[str]) -> tuple:
     return card_rule_problems(prompt, found["texts"], found["title"])
 
 
-def check_file(post_id: str, path: str, used: Optional[Dict[str, str]] = None) -> str:
-    """The file's sha256, after making sure it was never swapped into another article and that the prompt it was
-    generated from (if `generate` left it next to the file) obeys today's rules."""
+def check_file(post_id: str, path: str, used: Optional[Dict[str, str]] = None, target: Optional[tuple] = None) -> str:
+    """The file's sha256, after making sure it was never swapped into another article (or section, or spread) and
+    that the prompt it was generated from (if `generate` left it next to the file) obeys today's rules. `target` is
+    ("section", slug) or ("spread", id) for the picture of a section or a spread; then `post_id` is ignored."""
+    owner = f"{target[0]}:{target[1]}" if target else post_id
     sha = sha256_of(path)
     data = _progress()
     other = (used if used is not None else _used_files(data)).get(sha)
-    if other and other != post_id:
+    if other and other != owner:
+        whose = (f"the {other.replace(':', ' ', 1)}" if other.startswith(("section:", "spread:"))
+                 else f"article {other}")
         raise Failure(
-            f"{path} is already a picture of article {other}: every article gets its own picture. Generate a new one "
-            "for this article.", EXIT_RULE,
+            f"{path} is already a picture of {whose}: every article, section and spread gets its own picture. "
+            "Generate a new one.", EXIT_RULE,
         )
     prompt = _prompt_of(path)
     if prompt and (card := card_problem(prompt)):
         raise Failure(f"{path} was generated from a prompt that makes cards the picture ({card}): it cannot go on "
                       "the blog.", EXIT_RULE)
-    if prompt and (cards := article_card_problems(prompt, post_id)[0]):
+    if prompt and target and (cards := target_card_problems(prompt, *target)):
+        raise Failure(f"{path} was generated from a prompt that draws a card: {cards[0]}. Generate a new picture.",
+                      EXIT_RULE)
+    if prompt and not target and (cards := article_card_problems(prompt, post_id)[0]):
         raise Failure(f"{path} was generated from a prompt that draws a card, and for article {post_id}: "
                       f"{cards[0]}. Generate a new picture for this article.", EXIT_RULE)
     if not any(e.get("sha256") == sha for e in data.get("_generated") or []):
@@ -1319,6 +1425,8 @@ def cmd_list(a) -> int:
     done = _progress()
     if a.todo:
         posts = [p for p in posts if not (done.get(p["id"]) or {}).get("cover")]
+    if a.no_cover:  # 5/10/2026: «Wheel of Fortune», published with no cover, was never in --todo of the drafts
+        posts = [p for p in posts if not p.get("copertina")]
     if a.json:
         print(json.dumps(posts, indent=2, ensure_ascii=False))
         return EXIT_OK
@@ -1335,6 +1443,93 @@ def cmd_list(a) -> int:
 def cmd_show(a) -> int:
     print(json.dumps(call("GET", f"/media-posts/{a.id}"), indent=2, ensure_ascii=False))
     return EXIT_OK
+
+
+# ---- the pictures of the sections and of the spreads (5/10/2026) -------------------------------------------------
+# The Journal shows every section as a tile with a picture, and the page of the spreads shows each spread with an
+# illustration next to the scheme of its positions (drawn by the site). The contract with the server:
+#     GET /media-sections          every section: slug, nome, tipo, descrizione, immagine ({id, url, mini, alt} or null)
+#     GET /media-spreads           every spread: id, nome, descrizione, tradizione, n_carte, immagine (or null)
+#     PUT /media-sections/{slug}   {"immagine_id" or "immagine_base64", "alt"}   permission blog:media
+#     PUT /media-spreads/{id}      the same
+# A plain list or an object holding the list (`sezioni`, `stese`, `elementi`) is read the same way.
+
+ROW_LISTS = ("sezioni", "stese", "elementi", "items")
+
+
+def _rows(data: Any, what: str) -> List[Dict[str, Any]]:
+    if isinstance(data, dict):
+        data = next((data[k] for k in ROW_LISTS if isinstance(data.get(k), list)), None)
+    if not isinstance(data, list):
+        raise Failure(f"The API answered {what} with something that is not a list: is the server up to date?")
+    return [r for r in data if isinstance(r, dict)]
+
+
+def section_rows() -> List[Dict[str, Any]]:
+    """Every section of the Journal, as {slug, nome, tipo, descrizione, percorso, immagine}."""
+    return [{"slug": str(r.get("slug") or ""), "nome": r.get("nome") or r.get("slug"), "tipo": r.get("tipo") or "",
+             "descrizione": r.get("descrizione") or "", "percorso": r.get("percorso") or "",
+             "immagine": r.get("immagine") or None}
+            for r in _rows(call("GET", "/media-sections"), "GET /media-sections") if r.get("slug")]
+
+
+def spread_rows() -> List[Dict[str, Any]]:
+    """Every spread, as {id, nome, descrizione, tradizione, n_carte, immagine}."""
+    return [{"id": str(r.get("id") or ""), "nome": r.get("nome") or r.get("id"),
+             "descrizione": r.get("descrizione") or "", "tradizione": r.get("tradizione") or "",
+             "n_carte": r.get("n_carte"), "immagine": r.get("immagine") or None}
+            for r in _rows(call("GET", "/media-spreads"), "GET /media-spreads") if r.get("id")]
+
+
+def _print_rows(rows: List[Dict[str, Any]], key: str, a) -> int:
+    if a.missing:
+        rows = [r for r in rows if not r["immagine"]]
+    if a.json:
+        print(json.dumps(rows, indent=2, ensure_ascii=False))
+        return EXIT_OK
+    for r in rows:
+        extra = r.get("tipo") or (f"{r['n_carte']} cards" if r.get("n_carte") else "")
+        print(f"{r[key]:<28} {extra:<12} {'picture ' if r['immagine'] else 'no picture'}  {r['nome']}")
+        about = " · ".join(x for x in (r.get("tradizione"), r.get("descrizione")) if x)
+        if about:
+            print(f"{'':30}{_short(about, 110)}")
+    print(f"\n{len(rows)} {'section' if key == 'slug' else 'spread'}(s)")
+    return EXIT_OK
+
+
+def cmd_sections(a) -> int:
+    return _print_rows(section_rows(), "slug", a)
+
+
+def cmd_spreads(a) -> int:
+    return _print_rows(spread_rows(), "id", a)
+
+
+def _set_target_picture(kind: str, ref: str, a) -> int:
+    """`section-cover` / `spread-cover`: the rules of `cover` (alt, file, never a picture used elsewhere, no card
+    outside the rule), then upload, PUT and record."""
+    alt = _check_alt(a.alt)
+    _read_image(a.file)
+    sha = check_file("", a.file, target=(kind, ref))
+    path = f"/media-sections/{urllib.parse.quote(ref)}" if kind == "section" else f"/media-spreads/{urllib.parse.quote(ref)}"
+    if a.dry_run:
+        print(f"dry run: the picture of the {kind} «{ref}» would become {a.file} with alt «{alt}»")
+        return EXIT_OK
+    image = upload(a.file)
+    result = call("PUT", path, body={"immagine_id": image["id"], "alt": alt}) or {}
+    _record_target(kind, ref, {"file": a.file, "sha256": sha, "url": image["url"], "alt": alt,
+                               "prompt": _prompt_of(a.file)})
+    shown = (result.get("immagine") or {}).get("url") if isinstance(result.get("immagine"), dict) else None
+    print(f"{kind} picture set: {shown or image['url']} (the {kind} «{ref}», alt «{alt}»)")
+    return EXIT_OK
+
+
+def cmd_section_cover(a) -> int:
+    return _set_target_picture("section", a.slug.strip(), a)
+
+
+def cmd_spread_cover(a) -> int:
+    return _set_target_picture("spread", a.id.strip(), a)
 
 
 def cmd_balance(a) -> int:
@@ -1402,24 +1597,79 @@ def work_folder(article: Optional[str]) -> Path:
     return folder
 
 
-def _next_free(folder: Path, aspect: str) -> Path:
-    """The default name in foto/: cover.jpg for a 3:2 picture, inline-1.jpg, inline-2.jpg... for the others."""
-    if aspect == "3:2" and not (folder / "cover.jpg").exists():
-        return folder / "cover.jpg"
+# ---- a name of its own for every picture (5/10/2026) ----------------------------------------------------------------
+# Every picture was foto/cover.jpg: a second cover for the same article had to be named by hand, and `post` took
+# whatever cover.* it found. Now each file gets a name never used before, and the record says what it is for (role)
+# and of which article: `tarots_blog.py post` takes the LAST cover recorded for the article's slug, by itself.
+
+def _stamp() -> str:
+    """The local date and time in a file name: 20261005-143012."""
+    return datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+
+
+def _next_free(folder: Path, role: str, suffix: str = ".jpg") -> Path:
+    """<role>-<YYYYMMDD-HHMMSS>.jpg in foto/ (cover-…, inline-…, section-…, spread-…), with -2, -3… when that second
+    already has one, on disk or in the record: a file deleted from foto/ keeps its name, never given again."""
+    stem = f"{role}-{_stamp()}"
+    known = {os.path.normcase(str(e.get("file"))) for e in _progress().get("_generated") or []
+             if isinstance(e, dict) and e.get("file")}
     n = 1
-    while (folder / f"inline-{n}.jpg").exists():
+    while True:
+        path = folder / (f"{stem}{suffix}" if n == 1 else f"{stem}-{n}{suffix}")
+        if not path.exists() and os.path.normcase(str(path)) not in known:
+            return path
         n += 1
-    return folder / f"inline-{n}.jpg"
 
 
-def output_path(out: Optional[str], article: Optional[str], aspect: str) -> Path:
-    """Where `generate` saves: in <work folder>/foto/ with --article or a bare --out name; else --out as given."""
-    if out and not article and len(Path(out).parts) > 1:
+def target_folder(kind: str, ref: str) -> Path:
+    """The work folder of the picture of a section (work/sezioni/<slug>/) or of a spread (work/stese/<id>/)."""
+    name = work_slug(ref)
+    if not name:
+        raise Failure(f"--{kind} needs the {'slug of the section' if kind == 'section' else 'id of the spread'}.",
+                      EXIT_USAGE)
+    return work_root() / ("sezioni" if kind == "section" else "stese") / name
+
+
+def output_path(out: Optional[str], article: Optional[str], role: str, base: Optional[Path] = None) -> Path:
+    """Where `generate` saves: in <work folder>/foto/ with --article (or `base`, the folder of a section or a
+    spread) or a bare --out name; else --out as given. Without --out, a name of its own (`_next_free`)."""
+    if out and not article and base is None and len(Path(out).parts) > 1:
         return Path(out).expanduser()
-    if not out and not article:
-        raise Failure("Give --article <slug> (the picture goes in its work folder's foto/) or --out FILE.", EXIT_USAGE)
-    foto = work_folder(article) / "foto"
-    return foto / Path(out).name if out else _next_free(foto, aspect)
+    if not out and not article and base is None:
+        raise Failure("Give --article <slug> (the picture goes in its work folder's foto/), --section <slug>, "
+                      "--spread <id> or --out FILE.", EXIT_USAGE)
+    foto = (base if base is not None else work_folder(article)) / "foto"
+    return foto / Path(out).name if out else _next_free(foto, role)
+
+
+def _local_article(arg: str) -> Optional[Dict[str, Any]]:
+    """The article as the work folders and the titles copy know it, without asking the API."""
+    return _from_work_folder(arg) or _from_titles_cache(arg)
+
+
+def _quote(path: Any) -> str:
+    return f'"{path}"'
+
+
+def next_commands(out: Path, role: str, *, slug: Optional[str] = None, post_id: Optional[str] = None,
+                  ref: Optional[str] = None) -> List[str]:
+    """The exact commands that use the picture just made, with absolute paths: what the agent copies next."""
+    images = f'{_quote(sys.executable)} {_quote(Path(__file__).resolve())}'
+    blog_script = Path(__file__).resolve().parents[2] / "tarots-blog-publisher" / "scripts" / "tarots_blog.py"
+    blog = f'{_quote(sys.executable)} {_quote(blog_script)}'
+    file = _quote(out)
+    if role == "section":
+        return [f'{images} section-cover {ref} {file} --alt "<what the picture shows>"']
+    if role == "spread":
+        return [f'{images} spread-cover {ref} {file} --alt "<what the picture shows>"']
+    name = slug or "<slug>"
+    if role == "cover":
+        new = f"{blog} post {name} --cover {file}"
+        old = f'{images} cover {post_id or "<id>"} {file} --alt "<what the picture shows>"'
+        return [old, f"(a new article: {new})"] if post_id else [new, f"(an article already on the site: {old})"]
+    new = f"{blog} upload {file} --for {name}   (then ![alt](url) in article.md)"
+    old = f'{images} inline {post_id or "<id>"} --add <after paragraph> {file} "<alt>"   (or --replace <n> …)'
+    return [old, f"(a new article: {new})"] if post_id else [new, f"(an article already on the site: {old})"]
 
 
 def cmd_generate(a) -> int:
@@ -1427,17 +1677,40 @@ def cmd_generate(a) -> int:
     if resolution not in COST:
         raise Failure(f"{MODEL} accepts --resolution 2K or 4K (there is no 1K).", EXIT_USAGE)
     cost = COST[resolution]
-    folder_of = a.article
-    if a.article and UUID_LIKE.match(a.article.strip()):  # an id: the work folder is named after the slug
-        found = find_article(a.article.strip())
-        folder_of = (found or {}).get("slug") or a.article
-    out = output_path(a.out, folder_of, a.aspect)
+    target = ("section", a.section.strip()) if a.section else ("spread", a.spread.strip()) if a.spread else None
+    if target and a.article:
+        raise Failure("--article, --section and --spread exclude each other: one picture is for one thing.", EXIT_USAGE)
+    if target and a.role:
+        raise Failure("--role is for the pictures of an article (cover or inline), not with --section or --spread.",
+                      EXIT_USAGE)
+    record: Dict[str, Any]
+    if target:
+        role = target[0]
+        out = output_path(a.out, None, role, target_folder(*target))
+        record = {"role": role, role: target[1]}
+    else:
+        role = a.role or ("cover" if a.aspect == "3:2" else "inline")
+        slug = post_id = None
+        if a.article:
+            arg = a.article.strip()
+            if UUID_LIKE.match(arg):  # an id: the work folder is named after the slug
+                post_id, slug = arg, ((find_article(arg) or {}).get("slug") or arg)
+            else:
+                slug = work_slug(arg)
+                post_id = (_local_article(arg) or {}).get("id")
+        out = output_path(a.out, slug, role)
+        if slug:  # the slug of article.json wins over the folder's name: it is the one `post` looks for
+            try:
+                slug = json.loads((out.parent.parent / "article.json").read_text(encoding="utf-8")).get("slug") or slug
+            except (OSError, ValueError, AttributeError):
+                pass
+        record = {"role": role, "article": slug, "article_id": post_id}
     if out.suffix.lower() not in IMAGE_TYPES:
         raise Failure("--out must end in .jpg, .jpeg, .png or .webp", EXIT_USAGE)
     if out.exists():
         raise Failure(f"{out} already exists: a picture already paid for is never overwritten. Give another --out name.", EXIT_USAGE)
     dims = dimensions(a.kind, a.shot, a.light, a.setting)
-    for warning in check_prompt(a.prompt, dims, a.article):
+    for warning in check_prompt(a.prompt, dims, a.article, target):
         print(f"warning: {warning}", file=sys.stderr)
     if a.dry_run:
         print(f"dry run: the prompt passes every check; {MODEL}, {a.aspect}, {resolution}, {cost} credits, "
@@ -1461,8 +1734,15 @@ def cmd_generate(a) -> int:
         out.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(files[0]), out)
     Path(str(out) + ".prompt.txt").write_text(a.prompt, encoding="utf-8")
-    _record_generated(a.prompt, out, a.aspect, dims)
+    _record_generated(a.prompt, out, a.aspect, dims, record)
     print(f"saved {out} ({out.stat().st_size // 1024} KB), {cost} credits; balance now about {credits - cost}")
+    about = (f"the {role} «{target[1]}»" if target else
+             f"the {role} of {record['article']}" + (f" (id {record['article_id']})" if record.get("article_id") else "")
+             if record.get("article") else f"a {role}, of no article (--out)")
+    print(f"recorded as {about}. Next, with this very file:")
+    for line in next_commands(out, role, slug=record.get("article"), post_id=record.get("article_id"),
+                              ref=target[1] if target else None):
+        print(f"  {line}")
     return EXIT_OK
 
 
@@ -1477,7 +1757,11 @@ def cmd_prompt_check(a) -> int:
     earlier = _known_prompts(data)
     dims = dimensions(a.kind, a.shot, a.light, a.setting)
     history = dimension_history(data)
-    cards, card_warnings = article_card_problems(a.prompt, a.article)
+    if a.section or a.spread:
+        target = ("section", a.section.strip()) if a.section else ("spread", a.spread.strip())
+        cards, card_warnings = target_card_problems(a.prompt, *target), []
+    else:
+        cards, card_warnings = article_card_problems(a.prompt, a.article)
     problems = prompt_problems(a.prompt, earlier) + cards + dimension_problems(a.prompt, dims, history)
     for warning in card_warnings:
         print(f"card warning: {warning}")
@@ -1646,9 +1930,13 @@ def cmd_progress(_a) -> int:
             print(f"  {n:>2}. {entry.get('when', '')[:10]}  {entry.get('aspect', '')}  {_form(entry)}  {entry.get('file')}")
             print(f"      {_short(entry.get('prompt') or '', 160)}")
         print()
+    for kind, key in TARGETS.items():
+        done = data.get(key) or {}
+        if done:
+            print(f"{kind}s with a picture set by this tool: {', '.join(sorted(done))}")
     articles = _articles(data)
     if not articles:
-        print("nothing redone yet")
+        print("no article redone yet")
         return EXIT_OK
     for post_id, riga in articles.items():
         cover = riga.get("cover")
@@ -1677,11 +1965,19 @@ def parser() -> argparse.ArgumentParser:
     ls.add_argument("--status", choices=list(STATUS))
     ls.add_argument("--lang")
     ls.add_argument("--todo", action="store_true", help="only articles whose cover this tool has not redone yet")
+    ls.add_argument("--no-cover", action="store_true",
+                    help="only articles with no cover at all (every status, unless --status says one)")
     ls.add_argument("--json", action="store_true")
     ls.set_defaults(fn=cmd_list)
     sh = sub.add_parser("show", help="one article with its full text")
     sh.add_argument("id")
     sh.set_defaults(fn=cmd_show)
+    for name, fn, what in (("sections", cmd_sections, "the sections of the Journal with their picture"),
+                           ("spreads", cmd_spreads, "the spreads with their illustration")):
+        sp = sub.add_parser(name, help=what)
+        sp.add_argument("--missing", action="store_true", help="only those without a picture")
+        sp.add_argument("--json", action="store_true")
+        sp.set_defaults(fn=fn)
     bl = sub.add_parser("balance", help="LitMedia credits left")
     bl.add_argument("--json", action="store_true", help='print {"credit": N}')
     bl.set_defaults(fn=cmd_balance)
@@ -1690,16 +1986,27 @@ def parser() -> argparse.ArgumentParser:
     pc.add_argument("--prompt", required=True)
     _dimension_options(pc)
     pc.add_argument("--alt", help="also check this alt text")
-    pc.add_argument("--article", metavar="SLUG_OR_ID",
-                    help="the article the picture is for: needed when the prompt draws a card (only the article's "
-                         "own card, named in its title or focus keyword, may appear)")
+    for_what = pc.add_mutually_exclusive_group()
+    for_what.add_argument("--article", metavar="SLUG_OR_ID",
+                          help="the article the picture is for: needed when the prompt draws a card (only the "
+                               "article's own card, named in its title, focus keyword or subject, may appear)")
+    for_what.add_argument("--section", metavar="SLUG", help="the picture is for this section (no card drawn)")
+    for_what.add_argument("--spread", metavar="ID", help="the picture is for this spread (no card drawn)")
     pc.set_defaults(fn=cmd_prompt_check)
     g = sub.add_parser("generate", help=f"one picture with {MODEL} through litmedia-skill")
     g.add_argument("--prompt", required=True)
     _dimension_options(g)
-    g.add_argument("--article", metavar="SLUG_OR_ID",
-                   help="the article's slug (or id): the picture goes in its work folder's foto/ (cover.jpg, "
-                        "inline-1.jpg...), and a card may appear only if the article is about that very card")
+    target = g.add_mutually_exclusive_group()
+    target.add_argument("--article", metavar="SLUG_OR_ID",
+                        help="the article's slug (or id): the picture goes in its work folder's foto/ with a name of "
+                             "its own (cover-<date-time>.jpg, inline-<date-time>.jpg), recorded with the article, and "
+                             "a card may appear only if the article is about that very card")
+    target.add_argument("--section", metavar="SLUG",
+                        help="a picture for this section of the Journal: work/sezioni/<slug>/foto/section-<date-time>.jpg")
+    target.add_argument("--spread", metavar="ID",
+                        help="an illustration for this spread: work/stese/<id>/foto/spread-<date-time>.jpg")
+    g.add_argument("--role", choices=["cover", "inline"],
+                   help="what the picture of an article is for (default: cover for 3:2, inline for the others)")
     g.add_argument("--out", help="the file name (.jpg/.png/.webp). A bare name goes in the work folder's foto/ "
                                  "(of --article, else of the newest work folder); a path with a folder is used as is")
     g.add_argument("--aspect", default="3:2", help="3:2 for a cover (default), 4:3 or 1:1 for a picture in the text")
@@ -1721,6 +2028,18 @@ def parser() -> argparse.ArgumentParser:
     i.add_argument("--remove", action="append", metavar="N")
     i.add_argument("--dry-run", action="store_true")
     i.set_defaults(fn=cmd_inline)
+    sc = sub.add_parser("section-cover", help="set the picture of a section of the Journal")
+    sc.add_argument("slug")
+    sc.add_argument("file")
+    sc.add_argument("--alt", required=True, help="describes the new picture")
+    sc.add_argument("--dry-run", action="store_true")
+    sc.set_defaults(fn=cmd_section_cover)
+    spc = sub.add_parser("spread-cover", help="set the illustration of a spread (the site draws its positions)")
+    spc.add_argument("id")
+    spc.add_argument("file")
+    spc.add_argument("--alt", required=True, help="describes the new picture")
+    spc.add_argument("--dry-run", action="store_true")
+    spc.set_defaults(fn=cmd_spread_cover)
     sub.add_parser("progress", help="what this tool has redone").set_defaults(fn=cmd_progress)
     return p
 

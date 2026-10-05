@@ -10,6 +10,7 @@
   ],
   "origine": "La stesa più diffusa al mondo: una linea temporale di tre Arcani maggiori.",
   "descrizione": "Passato, presente e futuro: la traiettoria della questione letta attraverso le sole forze archetipiche dei 22 Arcani maggiori.",
+  "tradizione": "classica",
   "posizioni": [
    {
     "n": 1,
@@ -82,6 +83,7 @@
   ],
   "origine": "Metodo diffuso da Oswald Wirth e cardine della tradizione italiana: quattro Arcani maggiori e una sintesi calcolata.",
   "descrizione": "A favore, contro, il perché e il giudice; al centro la sintesi, che non si pesca ma si calcola sommando gli Arcani.",
+  "tradizione": "tradizione italiana",
   "posizioni": [
    {
     "n": 1,
@@ -189,6 +191,7 @@
   ],
   "origine": "Stesa tradizionale a sette carte disposte a V, diffusa nella cartomanzia europea per domande pratiche.",
   "descrizione": "Sette carte a ferro di cavallo: dal passato all'esito, passando per ciò che è nascosto, gli ostacoli, l'ambiente e il consiglio.",
+  "tradizione": "cartomanzia europea",
   "posizioni": [
    {
     "n": 1,
@@ -323,6 +326,7 @@
   ],
   "origine": "Pubblicata da A. E. Waite nel 1910 e divenuta la stesa più famosa del tarocco moderno.",
   "descrizione": "Dieci carte: la croce descrive la situazione e il suo tempo, il bastone a destra descrive chi consulta, l'ambiente e l'esito.",
+  "tradizione": "tradizione celtica",
   "posizioni": [
    {
     "n": 1,
@@ -509,6 +513,7 @@
   "carte_da_scegliere": 13,
   "origine": "Stesa a dodici case modellata sul tema natale, tradizionalmente usata per l'anno a venire; qui con un significatore al centro.",
   "descrizione": "Una carta per ciascuna delle dodici case astrologiche e una al centro come tema dominante: un panorama completo della vita.",
+  "tradizione": "astrologia",
   "posizioni": [
    {
     "n": 1,
@@ -730,6 +735,7 @@
   "larghezza_stretto": 0.16,
   "origine": "La stesa base delle letture di relazione: una carta per ciascuna persona e una per la dinamica che nasce fra loro.",
   "descrizione": "Tu, l'altra persona e la dinamica fra voi: la fotografia essenziale di un legame, letta con i 22 Arcani maggiori.",
+  "tradizione": "amore",
   "posizioni": [
    {
     "n": 1,
@@ -816,6 +822,7 @@
   "larghezza_stretto": 0.13,
   "origine": "La stesa di compatibilità più diffusa: cosa cerca ciascuno, dove vi somigliate e dove no, e le tre dimensioni dell'affinità.",
   "descrizione": "Cosa cerchi, cosa cerca l'altra persona, somiglianze e differenze, e poi la compatibilità emotiva, fisica e mentale.",
+  "tradizione": "amore",
   "posizioni": [
    {
     "n": 1,
@@ -977,6 +984,7 @@
   "larghezza_stretto": 0.13,
   "origine": "Stesa moderna a griglia 3x3: al centro l'energia del legame, ai lati gli apporti delle due persone (in alto) e i loro influssi nascosti (a metà), in basso forze, sfide e potenziale. Le carte 1, 5 e 7 formano il «triangolo della verità».",
   "descrizione": "Una griglia di nove carte: energia centrale, compatibilità emotiva, l'apporto di ciascuno, punti di forza, sfide, potenziale a lungo termine e gli influssi nascosti.",
+  "tradizione": "amore",
   "posizioni": [
    {
     "n": 1,
@@ -1175,6 +1183,7 @@
   "larghezza_stretto": 0.13,
   "origine": "La stesa «soulmate», molto diffusa online: legge un incontro come un incrocio di lezioni, con i soli Arcani maggiori.",
   "descrizione": "Le lezioni di ciascuno, perché vi siete incontrati, cosa vi rispecchiate, il tema karmico, la fase che vivete e il potenziale nel tempo.",
+  "tradizione": "anime affini",
   "posizioni": [
    {
     "n": 1,
@@ -1331,6 +1340,7 @@
   "larghezza_stretto": 0.13,
   "origine": "Croce a cinque carte, di uso comune nelle letture di relazione: le due persone ai lati, radici, presente e futuro sull'asse verticale.",
   "descrizione": "Tu e l'altra persona ai lati; sull'asse verticale le radici del legame, il presente e il futuro. Cinque Arcani maggiori, tutti scelti.",
+  "tradizione": "amore",
   "posizioni": [
    {
     "n": 1,
@@ -1442,6 +1452,7 @@
   "larghezza_stretto": 0.13,
   "origine": "Stesa simmetrica della tradizione italiana per le relazioni: le carte si leggono a coppie speculari, e quella centrale per ultima.",
   "descrizione": "Pensieri, sentimenti e azioni di ciascuno, letti a coppie speculari; al centro la situazione attuale, che si scopre per ultima.",
+  "tradizione": "amore, tradizione italiana",
   "posizioni": [
    {
     "n": 1,
@@ -1608,6 +1619,7 @@
   "larghezza_stretto": 0.13,
   "origine": "La «relationship spread» canonica della cartomanzia moderna: le due persone, il legame, ciò che funziona, ciò che attrita, il consiglio e l'esito.",
   "descrizione": "Tu, l'altra persona, il legame; poi punto di forza e attrito, il consiglio e l'esito se lo si segue.",
+  "tradizione": "amore",
   "posizioni": [
    {
     "n": 1,
@@ -1774,6 +1786,7 @@
   "larghezza_stretto": 0.13,
   "origine": "Lo «specchio»: una stesa moderna per relazioni già in corso, che mette a confronto come vi vedete e cosa rappresentate l'uno per l'altra.",
   "descrizione": "Come vedi l'altra persona e come l'altra persona si vede, cosa rappresenta per te e cosa rappresenti per l'altra persona; in mezzo gli ostacoli, poi forze e risultato probabile.",
+  "tradizione": "amore",
   "posizioni": [
    {
     "n": 1,
@@ -1947,6 +1960,7 @@
   "larghezza_stretto": 0.135,
   "origine": "Il «crossroads»: una stesa a forcella, molto usata per i momenti di decisione, con due strade che partono da uno stesso punto.",
   "descrizione": "Dove siete e cosa vi ha portato qui, poi due strade: per ciascuna l'energia, la sfida e l'esito. Serve per capire, non per far scegliere alle carte.",
+  "tradizione": "amore e scelte",
   "posizioni": [
    {
     "n": 1,
@@ -2110,6 +2124,7 @@
   "larghezza_stretto": 0.16,
   "origine": "Stesa recente a quattro carte in fila, diffusa nei siti di tarocchi dedicati al lavoro (la «Negotiation Prep» di Elvi Tarot) per prepararsi a una trattativa: uno stipendio, un contratto, una proposta a un cliente.",
   "descrizione": "Quattro carte in fila: il valore reale di ciò che porti, come lo vede l'altra parte, la tua leva e l'approccio da tenere. Prepara al confronto, non ne predice l'esito.",
+  "tradizione": "lavoro",
   "posizioni": [
    {
     "n": 1,
@@ -2202,6 +2217,7 @@
   "larghezza_stretto": 0.14,
   "origine": "Stesa recente a cinque carte, diffusa nelle guide online di tarocchi per la carriera (per esempio quella di Unmei Tarot) per valutare un posto offerto o un colloquio: il ruolo, le persone, ciò che dà e ciò che costa.",
   "descrizione": "Cinque carte ad arco per valutare un'offerta o un colloquio: com'è davvero il ruolo, le persone con cui lavoreresti, che cosa ti farebbe crescere, che cosa ti costerebbe e dove porta il primo anno.",
+  "tradizione": "lavoro",
   "posizioni": [
    {
     "n": 1,
@@ -2312,6 +2328,7 @@
   "larghezza_stretto": 0.12,
   "origine": "L'analisi SWOT (punti di forza, punti deboli, opportunità, minacce) è uno strumento di pianificazione aziendale nato negli anni Sessanta, che i lettori di tarocchi hanno trasformato in stesa. Questa è la versione «SWOT Plus» di Priskha (2015), con il consiglio e l'esito possibile.",
   "descrizione": "Una matrice di quattro carte — punti di forza, punti deboli, opportunità e minacce — e accanto il consiglio e l'esito possibile. Per un progetto, un'attività o una scelta professionale.",
+  "tradizione": "lavoro e strategia",
   "posizioni": [
    {
     "n": 1,
@@ -2447,6 +2464,7 @@
   "larghezza_stretto": 0.12,
   "origine": "Stesa recente a sette carte delle guide online per la carriera (lo «Stay or Go» di Unmei Tarot), per chi pensa di lasciare il lavoro: le due strade si leggono a specchio, con i timori e ciò che ciascuna offre. Qui l'ultima carta non è un verdetto ma la chiave della scelta.",
   "descrizione": "Il motivo vero del dubbio, poi due strade a specchio, restare e andare, ciascuna col suo timore e con ciò che offre; infine ciò che non vedi e la chiave per decidere.",
+  "tradizione": "lavoro",
   "posizioni": [
    {
     "n": 1,
@@ -2586,6 +2604,7 @@
   "forma": "quadrata",
   "origine": "Stesa moderna a nove carte per chi avvia un'attività o un progetto, adattata da «Aligning With Your Higher Purpose» di Labyrinthos e dalla «Business Idea Check» di Elvi Tarot: lo scopo al centro e, intorno, la motivazione, la visione, l'offerta, il punto cieco, i clienti, i mezzi e la preparazione.",
   "descrizione": "Una ruota di otto carte intorno al tuo ruolo nell'impresa: perché la vuoi, che cosa può diventare, che cosa offri, che cosa sottovaluti, a chi ti rivolgi, come servirli, che cosa serve per partire e a che punto è la tua preparazione.",
+  "tradizione": "impresa",
   "posizioni": [
    {
     "n": 1,
