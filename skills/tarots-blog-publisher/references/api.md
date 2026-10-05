@@ -21,6 +21,7 @@ page is for calling the API directly.
 | `POST /media` | write | Upload an image (raw `image/png|jpeg|webp` body, or JSON `{"immagine_base64": "…"}`) → `{id, url, larghezza, altezza, byte}` |
 | `POST /posts` | write | Create an article (`dry_run: true` → report only) |
 | `GET /posts` | write | Articles created by this key (`stato`, `pagina`, `per_pagina`) |
+| `GET /titles` | write or media | **Every** article of the blog (any key, the console too), compact: see below |
 | `GET /posts/{id}` | write | One of this key's articles, with its SEO report |
 | `PATCH /posts/{id}` | write (publish for published ones) | Change fields of this key's article |
 | `DELETE /posts/{id}` | write | Delete a **draft** created by this key |
@@ -65,6 +66,44 @@ section, cover_image_id, cover_alt, seo_title, seo_description, focus_keyword, s
   "avvisi": ["Saved as a draft: this key has no `blog:publish` permission. …"]
 }
 ```
+
+## `GET /titles`: the compact list of every article
+
+To learn what the blog already covers without downloading articles. `tarots_blog.py titles` and `topic-check` use
+it (with a local copy); call it directly only if you cannot run the script.
+
+Query parameters (all optional):
+
+| Parameter | Meaning |
+|---|---|
+| `lang` | only this language (`en`, `it`, …) |
+| `stato` | `bozza` \| `pubblicato` \| `archiviato`. Without it: drafts and published |
+| `archiviati` | `true`: without `stato`, archived articles too |
+| `sezione` | a section slug (an unknown slug simply gives no rows) |
+| `q` | case-insensitive search in title, slug and focus keyword (`%` and `_` are literal) |
+| `dal` | ISO 8601: only articles **updated** at or after that moment (a naive time is UTC) |
+| `pagina`, `per_pagina` | page from 1; size up to **1000**, default 200 |
+
+Order: newest first (`pubblicato_il`, or the creation time for drafts). Response:
+
+```json
+{
+  "totale": 1834, "pagina": 1, "per_pagina": 200, "adesso": "2026-10-05T09:12:44.120931+00:00",
+  "articoli": [
+    {"id": "…", "slug": "the-tower-thoth-tarot-meaning", "titolo": "The Tower in the Thoth Tarot",
+     "estratto": "subtitle, else SEO description, else the start of the text (~160 chars)",
+     "parola_chiave": "tower tarot meaning", "sezione": "cards", "lang": "en", "stato": "pubblicato",
+     "pubblicato_il": "2026-09-30T08:00:00+00:00", "aggiornato": "2026-10-01T10:02:11+00:00",
+     "mio": false, "tradotto_da_id": null}
+  ]
+}
+```
+
+- `mio` is true for the articles created by the key making the request.
+- `tradotto_da_id` is the original an article was translated from (`null` for an original).
+- Keeping a copy up to date: remember `adesso` and next time ask with `dal` = that moment **minus a few minutes**
+  (a slow save can carry a slightly earlier time) and `archiviati=true` (to see articles that got archived). A
+  **deleted** article is never in a `dal` answer: reload everything from time to time to drop it.
 
 ## Rules the server enforces (no parameter bypasses them)
 

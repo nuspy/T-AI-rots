@@ -19,6 +19,13 @@ Commands (run `tarots_blog.py <command> -h` for the options):
     tags                   tags already in use (reuse them)
     catalog [--grep TEXT]  cards and spreads with the ready-made internal-link shortcut
     mine                   articles this key created (avoid duplicates, pick an unused keyword)
+    titles [--lang en] [--status S] [--section SLUG] [--grep TEXT] [--all] [--refresh]
+                           one line per article of the WHOLE blog (any author): slug | title | keyword | lang |
+                           status | date. Kept in a local copy (~/.tarots-blog/titles-cache.json, or
+                           TAROTS_TITLES_CACHE) updated with only what changed; deleted articles leave it only on a
+                           full reload (--refresh, or by itself when the copy is older than 7 days)
+    topic-check "TOPIC" [--lang en]
+                           the 5 articles closest to a proposed title/keyword and a verdict FREE / CLOSE / TAKEN
     check ARTICLE.json     SEO report without saving anything
     upload IMAGE [--for SLUG_OR_ID] [--operator-image]
                            upload a cover OR an inline image, print its id and reusable url
@@ -31,11 +38,13 @@ Pictures (`post --cover`, `upload`) share the record of the `tarots-blog-images`
 images-progress.json`, or `TAROTS_IMAGES_PROGRESS`. Before anything is uploaded a picture is refused if it was
 not made by `tarots_images.py generate` (unless `--operator-image`: a picture the operator supplied, accepted with a
 warning), if it was already used for another article (same sha256, whatever the file name), or if the prompt it
-was generated from asks for a card. After a successful `post` or `upload` its sha256 is recorded with the article.
+was generated from makes cards the picture (a card as the subject, two or more cards, a spread, a hand holding a
+card: the rules of `tarots_images.py`, copied here). After a successful `post` or `upload` its sha256 is recorded
+with the article.
 
 Exit codes: 0 ok · 2 usage or bad article file · 3 SEO score below the threshold (nothing saved)
 · 4 the API refused (message printed) · 5 configuration missing or unsafe · 7 a picture rule refused the file
-(nothing uploaded).
+(nothing uploaded) · 8 `topic-check`: the topic is TAKEN.
 
 The full key is only ever sent to TAROTS_API_URL, never printed (only its 12-character prefix is, to tell keys
 apart), and redirects are not followed (a redirect would carry the key to another host): if the server redirects,
@@ -53,13 +62,14 @@ import os
 import re
 import sys
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-EXIT_OK, EXIT_USAGE, EXIT_SCORE, EXIT_API, EXIT_CONFIG, EXIT_RULE = 0, 2, 3, 4, 5, 7
+EXIT_OK, EXIT_USAGE, EXIT_SCORE, EXIT_API, EXIT_CONFIG, EXIT_RULE, EXIT_TAKEN = 0, 2, 3, 4, 5, 7, 8
 
 MAX_IMAGE_BYTES = 8_000_000
 IMAGE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
@@ -72,22 +82,69 @@ _noted = False  # config() prints its "using saved key" / "key saved" note once 
 #: lists what `tarots_images.py generate` made, `_used` maps sha256 → the article that uses the picture.
 PROGRESS_PATH = Path(os.environ["TAROTS_IMAGES_PROGRESS"]) if os.environ.get("TAROTS_IMAGES_PROGRESS") else Path.home() / ".tarots-blog" / "images-progress.json"
 
-#: A copy of the card patterns of `tarots_images.py` (prompts, not alt texts): no blog picture shows a card of any
-#: kind. Kept identical to the original by a test (`tests/test_immagini.py`); change both together.
+#: The local copy of every article's title (`titles`, `topic-check`): the compact list of the whole blog, kept up to
+#: date with `dal` (only what changed since the last run). Holds no key and no text, only titles, slugs, keywords.
+TITLES_CACHE_PATH = Path(os.environ["TAROTS_TITLES_CACHE"]) if os.environ.get("TAROTS_TITLES_CACHE") else Path.home() / ".tarots-blog" / "titles-cache.json"
+TITLES_PAGE = 1000                                   # the API's maximum page size
+TITLES_FULL_EVERY = datetime.timedelta(days=7)       # older than this: reload everything (deleted articles go away)
+TITLES_OVERLAP = datetime.timedelta(minutes=10)      # `dal` starts this much before the last sync (slow transactions)
+TITLES_SHOWN = 100                                   # lines `titles` prints without --all
+
+#: A copy of the card rules of `tarots_images.py`: a blog picture is never a picture of cards (no card as the
+#: subject, no two or more cards, no spread or layout, no hand holding a card), while cards may stay in the context
+#: ("tarot" as an adjective, the names of the cards, one single small card later in the scene). CARD_PATTERNS,
+#: CARD_WORD, LEAD_WORDS, LEAD_SKIP, DECK, NOT_A_CARD_DECK and `card_problems()` are kept identical to the original
+#: by a test (`tests/test_immagini.py`); change both together.
+SPREAD = "spread"
+_W = r"(?:[\w'-]+\s+)"  # one more word, in the patterns below
 CARD_PATTERNS = [
-    r"\btarot\w*|\btarocc\w*",
-    r"\bcards?\b",
-    r"\b(?:tarot|cards?|reading|oracle|celtic[- ]cross|horseshoe|lenormand)\s+spreads?\b"
-    r"|\bspreads?\s+(?:positions?|layout)\b"
-    r"|\b(?:a|the|this|that|her|his|their|my|your)\s+spread\s+(?:on|across|over|laid)\b",
-    r"\barcan(?:a|um)\b",
-    r"\breading\s+tables?\b|\btables?\s+(?:set\s+)?for\s+(?:a\s+)?reading\b|\bdivination\s+tables?\b",
-    r"\brider[- ]?waite\b|\bwaite[- ]smith\b|\bsmith[- ]waite\b|\bthoth\s+(?:trumps?|atus?)\b|\batus?\s+[ivxlc]+\b",
-    r"\bcartomanc\w*|\blenormand\b",
-    r"\b(?:ace|two|three|four|five|six|seven|eight|nine|ten|page|knight|queen|king|princess|prince)\s+of\s+"
-    r"(?:cups|wands|swords|pentacles|disks|discs|coins)\b"
-    r"|\bhigh\s+priestess\b|\bhierophant\b|\bhanged\s+man\b|\bwheel\s+of\s+fortune\b",
+    # spreads and layouts
+    (r"\b(?:tarot|cards?|reading|oracle|celtic[- ]cross|horseshoe|lenormand)\s+spreads?\b"
+     r"|\bspreads?\s+(?:positions?|layouts?)\b"
+     r"|\b(?:a|the|this|that|her|his|their|my|your)\s+spread\s+(?:on|across|over|laid)\b"
+     r"|\b(?:tarot|cards?|oracle|lenormand|celtic[- ]cross|horseshoe|spread|reading)\s+" + _W + r"{0,2}layouts?\b",
+     "a spread or a layout of cards", SPREAD),
+    (r"\b(?:tarot|cards?|oracle|lenormand)\s+readings?\b|\breading\s+tables?\b"
+     r"|\btables?\s+(?:set\s+)?for\s+(?:a\s+)?reading\b|\bdivination\s+tables?\b|\bcartomanc\w*",
+     "a card reading: cards laid out on a table", SPREAD),
+    (r"\bcards?\s+(?:laid|spread|arranged|dealt|fanned)\s+out\b"
+     r"|\bcards?\s+(?:(?:laid|lying|placed|set|spread|arranged|scattered|dealt|turned)\s+(?:out\s+)?)?"
+     r"(?:on|across|over|upon)\s+" + _W + r"{0,3}(?:table|tablecloth|cloth|altar|desk|velvet|silk|floor|rug|board)s?\b",
+     "cards laid out on a surface: a spread", SPREAD),
+    (r"\bcards?\s+" + _W + r"{0,2}face[- ]?(?:down|up)\b|\bface[- ]?(?:down|up)\s+" + _W + r"{0,2}cards?\b"
+     r"|\bfan\s+of\s+" + _W + r"{0,2}cards\b|\bfanned\s+" + _W + r"{0,2}cards\b",
+     "cards face down or face up, or fanned out: a spread", SPREAD),
+    # hands holding or turning a card
+    (r"\b(?:holding|holds|hold|turning|turns|turned|flipping|flips|flipped|drawing|draws|drew|shuffling|shuffles"
+     r"|dealing|deals|pulling|pulls|lifting|lifts|picking|picks|clutching|clutches|grasping|grasps|offering)\s+"
+     r"(?:up\s+|over\s+)?" + _W + r"{0,3}cards?\b"
+     r"|\bcards?\s+" + _W + r"{0,2}(?:in|between|from)\s+" + _W + r"{0,2}(?:hands?|fingers?|palms?)\b",
+     "a hand holding or turning a card", "hands"),
+    # more than one card
+    (r"\bcards\b", "more than one card", "many"),
+    (r"\barcana\b|\btarocchi\b|\b(?:thoth|tarot|major|minor)\s+(?:trumps|atus)\b"
+     r"|\b(?:pack|pile|stack|heap|hand|handful|box|set)\s+of\s+" + _W + r"{0,2}(?:tarot|tarocchi|oracle|lenormand|playing)\b",
+     "a set of cards", "many"),
+    # the card as the subject
+    (r"\b(?:close[- ]?up|macro(?:\s+shot)?|detail|portrait|still\s+life|study)\s+of\s+" + _W + r"{0,3}cards?\b"
+     r"|\bcards?\s+(?:showing|shows|depicting|depicts|bearing|with\s+(?:an?\s+)?(?:image|picture|illustration|painting"
+     r"|figure|drawing)\s+of)\b"
+     r"|\b(?:large|big|giant|huge|oversized|enormous|floating|levitating|glowing)\s+" + _W + r"?cards?\b"
+     r"|\bcards?\s+" + _W + r"{0,2}(?:in\s+the\s+)?(?:foreground|centre|center)\b",
+     "a card as the subject of the picture", "subject"),
+    (r"\btarot[- ](?:style\s+)?(?:imagery|artwork|art|illustrations?|images?|iconography|designs?|prints?|paintings?"
+     r"|style|frames?|borders?)\b|\bcard[- ](?:frames?|borders?)\b|\batus?\s+[ivxlc]+\b",
+     "the artwork, frame or numbered title of a card: the model paints the card", "subject"),
+    (r"\brider[- ]?waite\b|\bwaite[- ]smith\b|\bsmith[- ]waite\b|\bmarseilles?\s+tarot\b|\btarot\s+de\s+marseilles?\b",
+     "a named deck's artwork", "subject"),
 ]
+CARD_WORD = r"\bcard\b|\barcanum\b|\btarocco\b"
+LEAD_WORDS = 8
+LEAD_SKIP = frozenset("""
+a an the and or but of in on at to with by for from into onto over under above below behind beside between through
+across around along near its it their her his this that these those there is are was were be as while very some one
+single just only
+""".split())
 DECK = r"\bdecks?\b"
 NOT_A_CARD_DECK = (
     r"\b(?:ship's|ships|ship|boat's|boat|ferry|yacht|sailing|sailboat|liner|steamer|barge|vessel|upper|lower|top|main"
@@ -114,6 +171,10 @@ class Failure(Exception):
     def __init__(self, message: str, code: int = EXIT_API):
         super().__init__(message)
         self.code = code
+
+
+class Unreachable(Failure):
+    """The API could not be reached at all (network, DNS, timeout): the only failure a local cache may cover for."""
 
 
 # ---- configuration and HTTP ------------------------------------------------------------------------------------
@@ -218,7 +279,7 @@ def call(
             if attempt == 0 and method == "GET":
                 time.sleep(2)
                 continue
-            raise Failure(f"Cannot reach the API ({getattr(exc, 'reason', exc)}). Check TAROTS_API_URL and the network.") from None
+            raise Unreachable(f"Cannot reach the API ({getattr(exc, 'reason', exc)}). Check TAROTS_API_URL and the network.") from None
     return None  # pragma: no cover
 
 
@@ -412,6 +473,279 @@ def cmd_mine(a) -> int:
     return EXIT_OK
 
 
+# ---- every article of the blog, compact: titles and topic-check --------------------------------------------------
+# `GET /titles` lists every article (any key's, the console's too) with a few fields. The list is copied to
+# TITLES_CACHE_PATH and refreshed with `dal`: only what changed since the last run travels. An article deleted on the
+# site cannot appear in a `dal` answer, so it leaves the copy only on a full reload: `--refresh`, or by itself when
+# the copy is older than TITLES_FULL_EVERY (7 days).
+
+
+def _utcnow() -> datetime.datetime:
+    return datetime.datetime.now(datetime.timezone.utc)
+
+
+def _parse_time(value: Any) -> Optional[datetime.datetime]:
+    if not value:
+        return None
+    try:
+        when = datetime.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return when if when.tzinfo else when.replace(tzinfo=datetime.timezone.utc)
+
+
+def _identity() -> str:
+    """The site and the key the copy belongs to (`mio` depends on the key): a different one means a full reload.
+    Only the key's 12-character prefix is stored."""
+    cfg = config()
+    return f"{cfg['base']}|{cfg['key'][:12]}"
+
+
+def _read_titles_cache() -> Optional[Dict[str, Any]]:
+    try:
+        data = json.loads(TITLES_CACHE_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return data if isinstance(data, dict) and isinstance(data.get("articles"), dict) else None
+
+
+def _write_titles_cache(data: Dict[str, Any]) -> None:
+    TITLES_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    tmp = TITLES_CACHE_PATH.with_name(TITLES_CACHE_PATH.name + ".tmp")
+    tmp.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    os.replace(tmp, TITLES_CACHE_PATH)
+
+
+def _fetch_titles(since: Optional[datetime.datetime]) -> Any:
+    """Every page of `GET /titles`, archived ones included (the filters apply locally, on the copy). Returns the rows
+    and the server's clock (`adesso`) at the first page, the starting point of the next `dal`."""
+    rows: List[Dict[str, Any]] = []
+    server_now = None
+    page = 1
+    while True:
+        query: Dict[str, Any] = {"archiviati": "true", "pagina": page, "per_pagina": TITLES_PAGE}
+        if since is not None:
+            query["dal"] = since.isoformat()
+        data = call("GET", "/titles", query=query)
+        if page == 1:
+            server_now = data.get("adesso")
+        batch = data.get("articoli") or []
+        rows.extend(batch)
+        if len(batch) < TITLES_PAGE or len(rows) >= int(data.get("totale") or 0):
+            return rows, server_now
+        page += 1
+
+
+def sync_titles(*, refresh: bool = False) -> Dict[str, Any]:
+    """The up-to-date copy of every article. Incremental (`dal`) when possible; a full reload with `refresh`, when
+    there is no copy, when it belongs to another site or key, or when its last full reload is older than 7 days.
+    If the API cannot be reached at all, an existing copy is used as it is, with a warning."""
+    cache = _read_titles_cache()
+    identity = _identity()
+    full_at = _parse_time(cache.get("full_at")) if cache else None
+    reason = None
+    if refresh:
+        reason = "--refresh"
+    elif cache is None:
+        reason = "no local copy yet"
+    elif cache.get("identity") != identity:
+        reason = "the copy is of another site or key"
+    elif full_at is None or _utcnow() - full_at > TITLES_FULL_EVERY:
+        reason = "the copy is older than 7 days: this also drops deleted articles"
+    try:
+        if reason:
+            rows, server_now = _fetch_titles(None)
+            cache = {"version": 1, "identity": identity, "full_at": _utcnow().isoformat(timespec="seconds"), "articles": {}}
+            print(f"note: titles reloaded in full ({reason}): {len(rows)} article(s).", file=sys.stderr)
+        else:
+            assert cache is not None and full_at is not None
+            synced = _parse_time(cache.get("synced_at")) or full_at
+            rows, server_now = _fetch_titles(synced - TITLES_OVERLAP)
+    except Unreachable as exc:
+        if cache is None or cache.get("identity") != identity:
+            raise
+        print(f"warning: {exc} Using the local copy as it is (synced {cache.get('synced_at')}): articles written "
+              "since then are missing from it.", file=sys.stderr)
+        return cache
+    for row in rows:
+        cache["articles"][str(row["id"])] = row
+    cache["synced_at"] = server_now or _utcnow().isoformat(timespec="seconds")
+    _write_titles_cache(cache)
+    return cache
+
+
+def _plain(text: str) -> str:
+    """Lowercase, no accents, only letters and digits separated by single spaces (`Crowley’s Æon` → `crowley s aeon`)."""
+    text = unicodedata.normalize("NFKD", str(text or "")).replace("æ", "ae").replace("Æ", "ae").replace("œ", "oe")
+    text = "".join(c for c in text if not unicodedata.combining(c)).lower()
+    return " ".join(re.sub(r"[^0-9a-z]+", " ", text).split())
+
+
+def _date_of(row: Dict[str, Any]) -> datetime.datetime:
+    return _parse_time(row.get("pubblicato_il") or row.get("aggiornato")) or datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
+
+
+def _select_titles(cache: Dict[str, Any], *, lang: Optional[str] = None, statuses=("bozza", "pubblicato"),
+                   section: Optional[str] = None, grep: Optional[str] = None) -> List[Dict[str, Any]]:
+    """The articles of the copy that pass the filters, newest first. `grep` looks in title, slug, keyword and the
+    short excerpt, ignoring case, accents and punctuation."""
+    needle = _plain(grep) if grep else ""
+    rows = []
+    for row in cache["articles"].values():
+        if lang and row.get("lang") != lang:
+            continue
+        if statuses and row.get("stato") not in statuses:
+            continue
+        if section and row.get("sezione") != section:
+            continue
+        if needle and needle not in _plain(" ".join(str(row.get(k) or "") for k in ("titolo", "slug", "parola_chiave", "estratto"))):
+            continue
+        rows.append(row)
+    rows.sort(key=_date_of, reverse=True)
+    return rows
+
+
+def title_line(row: Dict[str, Any]) -> str:
+    when = (row.get("pubblicato_il") or row.get("aggiornato") or "")[:10] or "-"
+    return f"{row.get('slug')} | {row.get('titolo')} | {row.get('parola_chiave') or '-'} | {row.get('lang')} | {row.get('stato')} | {when}"
+
+
+def _statuses(value: Optional[str]):
+    return (STATUS.get(value, value),) if value else ("bozza", "pubblicato")
+
+
+def cmd_titles(a) -> int:
+    cache = sync_titles(refresh=a.refresh)
+    rows = _select_titles(cache, lang=a.lang, statuses=_statuses(a.status), section=a.section, grep=a.grep)
+    shown = rows if a.all else rows[:TITLES_SHOWN]
+    if a.json:
+        show(shown)
+        return EXIT_OK
+    print(f"# {len(rows)} of {len(cache['articles'])} article(s), newest first: slug | title | keyword | lang | status | date")
+    for row in shown:
+        print(title_line(row))
+    if len(shown) < len(rows):
+        print(f"# ... {len(rows) - len(shown)} more: narrow with --grep/--lang/--section, or add --all.")
+    return EXIT_OK
+
+
+#: Words that say nothing about the topic (English and Italian).
+STOPWORDS = frozenset("""
+a an the of in on at for to and or but with without by from about into onto over under as is are be been being it its
+this that these those your you my our their his her how what why when where which who whom do does vs versus than
+then so if not no can will should vs s t
+il lo la i gli le un uno una di da con su per tra fra e ed o del della dei degli delle dello al alla ai agli alle
+allo nel nella nei negli nelle nello sul sulla sui sugli sulle dal dalla dai dagli dalle che come cosa perche non si
+ti mi ci vi sono dell dall nell sull all l d
+""".split())
+#: Words every article of this blog shares: they count, but much less than the rest («the Tower» is the topic,
+#: «tarot card meaning» is not). Compared after the plural is taken off (cards → card).
+WEAK_WORDS = frozenset({"tarot", "tarocchi", "tarocco", "thoth", "card", "carta", "carte", "meaning", "significato",
+                        "significati", "deck", "mazzo"})
+#: topic-check verdicts on the best score (0..1): TAKEN at or above TOPIC_TAKEN, CLOSE at or above TOPIC_CLOSE.
+#: With `topic_similarity`: the same topic words (only the generic ones differ) score 0.85–1 → TAKEN from 0.88, i.e.
+#: also when the generic words mostly agree («Tower tarot meaning» vs «The Tower Thoth card meanings», 0.91);
+#: one extra topic word out of four («Celtic cross spread» + «for love») is 0.86 → CLOSE; half the topic words in
+#: common («New moon spread» vs «Full moon spread») about 0.67 → CLOSE; one in three or less → FREE.
+TOPIC_TAKEN, TOPIC_CLOSE = 0.88, 0.40
+
+
+def _stem(word: str) -> str:
+    if len(word) > 4 and word.endswith("ies"):
+        return word[:-3] + "y"
+    if len(word) > 3 and word.endswith("s") and not word.endswith(("ss", "us", "is")):
+        return word[:-1]
+    return word
+
+
+def topic_words(text: str) -> set:
+    return {_stem(w) for w in _plain(text).split() if w not in STOPWORDS and len(w) > 1}
+
+
+def _dice(a: set, b: set) -> float:
+    return 2 * len(a & b) / (len(a) + len(b)) if a and b else 0.0
+
+
+def topic_similarity(a: set, b: set) -> float:
+    """0..1. The topic words (not weak) decide: their Dice overlap, times 0.85–1 depending on how much the weak words
+    agree too. With no topic word in common the score is 0 («Death card meaning» is not «Tower card meaning»). When one
+    side has only weak words, half their plain overlap."""
+    if not a or not b:
+        return 0.0
+    strong_a, strong_b = a - WEAK_WORDS, b - WEAK_WORDS
+    if not strong_a or not strong_b:
+        return _dice(a, b) * (1.0 if not strong_a and not strong_b else 0.5)
+    strong = _dice(strong_a, strong_b)
+    weak_a, weak_b = a & WEAK_WORDS, b & WEAK_WORDS
+    weak = _dice(weak_a, weak_b) if (weak_a or weak_b) else 1.0
+    return strong * (0.85 + 0.15 * weak)
+
+
+def topic_matches(topic: str, rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Every article with its score against the topic, best first. The same slug, the same keyword or the same title
+    (ignoring case, accents, punctuation, stop words and word order) is always 1.0 and marked `exact`."""
+    plain = _plain(topic)
+    slug = plain.replace(" ", "-")
+    words = topic_words(topic)
+
+    def same(text: Any) -> bool:
+        return bool(text) and (plain == _plain(text) or (bool(words) and words == topic_words(text)))
+
+    out = []
+    for row in rows:
+        exact = None
+        if slug and slug == row.get("slug"):
+            exact = "same slug"
+        elif same(row.get("parola_chiave")):
+            exact = "same keyword"
+        elif same(row.get("titolo")):
+            exact = "same title"
+        score = 1.0 if exact else max(
+            topic_similarity(words, topic_words(row.get(field) or "")) for field in ("titolo", "slug", "parola_chiave")
+        )
+        out.append({"score": round(score, 2), "exact": exact, "row": row})
+    out.sort(key=lambda m: (m["score"], bool(m["exact"]), _date_of(m["row"])), reverse=True)
+    return out
+
+
+def topic_verdict(matches: List[Dict[str, Any]]) -> str:
+    best = matches[0] if matches else None
+    if best and (best["exact"] or best["score"] >= TOPIC_TAKEN):
+        return "TAKEN"
+    if best and best["score"] >= TOPIC_CLOSE:
+        return "CLOSE"
+    return "FREE"
+
+
+def cmd_topic_check(a) -> int:
+    topic = " ".join(a.topic).strip()
+    if not _plain(topic):
+        raise Failure("Give a proposed title or keyword, e.g. topic-check \"the hermit thoth tarot meaning\".", EXIT_USAGE)
+    cache = sync_titles(refresh=a.refresh)
+    rows = _select_titles(cache, lang=a.lang)
+    matches = topic_matches(topic, rows)
+    verdict = topic_verdict(matches)
+    top = [m for m in matches[:5] if m["score"] > 0]  # a 0 shares no topic word: not worth a line
+    if a.json:
+        show({"topic": topic, "verdict": verdict, "score": top[0]["score"] if top else 0.0, "compared": len(rows),
+              "matches": [{"score": m["score"], "exact": m["exact"], **m["row"]} for m in top]})
+    else:
+        print(f"# \"{topic}\" against {len(rows)} article(s) (drafts and published{', ' + a.lang if a.lang else ', every language'})")
+        for m in top:
+            print(f"{m['score']:.2f}  {title_line(m['row'])}" + (f"  [{m['exact']}]" if m["exact"] else ""))
+        if not top:
+            print("(no article shares a topic word with it)")
+        explanation = {
+            "TAKEN": f"an article on this already exists (score >= {TOPIC_TAKEN:.2f}, or the same slug, keyword or title). "
+                     "Do not write it: choose another topic, or tell the operator the existing article could be updated.",
+            "CLOSE": f"a similar article exists (score {TOPIC_CLOSE:.2f}-{TOPIC_TAKEN:.2f}). Write it only if the search "
+                     "intent is really different from the articles above, and say so in the report.",
+            "FREE": f"no article close to this (best score below {TOPIC_CLOSE:.2f}).",
+        }[verdict]
+        print(f"{verdict}: {explanation}")
+    return EXIT_TAKEN if verdict == "TAKEN" else EXIT_OK
+
+
 def cmd_check(a) -> int:
     payload = load_article(a.article)
     seo = call("POST", "/seo-check", body={k: v for k, v in payload.items() if k != "dry_run"})
@@ -426,7 +760,7 @@ def upload(path: str) -> Dict[str, Any]:
     file = Path(path)
     kind = IMAGE_TYPES.get(file.suffix.lower())
     if kind is None:
-        raise Failure("The cover must be a PNG, JPEG or WebP file.", EXIT_USAGE)
+        raise Failure("The picture must be a PNG, JPEG or WebP file.", EXIT_USAGE)
     try:
         raw = file.read_bytes()
     except OSError as exc:
@@ -463,14 +797,42 @@ def sha256_of(path: Any) -> str:
     return digest.hexdigest()
 
 
-def card_problem(text: str) -> Optional[str]:
+def _lead(low: str) -> str:
+    """The opening of a prompt, where a card is the subject: its first clause, or its first LEAD_WORDS content
+    words if they run further."""
+    clause = re.split(r"[,;:.!?()]|\s[-–—]\s", low, maxsplit=1)[0]
+    end, n = len(low), 0
+    for m in re.finditer(r"[a-z0-9]+(?:['-][a-z0-9]+)*", low):
+        if m.group(0) not in LEAD_SKIP:
+            n += 1
+            if n == LEAD_WORDS:
+                end = m.end()
+                break
+    return low[: max(len(clause), end)]
+
+
+def card_problems(text: str) -> List[tuple]:
+    """Every way the text makes cards the picture, as (family, words, what they name); [] when cards are at most
+    context. The family SPREAD comes first when there is one."""
     low = " ".join(text.lower().split()).replace("’", "'")
-    for pattern in CARD_PATTERNS:
+    found = []
+    for pattern, what, family in CARD_PATTERNS:
         m = re.search(pattern, low)
         if m:
-            return m.group(0)
+            found.append((family, m.group(0), what))
     m = re.search(DECK, re.sub(NOT_A_CARD_DECK, " ", low))
-    return m.group(0) if m else None
+    if m:
+        found.append(("many", m.group(0), "a deck: many cards"))
+    m = re.search(CARD_WORD, _lead(low))
+    if m:
+        found.append(("subject", m.group(0), f"a card as the subject: in the first clause or the first {LEAD_WORDS} words"))
+    return found
+
+
+def card_problem(text: str) -> Optional[str]:
+    """The first way the text makes cards the picture, as «words» (what they name), or None."""
+    found = card_problems(text)
+    return f"«{found[0][1]}» ({found[0][2]})" if found else None
 
 
 def _used_by(data: Dict[str, Any], sha: str) -> Optional[str]:
@@ -492,6 +854,8 @@ def _used_by(data: Dict[str, Any], sha: str) -> Optional[str]:
 def check_picture(path: str, *, article: Optional[str], operator_image: bool) -> str:
     """Refuse a picture before it is uploaded; return its sha256. `article` is the slug or id it is for (None for a
     new article: then any earlier use is another article's)."""
+    if IMAGE_TYPES.get(Path(path).suffix.lower()) is None:  # a usage error first: the record cannot fix a GIF
+        raise Failure("The picture must be a PNG, JPEG or WebP file.", EXIT_USAGE)
     if not Path(path).is_file():
         raise Failure(f"Cannot read {path}.", EXIT_USAGE)
     sha = sha256_of(path)
@@ -505,8 +869,8 @@ def check_picture(path: str, *, article: Optional[str], operator_image: bool) ->
     prompts = [e.get("prompt") or "" for e in generated] + ([sidecar.read_text(encoding="utf-8")] if sidecar.is_file() else [])
     for prompt in prompts:
         if card := card_problem(prompt):
-            raise Failure(f"{path} was generated from a prompt that asks for a card («{card}»): no blog picture shows "
-                          "a card. Generate a new one.", EXIT_RULE)
+            raise Failure(f"{path} was generated from a prompt that makes cards the picture ({card}): a blog picture "
+                          "is never a picture of cards (cards may only be context). Generate a new one.", EXIT_RULE)
     if not generated:
         if not operator_image:
             raise Failure(
@@ -624,6 +988,41 @@ def parser() -> argparse.ArgumentParser:
     m.add_argument("--page", type=int, default=1)
     m.add_argument("--per-page", type=int, default=25)
     m.set_defaults(run=cmd_mine)
+    t = sub.add_parser(
+        "titles", help="one line per article of the WHOLE blog (any author): slug | title | keyword | lang | status | date",
+        description=(
+            "Every article of the blog, whoever wrote it, one compact line each, newest first. The list is kept in a "
+            f"local copy ({TITLES_CACHE_PATH}) that each run brings up to date with only what changed since the last "
+            "one. An article DELETED on the site is not reported by that update: it leaves the copy only on a full "
+            "reload, which --refresh forces and which happens by itself when the last one is older than 7 days. "
+            "Never download whole articles to find out what exists: use this and topic-check."
+        ),
+    )
+    t.add_argument("--lang", help="only this language (en, it, ...)")
+    t.add_argument("--status", choices=["draft", "published", "archived", "bozza", "pubblicato", "archiviato"],
+                   help="only this status (default: drafts and published, not archived)")
+    t.add_argument("--section", metavar="SLUG", help="only this section (slug, see `sections`)")
+    t.add_argument("--grep", metavar="TEXT", help="only articles whose title, slug, keyword or excerpt contain TEXT")
+    t.add_argument("--all", action="store_true", help=f"print every matching line (default: the newest {TITLES_SHOWN})")
+    t.add_argument("--refresh", action="store_true", help="reload the whole list (drops articles deleted on the site)")
+    t.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help="the rows as JSON")
+    t.set_defaults(run=cmd_titles)
+    tc = sub.add_parser(
+        "topic-check", help="is a proposed topic already covered? the 5 closest articles and FREE / CLOSE / TAKEN",
+        description=(
+            "Compares a proposed title or keyword with the title, slug and keyword of every draft and published "
+            "article (from the up-to-date local copy of `titles`), ignoring case, accents, punctuation, English and "
+            "Italian stop words; 'tarot', 'thoth', 'card', 'meaning' (and 'deck') weigh little. Prints the 5 closest "
+            f"with a score 0-1 and a verdict: TAKEN (score >= {TOPIC_TAKEN:.2f}, or the same slug, keyword or title: "
+            f"exit code {EXIT_TAKEN}), CLOSE ({TOPIC_CLOSE:.2f} to {TOPIC_TAKEN:.2f}: write it only for a really "
+            f"different search intent, exit 0), FREE (below {TOPIC_CLOSE:.2f}, exit 0)."
+        ),
+    )
+    tc.add_argument("topic", nargs="+", help="the proposed title or focus keyword (quoted or not)")
+    tc.add_argument("--lang", help="compare only with articles in this language (default: every language)")
+    tc.add_argument("--refresh", action="store_true", help="reload the whole list first")
+    tc.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help="the result as JSON")
+    tc.set_defaults(run=cmd_topic_check)
 
     k = sub.add_parser("check", help="SEO report without saving")
     k.add_argument("article")

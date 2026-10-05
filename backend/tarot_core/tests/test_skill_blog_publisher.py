@@ -28,8 +28,10 @@ def _cache_isolata(monkeypatch, tmp_path, cli):
     precedente nello stesso lancio) apparirebbe «diversa» dalla `CHIAVE` finta dei test, bloccandoli col
     controllo appena aggiunto. `CACHE_PATH` è una costante di modulo, fissata all'importazione — la sola
     variabile d'ambiente non basta a cambiarla test per test: si riassegna direttamente l'attributo,
-    a un percorso nuovo (e quindi inesistente) per ciascun test."""
+    a un percorso nuovo (e quindi inesistente) per ciascun test. Lo stesso per il registro delle immagini
+    (`PROGRESS_PATH`, condiviso con tarots-blog-images): un test non deve leggere né scrivere quello vero."""
     monkeypatch.setattr(cli, "CACHE_PATH", tmp_path / "cache-di-prova.json")
+    monkeypatch.setattr(cli, "PROGRESS_PATH", tmp_path / "registro-immagini-di-prova.json")
 
 
 @pytest.fixture(scope="module")
@@ -275,6 +277,17 @@ def test_dry_run_non_salva(cli, api, tmp_path):
     assert len([r for r in api.richieste if r["metodo"] == "POST"]) == 1
 
 
+def _generata(cli, file: Path) -> None:
+    """Il registro di prova come lo lascia `tarots_images.py generate`: l'immagine, il suo sha256 e un prompt che
+    rispetta le regole (nessuna carta come soggetto), con le quattro dimensioni."""
+    cli.PROGRESS_PATH.write_text(json.dumps({"_generated": [{
+        "prompt": "A lighthouse on a black basalt cliff in a winter storm, waves breaking on the rocks, seen from the "
+                  "harbour below, looking up",
+        "file": str(file), "sha256": cli.sha256_of(file), "aspect": "3:2", "when": "2026-10-05T10:00:00+00:00",
+        "kind": "architecture", "shot": "low-angle", "light": "storm-light", "setting": "Breton coast",
+    }]}), encoding="utf-8")
+
+
 def test_la_copertina_si_carica_come_corpo_grezzo_e_il_suo_id_entra_nell_articolo(cli, api, tmp_path):
     immagine = tmp_path / "c.png"
     immagine.write_bytes(b"\x89PNG\r\n\x1a\n" + b"0" * 32)
@@ -282,14 +295,23 @@ def test_la_copertina_si_carica_come_corpo_grezzo_e_il_suo_id_entra_nell_articol
     api.risposte[("POST", "/v1/blog/posts")] = (
         201, {"dry_run": True, "seo": rapporto(90), "articolo": {"id": "1", "stato": "bozza", "lang": "en"}, "url": "u", "avvisi": []}, {},
     )
+    # Un'immagine che non viene da `generate` è rifiutata prima di caricare qualsiasi cosa...
+    assert cli.main(["post", _articolo(tmp_path), "--cover", str(immagine)]) == cli.EXIT_RULE
+    assert api.richieste == []
+    # ...la stessa, registrata come generata, passa.
+    _generata(cli, immagine)
     assert cli.main(["post", _articolo(tmp_path), "--cover", str(immagine)]) == cli.EXIT_OK
     carico = next(r for r in api.richieste if r["percorso"] == "/v1/blog/media")
     assert carico["tipo"] == "image/png" and carico["corpo"].startswith(b"\x89PNG")
     ultimo = json.loads([r for r in api.richieste if r["percorso"] == "/v1/blog/posts"][-1]["corpo"])
     assert ultimo["immagine_id"] == "0b1c2d3e-0000-4000-8000-000000000001"
+    # e il registro ora la lega a quell'articolo
+    usata = json.loads(cli.PROGRESS_PATH.read_text(encoding="utf-8"))["_used"][cli.sha256_of(immagine)]
+    assert usata["post"] == "1" and usata["kind"] == "cover"
 
 
 def test_la_copertina_deve_essere_un_immagine(cli, api, tmp_path, capsys):
+    # Il formato si controlla prima del registro: per una GIF l'errore utile è «non è un'immagine accettata».
     (tmp_path / "c.gif").write_bytes(b"GIF89a")
     assert cli.main(["upload", str(tmp_path / "c.gif")]) == cli.EXIT_USAGE
     assert "PNG, JPEG or WebP" in capsys.readouterr().err

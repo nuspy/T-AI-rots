@@ -81,8 +81,47 @@ def _used(env_tmp) -> dict:
 
 
 def test_card_patterns_are_the_same_as_in_tarots_images():
-    assert tb.CARD_PATTERNS == [pattern for pattern, _what, _alt in ti.CARD_PATTERNS]
+    assert tb.CARD_PATTERNS == ti.CARD_PATTERNS
     assert tb.DECK == ti.DECK and tb.NOT_A_CARD_DECK == ti.NOT_A_CARD_DECK
+    assert tb.CARD_WORD == ti.CARD_WORD and tb.LEAD_WORDS == ti.LEAD_WORDS and tb.LEAD_SKIP == ti.LEAD_SKIP
+    assert tb.SPREAD == ti.SPREAD
+
+
+SAMPLES = [
+    CARD_PROMPT, GOOD_PROMPT,
+    "a single card tucked between the pages of a notebook on a windowsill",
+    "a garden at dawn, a bench, and three cards forgotten on it",
+    "a Celtic Cross spread on a wooden floor",
+    "a harbour at night, gulls asleep on the posts, a sailor holding a card up to the lantern",
+    "Spiritual tarot imagery with sacred geometry, cosmic background",
+    "a lighthouse struck by lightning on a black cliff, the energy of the Tower",
+    "the Queen of Cups on a throne by the sea",
+    "A rain-streaked kitchen window at dawn, a kettle steaming on the stove, a coat on the chair, bread on the "
+    "board, and on the windowsill a single card tucked in a notebook",
+    "the deck of a sailing ship at dawn", "a heron with its wings spread wide", "an arcane brass astrolabe",
+]
+
+
+@pytest.mark.parametrize("prompt", SAMPLES)
+def test_the_copy_judges_every_prompt_like_tarots_images(prompt):
+    assert tb.card_problems(prompt) == ti.card_problems(prompt)
+    assert tb.card_problem(prompt) == ti.card_problem(prompt)
+
+
+def test_a_card_as_context_does_not_stop_the_picture(env):
+    tmp, api, article = env
+    context = GOOD_PROMPT + ", the energy of the Tower, on the harbour wall a single card tucked under a stone"
+    cover = _generated(tmp, "cover.jpg", b"\xff\xd8 lighthouse", prompt=context)
+    assert tb.main(["post", article, "--cover", cover]) == tb.EXIT_OK
+
+
+def test_a_file_that_is_not_an_image_is_a_usage_error_before_the_record(env, capsys):
+    tmp, api, article = env
+    gif = tmp / "c.gif"
+    gif.write_bytes(b"GIF89a")
+    assert tb.main(["upload", str(gif), "--for", "x"]) == tb.EXIT_USAGE
+    assert tb.main(["post", article, "--cover", str(gif)]) == tb.EXIT_USAGE
+    assert "PNG, JPEG or WebP" in capsys.readouterr().err and api.calls == []
 
 
 def test_post_with_a_generated_cover_records_it(env):

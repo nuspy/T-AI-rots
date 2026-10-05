@@ -1,6 +1,6 @@
 ---
 name: tarots-blog-images
-description: Generate and swap the images of TAROTS chat (tarots.chat) blog articles — the cover and the pictures inside the text — with the LitMedia skill (litmedia-skill, API, Seedream 5.0 2K) through this skill's own `tarots_images.py generate`, one article at a time. Every picture is a scene written for that article, different from the previous ones, and never shows a tarot card or any other card. Use when asked to replace, refresh, fix, vary or add images on TAROTS blog posts, to give an article a picture inside its text, or when tarots-blog-publisher needs a cover. Not browser-image-gen, not the agent's own image tool.
+description: Generate and swap the images of TAROTS chat (tarots.chat) blog articles — the cover and the pictures inside the text — with the LitMedia skill (litmedia-skill, API, Seedream 5.0 2K) through this skill's own `tarots_images.py generate`, one article at a time. Every picture is a scene written for that article, different in form from the previous ones (kind, shot, light and setting declared and checked), and never a picture of cards (a card may only be context). Use when asked to replace, refresh, fix, vary or add images on TAROTS blog posts, to give an article a picture inside its text, or when tarots-blog-publisher needs a cover. Not browser-image-gen, not the agent's own image tool.
 ---
 
 # TAROTS chat blog images
@@ -8,8 +8,9 @@ description: Generate and swap the images of TAROTS chat (tarots.chat) blog arti
 The blog's covers went wrong twice: first every article had tarot cards laid out on a table; then an agent made
 about fifty covers from one fixed prompt per section, with cards in almost all of them, the same picture again and
 again, sometimes the same file on two articles. This skill gives every article **its own** picture — a scene, a
-place, a person, a season, an object or a metaphor from what the article is actually about, **never a card** — and
-replaces cover and inline pictures through the REST API, without touching the text, the SEO fields or the status.
+place, a person, a season, an object or a metaphor from what the article is actually about, **never a picture of
+cards** — in a form (kind, shot, light, setting) that differs from the last pictures, and replaces cover and inline
+pictures through the REST API, without touching the text, the SEO fields or the status.
 
 Works for any agent that can run a shell command (Hermes, OpenClaw, Codex, Claude Code). Python 3.8+, standard
 library only. The script is `scripts/tarots_images.py` (paths below are relative to this skill). It is also the
@@ -24,20 +25,29 @@ library only. The script is `scripts/tarots_images.py` (paths below are relative
   look for another way to make one.
 
 ## The picture rules (the script enforces them, with no option to skip)
-- **Zero cards**: no tarot card, deck, spread, arcana, reading table, playing or oracle card, not even one small
-  card as a detail. A prompt with the word "tarot", a card, a deck, a spread or a card's name is refused, and so is
-  an alt text that describes cards. Why, and how to show a card's meaning without the card:
-  `references/prompts.md`.
+- **Cards as context, never as the picture.** Refused: a card as the **subject** (the prompt starts with it, the
+  word *card* is in the first clause or the first 8 content words, a close-up of a card, tarot artwork), **more than
+  one card** (cards, a deck, a pile, a hand of cards, the arcana), a **spread or layout** (cards on a table, a
+  reading, a fan of cards, cards face down, a Celtic Cross layout), **hands holding or turning a card**. Accepted:
+  "tarot" as an adjective, the **names of the cards** as a world or a symbol ("a lighthouse struck by lightning, the
+  energy of the Tower"), **one single small card later in the scene**. An alt text describing a spread is refused;
+  one mentioning a card gets a warning. Details and examples: `references/prompts.md`.
 - **A concrete scene from this article**: at least 12 content words once the house style and the empty words
   ("mystical", "ethereal", "professional photography"…) are out.
+- **A new form**: `generate` and `prompt-check` require `--kind` (17 values), `--shot` (12), `--light` (10) and
+  `--setting` (a place, culture or era in free text); `catalog` lists them. Refused: a kind of the **last 3**
+  pictures, a kind+shot pair of the **last 20**, a light of the **last 2** (firelight: of the **last 10**), a
+  setting of the **last 10**. The prompt must contain a word of the declared light and shot and name the setting.
+  Each refusal says what to change and lists what is free.
 - **A new scene**: a prompt sharing 45% or more of its content words with any prompt already generated is refused,
   with the closest one shown. Change the scene, not three words.
 - **A new file**: `cover` and `inline` refuse a picture (same bytes, whatever the name) already used for another
   article.
-- These checks run on `generate`, on `generate --dry-run` and on `prompt-check`; refusals exit with code **7**.
-  Everything is recorded in `~/.tarots-blog/images-progress.json` (prompts, files, sha256, dates). The publisher's
-  `tarots_blog.py post --cover` / `upload` read and write the same record: they accept only pictures made by
-  `generate` (or explicitly supplied by the operator) and never one already used by another article.
+- These checks run on `generate`, on `generate --dry-run` and on `prompt-check`; refusals exit with code **7**
+  (a value outside the catalogs: code 2). Everything is recorded in `~/.tarots-blog/images-progress.json` (prompts,
+  the four dimensions, files, sha256, dates). The publisher's `tarots_blog.py post --cover` / `upload` read and
+  write the same record: they accept only pictures made by `generate` (or explicitly supplied by the operator) and
+  never one already used by another article.
 
 ## Setup (once)
 
@@ -73,36 +83,38 @@ python scripts/tarots_images.py progress
 Read title, subtitle, keyword, section, tags and **the whole text**. Find what the article is really about: the
 human situation it speaks to (grief, a new love, a decision, a change of season), the world of its card, the place
 or the time. Note where the text already has pictures (`immagini_nel_testo`, numbered from 0) and what their alt
-text says. `progress` shows the last pictures generated: the next one must be a different kind.
+text says. `progress` shows the last 20 pictures with their kind, shot, light and setting, and what is free next.
 
 ### 3. Write the prompt (the heart of the job)
 Follow `references/prompts.md`. In short:
-- Pick the **kind** of picture first (landscape or sky, architecture or place, person from behind or far away,
-  still life of a symbolic object, natural close-up, abstract metaphor, everyday life scene, symbolic animal), and
-  **not the kind of any of the last 3 pictures**. Vary time of day, light, season and dominant colour too.
-- Name **one concrete element of this article's text** in the prompt. Never a prompt per section, never a template,
-  never the candlelit table, the open book with a candle or the desk as a default scene.
+- The **subject comes from the article**: name **one concrete element of its text**. Never a prompt per section,
+  never a template, never the candlelit table, the open book with a candle or the desk as a default scene.
+- Then choose its **form** among the free values (`catalog`, `progress`): `--kind` (what it shows), `--shot` (the
+  framing), `--light`, `--setting` (a place, culture or era, from the article when it has one). Write the light, the
+  framing and the setting into the prompt with their own words.
 - Append the house style line unchanged; covers are **3:2**, pictures in the text **4:3** (or 1:1 for a close-up).
-- Check it for free: `python scripts/tarots_images.py prompt-check --prompt "<prompt>" --alt "<alt>"`.
+- Check it for free:
+  `python scripts/tarots_images.py prompt-check --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --alt "<alt>"`.
 
 ### 4. Try it dry first
 ```
-python scripts/tarots_images.py generate --prompt "<prompt>" --out work/<slug>-cover.jpg --dry-run
+python scripts/tarots_images.py generate --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --out work/<slug>-cover.jpg --dry-run
 python scripts/tarots_images.py cover <id> work/<slug>-cover.jpg --alt "<alt>" --dry-run
 ```
 For the first run with an operator, show the prompts for **three** articles and wait for an ok before generating.
 
 ### 5. Generate and swap
 ```
-python scripts/tarots_images.py generate --prompt "<prompt>" --out work/<slug>-cover.jpg --budget <left>
+python scripts/tarots_images.py generate --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --out work/<slug>-cover.jpg --budget <left>
 python scripts/tarots_images.py cover <id> work/<slug>-cover.jpg --alt "<what the picture shows>"
 
-python scripts/tarots_images.py generate --prompt "<prompt>" --aspect 4:3 --out work/<slug>-1.jpg --budget <left>
+python scripts/tarots_images.py generate --prompt "<prompt>" --kind <other kind> --shot <shot> --light <other light> --setting "<other setting>" --aspect 4:3 --out work/<slug>-1.jpg --budget <left>
 python scripts/tarots_images.py inline <id> --replace 0 work/<slug>-1.jpg "<alt>"
 ```
-- **Look at every picture before swapping it in** (open the file). Reject it if it shows a card or anything like one
-  anyway, text or letters, a malformed hand or face, or has nothing to do with the article. A second try is a
-  **rewritten** prompt (the same one is refused as a repeat), and at most one.
+- **Look at every picture before swapping it in** (open the file). Reject it if it is a picture of cards anyway (a
+  card filling the frame, a spread, a deck, cards in a hand), has text or letters, a malformed hand or face, or has
+  nothing to do with the article. A second try is a **rewritten** prompt with a new form (the same prompt and the
+  same dimensions are refused as a repeat), and at most one.
 - `inline` also takes `--add <after paragraph> <file> <alt>` (0 = after the first paragraph; paragraphs are blocks
   separated by a blank line) and `--remove <n>`. Add a picture only where it serves the text, not at the top (that is
   the cover) and not after the last paragraph. One or two per article is plenty, each a different kind from the cover.
@@ -113,13 +125,14 @@ python scripts/tarots_images.py inline <id> --replace 0 work/<slug>-1.jpg "<alt>
 - Then the next article, from step 2.
 
 ### 6. Report
-A short table: article, what changed (cover / inline n), the kind and subject of each picture, credits spent,
+A short table: article, what changed (cover / inline n), the subject and the form (kind · shot · light · setting)
+of each picture, credits spent,
 balance left, and anything the operator should look at (a picture you rejected, a prompt the script refused and
 why, an article whose text made a good picture hard, LitMedia failing).
 
 ## Hard rules
 - Only pictures: never try to change text, title, SEO fields or status (the key cannot, and should not try).
-- **No card of any kind in any picture.** No text in pictures. No recognisable real people, no fake photos of real
+- **Never a picture of cards** (a card at most as a small detail in the context). No text in pictures. No recognisable real people, no fake photos of real
   events, no copy of the Thoth deck's actual artwork (copyrighted).
 - **Only `tarots_images.py generate`** makes pictures (through `litmedia-skill`). Never `browser-image-gen`, never a
   built-in image tool, never the LitMedia website.
@@ -132,6 +145,7 @@ why, an article whose text made a good picture hard, LitMedia failing).
 
 ## Files
 - `scripts/tarots_images.py`: the CLI (`-h` on every command).
-- `references/prompts.md`: why no cards, the kinds of picture and the variety rule, the house style, examples.
+- `references/prompts.md`: cards as context and never as the picture, the four dimensions with their catalogs and
+  rules, the house style, examples.
 - `references/api.md`: the four endpoints, if you would rather call them directly.
 - `tests/test_controlli.py`: offline tests of the picture rules (`python -m pytest tests -q`).

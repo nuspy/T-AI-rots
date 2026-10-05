@@ -19,20 +19,31 @@ Commands (run `tarots_images.py <command> -h` for the options):
     list [--todo]           every article with its cover and inline images (--todo: not redone yet by this tool)
     show ID                 one article with its full text: read it before writing a prompt
     balance                 LitMedia credits left
-    prompt-check --prompt P [--alt TEXT]
+    catalog                 the values of --kind, --shot and --light, and which ones are free for the next picture
+    prompt-check --prompt P --kind K --shot S --light L --setting TEXT [--alt TEXT]
                             every check `generate` makes on a prompt, offline: nothing generated, nothing spent
-    generate --prompt P --out FILE [--aspect 3:2] [--resolution 2K] [--budget N] [--dry-run]
+    generate --prompt P --kind K --shot S --light L --setting TEXT --out FILE [--aspect 3:2] [--resolution 2K]
+             [--budget N] [--dry-run]
                             one picture with Seedream 5.0 through litmedia-skill (checks the prompt, then the balance)
     cover ID FILE --alt TEXT [--dry-run]
                             replace the cover
     inline ID [--replace N FILE ALT] [--add AFTER_PARAGRAPH FILE ALT] [--remove N] [--dry-run]
                             replace, add or remove pictures inside the text (N = 0 for the first picture)
-    progress                the last pictures generated, and what this tool has already redone, with the prompts
+    progress                the last 20 pictures generated with their four dimensions, what is free next, and what
+                            this tool has already redone
 
 The picture rules, checked before anything is generated or sent (`--dry-run` included), with no option to skip them:
-    - no cards of any kind: no tarot card, deck, spread, arcana, reading table, playing or oracle card, not even one
-      as a small detail; the word "tarot" itself is refused (it makes the model paint cards). Alt texts too;
+    - never a picture OF cards: no card as the subject (at the start of the prompt, in its first clause or its first
+      8 content words, a close-up of a card), no two or more cards (cards, a deck, a pile, the arcana), no spread or
+      layout (cards on a table, a reading, a fan of cards, cards face down), no hands holding or turning a card.
+      Cards may stay in the context: "tarot" as an adjective, the names of cards as a world or a symbol ("the energy
+      of the Tower"), one single small card later in the scene. An alt text that describes a spread is refused; one
+      that mentions a card otherwise gets a warning;
     - a concrete scene: at least 12 content words once the house style line and the empty words are taken out;
+    - a new form: four dimensions are declared for every picture (--kind, --shot, --light from the catalogs below,
+      --setting in free text) and recorded; the kind of the last 3 pictures, a kind+shot pair of the last 20, the
+      light of the last 2 (firelight: of the last 10) and a setting of the last 10 are refused. The prompt must show
+      the declared light, composition and setting;
     - a new scene: a prompt 45% or more similar (Jaccard, content words) to one already generated is refused;
     - a new file: a picture already used for another article is refused (sha256, kept in the progress file).
 
@@ -54,6 +65,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -75,28 +87,66 @@ PROGRESS_PATH = Path(os.environ["TAROTS_IMAGES_PROGRESS"]) if os.environ.get("TA
 _noted = False
 
 #: The problem this skill exists to fix: every cover was "tarot cards laid out on a table", then a batch of covers
-#: made from one fixed prompt per section. The operator's rule is now absolute: **no card of any kind in any blog
-#: picture**, not even one as a small detail. Each entry: (pattern, what it names, checked in alt texts too).
-#: The bare word "tarot" and the names of cards are refused in prompts only (they make the model paint the card),
-#: while an alt text may still carry the article's keyword ("... the Five of Cups tarot meaning").
-#: `tarots-blog-publisher/scripts/tarots_blog.py` keeps a copy of these patterns (and of DECK / NOT_A_CARD_DECK) for
-#: the pictures it uploads; a test there checks that the two stay identical: change both together.
+#: made from one fixed prompt per section. The operator's rule: **a blog picture is never a picture of cards**.
+#: Cards may stay in the context — the blog is about tarot, and the names of the cards (the Sun, the Tower, the
+#: Queen of Cups, the Wands…) are the very world the pictures show — but never as the subject, never more than one,
+#: never laid out, never in a hand. Each entry: (pattern, what it names, family). The family "spread" is the only
+#: one that also refuses an alt text; the others only warn about it (an alt may carry the article's keyword).
+#: `tarots-blog-publisher/scripts/tarots_blog.py` keeps a copy of these patterns, of CARD_WORD, LEAD_WORDS,
+#: LEAD_SKIP, DECK and NOT_A_CARD_DECK and of `card_problems()` for the pictures it uploads; a test there checks
+#: that the two stay identical: change both together.
+SPREAD = "spread"
+_W = r"(?:[\w'-]+\s+)"  # one more word, in the patterns below
 CARD_PATTERNS = [
-    (r"\btarot\w*|\btarocc\w*", "the word itself makes the model paint cards", False),
-    (r"\bcards?\b", "a card", True),
+    # spreads and layouts
     (r"\b(?:tarot|cards?|reading|oracle|celtic[- ]cross|horseshoe|lenormand)\s+spreads?\b"
-     r"|\bspreads?\s+(?:positions?|layout)\b"
-     r"|\b(?:a|the|this|that|her|his|their|my|your)\s+spread\s+(?:on|across|over|laid)\b", "a spread", True),
-    (r"\barcan(?:a|um)\b", "the arcana", True),
-    (r"\breading\s+tables?\b|\btables?\s+(?:set\s+)?for\s+(?:a\s+)?reading\b|\bdivination\s+tables?\b", "a reading table", True),
-    (r"\brider[- ]?waite\b|\bwaite[- ]smith\b|\bsmith[- ]waite\b|\bthoth\s+(?:trumps?|atus?)\b|\batus?\s+[ivxlc]+\b",
-     "a named tarot deck or its trumps", True),
-    (r"\bcartomanc\w*|\blenormand\b", "card reading", True),
-    (r"\b(?:ace|two|three|four|five|six|seven|eight|nine|ten|page|knight|queen|king|princess|prince)\s+of\s+"
-     r"(?:cups|wands|swords|pentacles|disks|discs|coins)\b"
-     r"|\bhigh\s+priestess\b|\bhierophant\b|\bhanged\s+man\b|\bwheel\s+of\s+fortune\b",
-     "the name of a card (describe its world instead)", False),
+     r"|\bspreads?\s+(?:positions?|layouts?)\b"
+     r"|\b(?:a|the|this|that|her|his|their|my|your)\s+spread\s+(?:on|across|over|laid)\b"
+     r"|\b(?:tarot|cards?|oracle|lenormand|celtic[- ]cross|horseshoe|spread|reading)\s+" + _W + r"{0,2}layouts?\b",
+     "a spread or a layout of cards", SPREAD),
+    (r"\b(?:tarot|cards?|oracle|lenormand)\s+readings?\b|\breading\s+tables?\b"
+     r"|\btables?\s+(?:set\s+)?for\s+(?:a\s+)?reading\b|\bdivination\s+tables?\b|\bcartomanc\w*",
+     "a card reading: cards laid out on a table", SPREAD),
+    (r"\bcards?\s+(?:laid|spread|arranged|dealt|fanned)\s+out\b"
+     r"|\bcards?\s+(?:(?:laid|lying|placed|set|spread|arranged|scattered|dealt|turned)\s+(?:out\s+)?)?"
+     r"(?:on|across|over|upon)\s+" + _W + r"{0,3}(?:table|tablecloth|cloth|altar|desk|velvet|silk|floor|rug|board)s?\b",
+     "cards laid out on a surface: a spread", SPREAD),
+    (r"\bcards?\s+" + _W + r"{0,2}face[- ]?(?:down|up)\b|\bface[- ]?(?:down|up)\s+" + _W + r"{0,2}cards?\b"
+     r"|\bfan\s+of\s+" + _W + r"{0,2}cards\b|\bfanned\s+" + _W + r"{0,2}cards\b",
+     "cards face down or face up, or fanned out: a spread", SPREAD),
+    # hands holding or turning a card
+    (r"\b(?:holding|holds|hold|turning|turns|turned|flipping|flips|flipped|drawing|draws|drew|shuffling|shuffles"
+     r"|dealing|deals|pulling|pulls|lifting|lifts|picking|picks|clutching|clutches|grasping|grasps|offering)\s+"
+     r"(?:up\s+|over\s+)?" + _W + r"{0,3}cards?\b"
+     r"|\bcards?\s+" + _W + r"{0,2}(?:in|between|from)\s+" + _W + r"{0,2}(?:hands?|fingers?|palms?)\b",
+     "a hand holding or turning a card", "hands"),
+    # more than one card
+    (r"\bcards\b", "more than one card", "many"),
+    (r"\barcana\b|\btarocchi\b|\b(?:thoth|tarot|major|minor)\s+(?:trumps|atus)\b"
+     r"|\b(?:pack|pile|stack|heap|hand|handful|box|set)\s+of\s+" + _W + r"{0,2}(?:tarot|tarocchi|oracle|lenormand|playing)\b",
+     "a set of cards", "many"),
+    # the card as the subject
+    (r"\b(?:close[- ]?up|macro(?:\s+shot)?|detail|portrait|still\s+life|study)\s+of\s+" + _W + r"{0,3}cards?\b"
+     r"|\bcards?\s+(?:showing|shows|depicting|depicts|bearing|with\s+(?:an?\s+)?(?:image|picture|illustration|painting"
+     r"|figure|drawing)\s+of)\b"
+     r"|\b(?:large|big|giant|huge|oversized|enormous|floating|levitating|glowing)\s+" + _W + r"?cards?\b"
+     r"|\bcards?\s+" + _W + r"{0,2}(?:in\s+the\s+)?(?:foreground|centre|center)\b",
+     "a card as the subject of the picture", "subject"),
+    (r"\btarot[- ](?:style\s+)?(?:imagery|artwork|art|illustrations?|images?|iconography|designs?|prints?|paintings?"
+     r"|style|frames?|borders?)\b|\bcard[- ](?:frames?|borders?)\b|\batus?\s+[ivxlc]+\b",
+     "the artwork, frame or numbered title of a card: the model paints the card", "subject"),
+    (r"\brider[- ]?waite\b|\bwaite[- ]smith\b|\bsmith[- ]waite\b|\bmarseilles?\s+tarot\b|\btarot\s+de\s+marseilles?\b",
+     "a named deck's artwork", "subject"),
 ]
+#: A card named as such: in the first clause or among the first LEAD_WORDS content words it is the subject.
+CARD_WORD = r"\bcard\b|\barcanum\b|\btarocco\b"
+LEAD_WORDS = 8
+#: Words that do not count among the first LEAD_WORDS of a prompt: grammar, not content.
+LEAD_SKIP = frozenset("""
+a an the and or but of in on at to with by for from into onto over under above below behind beside between through
+across around along near its it their her his this that these those there is are was were be as while very some one
+single just only
+""".split())
 #: "deck" is a card deck unless it is a ship's, a garden's or a deck chair: those phrases are taken out first.
 #: ("wooden deck" stays refused on purpose: it reads as a box of cards as easily as a terrace. Say "terrace".)
 DECK = r"\bdecks?\b"
@@ -134,6 +184,93 @@ dramatic elegant ambient enchanting enchanted
 MIN_CONTENT_WORDS = 12
 #: Jaccard similarity of content words from which a prompt counts as "the same picture again".
 MAX_SIMILARITY = 0.45
+
+#: The form of a picture, declared with four options of `generate` and `prompt-check` and kept in `_generated`:
+#: what it shows (KINDS), how it is framed (SHOTS), its light (LIGHTS) and where or when it is (--setting, free
+#: text). 17 kinds × 12 shots × 10 lights = 2,040 forms before the setting, which has no end. The subject stays
+#: what the article is about: the dimensions only keep the form from repeating.
+KINDS = {
+    "landscape": "open land: a coast, a field, a mountain pass, a valley",
+    "sky-and-weather": "the sky and what it does: clouds, rain, wind, a rainbow, snow falling",
+    "architecture": "a building or a structure seen from outside: a lighthouse, a bridge, a cloister, a tower",
+    "interior": "a room or an inside place: a kitchen, a library, a greenhouse, a stairwell",
+    "street-or-market": "public everyday life: a street, a market, a station, a harbour front",
+    "figure-from-behind": "one or two people seen from behind, near enough to read the gesture, no face",
+    "figure-at-distance": "a person small in a large space, never recognisable",
+    "hands-and-gesture": "hands doing something the article speaks of: planting, writing, holding a cup (never cards)",
+    "still-life-object": "one object charged with meaning, alone and well lit: a key, a letter, two rings",
+    "nature-macro": "a natural detail very close: a seed head, frost on a leaf, bark, a shell",
+    "animal": "an animal that carries the article's meaning: a heron, a fox in snow, bees, a horse",
+    "water-and-reflection": "a sea, a river, a pool or a puddle, and what it mirrors",
+    "celestial": "the moon, the planets, the stars or an eclipse as the subject",
+    "ritual-or-craft": "making or rite: weaving, pottery, bread, a procession, a lit offering",
+    "abstract-symbol": "a visual metaphor: threads, doors, lights in a pattern, a labyrinth",
+    "map-or-diagram": "a drawn map, a sky chart or a plan, with no readable letters or numbers",
+    "journey-or-path": "a road, a path, steps, a crossing, a boat leaving",
+}
+#: Composition: name → (what it is, the words that show it in the prompt; one of them must be there).
+SHOTS = {
+    "wide": ("the whole place, the subject small in it",
+             ("wide", "wide view", "wide shot", "panoramic", "panorama", "vast", "seen from afar", "seen from a distance",
+              "far away", "in the distance")),
+    "close-up": ("the subject fills the frame",
+                 ("close-up", "closeup", "close view", "up close", "tight framing", "detail of", "seen close")),
+    "macro": ("closer than the eye: texture, drops, fibres",
+              ("macro", "extreme close-up", "magnified", "tiny details", "macro view")),
+    "aerial": ("from high above, the land as a pattern",
+               ("aerial", "bird's eye", "bird's-eye", "from high above", "from the air", "seen from above",
+                "high above", "drone view")),
+    "low-angle": ("from below, looking up at the subject",
+                  ("low angle", "low-angle", "from below", "looking up", "worm's eye", "from the ground up",
+                   "seen from beneath")),
+    "silhouette": ("the subject dark against a bright sky or window",
+                   ("silhouette", "silhouetted", "backlit", "against the light", "dark outline")),
+    "through-a-window-or-doorway": ("seen through a frame in the foreground",
+                                    ("through a window", "through the window", "through a doorway", "through the doorway",
+                                     "through an open door", "through the open door", "through an arch",
+                                     "framed by a window", "framed by a doorway", "framed by an arch", "window frame",
+                                     "door frame")),
+    "reflection": ("the subject seen in water, glass or a mirror",
+                   ("reflection", "reflected", "reflecting", "mirrored", "mirror", "doubled in the water")),
+    "symmetrical": ("centred, the two halves answering each other",
+                    ("symmetrical", "symmetry", "symmetric", "centred", "centered", "perfectly balanced")),
+    "off-centre-negative-space": ("a small subject to one side, much empty space",
+                                  ("off-centre", "off-center", "negative space", "empty space", "to one side",
+                                   "small in the frame", "open space around")),
+    "over-the-shoulder": ("behind a person, seeing what they see",
+                          ("over the shoulder", "over her shoulder", "over his shoulder", "over their shoulder",
+                           "over-the-shoulder")),
+    "top-down": ("straight down on a surface or the ground",
+                 ("top-down", "top down", "from directly above", "straight down", "overhead view", "flat lay",
+                  "seen from overhead")),
+}
+#: Light: name → (what it is, the words that show it in the prompt; one of them must be there).
+LIGHTS = {
+    "dawn": ("first light, cool and clean", ("dawn", "sunrise", "daybreak", "first light", "early morning")),
+    "golden-hour": ("low warm sun, long shadows",
+                    ("golden hour", "golden light", "late afternoon", "low sun", "sunset", "evening sun", "setting sun")),
+    "midday": ("high sun, short shadows, bright colours",
+               ("midday", "noon", "high sun", "noonday", "full daylight", "bright daylight", "overhead sun")),
+    "overcast": ("soft grey light, no shadows, often rain",
+                 ("overcast", "cloudy", "grey sky", "gray sky", "grey light", "diffused light", "soft rain", "drizzle",
+                  "rain")),
+    "blue-hour": ("after sunset, deep blue sky, first lamps",
+                  ("blue hour", "dusk", "twilight", "after sunset", "nightfall", "gloaming")),
+    "moonlight": ("night lit by the moon", ("moonlight", "moonlit", "full moon", "crescent moon", "moon")),
+    "starlight": ("night under the stars, no moon", ("starlight", "starlit", "starry", "stars", "milky way")),
+    "storm-light": ("dark sky and sudden brightness", ("storm", "stormy", "lightning", "thunder", "thunderclouds", "gale")),
+    "fog-or-mist": ("the far things fade into white", ("fog", "foggy", "mist", "misty", "haze", "hazy")),
+    "firelight": ("candles, lamps, a hearth: rare on this blog",
+                  ("firelight", "fire", "candlelight", "candle", "candles", "candlelit", "lamplight", "lantern light",
+                   "hearth", "embers", "bonfire", "torchlight")),
+}
+KIND_GAP = 3         # a kind cannot be the kind of any of the last 3 pictures
+PAIR_GAP = 20        # a kind+shot pair cannot repeat within the last 20
+LIGHT_GAP = 2        # a light cannot be the light of the last 2
+RARE_LIGHTS = {"firelight": 10}  # and these not at all if used within the last N
+SETTING_GAP = 10     # a setting (normalized) cannot repeat within the last 10
+SHOWN_IN_PROGRESS = 20
+MAX_SETTING_CHARS, MAX_SETTING_WORDS = 80, 8
 
 
 class Failure(Exception):
@@ -262,8 +399,11 @@ def explain(exc: urllib.error.HTTPError) -> str:
 #
 # One JSON object. Article ids map to {"cover": entry, "inline": [entries]} as before; two keys starting with "_"
 # were added later and never collide with an id (ids are uuids):
-#     "_generated": [{"prompt", "file", "sha256", "aspect", "when"}, ...]   every picture `generate` made, oldest first
+#     "_generated": [{"prompt", "file", "sha256", "aspect", "when",          every picture `generate` made, oldest first
+#                     "kind", "shot", "light", "setting"}, ...]            (the four dimensions: only in newer entries)
 #     "_used":      {sha256: {"post", "kind", "file", "when"}}                every file swapped into an article
+# ("kind" in `_used` is cover/inline/upload; in `_generated` it is the kind of picture of KINDS.) Older `_generated`
+# entries without dimensions still count for the similarity of prompts, not for the dimension rules.
 
 
 def _progress() -> Dict[str, Any]:
@@ -302,10 +442,10 @@ def _record(post_id: str, kind: str, entry: Dict[str, Any]) -> None:
     _save(data)
 
 
-def _record_generated(prompt: str, file: Path, aspect: str) -> None:
+def _record_generated(prompt: str, file: Path, aspect: str, dims: Optional[Dict[str, str]] = None) -> None:
     data = _progress()
     data.setdefault("_generated", []).append(
-        {"prompt": prompt, "file": str(file), "sha256": sha256_of(file), "aspect": aspect, "when": _now()}
+        {"prompt": prompt, "file": str(file), "sha256": sha256_of(file), "aspect": aspect, "when": _now(), **(dims or {})}
     )
     _save(data)
 
@@ -384,17 +524,42 @@ def balance() -> int:
 # ---- the picture rules (no network: `prompt-check` runs them alone) -------------------------------------------
 
 
-def card_problem(text: str, *, alt: bool = False) -> Optional[str]:
-    """The first mention of a card in a prompt (or, with alt=True, in an alt text), as «words» (what they name)."""
+def _lead(low: str) -> str:
+    """The opening of a prompt, where a card is the subject: its first clause, or its first LEAD_WORDS content
+    words if they run further."""
+    clause = re.split(r"[,;:.!?()]|\s[-–—]\s", low, maxsplit=1)[0]
+    end, n = len(low), 0
+    for m in re.finditer(r"[a-z0-9]+(?:['-][a-z0-9]+)*", low):
+        if m.group(0) not in LEAD_SKIP:
+            n += 1
+            if n == LEAD_WORDS:
+                end = m.end()
+                break
+    return low[: max(len(clause), end)]
+
+
+def card_problems(text: str) -> List[tuple]:
+    """Every way the text makes cards the picture, as (family, words, what they name); [] when cards are at most
+    context. The family SPREAD comes first when there is one."""
     low = " ".join(text.lower().split()).replace("’", "'")
-    for pattern, what, in_alt in CARD_PATTERNS:
-        if alt and not in_alt:
-            continue
+    found = []
+    for pattern, what, family in CARD_PATTERNS:
         m = re.search(pattern, low)
         if m:
-            return f"«{m.group(0)}» ({what})"
+            found.append((family, m.group(0), what))
     m = re.search(DECK, re.sub(NOT_A_CARD_DECK, " ", low))
-    return f"«{m.group(0)}» (a deck of cards)" if m else None
+    if m:
+        found.append(("many", m.group(0), "a deck: many cards"))
+    m = re.search(CARD_WORD, _lead(low))
+    if m:
+        found.append(("subject", m.group(0), f"a card as the subject: in the first clause or the first {LEAD_WORDS} words"))
+    return found
+
+
+def card_problem(text: str) -> Optional[str]:
+    """The first way the text makes cards the picture, as «words» (what they name), or None."""
+    found = card_problems(text)
+    return f"«{found[0][1]}» ({found[0][2]})" if found else None
 
 
 def _stem(word: str) -> str:
@@ -438,9 +603,12 @@ def prompt_problems(prompt: str, earlier: List[str]) -> List[str]:
     card = card_problem(prompt)
     if card:
         problems.append(
-            f"it asks for a card: {card}. No blog picture shows cards of any kind — no tarot card, deck, spread, "
-            "arcana, reading table, playing or oracle card, not even one small card as a detail. Show the world the "
-            "article talks about instead (see references/prompts.md)."
+            f"it makes cards the picture: {card}. A blog picture is never a picture of cards: no card as the subject "
+            f"(at the start, in the first clause or the first {LEAD_WORDS} words), no two or more cards (cards, a "
+            "deck, a pile, the arcana), no spread or layout, no hand holding or turning a card. Keep cards as "
+            "context: 'tarot' as an adjective, a card's name as a world or a symbol ('a lighthouse struck by "
+            "lightning, the energy of the Tower'), at most one single small card later in the scene. Show the "
+            "world the article talks about (see references/prompts.md)."
         )
     words = content_words(prompt)
     if len(words) < MIN_CONTENT_WORDS:
@@ -465,8 +633,138 @@ def _short(prompt: str, size: int = 160) -> str:
     return text if len(text) <= size else text[: size - 1] + "…"
 
 
-def check_prompt(prompt: str) -> None:
-    problems = prompt_problems(prompt, _known_prompts(_progress()))
+# ---- the four dimensions: kind, shot, light, setting -----------------------------------------------------------
+
+
+def _flat(text: str) -> str:
+    """Lowercase, straight apostrophes, hyphens as spaces, single spaces: how keywords are looked for."""
+    return " ".join(text.lower().replace("’", "'").replace("-", " ").split())
+
+
+def _shows(scene: str, keywords) -> bool:
+    flat = _flat(scene)
+    return any(re.search(r"(?<![\w'])" + re.escape(_flat(k)) + r"s?(?![\w'])", flat) for k in keywords)
+
+
+def _scene(prompt: str) -> str:
+    """The prompt without the house style line: its words ("soft natural light") never count as a choice."""
+    return " ".join(prompt.split()).replace(" ".join(HOUSE_STYLE.split()), " ")
+
+
+def setting_key(setting: str) -> str:
+    """A setting compared without case, accents, punctuation, articles, plurals or word order
+    ("The Mediterranean harbours" = "harbour, Mediterranean")."""
+    plain = unicodedata.normalize("NFKD", setting)
+    plain = "".join(c for c in plain if not unicodedata.combining(c)).lower().replace("’", "'")
+    words = {_stem(w) for w in re.findall(r"[a-z0-9]+", plain) if w not in LEAD_SKIP}
+    return " ".join(sorted(words))
+
+
+def _norm_value(value: Optional[str]) -> str:
+    return "-".join((value or "").strip().lower().replace("_", " ").replace("-", " ").split())
+
+
+def dimensions(kind: Optional[str], shot: Optional[str], light: Optional[str], setting: Optional[str]) -> Dict[str, str]:
+    """The four options, normalized ("Close up" → close-up) and validated against the catalogs (exit 2 otherwise)."""
+    dims = {"kind": _norm_value(kind), "shot": _norm_value(shot), "light": _norm_value(light),
+            "setting": " ".join((setting or "").split())}
+    wrong = []
+    for name, catalog in (("kind", KINDS), ("shot", SHOTS), ("light", LIGHTS)):
+        if dims[name] not in catalog:
+            wrong.append(f"--{name} «{dims[name] or ''}» is not in the catalog: one of {', '.join(catalog)}")
+    if not setting_key(dims["setting"]):
+        wrong.append("--setting is missing: a place, a culture or an era in a few words (\"Japanese garden\", "
+                     "\"Victorian library\", \"desert at the edge of a salt lake\")")
+    elif len(dims["setting"]) > MAX_SETTING_CHARS or len(dims["setting"].split()) > MAX_SETTING_WORDS:
+        wrong.append(f"--setting is too long: {MAX_SETTING_WORDS} words and {MAX_SETTING_CHARS} characters at most "
+                     "(a place, a culture or an era, not the scene)")
+    if wrong:
+        raise Failure("the dimensions are not valid, nothing was generated:\n  - " + "\n  - ".join(wrong)
+                      + "\n  (`catalog` lists every value and which ones are free now)", EXIT_USAGE)
+    return dims
+
+
+def dimension_history(data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """The generated pictures that declared their dimensions, oldest first (older entries have none)."""
+    return [e for e in data.get("_generated") or [] if isinstance(e, dict) and e.get("kind")]
+
+
+def free_values(history: List[Dict[str, Any]], kind: Optional[str] = None) -> Dict[str, Any]:
+    """What the next picture may use: kinds, lights, shots (with `kind`: the shots still free for that kind), and
+    the settings to avoid."""
+    last_kinds = [e.get("kind") for e in history[-KIND_GAP:]]
+    last_lights = [e.get("light") for e in history[-LIGHT_GAP:]]
+    rare = {l for l, gap in RARE_LIGHTS.items() if any(e.get("light") == l for e in history[-gap:])}
+    pairs = {(e.get("kind"), e.get("shot")) for e in history[-PAIR_GAP:]}
+    return {
+        "kinds": [k for k in KINDS if k not in last_kinds],
+        "lights": [l for l in LIGHTS if l not in last_lights and l not in rare],
+        "shots": [s for s in SHOTS if (kind, s) not in pairs] if kind else list(SHOTS),
+        "settings": [e.get("setting") for e in reversed(history[-SETTING_GAP:]) if e.get("setting")],  # newest first
+    }
+
+
+def dimension_problems(prompt: str, dims: Dict[str, str], history: List[Dict[str, Any]]) -> List[str]:
+    """Every dimension rule the picture breaks, each with what to change and what is still free."""
+    problems: List[str] = []
+    kind, shot, light, setting = dims["kind"], dims["shot"], dims["light"], dims["setting"]
+    free = free_values(history, kind)
+    last_kinds = [e.get("kind") for e in history[-KIND_GAP:]]
+    if kind in last_kinds:
+        problems.append(
+            f"--kind {kind} is the kind of one of the last {KIND_GAP} pictures ({', '.join(reversed(last_kinds))}, "
+            f"newest first): show something else. Kinds free now: {', '.join(free['kinds'])}."
+        )
+    if any((e.get("kind"), e.get("shot")) == (kind, shot) for e in history[-PAIR_GAP:]):
+        problems.append(
+            f"--kind {kind} with --shot {shot} was already used in the last {PAIR_GAP} pictures: change the framing. "
+            f"Shots still free with {kind}: {', '.join(free['shots']) or 'none, change the kind'}."
+        )
+    last_lights = [e.get("light") for e in history[-LIGHT_GAP:]]
+    if light in last_lights:
+        problems.append(
+            f"--light {light} is the light of one of the last {LIGHT_GAP} pictures ({', '.join(reversed(last_lights))}, "
+            f"newest first): change the hour or the weather. Lights free now: {', '.join(free['lights'])}."
+        )
+    elif light in RARE_LIGHTS:
+        gap = RARE_LIGHTS[light]
+        ago = [n for n, e in enumerate(reversed(history[-gap:]), 1) if e.get("light") == light]
+        if ago:
+            problems.append(
+                f"--light {light} stays rare: it was used {ago[0]} picture(s) ago, and never twice in {gap}. "
+                f"Lights free now: {', '.join(free['lights'])}."
+            )
+    key = setting_key(setting)
+    earlier = [e.get("setting") for e in history[-SETTING_GAP:] if setting_key(e.get("setting") or "") == key]
+    if earlier:
+        problems.append(
+            f"--setting «{setting}» was already used in the last {SETTING_GAP} pictures (as «{earlier[-1]}»): choose "
+            f"another place, culture or era. Settings of the last {SETTING_GAP}, to avoid: "
+            f"{'; '.join(free['settings'])}."
+        )
+    scene = _scene(prompt)
+    if not _shows(scene, LIGHTS[light][1]):
+        problems.append(
+            f"the prompt does not show the light declared with --light {light}: write it into the scene with one of "
+            f"{', '.join(repr(k) for k in LIGHTS[light][1])} (the house style line does not count)."
+        )
+    if not _shows(scene, SHOTS[shot][1]):
+        problems.append(
+            f"the prompt does not show the composition declared with --shot {shot}: write it into the scene with one "
+            f"of {', '.join(repr(k) for k in SHOTS[shot][1])}."
+        )
+    setting_words = {w for w in _words(setting) if w not in _EMPTY and len(w) > 2}
+    if setting_words and not setting_words & set(_words(scene)):
+        problems.append(
+            f"the prompt does not name the setting declared with --setting «{setting}»: put that place, culture or "
+            f"era in the scene (one of the words {', '.join(sorted(setting_words))})."
+        )
+    return problems
+
+
+def check_prompt(prompt: str, dims: Dict[str, str]) -> None:
+    data = _progress()
+    problems = prompt_problems(prompt, _known_prompts(data)) + dimension_problems(prompt, dims, dimension_history(data))
     if problems:
         raise Failure("the prompt is refused, nothing was generated:\n  - " + "\n  - ".join(problems), EXIT_RULE)
 
@@ -484,7 +782,8 @@ def check_file(post_id: str, path: str, used: Optional[Dict[str, str]] = None) -
         )
     prompt = _prompt_of(path)
     if prompt and (card := card_problem(prompt)):
-        raise Failure(f"{path} was generated from a prompt that asks for a card ({card}): it cannot go on the blog.", EXIT_RULE)
+        raise Failure(f"{path} was generated from a prompt that makes cards the picture ({card}): it cannot go on "
+                      "the blog.", EXIT_RULE)
     if not any(e.get("sha256") == sha for e in data.get("_generated") or []):
         print(f"warning: {path} was not made by `generate` (litmedia-skill). Use it only if the operator supplied it "
               "and it shows no card.", file=sys.stderr)
@@ -565,10 +864,12 @@ def cmd_generate(a) -> int:
     out = Path(a.out)
     if out.suffix.lower() not in IMAGE_TYPES:
         raise Failure("--out must end in .jpg, .jpeg, .png or .webp", EXIT_USAGE)
-    check_prompt(a.prompt)
+    dims = dimensions(a.kind, a.shot, a.light, a.setting)
+    check_prompt(a.prompt, dims)
     if a.dry_run:
         print(f"dry run: the prompt passes every check; {MODEL}, {a.aspect}, {resolution}, {cost} credits, "
               f"would be saved to {out}")
+        print(f"form: {_form(dims)}")
         print(f"prompt: {a.prompt}")
         return EXIT_OK
     credits = balance()
@@ -587,20 +888,32 @@ def cmd_generate(a) -> int:
         out.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(files[0]), out)
     Path(str(out) + ".prompt.txt").write_text(a.prompt, encoding="utf-8")
-    _record_generated(a.prompt, out, a.aspect)
+    _record_generated(a.prompt, out, a.aspect, dims)
     print(f"saved {out} ({out.stat().st_size // 1024} KB), {cost} credits; balance now about {credits - cost}")
     return EXIT_OK
 
 
+def _form(dims: Dict[str, Any]) -> str:
+    if not dims.get("kind"):
+        return "(no dimensions: an older record)"
+    return f"{dims.get('kind')} · {dims.get('shot')} · {dims.get('light')} · {dims.get('setting')}"
+
+
 def cmd_prompt_check(a) -> int:
-    earlier = _known_prompts(_progress())
-    problems = prompt_problems(a.prompt, earlier)
+    data = _progress()
+    earlier = _known_prompts(data)
+    dims = dimensions(a.kind, a.shot, a.light, a.setting)
+    history = dimension_history(data)
+    problems = prompt_problems(a.prompt, earlier) + dimension_problems(a.prompt, dims, history)
     if a.alt is not None:
         try:
-            _check_alt(a.alt)
+            _check_alt(a.alt, warn=False)
+            if warning := alt_card_warning(a.alt):
+                print(f"alt text warning: {warning}")
         except Failure as exc:
             problems.append(str(exc))
     best = most_similar(a.prompt, earlier)
+    print(f"form: {_form(dims)}")
     print(f"content words: {len(content_words(a.prompt))} (at least {MIN_CONTENT_WORDS})")
     print(f"closest earlier prompt: {best[0]:.0%} (limit {MAX_SIMILARITY:.0%}) «{_short(best[1])}»" if best
           else f"closest earlier prompt: none of the {len(earlier)} on record shares a content word")
@@ -627,13 +940,25 @@ def upload(path: str) -> Dict[str, Any]:
     return call("POST", "/media", raw=data, content_type=IMAGE_TYPES[Path(path).suffix.lower()])
 
 
-def _check_alt(alt: str) -> str:
+def alt_card_warning(alt: str) -> Optional[str]:
+    """A warning for an alt text that mentions a card without describing a spread (that one is refused)."""
+    found = [f for f in card_problems(alt) if f[0] != SPREAD]
+    if found:
+        return (f"the alt text mentions a card («{found[0][1]}», {found[0][2]}): check that the picture really shows "
+                "it, small and in the context; otherwise describe what is there.")
+    return None
+
+
+def _check_alt(alt: str, *, warn: bool = True) -> str:
     alt = " ".join(alt.split())
     if len(alt) < 8:
         raise Failure("The alt text must describe the picture (8 characters at least).", EXIT_USAGE)
-    if problem := card_problem(alt, alt=True):
-        raise Failure(f"The alt text describes a card ({problem}), and no blog picture shows one: describe what is "
-                      "really in the new picture.", EXIT_RULE)
+    spread = [f for f in card_problems(alt) if f[0] == SPREAD]
+    if spread:
+        raise Failure(f"The alt text describes a spread («{spread[0][1]}», {spread[0][2]}), and no blog picture "
+                      "shows one: describe what is really in the new picture.", EXIT_RULE)
+    if warn and (warning := alt_card_warning(alt)):
+        print(f"warning: {warning}", file=sys.stderr)
     return alt[:200]
 
 
@@ -684,12 +1009,12 @@ def cmd_inline(a) -> int:
     uploaded: List[Dict[str, Any]] = []
     for n, file, alt in replace:
         image = upload(file)
-        uploaded.append({"file": file, "sha256": hashes[file], "url": image["url"], "alt": _check_alt(alt), "prompt": _prompt_of(file)})
-        body["sostituisci"].append({"indice": int(n), "immagine_id": image["id"], "alt": _check_alt(alt)})
+        uploaded.append({"file": file, "sha256": hashes[file], "url": image["url"], "alt": _check_alt(alt, warn=False), "prompt": _prompt_of(file)})
+        body["sostituisci"].append({"indice": int(n), "immagine_id": image["id"], "alt": _check_alt(alt, warn=False)})
     for n, file, alt in add:
         image = upload(file)
-        uploaded.append({"file": file, "sha256": hashes[file], "url": image["url"], "alt": _check_alt(alt), "prompt": _prompt_of(file)})
-        body["aggiungi"].append({"dopo_paragrafo": int(n), "immagine_id": image["id"], "alt": _check_alt(alt)})
+        uploaded.append({"file": file, "sha256": hashes[file], "url": image["url"], "alt": _check_alt(alt, warn=False), "prompt": _prompt_of(file)})
+        body["aggiungi"].append({"dopo_paragrafo": int(n), "immagine_id": image["id"], "alt": _check_alt(alt, warn=False)})
     result = call("PUT", f"/posts/{a.id}/inline", body=body)
     for entry in uploaded:
         _record(a.id, "inline", entry)
@@ -700,14 +1025,50 @@ def cmd_inline(a) -> int:
     return EXIT_OK
 
 
+def _print_free(history: List[Dict[str, Any]]) -> None:
+    free = free_values(history)
+    last_kinds = [e.get("kind") for e in reversed(history[-KIND_GAP:])]
+    not_lights = [e.get("light") for e in reversed(history[-LIGHT_GAP:])]
+    for light, gap in RARE_LIGHTS.items():
+        ago = [n for n, e in enumerate(reversed(history[-gap:]), 1) if e.get("light") == light]
+        if ago and light not in not_lights:
+            not_lights.append(f"{light}: rare, used {ago[0]} picture(s) ago")
+    print("Free for the next picture:")
+    print(f"  --kind   {', '.join(free['kinds'])}" + (f"   (not: {', '.join(last_kinds)})" if last_kinds else ""))
+    print(f"  --light  {', '.join(free['lights'])}" + (f"   (not: {', '.join(not_lights)})" if not_lights else ""))
+    print(f"  --shot   any, as long as the kind+shot pair is not one of the last {PAIR_GAP} pictures (see `progress`)")
+    if free["settings"]:
+        print(f"  --setting not one of the last {SETTING_GAP}: {'; '.join(free['settings'])}")
+
+
+def cmd_catalog(_a) -> int:
+    print(f"--kind: what the picture shows (not the kind of the last {KIND_GAP} pictures)")
+    for name, what in KINDS.items():
+        print(f"  {name:<28} {what}")
+    print(f"\n--shot: the composition (a kind+shot pair not used in the last {PAIR_GAP}); the prompt must contain one "
+          "of the words in brackets")
+    for name, (what, words) in SHOTS.items():
+        print(f"  {name:<28} {what}  [{', '.join(words)}]")
+    print(f"\n--light: not the light of the last {LIGHT_GAP} pictures, firelight not twice in "
+          f"{RARE_LIGHTS['firelight']}; the prompt must contain one of the words in brackets")
+    for name, (what, words) in LIGHTS.items():
+        print(f"  {name:<28} {what}  [{', '.join(words)}]")
+    print(f"\n--setting: a place, a culture or an era in a few words (\"Mediterranean harbour\", \"Japanese garden\", "
+          f"\"Victorian library\"), not one of the last {SETTING_GAP}, named in the prompt too.\n")
+    _print_free(dimension_history(_progress()))
+    return EXIT_OK
+
+
 def cmd_progress(_a) -> int:
     data = _progress()
     generated = data.get("_generated") or []
     if generated:
-        print("Last pictures generated, newest first (the next one must not be the same kind as the last 3):")
-        for n, entry in enumerate(reversed(generated[-6:]), 1):
-            print(f"  {n}. {entry.get('when', '')[:10]}  {entry.get('aspect', '')}  {entry.get('file')}")
-            print(f"     {_short(entry.get('prompt') or '', 200)}")
+        _print_free(dimension_history(data))
+        print(f"\nLast {min(len(generated), SHOWN_IN_PROGRESS)} pictures generated, newest first "
+              "(kind · shot · light · setting):")
+        for n, entry in enumerate(reversed(generated[-SHOWN_IN_PROGRESS:]), 1):
+            print(f"  {n:>2}. {entry.get('when', '')[:10]}  {entry.get('aspect', '')}  {_form(entry)}  {entry.get('file')}")
+            print(f"      {_short(entry.get('prompt') or '', 160)}")
         print()
     articles = _articles(data)
     if not articles:
@@ -720,6 +1081,14 @@ def cmd_progress(_a) -> int:
             if entry.get("prompt"):
                 print(f"    {_short(entry['prompt'], 140)}")
     return EXIT_OK
+
+
+def _dimension_options(p: argparse.ArgumentParser) -> None:
+    """The four dimensions, required: the values are checked by `dimensions()`, which also says which are free."""
+    p.add_argument("--kind", required=True, help=f"what the picture shows: {', '.join(KINDS)}")
+    p.add_argument("--shot", required=True, help=f"the composition: {', '.join(SHOTS)}")
+    p.add_argument("--light", required=True, help=f"the light: {', '.join(LIGHTS)}")
+    p.add_argument("--setting", required=True, help="place, culture or era in a few words, e.g. \"Japanese garden\"")
 
 
 def parser() -> argparse.ArgumentParser:
@@ -738,12 +1107,15 @@ def parser() -> argparse.ArgumentParser:
     sh.add_argument("id")
     sh.set_defaults(fn=cmd_show)
     sub.add_parser("balance", help="LitMedia credits left").set_defaults(fn=cmd_balance)
+    sub.add_parser("catalog", help="the values of --kind, --shot, --light, and which are free now").set_defaults(fn=cmd_catalog)
     pc = sub.add_parser("prompt-check", help="check a prompt (and an alt text) offline, before spending anything")
     pc.add_argument("--prompt", required=True)
+    _dimension_options(pc)
     pc.add_argument("--alt", help="also check this alt text")
     pc.set_defaults(fn=cmd_prompt_check)
     g = sub.add_parser("generate", help=f"one picture with {MODEL} through litmedia-skill")
     g.add_argument("--prompt", required=True)
+    _dimension_options(g)
     g.add_argument("--out", required=True, help="where to save the picture (.jpg/.png/.webp)")
     g.add_argument("--aspect", default="3:2", help="3:2 for a cover (default), 4:3 or 1:1 for a picture in the text")
     g.add_argument("--resolution", default="2K", help="2K (10 credits, default) or 4K (20)")

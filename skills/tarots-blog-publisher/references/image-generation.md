@@ -15,9 +15,15 @@ website, never the agent's own image tool, never `litmedia-skill`'s `ai_image.py
 ## Commands (from this skill's folder)
 ```
 python ../tarots-blog-images/scripts/tarots_images.py balance
-python ../tarots-blog-images/scripts/tarots_images.py prompt-check --prompt "<prompt>" --alt "<alt>"
-python ../tarots-blog-images/scripts/tarots_images.py generate --prompt "<prompt>" --out work/<slug>-cover.jpg
-python ../tarots-blog-images/scripts/tarots_images.py generate --prompt "<prompt>" --aspect 4:3 --out work/<slug>-1.jpg
+python ../tarots-blog-images/scripts/tarots_images.py progress        # the last 20 pictures and what is free next
+python ../tarots-blog-images/scripts/tarots_images.py catalog         # every value of --kind, --shot, --light
+python ../tarots-blog-images/scripts/tarots_images.py prompt-check --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --alt "<alt>"
+python ../tarots-blog-images/scripts/tarots_images.py generate --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --out work/<slug>-cover.jpg
+python ../tarots-blog-images/scripts/tarots_images.py generate --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --aspect 4:3 --out work/<slug>-1.jpg
+```
+For example:
+```
+python ../tarots-blog-images/scripts/tarots_images.py generate --kind architecture --shot low-angle --light storm-light --setting "Breton fishing coast" --out work/the-tower-cover.jpg --prompt "A lighthouse on a black basalt cliff of the Breton coast in a winter storm, one bolt of lightning splitting the sky, a crack running down the white tower and warm light pouring out through it, seen from the fishing harbour below, looking up, the sudden energy of the Tower, <house style>"
 ```
 Then `python scripts/tarots_blog.py post article.json --cover work/<slug>-cover.jpg` for the cover, and
 `python scripts/tarots_blog.py upload work/<slug>-1.jpg --for <slug>` for an inline picture (it prints the `url` to
@@ -30,24 +36,44 @@ and refuse the file before uploading anything (exit 7) when:
 - it was not made by `tarots_images.py generate`. A picture **the operator supplied** passes with
   `--operator-image` and a warning; that option is never a way around a refusal;
 - the same picture (same sha256, whatever the name) is already used by another article;
-- the prompt it was generated from asks for a card.
+- the prompt it was generated from makes cards the picture (the same rules as `generate`, copied in
+  `tarots_blog.py`: a card as the subject, two or more cards, a spread, a hand holding a card).
+
+A file that is not PNG, JPEG or WebP is refused first, as a usage error (exit 2).
 
 After a successful `post` the cover's sha256 is recorded with the new article's id and slug; after `upload`, with
 the `--for` slug or id. Without `--for` the picture is tied to that single upload and refused afterwards: always
 pass it.
 
 ## The prompt
-Write it with `tarots-blog-images/references/prompts.md`: the reasons and the rules, the kinds of picture, the
-house style line, examples. In one breath: **no card of any kind** (not even the word "tarot"), a concrete scene
-from this article's text, a different kind of picture from the last three, never a prompt per section or a
-template. `generate` refuses a prompt that breaks these rules (exit 7) and says why: rewrite it, do not work
-around it.
+Write it with `tarots-blog-images/references/prompts.md`: the reasons and the rules, the catalogs, the house style
+line, examples. In short:
+- **The subject is this article's content**: a concrete scene, place, object or gesture from its text; never a
+  prompt per section or a template.
+- **Cards as context, never as the picture.** Refused: a card as the subject (at the start, in the first clause or
+  the first 8 content words, a close-up of a card), more than one card (cards, a deck, a pile, the arcana), a spread
+  or layout (cards on a table, a reading, a fan of cards, cards face down), hands holding or turning a card.
+  Accepted: "tarot" as an adjective, the names of the cards as a world or a symbol ("a lighthouse struck by
+  lightning, the energy of the Tower"), one single small card later in the scene.
+- **The form changes every time**, declared with four required options: `--kind` (17 values: landscape,
+  sky-and-weather, architecture, interior, street-or-market, figure-from-behind, figure-at-distance,
+  hands-and-gesture, still-life-object, nature-macro, animal, water-and-reflection, celestial, ritual-or-craft,
+  abstract-symbol, map-or-diagram, journey-or-path), `--shot` (12: wide, close-up, macro, aerial, low-angle,
+  silhouette, through-a-window-or-doorway, reflection, symmetrical, off-centre-negative-space, over-the-shoulder,
+  top-down), `--light` (10: dawn, golden-hour, midday, overcast, blue-hour, moonlight, starlight, storm-light,
+  fog-or-mist, firelight) and `--setting` (a place, culture or era in a few words). Refused: a kind of the last 3
+  pictures, a kind+shot pair of the last 20, a light of the last 2 (firelight: of the last 10), a setting of the
+  last 10; and a prompt that does not show the declared light, shot and setting in its own words.
+
+`generate` refuses a prompt that breaks these rules (exit 7) and says what to change, with the values still free:
+rewrite it, do not work around it. The cover and the inline picture of one article get two different forms.
 
 ## Rules
 - **Cost and consent**: 10 credits a picture. Before the first generation of a session tell the operator the
   number of pictures and the cost, and get a yes (a standing "go ahead" from the operator counts).
-- **Look at every picture** before using it. Reject it if it shows a card or anything like one, text, letters,
-  malformed hands or faces, or has nothing to do with the article. A second try needs a rewritten prompt.
+- **Look at every picture** before using it. Reject it if it is a picture of cards anyway (a card filling the
+  frame, a spread, a deck), has text, letters, malformed hands or faces, or has nothing to do with the article. A
+  second try needs a rewritten prompt and a new form.
 - **Never reuse a picture** of another article, and never the cover as the inline picture.
 - **TLS errors are not to be bypassed.** Report them and publish without the picture.
 - **LitMedia down, out of credits or failing**: no picture, said in the report. Never another tool.
@@ -58,7 +84,8 @@ around it.
 ## Alt text
 Describe what is really in the picture, 8–125 characters: `"A lighthouse on a basalt cliff struck by lightning,
 warm light pouring from a crack in the tower"`. The keyword only if the picture really shows it (otherwise accept
-the `chiave_nell_alt` warning); never "tarot cards".
+the `chiave_nell_alt` warning). `tarots_images.py prompt-check --alt` refuses an alt that describes a spread and
+warns about one that mentions a card: keep a card in the alt only if the picture really shows it.
 
 ## Inline pictures are not optional by default
 Decide for every article whether one belongs (a scene from the text, an abstract picture of a spread's positions,

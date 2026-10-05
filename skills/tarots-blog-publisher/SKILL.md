@@ -1,6 +1,6 @@
 ---
 name: tarots-blog-publisher
-description: Write one SEO-optimized English article and publish it on the TAROTS chat (tarots.chat) site's OWN blog, through the site's own REST API with this skill's script `tarots_blog.py` (draft, publish, schedule, update or delete a draft), using every SEO field (keyword, meta title and description, slug, tags, FAQ, alt text). Pictures come from the tarots-blog-images skill (LitMedia, never cards). Use whenever asked to write, publish, schedule, edit or post an article on the TAROTS chat blog, or to keep that blog fed with timely tarot, Thoth, Golden Dawn or astrology content. This is not a social media or scheduling tool; it does not post to Postiz, SocialClaw, WordPress, Medium or any social network, and those tools never publish this blog.
+description: Write one SEO-optimized English article and publish it on the TAROTS chat (tarots.chat) site's OWN blog, through the site's own REST API with this skill's script `tarots_blog.py` (draft, publish, schedule, update or delete a draft), using every SEO field (keyword, meta title and description, slug, tags, FAQ, alt text). Pictures come from the tarots-blog-images skill (LitMedia, never a picture of cards). Use whenever asked to write, publish, schedule, edit or post an article on the TAROTS chat blog, or to keep that blog fed with timely tarot, Thoth, Golden Dawn or astrology content. This is not a social media or scheduling tool; it does not post to Postiz, SocialClaw, WordPress, Medium or any social network, and those tools never publish this blog.
 ---
 
 # TAROTS chat blog publisher
@@ -60,9 +60,19 @@ Do the steps in order. Nothing is public until step 8, and only if the operator 
 ```
 python scripts/tarots_blog.py sections      # slug of a section for the article
 python scripts/tarots_blog.py tags          # reuse tags, don't invent near-duplicates
-python scripts/tarots_blog.py mine          # what this key already wrote: no repeated topic or keyword
+python scripts/tarots_blog.py titles --grep tower    # EVERY article on the blog (any author) about "tower"
 python scripts/tarots_blog.py catalog --grep tower   # link shortcuts for cards and spreads
 ```
+- `titles` lists the **whole blog** — articles of every key and of the console, not only yours — one compact line
+  each: `slug | title | keyword | lang | status | date`, newest first. Filter it (`--grep TEXT`, `--lang en`,
+  `--section SLUG`, `--status draft|published|archived`) rather than printing thousands of lines: without `--all`
+  it stops at the newest 100. It keeps a local copy (`~/.tarots-blog/titles-cache.json`) and fetches only what
+  changed since the last run; `--refresh` reloads everything (it happens by itself every 7 days), which is the only
+  way an article deleted on the site leaves the copy.
+- `mine` lists only what **this key** created, with ids: use it to find an article to `update`, not to learn what
+  the blog covers.
+- **Never download or read whole articles to choose a topic** (not through the API, not from the website): titles,
+  slugs and keywords are all that is needed, and the blog will have thousands of articles.
 
 ### 2. Choose the topic
 - **The operator named a topic** → use it exactly, and find the keyword around it.
@@ -72,8 +82,23 @@ python scripts/tarots_blog.py catalog --grep tower   # link shortcuts for cards 
   keyword map and a calendar to start from.
 - **Verify every date and astronomical claim** with a source you actually opened before writing it. If you cannot
   verify it, drop the claim or the topic.
-- One primary keyword per article, not used by anything in `mine`. Prefer a specific, answerable phrase
+- One primary keyword per article, not used by any other article on the blog. Prefer a specific, answerable phrase
   ("The Tower tarot card meaning in the Thoth deck") over a head term ("tarot").
+- **Before writing a word, check the topic against the whole blog** — the proposed title and the focus keyword,
+  each:
+  ```
+  python scripts/tarots_blog.py topic-check "the tower tarot meaning in love"
+  python scripts/tarots_blog.py topic-check "tower tarot love" --lang en
+  ```
+  It prints the 5 closest articles with a score 0–1 and a verdict (case, accents, punctuation and stop words are
+  ignored; "tarot", "thoth", "card", "meaning", "deck" count little):
+  - `TAKEN` (exit code 8): the same slug, keyword or title, or score ≥ 0.88. **Do not write it.** Choose another
+    topic; if the operator named this one, tell them it exists (they may want the existing article updated).
+  - `CLOSE` (0.40–0.88): write it **only if the search intent is really different** from the articles listed
+    (a different question, reader or use — not just a reworded title), and **say so in the step 9 report**, naming
+    the close article and why yours is different.
+  - `FREE` (< 0.40): go ahead.
+  `titles --grep <word>` helps to see the neighbourhood of a topic; `topic-check` is the decision.
 
 ### 3. Outline for search intent
 - The first 100 words answer the question directly and contain the primary keyword.
@@ -90,10 +115,10 @@ python scripts/tarots_blog.py catalog --grep tower   # link shortcuts for cards 
   `[[post:some-existing-slug]]` (a card or spread on its own line becomes a card with its picture). Take the exact
   shortcut from `catalog`. An unknown reference disappears silently, so copy, don't guess.
 - **Inline images — decide explicitly, don't silently skip**: for every article, actively decide whether a scene
-  from the text, an abstract picture of a spread's positions (lights, stones, a constellation: never cards) or a
+  from the text, an abstract picture of a spread's positions (lights, stones, a constellation: never a layout of cards) or a
   close-up of a symbol would genuinely help — most articles about a spread or a specific symbol do benefit from one.
-  If yes, generate it with `tarots_images.py generate --aspect 4:3` (step 6; a different kind of picture from the
-  cover), upload it with `python scripts/tarots_blog.py upload work/<slug>-1.jpg --for <slug>`, then paste the
+  If yes, generate it with `tarots_images.py generate --aspect 4:3` (step 6, with its four dimensions; a different form
+  from the cover), upload it with `python scripts/tarots_blog.py upload work/<slug>-1.jpg --for <slug>`, then paste the
   printed `url` into the body as ordinary Markdown: `![alt text](url)`. One is normally enough, not one per paragraph. State the decision either
   way in the step 9 report.
 - **Inline video**: a line on its own with `[[video:youtube:VIDEO_ID]]` (11-character id from the URL, e.g.
@@ -124,7 +149,7 @@ python scripts/tarots_blog.py catalog --grep tower   # link shortcuts for cards 
 | `tags` | 2–6, reuse existing ones. |
 | `section` | a slug from `sections` (or omit). |
 | `faq` | 3–5 real questions with 1–3 sentence direct answers (`question`, `answer`); becomes FAQ structured data. |
-| `cover_alt` | describes what is in the picture; the keyword only if it fits; never "tarot cards" (there are none). |
+| `cover_alt` | describes what is in the picture; the keyword only if it fits; never a spread (refused); a card only if the picture really shows one. |
 | `language` | `en` (default). |
 | `canonical_url` / `noindex` | leave unset unless the operator says the text lives elsewhere / must stay out of search. |
 
@@ -132,19 +157,35 @@ Put the article in a JSON file (see `assets/example-article.json`; friendly Engl
 Markdown in a file next to it and reference it with `"body_file": "article.md"`, so no quoting problems.
 
 ### 6. Cover image (and the inline picture)
-3:2, no text in the image, **no card of any kind** — not a spread, not a deck, not one small card as a detail.
-**Its own subject, taken from this article's text**, and a different kind of picture from the last ones on the blog.
-The blog's covers had to be redone twice for breaking this. Read `tarots-blog-images/references/prompts.md` (the
-rules, the kinds of picture, the house style, examples) and write the prompt after the article, naming something
-concrete from it.
+3:2, no text in the image, **never a picture of cards**. **Its own subject, taken from this article's text**, in a
+form that differs from the last pictures on the blog. The blog's covers had to be redone twice for breaking this.
+Read `tarots-blog-images/references/prompts.md` (the rules, the catalogs, the house style, examples) and write the
+prompt after the article, naming something concrete from it.
+- **Cards as context, never as the picture.** Refused: a card as the subject (at the start, in the first clause or
+  the first 8 content words, a close-up of a card), more than one card (cards, a deck, a pile, the arcana), a spread
+  or layout (cards on a table, a reading, a fan of cards, cards face down), hands holding or turning a card.
+  Accepted: "tarot" as an adjective, the names of the cards as a world or a symbol ("a lighthouse struck by
+  lightning, the energy of the Tower"), one single small card later in the scene.
+- **Four dimensions, required and recorded**: `--kind` (17 values, what it shows), `--shot` (12, the framing),
+  `--light` (10) and `--setting` (a place, culture or era in a few words); `tarots_images.py catalog` lists them,
+  `progress` shows the last 20 pictures and what is free. Refused: a kind of the last 3 pictures, a kind+shot pair
+  of the last 20, a light of the last 2 (firelight: of the last 10), a setting of the last 10, and a prompt that
+  does not show the declared light, shot and setting in its own words. The dimensions only vary the form: the
+  subject stays the article's content.
 
 Generate **only** with the `tarots-blog-images` skill's script, which calls `litmedia-skill` (Seedream 5.0, 2K,
-10 credits a picture) and checks the prompt first (no cards, a concrete scene, not a repeat of an earlier picture):
+10 credits a picture) and checks the prompt first (cards only as context, a concrete scene, a new form, not a
+repeat of an earlier picture); every refusal says what to change and which values are free:
 ```
-python ../tarots-blog-images/scripts/tarots_images.py prompt-check --prompt "<prompt>" --alt "<cover alt>"
-python ../tarots-blog-images/scripts/tarots_images.py generate --prompt "<prompt>" --out work/<slug>-cover.jpg
-python ../tarots-blog-images/scripts/tarots_images.py generate --prompt "<other prompt>" --aspect 4:3 --out work/<slug>-1.jpg
+python ../tarots-blog-images/scripts/tarots_images.py progress
+python ../tarots-blog-images/scripts/tarots_images.py prompt-check --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --alt "<cover alt>"
+python ../tarots-blog-images/scripts/tarots_images.py generate --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --out work/<slug>-cover.jpg
+python ../tarots-blog-images/scripts/tarots_images.py generate --prompt "<other prompt>" --kind <other kind> --shot <shot> --light <other light> --setting "<other setting>" --aspect 4:3 --out work/<slug>-1.jpg
 ```
+For example: `generate --kind architecture --shot low-angle --light storm-light --setting "Breton fishing coast"
+--out work/the-tower-cover.jpg --prompt "A lighthouse on a black basalt cliff of the Breton coast in a winter
+storm, one bolt of lightning splitting the sky, ..., seen from the fishing harbour below, looking up, the sudden
+energy of the Tower, <house style>"`.
 - The path is relative to this skill's folder: the two skills are normally installed side by side (`skills/`,
   `~/.claude/skills/`, `~/.agents/skills/`, `%LOCALAPPDATA%/hermes/skills/`). If they are not, find the other one
   by its folder name `tarots-blog-images` in the agent's skills directories and use its `scripts/tarots_images.py`.
@@ -157,7 +198,8 @@ python ../tarots-blog-images/scripts/tarots_images.py generate --prompt "<other 
   - it was **not made by `tarots_images.py generate`** — unless the operator supplied this very picture: then add
     `--operator-image` (accepted with a warning; never for a picture you made some other way);
   - it is **already used by another article** (same bytes, whatever the file name);
-  - the prompt it was generated from asks for a card.
+  - the prompt it was generated from makes cards the picture (the same rules as `generate`, copied in the script).
+  A file that is not PNG, JPEG or WebP is refused before all this, as a usage error (exit 2).
 - After a successful `post` the cover is recorded with the new article; after `upload` the picture is recorded
   with the `--for` slug or id (without `--for` it is tied to that upload alone and can never be used again). Always
   pass `--for`.
@@ -165,7 +207,7 @@ python ../tarots-blog-images/scripts/tarots_images.py generate --prompt "<other 
   of `litmedia-skill` called directly.
 - Cost and consent first (10 credits a picture). Never bypass TLS errors. Look at every picture before using it.
 - If a picture cannot be made (LitMedia down, no credits, the prompt keeps being refused), continue without it and
-  say so in the report: an article without an image is better than a stalled one, or than a card picture.
+  say so in the report: an article without an image is better than a stalled one, or than a picture of cards.
 
 To change the pictures of articles that already exist (yours or others'), use the **`tarots-blog-images`** skill:
 it has its own key with the `blog:media` permission.
@@ -196,7 +238,8 @@ python scripts/tarots_blog.py post article.json --cover cover.png
   for this very article**; never as a habit, never for a series. A low score means: fix the article (step 7).
 
 ### 9. Report
-Answer in a few lines: title, primary keyword, final SEO score, status, URL, cover yes/no, **inline image yes/no and
+Answer in a few lines: title, primary keyword, the `topic-check` verdict (for a `CLOSE` one: the close article and
+why the intent differs), final SEO score, status, URL, cover yes/no, **inline image yes/no and
 why**, and anything an editor must look at (`note:` lines, unverified claims you removed). Do not paste the key or
 the article body.
 
@@ -234,12 +277,13 @@ python scripts/tarots_blog.py delete-draft <id>          # delete a draft
   (`guide` shows it); a `429` means stop, not retry.
 - **Never write your own script** (a loop, a batch, a "publish_sequential" or "generate_articles" helper) that
   writes, generates pictures for or publishes articles in series. Run this skill's commands by hand.
-- **No card of any kind in any picture.** Pictures only from `tarots_images.py generate` (LitMedia), never from
+- **Never a picture of cards** (cards only as context). Pictures only from `tarots_images.py generate` (LitMedia), never from
   `browser-image-gen` or a built-in image tool. **Never reuse the cover (or any picture) of another article.**
   `--operator-image` only for a picture the operator supplied; never to get around a refusal.
 - `--save-anyway` only when the operator asked for it for that article.
 - Never edit or delete anything you did not create: the API refuses it, and you should not try.
-- Do not mass-produce near-duplicate articles for keyword variants: one page per intent.
+- Do not mass-produce near-duplicate articles for keyword variants: one page per intent. Every topic goes through
+  `topic-check` first (`TAKEN` = do not write it); never download or read whole articles to find out what exists.
 - Postiz, SocialClaw and other social or scheduling tools are not part of this job.
 
 ## Files
@@ -252,3 +296,4 @@ python scripts/tarots_blog.py delete-draft <id>          # delete a draft
   to copy: a real article is 800+ words and its own).
 - `../tarots-blog-images/`: the picture skill (`scripts/tarots_images.py`, `references/prompts.md`).
 - `tests/test_immagini.py`: offline tests of the picture checks of `post --cover` and `upload`.
+- `tests/test_titoli.py`: offline tests of `titles` (local copy, incremental update, `--refresh`) and `topic-check`.
