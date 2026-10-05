@@ -36,12 +36,15 @@ export const P = {
   sezioni: () => "/blog/sections",
   sezione: (slug: string, lingua: string) => `/blog/sections/${encodeURIComponent(slug)}?lang=${linguaContenuti(lingua)}`,
   etichette: () => "/blog/tags",
-  /** I nove articoli di ogni pagina (v8.5): 3 recenti + 6 attinenti al contesto, scelti a caso per la giornata. */
+  /** I nove articoli di ogni pagina (v8.5): 3 recenti + 6 attinenti al contesto, scelti a caso per la giornata.
+   *  `completa: false` (pagine di sezione e di etichetta del Diario): niente articoli presi da fuori del contesto,
+   *  così la pagina mostra tanti articoli quanti ne conta l'albero delle sezioni. */
   nove: (contesto: {
     carta?: string; stesa?: string; sezione?: string; articolo?: string; tag?: string; recenti?: number; scelti?: number;
+    completa?: boolean;
   } = {}) => {
     const p = new URLSearchParams();
-    for (const k of ["carta", "stesa", "sezione", "articolo", "tag", "recenti", "scelti"] as const) {
+    for (const k of ["carta", "stesa", "sezione", "articolo", "tag", "recenti", "scelti", "completa"] as const) {
       if (contesto[k] !== undefined && contesto[k] !== "") p.set(k, String(contesto[k]));
     }
     const q = p.toString();

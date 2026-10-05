@@ -33,7 +33,12 @@ export async function generateMetadata({ params, searchParams }: Parametri): Pro
   const s = await leggiSezione(slug, lingua);
   if (!s) return { title: lingua === "it" ? "Sezione non trovata" : "Section not found", robots: NOINDEX };
   const elenco = await leggiDalServer<ElencoArticoli>(percorsoArticoli(slug, lingua, pagina));
-  const vuota = (elenco?.totale ?? 0) === 0 && s.tipo !== "carte" && s.tipo !== "stese" && s.figli.length === 0;
+  // Vuota: niente articoli nel ramo e nessun catalogo (carte, stese) né nella sezione né sotto. Un contenitore di
+  // sole sezioni vuote è vuoto anche lui; uno con i semi dentro no. (Senza `n_carte`/`n_stese`, API più vecchia,
+  // una sezione con sotto-sezioni non si considera vuota.)
+  const catalogo = s.tipo === "carte" || s.tipo === "stese" || (s.n_carte ?? 0) + (s.n_stese ?? 0) > 0
+    || (s.n_carte === undefined && s.figli.length > 0);
+  const vuota = (elenco?.totale ?? 0) === 0 && !catalogo;
   const base = s.seo_titolo || BLOG.sezioneTitolo(lingua, s.nome);
   const titolo = pagina > 1 ? `${base} — ${lingua === "it" ? "pagina" : "page"} ${pagina}` : base;
   const descrizione = s.seo_descrizione || s.descrizione || BLOG.sezioneDescrizione(lingua, s.nome);
@@ -61,7 +66,7 @@ export default async function PaginaSezione({ params, searchParams }: Parametri)
   if (!sezione) notFound();
   const valori = await precarica([
     P.sezione(slug, lingua), percorsoArticoli(slug, lingua, pagina), P.sezioni(), P.etichette(),
-    pagina === 1 ? P.nove({ sezione: slug, recenti: PER_PAGINA_BLOG, scelti: 10 }) : null,
+    pagina === 1 ? P.nove({ sezione: slug, recenti: PER_PAGINA_BLOG, scelti: 10, completa: false }) : null,
   ]);
   const url = urlPubblico(lingua, `/blog/sezione/${sezione.slug}`);
   const dati = grafo(

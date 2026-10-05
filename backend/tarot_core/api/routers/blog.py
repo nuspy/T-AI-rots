@@ -13,7 +13,7 @@ import random
 import re
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, HTTPException, Query, Response
 from sqlalchemy import select
@@ -144,9 +144,31 @@ def _elementi_catalogo(sezione: BlogSection, lang: Optional[str] = None) -> List
 # ---- sezioni -----------------------------------------------------------------------------------------
 
 
-def _nodo(s: BlogSection, figli: Dict[Optional[int], List[BlogSection]], conteggi: Dict[int, int]) -> Dict[str, Any]:
-    sotto = [_nodo(f, figli, conteggi) for f in figli.get(s.id, [])]
-    return {
+def _figli_di(sezioni: List[BlogSection]) -> Dict[Optional[int], List[BlogSection]]:
+    """Le sezioni raggruppate per padre. Una sezione il cui padre non è fra quelle date sta alla radice (con
+    `sezioni()` non capita: una sezione dentro una nascosta è nascosta anche lei)."""
+    ids = {s.id for s in sezioni}
+    figli: Dict[Optional[int], List[BlogSection]] = {}
+    for s in sezioni:
+        figli.setdefault(s.parent_id if s.parent_id in ids else None, []).append(s)
+    return figli
+
+
+def _ramo(
+    s: BlogSection, figli: Dict[Optional[int], List[BlogSection]], conteggi: Dict[int, int], visti: set,
+) -> Tuple[Dict[str, Any], set, set]:
+    """Il nodo di una sezione, con le carte e le stese (gli id) di tutto il suo ramo, per i conti del padre."""
+    visti.add(s.id)
+    rami = [_ramo(f, figli, conteggi, visti) for f in figli.get(s.id, []) if f.id not in visti]
+    elementi = _elementi_catalogo(s) if s.tipo in ("carte", "stese") else []
+    carte = {e["id"] for e in elementi} if s.tipo == "carte" else set()
+    stese = {e["id"] for e in elementi} if s.tipo == "stese" else set()
+    for _, c, x in rami:
+        carte |= c
+        stese |= x
+    sotto = [nodo for nodo, _, _ in rami]
+    diretti = conteggi.get(s.id, 0)
+    nodo = {
         "id": s.id,
         "slug": s.slug,
         "nome": s.nome,
@@ -154,21 +176,33 @@ def _nodo(s: BlogSection, figli: Dict[Optional[int], List[BlogSection]], contegg
         "tipo": s.tipo,
         "filtro": s.filtro,
         "immagine": url_immagine(s.immagine_id),
-        "n_articoli": conteggi.get(s.id, 0),
-        "n_elementi": len(_elementi_catalogo(s)) if s.tipo in ("carte", "stese") else None,
+        "n_articoli": diretti + sum(f["n_articoli"] for f in sotto),
+        "n_articoli_diretti": diretti,
+        "n_elementi": len(elementi) if s.tipo in ("carte", "stese") else None,
+        "n_carte": len(carte),
+        "n_stese": len(stese),
         "figli": sotto,
     }
+    return nodo, carte, stese
+
+
+def _nodo(s: BlogSection, figli: Dict[Optional[int], List[BlogSection]], conteggi: Dict[int, int]) -> Dict[str, Any]:
+    """Una sezione con le sue sotto-sezioni e i conti di tutto il suo ramo.
+
+    - `n_articoli`: gli articoli pubblici della sezione **e di tutte le sotto-sezioni** — lo stesso numero che dà
+      `GET /blog/posts?sezione=<slug>` (che include le sotto-sezioni). Un articolo sta in una sezione sola, quindi la
+      somma non ha doppioni. `n_articoli_diretti`: solo quelli della sezione.
+    - `n_elementi`: per le sezioni «carte» e «stese», quante carte o stese ha la sezione nel catalogo.
+    - `n_carte`, `n_stese`: le carte e le stese diverse in tutto il ramo (una carta in due sotto-sezioni conta una
+      volta): «Tarot», che contiene arcani maggiori, minori e stese, ha 78 carte e 19 stese."""
+    return _ramo(s, figli, conteggi, set())[0]
 
 
 @router.get("/sections")
 async def albero(session: DbSession) -> List[Dict[str, Any]]:
-    """L'albero delle sezioni visibili, con il numero di articoli di ciascuna."""
+    """L'albero delle sezioni visibili; ognuna conta i suoi articoli più quelli delle sotto-sezioni (`_nodo`)."""
     repo = BlogRepository(session)
-    sezioni = await repo.sezioni()
-    figli: Dict[Optional[int], List[BlogSection]] = {}
-    ids = {s.id for s in sezioni}
-    for s in sezioni:
-        figli.setdefault(s.parent_id if s.parent_id in ids else None, []).append(s)
+    figli = _figli_di(await repo.sezioni())
     conteggi = await repo.conteggi_per_sezione()
     return [_nodo(s, figli, conteggi) for s in figli.get(None, [])]
 
@@ -186,10 +220,7 @@ async def sezione(
     if s is None:
         raise HTTPException(status_code=404, detail="Sezione non trovata")
     conteggi = await repo.conteggi_per_sezione()
-    figli_di: Dict[Optional[int], List[BlogSection]] = {}
-    for x in visibili:
-        figli_di.setdefault(x.parent_id, []).append(x)
-    nodo = _nodo(s, figli_di, conteggi)
+    nodo = _nodo(s, _figli_di(visibili), conteggi)
     return nodo | {
         "seo_titolo": s.seo_titolo,
         "seo_descrizione": s.seo_descrizione,
@@ -347,6 +378,7 @@ async def nove_articoli(
     tag: Optional[str] = Query(default=None, pattern="^[a-z0-9-]{1,80}$"),
     recenti: int = Query(default=3, ge=0, le=12),
     scelti: int = Query(default=6, ge=0, le=20),
+    completa: bool = True,
 ) -> Dict[str, Any]:
     """I nove articoli che il sito mostra in ogni pagina (v8.5): i 3 più recenti, e 6 scelti a caso fra quelli
     attinenti alla pagina — che citano la sua carta o la sua stesa, della sua sezione, con le etichette
@@ -357,11 +389,16 @@ async def nove_articoli(
 
     Le pagine del Diario (indice, sezione, etichetta) lo usano con `recenti=6&scelti=10`: con `sezione` o `tag` le
     recenti sono quelle della sezione o dell'etichetta (le stesse della prima pagina del loro elenco), e le 10 a
-    caso le escludono."""
+    caso le escludono.
+
+    `completa=false` (le pagine di sezione e di etichetta del Diario): le scelte restano fra le attinenti, senza
+    completarle con il resto del diario. Così la pagina di una sezione mostra solo articoli della sezione (e delle
+    sotto-sezioni), tanti quanti ne conta l'albero delle sezioni; una sezione senza articoli non ne mostra."""
     repo = BlogRepository(session)
     visibili = await repo.sezioni() if sezione else []
     radice = next((x for x in visibili if x.slug == sezione), None) if sezione else None
-    ids_sezione = repo.discendenti(radice.id, visibili) if radice is not None else None
+    # Una sezione che non c'è (o è nascosta) non ha articoli: le sue recenti sono nessuna, non tutto il diario.
+    ids_sezione = repo.discendenti(radice.id, visibili) if radice is not None else ([] if sezione else None)
     if recenti:
         recenti_post, _ = await repo.elenco(
             sezioni=ids_sezione, tag=tag, per_pagina=recenti + (1 if articolo else 0),
@@ -383,13 +420,15 @@ async def nove_articoli(
         attinenti += (await repo.elenco(sezioni=ids_sezione, per_pagina=60))[0]
     if tag:
         attinenti += (await repo.elenco(tag=tag, per_pagina=60))[0]
-    tutti, _ = await repo.elenco(per_pagina=200)
+    gruppi = [attinenti]
+    if completa:
+        gruppi.append((await repo.elenco(per_pagina=200))[0])
 
     caso = random.Random(f"{datetime.now(timezone.utc).date().isoformat()}|{carta}|{stesa}|{sezione}|{tag}|{articolo}")
     visti = set(esclusi) | ({corrente.id} if corrente is not None else set())
     quanti = scelti
     scelti_post: List[BlogPost] = []
-    for gruppo in (attinenti, tutti):
+    for gruppo in gruppi:
         candidati = [p for p in {p.id: p for p in gruppo}.values() if p.id not in visti]
         caso.shuffle(candidati)
         for p in candidati[: quanti - len(scelti_post)]:
@@ -406,6 +445,7 @@ async def mappa(session: DbSession) -> Dict[str, Any]:
     repo = BlogRepository(session)
     visibili = await repo.sezioni()
     per_sezione, per_tag = await repo.lingue_per_sezione_e_tag()
+    per_id = {s.id: s for s in visibili}
     sezioni_lingue: Dict[str, List[str]] = {}
     for s in visibili:
         if s.tipo in ("carte", "stese"):
@@ -414,6 +454,11 @@ async def mappa(session: DbSession) -> Dict[str, Any]:
         lingue: set = set()
         for sid in repo.discendenti(s.id, visibili):
             lingue |= per_sezione.get(sid, set())
+            # Un contenitore con un catalogo nel ramo («Minor Arcana», con i quattro semi) non è vuoto anche senza
+            # articoli: è l'indice delle carte e delle stese. La sua lista è la stessa in ogni lingua, quindi conta
+            # per l'inglese, la lingua canonica.
+            if per_id[sid].tipo in ("carte", "stese"):
+                lingue.add("en")
         sezioni_lingue[s.slug] = sorted(lingue)
     return {
         # Un articolo `noindex` non sta nella mappa: la mappa dice ai motori di ricerca cosa indicizzare.
@@ -421,7 +466,10 @@ async def mappa(session: DbSession) -> Dict[str, Any]:
             {"slug": s, "aggiornato": d.isoformat(), "lang": lingua}
             for s, d, lingua, noindex in await repo.slug_pubblici() if not noindex
         ],
-        "sezioni": [s.slug for s in await repo.sezioni()],
+        "sezioni": [s.slug for s in visibili],
+        # Le sezioni tradotte (cataloghi di carte e stese): solo queste hanno una pagina per lingua; le altre sono la
+        # stessa lista in ogni lingua, col canonical all'inglese.
+        "sezioni_tradotte": [s.slug for s in visibili if s.tipo in ("carte", "stese")],
         "tags": [t.slug for t, _ in await repo.tag_con_conteggi()],
         # Le lingue in cui una sezione (con le sue sotto-sezioni) o un'etichetta ha articoli da indicizzare. Le
         # sezioni «carte» e «stese» sono cataloghi: esistono in ogni lingua.

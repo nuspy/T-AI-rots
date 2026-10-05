@@ -730,7 +730,10 @@ p, li, .section-intro, .lede, .faq-item p, .message { text-wrap: pretty; }
 .albero-voce:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
 .albero-voce[aria-current="page"] { color: #fff7e8; background: var(--plum); }
 .albero-sezioni > li > .albero-voce .albero-nome { font: 400 1.02rem var(--serif); }
-.albero-conta { min-width: 1.8rem; padding: .05rem .45rem; border-radius: 999px; background: rgba(178,131,54,.16); color: var(--ink-soft); font-size: .75rem; text-align: center; }
+.albero-nome { min-width: 0; overflow-wrap: anywhere; }
+/* Le pastiglie dei conti («78 cards», «19 spreads», «24 articles»): a capo fra loro, mai dentro una. */
+.albero-conti { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .2rem .25rem; flex: 0 1 auto; }
+.albero-conta { min-width: 1.8rem; padding: .05rem .45rem; border-radius: 999px; background: rgba(178,131,54,.16); color: var(--ink-soft); font-size: .75rem; text-align: center; white-space: nowrap; }
 .albero-voce[aria-current="page"] .albero-conta { color: #fff7e8; background: rgba(255,255,255,.18); }
 .journal-a-caso { margin-top: .7rem; }
 

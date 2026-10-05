@@ -54,7 +54,7 @@ export default async function PaginaEtichetta({ params, searchParams }: Parametr
   if (!e) notFound();
   const valori = await precarica([
     P.etichette(), percorsoArticoli(slug, lingua, pagina), P.sezioni(),
-    pagina === 1 ? P.nove({ tag: slug, recenti: PER_PAGINA_BLOG, scelti: 10 }) : null,
+    pagina === 1 ? P.nove({ tag: slug, recenti: PER_PAGINA_BLOG, scelti: 10, completa: false }) : null,
   ]);
   const dati = grafo(
     briciole([

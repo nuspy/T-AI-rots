@@ -82,9 +82,15 @@ export interface NodoSezione {
   tipo: TipoSezione;
   filtro: Record<string, string> | null;
   immagine: string | null;
+  /* Gli articoli della sezione e di tutte le sotto-sezioni: quanti ne mostra la pagina della sezione. */
   n_articoli: number;
+  /* Solo quelli della sezione (assente da un'API più vecchia). */
+  n_articoli_diretti?: number;
   /* Per le sezioni «carte» e «stese»: quante ce ne sono nel catalogo. */
   n_elementi: number | null;
+  /* Le carte e le stese diverse in tutto il ramo (assenti da un'API più vecchia). */
+  n_carte?: number;
+  n_stese?: number;
   figli: NodoSezione[];
 }
 

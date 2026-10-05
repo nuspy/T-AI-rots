@@ -20,6 +20,9 @@ interface Mappa {
   sezioni: string[];
   tags: string[];
   sezioni_lingue?: Record<string, string[]>;
+  /* Le sezioni di carte e stese: le sole tradotte (una pagina per lingua). Assente da un'API più vecchia. */
+  sezioni_tradotte?: string[];
+  tags_lingue?: Record<string, string[]>;
 }
 
 /** Una pagina nelle lingue in cui esiste: una voce per lingua, ognuna con le alternative delle altre. */
@@ -53,6 +56,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     LINGUE.filter((l) => (mappa ? (mappa[slug] ?? []).includes(l) : l === "en"));
   const conLingue = (lingue: LinguaPubblica[], interno: string) =>
     Object.fromEntries(lingue.map((l) => [l, interno])) as Partial<Record<LinguaPubblica, string>>;
+  /* Una sezione nelle lingue in cui ha qualcosa da indicizzare. Solo i cataloghi (carte, stese) sono tradotti; le
+   * altre sezioni sono la stessa lista in ogni lingua col canonical all'inglese (la loro pagina): compaiono una volta,
+   * in inglese, se hanno qualcosa in una lingua qualunque. */
+  const lingueSezione = (s: string): LinguaPubblica[] => {
+    const lingue = inLingua(blog?.sezioni_lingue, s);
+    if (!blog?.sezioni_tradotte || blog.sezioni_tradotte.includes(s)) return lingue;
+    return lingue.length ? ["en"] : [];
+  };
+  /* Un'etichetta i cui articoli sono tutti `noindex` non ha niente da indicizzare. */
+  const etichettaVuota = (x: string) => blog?.tags_lingue !== undefined && !(blog.tags_lingue[x] ?? []).length;
 
   return [
     ...coppia(stessa("/"), 1, "weekly"),
@@ -67,8 +80,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...coppia(stessa("/privacy"), 0.2, "yearly"),
     ...((blog?.articoli ?? []).length ? coppia(soloEn("/blog"), 0.9, "weekly") : []),
     ...(blog?.sezioni ?? []).flatMap((s) =>
-      coppia(conLingue(inLingua(blog?.sezioni_lingue, s), `/blog/sezione/${s}`), 0.7, "weekly")),
-    ...(blog?.tags ?? []).flatMap((x) => coppia(soloEn(`/blog/tag/${x}`), 0.4, "weekly")),
+      coppia(conLingue(lingueSezione(s), `/blog/sezione/${s}`), 0.7, "weekly")),
+    ...(blog?.tags ?? []).filter((x) => !etichettaVuota(x)).flatMap((x) => coppia(soloEn(`/blog/tag/${x}`), 0.4, "weekly")),
     ...(blog?.articoli ?? []).map((a): Voce => ({
       url: urlPubblico(linguaPubblica(a.lang), `/blog/${a.slug}`),
       lastModified: new Date(a.aggiornato),

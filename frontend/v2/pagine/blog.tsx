@@ -114,8 +114,25 @@ function Pagine({ pagina, pagine, base, q }: { pagina: number; pagine: number; b
   );
 }
 
-/* Le sezioni come un piccolo albero (v8.5): ogni ramo collegato al padre da un tratto d'ottone, il numero degli
- * articoli in una pastiglia, la sezione corrente in prugna. Voci alte 44px: si toccano bene anche sul telefono. */
+/** Cosa contiene una sezione, in pastiglie con la loro parola: le carte e le stese del ramo («22 cards», «19 spreads»)
+ *  e i suoi articoli con quelli delle sotto-sezioni («6 articles», lo stesso numero che mostra la pagina della
+ *  sezione). Un contenitore come «Tarot» le mostra tutte; una sezione di carte o di stese non mostra «0 articles». Con
+ *  un'API più vecchia (senza `n_carte`/`n_stese`) carte e stese vengono da `n_elementi`. */
+function Conti({ n }: { n: NodoSezione }) {
+  const { t } = useLingua();
+  const b = t.blog;
+  const carte = n.n_carte ?? (n.tipo === "carte" ? n.n_elementi ?? 0 : 0);
+  const stese = n.n_stese ?? (n.tipo === "stese" ? n.n_elementi ?? 0 : 0);
+  const voci = [
+    carte > 0 ? plurale(carte, b.conta_carte) : null,
+    stese > 0 ? plurale(stese, b.conta_stese) : null,
+    n.n_articoli > 0 || (!carte && !stese) ? plurale(n.n_articoli, b.conta_articoli) : null,
+  ].filter((v): v is string => v !== null);
+  return <span className="albero-conti">{voci.map((v) => <span key={v} className="albero-conta">{v}</span>)}</span>;
+}
+
+/* Le sezioni come un piccolo albero (v8.5): ogni ramo collegato al padre da un tratto d'ottone, cosa contiene in
+ * pastiglie (`Conti`), la sezione corrente in prugna. Voci alte 44px: si toccano bene anche sul telefono. */
 function Albero({ nodi, corrente, livello = 0 }: { nodi: NodoSezione[]; corrente?: string; livello?: number }) {
   return (
     <ul className={livello === 0 ? "albero-sezioni" : "albero-rami"}>
@@ -123,7 +140,7 @@ function Albero({ nodi, corrente, livello = 0 }: { nodi: NodoSezione[]; corrente
         <li key={n.id}>
           <LinkV2 className="albero-voce" href={R.blogSezione(n.slug)} aria-current={n.slug === corrente ? "page" : undefined}>
             <span className="albero-nome">{n.nome}</span>
-            <span className="albero-conta">{n.n_articoli}</span>
+            <Conti n={n} />
           </LinkV2>
           {n.figli.length > 0 && <Albero nodi={n.figli} corrente={corrente} livello={livello + 1} />}
         </li>
@@ -305,9 +322,11 @@ function SezioneContenuto({ slug }: { slug: string }) {
                 {elenco.dati && <Pagine pagina={pagina} pagine={elenco.dati.pagine} base={R.blogSezione(slug)} />}
               </Fragment>
             )}
-            {pagina === 1 && <SceltiACaso key="caso" percorso={P.nove({ sezione: slug, recenti: PER_PAGINA, scelti: 10 })} />}
+            {pagina === 1 && <SceltiACaso key="caso" percorso={P.nove({ sezione: slug, recenti: PER_PAGINA, scelti: 10, completa: false })} />}
           </ConPubblicita>
-          {elenco.dati && lista.length === 0 && d.figli.length === 0 && d.tipo === "articoli" && <p className="notice">{b.vuoto}</p>}
+          {/* «Ancora nessun articolo» se il ramo non ha né articoli né carte o stese (un contenitore di sezioni vuote). */}
+          {elenco.dati && lista.length === 0 && (d.tipo === "articoli" || d.tipo === "contenitore") && !d.n_carte && !d.n_stese
+            && (d.figli.length === 0 || d.n_carte !== undefined) && <p className="notice">{b.vuoto}</p>}
           <Ponte />
         </div>
         <Laterale corrente={slug} />
@@ -344,7 +363,7 @@ function EtichettaContenuto({ slug }: { slug: string }) {
               <div className="journal-grid">{lista.map((a) => <Tessera key={a.slug} a={a} />)}</div>
               {elenco.dati && <Pagine pagina={pagina} pagine={elenco.dati.pagine} base={R.blogTag(slug)} />}
             </Fragment>
-            {pagina === 1 && <SceltiACaso key="caso" percorso={P.nove({ tag: slug, recenti: PER_PAGINA, scelti: 10 })} />}
+            {pagina === 1 && <SceltiACaso key="caso" percorso={P.nove({ tag: slug, recenti: PER_PAGINA, scelti: 10, completa: false })} />}
           </ConPubblicita>
           <Ponte />
         </div>
