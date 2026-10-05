@@ -8,6 +8,11 @@ from the environment, or from a small local cache this tool manages — never fr
     TAROTS_MEDIA_KEY   a `tk_live_...` key with the `blog:media` permission (console: Blog > Keys > "Change images")
     LITMEDIA_SKILL     optional: the litmedia-skill folder (default: ~/.claude/skills/litmedia-skill, then
                        ~/.agents/skills/litmedia-skill, then %LOCALAPPDATA%/hermes/skills/litmedia-skill)
+    LITMEDIA_PYTHON    optional: the Python that runs LitMedia's scripts. Otherwise the first that can import
+                       `requests` and `dotenv` among: this script's Python, `py -3.12`, `py -3`, python3, python and
+                       (Windows) %LOCALAPPDATA%/Programs/Python/Python3*/python.exe, newest first. None: exit 5 with
+                       the pip command to run; nothing is installed by this script
+    TAROTS_WORK_DIR    optional: the root of the articles' work folders (default ~/.tarots-blog/work)
 
 The key is remembered in `~/.tarots-blog/media-credentials.json` (or `TAROTS_MEDIA_KEY_CACHE`), outside any
 repository, the same way `tarots_blog.py` remembers its own. A `blog:media` key can touch **only images** — cover
@@ -22,9 +27,12 @@ Commands (run `tarots_images.py <command> -h` for the options):
     catalog                 the values of --kind, --shot and --light, and which ones are free for the next picture
     prompt-check --prompt P --kind K --shot S --light L --setting TEXT [--alt TEXT]
                             every check `generate` makes on a prompt, offline: nothing generated, nothing spent
-    generate --prompt P --kind K --shot S --light L --setting TEXT --out FILE [--aspect 3:2] [--resolution 2K]
-             [--budget N] [--dry-run]
-                            one picture with Seedream 5.0 through litmedia-skill (checks the prompt, then the balance)
+    generate --prompt P --kind K --shot S --light L --setting TEXT (--article SLUG | --out FILE) [--aspect 3:2]
+             [--resolution 2K] [--budget N] [--dry-run]
+                            one picture with Seedream 5.0 through litmedia-skill (checks the prompt, then the balance).
+                            With --article, or a bare --out name, it goes in the article's work folder:
+                            ~/.tarots-blog/work/<YYYY-MM-DD>-<slug>/foto/ (TAROTS_WORK_DIR moves the root), as
+                            cover.jpg (3:2) or inline-N.jpg unless --out names it. An existing file is never overwritten
     cover ID FILE --alt TEXT [--dry-run]
                             replace the cover
     inline ID [--replace N FILE ALT] [--add AFTER_PARAGRAPH FILE ALT] [--remove N] [--dry-run]
@@ -527,8 +535,79 @@ def _check_litmedia_version(folder: Path) -> None:
         )
 
 
+#: What LitMedia's scripts import on every call (balance, text-to-image). Its requirements.txt also lists
+#: alibabacloud_oss_v2 and pymediainfo, needed only to upload a picture (image-to-image): not tested here.
+LITMEDIA_IMPORTS = "import requests, dotenv"
+_litmedia_python: Optional[List[str]] = None  # the interpreter found, kept for the rest of this process
+
+
+def _python_candidates() -> List[List[str]]:
+    """The interpreters to try for LitMedia, in order. Seen on 5/10/2026: Hermes ran this script with uv's bare
+    Python 3.11, without `requests`, while the same PC had three Pythons that had it."""
+    found: List[List[str]] = []
+    if os.environ.get("LITMEDIA_PYTHON", "").strip():
+        found.append([os.environ["LITMEDIA_PYTHON"].strip()])
+    if sys.executable:
+        found.append([sys.executable])
+    launcher = shutil.which("py")
+    if launcher:
+        found += [[launcher, "-3.12"], [launcher, "-3"]]
+    for name in ("python3", "python"):
+        path = shutil.which(name)
+        if path:
+            found.append([path])
+    if os.name == "nt" and os.environ.get("LOCALAPPDATA"):
+        def minor(folder: Path) -> int:
+            m = re.match(r"Python3(\d+)", folder.name)
+            return int(m.group(1)) if m else -1
+        base = Path(os.environ["LOCALAPPDATA"]) / "Programs" / "Python"
+        found += [[str(d / "python.exe")] for d in sorted(base.glob("Python3*"), key=minor, reverse=True)
+                  if (d / "python.exe").is_file()]
+    unique: List[List[str]] = []
+    seen = set()
+    for cmd in found:
+        key = tuple([os.path.normcase(os.path.abspath(cmd[0]))] + cmd[1:])
+        if key not in seen:
+            seen.add(key)
+            unique.append(cmd)
+    return unique
+
+
+def _has_litmedia_deps(cmd: List[str]) -> bool:
+    try:
+        return subprocess.run([*cmd, "-c", LITMEDIA_IMPORTS], capture_output=True, timeout=20).returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def litmedia_python() -> List[str]:
+    """The first candidate that imports LitMedia's dependencies, said in a `note:` when it is not this Python. None:
+    EXIT_CONFIG with what to install and with which interpreter. Nothing is ever installed by this script."""
+    global _litmedia_python
+    if _litmedia_python is not None:
+        return _litmedia_python
+    candidates = _python_candidates()
+    for cmd in candidates:
+        if _has_litmedia_deps(cmd):
+            if cmd != [sys.executable]:
+                print(f"note: LitMedia runs with {' '.join(cmd)}: this script's Python ({sys.executable}) lacks its "
+                      "dependencies.", file=sys.stderr)
+            _litmedia_python = cmd
+            return cmd
+    requirements = litmedia_dir() / "scripts" / "requirements.txt"
+    first = " ".join(candidates[0]) if candidates else "python"
+    raise Failure(
+        "No Python with LitMedia's dependencies (requests, python-dotenv) was found. Tried: "
+        + ("; ".join(" ".join(c) for c in candidates) or "none")
+        + f". Install them for one of these, e.g.: {first} -m pip install -r {requirements} (the complete list, with "
+        "alibabacloud_oss_v2 and pymediainfo for image-to-image uploads), or set LITMEDIA_PYTHON to a Python that has "
+        "them. Nothing was installed and nothing was spent.", EXIT_CONFIG,
+    )
+
+
 def _litmedia(script: str, args: List[str], timeout: int) -> subprocess.CompletedProcess:
-    cmd = [sys.executable, str(litmedia_dir() / "scripts" / script), *args]
+    folder = litmedia_dir()
+    cmd = [*litmedia_python(), str(folder / "scripts" / script), *args]
     try:
         return subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout)
     except subprocess.TimeoutExpired:
@@ -874,14 +953,95 @@ def cmd_balance(_a) -> int:
     return EXIT_OK
 
 
+# ---- the work folder of an article (the same folders as tarots_blog.py `new`) -----------------------------------
+# `~/.tarots-blog/work/<YYYY-MM-DD>-<slug>/foto/` holds every picture of one article. An agent saved its files with
+# relative paths (`work/<slug>-cover.jpg`) inside the skill's folder and then could not find them: `--article SLUG`,
+# or a bare `--out` name, puts the picture there. `work_slug` is a copy of `slugify` in tarots_blog.py (a test there
+# keeps the two equal): the two skills install separately.
+
+WORK_NAME = re.compile(r"^(\d{4}-\d{2}-\d{2})-(.+)$")
+
+
+def work_root() -> Path:
+    """Read at every call, not at import: TAROTS_WORK_DIR may be set for one run."""
+    env = os.environ.get("TAROTS_WORK_DIR", "").strip()
+    return Path(env).expanduser() if env else Path.home() / ".tarots-blog" / "work"
+
+
+def work_slug(text: str, limit: int = 60) -> str:
+    plain = unicodedata.normalize("NFKD", str(text or "")).replace("æ", "ae").replace("Æ", "ae").replace("œ", "oe")
+    plain = "".join(c for c in plain if not unicodedata.combining(c)).lower()
+    slug = "-".join(re.sub(r"[^0-9a-z]+", " ", plain).split())
+    if len(slug) > limit:
+        slug = slug[:limit].rsplit("-", 1)[0]
+    return slug
+
+
+def work_folders() -> List[Path]:
+    """Every work folder, newest first (the date in its name, then the last change)."""
+    try:
+        found = [p for p in work_root().iterdir() if p.is_dir() and WORK_NAME.match(p.name)]
+    except OSError:
+        return []
+    return sorted(found, key=lambda p: (p.name[:10], p.stat().st_mtime), reverse=True)
+
+
+def work_folder(article: Optional[str]) -> Path:
+    """The work folder of `article` (a slug): the newest with that slug in its name or in its article.json; created
+    for today if there is none (pictures for an existing article). Without `article`: the newest work folder."""
+    folders = work_folders()
+    if not article:
+        if not folders:
+            raise Failure(f"--out is a bare file name but there is no work folder in {work_root()}: give "
+                          "--article <slug> (or run tarots_blog.py new \"<slug>\" first).", EXIT_USAGE)
+        return folders[0]
+    slug = work_slug(article)
+    if not slug:
+        raise Failure("--article needs the article's slug.", EXIT_USAGE)
+    for folder in folders:
+        if WORK_NAME.match(folder.name).group(2) == slug:
+            return folder
+    for folder in folders:
+        try:
+            if json.loads((folder / "article.json").read_text(encoding="utf-8")).get("slug") == slug:
+                return folder
+        except (OSError, ValueError, AttributeError):
+            continue
+    folder = work_root() / f"{datetime.date.today().isoformat()}-{slug}"
+    print(f"note: no work folder for {slug} yet: the picture goes in {folder}", file=sys.stderr)
+    return folder
+
+
+def _next_free(folder: Path, aspect: str) -> Path:
+    """The default name in foto/: cover.jpg for a 3:2 picture, inline-1.jpg, inline-2.jpg... for the others."""
+    if aspect == "3:2" and not (folder / "cover.jpg").exists():
+        return folder / "cover.jpg"
+    n = 1
+    while (folder / f"inline-{n}.jpg").exists():
+        n += 1
+    return folder / f"inline-{n}.jpg"
+
+
+def output_path(out: Optional[str], article: Optional[str], aspect: str) -> Path:
+    """Where `generate` saves: in <work folder>/foto/ with --article or a bare --out name; else --out as given."""
+    if out and not article and len(Path(out).parts) > 1:
+        return Path(out).expanduser()
+    if not out and not article:
+        raise Failure("Give --article <slug> (the picture goes in its work folder's foto/) or --out FILE.", EXIT_USAGE)
+    foto = work_folder(article) / "foto"
+    return foto / Path(out).name if out else _next_free(foto, aspect)
+
+
 def cmd_generate(a) -> int:
     resolution = a.resolution.upper()
     if resolution not in COST:
         raise Failure(f"{MODEL} accepts --resolution 2K or 4K (there is no 1K).", EXIT_USAGE)
     cost = COST[resolution]
-    out = Path(a.out)
+    out = output_path(a.out, a.article, a.aspect)
     if out.suffix.lower() not in IMAGE_TYPES:
         raise Failure("--out must end in .jpg, .jpeg, .png or .webp", EXIT_USAGE)
+    if out.exists():
+        raise Failure(f"{out} already exists: a picture already paid for is never overwritten. Give another --out name.", EXIT_USAGE)
     dims = dimensions(a.kind, a.shot, a.light, a.setting)
     check_prompt(a.prompt, dims)
     if a.dry_run:
@@ -1134,7 +1294,10 @@ def parser() -> argparse.ArgumentParser:
     g = sub.add_parser("generate", help=f"one picture with {MODEL} through litmedia-skill")
     g.add_argument("--prompt", required=True)
     _dimension_options(g)
-    g.add_argument("--out", required=True, help="where to save the picture (.jpg/.png/.webp)")
+    g.add_argument("--article", metavar="SLUG",
+                   help="the article's slug: the picture goes in its work folder's foto/ (cover.jpg, inline-1.jpg...)")
+    g.add_argument("--out", help="the file name (.jpg/.png/.webp). A bare name goes in the work folder's foto/ "
+                                 "(of --article, else of the newest work folder); a path with a folder is used as is")
     g.add_argument("--aspect", default="3:2", help="3:2 for a cover (default), 4:3 or 1:1 for a picture in the text")
     g.add_argument("--resolution", default="2K", help="2K (10 credits, default) or 4K (20)")
     g.add_argument("--budget", type=int, help="credits still allowed for this run: refuse if one picture costs more")

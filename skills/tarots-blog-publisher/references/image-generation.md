@@ -18,16 +18,21 @@ python ../tarots-blog-images/scripts/tarots_images.py balance
 python ../tarots-blog-images/scripts/tarots_images.py progress        # the last 20 pictures and what is free next
 python ../tarots-blog-images/scripts/tarots_images.py catalog         # every value of --kind, --shot, --light
 python ../tarots-blog-images/scripts/tarots_images.py prompt-check --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --alt "<alt>"
-python ../tarots-blog-images/scripts/tarots_images.py generate --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --out work/<slug>-cover.jpg
-python ../tarots-blog-images/scripts/tarots_images.py generate --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --aspect 4:3 --out work/<slug>-1.jpg
+python ../tarots-blog-images/scripts/tarots_images.py generate --article <slug> --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>"
+python ../tarots-blog-images/scripts/tarots_images.py generate --article <slug> --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --aspect 4:3
 ```
+`--article <slug>` saves into the article's work folder (made by `tarots_blog.py new`):
+`~/.tarots-blog/work/<YYYY-MM-DD>-<slug>/foto/`, as `cover.jpg` for a 3:2 picture and `inline-1.jpg`, `inline-2.jpg`...
+for the others (`--out NAME` chooses the name; a bare name without `--article` goes in the newest work folder). The
+full path is printed; an existing file is never overwritten. Never `--out work/...` or any path inside a skill's
+folder.
 For example:
 ```
-python ../tarots-blog-images/scripts/tarots_images.py generate --kind architecture --shot low-angle --light storm-light --setting "Breton fishing coast" --out work/the-tower-cover.jpg --prompt "A lighthouse on a black basalt cliff of the Breton coast in a winter storm, one bolt of lightning splitting the sky, a crack running down the white tower and warm light pouring out through it, seen from the fishing harbour below, looking up, the sudden energy of the Tower, <house style>"
+python ../tarots-blog-images/scripts/tarots_images.py generate --kind architecture --shot low-angle --light storm-light --setting "Breton fishing coast" --article the-tower-tarot-card-meaning-thoth --prompt "A lighthouse on a black basalt cliff of the Breton coast in a winter storm, one bolt of lightning splitting the sky, a crack running down the white tower and warm light pouring out through it, seen from the fishing harbour below, looking up, the sudden energy of the Tower, <house style>"
 ```
-Then `python scripts/tarots_blog.py post article.json --cover work/<slug>-cover.jpg` for the cover, and
-`python scripts/tarots_blog.py upload work/<slug>-1.jpg --for <slug>` for an inline picture (it prints the `url` to
-write as `![alt](url)` in the body). If `tarots-blog-images` is not next to this skill, find its folder by name in
+Then `python scripts/tarots_blog.py post <slug> --cover cover.jpg` for the cover, and
+`python scripts/tarots_blog.py upload inline-1.jpg --for <slug>` for an inline picture (it prints the `url` to
+write as `![alt](url)` in the body): a bare name is looked for in the work folder's `foto/`. If `tarots-blog-images` is not next to this skill, find its folder by name in
 the agent's skills directories; if it is not installed, publish without pictures and say so.
 
 ## What `post --cover` and `upload` check
@@ -71,12 +76,15 @@ rewrite it, do not work around it. The cover and the inline picture of one artic
 ## Rules
 - **Cost and consent**: 10 credits a picture. Before the first generation of a session tell the operator the
   number of pictures and the cost, and get a yes (a standing "go ahead" from the operator counts).
+  In an unattended run the job's instructions are that standing ok: a cover and at most one inline picture.
 - **Look at every picture** before using it. Reject it if it is a picture of cards anyway (a card filling the
   frame, a spread, a deck), has text, letters, malformed hands or faces, or has nothing to do with the article. A
   second try needs a rewritten prompt and a new form.
 - **Never reuse a picture** of another article, and never the cover as the inline picture.
 - **TLS errors are not to be bypassed.** Report them and publish without the picture.
 - **LitMedia down, out of credits or failing**: no picture, said in the report. Never another tool.
+  `ModuleNotFoundError: requests`: `tarots_images.py` picks by itself a Python that has LitMedia's dependencies;
+  with none it exits 5 naming the `pip install -r` command: report it, never install anything yourself.
 - **Illustration, not evidence**: no fake photos of real people, no fake documents, no copy of the Thoth deck's
   artwork (copyrighted).
 - **Never send the blog key to LitMedia** (or anywhere but `TAROTS_API_URL`).

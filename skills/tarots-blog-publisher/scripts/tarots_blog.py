@@ -15,6 +15,9 @@ Commands (run `tarots_blog.py <command> -h` for the options):
 
     key show|save|clear    the saved key: show its prefix and origin, save the one in TAROTS_API_KEY, or forget it
     guide                  what the blog accepts and the SEO thresholds (read once, before writing)
+    new "SLUG OR TITLE"    create the work folder of one article: ~/.tarots-blog/work/<YYYY-MM-DD>-<slug>/ with
+                           article.json (empty SEO fields, status draft), article.md (empty) and foto/ (its pictures).
+                           TAROTS_WORK_DIR moves the root. Article files live there and nowhere else.
     sections               the sections articles can go in
     tags                   tags already in use (reuse them)
     catalog [--grep TEXT]  cards and spreads with the ready-made internal-link shortcut
@@ -26,13 +29,21 @@ Commands (run `tarots_blog.py <command> -h` for the options):
                            full reload (--refresh, or by itself when the copy is older than 7 days)
     topic-check "TOPIC" [--lang en]
                            the 5 articles closest to a proposed title/keyword and a verdict FREE / CLOSE / TAKEN
-    check ARTICLE.json     SEO report without saving anything
+    check ARTICLE          SEO report without saving anything, then NEXT: the exact fixes, one per open item.
+                           Counts its rounds in the work folder (.checks): a 5th round still below the score is a STOP
     upload IMAGE [--for SLUG_OR_ID] [--operator-image]
                            upload a cover OR an inline image, print its id and reusable url
-    post ARTICLE.json [--cover IMAGE [--operator-image]]
+    post ARTICLE [--cover IMAGE [--operator-image]]
                            check, then create the article (draft unless the JSON says "published")
     update ID PATCH.json   change fields of an article this key created
     delete-draft ID        delete a draft this key created
+
+ARTICLE is the article's slug (the newest work folder with that slug is used), its work folder, or the path of its
+article.json. When it is not found the error says where article files live: never search the disk for them. A bare
+picture name (`--cover cover.jpg`, `upload inline-1.jpg --for SLUG`) is looked for in that work folder's foto/.
+
+`check` and `post` refuse, before calling the API, a focus_keyword longer than 6 words or with a repeated word
+(exit 9), or one already TAKEN by another article according to the same comparison as `topic-check` (exit 8).
 
 Pictures (`post --cover`, `upload`) share the record of the `tarots-blog-images` skill: `~/.tarots-blog/
 images-progress.json`, or `TAROTS_IMAGES_PROGRESS`. Before anything is uploaded a picture is refused if it was
@@ -42,9 +53,11 @@ was generated from makes cards the picture (a card as the subject, two or more c
 card: the rules of `tarots_images.py`, copied here). After a successful `post` or `upload` its sha256 is recorded
 with the article.
 
-Exit codes: 0 ok · 2 usage or bad article file · 3 SEO score below the threshold (nothing saved)
-· 4 the API refused (message printed) · 5 configuration missing or unsafe · 7 a picture rule refused the file
-(nothing uploaded) · 8 `topic-check`: the topic is TAKEN.
+Exit codes: 0 ok · 2 usage, bad or missing article file · 3 SEO score below the threshold, or an error (FIX) left
+(nothing saved) · 4 the API refused (message printed) · 5 configuration missing or unsafe · 7 a picture rule refused
+the file (nothing uploaded) · 8 the topic (`topic-check`) or the focus_keyword (`check`, `post`) is TAKEN
+· 9 the focus_keyword is not a search phrase (more than 6 words, or a repeated word) · 10 STOP: 4 rounds of `check`
+did not reach the score; `check` and `post` refuse this article from now on (the operator can delete its .checks).
 
 The full key is only ever sent to TAROTS_API_URL, never printed (only its 12-character prefix is, to tell keys
 apart), and redirects are not followed (a redirect would carry the key to another host): if the server redirects,
@@ -70,6 +83,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 EXIT_OK, EXIT_USAGE, EXIT_SCORE, EXIT_API, EXIT_CONFIG, EXIT_RULE, EXIT_TAKEN = 0, 2, 3, 4, 5, 7, 8
+EXIT_KEYWORD, EXIT_STOP = 9, 10
 
 MAX_IMAGE_BYTES = 8_000_000
 IMAGE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
@@ -338,6 +352,8 @@ def normalize(article: Dict[str, Any], base_dir: Optional[Path] = None) -> Dict[
             out["testo"] = path.read_text(encoding="utf-8")
         except OSError as exc:
             raise Failure(f"Cannot read body_file {path}: {exc.strerror}", EXIT_USAGE) from None
+    if isinstance(out.get("testo"), str):
+        out["testo"] = _without_leading_h1(out["testo"])
     if isinstance(out.get("stato"), str):
         out["stato"] = STATUS.get(out["stato"].lower(), out["stato"])
     if isinstance(out.get("faq"), list):
@@ -353,6 +369,21 @@ def normalize(article: Dict[str, Any], base_dir: Optional[Path] = None) -> Dict[
     return out
 
 
+def _without_leading_h1(body: str) -> str:
+    """The page title is already the H1: a `# …` line at the top of the body is dropped here, deterministically,
+    with a note. Agents kept rewriting the whole text around it (5/10/2026) instead of deleting one line."""
+    lines = body.lstrip("﻿").splitlines()
+    first = next((i for i, line in enumerate(lines) if line.strip()), None)
+    if first is None or not re.match(r"#\s+\S", lines[first]) or lines[first].startswith("##"):
+        return body
+    print(f"note: removed the H1 at the top of the body ({lines[first].strip()[:60]!r}): the article's title is "
+          "already the page's H1; sections start at `##`.", file=sys.stderr)
+    rest = lines[first + 1:]
+    while rest and not rest[0].strip():
+        rest = rest[1:]
+    return "\n".join(rest) + ("\n" if body.endswith("\n") else "")
+
+
 def load_article(path: str) -> Dict[str, Any]:
     file = Path(path)
     try:
@@ -364,6 +395,154 @@ def load_article(path: str) -> Dict[str, Any]:
     if not isinstance(data, dict):
         raise Failure(f"{file} must contain a JSON object.", EXIT_USAGE)
     return normalize(data, file.parent)
+
+
+def require_filled(payload: Dict[str, Any], path: Path) -> None:
+    """The skeleton written by `new` is not an article yet: say which file to fill, before the API answers a 422."""
+    missing = []
+    if not str(payload.get("titolo") or "").strip():
+        missing.append(f'"title" is empty in {path}')
+    if not str(payload.get("testo") or "").strip():
+        missing.append(f"the text is empty: write it in {path.parent / 'article.md'} (sections start at `##`)")
+    if missing:
+        raise Failure("; ".join(missing) + ".", EXIT_USAGE)
+
+
+# ---- the work folder: where the files of one article live -----------------------------------------------------
+# One folder per article, outside any repository and outside the skill: `~/.tarots-blog/work/<YYYY-MM-DD>-<slug>/`
+# with article.json, article.md, foto/ (every picture of that article) and .checks (the rounds of `check`).
+# An agent (5/10/2026) wrote its files inside the skill's folder, lost them, then searched the whole disk: every
+# command now finds the article from its slug, and says where to look when it is not there.
+# `tarots_images.py` finds the same folders (its `work_slug` is a copy of `slugify`; a test keeps them equal).
+
+WORK_NAME = re.compile(r"^(\d{4}-\d{2}-\d{2})-(.+)$")
+ROUNDS_FILE = ".checks"
+MAX_ROUNDS = 4                       # rounds of `check` below the score; the next one is a STOP
+SKILL_DIR = Path(__file__).resolve().parents[1]
+
+
+def work_root() -> Path:
+    """Read at every call, not at import: TAROTS_WORK_DIR may be set for one run."""
+    env = os.environ.get("TAROTS_WORK_DIR", "").strip()
+    return Path(env).expanduser() if env else Path.home() / ".tarots-blog" / "work"
+
+
+def slugify(text: str, limit: int = 60) -> str:
+    """`Samhain: a Tarot Spread!` → `samhain-a-tarot-spread`, cut at a hyphen within `limit` characters."""
+    slug = _plain(text).replace(" ", "-")
+    if len(slug) > limit:
+        slug = slug[:limit].rsplit("-", 1)[0]
+    return slug
+
+
+def work_folders() -> List[Path]:
+    """Every work folder, newest first (the date in its name, then the last change)."""
+    try:
+        found = [p for p in work_root().iterdir() if p.is_dir() and WORK_NAME.match(p.name)]
+    except OSError:
+        return []
+    return sorted(found, key=lambda p: (p.name[:10], p.stat().st_mtime), reverse=True)
+
+
+def find_work_folder(slug: str) -> Optional[Path]:
+    """The newest work folder of this slug: by the folder's name, else by the `slug` inside its article.json."""
+    folders = work_folders()
+    for folder in folders:
+        if WORK_NAME.match(folder.name).group(2) == slug:
+            return folder
+    for folder in folders:
+        try:
+            if json.loads((folder / "article.json").read_text(encoding="utf-8")).get("slug") == slug:
+                return folder
+        except (OSError, ValueError, AttributeError):
+            continue
+    return None
+
+
+def where_articles_live() -> str:
+    recent = "".join(f"\n    {p}" for p in work_folders()[:5]) or " (none yet)"
+    return (f"Article files live only in the work folder {work_root() / '<YYYY-MM-DD>-<slug>'} (article.json, "
+            "article.md, foto/). Start one with `tarots_blog.py new \"<slug>\"`, then pass its slug, its folder or its "
+            f"article.json. Do not search the disk for them. Newest work folders:{recent}")
+
+
+def resolve_article(arg: str, name: str = "article.json") -> Path:
+    """ARTICLE as given to `check`, `post` (and `update`, with name="patch.json"): a file, a work folder, or a slug."""
+    path = Path(arg).expanduser()
+    if path.is_dir():
+        path = path / name
+    elif not path.exists() and len(path.parts) == 1 and path.suffix.lower() != ".json":
+        folder = find_work_folder(slugify(arg))
+        if folder is not None:
+            path = folder / name
+    if not path.is_file():
+        looked = f" (looked for {path})" if str(path) != arg else ""
+        raise Failure(f"{arg}: not found{looked}. " + where_articles_live(), EXIT_USAGE)
+    resolved = path.resolve()
+    if SKILL_DIR in resolved.parents and SKILL_DIR / "assets" not in resolved.parents:
+        raise Failure(f"{resolved} is inside the skill's folder: article files never go there (they get lost, and "
+                      "an update of the skill deletes them). Run `tarots_blog.py new \"<slug>\"` and move them to the "
+                      "work folder it prints.", EXIT_USAGE)
+    return path
+
+
+def in_work_folder(path: Path) -> Optional[Path]:
+    """The work folder holding this file, if it is in one."""
+    parent = path.resolve().parent
+    return parent if WORK_NAME.match(parent.name) else None
+
+
+def resolve_picture(arg: str, folder: Optional[Path]) -> str:
+    """A bare file name (`cover.jpg`) that does not exist here is looked for in the work folder's foto/."""
+    path = Path(arg).expanduser()
+    if not path.exists() and folder is not None and len(path.parts) == 1:
+        candidate = folder / "foto" / path.name
+        if candidate.is_file():
+            return str(candidate)
+    return arg
+
+
+def skeleton(slug: str) -> Dict[str, Any]:
+    """The article.json written by `new`: every field to fill, nothing that the API would refuse once filled."""
+    return {
+        "title": "", "subtitle": "", "slug": slug, "language": "en", "focus_keyword": "", "seo_title": "",
+        "seo_description": "", "secondary_keywords": [], "tags": [], "cover_alt": "", "faq": [], "status": "draft",
+        "body_file": "article.md",
+    }
+
+
+# ---- rounds of `check` -------------------------------------------------------------------------------------------
+# An agent ran `check` more than ten times on one article, rewriting the whole text each time. The rounds are
+# counted in the article's folder; the 5th still below the score is a STOP, recorded, so that a later `check` or
+# `post` (even with --save-anyway) refuses the article until the operator deletes the file.
+
+
+def _rounds_path(article: Path) -> Path:
+    return article.parent / ROUNDS_FILE
+
+
+def read_rounds(article: Path) -> Dict[str, Any]:
+    try:
+        data = json.loads(_rounds_path(article).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {"rounds": [], "stopped": False}
+    if not isinstance(data, dict) or not isinstance(data.get("rounds"), list):
+        return {"rounds": [], "stopped": False}
+    return data
+
+
+def write_rounds(article: Path, data: Dict[str, Any]) -> None:
+    _rounds_path(article).write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def print_stop(article: Path, data: Dict[str, Any], min_score: int) -> None:
+    last = data["rounds"][-1]["score"] if data.get("rounds") else "?"
+    folder = article.parent
+    print(f"\nSTOP: {len(data.get('rounds', []))} rounds of `check` and the score is still {last} (below {min_score}).")
+    print("  Do not save this article: no `post`, no `--save-anyway`, no other rewrite.")
+    print("  End the run here. Report: the title, the focus keyword, the last score, the items still open, and the")
+    print(f"  work folder {folder}")
+    print(f"  (only the operator can reopen it, by deleting {_rounds_path(article)})")
 
 
 # ---- output -----------------------------------------------------------------------------------------------------
@@ -380,11 +559,166 @@ def report(seo: Dict[str, Any]) -> None:
     s = seo.get("statistiche", {})
     print(f"SEO score: {seo['punteggio']}/100 ({seo['giudizio']})  words={s.get('parole')} h2={s.get('titoli_h2')} "
           f"internal_links={s.get('collegamenti_interni')} external_links={s.get('collegamenti_esterni')} faq={s.get('faq')}")
-    todo = [c for c in seo["controlli"] if c["esito"] != "ok"]
-    for c in sorted(todo, key=lambda c: (c["esito"] != "errore", -c["peso"])):
+    todo = [c for c in seo.get("controlli", []) if c["esito"] != "ok"]
+    for c in _open_items(seo):
         print(f"  {MARK[c['esito']]} [{c['id']}] {c['messaggio']}")
     if not todo:
         print("  every check passes")
+
+
+def _open_items(seo: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """The checks that are not ok, errors first, then by weight (the order of the report and of NEXT)."""
+    todo = [c for c in seo.get("controlli", []) if c["esito"] != "ok"]
+    return sorted(todo, key=lambda c: (c["esito"] != "errore", -c["peso"]))
+
+
+def passes(seo: Dict[str, Any], min_score: int) -> bool:
+    """Good enough to save: the score reaches the threshold and no check is an error (FIX)."""
+    return seo["punteggio"] >= min_score and not any(c["esito"] == "errore" for c in seo.get("controlli", []))
+
+
+# The server's thresholds (SOGLIE in backend/tarot_core/tarot/blog_seo.py), to put numbers in the NEXT lines.
+TITLE_CHARS, DESCRIPTION_CHARS, GOOD_WORDS, MAX_SENTENCE = (30, 60), (120, 160), 800, 24
+MAX_PER_MILLE, SLUG_CHARS, SLUG_WORDS = 30, 75, 9
+
+
+def _q(text: Any, size: int = 120) -> str:
+    text = " ".join(str(text or "").split())
+    return json.dumps(text if len(text) <= size else text[: size - 1] + "…", ensure_ascii=False)
+
+
+def long_sentences(body: str, limit: int = MAX_SENTENCE, n: int = 3) -> List[str]:
+    """The `n` longest sentences above `limit` words, links and shortcuts reduced to their words."""
+    text = re.sub(r"!\[[^\]]*\]\([^)]*\)|\[\[[^\]]*\]\]", " ", body)
+    text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)
+    text = "\n".join(line for line in text.splitlines() if not line.lstrip().startswith(("#", "|", ">")))
+    sentences = [" ".join(s.split()) for s in re.split(r"(?<=[.!?])\s+|\n\s*\n", text)]
+    return sorted((s for s in sentences if len(s.split()) > limit), key=lambda s: -len(s.split()))[:n]
+
+
+def next_steps(seo: Dict[str, Any], payload: Dict[str, Any]) -> List[tuple]:
+    """For every open item of the report, one concrete instruction with the real values: (to do now?, text).
+    The ids are those of blog_seo.py; an unknown id gets a generic line, so a newer server never breaks this."""
+    kw = str(payload.get("seo_parola_chiave") or "").strip()
+    kq = _q(kw)
+    kw_slug = slugify(kw, 160)
+    body = str(payload.get("testo") or "")
+    title = str(payload.get("seo_titolo") or payload.get("titolo") or "")
+    description = str(payload.get("seo_descrizione") or "")
+    slug = str(payload.get("slug") or "")
+    alt = str(payload.get("immagine_alt") or "")
+    stats = seo.get("statistiche") or {}
+    steps: List[tuple] = []
+    for c in _open_items(seo):
+        d = c.get("dettaglio") or {}
+        cid = c["id"]
+        now = True
+        if cid == "titolo_seo":
+            n = int(d.get("caratteri", len(title)))
+            if not n:
+                text = f'there is no title: set "seo_title" ({TITLE_CHARS[0]}-{TITLE_CHARS[1]} chars, starting with {kq})'
+            elif n > TITLE_CHARS[1]:
+                text = f"seo_title is {n} chars: cut it to ≤ {TITLE_CHARS[1]}, keyword first: current = {_q(title)}"
+            else:
+                text = (f"seo_title is {n} chars: lengthen it to {TITLE_CHARS[0]}-{TITLE_CHARS[1]} (add the benefit or "
+                        f"the year), keyword first: current = {_q(title)}")
+        elif cid == "descrizione_seo":
+            n = int(d.get("caratteri", len(description)))
+            lo, hi = DESCRIPTION_CHARS
+            if not n:
+                text = f"there is no seo_description: write one of {lo}-{hi} chars, with {kq} once, a promise and a reason to click"
+            elif n > hi:
+                text = f"seo_description is {n} chars: cut it to ≤ {hi} (remove {n - hi}+), keep {kq} once: current = {_q(description, 200)}"
+            else:
+                text = (f"seo_description is {n} chars: lengthen it to {lo}-{hi} (add {lo - n}+: a concrete promise and "
+                        f"a reason to click), keep {kq} once: current = {_q(description, 200)}")
+        elif cid == "parola_chiave":
+            text = ('there is no focus_keyword: set it to the phrase you checked with `topic-check` (2-5 words a person '
+                    "would type in a search engine)")
+        elif cid == "chiave_nel_titolo":
+            text = f"the keyword {kq} is not in seo_title: rewrite ONLY seo_title so it starts with the exact phrase (≤ {TITLE_CHARS[1]} chars): current = {_q(title)}"
+        elif cid == "chiave_nella_descrizione":
+            text = f"the keyword {kq} is not in seo_description: put the exact phrase in it once, in a natural sentence: current = {_q(description, 200)}"
+        elif cid == "chiave_nello_slug":
+            text = f'the slug does not contain "{kw_slug}": set "slug" to "{kw_slug}" (≤ {SLUG_CHARS} chars, ≤ {SLUG_WORDS} words): current = {_q(slug)}'
+        elif cid == "chiave_nell_inizio":
+            text = f"the keyword {kq} is not in the first 100 words: edit ONLY the first paragraph and put the exact phrase in it"
+        elif cid == "chiave_in_un_h2":
+            heads = re.findall(r"^##\s+(.+?)\s*$", body, flags=re.M)
+            text = (f"keyword not in an H2: rename ONE existing `##` heading to contain {kq}"
+                    + (f" (headings now: {' | '.join(_q(h, 60) for h in heads[:6])})" if heads else ""))
+        elif cid == "chiave_nell_alt":
+            now = False
+            text = f"cover_alt does not contain {kq}: add it only if the picture really shows it; otherwise leave this warning"
+        elif cid == "densita":
+            count = _plain(body).count(_plain(kw)) if kw else 0
+            if not count or not d.get("per_mille"):
+                text = (f"the keyword {kq} never appears in the body: put the exact phrase once in the first paragraph and "
+                        "once in one `##` heading, inside natural sentences (never pasted at the end of a sentence)")
+            else:
+                words = int(stats.get("parole") or 0)
+                keep = max(1, int(MAX_PER_MILLE * words / 1000 / max(len(kw.split()), 1)))
+                text = (f"the keyword {kq} appears {count} times ({d['per_mille']}‰ of the words, limit {MAX_PER_MILLE}‰): "
+                        f"replace {max(count - keep, 1)} of them with a synonym or a pronoun; keep at most {keep}")
+        elif cid == "lunghezza":
+            n = int(d.get("parole", stats.get("parole") or 0))
+            text = (f"the body has {n} words: add about {max(GOOD_WORDS - n, 50)} words as ONE new `##` section (an example, "
+                    "a common misconception or a practical exercise); leave the rest as it is")
+        elif cid == "titoli_h2":
+            n = int(d.get("h2", stats.get("titoli_h2") or 0))
+            text = f"the body has {n} `##` heading(s): add `##` headings above existing paragraphs to make at least 2 sections; do not rewrite the paragraphs"
+        elif cid == "h1_nel_testo":
+            lines = re.findall(r"^#\s+.+$", body, flags=re.M)
+            text = (f"the body has an H1 line ({', '.join(_q(x, 60) for x in lines[:2])}): make it `##`, or delete it "
+                    "if it repeats the title")
+        elif cid == "frasi":
+            longs = long_sentences(body)
+            text = (f"sentences average {d.get('parole_per_frase', '?')} words (limit {MAX_SENTENCE}): split ONLY these "
+                    "long ones in two: " + ("; ".join(f"{_q(' '.join(s.split()[:10]) + ' …', 90)} ({len(s.split())} words)"
+                                                    for s in longs) or "the longest sentences"))
+        elif cid == "collegamenti_interni":
+            n = int(d.get("interni", stats.get("collegamenti_interni") or 0))
+            text = (("no internal links" if not n else f"only {n} internal link") + ": run `tarots_blog.py catalog --grep "
+                    f"<word>` with a card or spread the article talks about, and put {max(2 - n, 1)} of the printed "
+                    "shortcuts in sentences (e.g. \"… the lightning of [[card:the-tower]] …\"); `titles --grep <word>` "
+                    "gives slugs for [[post:slug]]")
+        elif cid == "collegamenti_esterni":
+            text = ("no external link: add one reputable source, e.g. a museum, library or agency page you actually "
+                    "opened, as [a few words](https://…) inside a sentence")
+        elif cid == "immagine":
+            if len(alt.strip()) < 8:
+                text = 'cover_alt is empty or too short: write what the cover shows (8-125 chars) in "cover_alt"'
+            else:
+                now = False
+                text = "no cover yet: normal in `check`; `post <slug> --cover <file in foto/>` adds it"
+        elif cid == "etichette":
+            n = int(d.get("etichette", len(payload.get("tags") or [])))
+            text = (f"there are {n} tags: run `tarots_blog.py tags` and reuse 2-4 existing ones in \"tags\"" if n < 2
+                    else f"there are {n} tags: keep the 6 most relevant")
+        elif cid == "faq":
+            n = int(d.get("faq", stats.get("faq") or 0))
+            text = f'there are {n} FAQ items: add {max(3 - n, 1)} real questions with 1-3 sentence answers to "faq" ({{"question": …, "answer": …}})'
+        elif cid == "slug":
+            words = len([p for p in slug.split("-") if p])
+            text = (f"the slug {_q(slug)} is {len(slug)} chars and {words} words: shorten it to ≤ {SLUG_WORDS} words and "
+                    f"≤ {SLUG_CHARS} chars" + (f', keeping "{kw_slug}"' if kw_slug else ""))
+        else:
+            text = f"[{cid}] {c.get('messaggio', '')} Change only what this line names"
+        steps.append((now, text))
+    return steps
+
+
+def print_next(steps: List[tuple], round_line: str = "") -> None:
+    todo = [text for now, text in steps if now]
+    later = [text for now, text in steps if not now]
+    if todo:
+        print(f"\nNEXT — fix only these, do not rewrite the rest{round_line}:")
+        for n, text in enumerate(todo, 1):
+            print(f"  {n}. {text}.")
+    if later:
+        print("No action needed now:")
+        for text in later:
+            print(f"  - {text}.")
 
 
 # ---- commands -----------------------------------------------------------------------------------------------------
@@ -424,6 +758,9 @@ def cmd_key(a) -> int:
 
 def cmd_guide(_a) -> int:
     show(call("GET", "/guide"))
+    # On stderr, so the JSON above stays parseable. Seen: an «autumn equinox» article written two weeks after it.
+    print(f"note: today is {datetime.date.today().isoformat()} (this computer's clock): a timely topic falls in the "
+          "next 14 days; a date already past is not timely. Verify every date with a page you open.", file=sys.stderr)
     return EXIT_OK
 
 
@@ -783,14 +1120,122 @@ def cmd_topic_check(a) -> int:
     return EXIT_TAKEN if verdict == "TAKEN" else EXIT_OK
 
 
-def cmd_check(a) -> int:
-    payload = load_article(a.article)
-    seo = call("POST", "/seo-check", body={k: v for k, v in payload.items() if k != "dry_run"})
+# ---- the focus keyword ------------------------------------------------------------------------------------------
+# Seen on 5/10/2026: «balance tarot meditation autumn», a phrase nobody searches, then pasted into the H1 to make it
+# appear. `check` and `post` refuse a keyword that cannot be a search phrase, or that another article already has.
+
+KEYWORD_MAX_WORDS = 6
+KEYWORD_RULE = (
+    "A focus keyword is the phrase a person would really type into a search engine, in natural order, 2-5 words "
+    "(\"samhain tarot spread\", not \"balance tarot meditation autumn\"). Choose it before writing, run "
+    "`topic-check \"<keyword>\"`, then use the exact phrase in seo_title, seo_description, slug, the first paragraph "
+    "and one `##` heading, inside natural sentences."
+)
+
+
+def keyword_problem(keyword: str) -> Optional[str]:
+    """Why this cannot be a search phrase (too long, a word repeated), or None. Stop words may repeat."""
+    words = _plain(keyword).split()
+    if len(words) > KEYWORD_MAX_WORDS:
+        return f"it is {len(words)} words (at most {KEYWORD_MAX_WORDS}, 2-5 is the target)"
+    seen = set()
+    for word in words:
+        if word in STOPWORDS:
+            continue
+        if _stem(word) in seen:
+            return f"it repeats the word \"{word}\""
+        seen.add(_stem(word))
+    return None
+
+
+def keyword_taken(keyword: str, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """The article that already has this keyword (verdict TAKEN of `topic-check`, same language), or None. The
+    article itself (same slug) does not count: `check` after `post` must not find its own draft."""
+    cache = sync_titles()
+    own = payload.get("slug") or slugify(str(payload.get("titolo") or ""), 160)
+    rows = [r for r in _select_titles(cache, lang=payload.get("lang")) if r.get("slug") != own]
+    matches = topic_matches(keyword, rows)
+    return matches[0] if topic_verdict(matches) == "TAKEN" else None
+
+
+def check_keyword(payload: Dict[str, Any]) -> None:
+    keyword = str(payload.get("seo_parola_chiave") or "").strip()
+    if not keyword:
+        return  # the server reports it (parola_chiave), with its weight
+    problem = keyword_problem(keyword)
+    if problem:
+        raise Failure(f"focus_keyword \"{keyword}\" refused: {problem}. {KEYWORD_RULE}", EXIT_KEYWORD)
+    taken = keyword_taken(keyword, payload)
+    if taken:
+        why = taken["exact"] or f"score {taken['score']:.2f}"
+        raise Failure(
+            f"focus_keyword \"{keyword}\" is TAKEN ({why}) by: {title_line(taken['row'])}. One page per search intent: "
+            "do not write a second one. Choose another topic and keyword with `topic-check`, or report that the "
+            "existing article could be updated instead.", EXIT_TAKEN,
+        )
+
+
+def cmd_new(a) -> int:
+    name = " ".join(a.name).strip()
+    slug = slugify(name)
+    if not slug:
+        raise Failure("Give a slug or a working title, e.g. new \"samhain tarot spread\".", EXIT_USAGE)
+    folder = work_root() / f"{datetime.date.today().isoformat()}-{slug}"
+    existed = (folder / "article.json").exists()
+    (folder / "foto").mkdir(parents=True, exist_ok=True)
+    article, body = folder / "article.json", folder / "article.md"
+    if not article.exists():
+        article.write_text(json.dumps(skeleton(slug), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    if not body.exists():
+        body.write_text("", encoding="utf-8")
+    paths = {"slug": slug, "folder": str(folder.resolve()), "article": str(article.resolve()),
+             "body": str(body.resolve()), "foto": str((folder / "foto").resolve())}
     if a.json:
-        show(seo)
+        show({**paths, "existed": existed})
+        return EXIT_OK
+    if existed:
+        print("note: this work folder already exists: nothing was overwritten.")
+    print(f"work folder: {paths['folder']}")
+    print(f"article:     {paths['article']}   (fill every empty field)")
+    print(f"text:        {paths['body']}   (Markdown, no `# H1`, sections start at `##`)")
+    print(f"pictures:    {paths['foto']}   (tarots_images.py generate ... --article {slug})")
+    print(f"next: write the text and the fields, then `tarots_blog.py check {slug}`")
+    return EXIT_OK
+
+
+def cmd_check(a) -> int:
+    path = resolve_article(a.article)
+    rounds = read_rounds(path)
+    if rounds.get("stopped"):
+        print_stop(path, rounds, a.min_score)
+        return EXIT_STOP
+    payload = load_article(str(path))
+    require_filled(payload, path)
+    check_keyword(payload)
+    seo = call("POST", "/seo-check", body={k: v for k, v in payload.items() if k != "dry_run"})
+    ok = passes(seo, a.min_score)
+    rounds["rounds"].append({"when": _utcnow().isoformat(timespec="seconds"), "score": seo["punteggio"]})
+    n = len(rounds["rounds"])
+    rounds["stopped"] = not ok and n > MAX_ROUNDS
+    write_rounds(path, rounds)
+    steps = next_steps(seo, payload)
+    if a.json:
+        show({**seo, "round": n, "max_rounds": MAX_ROUNDS, "pass": ok, "stop": rounds["stopped"],
+              "next": [t for now, t in steps if now], "no_action": [t for now, t in steps if not now]})
     else:
         report(seo)
-    return EXIT_OK if seo["punteggio"] >= a.min_score else EXIT_SCORE
+        if rounds["stopped"]:
+            print_stop(path, rounds, a.min_score)
+        elif ok:
+            print(f"\nPASS (round {n}): {seo['punteggio']} ≥ {a.min_score} and no FIX. Do not polish further: go on "
+                  "with the pictures and `post`.")
+        else:
+            last = " This was the last round: if the next check is still below, the article stops." if n == MAX_ROUNDS else ""
+            print_next(steps, f" (round {n} of {MAX_ROUNDS})")
+            print(f"Then run `tarots_blog.py check {path.parent.name[11:] if in_work_folder(path) else path}` again.{last}")
+    if rounds["stopped"]:
+        return EXIT_STOP
+    return EXIT_OK if ok else EXIT_SCORE
 
 
 def upload(path: str) -> Dict[str, Any]:
@@ -931,9 +1376,11 @@ def record_picture(sha: str, path: str, *, article: str, kind: str, slug: Option
 
 
 def cmd_upload(a) -> int:
-    sha = check_picture(a.image, article=a.for_article, operator_image=a.operator_image)
-    image = upload(a.image)
-    record_picture(sha, a.image, article=a.for_article or f"(upload {image['id']})", kind="upload")
+    folder = find_work_folder(slugify(a.for_article)) if a.for_article else None
+    picture = resolve_picture(a.image, folder)
+    sha = check_picture(picture, article=a.for_article, operator_image=a.operator_image)
+    image = upload(picture)
+    record_picture(sha, picture, article=a.for_article or f"(upload {image['id']})", kind="upload")
     if a.json:
         show(image)
     else:
@@ -944,20 +1391,29 @@ def cmd_upload(a) -> int:
 
 
 def cmd_post(a) -> int:
-    payload = load_article(a.article)
-    sha = check_picture(a.cover, article=None, operator_image=a.operator_image) if a.cover else None
-    if a.cover:
-        image = upload(a.cover)
+    path = resolve_article(a.article)
+    rounds = read_rounds(path)
+    if rounds.get("stopped"):
+        print_stop(path, rounds, a.min_score)
+        return EXIT_STOP
+    payload = load_article(str(path))
+    require_filled(payload, path)
+    cover = resolve_picture(a.cover, in_work_folder(path)) if a.cover else None
+    sha = check_picture(cover, article=None, operator_image=a.operator_image) if cover else None
+    check_keyword(payload)
+    if cover:
+        image = upload(cover)
         payload["immagine_id"] = image["id"]
         print(f"cover uploaded: {image['id']}", file=sys.stderr)
     payload.pop("dry_run", None)
     trial = call("POST", "/posts", body={**payload, "dry_run": True})
     seo = trial["seo"]
     report(seo)
-    if seo["punteggio"] < a.min_score:
+    if not passes(seo, a.min_score):
         if not a.save_anyway:
-            print(f"Not saved: the score is below {a.min_score}. Fix the items above and run again "
-                  f"(or use --save-anyway to keep it as a draft for an editor).", file=sys.stderr)
+            print_next(next_steps(seo, payload))
+            print(f"Not saved: the score is below {a.min_score}, or a FIX is left. Fix only the items above and run "
+                  f"`check` again (or use --save-anyway, only if the operator asked it for this article).", file=sys.stderr)
             return EXIT_SCORE
         payload["stato"] = "bozza"
         payload.pop("pubblicato_il", None)
@@ -968,7 +1424,7 @@ def cmd_post(a) -> int:
     result = call("POST", "/posts", body=payload)
     article = result["articolo"]
     if sha:
-        record_picture(sha, a.cover, article=str(article["id"]), kind="cover", slug=article.get("slug"))
+        record_picture(sha, cover, article=str(article["id"]), kind="cover", slug=article.get("slug"))
     if a.json:
         show(result)
     else:
@@ -980,7 +1436,7 @@ def cmd_post(a) -> int:
 
 
 def cmd_update(a) -> int:
-    payload = load_article(a.patch)
+    payload = load_article(str(resolve_article(a.patch, "patch.json")))
     if "dry_run" in payload:
         # PATCH has no dry run: the server would ignore the field and save the change anyway.
         raise Failure("`update` has no dry run: remove `dry_run` from the patch, and run `check` on the full article "
@@ -1061,8 +1517,27 @@ def parser() -> argparse.ArgumentParser:
     tc.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help="the result as JSON")
     tc.set_defaults(run=cmd_topic_check)
 
-    k = sub.add_parser("check", help="SEO report without saving")
-    k.add_argument("article")
+    nw = sub.add_parser(
+        "new", help="create the work folder of one article (article.json, article.md, foto/) and print its paths",
+        description=(
+            "Creates <work root>/<YYYY-MM-DD>-<slug>/ with an article.json skeleton (empty SEO fields, status draft, "
+            "body_file article.md), an empty article.md and foto/ for every picture of the article. The work root is "
+            "~/.tarots-blog/work, or TAROTS_WORK_DIR. An existing folder is never overwritten. Every other command "
+            "then accepts the slug instead of a path."
+        ),
+    )
+    nw.add_argument("name", nargs="+", help="the slug or a working title (made into a slug)")
+    nw.set_defaults(run=cmd_new)
+    k = sub.add_parser(
+        "check", help="SEO report without saving, then NEXT: the exact fixes",
+        description=(
+            "ARTICLE is a slug, a work folder or an article.json. Prints the score, the open items and NEXT (one "
+            f"concrete instruction per item). Rounds are counted in the work folder ({ROUNDS_FILE}): the "
+            f"{MAX_ROUNDS + 1}th check still below the score prints STOP and exits {EXIT_STOP}; from then on check and "
+            "post refuse the article."
+        ),
+    )
+    k.add_argument("article", metavar="ARTICLE")
     k.add_argument("--min-score", type=int, default=85)
     k.set_defaults(run=cmd_check)
     u = sub.add_parser("upload", help="upload a cover or inline image, print its id/url")
@@ -1073,8 +1548,9 @@ def parser() -> argparse.ArgumentParser:
                    help="accept a picture the operator supplied, not made by tarots_images.py generate")
     u.set_defaults(run=cmd_upload)
     r = sub.add_parser("post", help="check, then create the article")
-    r.add_argument("article")
-    r.add_argument("--cover", help="an image file made by tarots_images.py generate, to upload and use as the cover")
+    r.add_argument("article", metavar="ARTICLE", help="a slug, a work folder or an article.json")
+    r.add_argument("--cover", help="an image file made by tarots_images.py generate (a bare name is looked for in the "
+                                   "work folder's foto/), to upload and use as the cover")
     r.add_argument("--operator-image", action="store_true",
                    help="the --cover file was supplied by the operator, not made by tarots_images.py generate")
     r.add_argument("--min-score", type=int, default=85, help="refuse to save below this SEO score (default 85)")

@@ -34,6 +34,12 @@ library only. The script is `scripts/tarots_images.py` (paths below are relative
   as the litmedia.ai website does (fix of 2026-09-30). `tarots_images.py` checks this before spending anything and
   stops with a message naming the folder to update; the up-to-date source is `E:\Projects\litmedia_skill`. Failed
   tasks are not charged.
+- **`ModuleNotFoundError: requests`** (seen when the agent started this script with a bare Python, e.g. uv's): the
+  script now finds a Python with LitMedia's dependencies by itself — `LITMEDIA_PYTHON` if set, then its own Python,
+  `py -3.12`, `py -3`, `python3`, `python`, and on Windows `%LOCALAPPDATA%\Programs\Python\Python3*\python.exe`,
+  newest first — and says which one in a `note:` line. If none has them it exits **5** naming the interpreter and the
+  command (`<python> -m pip install -r <litmedia-skill>/scripts/requirements.txt`): install requirements.txt for
+  the interpreter it names (ask the operator first), or report that line. The script never installs anything.
 - **`ModuleNotFoundError: alibabacloud_oss_v2`** from `ai_image.py`: a dependency missing from LitMedia's
   requirements. Install it for the interpreter that runs the script: `python3 -m pip install alibabacloud_oss_v2`
   (on this Windows host `pip` alone installs into another Python).
@@ -43,6 +49,17 @@ library only. The script is `scripts/tarots_images.py` (paths below are relative
 - **Nano Banana**: never through the API (accepted, then fails on LitMedia's side). This skill never uses it anyway.
 - **A certificate / TLS error**: report it; never disable verification.
 - After any failure: `balance`, then `show <id>` for the article, then at most **one** new attempt. Never a loop.
+
+## Where the pictures go: the article's work folder
+Every picture of an article lives in its work folder, the one `tarots_blog.py new "<slug>"` creates:
+`~/.tarots-blog/work/<YYYY-MM-DD>-<slug>/foto/` (`TAROTS_WORK_DIR` moves the root).
+- `generate --article <slug> …` saves there: `cover.jpg` for a 3:2 picture, `inline-1.jpg`, `inline-2.jpg`… for
+  `--aspect 4:3` or `1:1`; `--out NAME` chooses the name. A bare `--out NAME` without `--article` goes in the newest
+  work folder. An article with no work folder yet (an existing article whose pictures you redo) gets one for today.
+- `generate` prints the full path of the file: use that path with `cover` and `inline`. An existing file is never
+  overwritten (a picture already paid for).
+- Never relative paths like `work/<slug>-cover.jpg`: they land in whatever folder the agent runs in, often this
+  skill's, and get lost. Never search the disk for a picture: it is in `foto/` of its work folder.
 
 ## The picture rules (the script enforces them, with no option to skip)
 - **Cards as context, never as the picture.** Refused: a card as the **subject** (the prompt starts with it, the
@@ -124,19 +141,19 @@ Follow `references/prompts.md`. In short:
 
 ### 4. Try it dry first
 ```
-python scripts/tarots_images.py generate --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --out work/<slug>-cover.jpg --dry-run
-python scripts/tarots_images.py cover <id> work/<slug>-cover.jpg --alt "<alt>" --dry-run
+python scripts/tarots_images.py generate --article <slug> --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --dry-run
 ```
 For the first run with an operator, show the prompts for **three** articles and wait for an ok before generating.
 
 ### 5. Generate and swap
 ```
-python scripts/tarots_images.py generate --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --out work/<slug>-cover.jpg --budget <left>
-python scripts/tarots_images.py cover <id> work/<slug>-cover.jpg --alt "<what the picture shows>"
+python scripts/tarots_images.py generate --article <slug> --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --budget <left>
+python scripts/tarots_images.py cover <id> <the path generate printed: …/foto/cover.jpg> --alt "<what the picture shows>"
 
-python scripts/tarots_images.py generate --prompt "<prompt>" --kind <other kind> --shot <shot> --light <other light> --setting "<other setting>" --aspect 4:3 --out work/<slug>-1.jpg --budget <left>
-python scripts/tarots_images.py inline <id> --replace 0 work/<slug>-1.jpg "<alt>"
+python scripts/tarots_images.py generate --article <slug> --prompt "<prompt>" --kind <other kind> --shot <shot> --light <other light> --setting "<other setting>" --aspect 4:3 --budget <left>
+python scripts/tarots_images.py inline <id> --replace 0 <the path generate printed: …/foto/inline-1.jpg> "<alt>"
 ```
+(`cover <id> <file> --dry-run` shows what would change before the real swap.)
 - **Look at every picture before swapping it in** (open the file). Reject it if it is a picture of cards anyway (a
   card filling the frame, a spread, a deck, cards in a hand), has text or letters, a malformed hand or face, or has
   nothing to do with the article. A second try is a **rewritten** prompt with a new form (the same prompt and the
@@ -175,3 +192,5 @@ why, an article whose text made a good picture hard, LitMedia failing).
   rules, the house style, examples.
 - `references/api.md`: the four endpoints, if you would rather call them directly.
 - `tests/test_controlli.py`: offline tests of the picture rules (`python -m pytest tests -q`).
+- `tests/test_cartella_e_python.py`: offline tests of the work folder (`--article`, `foto/`) and of the choice of
+  the Python that runs LitMedia.

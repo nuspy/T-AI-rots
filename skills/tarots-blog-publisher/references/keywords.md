@@ -72,7 +72,9 @@ Secondary keywords go in the H2s, the first 100 words, image alt text and the FA
 
 ## Topic calendar (from September 2026)
 
-Verify each date before publishing (sources: Farmers' Almanac, Britannica, CHANI, Almanac Supply Co.).
+Verify each date before publishing (sources: Farmers' Almanac, Britannica, CHANI, Almanac Supply Co.). **A row is
+timely only within the next 14 days of today** (`guide` prints today's date): a row whose date has passed is not a
+hook any more (on 5 Oct 2026 an agent wrote an "autumn equinox" article two weeks after the equinox).
 
 | When | Hook | Angle for us |
 |---|---|---|
@@ -98,3 +100,5 @@ Verify each date before publishing (sources: Farmers' Almanac, Britannica, CHANI
 - Cover image: 3:2, a scene from this article and never a card (see `references/image-generation.md`), alt text
   describing the image (with the keyword only if it fits naturally).
 - One article per primary keyword. Before writing, list existing posts and pick a keyword not already used.
+- The primary keyword is a phrase people really search, in natural order, 2–5 words (`samhain tarot spread`), chosen
+  before writing; `check` and `post` refuse one longer than 6 words, with a repeated word, or already TAKEN.

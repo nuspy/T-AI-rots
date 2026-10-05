@@ -3,6 +3,11 @@
 `check` and `post` return a score from 0 to 100 (weighted sum of the checks below; `ok` = full weight, `WARN` =
 half, `FIX` = none) and a verdict: `ottimo` (≥ 85 and no error), `buono` (≥ 65), `da_migliorare`.
 
+After the report, `check` prints **NEXT**: for each open item below, one instruction with the real values (the
+current SEO title and its length, the headings to rename, the long sentences to split, the command for link
+shortcuts). Change only those lines; never rewrite the whole text. Rounds are counted in the work folder
+(`.checks`): the 5th `check` still below 85 is a **STOP** (exit 10), and the article is not saved.
+
 **What the score is not.** It does not know search volume, competition or ranking. It says whether the article follows
 well-established good practice. A 100 does not promise page one; a 40 says where to start. Never chase the number
 with tricks (repeated keywords, padding, hidden text): the density check exists to catch exactly that.

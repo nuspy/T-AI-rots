@@ -9,8 +9,9 @@ Publishes one article at a time to the **TAROTS chat** blog (an AI reading servi
 its REST API, and makes it as findable as it honestly can be. **International audience, English first**: the default
 language is `en`; an Italian article is optional and separate.
 
-Works for any agent that can run a shell command and read files (Hermes, OpenClaw, Claude Code, a cron job).
-No dependency beyond Python 3.8+. The script is `scripts/tarots_blog.py` (path below is relative to this skill).
+Works for any agent that can run a shell command and read files (Hermes, OpenClaw, Claude Code, a cron job), also
+through `execute_code` with `subprocess`. No dependency beyond Python 3.8+. The script is `scripts/tarots_blog.py`
+(paths below are relative to this skill's folder).
 
 ## Which skill does what
 | Skill | Its job for the blog |
@@ -23,284 +24,228 @@ No dependency beyond Python 3.8+. The script is `scripts/tarots_blog.py` (path b
 If the operator asks to "post", "publish" or "schedule" an article for TAROTS chat, it means this skill and this
 script: there is no other target to choose or ask about.
 
-## Setup (once per key, not once per run)
-
+## Setup: run `guide` first, never ask for a key
 **Start every run with `python scripts/tarots_blog.py guide`, before asking anything.** If it prints the key's
 permissions (`note: using the saved key (prefix tk_live_…)`), the key and the URL are already saved: everything is
-set, go on with the workflow and **never ask the operator for a key or a URL**. Only if `guide` fails with a
-message about a missing key, follow the steps below.
+set, go on and **never ask the operator for a key or a URL**. `guide` also prints today's date (`note: today is …`):
+use it for every "timely" decision. Only if `guide` fails with a message about a missing key, follow
+`references/setup.md` (first setup, and what to do when a different key is offered).
 
-1. An editor creates a key in the console: **Blog → Keys**. The key is shown once. Permissions: `blog:write`
-   (drafts) or `blog:write` + `blog:publish` (can publish). Ask the operator which one this agent should have.
-2. Put it in the environment for this run only:
-   ```
-   TAROTS_API_URL=https://tarots.chat/api        # the API base of the site
-   TAROTS_API_KEY=tk_live_…
-   ```
-   The **first** run with nothing saved yet remembers both, in `~/.tarots-blog/credentials.json` — a file
-   outside any repository, never inside this project, `chmod 600` where the OS supports it. Every run after
-   that needs neither variable: omit them and the saved ones are used automatically (a one-line `note:` on
-   stderr says so, every time, so it is never silently invisible).
-3. Check: `python scripts/tarots_blog.py guide` prints what the key can do and the SEO thresholds.
+## The work folder: the only place for this article's files
+```
+python scripts/tarots_blog.py new "samhain tarot spread"
+```
+creates `~/.tarots-blog/work/<YYYY-MM-DD>-<slug>/` (or under `TAROTS_WORK_DIR`) and prints its absolute paths:
+- `article.json` — the fields, with every SEO field empty, `"status": "draft"`, `"body_file": "article.md"`;
+- `article.md` — the text, empty;
+- `foto/` — every picture of this article (cover and inline), where `tarots_images.py generate --article <slug>`
+  saves them;
+- `.checks` — written by `check`: its rounds (do not edit it).
 
-If `guide` fails with `error: …`, read the message: it says what is wrong (URL, key, network). Do not work around it.
+Rules:
+- The article's files live **only** there: **never** in this skill's folder, never in a repository, never in the
+  current directory. `check` and `post` refuse an article.json inside the skill's folder.
+- Every command takes the **slug** (or the folder, or the path) instead of a path: `check samhain-tarot-spread`,
+  `post samhain-tarot-spread --cover cover.jpg`. A bare picture name is looked for in `foto/`.
+- If a command says the article is not found, its message names the work folder and lists the newest ones.
+  **Never search the disk** (`os.walk`, `dir /s`, `find /`) for an article file.
 
-### Given a new key when one is already saved
-
-Never swapped in silently. If `TAROTS_API_KEY` is set to a key that differs from the one already saved, every
-command refuses with an error naming both by prefix and asks for one of three explicit choices:
-- `python scripts/tarots_blog.py key show` — compare the saved key's prefix against the new one first.
-- `python scripts/tarots_blog.py key save` — replace the saved key with the one in `TAROTS_API_KEY` now.
-- unset `TAROTS_API_KEY` — keep using the saved key, untouched.
-
-`python scripts/tarots_blog.py key clear` forgets the saved key entirely (a bare `guide` or any other command then
-falls back to needing `TAROTS_API_KEY` set, as on a first run). Only the 12-character prefix is ever shown or
-printed — never the full key — matching how the console lists keys.
+## The whole run, command by command
+This is the sequence for one article. Follow it in this order.
+```
+python scripts/tarots_blog.py guide                                        # 1. key ok? today's date
+python scripts/tarots_blog.py titles --grep samhain                         # 2. what exists around the topic
+python scripts/tarots_blog.py topic-check "samhain tarot spread" --lang en  #    the keyword: FREE / CLOSE ok, TAKEN = choose another
+python scripts/tarots_blog.py new "samhain tarot spread"                     # 3. the work folder (prints the paths)
+#  4. write article.md and fill article.json, in the folder printed by `new`
+python scripts/tarots_blog.py catalog --grep death                          # 5. link shortcuts for the cards/spreads named
+python scripts/tarots_blog.py tags                                          #    tags to reuse
+python scripts/tarots_blog.py check samhain-tarot-spread                    # 6. score + NEXT; fix only NEXT; at most 4 rounds
+python ../tarots-blog-images/scripts/tarots_images.py progress              # 7. pictures: what form is free
+python ../tarots-blog-images/scripts/tarots_images.py generate --article samhain-tarot-spread --kind landscape --shot wide --light blue-hour --setting "Irish hillside" --prompt "…"
+#                                                                              → foto/cover.jpg
+python scripts/tarots_blog.py post samhain-tarot-spread --cover cover.jpg   # 8. re-check, upload the cover, save (draft)
+```
+Then the report (step 9).
 
 ## Workflow
 
-Do the steps in order. Nothing is public until step 8, and only if the operator wants it published.
-
 ### 1. Learn what exists
-```
-python scripts/tarots_blog.py sections      # slug of a section for the article
-python scripts/tarots_blog.py tags          # reuse tags, don't invent near-duplicates
-python scripts/tarots_blog.py titles --grep tower    # EVERY article on the blog (any author) about "tower"
-python scripts/tarots_blog.py catalog --grep tower   # link shortcuts for cards and spreads
-```
-- `titles` lists the **whole blog** — articles of every key and of the console, not only yours — one compact line
-  each: `slug | title | keyword | lang | status | date`, newest first. Filter it (`--grep TEXT`, `--lang en`,
-  `--section SLUG`, `--status draft|published|archived`) rather than printing thousands of lines: without `--all`
-  it stops at the newest 100. It keeps a local copy (`~/.tarots-blog/titles-cache.json`) and fetches only what
-  changed since the last run; `--refresh` reloads everything (it happens by itself every 7 days), which is the only
-  way an article deleted on the site leaves the copy.
-- `mine` lists only what **this key** created, with ids: use it to find an article to `update`, not to learn what
-  the blog covers.
-- **Never download or read whole articles to choose a topic** (not through the API, not from the website): titles,
-  slugs and keywords are all that is needed, and the blog will have thousands of articles.
+- `titles` lists the **whole blog** (every key and the console), one line each: `slug | title | keyword | lang |
+  status | date`, newest first. Filter it (`--grep TEXT`, `--lang en`, `--section SLUG`, `--status draft`); it keeps
+  a local copy and fetches only what changed. `sections` and `tags` list what to reuse.
+- `mine` lists only what **this key** created, with ids: use it to find an article to `update`.
+- **Never download or read whole articles to choose a topic**: titles, slugs and keywords are enough.
 
-### 2. Choose the topic
+### 2. Choose the topic and the focus keyword — before writing a word
 - **The operator named a topic** → use it exactly, and find the keyword around it.
-- **Otherwise** pick something esoteric that is timely *now*: an astronomical or seasonal moment (equinox, solstice,
-  full/new moon, eclipse, retrograde), a cultural moment, a trend people are searching (shadow work, tarot
-  journaling, pick-a-card vs real spreads), or a Thoth / Golden Dawn evergreen. `references/keywords.md` has the
-  keyword map and a calendar to start from.
-- **Verify every date and astronomical claim** with a source you actually opened before writing it. If you cannot
-  verify it, drop the claim or the topic.
-- One primary keyword per article, not used by any other article on the blog. Prefer a specific, answerable phrase
-  ("The Tower tarot card meaning in the Thoth deck") over a head term ("tarot").
-- **Before writing a word, check the topic against the whole blog** — the proposed title and the focus keyword,
-  each:
-  ```
-  python scripts/tarots_blog.py topic-check "the tower tarot meaning in love"
-  python scripts/tarots_blog.py topic-check "tower tarot love" --lang en
-  ```
-  It prints the 5 closest articles with a score 0–1 and a verdict (case, accents, punctuation and stop words are
-  ignored; "tarot", "thoth", "card", "meaning", "deck" count little):
-  - `TAKEN` (exit code 8): the same slug, keyword or title, or score ≥ 0.88. **Do not write it.** Choose another
-    topic; if the operator named this one, tell them it exists (they may want the existing article updated).
-  - `CLOSE` (0.40–0.88): write it **only if the search intent is really different** from the articles listed
-    (a different question, reader or use — not just a reworded title), and **say so in the step 9 report**, naming
-    the close article and why yours is different.
+- **Otherwise** something esoteric that is timely *now*: an astronomical or seasonal moment, a cultural moment, a
+  trend, or a Thoth / Golden Dawn evergreen (`references/keywords.md` has the keyword map and a calendar).
+- **Timely means within the next 14 days of today's date** (`guide` prints it). A date that has passed is not a hook:
+  an "autumn equinox" article two weeks after the equinox is late. **Verify every date and astronomical claim**
+  with a page you actually open (an observatory, an almanac, an encyclopedia). If you cannot verify it, drop it.
+- **The focus keyword** is the phrase a person would really type into a search engine, in natural word order,
+  **2–5 words**, specific and answerable. It is the phrase you pass to `topic-check`; the text is then written
+  around it. Never paste it into a title or at the end of a sentence only to make it appear.
+  - Bad (seen): topic "autumn equinox", keyword `balance tarot meditation autumn` — nobody searches that word salad;
+    it never appeared in the text, so it was pasted into the H1 ("…Balance: balance tarot meditation autumn"):
+    keyword stuffing.
+  - Good: `mabon tarot spread`, chosen first, checked with `topic-check`, and the opening written around it: "A
+    Mabon tarot spread is a five-card reading for the autumn equinox, when day and night are equal…".
+  - `check` and `post` refuse a keyword of more than 6 words or with a repeated word (exit 9), and one another
+    article already has (exit 8, the `topic-check` comparison).
+- **Check the keyword (and the proposed title) against the whole blog**:
+  `python scripts/tarots_blog.py topic-check "mabon tarot spread" --lang en`. It prints the 5 closest articles and:
+  - `TAKEN` (exit 8): the same slug, keyword or title, or score ≥ 0.88. **Do not write it.** Choose another topic;
+    if the operator named this one, tell them it exists (they may want it updated).
+  - `CLOSE` (0.40–0.88): write it **only if the search intent is really different** (a different question, reader
+    or use), and say so in the report, naming the close article.
   - `FREE` (< 0.40): go ahead.
-  `titles --grep <word>` helps to see the neighbourhood of a topic; `topic-check` is the decision.
-  On a server that does not have `GET /titles` yet, both commands print `warning: this server has no GET /titles
-  yet` and check only this key's own articles: say so in the report (the verdict covers fewer articles).
+  On a server without `GET /titles` both commands warn that only this key's articles are compared: say so.
 
 ### 3. Outline for search intent
-- The first 100 words answer the question directly and contain the primary keyword.
-- 3–6 `##` sections, at least one with the keyword or a close variant; question-style headings when natural.
-- Plan 2–5 internal links (cards, spreads, other posts), at least one reputable external source, 3–5 FAQ items.
+- The first 100 words answer the question directly and contain the focus keyword.
+- 3–6 `##` sections, one with the keyword; question-style headings when natural.
+- Plan 2–5 internal links, at least one reputable external source, 3–5 FAQ items.
 
 ### 4. Write the article (original, expert, useful)
-- English, **800+ words** (300 is the hard minimum), short sentences (average ≤ 24 words), Markdown, no HTML.
-  Do **not** write an `# H1`: the page title is the H1. Sections start at `##`.
+- In `article.md` of the work folder. English, **800+ words** (300 is the hard minimum), short sentences (average
+  ≤ 24 words), Markdown, no HTML. **No `# H1`**: sections start at `##`.
 - Write it yourself from what you know and verified. Never copy or closely paraphrase another site; never invent a
-  quote, statistic, source, or "study". Attribute Crowley, Harris, the Golden Dawn correctly, and say when something
+  quote, statistic, source or "study". Attribute Crowley, Harris, the Golden Dawn correctly, and say when something
   is a modern interpretation.
-- Internal links inside sentences with shortcuts: `[[card:the-tower]]`, `[[spread:celtic-cross]]`,
-  `[[post:some-existing-slug]]` (a card or spread on its own line becomes a card with its picture). Take the exact
-  shortcut from `catalog`. An unknown reference disappears silently, so copy, don't guess.
-- **Inline images — decide explicitly, don't silently skip**: for every article, actively decide whether a scene
-  from the text, an abstract picture of a spread's positions (lights, stones, a constellation: never a layout of cards) or a
-  close-up of a symbol would genuinely help — most articles about a spread or a specific symbol do benefit from one.
-  If yes, generate it with `tarots_images.py generate --aspect 4:3` (step 6, with its four dimensions; a different form
-  from the cover), upload it with `python scripts/tarots_blog.py upload work/<slug>-1.jpg --for <slug>`, then paste the
-  printed `url` into the body as ordinary Markdown: `![alt text](url)`. One is normally enough, not one per paragraph. State the decision either
-  way in the step 9 report.
-- **Inline video**: a line on its own with `[[video:youtube:VIDEO_ID]]` (11-character id from the URL, e.g.
-  `dQw4w9WgXcQ`) or `[[video:vimeo:VIDEO_ID]]` (the number in the Vimeo URL) embeds that video. No other host —
-  the site doesn't run its own video hosting. Use only a real, relevant, existing video (a tradition's own
-  explainer, a museum/library recording) — never invent one.
-- **Image captions**: put the caption in the image title — `![alt text](url "The caption under the picture")`.
-  Alt describes the picture for who can't see it; the caption says why it is there.
-- **Rich text (sparingly)**: `:text[a phrase]{color=brass}` / `{color=plum}` / `{color=verdigris}` /
-  `{color=muted}`, `:text[bigger]{size=large}` (`small`, `large`, `title`), both together
-  `:text[…]{color=plum size=large}`, and `:underline[…]`. Only these values exist (the site's palette): anything
-  else is ignored, and no HTML ever runs. One or two highlights per article at most — emphasis that is everywhere
-  is emphasis nowhere; `**bold**` is still the default.
-- Voice: warm and precise, reflective rather than prophetic. Tarot is a tool for reflection here: no promises about
-  the future, no health, legal, money or "he will/won't love you" verdicts, no fear-mongering. For relationship
-  topics offer questions and perspectives, never a verdict on a person or a couple.
-- Mention the service only where it is really useful (a spread the reader can try), once or twice, no hard sell.
+- Internal links inside sentences with the exact shortcuts from `catalog`: `[[card:the-tower]]`,
+  `[[spread:celtic-cross]]`, `[[post:slug]]`. Inline picture (decide explicitly, say it in the report), captions,
+  video and coloured text: `references/writing.md`.
+- Voice: warm and precise, reflective rather than prophetic. No promises about the future, no health, legal, money
+  or "he will/won't love you" verdicts, no fear-mongering. Mention the service once or twice where useful, no hard sell.
 
-### 5. Fill the SEO fields
+### 5. Fill the SEO fields (article.json)
 | Field | Rule |
 |---|---|
 | `title` | ≤ 200; the page H1. Clear and specific. |
-| `seo_title` | **30–60 chars**, keyword near the start. |
+| `seo_title` | **30–60 chars**, keyword at the start. |
 | `seo_description` | **120–160 chars**, keyword once, a promise and a reason to click. |
-| `focus_keyword` | the one phrase; must appear in the SEO title, description, slug, first 100 words, one `##`; in the cover alt only if the picture really shows it (otherwise accept that one warning). |
+| `focus_keyword` | the phrase of step 2; in the SEO title, description, slug, first 100 words, one `##`; in the cover alt only if the picture really shows it. |
 | `secondary_keywords` | up to 10 related phrases, used naturally in the text. |
 | `slug` | lowercase-hyphen, ≤ 75 chars and ≤ 9 words, contains the keyword. |
-| `tags` | 2–6, reuse existing ones. |
-| `section` | a slug from `sections` (or omit). |
-| `faq` | 3–5 real questions with 1–3 sentence direct answers (`question`, `answer`); becomes FAQ structured data. |
-| `cover_alt` | describes what is in the picture; the keyword only if it fits; never a spread (refused); a card only if the picture really shows one. |
+| `tags` | 2–6, reuse existing ones (`tags`). |
+| `section` | a slug from `sections` (or leave it out). |
+| `faq` | 3–5 real questions with 1–3 sentence direct answers (`question`, `answer`). |
+| `cover_alt` | what is in the picture; never a spread; a card only if the picture really shows one. |
 | `language` | `en` (default). |
-| `canonical_url` / `noindex` | leave unset unless the operator says the text lives elsewhere / must stay out of search. |
+| `canonical_url` / `noindex` | leave unset unless the operator says so. |
 
-Put the article in a JSON file (see `assets/example-article.json`; friendly English keys are accepted). Put the
-Markdown in a file next to it and reference it with `"body_file": "article.md"`, so no quoting problems.
+`assets/example-article.json` + `.md` show the shape (abridged, not a template to copy).
 
-### 6. Cover image (and the inline picture)
-3:2, no text in the image, **never a picture of cards**. **Its own subject, taken from this article's text**, in a
-form that differs from the last pictures on the blog. The blog's covers had to be redone twice for breaking this.
-Read `tarots-blog-images/references/prompts.md` (the rules, the catalogs, the house style, examples) and write the
-prompt after the article, naming something concrete from it.
-- **Cards as context, never as the picture.** Refused: a card as the subject (at the start, in the first clause or
-  the first 8 content words, a close-up of a card), more than one card (cards, a deck, a pile, the arcana), a spread
-  or layout (cards on a table, a reading, a fan of cards, cards face down), hands holding or turning a card.
-  Accepted: "tarot" as an adjective, the names of the cards as a world or a symbol ("a lighthouse struck by
-  lightning, the energy of the Tower"), one single small card later in the scene.
-- **Four dimensions, required and recorded**: `--kind` (17 values, what it shows), `--shot` (12, the framing),
-  `--light` (10) and `--setting` (a place, culture or era in a few words); `tarots_images.py catalog` lists them,
-  `progress` shows the last 20 pictures and what is free. Refused: a kind of the last 3 pictures, a kind+shot pair
-  of the last 20, a light of the last 2 (firelight: of the last 10), a setting of the last 10, and a prompt that
-  does not show the declared light, shot and setting in its own words. The dimensions only vary the form: the
-  subject stays the article's content.
-
-Generate **only** with the `tarots-blog-images` skill's script, which calls `litmedia-skill` (Seedream 5.0, 2K,
-10 credits a picture) and checks the prompt first (cards only as context, a concrete scene, a new form, not a
-repeat of an earlier picture); every refusal says what to change and which values are free:
+### 6. Pictures: cover and inline
+3:2 cover, no text in the image, **never a picture of cards** (cards only as context), its own subject from this
+article, in a form that differs from the last pictures. Made **only** by the `tarots-blog-images` skill:
 ```
 python ../tarots-blog-images/scripts/tarots_images.py progress
 python ../tarots-blog-images/scripts/tarots_images.py prompt-check --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --alt "<cover alt>"
-python ../tarots-blog-images/scripts/tarots_images.py generate --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --out work/<slug>-cover.jpg
-python ../tarots-blog-images/scripts/tarots_images.py generate --prompt "<other prompt>" --kind <other kind> --shot <shot> --light <other light> --setting "<other setting>" --aspect 4:3 --out work/<slug>-1.jpg
+python ../tarots-blog-images/scripts/tarots_images.py generate --article <slug> --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>"
 ```
-For example: `generate --kind architecture --shot low-angle --light storm-light --setting "Breton fishing coast"
---out work/the-tower-cover.jpg --prompt "A lighthouse on a black basalt cliff of the Breton coast in a winter
-storm, one bolt of lightning splitting the sky, ..., seen from the fishing harbour below, looking up, the sudden
-energy of the Tower, <house style>"`.
-- The path is relative to this skill's folder: the two skills are normally installed side by side (`skills/`,
-  `~/.claude/skills/`, `~/.agents/skills/`, `%LOCALAPPDATA%/hermes/skills/`). If they are not, find the other one
-  by its folder name `tarots-blog-images` in the agent's skills directories and use its `scripts/tarots_images.py`.
-  If it is not installed, say so and publish without pictures: do not make them another way.
-- Then the file goes to `tarots_blog.py post article.json --cover work/<slug>-cover.jpg` (the cover) or
-  `tarots_blog.py upload work/<slug>-1.jpg --for <slug>` (an inline picture, step 4).
-- `post --cover` and `upload` check the picture against the same record as `tarots_images.py`
-  (`~/.tarots-blog/images-progress.json`, or `TAROTS_IMAGES_PROGRESS`) **before uploading anything**, and refuse it
-  (exit 7) if:
-  - it was **not made by `tarots_images.py generate`** — unless the operator supplied this very picture: then add
-    `--operator-image` (accepted with a warning; never for a picture you made some other way);
-  - it is **already used by another article** (same bytes, whatever the file name);
-  - the prompt it was generated from makes cards the picture (the same rules as `generate`, copied in the script).
-  A file that is not PNG, JPEG or WebP is refused before all this, as a usage error (exit 2).
-- After a successful `post` the cover is recorded with the new article; after `upload` the picture is recorded
-  with the `--for` slug or id (without `--for` it is tied to that upload alone and can never be used again). Always
-  pass `--for`.
-- **Never** `browser-image-gen`, never the LitMedia website, never the agent's own image tool, never `ai_image.py`
-  of `litmedia-skill` called directly.
-- Cost and consent first (10 credits a picture). Never bypass TLS errors. Look at every picture before using it.
-- If a picture cannot be made (LitMedia down, no credits, the prompt keeps being refused), continue without it and
-  say so in the report: an article without an image is better than a stalled one, or than a picture of cards.
+`--article <slug>` saves into the work folder's `foto/`: `cover.jpg` for a 3:2 picture, `inline-1.jpg`… for
+`--aspect 4:3`; it never overwrites a file. Then `post <slug> --cover cover.jpg`, and for an inline picture
+`upload inline-1.jpg --for <slug>` (prints the url for `![alt](url)`). Prompt rules, the four dimensions, what
+`post --cover` and `upload` refuse (exit 7), cost and consent: `references/image-generation.md`. If the other skill
+is not next to this one, find its folder `tarots-blog-images` among the agent's skills; if it is not installed, or
+LitMedia fails, say so (attended run: publish without pictures; unattended: see below). Never another image tool.
 
-To change the pictures of articles that already exist (yours or others'), use the **`tarots-blog-images`** skill:
-it has its own key with the `blog:media` permission.
-
-### 7. Check, fix, repeat
+### 7. Check: fix only what NEXT says, at most 4 rounds
 ```
-python scripts/tarots_blog.py check article.json
+python scripts/tarots_blog.py check <slug>
 ```
-Prints a score 0–100 and a list `FIX` (errors), `WARN` (improvements). Fix the items and re-run. **Stop at ≥ 85 with
-no `FIX`**, or after 4 rounds. The score measures good practice, not ranking: never stuff keywords or pad the text
-to push a number. Meanings of each check: `references/seo-checklist.md`.
+It prints the score 0–100, the open items (`FIX` errors, `WARN` improvements) and then
+**`NEXT — fix only these, do not rewrite the rest`**: one instruction per item, with the real values, e.g.
+`seo_title is 76 chars: cut it to ≤ 60, keyword first: current = "…"`, `the keyword "…" is not in the first 100
+words: edit ONLY the first paragraph and put the exact phrase in it`, `no internal links: run catalog --grep <word>
+and put 2 of the printed shortcuts in sentences`. Items under "No action needed now" (no cover yet, keyword in the
+alt) are left as they are.
+- **Change only the lines NEXT names** (one field in article.json, one paragraph or one heading in article.md).
+  **Never rewrite or regenerate the whole text**: what passed stays as it is.
+- `PASS` (score ≥ 85 and no `FIX`): stop polishing and go on.
+- The rounds are counted (`.checks`). Rounds 1–4 below the score exit 3 with NEXT. **The 5th `check` still below
+  85 prints `STOP` and exits 10**: do not save, no `post`, no `--save-anyway`, no other rewrite; end the run and
+  report it. From then on `check` and `post` refuse that article (only the operator can reopen it).
+- The score measures good practice, not ranking: never stuff keywords or pad the text. Meanings of each check:
+  `references/seo-checklist.md`.
 
 ### 8. Publish
-**The publishing target is always the TAROTS chat blog itself, through this one script and its REST API — never a
-social platform, a CMS, or any other publishing/scheduling tool you may also have available** (Postiz, SocialClaw,
-WordPress, Medium, a social scheduler, a generic "publish" skill). If you have such a tool loaded, ignore it for
-this task: it does not apply here, and there is no other target to ask the operator about.
+The target is always the TAROTS chat blog through this script — never a social platform, a CMS or another
+publishing tool you may have loaded.
 ```
-python scripts/tarots_blog.py post article.json --cover cover.png
+python scripts/tarots_blog.py post <slug> --cover cover.jpg
 ```
-`post` re-checks, refuses to save below 85, uploads the cover, creates the article, and prints the URL.
-- `"status": "draft"` (the default) saves a draft an editor can publish. Use `"status": "published"` **only if the
-  operator's instructions say to publish**. With a key that lacks `blog:publish` the server saves a draft anyway and
-  prints a `note:`; report it, don't try to get around it.
-- `"publish_at": "2026-10-12T08:00:00Z"` (with `published`) schedules the article for that time.
+`post` re-checks, refuses to save below 85 or with a `FIX` (and prints NEXT), uploads the cover, creates the article
+and prints the URL.
+- `"status": "draft"` (the default) saves a draft an editor can publish. `"status": "published"` **only if the
+  operator's (or the job's) instructions say to publish**; `"publish_at": "2026-10-12T08:00:00Z"` schedules it. With
+  a key that lacks `blog:publish` the server saves a draft anyway and prints a `note:`: report it.
 - On a network error or timeout **do not simply run `post` again**: run `mine` first, the article may exist.
-- `--save-anyway` keeps a below-85 article as a draft for a human. Use it **only when the operator asked for it
-  for this very article**; never as a habit, never for a series. A low score means: fix the article (step 7).
+- `--save-anyway` keeps a below-85 article as a draft for a human: **only when the operator asked for it for this
+  very article**, never after a STOP, never as a habit.
 
 ### 9. Report
-Answer in a few lines: title, primary keyword, the `topic-check` verdict (for a `CLOSE` one: the close article and
-why the intent differs), final SEO score, status, URL, cover yes/no, **inline image yes/no and
-why**, and anything an editor must look at (`note:` lines, unverified claims you removed). Do not paste the key or
-the article body.
+A few lines: title, focus keyword, the `topic-check` verdict (for `CLOSE`: the close article and why the intent
+differs), final SEO score and number of `check` rounds, status, URL, cover yes/no, **inline image yes/no and why**,
+the **work folder path**, and anything an editor must look at (`note:` lines, claims you removed). Never the key,
+never the article body.
+
+## Unattended runs (a scheduled job, no operator watching)
+- **Ask nothing.** `guide` gives the key's state and today's date; the job's instructions give the rest. A missing
+  key is a failure to report, not a question.
+- **Topic**: chosen with `topic-check`, preferring this week's events (dates verified on a page you open, within
+  the next 14 days) or an evergreen; never one `TAKEN`.
+- **One article per run.** Status `draft`, unless the job's instructions say `published`.
+- The job's instructions are the operator's standing ok for this article's pictures: a cover and at most one inline
+  picture (10 credits each); pass the job's budget with `--budget` if it sets one.
+- **If a step fails, nothing is saved**: `guide` errors, `topic-check` leaves no free topic, LitMedia fails (no
+  cover), the keyword is refused, `check` says `STOP` (exit 10), `post` refuses. Do not retry in a loop, do not use
+  `--save-anyway`; write the report with the reason and the work folder path.
+- `ModuleNotFoundError: requests` from LitMedia: `tarots_images.py` now finds a Python that has LitMedia's
+  dependencies by itself; if there is none it exits 5 naming the `pip install -r …requirements.txt` command and the
+  interpreter: report that line, do not install anything.
+- The final report is the one of step 9, with the work folder path.
+
+## Exit codes of `tarots_blog.py`
+`0` ok · `2` usage, article file missing/unfilled/in the skill folder · `3` below the score or a `FIX` left (nothing
+saved) · `4` the API refused · `5` configuration (key, URL) · `7` a picture rule refused the file · `8` topic or
+keyword TAKEN · `9` the focus keyword is not a search phrase (> 6 words, a repeated word) · `10` STOP after 4 rounds.
 
 ## Edit an existing article
-`tarots_blog.py` can change and delete **only the articles this key created** (`mine` lists them; for any other
-article the API answers `404`, the same as "does not exist").
-
-```
-python scripts/tarots_blog.py mine                       # find the id
-python scripts/tarots_blog.py update <id> patch.json     # change some fields
-python scripts/tarots_blog.py delete-draft <id>          # delete a draft
-```
-- `patch.json` holds **only the fields to change**, with the same names as an article file (`title`, `subtitle`,
-  `body` or `body_file`, `language`, `section`, `tags`, `slug`, `seo_title`, `seo_description`, `focus_keyword`,
-  `secondary_keywords`, `faq`, `cover_alt`, `cover_image_id`, `canonical_url`, `noindex`, `status`
-  (`draft|published|archived`), `publish_at`, `featured`). An unknown field is an error. `body`/`body_file`
-  replaces the **whole** text; `tags`, `faq` and `secondary_keywords` replace the whole list.
-- There is **no dry run and no score gate** on `update`: the change is saved, then the SEO report is printed. Run
-  `check` on the full article first. A `dry_run` field in the patch is refused (the server would ignore it and
-  save).
-- Without `blog:publish`: an article that is already published or archived cannot be changed (`403`), and
-  `status: published|archived`, `publish_at` or `featured` in the patch are ignored with a `note:`.
-- `delete-draft` deletes **drafts only** (`409` otherwise); a published article is archived from the console.
-- Pictures of an existing article (cover or inline): use the **`tarots-blog-images`** skill (`cover`, `inline`),
-  not `update` with a new `cover_image_id`, so the picture rules and the record of used pictures apply.
+`mine`, `update <id> patch.json`, `delete-draft <id>`: only articles this key created. Details and limits:
+`references/editing.md`. Pictures of existing articles: the `tarots-blog-images` skill.
 
 ## Hard rules
-- The key lives in the environment or in the local cache file described above — **never** in a project file, an
-  article, a prompt or a message. Never print the full key, log it, commit it, or send it anywhere except
-  `TAROTS_API_URL`; only its 12-character prefix (`tk_live_ab12…`) may ever appear in output.
-- Never disable TLS verification and never follow a redirect with the key. Fix the URL instead.
+- The key lives in the environment or in the local cache file — **never** in a project file, an article, a prompt
+  or a message. Only its 12-character prefix may ever appear in output. Never disable TLS verification, never follow
+  a redirect with the key.
+- Article files only in the work folder made by `new`; never in the skill's folder or a repository; never search
+  the disk for them.
 - Publish only what you would put your name to: original, verified, no invented facts.
-- **One article per run**, unless the operator explicitly asks for more; even then, one after the other with this
-  skill's commands, each one researched, written, checked and illustrated on its own. The key has a daily limit
-  (`guide` shows it); a `429` means stop, not retry.
+- **One article per run**, unless the operator explicitly asks for more; even then one after the other, each
+  researched, written, checked and illustrated on its own. A `429` means stop, not retry.
 - **Never write your own script** (a loop, a batch, a "publish_sequential" or "generate_articles" helper) that
-  writes, generates pictures for or publishes articles in series. Run this skill's commands by hand.
-- **Never a picture of cards** (cards only as context). Pictures only from `tarots_images.py generate` (LitMedia), never from
-  `browser-image-gen` or a built-in image tool. **Never reuse the cover (or any picture) of another article.**
-  `--operator-image` only for a picture the operator supplied; never to get around a refusal.
-- `--save-anyway` only when the operator asked for it for that article.
-- Never edit or delete anything you did not create: the API refuses it, and you should not try.
-- Do not mass-produce near-duplicate articles for keyword variants: one page per intent. Every topic goes through
-  `topic-check` first (`TAKEN` = do not write it); never download or read whole articles to find out what exists.
+  writes, illustrates or publishes articles in series. Running this skill's commands through `execute_code` /
+  `subprocess` one at a time is fine.
+- **Never a picture of cards**; pictures only from `tarots_images.py generate`; never reuse a picture of another
+  article; `--operator-image` only for a picture the operator supplied.
+- `--save-anyway` only when the operator asked for it for that article; never after a STOP.
+- Never edit or delete anything you did not create.
+- One page per search intent: every topic goes through `topic-check` first (`TAKEN` = do not write it).
 - Postiz, SocialClaw and other social or scheduling tools are not part of this job.
 
 ## Files
 - `scripts/tarots_blog.py`: the CLI (`-h` for every command).
-- `references/api.md`: the REST endpoints, fields and errors, if you would rather call the API directly.
-- `references/keywords.md`: keyword clusters per page, competitors, topic calendar, on-page rules.
+- `references/setup.md`: first setup of the key, a new key when one is saved.
+- `references/writing.md`: links, inline picture, captions, video, coloured text.
 - `references/seo-checklist.md`: every check the server runs and how to satisfy it.
+- `references/keywords.md`: keyword clusters, competitors, topic calendar, on-page rules.
 - `references/image-generation.md`: how the cover and inline pictures are made (only through `tarots-blog-images`).
-- `assets/example-article.json` + `assets/example-article.md`: the shape of an article (abridged, not a template
-  to copy: a real article is 800+ words and its own).
+- `references/editing.md`: `update` and `delete-draft`.
+- `references/api.md`: the REST endpoints, fields and errors.
+- `assets/example-article.json` + `assets/example-article.md`: the shape of an article (abridged).
 - `../tarots-blog-images/`: the picture skill (`scripts/tarots_images.py`, `references/prompts.md`).
-- `tests/test_immagini.py`: offline tests of the picture checks of `post --cover` and `upload`.
-- `tests/test_titoli.py`: offline tests of `titles` (local copy, incremental update, `--refresh`) and `topic-check`.
+- `tests/`: offline tests (pictures, titles and topic-check, work folder, NEXT, keyword, rounds).
