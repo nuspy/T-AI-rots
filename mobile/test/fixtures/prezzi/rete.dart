@@ -43,6 +43,10 @@ AdattatoreFinto retePrezziDiario({bool codiceValido = true}) {
     '/blog/sections': (_) => RispostaFinta.fixture('blog/sezioni.json'),
     '/blog/sections/learn-tarot': (_) => RispostaFinta.fixture('blog/sezione_learn.json'),
     '/blog/sections/major-arcana': (_) => RispostaFinta.fixture('blog/sezione_maggiori.json'),
+    // v9.4: le stese come schede ricche (gli elementi veri del catalogo, la prima con l'illustrazione) e Minor Arcana
+    // coi contenitori «By suit» e «By number».
+    '/blog/sections/tarot-spreads': (_) => RispostaFinta.fixture('blog/sezione_stese.json'),
+    '/blog/sections/minor-arcana': (_) => RispostaFinta.fixture('blog/sezione_minori.json'),
     '/blog/tags': (_) => RispostaFinta.fixture('blog/etichette.json'),
     '/blog/nove': (r) {
       final q = r.uri.queryParameters;

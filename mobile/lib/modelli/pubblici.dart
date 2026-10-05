@@ -90,6 +90,17 @@ abstract class AutoreBlog with _$AutoreBlog {
   factory AutoreBlog.fromJson(Map<String, dynamic> json) => _$AutoreBlogFromJson(json);
 }
 
+/// Di che cosa parla un articolo (v9.4): una carta o una stesa, coi nomi e l'indirizzo nella lingua dell'articolo.
+@freezed
+abstract class SoggettoArticolo with _$SoggettoArticolo {
+  /// `{tipo, ref, nome, slug}`: `tipo` è `carta` o `stesa`, `ref` l'id canonico (`maj-10`, `croce-celtica`).
+  const factory SoggettoArticolo({required String tipo, required String ref, String? nome, String? slug}) =
+      _SoggettoArticolo;
+
+  /// Dal JSON dell'API.
+  factory SoggettoArticolo.fromJson(Map<String, dynamic> json) => _$SoggettoArticoloFromJson(json);
+}
+
 /// Un articolo del diario negli elenchi.
 @freezed
 abstract class ArticoloBreve with _$ArticoloBreve {
@@ -108,6 +119,9 @@ abstract class ArticoloBreve with _$ArticoloBreve {
     String? pubblicatoIl,
     String? aggiornatoIl,
     @Default(false) bool inEvidenza,
+
+    /// La carta o la stesa di cui parla (v9.4), o null.
+    SoggettoArticolo? soggetto,
   }) = _ArticoloBreve;
 
   /// Dal JSON dell'API.

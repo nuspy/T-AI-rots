@@ -1988,9 +1988,289 @@ as String?,
 
 
 /// @nodoc
+mixin _$SoggettoArticolo {
+
+ String get tipo; String get ref; String? get nome; String? get slug;
+/// Create a copy of SoggettoArticolo
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$SoggettoArticoloCopyWith<SoggettoArticolo> get copyWith => _$SoggettoArticoloCopyWithImpl<SoggettoArticolo>(this as SoggettoArticolo, _$identity);
+
+  /// Serializes this SoggettoArticolo to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as SoggettoArticolo;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SoggettoArticolo&&(identical(other.tipo, _this.tipo) || other.tipo == _this.tipo)&&(identical(other.ref, _this.ref) || other.ref == _this.ref)&&(identical(other.nome, _this.nome) || other.nome == _this.nome)&&(identical(other.slug, _this.slug) || other.slug == _this.slug));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as SoggettoArticolo;
+  return Object.hash(runtimeType,_this.tipo,_this.ref,_this.nome,_this.slug);
+}
+
+@override
+String toString() {
+  final _this = this as SoggettoArticolo;
+  return 'SoggettoArticolo(tipo: ${_this.tipo}, ref: ${_this.ref}, nome: ${_this.nome}, slug: ${_this.slug})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $SoggettoArticoloCopyWith<$Res>  {
+  factory $SoggettoArticoloCopyWith(SoggettoArticolo value, $Res Function(SoggettoArticolo) _then) = _$SoggettoArticoloCopyWithImpl;
+@useResult
+$Res call({
+ String tipo, String ref, String? nome, String? slug
+});
+
+
+
+
+}
+/// @nodoc
+class _$SoggettoArticoloCopyWithImpl<$Res>
+    implements $SoggettoArticoloCopyWith<$Res> {
+  _$SoggettoArticoloCopyWithImpl(this._self, this._then);
+
+  final SoggettoArticolo _self;
+  final $Res Function(SoggettoArticolo) _then;
+
+/// Create a copy of SoggettoArticolo
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? tipo = null,Object? ref = null,Object? nome = freezed,Object? slug = freezed,}) {
+  return _then(SoggettoArticolo(
+tipo: null == tipo ? _self.tipo : tipo // ignore: cast_nullable_to_non_nullable
+as String,ref: null == ref ? _self.ref : ref // ignore: cast_nullable_to_non_nullable
+as String,nome: freezed == nome ? _self.nome : nome // ignore: cast_nullable_to_non_nullable
+as String?,slug: freezed == slug ? _self.slug : slug // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [SoggettoArticolo].
+extension SoggettoArticoloPatterns on SoggettoArticolo {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _SoggettoArticolo value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _SoggettoArticolo() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _SoggettoArticolo value)  $default,){
+final _that = this;
+switch (_that) {
+case _SoggettoArticolo():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _SoggettoArticolo value)?  $default,){
+final _that = this;
+switch (_that) {
+case _SoggettoArticolo() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String tipo,  String ref,  String? nome,  String? slug)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _SoggettoArticolo() when $default != null:
+return $default(_that.tipo,_that.ref,_that.nome,_that.slug);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String tipo,  String ref,  String? nome,  String? slug)  $default,) {final _that = this;
+switch (_that) {
+case _SoggettoArticolo():
+return $default(_that.tipo,_that.ref,_that.nome,_that.slug);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String tipo,  String ref,  String? nome,  String? slug)?  $default,) {final _that = this;
+switch (_that) {
+case _SoggettoArticolo() when $default != null:
+return $default(_that.tipo,_that.ref,_that.nome,_that.slug);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _SoggettoArticolo implements SoggettoArticolo {
+  const _SoggettoArticolo({required this.tipo, required this.ref, this.nome, this.slug});
+  factory _SoggettoArticolo.fromJson(Map<String, dynamic> json) => _$SoggettoArticoloFromJson(json);
+
+@override final  String tipo;
+@override final  String ref;
+@override final  String? nome;
+@override final  String? slug;
+
+/// Create a copy of SoggettoArticolo
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$SoggettoArticoloCopyWith<_SoggettoArticolo> get copyWith => __$SoggettoArticoloCopyWithImpl<_SoggettoArticolo>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$SoggettoArticoloToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SoggettoArticolo&&(identical(other.tipo, tipo) || other.tipo == tipo)&&(identical(other.ref, ref) || other.ref == ref)&&(identical(other.nome, nome) || other.nome == nome)&&(identical(other.slug, slug) || other.slug == slug));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,tipo,ref,nome,slug);
+}
+
+@override
+String toString() {
+    return 'SoggettoArticolo(tipo: $tipo, ref: $ref, nome: $nome, slug: $slug)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$SoggettoArticoloCopyWith<$Res> implements $SoggettoArticoloCopyWith<$Res> {
+  factory _$SoggettoArticoloCopyWith(_SoggettoArticolo value, $Res Function(_SoggettoArticolo) _then) = __$SoggettoArticoloCopyWithImpl;
+@override @useResult
+$Res call({
+ String tipo, String ref, String? nome, String? slug
+});
+
+
+
+
+}
+/// @nodoc
+class __$SoggettoArticoloCopyWithImpl<$Res>
+    implements _$SoggettoArticoloCopyWith<$Res> {
+  __$SoggettoArticoloCopyWithImpl(this._self, this._then);
+
+  final _SoggettoArticolo _self;
+  final $Res Function(_SoggettoArticolo) _then;
+
+/// Create a copy of SoggettoArticolo
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? tipo = null,Object? ref = null,Object? nome = freezed,Object? slug = freezed,}) {
+  return _then(_SoggettoArticolo(
+tipo: null == tipo ? _self.tipo : tipo // ignore: cast_nullable_to_non_nullable
+as String,ref: null == ref ? _self.ref : ref // ignore: cast_nullable_to_non_nullable
+as String,nome: freezed == nome ? _self.nome : nome // ignore: cast_nullable_to_non_nullable
+as String?,slug: freezed == slug ? _self.slug : slug // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
 mixin _$ArticoloBreve {
 
- String get slug; String get titolo; String? get sottotitolo; String? get estratto; ImmagineArticolo? get immagine; Voce? get sezione; int get tempoLettura; List<Voce> get tags; String? get lang; AutoreBlog? get autore; String? get pubblicatoIl; String? get aggiornatoIl; bool get inEvidenza;
+ String get slug; String get titolo; String? get sottotitolo; String? get estratto; ImmagineArticolo? get immagine; Voce? get sezione; int get tempoLettura; List<Voce> get tags; String? get lang; AutoreBlog? get autore; String? get pubblicatoIl; String? get aggiornatoIl; bool get inEvidenza;/// La carta o la stesa di cui parla (v9.4), o null.
+ SoggettoArticolo? get soggetto;
 /// Create a copy of ArticoloBreve
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2004,20 +2284,20 @@ $ArticoloBreveCopyWith<ArticoloBreve> get copyWith => _$ArticoloBreveCopyWithImp
 @override
 bool operator ==(Object other) {
   final _this = this as ArticoloBreve;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ArticoloBreve&&(identical(other.slug, _this.slug) || other.slug == _this.slug)&&(identical(other.titolo, _this.titolo) || other.titolo == _this.titolo)&&(identical(other.sottotitolo, _this.sottotitolo) || other.sottotitolo == _this.sottotitolo)&&(identical(other.estratto, _this.estratto) || other.estratto == _this.estratto)&&(identical(other.immagine, _this.immagine) || other.immagine == _this.immagine)&&(identical(other.sezione, _this.sezione) || other.sezione == _this.sezione)&&(identical(other.tempoLettura, _this.tempoLettura) || other.tempoLettura == _this.tempoLettura)&&const DeepCollectionEquality().equals(other.tags, _this.tags)&&(identical(other.lang, _this.lang) || other.lang == _this.lang)&&(identical(other.autore, _this.autore) || other.autore == _this.autore)&&(identical(other.pubblicatoIl, _this.pubblicatoIl) || other.pubblicatoIl == _this.pubblicatoIl)&&(identical(other.aggiornatoIl, _this.aggiornatoIl) || other.aggiornatoIl == _this.aggiornatoIl)&&(identical(other.inEvidenza, _this.inEvidenza) || other.inEvidenza == _this.inEvidenza));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ArticoloBreve&&(identical(other.slug, _this.slug) || other.slug == _this.slug)&&(identical(other.titolo, _this.titolo) || other.titolo == _this.titolo)&&(identical(other.sottotitolo, _this.sottotitolo) || other.sottotitolo == _this.sottotitolo)&&(identical(other.estratto, _this.estratto) || other.estratto == _this.estratto)&&(identical(other.immagine, _this.immagine) || other.immagine == _this.immagine)&&(identical(other.sezione, _this.sezione) || other.sezione == _this.sezione)&&(identical(other.tempoLettura, _this.tempoLettura) || other.tempoLettura == _this.tempoLettura)&&const DeepCollectionEquality().equals(other.tags, _this.tags)&&(identical(other.lang, _this.lang) || other.lang == _this.lang)&&(identical(other.autore, _this.autore) || other.autore == _this.autore)&&(identical(other.pubblicatoIl, _this.pubblicatoIl) || other.pubblicatoIl == _this.pubblicatoIl)&&(identical(other.aggiornatoIl, _this.aggiornatoIl) || other.aggiornatoIl == _this.aggiornatoIl)&&(identical(other.inEvidenza, _this.inEvidenza) || other.inEvidenza == _this.inEvidenza)&&(identical(other.soggetto, _this.soggetto) || other.soggetto == _this.soggetto));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as ArticoloBreve;
-  return Object.hash(runtimeType,_this.slug,_this.titolo,_this.sottotitolo,_this.estratto,_this.immagine,_this.sezione,_this.tempoLettura,const DeepCollectionEquality().hash(_this.tags),_this.lang,_this.autore,_this.pubblicatoIl,_this.aggiornatoIl,_this.inEvidenza);
+  return Object.hash(runtimeType,_this.slug,_this.titolo,_this.sottotitolo,_this.estratto,_this.immagine,_this.sezione,_this.tempoLettura,const DeepCollectionEquality().hash(_this.tags),_this.lang,_this.autore,_this.pubblicatoIl,_this.aggiornatoIl,_this.inEvidenza,_this.soggetto);
 }
 
 @override
 String toString() {
   final _this = this as ArticoloBreve;
-  return 'ArticoloBreve(slug: ${_this.slug}, titolo: ${_this.titolo}, sottotitolo: ${_this.sottotitolo}, estratto: ${_this.estratto}, immagine: ${_this.immagine}, sezione: ${_this.sezione}, tempoLettura: ${_this.tempoLettura}, tags: ${_this.tags}, lang: ${_this.lang}, autore: ${_this.autore}, pubblicatoIl: ${_this.pubblicatoIl}, aggiornatoIl: ${_this.aggiornatoIl}, inEvidenza: ${_this.inEvidenza})';
+  return 'ArticoloBreve(slug: ${_this.slug}, titolo: ${_this.titolo}, sottotitolo: ${_this.sottotitolo}, estratto: ${_this.estratto}, immagine: ${_this.immagine}, sezione: ${_this.sezione}, tempoLettura: ${_this.tempoLettura}, tags: ${_this.tags}, lang: ${_this.lang}, autore: ${_this.autore}, pubblicatoIl: ${_this.pubblicatoIl}, aggiornatoIl: ${_this.aggiornatoIl}, inEvidenza: ${_this.inEvidenza}, soggetto: ${_this.soggetto})';
 }
 
 
@@ -2028,11 +2308,11 @@ abstract mixin class $ArticoloBreveCopyWith<$Res>  {
   factory $ArticoloBreveCopyWith(ArticoloBreve value, $Res Function(ArticoloBreve) _then) = _$ArticoloBreveCopyWithImpl;
 @useResult
 $Res call({
- String slug, String titolo, String? sottotitolo, String? estratto, ImmagineArticolo? immagine, Voce? sezione, int tempoLettura, List<Voce> tags, String? lang, AutoreBlog? autore, String? pubblicatoIl, String? aggiornatoIl, bool inEvidenza
+ String slug, String titolo, String? sottotitolo, String? estratto, ImmagineArticolo? immagine, Voce? sezione, int tempoLettura, List<Voce> tags, String? lang, AutoreBlog? autore, String? pubblicatoIl, String? aggiornatoIl, bool inEvidenza, SoggettoArticolo? soggetto
 });
 
 
-$ImmagineArticoloCopyWith<$Res>? get immagine;$VoceCopyWith<$Res>? get sezione;$AutoreBlogCopyWith<$Res>? get autore;
+$ImmagineArticoloCopyWith<$Res>? get immagine;$VoceCopyWith<$Res>? get sezione;$AutoreBlogCopyWith<$Res>? get autore;$SoggettoArticoloCopyWith<$Res>? get soggetto;
 
 }
 /// @nodoc
@@ -2045,7 +2325,7 @@ class _$ArticoloBreveCopyWithImpl<$Res>
 
 /// Create a copy of ArticoloBreve
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? slug = null,Object? titolo = null,Object? sottotitolo = freezed,Object? estratto = freezed,Object? immagine = freezed,Object? sezione = freezed,Object? tempoLettura = null,Object? tags = null,Object? lang = freezed,Object? autore = freezed,Object? pubblicatoIl = freezed,Object? aggiornatoIl = freezed,Object? inEvidenza = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? slug = null,Object? titolo = null,Object? sottotitolo = freezed,Object? estratto = freezed,Object? immagine = freezed,Object? sezione = freezed,Object? tempoLettura = null,Object? tags = null,Object? lang = freezed,Object? autore = freezed,Object? pubblicatoIl = freezed,Object? aggiornatoIl = freezed,Object? inEvidenza = null,Object? soggetto = freezed,}) {
   return _then(ArticoloBreve(
 slug: null == slug ? _self.slug : slug // ignore: cast_nullable_to_non_nullable
 as String,titolo: null == titolo ? _self.titolo : titolo // ignore: cast_nullable_to_non_nullable
@@ -2060,7 +2340,8 @@ as String?,autore: freezed == autore ? _self.autore : autore // ignore: cast_nul
 as AutoreBlog?,pubblicatoIl: freezed == pubblicatoIl ? _self.pubblicatoIl : pubblicatoIl // ignore: cast_nullable_to_non_nullable
 as String?,aggiornatoIl: freezed == aggiornatoIl ? _self.aggiornatoIl : aggiornatoIl // ignore: cast_nullable_to_non_nullable
 as String?,inEvidenza: null == inEvidenza ? _self.inEvidenza : inEvidenza // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,soggetto: freezed == soggetto ? _self.soggetto : soggetto // ignore: cast_nullable_to_non_nullable
+as SoggettoArticolo?,
   ));
 }
 /// Create a copy of ArticoloBreve
@@ -2098,6 +2379,18 @@ $AutoreBlogCopyWith<$Res>? get autore {
 
   return $AutoreBlogCopyWith<$Res>(_self.autore!, (value) {
     return _then(_self.copyWith(autore: value));
+  });
+}/// Create a copy of ArticoloBreve
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$SoggettoArticoloCopyWith<$Res>? get soggetto {
+    if (_self.soggetto == null) {
+    return null;
+  }
+
+  return $SoggettoArticoloCopyWith<$Res>(_self.soggetto!, (value) {
+    return _then(_self.copyWith(soggetto: value));
   });
 }
 }
@@ -2181,10 +2474,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String slug,  String titolo,  String? sottotitolo,  String? estratto,  ImmagineArticolo? immagine,  Voce? sezione,  int tempoLettura,  List<Voce> tags,  String? lang,  AutoreBlog? autore,  String? pubblicatoIl,  String? aggiornatoIl,  bool inEvidenza)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String slug,  String titolo,  String? sottotitolo,  String? estratto,  ImmagineArticolo? immagine,  Voce? sezione,  int tempoLettura,  List<Voce> tags,  String? lang,  AutoreBlog? autore,  String? pubblicatoIl,  String? aggiornatoIl,  bool inEvidenza,  SoggettoArticolo? soggetto)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ArticoloBreve() when $default != null:
-return $default(_that.slug,_that.titolo,_that.sottotitolo,_that.estratto,_that.immagine,_that.sezione,_that.tempoLettura,_that.tags,_that.lang,_that.autore,_that.pubblicatoIl,_that.aggiornatoIl,_that.inEvidenza);case _:
+return $default(_that.slug,_that.titolo,_that.sottotitolo,_that.estratto,_that.immagine,_that.sezione,_that.tempoLettura,_that.tags,_that.lang,_that.autore,_that.pubblicatoIl,_that.aggiornatoIl,_that.inEvidenza,_that.soggetto);case _:
   return orElse();
 
 }
@@ -2202,10 +2495,10 @@ return $default(_that.slug,_that.titolo,_that.sottotitolo,_that.estratto,_that.i
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String slug,  String titolo,  String? sottotitolo,  String? estratto,  ImmagineArticolo? immagine,  Voce? sezione,  int tempoLettura,  List<Voce> tags,  String? lang,  AutoreBlog? autore,  String? pubblicatoIl,  String? aggiornatoIl,  bool inEvidenza)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String slug,  String titolo,  String? sottotitolo,  String? estratto,  ImmagineArticolo? immagine,  Voce? sezione,  int tempoLettura,  List<Voce> tags,  String? lang,  AutoreBlog? autore,  String? pubblicatoIl,  String? aggiornatoIl,  bool inEvidenza,  SoggettoArticolo? soggetto)  $default,) {final _that = this;
 switch (_that) {
 case _ArticoloBreve():
-return $default(_that.slug,_that.titolo,_that.sottotitolo,_that.estratto,_that.immagine,_that.sezione,_that.tempoLettura,_that.tags,_that.lang,_that.autore,_that.pubblicatoIl,_that.aggiornatoIl,_that.inEvidenza);case _:
+return $default(_that.slug,_that.titolo,_that.sottotitolo,_that.estratto,_that.immagine,_that.sezione,_that.tempoLettura,_that.tags,_that.lang,_that.autore,_that.pubblicatoIl,_that.aggiornatoIl,_that.inEvidenza,_that.soggetto);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2222,10 +2515,10 @@ return $default(_that.slug,_that.titolo,_that.sottotitolo,_that.estratto,_that.i
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String slug,  String titolo,  String? sottotitolo,  String? estratto,  ImmagineArticolo? immagine,  Voce? sezione,  int tempoLettura,  List<Voce> tags,  String? lang,  AutoreBlog? autore,  String? pubblicatoIl,  String? aggiornatoIl,  bool inEvidenza)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String slug,  String titolo,  String? sottotitolo,  String? estratto,  ImmagineArticolo? immagine,  Voce? sezione,  int tempoLettura,  List<Voce> tags,  String? lang,  AutoreBlog? autore,  String? pubblicatoIl,  String? aggiornatoIl,  bool inEvidenza,  SoggettoArticolo? soggetto)?  $default,) {final _that = this;
 switch (_that) {
 case _ArticoloBreve() when $default != null:
-return $default(_that.slug,_that.titolo,_that.sottotitolo,_that.estratto,_that.immagine,_that.sezione,_that.tempoLettura,_that.tags,_that.lang,_that.autore,_that.pubblicatoIl,_that.aggiornatoIl,_that.inEvidenza);case _:
+return $default(_that.slug,_that.titolo,_that.sottotitolo,_that.estratto,_that.immagine,_that.sezione,_that.tempoLettura,_that.tags,_that.lang,_that.autore,_that.pubblicatoIl,_that.aggiornatoIl,_that.inEvidenza,_that.soggetto);case _:
   return null;
 
 }
@@ -2237,7 +2530,7 @@ return $default(_that.slug,_that.titolo,_that.sottotitolo,_that.estratto,_that.i
 @JsonSerializable()
 
 class _ArticoloBreve implements ArticoloBreve {
-  const _ArticoloBreve({required this.slug, required this.titolo, this.sottotitolo, this.estratto, this.immagine, this.sezione, this.tempoLettura = 1,  List<Voce> tags = const <Voce>[], this.lang, this.autore, this.pubblicatoIl, this.aggiornatoIl, this.inEvidenza = false}): _tags = tags;
+  const _ArticoloBreve({required this.slug, required this.titolo, this.sottotitolo, this.estratto, this.immagine, this.sezione, this.tempoLettura = 1,  List<Voce> tags = const <Voce>[], this.lang, this.autore, this.pubblicatoIl, this.aggiornatoIl, this.inEvidenza = false, this.soggetto}): _tags = tags;
   factory _ArticoloBreve.fromJson(Map<String, dynamic> json) => _$ArticoloBreveFromJson(json);
 
 @override final  String slug;
@@ -2259,6 +2552,8 @@ class _ArticoloBreve implements ArticoloBreve {
 @override final  String? pubblicatoIl;
 @override final  String? aggiornatoIl;
 @override@JsonKey() final  bool inEvidenza;
+/// La carta o la stesa di cui parla (v9.4), o null.
+@override final  SoggettoArticolo? soggetto;
 
 /// Create a copy of ArticoloBreve
 /// with the given fields replaced by the non-null parameter values.
@@ -2273,18 +2568,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ArticoloBreve&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.titolo, titolo) || other.titolo == titolo)&&(identical(other.sottotitolo, sottotitolo) || other.sottotitolo == sottotitolo)&&(identical(other.estratto, estratto) || other.estratto == estratto)&&(identical(other.immagine, immagine) || other.immagine == immagine)&&(identical(other.sezione, sezione) || other.sezione == sezione)&&(identical(other.tempoLettura, tempoLettura) || other.tempoLettura == tempoLettura)&&const DeepCollectionEquality().equals(other.tags, _tags)&&(identical(other.lang, lang) || other.lang == lang)&&(identical(other.autore, autore) || other.autore == autore)&&(identical(other.pubblicatoIl, pubblicatoIl) || other.pubblicatoIl == pubblicatoIl)&&(identical(other.aggiornatoIl, aggiornatoIl) || other.aggiornatoIl == aggiornatoIl)&&(identical(other.inEvidenza, inEvidenza) || other.inEvidenza == inEvidenza));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ArticoloBreve&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.titolo, titolo) || other.titolo == titolo)&&(identical(other.sottotitolo, sottotitolo) || other.sottotitolo == sottotitolo)&&(identical(other.estratto, estratto) || other.estratto == estratto)&&(identical(other.immagine, immagine) || other.immagine == immagine)&&(identical(other.sezione, sezione) || other.sezione == sezione)&&(identical(other.tempoLettura, tempoLettura) || other.tempoLettura == tempoLettura)&&const DeepCollectionEquality().equals(other.tags, _tags)&&(identical(other.lang, lang) || other.lang == lang)&&(identical(other.autore, autore) || other.autore == autore)&&(identical(other.pubblicatoIl, pubblicatoIl) || other.pubblicatoIl == pubblicatoIl)&&(identical(other.aggiornatoIl, aggiornatoIl) || other.aggiornatoIl == aggiornatoIl)&&(identical(other.inEvidenza, inEvidenza) || other.inEvidenza == inEvidenza)&&(identical(other.soggetto, soggetto) || other.soggetto == soggetto));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,slug,titolo,sottotitolo,estratto,immagine,sezione,tempoLettura,const DeepCollectionEquality().hash(_tags),lang,autore,pubblicatoIl,aggiornatoIl,inEvidenza);
+    return Object.hash(runtimeType,slug,titolo,sottotitolo,estratto,immagine,sezione,tempoLettura,const DeepCollectionEquality().hash(_tags),lang,autore,pubblicatoIl,aggiornatoIl,inEvidenza,soggetto);
 }
 
 @override
 String toString() {
-    return 'ArticoloBreve(slug: $slug, titolo: $titolo, sottotitolo: $sottotitolo, estratto: $estratto, immagine: $immagine, sezione: $sezione, tempoLettura: $tempoLettura, tags: $tags, lang: $lang, autore: $autore, pubblicatoIl: $pubblicatoIl, aggiornatoIl: $aggiornatoIl, inEvidenza: $inEvidenza)';
+    return 'ArticoloBreve(slug: $slug, titolo: $titolo, sottotitolo: $sottotitolo, estratto: $estratto, immagine: $immagine, sezione: $sezione, tempoLettura: $tempoLettura, tags: $tags, lang: $lang, autore: $autore, pubblicatoIl: $pubblicatoIl, aggiornatoIl: $aggiornatoIl, inEvidenza: $inEvidenza, soggetto: $soggetto)';
 }
 
 
@@ -2295,11 +2590,11 @@ abstract mixin class _$ArticoloBreveCopyWith<$Res> implements $ArticoloBreveCopy
   factory _$ArticoloBreveCopyWith(_ArticoloBreve value, $Res Function(_ArticoloBreve) _then) = __$ArticoloBreveCopyWithImpl;
 @override @useResult
 $Res call({
- String slug, String titolo, String? sottotitolo, String? estratto, ImmagineArticolo? immagine, Voce? sezione, int tempoLettura, List<Voce> tags, String? lang, AutoreBlog? autore, String? pubblicatoIl, String? aggiornatoIl, bool inEvidenza
+ String slug, String titolo, String? sottotitolo, String? estratto, ImmagineArticolo? immagine, Voce? sezione, int tempoLettura, List<Voce> tags, String? lang, AutoreBlog? autore, String? pubblicatoIl, String? aggiornatoIl, bool inEvidenza, SoggettoArticolo? soggetto
 });
 
 
-@override $ImmagineArticoloCopyWith<$Res>? get immagine;@override $VoceCopyWith<$Res>? get sezione;@override $AutoreBlogCopyWith<$Res>? get autore;
+@override $ImmagineArticoloCopyWith<$Res>? get immagine;@override $VoceCopyWith<$Res>? get sezione;@override $AutoreBlogCopyWith<$Res>? get autore;@override $SoggettoArticoloCopyWith<$Res>? get soggetto;
 
 }
 /// @nodoc
@@ -2312,7 +2607,7 @@ class __$ArticoloBreveCopyWithImpl<$Res>
 
 /// Create a copy of ArticoloBreve
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? slug = null,Object? titolo = null,Object? sottotitolo = freezed,Object? estratto = freezed,Object? immagine = freezed,Object? sezione = freezed,Object? tempoLettura = null,Object? tags = null,Object? lang = freezed,Object? autore = freezed,Object? pubblicatoIl = freezed,Object? aggiornatoIl = freezed,Object? inEvidenza = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? slug = null,Object? titolo = null,Object? sottotitolo = freezed,Object? estratto = freezed,Object? immagine = freezed,Object? sezione = freezed,Object? tempoLettura = null,Object? tags = null,Object? lang = freezed,Object? autore = freezed,Object? pubblicatoIl = freezed,Object? aggiornatoIl = freezed,Object? inEvidenza = null,Object? soggetto = freezed,}) {
   return _then(_ArticoloBreve(
 slug: null == slug ? _self.slug : slug // ignore: cast_nullable_to_non_nullable
 as String,titolo: null == titolo ? _self.titolo : titolo // ignore: cast_nullable_to_non_nullable
@@ -2327,7 +2622,8 @@ as String?,autore: freezed == autore ? _self.autore : autore // ignore: cast_nul
 as AutoreBlog?,pubblicatoIl: freezed == pubblicatoIl ? _self.pubblicatoIl : pubblicatoIl // ignore: cast_nullable_to_non_nullable
 as String?,aggiornatoIl: freezed == aggiornatoIl ? _self.aggiornatoIl : aggiornatoIl // ignore: cast_nullable_to_non_nullable
 as String?,inEvidenza: null == inEvidenza ? _self.inEvidenza : inEvidenza // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,soggetto: freezed == soggetto ? _self.soggetto : soggetto // ignore: cast_nullable_to_non_nullable
+as SoggettoArticolo?,
   ));
 }
 
@@ -2366,6 +2662,18 @@ $AutoreBlogCopyWith<$Res>? get autore {
 
   return $AutoreBlogCopyWith<$Res>(_self.autore!, (value) {
     return _then(_self.copyWith(autore: value));
+  });
+}/// Create a copy of ArticoloBreve
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$SoggettoArticoloCopyWith<$Res>? get soggetto {
+    if (_self.soggetto == null) {
+    return null;
+  }
+
+  return $SoggettoArticoloCopyWith<$Res>(_self.soggetto!, (value) {
+    return _then(_self.copyWith(soggetto: value));
   });
 }
 }

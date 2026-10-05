@@ -3329,6 +3329,24 @@ class AppLocalizationsRu extends AppLocalizations {
   String get blog_stese_sezione => 'Схемы раскладов в этом разделе';
 
   @override
+  String blog_conta_carte(int n) {
+    String _temp0 = intl.Intl.pluralLogic(n, locale: localeName, other: 'Карт: $n', one: '1 карта');
+    return '$_temp0';
+  }
+
+  @override
+  String blog_conta_stese(int n) {
+    String _temp0 = intl.Intl.pluralLogic(n, locale: localeName, other: 'Раскладов: $n', one: '1 расклад');
+    return '$_temp0';
+  }
+
+  @override
+  String blog_conta_articoli(int n) {
+    String _temp0 = intl.Intl.pluralLogic(n, locale: localeName, other: 'Статей: $n', one: '1 статья');
+    return '$_temp0';
+  }
+
+  @override
   String get blog_vuoto => 'Здесь пока нет статей.';
 
   @override
@@ -3411,6 +3429,37 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get blog_non_trovato => 'Такой статьи нет, или она больше не опубликована.';
+
+  @override
+  String get blog_pagina_prima => 'Первая страница';
+
+  @override
+  String get blog_pagina_ultima => 'Последняя страница';
+
+  @override
+  String get blog_pagina_precedente => 'Предыдущая страница';
+
+  @override
+  String get blog_pagina_successiva => 'Следующая страница';
+
+  @override
+  String blog_pagina_n(Object p) {
+    return 'Страница $p';
+  }
+
+  @override
+  String get blog_per_pagina => 'На странице';
+
+  @override
+  String get blog_stesa_inizia => 'Начать расклад по этой схеме';
+
+  @override
+  String get blog_stesa_posizioni => 'Посмотреть позиции';
+
+  @override
+  String blog_articoli_su(Object nome) {
+    return 'Все статьи о «$nome»';
+  }
 
   @override
   String get blog_esplora_meta_titolo => 'Обзор мира Таро';

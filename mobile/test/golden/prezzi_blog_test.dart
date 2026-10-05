@@ -4,7 +4,8 @@
 //   flutter test --update-goldens --tags golden test/golden/prezzi_blog_test.dart
 //
 // Le URL del sito equivalenti: /pricing, /pricing?coupon=LUNA30, /trial, /blog, /blog/sezione/learn-tarot,
-// /blog/how-to-read-tarot-cards, /explore (sessione di sviluppo, lingua inglese).
+// /blog/how-to-read-tarot-cards, /explore, e (v9.4) /blog/sezione/tarot-spreads, /blog/sezione/minor-arcana (sessione di
+// sviluppo, lingua inglese).
 @Tags(['golden'])
 library;
 
@@ -22,6 +23,9 @@ const List<(String, String)> schermate = [
   ('prova', '/trial'),
   ('blog', '/blog'),
   ('blog_sezione', '/blog/sezione/learn-tarot'),
+  // v9.4: le stese come schede ricche, Minor Arcana coi contenitori «By suit» e «By number».
+  ('blog_stese', '/blog/sezione/tarot-spreads'),
+  ('blog_minori', '/blog/sezione/minor-arcana'),
   ('articolo', '/blog/how-to-read-tarot-cards'),
   ('esplora', '/explore'),
 ];

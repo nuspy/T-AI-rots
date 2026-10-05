@@ -21,6 +21,7 @@ import '../lingua/lingua.dart';
 import '../modelli/carta.dart';
 import '../rotte/percorsi.dart';
 import '../tema/tema.dart';
+import 'blog.dart' show ArticoliSu;
 
 /// I filtri della biblioteca, nell'ordine del sito.
 const List<String> filtriCarte = ['tutte', 'maggiori', 'bastoni', 'coppe', 'spade', 'dischi'];
@@ -123,10 +124,13 @@ class _BibliotecaState extends ConsumerState<Biblioteca> {
 /// La pagina di una carta.
 class DettaglioCarta extends ConsumerWidget {
   /// La carta [id] (id o slug).
-  const DettaglioCarta({super.key, required this.id});
+  const DettaglioCarta({super.key, required this.id, this.parametri = const {}});
 
   /// L'id o lo slug.
   final String id;
+
+  /// I parametri della query (`page`, `per`: l'elenco degli articoli sulla carta).
+  final Map<String, String> parametri;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -154,7 +158,9 @@ class DettaglioCarta extends ConsumerWidget {
       final c = carta.value!;
       sezioni = [
         _SchedaCarta(c: c, lingua: lingua),
-        DiarioNove(contesto: 'carta=${Uri.encodeQueryComponent(c.id)}'),
+        // Prima gli articoli che parlano di questa carta, poi gli ultimi; sotto, l'elenco completo a pagine.
+        DiarioNove(contesto: 'carta=${Uri.encodeQueryComponent(c.id)}', sceltiPrima: true),
+        ArticoliSu(tipo: 'carta', id: c.id, nome: nomeDi(c, lingua), base: R.carta(id), parametri: parametri),
       ];
     }
     return Pagina(sezioni: sezioni);

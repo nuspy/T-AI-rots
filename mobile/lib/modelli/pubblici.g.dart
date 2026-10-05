@@ -101,6 +101,22 @@ Map<String, dynamic> _$AutoreBlogToJson(_AutoreBlog instance) =>
       'avatar': ?instance.avatar,
     };
 
+_SoggettoArticolo _$SoggettoArticoloFromJson(Map<String, dynamic> json) =>
+    _SoggettoArticolo(
+      tipo: json['tipo'] as String,
+      ref: json['ref'] as String,
+      nome: json['nome'] as String?,
+      slug: json['slug'] as String?,
+    );
+
+Map<String, dynamic> _$SoggettoArticoloToJson(_SoggettoArticolo instance) =>
+    <String, dynamic>{
+      'tipo': instance.tipo,
+      'ref': instance.ref,
+      'nome': ?instance.nome,
+      'slug': ?instance.slug,
+    };
+
 _ArticoloBreve _$ArticoloBreveFromJson(Map<String, dynamic> json) =>
     _ArticoloBreve(
       slug: json['slug'] as String,
@@ -126,6 +142,9 @@ _ArticoloBreve _$ArticoloBreveFromJson(Map<String, dynamic> json) =>
       pubblicatoIl: json['pubblicato_il'] as String?,
       aggiornatoIl: json['aggiornato_il'] as String?,
       inEvidenza: json['in_evidenza'] as bool? ?? false,
+      soggetto: json['soggetto'] == null
+          ? null
+          : SoggettoArticolo.fromJson(json['soggetto'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$ArticoloBreveToJson(_ArticoloBreve instance) =>
@@ -143,6 +162,7 @@ Map<String, dynamic> _$ArticoloBreveToJson(_ArticoloBreve instance) =>
       'pubblicato_il': ?instance.pubblicatoIl,
       'aggiornato_il': ?instance.aggiornatoIl,
       'in_evidenza': instance.inEvidenza,
+      'soggetto': ?instance.soggetto?.toJson(),
     };
 
 _Nove _$NoveFromJson(Map<String, dynamic> json) => _Nove(

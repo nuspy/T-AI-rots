@@ -3324,6 +3324,24 @@ class AppLocalizationsHu extends AppLocalizations {
   String get blog_stese_sezione => 'A rovat kirakásai';
 
   @override
+  String blog_conta_carte(int n) {
+    String _temp0 = intl.Intl.pluralLogic(n, locale: localeName, other: '$n kártya', one: '1 kártya');
+    return '$_temp0';
+  }
+
+  @override
+  String blog_conta_stese(int n) {
+    String _temp0 = intl.Intl.pluralLogic(n, locale: localeName, other: '$n kirakás', one: '1 kirakás');
+    return '$_temp0';
+  }
+
+  @override
+  String blog_conta_articoli(int n) {
+    String _temp0 = intl.Intl.pluralLogic(n, locale: localeName, other: '$n cikk', one: '1 cikk');
+    return '$_temp0';
+  }
+
+  @override
   String get blog_vuoto => 'Itt még nincsenek cikkek.';
 
   @override
@@ -3406,6 +3424,37 @@ class AppLocalizationsHu extends AppLocalizations {
 
   @override
   String get blog_non_trovato => 'Ez a cikk nem létezik, vagy már nincs közzétéve.';
+
+  @override
+  String get blog_pagina_prima => 'Első oldal';
+
+  @override
+  String get blog_pagina_ultima => 'Utolsó oldal';
+
+  @override
+  String get blog_pagina_precedente => 'Előző oldal';
+
+  @override
+  String get blog_pagina_successiva => 'Következő oldal';
+
+  @override
+  String blog_pagina_n(Object p) {
+    return '$p. oldal';
+  }
+
+  @override
+  String get blog_per_pagina => 'Oldalanként';
+
+  @override
+  String get blog_stesa_inizia => 'Kezdj jóslást ezzel a kirakással';
+
+  @override
+  String get blog_stesa_posizioni => 'A pozíciók megtekintése';
+
+  @override
+  String blog_articoli_su(Object nome) {
+    return 'Minden cikk: $nome';
+  }
 
   @override
   String get blog_esplora_meta_titolo => 'Fedezd fel a tarotot';

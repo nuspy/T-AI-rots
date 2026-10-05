@@ -6163,6 +6163,24 @@ abstract class AppLocalizations {
   /// **'The spreads in this section'**
   String get blog_stese_sezione;
 
+  /// No description provided for @blog_conta_carte.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{1 card} other{{n} cards}}'**
+  String blog_conta_carte(int n);
+
+  /// No description provided for @blog_conta_stese.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{1 spread} other{{n} spreads}}'**
+  String blog_conta_stese(int n);
+
+  /// No description provided for @blog_conta_articoli.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{1 article} other{{n} articles}}'**
+  String blog_conta_articoli(int n);
+
   /// No description provided for @blog_vuoto.
   ///
   /// In en, this message translates to:
@@ -6312,6 +6330,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This article does not exist, or it is no longer published.'**
   String get blog_non_trovato;
+
+  /// No description provided for @blog_pagina_prima.
+  ///
+  /// In en, this message translates to:
+  /// **'First page'**
+  String get blog_pagina_prima;
+
+  /// No description provided for @blog_pagina_ultima.
+  ///
+  /// In en, this message translates to:
+  /// **'Last page'**
+  String get blog_pagina_ultima;
+
+  /// No description provided for @blog_pagina_precedente.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous page'**
+  String get blog_pagina_precedente;
+
+  /// No description provided for @blog_pagina_successiva.
+  ///
+  /// In en, this message translates to:
+  /// **'Next page'**
+  String get blog_pagina_successiva;
+
+  /// No description provided for @blog_pagina_n.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {p}'**
+  String blog_pagina_n(Object p);
+
+  /// No description provided for @blog_per_pagina.
+  ///
+  /// In en, this message translates to:
+  /// **'Per page'**
+  String get blog_per_pagina;
+
+  /// No description provided for @blog_stesa_inizia.
+  ///
+  /// In en, this message translates to:
+  /// **'Begin a reading with this spread'**
+  String get blog_stesa_inizia;
+
+  /// No description provided for @blog_stesa_posizioni.
+  ///
+  /// In en, this message translates to:
+  /// **'See the positions'**
+  String get blog_stesa_posizioni;
+
+  /// No description provided for @blog_articoli_su.
+  ///
+  /// In en, this message translates to:
+  /// **'Every article about {nome}'**
+  String blog_articoli_su(Object nome);
 
   /// No description provided for @blog_esplora_meta_titolo.
   ///

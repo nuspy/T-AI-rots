@@ -3336,6 +3336,24 @@ class AppLocalizationsIt extends AppLocalizations {
   String get blog_stese_sezione => 'Le stese di questa sezione';
 
   @override
+  String blog_conta_carte(int n) {
+    String _temp0 = intl.Intl.pluralLogic(n, locale: localeName, other: '$n carte', one: '1 carta');
+    return '$_temp0';
+  }
+
+  @override
+  String blog_conta_stese(int n) {
+    String _temp0 = intl.Intl.pluralLogic(n, locale: localeName, other: '$n stese', one: '1 stesa');
+    return '$_temp0';
+  }
+
+  @override
+  String blog_conta_articoli(int n) {
+    String _temp0 = intl.Intl.pluralLogic(n, locale: localeName, other: '$n articoli', one: '1 articolo');
+    return '$_temp0';
+  }
+
+  @override
   String get blog_vuoto => 'Qui non ci sono ancora articoli.';
 
   @override
@@ -3418,6 +3436,37 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get blog_non_trovato => 'Questo articolo non esiste, oppure non è più pubblicato.';
+
+  @override
+  String get blog_pagina_prima => 'Prima pagina';
+
+  @override
+  String get blog_pagina_ultima => 'Ultima pagina';
+
+  @override
+  String get blog_pagina_precedente => 'Pagina precedente';
+
+  @override
+  String get blog_pagina_successiva => 'Pagina successiva';
+
+  @override
+  String blog_pagina_n(Object p) {
+    return 'Pagina $p';
+  }
+
+  @override
+  String get blog_per_pagina => 'Per pagina';
+
+  @override
+  String get blog_stesa_inizia => 'Comincia una lettura con questa stesa';
+
+  @override
+  String get blog_stesa_posizioni => 'Vedi le posizioni';
+
+  @override
+  String blog_articoli_su(Object nome) {
+    return 'Tutti gli articoli su $nome';
+  }
 
   @override
   String get blog_esplora_meta_titolo => 'Esplora i Tarocchi';

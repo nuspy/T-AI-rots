@@ -18,6 +18,7 @@ import 'package:tarots/modelli/carta.dart';
 import 'package:tarots/modelli/notifiche.dart';
 import 'package:tarots/modelli/pubblici.dart';
 import 'package:tarots/modelli/store.dart';
+import 'package:tarots/pagine/blog.dart' show sceltePerPagina;
 
 /// Gli endpoint che l'app chiama (`lib/api/api.dart`), come compaiono nello schema.
 const List<(String, String)> endpointApp = [
@@ -29,6 +30,12 @@ const List<(String, String)> endpointApp = [
   ('get', '/impostazioni-pubbliche'),
   ('get', '/eta-minima'),
   ('get', '/blog/nove'),
+  // Il diario (v9.4: elenchi a pagine anche per carta e stesa, sezioni ricche).
+  ('get', '/blog/posts'),
+  ('get', '/blog/posts/{slug}'),
+  ('get', '/blog/sections'),
+  ('get', '/blog/sections/{slug}'),
+  ('get', '/blog/tags'),
   ('get', '/decks'),
   ('get', '/me/daily-card'),
   ('get', '/me/profile'),
@@ -87,6 +94,28 @@ void main() {
       final parametri = (operazione('get', p)['parameters'] as List<Object?>? ?? []).cast<Map<String, Object?>>();
       expect(parametri.map((x) => x['name']), contains('lang'), reason: p);
     }
+  });
+
+  test('v9.4: GET /blog/posts accetta carta e stesa, e ogni scelta per pagina (10/25/50); /blog/nove i recenti', () {
+    Map<String, Object?> parametro(String percorso, String nome) =>
+        ((operazione('get', percorso)['parameters']! as List<Object?>).cast<Map<String, Object?>>().firstWhere(
+                  (x) => x['name'] == nome,
+                )['schema']
+                as Map<String, Object?>?) ??
+        const {};
+    // `Optional[str]` con un pattern: `{anyOf: [{type: string, pattern}, {type: null}]}`.
+    String pattern(Map<String, Object?> s) =>
+        (s['anyOf']! as List<Object?>).cast<Map<String, Object?>>().firstWhere((x) => x['pattern'] != null)['pattern']!
+            as String;
+    for (final (nome, esempio) in [('carta', 'maj-17'), ('stesa', 'croce-celtica')]) {
+      expect(RegExp(pattern(parametro('/blog/posts', nome))).hasMatch(esempio), isTrue, reason: nome);
+    }
+    final per = parametro('/blog/posts', 'per_pagina');
+    for (final n in sceltePerPagina) {
+      expect(n, inInclusiveRange((per['minimum']! as num).toInt(), (per['maximum']! as num).toInt()));
+    }
+    final recenti = parametro('/blog/nove', 'recenti');
+    expect(sceltePerPagina.map((n) => n.clamp(0, 12)), everyElement(lessThanOrEqualTo(recenti['maximum']! as num)));
   });
 
   test('POST /consensi: le scelte dell\'app rispettano lo schema (origine android/ios, categorie, versione)', () {

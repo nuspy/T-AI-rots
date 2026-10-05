@@ -28,6 +28,7 @@ import '../componenti/carta.dart';
 import '../componenti/diario.dart';
 import '../componenti/formati.dart';
 import '../componenti/griglia.dart';
+import '../componenti/miniatura_stesa.dart';
 import '../componenti/pagina.dart';
 import '../componenti/premibile.dart';
 import '../componenti/testi.dart';
@@ -43,9 +44,18 @@ import '../rotte/navigazione.dart';
 import '../rotte/percorsi.dart';
 import '../tema/tema.dart';
 import 'prezzi.dart' show FasciaStretta;
+import 'stese.dart' show nomeStesa;
 
-/// Articoli per pagina negli elenchi (`PER_PAGINA_BLOG`).
-const int perPaginaBlog = 6;
+/// Articoli per pagina, se non se ne sceglie un altro numero, negli elenchi del diario e delle pagine di carte e stese
+/// (`PER_PAGINA_BLOG`).
+const int perPaginaBlog = 25;
+
+/// Le scelte del numero di articoli per pagina (`?per=` nell'indirizzo, come il sito).
+const List<int> sceltePerPagina = [10, 25, 50];
+
+/// Quanti articoli recenti chiedere a `GET /blog/nove` perché i dieci scelti a caso non ripetano la prima pagina: il
+/// server ne dà al più 12 (`recenti` ≤ 12), anche se la pagina ne mostra 25 o 50.
+int _recentiNove(int per) => math.min(per, 12);
 
 /* ---- i dati ------------------------------------------------------------------------------------------------------- */
 
@@ -80,6 +90,21 @@ String _query(Map<String, Object?> p) => Uri(
 ).query;
 
 int _pagina(Map<String, String> parametri) => math.max(1, int.tryParse(parametri['page'] ?? '') ?? 1);
+
+/// Gli articoli per pagina scelti nell'indirizzo (`?per=10|25|50`); un altro valore vale [perPaginaBlog].
+int perPaginaDa(Map<String, String> parametri) {
+  final n = int.tryParse(parametri['per'] ?? '');
+  return sceltePerPagina.contains(n) ? n! : perPaginaBlog;
+}
+
+/// Gli articoli su una carta o una stesa, a pagine (`GET /blog/posts?carta=…|stesa=…`, v9.4).
+final articoliSuProvider = FutureProvider.family<ElencoArticoli, ({String tipo, String id, int pagina, int per})>((
+  ref,
+  x,
+) {
+  ref.watch(linguaProvider);
+  return ref.read(apiProvider).articoliSuPagine(x.tipo, x.id, pagina: x.pagina, perPagina: x.per);
+});
 
 /* ---- i pezzi comuni ----------------------------------------------------------------------------------------------- */
 
@@ -263,48 +288,210 @@ class _SceltiACaso extends ConsumerWidget {
   }
 }
 
-/// `nav.pager`: «← più recenti», «pagina 2 di 5», «meno recenti →».
-class _Pagine extends StatelessWidget {
-  const _Pagine({required this.pagina, required this.pagine, required this.base, this.q});
+/// `nav.pager` (v9.4): «← più recenti», «pagina 2 di 5», «meno recenti →»; sotto, i numeri delle pagine (la prima,
+/// l'ultima e le vicine a quella corrente, con «…» in mezzo) e la scelta di 10 / 25 / 50 articoli per pagina. Il numero
+/// per pagina resta nei collegamenti (`?per=`, assente se è quello predefinito); cambiarlo riporta alla prima pagina.
+/// Ogni bersaglio è alto almeno 48 px.
+class PaginatoreBlog extends StatelessWidget {
+  /// Il navigatore della pagina [pagina] di [pagine], con [per] articoli per pagina su [totale], verso [base].
+  const PaginatoreBlog({
+    super.key,
+    required this.pagina,
+    required this.pagine,
+    required this.base,
+    this.per = perPaginaBlog,
+    this.totale = 0,
+    this.q,
+  });
 
+  /// La pagina corrente (da 1).
   final int pagina;
+
+  /// Quante pagine.
   final int pagine;
+
+  /// L'indirizzo dell'elenco, senza query.
   final String base;
+
+  /// Gli articoli per pagina.
+  final int per;
+
+  /// Gli articoli in tutto (la scelta per pagina si mostra solo se ce ne sono più della scelta minima).
+  final int totale;
+
+  /// La ricerca, da conservare nei collegamenti.
   final String? q;
 
-  String _href(int p) {
-    final query = _query({'q': q, if (p > 1) 'page': p});
+  /// L'indirizzo della pagina [p], con [conPer] articoli per pagina (predefinito: quelli correnti).
+  String href(int p, {int? conPer}) {
+    final n = conPer ?? per;
+    final query = _query({'q': q, if (p > 1) 'page': p, if (n != perPaginaBlog) 'per': n});
     return query.isEmpty ? base : '$base?$query';
+  }
+
+  /// I numeri da mostrare: 1, l'ultima, e [vicine] pagine attorno alla corrente; `null` dove ne mancano (i «…»).
+  static List<int?> numeri(int pagina, int pagine, {int vicine = 1}) {
+    final scelti = <int>{1, pagine, for (var i = pagina - vicine; i <= pagina + vicine; i++) i}
+      ..removeWhere((p) => p < 1 || p > pagine);
+    final ordinati = scelti.toList()..sort();
+    final esito = <int?>[];
+    int? ultimo;
+    for (final p in ordinati) {
+      if (ultimo != null && p - ultimo > 1) esito.add(null);
+      esito.add(p);
+      ultimo = p;
+    }
+    return esito;
   }
 
   @override
   Widget build(BuildContext context) {
-    if (pagine <= 1) return const SizedBox.shrink();
     final t = context.t;
-    final etichetta = t.blog_pagina(pagina, pagine);
+    final conScelta = totale > sceltePerPagina.first;
+    if (pagine <= 1 && !conScelta) return const SizedBox.shrink();
+    final etichetta = t.blog_pagina(math.min(pagina, math.max(1, pagine)), math.max(1, pagine));
+    final largo = !MediaQuery.sizeOf(context).width.telefono;
     return Semantics(
       container: true,
       label: etichetta,
       child: Padding(
         padding: const EdgeInsets.only(top: 11.2),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (pagina > 1)
-              Bottone(t.blog_piu_recenti, href: _href(pagina - 1), variante: Variante.quieto, piccolo: true)
-            else
-              const SizedBox.shrink(),
-            const Spacer(),
-            Text(etichetta, style: stilePiccolo()),
-            const Spacer(),
-            if (pagina < pagine)
-              Bottone(t.blog_meno_recenti, href: _href(pagina + 1), variante: Variante.quieto, piccolo: true)
-            else
-              const SizedBox.shrink(),
+            if (pagine > 1) ...[
+              Row(
+                children: [
+                  if (pagina > 1)
+                    _Alto48(
+                      child: Bottone(
+                        t.blog_piu_recenti,
+                        href: href(pagina - 1),
+                        variante: Variante.quieto,
+                        piccolo: true,
+                      ),
+                    )
+                  else
+                    const SizedBox.shrink(),
+                  const Spacer(),
+                  Text(etichetta, style: stilePiccolo()),
+                  const Spacer(),
+                  if (pagina < pagine)
+                    _Alto48(
+                      child: Bottone(
+                        t.blog_meno_recenti,
+                        href: href(pagina + 1),
+                        variante: Variante.quieto,
+                        piccolo: true,
+                      ),
+                    )
+                  else
+                    const SizedBox.shrink(),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final n in numeri(pagina, pagine, vicine: largo ? 2 : 1))
+                      if (n == null)
+                        SizedBox(
+                          width: 24,
+                          height: 48,
+                          child: Center(
+                            child: ExcludeSemantics(child: Text('…', style: stilePiccolo())),
+                          ),
+                        )
+                      else
+                        _NumeroPagina(
+                          numero: n,
+                          corrente: n == pagina,
+                          href: href(n),
+                          etichetta: t.blog_pagina(n, pagine),
+                        ),
+                  ],
+                ),
+              ),
+            ],
+            if (conScelta)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Semantics(
+                  container: true,
+                  label: t.blog_per_pagina,
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ExcludeSemantics(child: Text(t.blog_per_pagina, style: stilePiccolo())),
+                      for (final n in sceltePerPagina)
+                        _Alto48(
+                          child: Pillola(
+                            '$n',
+                            acceso: n == per,
+                            alTocco: () => vai(context, href(1, conPer: n)),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
   }
+}
+
+/// Alto almeno 48 px (il bersaglio minimo del tocco su Android): il figlio si allunga fino a lì.
+class _Alto48 extends StatelessWidget {
+  const _Alto48({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => ConstrainedBox(constraints: const BoxConstraints(minHeight: 48), child: child);
+}
+
+/// Il numero di una pagina: un quadrato di 48 px, prugna se è quella corrente.
+class _NumeroPagina extends StatelessWidget {
+  const _NumeroPagina({required this.numero, required this.corrente, required this.href, required this.etichetta});
+
+  final int numero;
+  final bool corrente;
+  final String href;
+  final String etichetta;
+
+  @override
+  Widget build(BuildContext context) => Premibile(
+    alTocco: corrente ? null : () => vai(context, href),
+    collegamento: true,
+    selezionato: corrente,
+    etichetta: etichetta,
+    raggioFuoco: Token.raggio,
+    costruisci: (context, premuto) => Container(
+      constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: corrente ? Token.plum : (premuto ? const Color(0x0F3C1846) : null),
+        border: Border.all(color: corrente ? Token.plum : Token.line),
+        borderRadius: BorderRadius.circular(Token.raggio),
+      ),
+      child: Center(
+        widthFactor: 1,
+        heightFactor: 1,
+        child: Text(
+          '$numero',
+          style: Stile.sans(15, colore: corrente ? const Color(0xFFFFF7E8) : Token.ink, altezza: 1.2),
+        ),
+      ),
+    ),
+  );
 }
 
 /// `.sezioni-box`: il riquadro con la riga d'ottone in alto e il titolo con la stella.
@@ -751,7 +938,8 @@ class Blog extends ConsumerWidget {
     final t = context.t;
     final q = parametri['q'] ?? '';
     final pagina = _pagina(parametri);
-    final elenco = ref.watch(elencoArticoliProvider(_query({'q': q, 'pagina': pagina, 'per_pagina': perPaginaBlog})));
+    final per = perPaginaDa(parametri);
+    final elenco = ref.watch(elencoArticoliProvider(_query({'q': q, 'pagina': pagina, 'per_pagina': per})));
     final evidenza = q.isNotEmpty || pagina > 1
         ? null
         : ref.watch(elencoArticoliProvider(_query({'evidenza': 'true', 'per_pagina': 1}))).value;
@@ -783,10 +971,11 @@ class Blog extends ConsumerWidget {
           GrigliaDiario(
             children: [for (final (i, a) in lista.indexed) TesseraDiario(a: a, indice: i)],
           ),
-          _Pagine(pagina: pagina, pagine: dati!.pagine, base: R.blog, q: q),
+          PaginatoreBlog(pagina: pagina, pagine: dati!.pagine, totale: dati.totale, per: per, base: R.blog, q: q),
         ],
-        if (q.isEmpty && pagina == 1) _SceltiACaso(contesto: _query({'recenti': perPaginaBlog, 'scelti': 10})),
-        if (dati != null && lista.isEmpty) _Pagine(pagina: pagina, pagine: dati.pagine, base: R.blog, q: q),
+        if (q.isEmpty && pagina == 1) _SceltiACaso(contesto: _query({'recenti': _recentiNove(per), 'scelti': 10})),
+        if (dati != null && lista.isEmpty)
+          PaginatoreBlog(pagina: pagina, pagine: dati.pagine, totale: dati.totale, per: per, base: R.blog, q: q),
         const _Ponte(),
       ],
     );
@@ -832,9 +1021,10 @@ class BlogSezione extends ConsumerWidget {
     final t = context.t;
     final lingua = ref.watch(linguaProvider);
     final pagina = _pagina(parametri);
+    final per = perPaginaDa(parametri);
     final sezione = ref.watch(sezioneBlogProvider(slug));
     final elenco = ref
-        .watch(elencoArticoliProvider(_query({'sezione': slug, 'pagina': pagina, 'per_pagina': perPaginaBlog})))
+        .watch(elencoArticoliProvider(_query({'sezione': slug, 'pagina': pagina, 'per_pagina': per})))
         .value;
     final w = MediaQuery.sizeOf(context).width;
 
@@ -847,43 +1037,55 @@ class BlogSezione extends ConsumerWidget {
     final carte = d.tipo == 'carte'
         ? [for (final e in d.elementi) Carta.fromJson(Map<String, dynamic>.from(e))]
         : const <Carta>[];
+    final stese = d.stese;
+
+    // A tutta larghezza (sopra gli articoli e le sezioni di lato): le sotto-sezioni come riquadri con immagine, le
+    // carte in una griglia ampia, le stese come schede ricche.
+    final catalogo = <Widget>[
+      if (d.figli.isNotEmpty) ...[
+        Semantics(header: true, child: Eyebrow(t.blog_sottosezioni)),
+        _RiquadriSezioni(nodi: d.figli),
+      ],
+      if (d.tipo == 'carte' && carte.isNotEmpty) ...[
+        Padding(
+          padding: EdgeInsets.only(top: d.figli.isEmpty ? 0 : 16),
+          child: Semantics(header: true, child: Eyebrow(t.blog_carte_sezione)),
+        ),
+        Griglia(
+          colonne: colonneCarte(w),
+          spazioColonne: 16,
+          spazioRighe: 8,
+          allunga: false,
+          children: [for (final c in carte) _TesseraCarta(carta: c, lingua: lingua)],
+        ),
+      ],
+      if (stese.isNotEmpty) ...[
+        Padding(
+          padding: EdgeInsets.only(top: d.figli.isEmpty ? 0 : 16),
+          child: Semantics(header: true, child: Eyebrow(t.blog_stese_sezione)),
+        ),
+        _GrigliaStese(stese: stese),
+      ],
+    ];
 
     final contenuto = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (d.figli.isNotEmpty)
-          _Riquadro(
-            titolo: t.blog_sottosezioni,
-            child: _Albero(nodi: d.figli),
-          ),
-        if (d.tipo == 'carte') ...[
-          Padding(padding: const EdgeInsets.only(top: 8), child: Eyebrow(t.blog_carte_sezione)),
-          Griglia(
-            colonne: colonneCarte(w),
-            spazioColonne: 16,
-            spazioRighe: 8,
-            allunga: false,
-            children: [for (final c in carte) _TesseraCarta(carta: c, lingua: lingua)],
-          ),
-        ],
-        if (d.tipo == 'stese') ...[
-          Padding(padding: const EdgeInsets.only(top: 8), child: Eyebrow(t.blog_stese_sezione)),
-          Pillole(
-            children: [
-              for (final e in d.elementi)
-                Pillola('${e['nome'] ?? ''}', alTocco: () => vai(context, R.stesa('${e['slug'] ?? e['id']}'))),
-            ],
-          ),
-        ],
         if (lista.isNotEmpty) ...[
-          Padding(padding: const EdgeInsets.only(top: 10.4), child: Eyebrow(t.blog_articoli)),
+          Semantics(header: true, child: Eyebrow(t.blog_articoli)),
           GrigliaDiario(
             children: [for (final (i, a) in lista.indexed) TesseraDiario(a: a, indice: i)],
           ),
-          _Pagine(pagina: pagina, pagine: elenco!.pagine, base: R.blogSezione(slug)),
+          PaginatoreBlog(
+            pagina: pagina,
+            pagine: elenco!.pagine,
+            totale: elenco.totale,
+            per: per,
+            base: R.blogSezione(slug),
+          ),
         ],
-        if (pagina == 1) _SceltiACaso(contesto: _query({'sezione': slug, 'recenti': perPaginaBlog, 'scelti': 10})),
-        if (elenco != null && lista.isEmpty && d.figli.isEmpty && d.tipo == 'articoli') Avviso(t.blog_vuoto),
+        if (pagina == 1) _SceltiACaso(contesto: _query({'sezione': slug, 'recenti': _recentiNove(per), 'scelti': 10})),
+        if (elenco != null && lista.isEmpty && d.figli.isEmpty && d.tipo == 'articoli') Avviso(t.blog_vuoto, sopra: 0),
         const _Ponte(),
       ],
     );
@@ -903,12 +1105,438 @@ class BlogSezione extends ConsumerWidget {
           ],
         ),
         FasciaStretta(
-          child: _Disposizione(
-            contenuto: contenuto,
-            laterale: _Laterale(corrente: slug),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (catalogo.isNotEmpty) ...[...catalogo, const SizedBox(height: 19.2)],
+              _Disposizione(
+                contenuto: contenuto,
+                laterale: _Laterale(corrente: slug),
+              ),
+            ],
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Le colonne di una griglia di schede larghe almeno [minima] px (`repeat(auto-fill, minmax(…, 1fr))`), al più
+/// [massimo].
+int _colonne(double larghezza, double minima, {double spazio = 17.6, int massimo = 3}) =>
+    ((larghezza + spazio) / (minima + spazio)).floor().clamp(1, massimo);
+
+/// I conteggi di una sezione: articoli, e carte e stese del ramo se ce ne sono (`12 articles · 22 cards`); «0 articoli»
+/// solo se non c'è altro da contare.
+String _conteggi(AppLocalizations t, NodoSezione n) {
+  final carte = n.nCarte > 0 ? n.nCarte : (n.tipo == 'carte' ? (n.nElementi ?? 0) : 0);
+  final stese = n.nStese > 0 ? n.nStese : (n.tipo == 'stese' ? (n.nElementi ?? 0) : 0);
+  return [
+    if (n.nArticoli > 0 || carte + stese == 0) t.blog_conta_articoli(n.nArticoli),
+    if (carte > 0) t.blog_conta_carte(carte),
+    if (stese > 0) t.blog_conta_stese(stese),
+  ].join(' · ');
+}
+
+/// Un'immagine del diario (sezione, stesa) da un percorso dell'API; se manca o non si carica, [riserva].
+class _ImmagineDiario extends ConsumerWidget {
+  const _ImmagineDiario({required this.immagine, required this.riserva});
+
+  final ImmagineBlog? immagine;
+  final Widget riserva;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final percorso = immagine?.perTessera;
+    if (percorso == null) return riserva;
+    final alt = (immagine?.alt ?? '').trim();
+    return Image(
+      image: ref.watch(immagineMediaProvider)(percorso),
+      fit: BoxFit.cover,
+      semanticLabel: alt.isEmpty ? null : alt,
+      excludeFromSemantics: alt.isEmpty,
+      errorBuilder: (context, e, s) => riserva,
+    );
+  }
+}
+
+/// Il fondo di un riquadro senza immagine: prugna, con il segno del tipo in ottone.
+class _FondoSegno extends StatelessWidget {
+  const _FondoSegno({required this.segno});
+
+  final String segno;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Token.plumDeep, Color(0xFF3C1846)],
+      ),
+    ),
+    child: Center(
+      child: ExcludeSemantics(
+        child: Text(segno, style: Stile.serif(40, colore: Token.brassPale)),
+      ),
+    ),
+  );
+}
+
+/// Le sotto-sezioni di una sezione come riquadri (v9.4): una colonna sul telefono, fino a tre più largo.
+class _RiquadriSezioni extends StatelessWidget {
+  const _RiquadriSezioni({required this.nodi});
+
+  final List<NodoSezione> nodi;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, v) => Griglia(
+      colonne: _colonne(v.maxWidth, 280),
+      spazioColonne: 17.6,
+      spazioRighe: 17.6,
+      allunga: false,
+      children: [for (final n in nodi) _RiquadroSezione(nodo: n)],
+    ),
+  );
+}
+
+/// Il riquadro di una sotto-sezione: l'immagine (o il segno del tipo), il nome, la descrizione, i conteggi; sotto, le
+/// sue sezioni (per i contenitori come «By suit» e «By number») e 3 articoli del ramo scelti per la giornata.
+class _RiquadroSezione extends StatelessWidget {
+  const _RiquadroSezione({required this.nodo});
+
+  final NodoSezione nodo;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.t;
+    final n = nodo;
+    final segno = switch (n.tipo) {
+      'stese' => '▦',
+      'contenitore' => '✶',
+      _ => '✦',
+    };
+    final testa = Premibile(
+      alTocco: () => vai(context, R.blogSezione(n.slug)),
+      collegamento: true,
+      costruisci: (context, premuto) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                _ImmagineDiario(
+                  immagine: n.immagine,
+                  riserva: _FondoSegno(segno: segno),
+                ),
+                if (premuto) const ColoredBox(color: Color(0x1F201026)),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12.8, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Semantics(
+                  header: true,
+                  child: Text(
+                    n.nome,
+                    style: Stile.serif(20.8, altezza: 1.25, colore: premuto ? Token.plum : Token.ink),
+                  ),
+                ),
+                if ((n.descrizione ?? '').isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4.8),
+                    child: Paragrafo(n.descrizione!, style: Stile.sans(14.4, colore: Token.inkSoft, altezza: 1.5)),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 6.4, bottom: 4.8),
+                  child: Text(_conteggi(t, n), style: stilePiccolo()),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+    // `.sezioni-box`: la riga d'ottone in alto, sopra l'immagine (il riempimento lascia vedere il bordo).
+    return Container(
+      padding: const EdgeInsets.fromLTRB(1, 3, 1, 1),
+      decoration: const BoxDecoration(
+        color: Token.paperLight,
+        border: Border(
+          top: BorderSide(color: Token.brass, width: 3),
+          left: BorderSide(color: Token.line),
+          right: BorderSide(color: Token.line),
+          bottom: BorderSide(color: Token.line),
+        ),
+        boxShadow: [BoxShadow(color: Color(0x0F3C1846), offset: Offset(0, 10), blurRadius: 24)],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          testa,
+          if (n.figli.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final f in n.figli)
+                    _Alto48(child: Pillola(f.nome, alTocco: () => vai(context, R.blogSezione(f.slug)))),
+                ],
+              ),
+            ),
+          if (n.articoli.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final a in n.articoli.take(3))
+                    DecoratedBox(
+                      decoration: const BoxDecoration(
+                        border: Border(top: BorderSide(color: Token.line)),
+                      ),
+                      child: _VoceArticolo(a: a),
+                    ),
+                ],
+              ),
+            ),
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+}
+
+/// Un articolo in un riquadro di sezione: il titolo, alto almeno 48 px, che porta all'articolo.
+class _VoceArticolo extends StatelessWidget {
+  const _VoceArticolo({required this.a});
+
+  final ArticoloBreve a;
+
+  @override
+  Widget build(BuildContext context) => Premibile(
+    alTocco: () => vai(context, R.articolo(a.slug)),
+    collegamento: true,
+    costruisci: (context, premuto) => ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 48),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ExcludeSemantics(
+              child: Text('→ ', style: Stile.sans(15.2, colore: Token.brass, altezza: 1.5)),
+            ),
+            Expanded(
+              child: Text(
+                a.titolo,
+                style: Stile.sans(15.2, colore: premuto ? Token.verdigris : Token.plum, altezza: 1.5),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+/// Le stese di una sezione «stese» come schede ricche (v9.4): una colonna sul telefono, fino a tre più largo.
+class _GrigliaStese extends StatelessWidget {
+  const _GrigliaStese({required this.stese});
+
+  final List<StesaSezione> stese;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, v) => Griglia(
+      colonne: _colonne(v.maxWidth, 290),
+      spazioColonne: 17.6,
+      spazioRighe: 17.6,
+      allunga: false,
+      children: [for (final s in stese) _SchedaStesa(s: s)],
+    ),
+  );
+}
+
+/// La scheda di una stesa: l'illustrazione con lo schema sul tavolo in un angolo (o lo schema solo, sul fondo prugna,
+/// se l'illustrazione non c'è ancora), la tradizione e il numero di carte, il titolo, l'intro breve e «inizia una
+/// lettura con questa stesa».
+class _SchedaStesa extends ConsumerWidget {
+  const _SchedaStesa({required this.s});
+
+  final StesaSezione s;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = context.t;
+    final lingua = ref.watch(linguaProvider);
+    final stesa = s.comeStesa();
+    final nome = nomeStesa(stesa, lingua);
+    final tradizione = s.tradizioneIn(lingua);
+    final intro = s.descrizioneBreve.isNotEmpty ? s.descrizioneBreve : s.descrizione;
+    final schema = DecoratedBox(
+      decoration: BoxDecoration(
+        color: Token.plumDeep,
+        border: Border.all(color: const Color(0x8CD6B66D)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(6.4),
+        child: Semantics(
+          image: true,
+          label: t.stese_stesa_diagramma,
+          child: MiniaturaStesa(stesa: stesa),
+        ),
+      ),
+    );
+    final illustrazione = s.immagine?.perTessera != null;
+    final testa = Premibile(
+      alTocco: () => vai(context, R.stesa(s.slug ?? s.id)),
+      collegamento: true,
+      costruisci: (context, premuto) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AspectRatio(
+            aspectRatio: 16 / 10,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                const ColoredBox(color: Token.plumDeep),
+                if (illustrazione)
+                  _ImmagineDiario(immagine: s.immagine, riserva: const SizedBox.shrink())
+                else
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    child: Center(child: MiniaturaStesa(stesa: stesa)),
+                  ),
+                if (illustrazione)
+                  Align(
+                    alignment: AlignmentDirectional.bottomEnd,
+                    child: Padding(
+                      padding: const EdgeInsets.all(9.6),
+                      child: FractionallySizedBox(widthFactor: .42, child: schema),
+                    ),
+                  ),
+                if (premuto) const ColoredBox(color: Color(0x1F201026)),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12.8, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  [?tradizione, t.lettura_n_carte(s.carte)].join(' · ').toUpperCase(),
+                  // Verderame come le eyebrow (l'ottone sul fondo chiaro non arriva a 4,5:1).
+                  style: Stile.sans(11.2, peso: FontWeight.w700, em: .08, colore: Token.verdigris, altezza: 1.6),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Semantics(
+                    header: true,
+                    child: Text(
+                      nome,
+                      style: Stile.serif(20.8, altezza: 1.25, colore: premuto ? Token.plum : Token.ink),
+                    ),
+                  ),
+                ),
+                if (intro.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6.4),
+                    child: Paragrafo(intro, style: Stile.sans(14.4, colore: Token.inkSoft, altezza: 1.5)),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+    return Container(
+      padding: const EdgeInsets.all(1),
+      decoration: BoxDecoration(
+        color: Token.paperLight,
+        border: Border.all(color: Token.line),
+        boxShadow: const [BoxShadow(color: Color(0x0F3C1846), offset: Offset(0, 10), blurRadius: 24)],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          testa,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: _Alto48(
+              child: Bottone(
+                t.stese_stesa_cta,
+                href: '${R.leggi}?spread=${Uri.encodeQueryComponent(s.id)}&source=journal',
+                variante: Variante.ottone,
+                pieno: true,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// L'elenco completo, a pagine, degli articoli su una carta o una stesa (v9.4, `GET /blog/posts?carta=…|stesa=…`),
+/// per le loro pagine: sotto i nove articoli, con lo stesso navigatore del diario. Niente se non ce ne sono.
+class ArticoliSu extends ConsumerWidget {
+  /// Gli articoli su [tipo] (`carta` o `stesa`) [id], chiamato [nome], nella pagina [base] coi [parametri] (`page`,
+  /// `per`).
+  const ArticoliSu({
+    super.key,
+    required this.tipo,
+    required this.id,
+    required this.nome,
+    required this.base,
+    this.parametri = const {},
+  });
+
+  /// `carta` o `stesa`.
+  final String tipo;
+
+  /// L'id canonico.
+  final String id;
+
+  /// Il nome nella lingua dell'interfaccia.
+  final String nome;
+
+  /// L'indirizzo della pagina (per i collegamenti alle altre pagine dell'elenco).
+  final String base;
+
+  /// I parametri della query.
+  final Map<String, String> parametri;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = context.t;
+    final pagina = _pagina(parametri);
+    final per = perPaginaDa(parametri);
+    final elenco = ref.watch(articoliSuProvider((tipo: tipo, id: id, pagina: pagina, per: per))).value;
+    if (elenco == null || (elenco.articoli.isEmpty && pagina == 1)) return const SizedBox.shrink();
+    return Fascia(
+      compatta: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Eyebrow(t.blog_articoli),
+          Padding(padding: const EdgeInsets.only(bottom: 14.4), child: TitoloSezione(t.blog_articoli_su(nome))),
+          if (elenco.articoli.isEmpty) Avviso(t.blog_vuoto, sopra: 0),
+          GrigliaDiario(
+            children: [for (final (i, a) in elenco.articoli.indexed) TesseraDiario(a: a, indice: i)],
+          ),
+          PaginatoreBlog(pagina: pagina, pagine: elenco.pagine, totale: elenco.totale, per: per, base: base),
+        ],
+      ),
     );
   }
 }
@@ -964,10 +1592,9 @@ class BlogTag extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = context.t;
     final pagina = _pagina(parametri);
+    final per = perPaginaDa(parametri);
     final tag = ref.watch(etichetteBlogProvider).value;
-    final elenco = ref
-        .watch(elencoArticoliProvider(_query({'tag': slug, 'pagina': pagina, 'per_pagina': perPaginaBlog})))
-        .value;
+    final elenco = ref.watch(elencoArticoliProvider(_query({'tag': slug, 'pagina': pagina, 'per_pagina': per}))).value;
     final nome = tag?.where((e) => e.slug == slug).firstOrNull?.nome ?? slug;
     final lista = elenco?.articoli ?? const <ArticoloBreve>[];
     return Pagina(
@@ -988,8 +1615,16 @@ class BlogTag extends ConsumerWidget {
                 GrigliaDiario(
                   children: [for (final (i, a) in lista.indexed) TesseraDiario(a: a, indice: i)],
                 ),
-                if (elenco != null) _Pagine(pagina: pagina, pagine: elenco.pagine, base: R.blogTag(slug)),
-                if (pagina == 1) _SceltiACaso(contesto: _query({'tag': slug, 'recenti': perPaginaBlog, 'scelti': 10})),
+                if (elenco != null)
+                  PaginatoreBlog(
+                    pagina: pagina,
+                    pagine: elenco.pagine,
+                    totale: elenco.totale,
+                    per: per,
+                    base: R.blogTag(slug),
+                  ),
+                if (pagina == 1)
+                  _SceltiACaso(contesto: _query({'tag': slug, 'recenti': _recentiNove(per), 'scelti': 10})),
                 const _Ponte(),
               ],
             ),
@@ -1242,7 +1877,7 @@ class Articolo extends ConsumerWidget {
             ],
           ),
         ),
-        DiarioNove(contesto: _query({'articolo': x.slug})),
+        DiarioNove(contesto: _query({'articolo': x.slug}), sceltiPrima: true),
       ],
     );
   }

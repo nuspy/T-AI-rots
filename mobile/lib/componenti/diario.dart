@@ -196,7 +196,12 @@ class Tessera extends ConsumerWidget {
 /// I nove articoli.
 class DiarioNove extends ConsumerWidget {
   /// I nove articoli per la pagina (il [contesto] come query: `carta=maj-17`), con [vuoto] se il diario è vuoto.
-  const DiarioNove({super.key, this.contesto = '', this.eyebrow, this.titolo, this.vuoto});
+  const DiarioNove({super.key, this.contesto = '', this.eyebrow, this.titolo, this.vuoto, this.sceltiPrima = false});
+
+  /// «Scelti per questa pagina» prima degli ultimi articoli (v9.4): solo nelle pagine di un articolo, di una carta e
+  /// di una stesa, dove gli scelti sono gli articoli che ne parlano. Altrove (home, Esplora, carta del giorno) restano
+  /// prima gli ultimi.
+  final bool sceltiPrima;
 
   /// Il contesto della pagina.
   final String contesto;
@@ -257,37 +262,60 @@ class DiarioNove extends ConsumerWidget {
                     ],
                   ),
           ),
-          GrigliaArticoli(
-            children: [for (final (i, a) in recenti.indexed) Tessera(a: a, indice: i)],
-          ),
-          if (scelti.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.only(top: 11.2, bottom: 8),
-              child: Text(t.blog_nove_attinenti, style: Stile.serif(20)),
-            ),
+          if (sceltiPrima) ...[
+            if (scelti.isNotEmpty) ...[_titoletto(t.blog_nove_attinenti, sopra: 0), _GrigliaScelti(scelti: scelti)],
+            if (recenti.isNotEmpty) ...[
+              if (scelti.isNotEmpty) _titoletto(t.blog_ultimi),
+              GrigliaArticoli(
+                children: [for (final (i, a) in recenti.indexed) Tessera(a: a, indice: i)],
+              ),
+            ],
+          ] else ...[
             GrigliaArticoli(
-              children: [
-                for (final (i, a) in scelti.indexed)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Tessera(a: a, indice: i),
-                      if (a.sezione != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 7.2),
-                          child: Collegamento(
-                            t.blog_nove_sezione(a.sezione!.nome),
-                            href: R.blogSezione(a.sezione!.slug),
-                            stile: Stile.sans(13.44, altezza: 1.6),
-                          ),
-                        ),
-                    ],
-                  ),
-              ],
+              children: [for (final (i, a) in recenti.indexed) Tessera(a: a, indice: i)],
             ),
+            if (scelti.isNotEmpty) ...[_titoletto(t.blog_nove_attinenti), _GrigliaScelti(scelti: scelti)],
           ],
         ],
       ),
+    );
+  }
+}
+
+/// Il titoletto serif di un gruppo dei nove («Scelti per questa pagina», «Ultimi articoli»).
+Widget _titoletto(String testo, {double sopra = 11.2}) => Padding(
+  padding: EdgeInsets.only(top: sopra, bottom: 8),
+  child: Semantics(header: true, child: Text(testo, style: Stile.serif(20))),
+);
+
+/// Gli scelti per la pagina, ognuno col collegamento alla sua sezione.
+class _GrigliaScelti extends StatelessWidget {
+  const _GrigliaScelti({required this.scelti});
+
+  final List<ArticoloBreve> scelti;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.t;
+    return GrigliaArticoli(
+      children: [
+        for (final (i, a) in scelti.indexed)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Tessera(a: a, indice: i),
+              if (a.sezione != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 7.2),
+                  child: Collegamento(
+                    t.blog_nove_sezione(a.sezione!.nome),
+                    href: R.blogSezione(a.sezione!.slug),
+                    stile: Stile.sans(13.44, altezza: 1.6),
+                  ),
+                ),
+            ],
+          ),
+      ],
     );
   }
 }

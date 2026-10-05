@@ -418,6 +418,16 @@
       ],
       "title": "Slug"
      },
+     "soggetto": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/SoggettoIn"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
      "sottotitolo": {
       "anyOf": [
        {
@@ -651,6 +661,16 @@
       ],
       "title": "Slug"
      },
+     "soggetto": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/SoggettoIn"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
      "sottotitolo": {
       "anyOf": [
        {
@@ -875,7 +895,7 @@
         "type": "null"
        }
       ],
-      "description": "Lo slug (o l'id) di una sezione di tipo «articoli»: vedi GET /v1/blog/sections.",
+      "description": "Lo slug (o l'id) di una sezione di tipo «articoli», «carte» o «stese»: vedi GET /v1/blog/sections. Vuota, per un articolo su una carta: la sezione della carta.",
       "title": "Sezione"
      },
      "slug": {
@@ -911,6 +931,17 @@
       ],
       "title": "Stato",
       "type": "string"
+     },
+     "subject": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/SoggettoIn"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "La carta o la stesa di cui l'articolo parla: {\"tipo\": \"carta\"|\"stesa\", \"ref\": id o slug}. Non mandato: lo ricava il server; null: nessuno."
      },
      "tags": {
       "items": {
@@ -1154,6 +1185,16 @@
       ],
       "title": "Stato"
      },
+     "subject": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/SoggettoIn"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
      "tags": {
       "anyOf": [
        {
@@ -1200,6 +1241,37 @@
    },
    "Assegnazione": {
     "properties": {
+     "json_schema": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Json Schema"
+     },
+     "livello": {
+      "anyOf": [
+       {
+        "enum": [
+         "none",
+         "minimal",
+         "low",
+         "medium",
+         "high",
+         "xhigh",
+         "max"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Livello"
+     },
      "modello": {
       "anyOf": [
        {
@@ -2808,6 +2880,26 @@
       ],
       "title": "Embed Model"
      },
+     "livello_ragionamento": {
+      "anyOf": [
+       {
+        "enum": [
+         "none",
+         "minimal",
+         "low",
+         "medium",
+         "high",
+         "xhigh",
+         "max"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Livello Ragionamento"
+     },
      "model": {
       "anyOf": [
        {
@@ -2900,6 +2992,26 @@
       "maxLength": 120,
       "title": "Embed Model",
       "type": "string"
+     },
+     "livello_ragionamento": {
+      "anyOf": [
+       {
+        "enum": [
+         "none",
+         "minimal",
+         "low",
+         "medium",
+         "high",
+         "xhigh",
+         "max"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Livello Ragionamento"
      },
      "model": {
       "default": "",
@@ -3067,6 +3179,32 @@
     "title": "HTTPValidationError",
     "type": "object"
    },
+   "ImmagineCatalogoIn": {
+    "properties": {
+     "alt": {
+      "anyOf": [
+       {
+        "maxLength": 200,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Alt"
+     },
+     "immagine_id": {
+      "format": "uuid",
+      "title": "Immagine Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "immagine_id"
+    ],
+    "title": "ImmagineCatalogoIn",
+    "type": "object"
+   },
    "ImmaginiInlineIn": {
     "properties": {
      "aggiungi": {
@@ -3174,6 +3312,22 @@
    },
    "ImpostazioniIntervistaModifica": {
     "properties": {
+     "guardia_responso": {
+      "anyOf": [
+       {
+        "enum": [
+         "dubbi",
+         "spento",
+         "acceso"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Guardia Responso"
+     },
      "max_domande": {
       "anyOf": [
        {
@@ -3187,6 +3341,17 @@
       ],
       "title": "Max Domande"
      },
+     "memoria_stato_nei_prompt": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Memoria Stato Nei Prompt"
+     },
      "min_domande": {
       "anyOf": [
        {
@@ -3199,6 +3364,22 @@
        }
       ],
       "title": "Min Domande"
+     },
+     "validatore_domande": {
+      "anyOf": [
+       {
+        "enum": [
+         "dubbi",
+         "spento",
+         "acceso"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Validatore Domande"
      }
     },
     "title": "ImpostazioniIntervistaModifica",
@@ -3625,6 +3806,60 @@
      "visitor"
     ],
     "title": "Iscrizione",
+    "type": "object"
+   },
+   "ListinoIn": {
+    "properties": {
+     "attuale": {
+      "default": false,
+      "title": "Attuale",
+      "type": "boolean"
+     },
+     "cache_hit": {
+      "default": 0,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Cache Hit",
+      "type": "number"
+     },
+     "nome": {
+      "maxLength": 60,
+      "minLength": 1,
+      "title": "Nome",
+      "type": "string"
+     },
+     "nota": {
+      "default": "",
+      "maxLength": 300,
+      "title": "Nota",
+      "type": "string"
+     },
+     "prezzo_cache": {
+      "maximum": 1000.0,
+      "minimum": 0.0,
+      "title": "Prezzo Cache",
+      "type": "number"
+     },
+     "prezzo_ingresso": {
+      "maximum": 1000.0,
+      "minimum": 0.0,
+      "title": "Prezzo Ingresso",
+      "type": "number"
+     },
+     "prezzo_uscita": {
+      "maximum": 1000.0,
+      "minimum": 0.0,
+      "title": "Prezzo Uscita",
+      "type": "number"
+     }
+    },
+    "required": [
+     "nome",
+     "prezzo_ingresso",
+     "prezzo_cache",
+     "prezzo_uscita"
+    ],
+    "title": "ListinoIn",
     "type": "object"
    },
    "LottoIn": {
@@ -4116,9 +4351,9 @@
     "properties": {
      "ids": {
       "items": {
-       "format": "uuid",
        "type": "string"
       },
+      "maxItems": 200,
       "title": "Ids",
       "type": "array"
      },
@@ -6781,6 +7016,18 @@
       ],
       "title": "Filtro"
      },
+     "immagine_alt": {
+      "anyOf": [
+       {
+        "maxLength": 200,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Immagine Alt"
+     },
      "immagine_id": {
       "anyOf": [
        {
@@ -6901,6 +7148,18 @@
        }
       ],
       "title": "Filtro"
+     },
+     "immagine_alt": {
+      "anyOf": [
+       {
+        "maxLength": 200,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Immagine Alt"
      },
      "immagine_id": {
       "anyOf": [
@@ -7076,6 +7335,42 @@
      }
     },
     "title": "SmtpIn",
+    "type": "object"
+   },
+   "SoggettoIn": {
+    "description": "Il soggetto di un articolo (v9.4): la carta o la stesa di cui parla. `ref` è l'id o uno slug in qualunque lingua\n(`maj-10`, `fortune`; `croce-celtica`, `celtic-cross`); il tipo si accetta anche in inglese. `tipo` vuoto o `null`\nal posto dell'oggetto: nessun soggetto.",
+    "properties": {
+     "ref": {
+      "anyOf": [
+       {
+        "maxLength": 80,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Ref"
+     },
+     "tipo": {
+      "anyOf": [
+       {
+        "enum": [
+         "carta",
+         "stesa",
+         "card",
+         "spread"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Tipo"
+     }
+    },
+    "title": "SoggettoIn",
     "type": "object"
    },
    "SostituzioneInline": {
@@ -12116,6 +12411,228 @@
     ]
    }
   },
+  "/admin/blog/catalogo-immagini": {
+   "get": {
+    "description": "Ogni stesa e ogni sezione con la sua immagine (`immagine: null` se manca): prima le stese, nell'ordine del\ncatalogo, poi le sezioni. `?tipo=stesa` o `?tipo=sezione` per una sola delle due.",
+    "operationId": "catalogo_immagini_admin_blog_catalogo_immagini_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "tipo",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "enum": [
+          "stesa",
+          "sezione"
+         ],
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Tipo"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "additionalProperties": true,
+          "type": "object"
+         },
+         "title": "Response Catalogo Immagini Admin Blog Catalogo Immagini Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Catalogo Immagini",
+    "tags": [
+     "console-blog"
+    ]
+   }
+  },
+  "/admin/blog/catalogo-immagini/{tipo}/{riferimento}": {
+   "delete": {
+    "description": "Toglie l'immagine di una stesa o di una sezione (l'immagine resta fra i media).",
+    "operationId": "togli_immagine_catalogo_admin_blog_catalogo_immagini__tipo___riferimento__delete",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "tipo",
+      "required": true,
+      "schema": {
+       "enum": [
+        "stesa",
+        "sezione"
+       ],
+       "title": "Tipo",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "riferimento",
+      "required": true,
+      "schema": {
+       "title": "Riferimento",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Togli Immagine Catalogo",
+    "tags": [
+     "console-blog"
+    ]
+   },
+   "put": {
+    "description": "Assegna un'immagine già caricata a una stesa (id o slug) o a una sezione (slug).",
+    "operationId": "imposta_immagine_catalogo_admin_blog_catalogo_immagini__tipo___riferimento__put",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "tipo",
+      "required": true,
+      "schema": {
+       "enum": [
+        "stesa",
+        "sezione"
+       ],
+       "title": "Tipo",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "riferimento",
+      "required": true,
+      "schema": {
+       "title": "Riferimento",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ImmagineCatalogoIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Imposta Immagine Catalogo Admin Blog Catalogo Immagini  Tipo   Riferimento  Put",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Imposta Immagine Catalogo",
+    "tags": [
+     "console-blog"
+    ]
+   }
+  },
   "/admin/blog/media": {
    "get": {
     "operationId": "immagini_admin_blog_media_get",
@@ -14217,6 +14734,299 @@
     "summary": "Esegui",
     "tags": [
      "conservazione"
+    ]
+   }
+  },
+  "/admin/costi": {
+   "get": {
+    "description": "I consumi degli ultimi `giorni`, con il costo stimato per ogni listino.",
+    "operationId": "riepilogo_admin_costi_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "giorni",
+      "required": false,
+      "schema": {
+       "default": 14,
+       "maximum": 365,
+       "minimum": 1,
+       "title": "Giorni",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Riepilogo Admin Costi Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Riepilogo",
+    "tags": [
+     "costi"
+    ]
+   }
+  },
+  "/admin/costi/listini": {
+   "get": {
+    "operationId": "elenco_listini_admin_costi_listini_get",
+    "parameters": [
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Elenco Listini Admin Costi Listini Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Elenco Listini",
+    "tags": [
+     "costi"
+    ]
+   },
+   "post": {
+    "operationId": "crea_listino_admin_costi_listini_post",
+    "parameters": [
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ListinoIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Crea Listino Admin Costi Listini Post",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Crea Listino",
+    "tags": [
+     "costi"
+    ]
+   }
+  },
+  "/admin/costi/listini/{id_listino}": {
+   "delete": {
+    "operationId": "elimina_listino_admin_costi_listini__id_listino__delete",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "id_listino",
+      "required": true,
+      "schema": {
+       "title": "Id Listino",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Elimina Listino",
+    "tags": [
+     "costi"
+    ]
+   },
+   "put": {
+    "operationId": "modifica_listino_admin_costi_listini__id_listino__put",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "id_listino",
+      "required": true,
+      "schema": {
+       "title": "Id Listino",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ListinoIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Modifica Listino Admin Costi Listini  Id Listino  Put",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Modifica Listino",
+    "tags": [
+     "costi"
     ]
    }
   },
@@ -22142,7 +22952,7 @@
   },
   "/blog/nove": {
    "get": {
-    "description": "I nove articoli che il sito mostra in ogni pagina (v8.5): i 3 più recenti, e 6 scelti a caso fra quelli\nattinenti alla pagina — che citano la sua carta o la sua stesa, della sua sezione, con le etichette\ndell'articolo che si sta leggendo —, completati a caso con gli altri se non bastano.\n\nIl caso è stabile per un giorno (seme = data UTC + contesto): un motore di ricerca che passa due volte nello\nstesso giorno vede la stessa pagina, e domani la scelta cambia. L'articolo che si sta leggendo non compare.\n\nLe pagine del Diario (indice, sezione, etichetta) lo usano con `recenti=6&scelti=10`: con `sezione` o `tag` le\nrecenti sono quelle della sezione o dell'etichetta (le stesse della prima pagina del loro elenco), e le 10 a\ncaso le escludono.",
+    "description": "I nove articoli che il sito mostra in ogni pagina (v8.5): i 3 più recenti, e 6 scelti a caso fra quelli\nattinenti alla pagina — che citano la sua carta o la sua stesa, della sua sezione, con le etichette\ndell'articolo che si sta leggendo —, completati a caso con gli altri se non bastano.\n\nIl caso è stabile per un giorno (seme = data UTC + contesto): un motore di ricerca che passa due volte nello\nstesso giorno vede la stessa pagina, e domani la scelta cambia. L'articolo che si sta leggendo non compare.\n\nLe pagine del Diario (indice, sezione, etichetta) lo usano con `recenti=6&scelti=10`: con `sezione` o `tag` le\nrecenti sono quelle della sezione o dell'etichetta (le stesse della prima pagina del loro elenco), e le 10 a\ncaso le escludono.\n\n`completa=false` (le pagine di sezione e di etichetta del Diario): le scelte restano fra le attinenti, senza\ncompletarle con il resto del diario. Così la pagina di una sezione mostra solo articoli della sezione (e delle\nsotto-sezioni), tanti quanti ne conta l'albero delle sezioni; una sezione senza articoli non ne mostra.\n\n**Per pertinenza** (v9.4) nelle pagine di una carta, di una stesa e di un articolo (`carta`, `stesa`, `articolo`),\ndove «Chosen for this page» sta prima degli ultimi articoli: le scelte vengono **prima** delle recenti (che le\nescludono) e sono ordinate per punteggio — gli articoli che hanno quella carta o stesa come **soggetto** (per un\narticolo: il suo soggetto), poi quelli che la **citano**, poi i `correlati` dell'articolo (etichette, sezione,\ncitazioni in comune), e più sotto quelli della `sezione` o dell'`etichetta` se date. Il caso del giorno decide\nsolo a parità di punteggio. Con `carta` o `stesa` niente riempimento con il resto del diario (come\n`completa=false`); con un articolo sì, in fondo. `lang` tiene solo gli articoli in quella lingua (recenti\ncomprese).",
     "operationId": "nove_articoli_blog_nove_get",
     "parameters": [
      {
@@ -22253,6 +23063,33 @@
        "title": "Scelti",
        "type": "integer"
       }
+     },
+     {
+      "in": "query",
+      "name": "completa",
+      "required": false,
+      "schema": {
+       "default": true,
+       "title": "Completa",
+       "type": "boolean"
+      }
+     },
+     {
+      "in": "query",
+      "name": "lang",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "pattern": "^[a-z]{2}(-[A-Za-z]{2})?$",
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Lang"
+      }
      }
     ],
     "responses": {
@@ -22287,7 +23124,7 @@
   },
   "/blog/posts": {
    "get": {
-    "description": "Gli articoli pubblicati, dal più recente. `sezione` include le sotto-sezioni.",
+    "description": "Gli articoli pubblicati, dal più recente. `sezione` include le sotto-sezioni.\n\n`carta=maj-10` (o `stesa=croce-celtica`; anche per slug, `fortune`, `celtic-cross`): l'elenco completo degli\narticoli su quella carta o stesa, per la sua pagina (v9.4) — prima quelli che l'hanno come **soggetto**, poi quelli\nche la **citano**, ciascun gruppo dal più recente. Una carta o una stesa che non esiste: 404.\n\n`per_pagina` va da 1 a 50 (predefinito 12, per compatibilità): gli elenchi del Journal e delle pagine di carte e\nstese usano 25, con la scelta 10 / 25 / 50.",
     "operationId": "elenco_blog_posts_get",
     "parameters": [
      {
@@ -22366,6 +23203,44 @@
         }
        ],
        "title": "Evidenza"
+      }
+     },
+     {
+      "description": "Id o slug di una carta.",
+      "in": "query",
+      "name": "carta",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "pattern": "^[a-z0-9-]{1,60}$",
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Id o slug di una carta.",
+       "title": "Carta"
+      }
+     },
+     {
+      "description": "Id o slug di una stesa.",
+      "in": "query",
+      "name": "stesa",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "pattern": "^[a-z0-9-]{1,60}$",
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Id o slug di una stesa.",
+       "title": "Stesa"
       }
      },
      {
@@ -22469,7 +23344,7 @@
   },
   "/blog/sections": {
    "get": {
-    "description": "L'albero delle sezioni visibili, con il numero di articoli di ciascuna.",
+    "description": "L'albero delle sezioni visibili; ognuna conta i suoi articoli più quelli delle sotto-sezioni (`_nodo`).",
     "operationId": "albero_blog_sections_get",
     "responses": {
      "200": {
@@ -22496,7 +23371,7 @@
   },
   "/blog/sections/{slug}": {
    "get": {
-    "description": "Una sezione. `lang` sceglie la lingua dei nomi e degli slug di carte e stese del catalogo.",
+    "description": "Una sezione. `lang` sceglie la lingua dei nomi e degli slug di carte e stese del catalogo.\n\nOgni sotto-sezione diretta (`figli`) porta, oltre a immagine e conteggi del nodo, `articoli`: 3 articoli del suo\nramo scelti a caso (stabili nella giornata), nel formato degli elenchi (v9.4). Gli `elementi` di una sezione\n«stese» hanno descrizione breve, tradizione, numero di carte, schema e immagine (`_elementi_catalogo`).",
     "operationId": "sezione_blog_sections__slug__get",
     "parameters": [
      {
@@ -25830,7 +26705,7 @@
   },
   "/me/memories": {
    "delete": {
-    "description": "Cancellazione multipla: `tutte` prevale su `ids` se entrambi sono valorizzati — un client\nche li manda insieme intende «tutte», non un sottoinsieme ambiguo.",
+    "description": "Cancellazione multipla: `tutte` prevale su `ids` se entrambi sono valorizzati — un client\nche li manda insieme intende «tutte», non un sottoinsieme ambiguo. «Tutte» vuol dire lo stato sintetico e le\nmemorie di prima.",
     "operationId": "elimina_memorie_me_memories_delete",
     "parameters": [
      {
@@ -25881,6 +26756,7 @@
     ]
    },
    "get": {
+    "description": "Ciò che il lettore ricorda: le voci dello stato sintetico (già ripulite dall'oblio di oggi) e, se ce ne sono\nancora, le memorie di prima — tutto ciò che può entrare in un prompt si vede qui e si può cancellare.",
     "operationId": "memorie_me_memories_get",
     "parameters": [
      {
@@ -25945,7 +26821,6 @@
       "name": "memoria_id",
       "required": true,
       "schema": {
-       "format": "uuid",
        "title": "Memoria Id",
        "type": "string"
       }
@@ -25988,7 +26863,7 @@
     ]
    },
    "patch": {
-    "description": "Modifica una memoria. Se il contenuto cambia, l'embedding si ricalcola: altrimenti il\nretrieval futuro cercherebbe sul vettore vecchio con un testo nuovo — un disallineamento\nsilenzioso che nessun test noterebbe finché qualcuno non si accorge che non torna più fuori.",
+    "description": "Modifica una memoria: una voce dello stato sintetico (id breve) o una memoria di prima (UUID). Per queste, se il\ncontenuto cambia, l'embedding si ricalcola: altrimenti il retrieval futuro cercherebbe sul vettore vecchio con un\ntesto nuovo — un disallineamento silenzioso che nessun test noterebbe finché qualcuno non si accorge che non torna\npiù fuori.",
     "operationId": "modifica_memoria_me_memories__memoria_id__patch",
     "parameters": [
      {
@@ -25996,7 +26871,6 @@
       "name": "memoria_id",
       "required": true,
       "schema": {
-       "format": "uuid",
        "title": "Memoria Id",
        "type": "string"
       }
@@ -28149,9 +29023,67 @@
     ]
    }
   },
+  "/readings/{reading_id}/reveal-all": {
+   "post": {
+    "description": "Gira tutte le carte ancora coperte e le interpreta con una chiamata sola, in streaming.\n\nEventi: un `carta` per ogni carta, in ordine (subito: le carte si girano insieme); `fase` `lettura` (il lettore sta\nleggendo le carte) e `battito` finché la chiamata unica lavora; poi per ogni posizione `token` (con `posizione`; il\ntesto intero, o a pezzi se quella posizione torna alla chiamata singola), eventualmente `sostituisci` o `errore`\n(con `posizione`), e `fine` (`posizione`, `interpretazione`, `ultima`). Le regole sono quelle di\n`POST /readings/{id}/reveal/{posizione}`, che resta per i client di prima.",
+    "operationId": "rivela_tutte_readings__reading_id__reveal_all_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "reading_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Reading Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Rivela Tutte",
+    "tags": [
+     "letture"
+    ]
+   }
+  },
   "/readings/{reading_id}/reveal/{posizione}": {
    "post": {
-    "description": "Gira la carta e ne dà l'interpretazione immediata, in streaming.\n\nLe carte si rivelano in ordine di posizione: la lettura è un racconto, e\nl'interpretazione di ciascuna tiene conto di quelle già viste.",
+    "description": "Gira la carta e ne dà l'interpretazione, in streaming.\n\nLe carte si rivelano in ordine di posizione: la lettura è un racconto, e\nl'interpretazione di ciascuna tiene conto di quelle già viste.\n\n**Una chiamata sola per tutte le carte** (`api/rivelazione.py`): la prima richiesta di svelamento della lettura\ninterpreta tutte le carte ancora da leggere; le richieste delle altre posizioni trovano il testo già pronto e lo\nmandano subito (`token` con il testo intero). Gli eventi restano quelli di prima — `carta`, `battito` mentre il\nlettore legge, `token`, `sostituisci`, `errore`, `fine` — così sito e app di prima funzionano come prima. Le\nposizioni che la chiamata unica non copre si leggono con la chiamata singola di prima, in streaming.",
     "operationId": "rivela_readings__reading_id__reveal__posizione__post",
     "parameters": [
      {
@@ -28463,7 +29395,7 @@
   },
   "/spreads": {
    "get": {
-    "description": "Le stese. Con `?categoria=` solo quelle della lettura standard, di lavoro e\naffari, di compatibilità o di coppia; senza, tutte. La home e la scelta della stesa\nstandard chiedono `standard`, così le letture speciali non vi compaiono.\n\nCon `?tema=lavoro` le stese che il sito propone per quel tema: quelle della categoria\n`lavoro` e poi le standard con `\"lavoro\"` in `temi` (ogni stesa porta `temi`, per chi\npreferisce filtrare da sé l'elenco completo). `tema` vince su `categoria`.",
+    "description": "Le stese. Con `?categoria=` solo quelle della lettura standard, di lavoro e\naffari, di compatibilità o di coppia; senza, tutte. La home e la scelta della stesa\nstandard chiedono `standard`, così le letture speciali non vi compaiono.\n\nCon `?tema=lavoro` le stese che il sito propone per quel tema: quelle della categoria\n`lavoro` e poi le standard con `\"lavoro\"` in `temi` (ogni stesa porta `temi`, per chi\npreferisce filtrare da sé l'elenco completo). `tema` vince su `categoria`.\n\nOgni stesa porta `immagine` (v9.4): l'illustrazione del catalogo, `{url, mini, alt}`, o null.",
     "operationId": "stese_spreads_get",
     "parameters": [
      {
@@ -28555,7 +29487,7 @@
   },
   "/spreads/{spread_id}": {
    "get": {
-    "description": "Una stesa, per la sua pagina pubblica: posizioni, significati, regole. Si trova per id\n(`croce-celtica`) o per slug (`celtic-cross`).",
+    "description": "Una stesa, per la sua pagina pubblica: posizioni, significati, regole e l'illustrazione (`immagine`, o null).\nSi trova per id (`croce-celtica`) o per slug (`celtic-cross`).",
     "operationId": "stesa_spreads__spread_id__get",
     "parameters": [
      {
@@ -28832,9 +29764,173 @@
     ]
    }
   },
+  "/v1/blog/media-sections": {
+   "get": {
+    "description": "Tutte le sezioni (anche nascoste), con l'immagine attuale (`null` se manca): per sapere quali fare.",
+    "operationId": "media_sezioni_v1_blog_media_sections_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "additionalProperties": true,
+          "type": "object"
+         },
+         "title": "Response Media Sezioni V1 Blog Media Sections Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Media Sezioni",
+    "tags": [
+     "rest-blog"
+    ]
+   }
+  },
+  "/v1/blog/media-sections/{slug}": {
+   "put": {
+    "description": "Sostituisce l'immagine di una sezione (e il suo testo alternativo). Risponde `{slug, immagine: {url, mini, alt}}`.",
+    "operationId": "cambia_immagine_sezione_v1_blog_media_sections__slug__put",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "slug",
+      "required": true,
+      "schema": {
+       "title": "Slug",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CopertinaIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Cambia Immagine Sezione V1 Blog Media Sections  Slug  Put",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Cambia Immagine Sezione",
+    "tags": [
+     "rest-blog"
+    ]
+   }
+  },
+  "/v1/blog/media-spreads": {
+   "get": {
+    "description": "Tutte le stese, in inglese, con ciò che serve a scrivere un'illustrazione (descrizione, origine, tradizione,\nnumero di carte) e l'immagine attuale (`null` se manca).",
+    "operationId": "media_stese_v1_blog_media_spreads_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "additionalProperties": true,
+          "type": "object"
+         },
+         "title": "Response Media Stese V1 Blog Media Spreads Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Media Stese",
+    "tags": [
+     "rest-blog"
+    ]
+   }
+  },
+  "/v1/blog/media-spreads/{spread_id}": {
+   "put": {
+    "description": "Sostituisce l'illustrazione di una stesa (per id, `croce-celtica`, o per slug, `celtic-cross`). Risponde\n`{id, slug, immagine: {url, mini, alt}}`.",
+    "operationId": "cambia_immagine_stesa_v1_blog_media_spreads__spread_id__put",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "spread_id",
+      "required": true,
+      "schema": {
+       "title": "Spread Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CopertinaIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Cambia Immagine Stesa V1 Blog Media Spreads  Spread Id  Put",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Cambia Immagine Stesa",
+    "tags": [
+     "rest-blog"
+    ]
+   }
+  },
   "/v1/blog/posts": {
    "get": {
-    "description": "Gli articoli creati da questa chiave (per evitare doppioni e scegliere una parola chiave non ancora usata).",
+    "description": "Gli articoli del blog, di qualunque chiave e della console (v9.4), dal più recente; con `mine=true` solo quelli\ncreati da questa chiave. Ogni articolo dice `mio` (creato da questa chiave) e `subject`.",
     "operationId": "elenco_v1_blog_posts_get",
     "parameters": [
      {
@@ -28856,6 +29952,18 @@
         }
        ],
        "title": "Stato"
+      }
+     },
+     {
+      "description": "Vero: solo gli articoli creati da questa chiave.",
+      "in": "query",
+      "name": "mine",
+      "required": false,
+      "schema": {
+       "default": false,
+       "description": "Vero: solo gli articoli creati da questa chiave.",
+       "title": "Mine",
+       "type": "boolean"
       }
      },
      {
@@ -28956,7 +30064,7 @@
   },
   "/v1/blog/posts/{post_id}": {
    "delete": {
-    "description": "Elimina una **bozza** creata da questa chiave. Un articolo pubblicato si toglie dalla console.",
+    "description": "Elimina un articolo qualunque: una **bozza** con `blog:write`, un articolo pubblicato (o archiviato) solo con\n`blog:publish`. Se la chiave non è quella che l'ha creato, il registro conserva l'articolo com'era.",
     "operationId": "elimina_v1_blog_posts__post_id__delete",
     "parameters": [
      {
@@ -28991,6 +30099,7 @@
     ]
    },
    "get": {
+    "description": "Un articolo qualunque (anche di un'altra chiave o della console), con il rapporto SEO.",
     "operationId": "leggi_v1_blog_posts__post_id__get",
     "parameters": [
      {
@@ -29034,7 +30143,7 @@
     ]
    },
    "patch": {
-    "description": "Modifica un articolo creato da questa chiave: si mandano solo i campi da cambiare.",
+    "description": "Modifica un articolo qualunque: si mandano solo i campi da cambiare. Un articolo che non è più in bozza (o che\nsi vuole pubblicare) serve `blog:publish`. Se la chiave non è quella che l'ha creato, il registro conserva i campi\ncambiati, prima e dopo.",
     "operationId": "modifica_v1_blog_posts__post_id__patch",
     "parameters": [
      {
@@ -29202,7 +30311,7 @@
   },
   "/v1/blog/sections": {
    "get": {
-    "description": "Le sezioni in cui si può pubblicare (tipo «articoli»), con il percorso nell'albero.",
+    "description": "Le sezioni in cui si può pubblicare (tipo «articoli», «carte», «stese»: non i contenitori), con il percorso\nnell'albero, il tipo e il filtro (per le «carte»: `{\"arcano\": \"maggiore\"}`, `{\"seme\": \"coppe\"}`…).",
     "operationId": "sezioni_v1_blog_sections_get",
     "responses": {
      "200": {
@@ -29293,6 +30402,172 @@
      }
     },
     "summary": "Etichette",
+    "tags": [
+     "rest-blog"
+    ]
+   }
+  },
+  "/v1/blog/titles": {
+   "get": {
+    "description": "L'elenco compatto di **tutti** gli articoli del blog (di qualunque chiave, anche quelli scritti dalla console):\nper scegliere un argomento nuovo senza leggere gli articoli interi, anche quando sono migliaia.\n\nUna query per pagina, con le sole colonne che servono (niente oggetti ORM): dal testo arriva solo l'inizio, e solo\nquando mancano sia il sottotitolo sia la descrizione SEO (è da lì che si calcola l'estratto). Il totale viene dalla\nstessa query (`count(*) over ()`); serve una seconda query solo se la pagina chiesta è oltre la fine.\n\n`adesso` è l'ora del database all'inizio della richiesta: chi tiene una copia locale lo usa (con un margine) come\n`dal` della volta dopo. Gli articoli cancellati non compaiono in un aggiornamento con `dal`: si scoprono solo\nrileggendo tutto.",
+    "operationId": "titoli_v1_blog_titles_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "lang",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "pattern": "^[a-z]{2}(-[A-Za-z]{2})?$",
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Lang"
+      }
+     },
+     {
+      "in": "query",
+      "name": "stato",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "enum": [
+          "bozza",
+          "pubblicato",
+          "archiviato"
+         ],
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Stato"
+      }
+     },
+     {
+      "description": "Senza `stato`: anche gli archiviati (di norma solo bozze e pubblicati).",
+      "in": "query",
+      "name": "archiviati",
+      "required": false,
+      "schema": {
+       "default": false,
+       "description": "Senza `stato`: anche gli archiviati (di norma solo bozze e pubblicati).",
+       "title": "Archiviati",
+       "type": "boolean"
+      }
+     },
+     {
+      "description": "Lo slug di una sezione.",
+      "in": "query",
+      "name": "sezione",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "maxLength": 80,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Lo slug di una sezione.",
+       "title": "Sezione"
+      }
+     },
+     {
+      "description": "Cerca (ILIKE) in titolo, slug e parola chiave.",
+      "in": "query",
+      "name": "q",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "maxLength": 100,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Cerca (ILIKE) in titolo, slug e parola chiave.",
+       "title": "Q"
+      }
+     },
+     {
+      "description": "Solo gli articoli aggiornati da questo momento in poi.",
+      "in": "query",
+      "name": "dal",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "format": "date-time",
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Solo gli articoli aggiornati da questo momento in poi.",
+       "title": "Dal"
+      }
+     },
+     {
+      "in": "query",
+      "name": "pagina",
+      "required": false,
+      "schema": {
+       "default": 1,
+       "minimum": 1,
+       "title": "Pagina",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "query",
+      "name": "per_pagina",
+      "required": false,
+      "schema": {
+       "default": 200,
+       "maximum": 1000,
+       "minimum": 1,
+       "title": "Per Pagina",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Titoli V1 Blog Titles Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Titoli",
     "tags": [
      "rest-blog"
     ]

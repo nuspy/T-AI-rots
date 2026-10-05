@@ -761,6 +761,12 @@ class Api {
     pubblica: true,
   );
 
+  /// `GET /blog/posts?carta=…` o `?stesa=…` (v9.4): l'elenco completo, a pagine, degli articoli su una carta o una
+  /// stesa ([tipo] `carta` o `stesa`, [id] l'id o lo slug) — prima quelli che l'hanno come soggetto, poi quelli che la
+  /// citano. Una carta o una stesa sconosciuta: 404.
+  Future<ElencoArticoli> articoliSuPagine(String tipo, String id, {int pagina = 1, int perPagina = 25}) =>
+      articoli({tipo: id, 'pagina': '$pagina', 'per_pagina': '$perPagina'});
+
   /// `GET /blog/posts/{slug}`.
   Future<ArticoloBlog> articolo(String slug) => _chiama(
     'GET',

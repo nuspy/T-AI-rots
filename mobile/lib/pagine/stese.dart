@@ -20,6 +20,7 @@ import '../lingua/lingua.dart';
 import '../modelli/carta.dart';
 import '../rotte/percorsi.dart';
 import '../tema/tema.dart';
+import 'blog.dart' show ArticoliSu;
 
 /// L'ordine degli stili delle stese speciali.
 const List<String> ordineStili = ['tradizionale', 'moderna', 'tendenza'];
@@ -159,10 +160,13 @@ class Stese extends ConsumerWidget {
 /// La pagina di una stesa.
 class DettaglioStesa extends ConsumerWidget {
   /// La stesa [id] (id o slug in qualunque lingua).
-  const DettaglioStesa({super.key, required this.id});
+  const DettaglioStesa({super.key, required this.id, this.parametri = const {}});
 
   /// L'id o lo slug.
   final String id;
+
+  /// I parametri della query (`page`, `per`: l'elenco degli articoli sulla stesa).
+  final Map<String, String> parametri;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -280,7 +284,9 @@ class DettaglioStesa extends ConsumerWidget {
               ],
             ),
           ),
-        DiarioNove(contesto: 'stesa=${Uri.encodeQueryComponent(s.id)}'),
+        // Prima gli articoli che parlano di questa stesa, poi gli ultimi; sotto, l'elenco completo a pagine.
+        DiarioNove(contesto: 'stesa=${Uri.encodeQueryComponent(s.id)}', sceltiPrima: true),
+        ArticoliSu(tipo: 'stesa', id: s.id, nome: nomeStesa(s, lingua), base: R.stesa(id), parametri: parametri),
       ],
     );
   }

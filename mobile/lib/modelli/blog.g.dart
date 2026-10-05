@@ -147,6 +147,9 @@ _ArticoloBlog _$ArticoloBlogFromJson(Map<String, dynamic> json) =>
       gemellaLingua: json['gemella_lingua'] == null
           ? null
           : Gemella.fromJson(json['gemella_lingua'] as Map<String, dynamic>),
+      soggetto: json['soggetto'] == null
+          ? null
+          : SoggettoArticolo.fromJson(json['soggetto'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$ArticoloBlogToJson(_ArticoloBlog instance) =>
@@ -175,6 +178,21 @@ Map<String, dynamic> _$ArticoloBlogToJson(_ArticoloBlog instance) =>
       'precedente': ?instance.precedente?.toJson(),
       'successivo': ?instance.successivo?.toJson(),
       'gemella_lingua': ?instance.gemellaLingua?.toJson(),
+      'soggetto': ?instance.soggetto?.toJson(),
+    };
+
+_ImmagineBlog _$ImmagineBlogFromJson(Map<String, dynamic> json) =>
+    _ImmagineBlog(
+      url: json['url'] as String?,
+      mini: json['mini'] as String?,
+      alt: json['alt'] as String?,
+    );
+
+Map<String, dynamic> _$ImmagineBlogToJson(_ImmagineBlog instance) =>
+    <String, dynamic>{
+      'url': ?instance.url,
+      'mini': ?instance.mini,
+      'alt': ?instance.alt,
     };
 
 _NodoSezione _$NodoSezioneFromJson(Map<String, dynamic> json) => _NodoSezione(
@@ -186,14 +204,22 @@ _NodoSezione _$NodoSezioneFromJson(Map<String, dynamic> json) => _NodoSezione(
   filtro: (json['filtro'] as Map<String, dynamic>?)?.map(
     (k, e) => MapEntry(k, e as String),
   ),
-  immagine: json['immagine'] as String?,
+  immagine: const ImmagineBlogJson().fromJson(json['immagine']),
   nArticoli: (json['n_articoli'] as num?)?.toInt() ?? 0,
+  nArticoliDiretti: (json['n_articoli_diretti'] as num?)?.toInt(),
   nElementi: (json['n_elementi'] as num?)?.toInt(),
+  nCarte: (json['n_carte'] as num?)?.toInt() ?? 0,
+  nStese: (json['n_stese'] as num?)?.toInt() ?? 0,
   figli:
       (json['figli'] as List<dynamic>?)
           ?.map((e) => NodoSezione.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const <NodoSezione>[],
+  articoli:
+      (json['articoli'] as List<dynamic>?)
+          ?.map((e) => ArticoloBreve.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const <ArticoloBreve>[],
 );
 
 Map<String, dynamic> _$NodoSezioneToJson(_NodoSezione instance) =>
@@ -204,10 +230,14 @@ Map<String, dynamic> _$NodoSezioneToJson(_NodoSezione instance) =>
       'descrizione': ?instance.descrizione,
       'tipo': instance.tipo,
       'filtro': ?instance.filtro,
-      'immagine': ?instance.immagine,
+      'immagine': ?const ImmagineBlogJson().toJson(instance.immagine),
       'n_articoli': instance.nArticoli,
+      'n_articoli_diretti': ?instance.nArticoliDiretti,
       'n_elementi': ?instance.nElementi,
+      'n_carte': instance.nCarte,
+      'n_stese': instance.nStese,
       'figli': instance.figli.map((e) => e.toJson()).toList(),
+      'articoli': instance.articoli.map((e) => e.toJson()).toList(),
     };
 
 _DettaglioSezione _$DettaglioSezioneFromJson(Map<String, dynamic> json) =>
@@ -220,9 +250,12 @@ _DettaglioSezione _$DettaglioSezioneFromJson(Map<String, dynamic> json) =>
       filtro: (json['filtro'] as Map<String, dynamic>?)?.map(
         (k, e) => MapEntry(k, e as String),
       ),
-      immagine: json['immagine'] as String?,
+      immagine: const ImmagineBlogJson().fromJson(json['immagine']),
       nArticoli: (json['n_articoli'] as num?)?.toInt() ?? 0,
+      nArticoliDiretti: (json['n_articoli_diretti'] as num?)?.toInt(),
       nElementi: (json['n_elementi'] as num?)?.toInt(),
+      nCarte: (json['n_carte'] as num?)?.toInt() ?? 0,
+      nStese: (json['n_stese'] as num?)?.toInt() ?? 0,
       figli:
           (json['figli'] as List<dynamic>?)
               ?.map((e) => NodoSezione.fromJson(e as Map<String, dynamic>))
@@ -250,9 +283,12 @@ Map<String, dynamic> _$DettaglioSezioneToJson(_DettaglioSezione instance) =>
       'descrizione': ?instance.descrizione,
       'tipo': instance.tipo,
       'filtro': ?instance.filtro,
-      'immagine': ?instance.immagine,
+      'immagine': ?const ImmagineBlogJson().toJson(instance.immagine),
       'n_articoli': instance.nArticoli,
+      'n_articoli_diretti': ?instance.nArticoliDiretti,
       'n_elementi': ?instance.nElementi,
+      'n_carte': instance.nCarte,
+      'n_stese': instance.nStese,
       'figli': instance.figli.map((e) => e.toJson()).toList(),
       'seo_titolo': ?instance.seoTitolo,
       'seo_descrizione': ?instance.seoDescrizione,
@@ -260,11 +296,69 @@ Map<String, dynamic> _$DettaglioSezioneToJson(_DettaglioSezione instance) =>
       'elementi': instance.elementi,
     };
 
+_StesaSezione _$StesaSezioneFromJson(Map<String, dynamic> json) =>
+    _StesaSezione(
+      id: json['id'] as String,
+      nome: json['nome'] as String,
+      nomi: (json['nomi'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, e as String),
+      ),
+      descrizione: json['descrizione'] as String? ?? '',
+      descrizioneBreve: json['descrizione_breve'] as String? ?? '',
+      categoria: json['categoria'] as String? ?? 'standard',
+      stile: json['stile'] as String?,
+      posizioni:
+          (json['posizioni'] as List<dynamic>?)
+              ?.map((e) => Posizione.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <Posizione>[],
+      lang: json['lang'] as String?,
+      slug: json['slug'] as String?,
+      slugs: (json['slugs'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, e as String),
+      ),
+      tradizione: json['tradizione'] as String?,
+      tradizioni: (json['tradizioni'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, e as String),
+      ),
+      forma: json['forma'] as String? ?? 'standard',
+      larghezza: (json['larghezza'] as num?)?.toDouble(),
+      larghezzaStretto: (json['larghezza_stretto'] as num?)?.toDouble(),
+      carteDaScegliere: (json['carte_da_scegliere'] as num?)?.toInt(),
+      mazzo: json['mazzo'] as String? ?? 'completo',
+      nCarte: (json['n_carte'] as num?)?.toInt(),
+      immagine: const ImmagineBlogJson().fromJson(json['immagine']),
+    );
+
+Map<String, dynamic> _$StesaSezioneToJson(_StesaSezione instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'nome': instance.nome,
+      'nomi': ?instance.nomi,
+      'descrizione': instance.descrizione,
+      'descrizione_breve': instance.descrizioneBreve,
+      'categoria': instance.categoria,
+      'stile': ?instance.stile,
+      'posizioni': instance.posizioni.map((e) => e.toJson()).toList(),
+      'lang': ?instance.lang,
+      'slug': ?instance.slug,
+      'slugs': ?instance.slugs,
+      'tradizione': ?instance.tradizione,
+      'tradizioni': ?instance.tradizioni,
+      'forma': instance.forma,
+      'larghezza': ?instance.larghezza,
+      'larghezza_stretto': ?instance.larghezzaStretto,
+      'carte_da_scegliere': ?instance.carteDaScegliere,
+      'mazzo': instance.mazzo,
+      'n_carte': ?instance.nCarte,
+      'immagine': ?const ImmagineBlogJson().toJson(instance.immagine),
+    };
+
 _ElencoArticoli _$ElencoArticoliFromJson(Map<String, dynamic> json) =>
     _ElencoArticoli(
       totale: (json['totale'] as num?)?.toInt() ?? 0,
       pagina: (json['pagina'] as num?)?.toInt() ?? 1,
-      perPagina: (json['per_pagina'] as num?)?.toInt() ?? 6,
+      perPagina: (json['per_pagina'] as num?)?.toInt() ?? 25,
       pagine: (json['pagine'] as num?)?.toInt() ?? 1,
       articoli:
           (json['articoli'] as List<dynamic>?)
