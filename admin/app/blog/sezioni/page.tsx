@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import Link from "next/link";
+import { Fragment, useCallback, useMemo, useState } from "react";
 import {
   creaSezione,
   eliminaSezione,
@@ -24,7 +25,11 @@ import { Schede } from "../schede";
  *
  * Una sezione ha un **tipo**: `articoli` raccoglie articoli scritti a mano; `carte` e `stese` elencano da sole
  * il catalogo (le ventidue carte dei maggiori, le stese di coppia…) secondo un filtro; `contenitore` riunisce le
- * sotto-sezioni e mostra gli articoli di tutte. Un articolo sta solo in una sezione di tipo «articoli».
+ * sotto-sezioni e mostra gli articoli di tutte. Un articolo sta in una sezione «articoli», «carte» o «stese» (v9.4:
+ * un articolo su una carta senza sezione finisce da solo in quella della carta); mai in un contenitore.
+ *
+ * Nell'albero ogni sezione mostra la miniatura della sua immagine; le immagini di tutte si gestiscono anche insieme
+ * dalla pagina «Immagini del catalogo».
  *
  * Si sposta con i pulsanti — su, giù, dentro, fuori — e non trascinando: il trascinamento non c'è sul telefono
  * e non lo si può fare con la tastiera, mentre un pulsante sì, da tutti e due.
@@ -40,15 +45,28 @@ const TIPI: { valore: TipoSezione; etichetta: string; aiuto: string }[] = [
   { valore: "stese", etichetta: "Stese", aiuto: "Elenca da sola le stese del catalogo." },
 ];
 
-const FILTRI: Record<"carte" | "stese", { valore: string; etichetta: string }[]> = {
+/* I gradi delle carte minori, come li salva il server (`rango`): una sezione «Assi» elenca l'asso di tutti e quattro
+ * i semi. Principessa vale anche per Fante/Page dei mazzi tradizionali. */
+const RANGHI: [string, string][] = [
+  ["asso", "Assi"], ["due", "Due"], ["tre", "Tre"], ["quattro", "Quattro"], ["cinque", "Cinque"],
+  ["sei", "Sei"], ["sette", "Sette"], ["otto", "Otto"], ["nove", "Nove"], ["dieci", "Dieci"],
+  ["principessa", "Principesse (Fanti)"], ["principe", "Principi"], ["regina", "Regine"], ["cavaliere", "Cavalieri"],
+];
+
+const FILTRI: Record<"carte" | "stese", { valore: string; etichetta: string; gruppo?: string }[]> = {
   carte: [
     { valore: "", etichetta: "Tutte le carte" },
     { valore: "arcano:maggiore", etichetta: "Arcani maggiori" },
     { valore: "arcano:minore", etichetta: "Arcani minori" },
-    { valore: "seme:bastoni", etichetta: "Bastoni" },
-    { valore: "seme:coppe", etichetta: "Coppe" },
-    { valore: "seme:spade", etichetta: "Spade" },
-    { valore: "seme:dischi", etichetta: "Dischi" },
+    { valore: "seme:bastoni", etichetta: "Bastoni", gruppo: "Un seme" },
+    { valore: "seme:coppe", etichetta: "Coppe", gruppo: "Un seme" },
+    { valore: "seme:spade", etichetta: "Spade", gruppo: "Un seme" },
+    { valore: "seme:dischi", etichetta: "Dischi", gruppo: "Un seme" },
+    ...RANGHI.map(([valore, etichetta]) => ({
+      valore: `rango:${valore}`,
+      etichetta,
+      gruppo: "Un grado, di tutti i semi",
+    })),
   ],
   stese: [
     { valore: "", etichetta: "Tutte le stese" },
@@ -69,6 +87,25 @@ const valoreInFiltro = (v: string): Record<string, string> | null => {
   const [chiave, valore] = v.split(":");
   return { [chiave]: valore };
 };
+
+/** Le voci del filtro, raggruppate come le mostra il menu (le voci senza gruppo restano in cima). */
+function gruppiFiltro(voci: { valore: string; etichetta: string; gruppo?: string }[]) {
+  const gruppi: { gruppo: string | null; voci: typeof voci }[] = [];
+  for (const v of voci) {
+    const nome = v.gruppo ?? null;
+    const ultimo = gruppi[gruppi.length - 1];
+    if (ultimo && ultimo.gruppo === nome) ultimo.voci.push(v);
+    else gruppi.push({ gruppo: nome, voci: [v] });
+  }
+  return gruppi;
+}
+
+/** Come si legge un filtro nell'albero: «Grado: Assi», «Seme: Coppe». */
+function descriviFiltro(tipo: TipoSezione, f: Record<string, string> | null): string | null {
+  if ((tipo !== "carte" && tipo !== "stese") || !f) return null;
+  const valore = filtroInValore(f);
+  return FILTRI[tipo].find((v) => v.valore === valore)?.etichetta ?? valore;
+}
 
 interface Nodo {
   sezione: Sezione;
@@ -198,11 +235,30 @@ export default function Sezioni() {
         return (
           <li key={s.id} className={stili.nodo}>
             <div className={`${stili.nodoRiga} ${s.visibile ? "" : stili.nodoNascosto}`}>
+              {s.immagine_mini || s.immagine ? (
+                // eslint-disable-next-line @next/next/no-img-element -- miniatura della sezione dall'API
+                <img
+                  className={stili.nodoImmagine}
+                  src={urlMedia(s.immagine_mini ?? s.immagine) ?? ""}
+                  alt=""
+                  width={64}
+                  height={48}
+                  loading="lazy"
+                />
+              ) : (
+                <span className={stili.nodoSenzaImmagine} aria-hidden="true">
+                  senza
+                  <br />
+                  immagine
+                </span>
+              )}
               <div className={stili.nodoNome}>
                 {s.nome}
                 <small>
-                  /{s.slug} · {s.tipo}
-                  {s.tipo === "articoli" || s.tipo === "contenitore" ? ` · ${s.n_articoli} articoli` : ""}
+                  /{s.slug} · {TIPI.find((t) => t.valore === s.tipo)?.etichetta ?? s.tipo}
+                  {descriviFiltro(s.tipo, s.filtro) ? ` (${descriviFiltro(s.tipo, s.filtro)})` : ""}
+                  {s.tipo === "articoli" || s.tipo === "contenitore" || s.n_articoli > 0 ? ` · ${s.n_articoli} articoli` : ""}
+                  {s.immagine_id ? "" : " · senza immagine"}
                   {s.visibile ? "" : " · nascosta"}
                 </small>
               </div>
@@ -284,7 +340,8 @@ export default function Sezioni() {
           <h1 className={comuni.titolo}>Blog · Sezioni</h1>
           <p className={comuni.sottotitolo}>
             L&apos;albero delle sezioni: carte, stese e articoli stanno nella stessa struttura, così ogni articolo può
-            collegarsi a una carta o a una stesa. Una sezione nascosta nasconde anche ciò che contiene.
+            collegarsi a una carta o a una stesa. Una sezione nascosta nasconde anche ciò che contiene. Le immagini di
+            tutte le sezioni si cambiano anche insieme da <Link href="/blog/catalogo-immagini?tipo=sezione">Immagini del catalogo</Link>.
           </p>
         </div>
         <button className={comuni.primaria} style={{ height: 44 }} onClick={() => setModificando(modificando === "nuova" ? null : "nuova")} aria-expanded={modificando === "nuova"}>
@@ -345,6 +402,7 @@ function ModuloSezione({
   const [immagine, setImmagine] = useState<{ id: string; url: string } | null>(
     iniziale?.immagine_id && iniziale.immagine ? { id: iniziale.immagine_id, url: iniziale.immagine } : null,
   );
+  const [immagineAlt, setImmagineAlt] = useState(iniziale?.immagine_alt ?? "");
   const [scegli, setScegli] = useState(false);
 
   /* Una sezione non può stare sotto se stessa né sotto una delle sue discendenti (il server lo rifiuta
@@ -387,6 +445,7 @@ function ModuloSezione({
       parent_id: padre ? Number(padre) : null,
       visibile,
       immagine_id: immagine?.id ?? null,
+      immagine_alt: immagine ? immagineAlt.trim() || null : null,
       seo_titolo: seoTitolo.trim() || null,
       seo_descrizione: seoDescrizione.trim() || null,
     };
@@ -431,12 +490,27 @@ function ModuloSezione({
           <label className={comuni.campo}>
             <span className={comuni.campoEtichetta}>Che cosa elenca</span>
             <select className={comuni.selezione} value={filtro} onChange={(e) => setFiltro(e.target.value)}>
-              {FILTRI[tipo].map((f) => (
-                <option key={f.valore} value={f.valore}>
-                  {f.etichetta}
-                </option>
-              ))}
+              {gruppiFiltro(FILTRI[tipo]).map(({ gruppo, voci }) => {
+                const opzioni = voci.map((f) => (
+                  <option key={f.valore} value={f.valore}>
+                    {f.etichetta}
+                  </option>
+                ));
+                return gruppo ? (
+                  <optgroup key={gruppo} label={gruppo}>
+                    {opzioni}
+                  </optgroup>
+                ) : (
+                  <Fragment key="senza-gruppo">{opzioni}</Fragment>
+                );
+              })}
             </select>
+            {tipo === "carte" && (
+              <span className={comuni.campoAiuto}>
+                «Un grado» elenca quella carta di tutti e quattro i semi: «Assi» mostra l&apos;Asso di Bastoni, di
+                Coppe, di Spade e di Dischi.
+              </span>
+            )}
           </label>
         )}
         <label className={comuni.campo}>
@@ -502,6 +576,22 @@ function ModuloSezione({
               chiudi={() => setScegli(false)}
             />
           </div>
+        )}
+        {immagine && (
+          <label className={comuni.campo} style={{ marginTop: "0.6rem", marginBottom: 0 }}>
+            <span className={comuni.campoEtichetta}>Testo alternativo dell&apos;immagine</span>
+            <input
+              className={comuni.ingresso}
+              value={immagineAlt}
+              maxLength={200}
+              onChange={(e) => setImmagineAlt(e.target.value)}
+              placeholder={nome.trim() ? `Vuoto: «${nome.trim()}»` : "Che cosa mostra l'immagine"}
+            />
+            <span className={comuni.campoAiuto}>
+              Una frase che descrive l&apos;immagine a chi non la vede: la leggono i lettori di schermo per i non
+              vedenti e i motori di ricerca. Vuoto: si usa il nome della sezione.
+            </span>
+          </label>
         )}
       </div>
 

@@ -520,6 +520,62 @@
   text-align: left;
 }
 
+/* ---- il soggetto di un articolo: l'elenco cercabile di carte o stese ---- */
+
+.sceltaSoggetto {
+  list-style: none;
+  margin: 0 0 0.9rem;
+  padding: 0.25rem;
+  max-height: 16rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--filo);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+}
+
+.sceltaSoggetto button {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.5rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: var(--raggio);
+  background: transparent;
+  color: var(--inchiostro);
+  font-size: 0.9375rem;
+  text-align: left;
+}
+
+.sceltaSoggetto button small {
+  color: var(--inchiostro-debole);
+  font-size: 0.75rem;
+}
+
+.sceltaSoggetto button:hover {
+  background: var(--superficie-alta);
+}
+
+.sceltaSoggetto button[aria-pressed="true"] {
+  border-color: var(--rubrica);
+  background: var(--superficie-alta);
+  font-weight: 600;
+}
+
+.sceltaSoggetto button:focus-visible {
+  outline: 2px solid var(--rubrica);
+  outline-offset: -2px;
+}
+
+.sceltaSoggettoVuota {
+  padding: 0.6rem;
+  color: var(--inchiostro-debole);
+  font-size: 0.875rem;
+}
+
 /* ---- sezioni ---- */
 
 .albero {
@@ -547,6 +603,31 @@
   border: 1px solid var(--filo);
   border-radius: var(--raggio);
   background: var(--superficie);
+}
+
+/* La miniatura della sezione: piccola e fissa, così la riga non salta mentre l'immagine arriva. */
+.nodoImmagine,
+.nodoSenzaImmagine {
+  flex: 0 0 auto;
+  width: 64px;
+  height: 48px;
+  border-radius: var(--raggio);
+  border: 1px solid var(--filo);
+  background: var(--superficie-alta);
+}
+
+.nodoImmagine {
+  object-fit: cover;
+}
+
+.nodoSenzaImmagine {
+  display: grid;
+  place-items: center;
+  border-style: dashed;
+  color: var(--inchiostro-debole);
+  font-size: 0.625rem;
+  line-height: 1.2;
+  text-align: center;
 }
 
 .nodoNascosto {

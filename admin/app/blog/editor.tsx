@@ -27,6 +27,7 @@ import {
   type DatiControlloSeo,
   type DomandaFrequente,
   type Immagine,
+  type SoggettoIn,
   type StatoArticolo,
 } from "@/lib/blog";
 import { quandoCompleto } from "@/lib/formato";
@@ -37,6 +38,7 @@ import { Anteprima } from "./anteprima";
 import stili from "./blog.module.css";
 import { PannelloSeo } from "./pannello-seo";
 import { SelettoreImmagine } from "./selettore-immagine";
+import { SceltaSoggetto, type ModoSoggetto } from "./soggetto";
 
 /* L'editor di un articolo, nuovo o esistente.
  *
@@ -71,6 +73,9 @@ interface Forma {
   slug: string;
   lang: string;
   sezioneId: string;
+  /** Il soggetto (v9.4): automatico, nessuno, o la carta/stesa con il suo id. */
+  soggettoModo: ModoSoggetto;
+  soggettoRef: string;
   immagineId: string | null;
   immagineUrl: string | null;
   immagineAlt: string;
@@ -91,7 +96,7 @@ interface Forma {
 }
 
 const VUOTA: Forma = {
-  titolo: "", sottotitolo: "", testo: "", slug: "", lang: "en", sezioneId: "", immagineId: null,
+  titolo: "", sottotitolo: "", testo: "", slug: "", lang: "en", sezioneId: "", soggettoModo: "auto", soggettoRef: "", immagineId: null,
   immagineUrl: null, immagineAlt: "", tags: [], inEvidenza: false, commentiAperti: true, seoTitolo: "",
   seoDescrizione: "", parolaChiave: "", paroleSecondarie: "", noindex: false, canonical: "", faq: [],
   stato: "bozza", pubblicatoIl: "",
@@ -110,7 +115,11 @@ function inCampo(iso: string | null): string {
 function daArticolo(a: Articolo): Forma {
   return {
     titolo: a.titolo, sottotitolo: a.sottotitolo ?? "", testo: a.testo ?? "", slug: a.slug, lang: a.lang,
-    sezioneId: a.sezione_id === null ? "" : String(a.sezione_id), immagineId: a.immagine_id,
+    sezioneId: a.sezione_id === null ? "" : String(a.sezione_id),
+    /* Un articolo salvato senza soggetto resta «nessuno»: rimandarlo come automatico glielo farebbe ricalcolare a
+     * ogni salvataggio, anche dopo che qualcuno l'ha tolto apposta. */
+    soggettoModo: a.soggetto ? a.soggetto.tipo : "nessuno", soggettoRef: a.soggetto?.ref ?? "",
+    immagineId: a.immagine_id,
     immagineUrl: a.immagine, immagineAlt: a.immagine_alt ?? "", tags: a.tags, inEvidenza: a.in_evidenza,
     commentiAperti: a.commenti_aperti, seoTitolo: a.seo_titolo ?? "", seoDescrizione: a.seo_descrizione ?? "",
     parolaChiave: a.seo_parola_chiave ?? "", paroleSecondarie: a.seo_parole_chiave.join(", "), noindex: a.noindex,
@@ -135,8 +144,17 @@ const faqCompleta = (faq: DomandaFrequente[]): DomandaFrequente[] =>
     .map((f) => ({ domanda: f.domanda.trim(), risposta: f.risposta.trim() }))
     .filter((f) => f.domanda && f.risposta);
 
+/* Il soggetto da mandare: assente = lo sceglie il server; null = nessuno. Una carta o una stesa non ancora scelta
+ * dall'elenco non cambia quello che c'è. */
+function soggettoDa(f: Forma): SoggettoIn | null | undefined {
+  if (f.soggettoModo === "auto") return undefined;
+  if (f.soggettoModo === "nessuno") return null;
+  return f.soggettoRef ? { tipo: f.soggettoModo, ref: f.soggettoRef } : undefined;
+}
+
 function inCorpo(f: Forma): CampiArticolo {
   return {
+    soggetto: soggettoDa(f),
     titolo: f.titolo.trim(),
     sottotitolo: f.sottotitolo.trim() || null,
     testo: f.testo,
@@ -206,6 +224,8 @@ function Modulo({ iniziale }: { iniziale: Articolo | null }) {
   const [nuovaEtichetta, setNuovaEtichetta] = useState("");
   const [tipoRif, setTipoRif] = useState<"carta" | "stesa" | "articolo">("carta");
   const [idRif, setIdRif] = useState("");
+  /* Vero se l'ultimo salvataggio ha lasciato scegliere il soggetto al server e lui ne ha trovato uno. */
+  const [soggettoAutomatico, setSoggettoAutomatico] = useState(false);
   const area = useRef<HTMLTextAreaElement>(null);
 
   /* «Adesso» per decidere se il pulsante dice «Pubblica» o «Programma»: si aggiorna ogni mezzo minuto, così
@@ -243,7 +263,8 @@ function Modulo({ iniziale }: { iniziale: Articolo | null }) {
   );
 
   const albero = useMemo(
-    () => sezioniInOrdine(tutteLeSezioni.dati ?? []).filter((v) => v.sezione.tipo === "articoli"),
+    /* v9.4: un articolo sta anche in una sezione «carte» o «stese» (quella della sua carta), mai in un contenitore. */
+    () => sezioniInOrdine(tutteLeSezioni.dati ?? []).filter((v) => v.sezione.tipo !== "contenitore"),
     [tutteLeSezioni.dati],
   );
   const riferimenti = useMemo(
@@ -267,12 +288,16 @@ function Modulo({ iniziale }: { iniziale: Articolo | null }) {
       return null;
     }
     setEsito(null);
-    const risposta = await esegui((t) =>
-      articoloSalvato
-        ? modificaArticolo(t, articoloSalvato.id, inCorpo(daScrivere))
-        : creaArticolo(t, inCorpo(daScrivere)),
-    );
+    const automatico = daScrivere.soggettoModo === "auto";
+    const risposta = await esegui(async (t) => {
+      if (!articoloSalvato) return creaArticolo(t, inCorpo(daScrivere));
+      /* Il server ricalcola il soggetto solo per un articolo che non ne ha: chi chiede «automatico» per uno che ce
+       * l'ha lo vede prima togliere, poi ricalcolare con il salvataggio vero. */
+      if (automatico && articoloSalvato.soggetto) await modificaArticolo(t, articoloSalvato.id, { soggetto: null });
+      return modificaArticolo(t, articoloSalvato.id, inCorpo(daScrivere));
+    });
     if (!risposta) return null;
+    setSoggettoAutomatico(automatico && risposta.soggetto !== null);
     const scritta = daArticolo(risposta);
     setArticoloSalvato(risposta);
     setForma(scritta);
@@ -713,7 +738,10 @@ function Modulo({ iniziale }: { iniziale: Articolo | null }) {
                   </option>
                 ))}
               </select>
-              <span className={comuni.campoAiuto}>Gli articoli stanno nelle sezioni di tipo «articoli».</span>
+              <span className={comuni.campoAiuto}>
+                Nelle sezioni di articoli, di carte o di stese (non nei contenitori). Senza sezione, un articolo su una
+                carta va da solo nella sezione di quella carta.
+              </span>
             </label>
             <label className={comuni.campo}>
               <span className={comuni.campoEtichetta}>Lingua dell&apos;articolo</span>
@@ -729,6 +757,29 @@ function Modulo({ iniziale }: { iniziale: Articolo | null }) {
                 nell&apos;indirizzo della sua lingua.
               </span>
             </label>
+          </section>
+
+          <section className={stili.pannello} aria-labelledby="soggetto">
+            <h2 id="soggetto" className={stili.pannelloTitolo}>
+              Soggetto
+            </h2>
+            <SceltaSoggetto
+              modo={forma.soggettoModo}
+              rif={forma.soggettoRef}
+              cambia={(modo, rif) => {
+                setForma((f) => ({ ...f, soggettoModo: modo, soggettoRef: rif }));
+                setEsito(null);
+              }}
+              carte={riferimenti.carta}
+              stese={riferimenti.stesa}
+              attuale={articoloSalvato?.soggetto ?? null}
+              automatico={soggettoAutomatico}
+            />
+            {catalogo.errore && (
+              <p className={comuni.errore} role="alert">
+                Elenco di carte e stese non disponibile: {catalogo.errore}
+              </p>
+            )}
           </section>
 
           <section className={stili.pannello} aria-labelledby="copertina">

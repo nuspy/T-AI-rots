@@ -8,6 +8,7 @@ const PARTI = [
   { href: "/blog", etichetta: "Articoli" },
   { href: "/blog/sezioni", etichetta: "Sezioni" },
   { href: "/blog/immagini", etichetta: "Immagini" },
+  { href: "/blog/catalogo-immagini", etichetta: "Immagini del catalogo" },
   { href: "/blog/etichette", etichetta: "Etichette" },
   { href: "/blog/chiavi", etichetta: "Chiavi" },
 ];

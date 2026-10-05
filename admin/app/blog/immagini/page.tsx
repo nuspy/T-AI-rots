@@ -147,7 +147,7 @@ export default function Immagini() {
                 </div>
                 {inUso === i.id && (
                   <span role="alert" style={{ color: "var(--allarme)", fontFamily: "var(--interfaccia)" }}>
-                    In uso da un articolo o da una sezione: prima toglila da lì.
+                    In uso da un articolo, da una sezione o da una stesa: prima toglila da lì.
                   </span>
                 )}
               </div>

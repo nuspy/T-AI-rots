@@ -16,12 +16,16 @@ export interface Sezione {
   nome: string;
   descrizione: string | null;
   tipo: TipoSezione;
-  /** Per `carte`: `{arcano: "maggiore"}` o `{seme: "coppe"}`; per `stese`: `{categoria: "coppia"}`. */
+  /** Per `carte`: `{arcano: "maggiore"}`, `{seme: "coppe"}` o `{rango: "asso"}`; per `stese`: `{categoria: "coppia"}`. */
   filtro: Record<string, string> | null;
   ordine: number;
   visibile: boolean;
   immagine_id: string | null;
+  /** L'indirizzo dell'immagine grande, e quello della miniatura per gli elenchi (v9.4). */
   immagine: string | null;
+  immagine_mini: string | null;
+  /** Il testo alternativo dell'immagine (v9.4); vuoto: il sito usa il nome della sezione. */
+  immagine_alt: string | null;
   seo_titolo: string | null;
   seo_descrizione: string | null;
   n_articoli: number;
@@ -37,8 +41,27 @@ export interface CampiSezione {
   ordine?: number;
   visibile?: boolean;
   immagine_id?: string | null;
+  immagine_alt?: string | null;
   seo_titolo?: string | null;
   seo_descrizione?: string | null;
+}
+
+/** Il soggetto di un articolo (v9.4): la carta o la stesa di cui parla. In uscita porta anche nome e indirizzo
+ *  nella lingua dell'articolo. */
+export type TipoSoggetto = "carta" | "stesa";
+
+export interface Soggetto {
+  tipo: TipoSoggetto;
+  /** L'id del catalogo: `maj-10`, `coppe-01`, `croce-celtica`. */
+  ref: string;
+  nome: string;
+  slug: string;
+}
+
+/** Il soggetto da salvare: `{tipo, ref}`; `null` = nessuno; non mandarlo = lo sceglie il server dal titolo. */
+export interface SoggettoIn {
+  tipo: TipoSoggetto;
+  ref: string;
 }
 
 /** Una domanda frequente: si vede in pagina e diventa dati strutturati FAQ. */
@@ -64,6 +87,8 @@ export interface Articolo {
   /** `pubblicato` con la data nel futuro: il pubblico non lo vede ancora. */
   programmato: boolean;
   sezione_id: number | null;
+  /** La carta o la stesa di cui parla (v9.4), o `null`. */
+  soggetto: Soggetto | null;
   immagine_id: string | null;
   immagine: string | null;
   immagine_alt: string | null;
@@ -101,6 +126,8 @@ export interface CampiArticolo {
   slug?: string | null;
   lang?: string;
   sezione_id?: number | null;
+  /** Assente: lo sceglie il server (solo se l'articolo non ne ha uno); `null`: nessuno. */
+  soggetto?: SoggettoIn | null;
   immagine_id?: string | null;
   immagine_alt?: string | null;
   tags?: string[];
@@ -249,19 +276,68 @@ export const eliminaEtichetta = (t: string, id: number) =>
 export interface Riferimento {
   id: string;
   nome: string;
+  /** Gli altri nomi (inglese, Thoth, le altre lingue): per trovarla cercando. */
+  altri?: string[];
 }
 
 /* Carte e stese non richiedono il ruolo: sono le stesse risposte del sito. */
 export async function carteEStese(t: string): Promise<{ carte: Riferimento[]; stese: Riferimento[] }> {
   const [carte, stese] = await Promise.all([
-    chiamata<{ id: string; nome_it: string }[]>(t, "/cards"),
-    chiamata<{ id: string; nome: string }[]>(t, "/spreads"),
+    chiamata<{ id: string; nome_it: string; nome_thoth?: string | null; nomi?: Record<string, string> }[]>(t, "/cards"),
+    chiamata<{ id: string; nome: string; nome_en?: string | null; nomi?: Record<string, string> }[]>(t, "/spreads"),
   ]);
+  const altri = (...nomi: (string | null | undefined)[]) => nomi.filter((n): n is string => Boolean(n));
   return {
-    carte: carte.map((c) => ({ id: c.id, nome: c.nome_it })),
-    stese: stese.map((s) => ({ id: s.id, nome: s.nome })),
+    carte: carte.map((c) => ({
+      id: c.id,
+      nome: c.nome_it,
+      altri: altri(c.nomi?.en, c.nome_thoth, ...Object.values(c.nomi ?? {})),
+    })),
+    stese: stese.map((s) => ({ id: s.id, nome: s.nome, altri: altri(s.nome_en, ...Object.values(s.nomi ?? {})) })),
   };
 }
+
+/* ---- le immagini del catalogo (v9.4): le illustrazioni delle stese e le immagini delle sezioni ---- */
+
+export type TipoCatalogo = "stesa" | "sezione";
+
+/** Un'immagine come la mostra il sito: grande, miniatura e testo alternativo. */
+export interface ImmagineRicca {
+  url: string;
+  mini: string;
+  alt: string | null;
+}
+
+export interface VoceCatalogo {
+  tipo: TipoCatalogo;
+  /** L'id della stesa (`croce-celtica`) o l'indirizzo della sezione (`major-arcana`). */
+  riferimento: string;
+  nome: string;
+  immagine_id: string | null;
+  immagine: ImmagineRicca | null;
+  aggiornata: string | null;
+}
+
+export const catalogoImmagini = (t: string, tipo?: TipoCatalogo) =>
+  chiamata<VoceCatalogo[]>(t, `/admin/blog/catalogo-immagini${interrogazione({ tipo })}`);
+
+/** Assegna (o cambia) l'immagine, già caricata fra le immagini del blog, e il suo testo alternativo. */
+export const impostaImmagineCatalogo = (
+  t: string,
+  tipo: TipoCatalogo,
+  riferimento: string,
+  corpo: { immagine_id: string; alt?: string | null },
+) =>
+  chiamata<VoceCatalogo>(t, `/admin/blog/catalogo-immagini/${tipo}/${encodeURIComponent(riferimento)}`, {
+    method: "PUT",
+    body: JSON.stringify(corpo),
+  });
+
+/** Toglie l'immagine (che resta nella libreria). */
+export const togliImmagineCatalogo = (t: string, tipo: TipoCatalogo, riferimento: string) =>
+  chiamata<void>(t, `/admin/blog/catalogo-immagini/${tipo}/${encodeURIComponent(riferimento)}`, {
+    method: "DELETE",
+  });
 
 /* ---- il controllo SEO ---- */
 
