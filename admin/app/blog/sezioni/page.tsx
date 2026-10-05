@@ -554,7 +554,7 @@ function ModuloSezione({
         <div className={comuni.riga} style={{ marginTop: "0.3rem", alignItems: "center" }}>
           {immagine && (
             // eslint-disable-next-line @next/next/no-img-element -- immagine della sezione
-            <img src={urlMedia(immagine.url) ?? ""} alt="" width={96} height={72} style={{ objectFit: "cover", flex: "0 0 auto", border: "1px solid var(--filo)" }} />
+            <img src={urlMedia(`/blog/media/${immagine.id}-mini.webp`) ?? ""} alt="" width={96} height={72} style={{ objectFit: "cover", flex: "0 0 auto", border: "1px solid var(--filo)" }} />
           )}
           <button type="button" className={comuni.secondaria} style={{ height: 44 }} onClick={() => setScegli(!scegli)} aria-expanded={scegli}>
             {immagine ? "Cambia" : "Scegli o carica"}
