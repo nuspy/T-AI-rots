@@ -288,7 +288,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: tarots-api:v9.0
+          image: tarots-api:v9.2
           imagePullPolicy: IfNotPresent
           # Il CMD dell'immagine applica le migrazioni e poi serve.
           env:
@@ -447,7 +447,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: abbonamenti
-              image: tarots-api:v9.0
+              image: tarots-api:v9.2
               imagePullPolicy: IfNotPresent
               command: ["python", "-m", "tarot_core.tools.abbonamenti"]
               env:
@@ -509,7 +509,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: store-riconcilia
-              image: tarots-api:v9.0
+              image: tarots-api:v9.2
               imagePullPolicy: IfNotPresent
               command: ["python", "-m", "tarot_core.tools.store_riconcilia"]
               env:
@@ -566,7 +566,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: notifiche
-              image: tarots-api:v9.0
+              image: tarots-api:v9.2
               imagePullPolicy: IfNotPresent
               command: ["python", "-m", "tarot_core.tools.notifiche"]
               env:
@@ -616,7 +616,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: notifica
-              image: tarots-api:v9.0
+              image: tarots-api:v9.2
               imagePullPolicy: IfNotPresent
               command: ["python", "-m", "tarot_core.tools.notifica_motori"]
               env:
@@ -674,7 +674,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: reddit
-              image: tarots-api:v9.0
+              image: tarots-api:v9.2
               imagePullPolicy: IfNotPresent
               command: ["python", "-m", "tarot_core.tools.reddit_pubblica"]
               env:
@@ -721,7 +721,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: analytics
-              image: tarots-api:v9.0
+              image: tarots-api:v9.2
               imagePullPolicy: IfNotPresent
               command: ["python", "-m", "tarot_core.tools.analytics_notte"]
               env:
@@ -775,7 +775,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: rapporto
-              image: tarots-api:v9.0
+              image: tarots-api:v9.2
               imagePullPolicy: IfNotPresent
               command: ["python", "-m", "tarot_core.tools.rapporto_settimanale"]
               env:
@@ -927,7 +927,7 @@ spec:
           securityContext: {fsGroup: 1000}
           containers:
             - name: backup
-              image: tarots-api:v9.0
+              image: tarots-api:v9.2
               imagePullPolicy: IfNotPresent
               command: ["python", "-m", "tarot_core.tools.backup_db"]
               env:
@@ -990,7 +990,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: cancellazioni
-              image: tarots-api:v9.0
+              image: tarots-api:v9.2
               imagePullPolicy: IfNotPresent
               command: ["python", "-m", "tarot_core.tools.cancellazioni"]
               env:
@@ -1045,7 +1045,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: apple-segreto
-              image: tarots-api:v9.0
+              image: tarots-api:v9.2
               imagePullPolicy: IfNotPresent
               command: ["python", "-m", "tarot_core.tools.apple_segreto"]
               env:
