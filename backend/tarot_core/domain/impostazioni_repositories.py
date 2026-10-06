@@ -126,6 +126,8 @@ def pubblico_intervista(riga: ImpostazioniIntervista) -> Dict[str, Any]:
         "validatore_domande": riga.validatore_domande or "dubbi",
         "guardia_responso": riga.guardia_responso or "dubbi",
         "memoria_stato_nei_prompt": bool(riga.memoria_stato_nei_prompt),
+        # v9.5: la prova della lettura in chat (una riga appena creata in memoria non ha ancora il default del database)
+        "chat_percentuale": 90 if riga.chat_percentuale is None else riga.chat_percentuale,
     }
 
 
@@ -144,6 +146,8 @@ async def aggiorna_intervista(
             setattr(riga, campo, campi[campo])
     if campi.get("memoria_stato_nei_prompt") is not None:
         riga.memoria_stato_nei_prompt = bool(campi["memoria_stato_nei_prompt"])
+    if campi.get("chat_percentuale") is not None:
+        riga.chat_percentuale = int(campi["chat_percentuale"])
     riga.updated_by = attore_id
     dopo = pubblico_intervista(riga)
     if prima != dopo:

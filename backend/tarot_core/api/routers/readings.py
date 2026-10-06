@@ -595,6 +595,9 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
         limite=limite_superato if consumo != "omaggio" else None,
         variante=payload.variante, piattaforma=payload.piattaforma,
     )
+    # v9.5: la prima variante con cui la persona apre una lettura diventa la sua, su tutti i dispositivi.
+    if payload.variante and not user.variante_lettura:
+        user.variante_lettura = payload.variante
     if assegnazioni_manuali is not None:
         # `lettura` è appena stata creata (solo un flush, mai un `select`): la relazione `cards` non è
         # ancora "caricata", e sia leggerla sia assegnarla (`lettura.cards = []`, che deve leggere il

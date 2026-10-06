@@ -21,6 +21,8 @@ interface ImpostazioniIntervista {
   validatore_domande: Modo;
   guardia_responso: Modo;
   memoria_stato_nei_prompt: boolean;
+  /** v9.5: quante persone su cento, al primo arrivo su /read, ricevono la lettura in chat invece della classica. */
+  chat_percentuale: number;
 }
 
 const leggi = (t: string) => chiamata<ImpostazioniIntervista>(t, "/admin/impostazioni-intervista");
@@ -48,6 +50,7 @@ function Modulo({ valori, ricarica }: { valori: ImpostazioniIntervista; ricarica
   const [validatore, setValidatore] = useState<Modo>(valori.validatore_domande);
   const [guardia, setGuardia] = useState<Modo>(valori.guardia_responso);
   const [memoria, setMemoria] = useState(valori.memoria_stato_nei_prompt);
+  const [chat, setChat] = useState(String(valori.chat_percentuale ?? 90));
   const [salvato, setSalvato] = useState(false);
   const [problema, setProblema] = useState<string | null>(null);
 
@@ -60,9 +63,11 @@ function Modulo({ valori, ricarica }: { valori: ImpostazioniIntervista; ricarica
     if (!Number.isInteger(a) || a < 0 || a > 12) return setProblema("Il minimo è un intero fra 0 e 12 (0: si può passare alle carte fin dalla prima domanda).");
     if (!Number.isInteger(b) || b < 1 || b > 12) return setProblema("Il massimo è un intero fra 1 e 12.");
     if (a > b) return setProblema("Il minimo non può superare il massimo.");
+    const c = Number(chat);
+    if (!Number.isInteger(c) || c < 0 || c > 100) return setProblema("La quota della lettura in chat è un intero fra 0 e 100.");
     const fatto = await esegui((t) => salva(t, {
       min_domande: a, max_domande: b, validatore_domande: validatore, guardia_responso: guardia,
-      memoria_stato_nei_prompt: memoria,
+      memoria_stato_nei_prompt: memoria, chat_percentuale: c,
     }));
     if (fatto) {
       setSalvato(true);
@@ -78,9 +83,10 @@ function Modulo({ valori, ricarica }: { valori: ImpostazioniIntervista; ricarica
           <span className={comuni.campoEtichetta}>Minimo di domande</span>
           <input className={comuni.ingresso} inputMode="numeric" value={minimo} onChange={(e) => setMinimo(e.target.value)} />
           <span className={comuni.campoAiuto}>
-            Prima di questo numero l&apos;oracolo non passa alle carte. Dopo, sotto ogni domanda, nella chat, chi
-            consulta ha «Rispondi» e «Basta domande: mescola le carte». Con 0 può passare alle carte fin dalla prima
-            domanda (consigliato: 0–2, dai dati sugli abbandoni).
+            Prima di questo numero l&apos;oracolo non passa alle carte. Dopo ogni risposta, nella chat, chi consulta
+            sceglie fra «Passa alla lettura», «Voglio dire qualcosa di libero» e «Voglio rispondere a un&apos;altra
+            domanda» (quest&apos;ultimo non c&apos;è al massimo). Con 0 può passare alle carte fin dalla prima domanda
+            (consigliato: 0–2, dai dati sugli abbandoni).
           </span>
         </label>
         <label className={comuni.campo}>
@@ -134,6 +140,17 @@ function Modulo({ valori, ricarica }: { valori: ImpostazioniIntervista; ricarica
               modifica dal profilo). Spento: il riassunto si aggiorna ma non entra ancora nelle domande, nei responsi e
               nell&apos;oracolo.
             </span>
+          </span>
+        </label>
+
+        <label className={comuni.campo}>
+          <span className={comuni.campoEtichetta}>Lettura in chat: persone su 100</span>
+          <input className={comuni.ingresso} inputMode="numeric" value={chat} onChange={(e) => setChat(e.target.value)} />
+          <span className={comuni.campoAiuto}>
+            Prova delle due versioni della lettura: chi arriva per la prima volta riceve la lettura tutta in chat con
+            questa probabilità, gli altri la classica. La scelta resta legata alla persona (all&apos;account su tutti i
+            dispositivi, al dispositivo per chi non è registrato): cambiare il numero vale solo per chi arriva dopo.
+            Il confronto è in Analisi → Uscite, filtro «variante».
           </span>
         </label>
 

@@ -6,8 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "carte": "node scripts/genera-carte.mjs"
+    "lint": "eslint && node scripts/controlla-link-lettura.mjs",
+    "carte": "node scripts/genera-carte.mjs",
+    "controlla-lettura": "node scripts/controlla-link-lettura.mjs"
   },
   "dependencies": {
     "@types/three": "^0.186.0",

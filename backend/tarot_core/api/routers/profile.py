@@ -111,6 +111,8 @@ async def _profilo_json(user: User, session) -> Dict[str, Any]:
         "locale": user.locale,
         # Fase 2d: quando la lingua è stata scelta dal sito (vuoto: mai; allora vale quella del browser all'accesso).
         "locale_scelta_il": user.locale_scelta_il.isoformat() if user.locale_scelta_il else None,
+        # v9.5: la versione della lettura di questa persona (prova 90/10), la stessa su tutti i dispositivi.
+        "variante_lettura": user.variante_lettura,
         "birth_date": user.birth_date.isoformat() if user.birth_date else None,
         "gender": user.gender,
         "gender_custom": user.gender_custom,

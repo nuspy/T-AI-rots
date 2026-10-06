@@ -375,6 +375,8 @@ export interface Profilo {
   email: string | null;
   display_name: string | null;
   locale: string;
+  /** v9.5: la versione della lettura di questa persona (prova 90/10), la stessa su tutti i dispositivi. */
+  variante_lettura?: "classica" | "chat" | null;
   /* v9, Fase 2d: quando la lingua è stata scelta dal sito (menu o profilo); `null` = mai. */
   locale_scelta_il?: string | null;
   birth_date: string | null;

@@ -124,6 +124,9 @@ class User(Base, TimestampMixin):
     mazzo_predefinito_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("decks.id", ondelete="SET NULL"),
     )
+    #: v9.5: la versione della lettura assegnata a questa persona nella prova 90/10 (`classica` o `chat`), la prima
+    #: con cui ha aperto una lettura: resta la stessa su tutti i dispositivi. Nulla finché non ne apre una.
+    variante_lettura: Mapped[Optional[str]] = mapped_column(String(10))
 
     #: Il codice che l'utente condivide per invitare altri. Nasce con l'utente.
     referral_code: Mapped[Optional[str]] = mapped_column(String(16), unique=True)

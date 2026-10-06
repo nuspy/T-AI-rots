@@ -46,6 +46,7 @@ import { FaseResponso, Responso } from "./responso";
 import { Tavolo, type Posata } from "./tavolo";
 import { Mescolamento, Taglio, Ventaglio } from "./ventaglio";
 import stili from "./lettura.module.css";
+import type { VarianteLettura } from "@/v2/lib/varianti";
 
 type Fase =
   | "preparazione" | "persone" | "intervista" | "pronto-mescolare" | "mescolamento" | "taglio" | "scelta"
@@ -65,8 +66,12 @@ const comeCategoria = (v: string | null): Categoria | null => {
 let contatore = 0;
 const nuovoId = () => `b${++contatore}`;
 
-export function LetturaV2() {
+/* v9.5: `variante` è la messa in scena della prova 90/10. `classica`: due pannelli, conversazione e console del rito.
+ * `chat`: una sola colonna che scorre, dove mescolare, tagliare, il ventaglio, le carte svelate e l'interpretazione
+ * sono messaggi della conversazione. La logica e le API sono le stesse: cambia solo come si vede. */
+export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettura }) {
   const { t, lingua, prefissoIt } = useLingua();
+  const inChat = variante === "chat";
   const l = t.lettura;
   const sessione = useSessione();
   const router = useRouter();
@@ -203,6 +208,15 @@ export function LetturaV2() {
     sorgenteTracciata.current = true;
     traccia(sorgente === "qr" ? "qr_entry" : "reading_entry", { sorgente, mazzo: deckParam ?? "" });
   }, [parametri, traccia, deckParam, osservatore]);
+
+  /* v9.5: chi ha un account ha la sua variante nel profilo (la prima con cui ha letto): se questa pagina è l'altra,
+   * si passa a quella giusta con gli stessi parametri, e il cookie si allinea (lo smistatore di `/read` lo legge). */
+  useEffect(() => {
+    const sua = profilo.dati?.variante_lettura;
+    if (!sua || sua === variante) return;
+    document.cookie = `tarots_lettura=${sua}; Path=/; Max-Age=31536000; SameSite=Lax`;
+    router.replace(`${prefissoIt ? "/it" : ""}${sua === "chat" ? "/read-chat" : "/read-classic"}${window.location.search}`);
+  }, [profilo.dati, variante, router, prefissoIt]);
 
   const precompilato = useRef(false);
   useEffect(() => {
@@ -418,10 +432,10 @@ export function LetturaV2() {
       const a = sessione.autenticata
         ? await apriLettura(sessione.token, {
             spreadId: stesaId, domanda: testoDomanda, lang: lingua, mazzo: mazzoDaInviare, oltreLimite,
-            variante: "classica",
+            variante,
             ...(speciale ? { partner: partnerDa(persone), ricordaPartner: persone.ricorda } : {}),
           })
-        : await apriLetturaAnonima(stesaId, testoDomanda, lingua, etaAnni, "classica");
+        : await apriLetturaAnonima(stesaId, testoDomanda, lingua, etaAnni, variante);
       traccia("reading_started", { categoria, anonima: !sessione.autenticata });
       if (a.crisi) {
         setLinguaLettura(null);
@@ -649,7 +663,7 @@ export function LetturaV2() {
     setRivelazioneInCorso(true);
     setRitoChiuso(true);
     setFase("svelamento");
-    setTimeout(() => document.getElementById("zona-responso")?.scrollIntoView({ behavior: "smooth", block: "start" }), 250);
+    if (!inChat) setTimeout(() => document.getElementById("zona-responso")?.scrollIntoView({ behavior: "smooth", block: "start" }), 250);
     try {
       const coperte = posate.filter((p) => !p.rivelata).map((p) => p.posizione).sort((a, b) => a - b);
       if (coperte.length) {
@@ -724,14 +738,42 @@ export function LetturaV2() {
     sessione.registrati();
   };
 
+  /* v9.5, la chat: la pagina segue i messaggi nuovi solo se chi legge è già in fondo (se sta rileggendo più su, non
+   * si muove), e si ferma all'INIZIO del messaggio nuovo (una domanda, il mazzo, una carta che si gira, il responso),
+   * non alla fine: si legge dalla prima riga e la carta si vede intera. */
+  const inFondo = useRef(true);
+  useEffect(() => {
+    if (!inChat) return;
+    const misura = () => {
+      inFondo.current = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 180;
+    };
+    misura();
+    window.addEventListener("scroll", misura, { passive: true });
+    return () => window.removeEventListener("scroll", misura);
+  }, [inChat]);
+  const rivelate = posate.filter((p) => p.rivelata).length;
+  const novita = `${battute.length}|${fase}|${rivelate}|${testoResponso ? 1 : 0}`;
+  useEffect(() => {
+    if (!inChat || !inFondo.current) return;
+    const blocchi = document.querySelectorAll<HTMLElement>("[data-battuta], [data-chat-blocco]");
+    const ultimo = blocchi[blocchi.length - 1];
+    if (!ultimo) return;
+    const piano = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const attesa = setTimeout(() => {
+      window.scrollTo({ top: ultimo.getBoundingClientRect().top + window.scrollY - 88, behavior: piano ? "auto" : "smooth" });
+    }, 120);
+    return () => clearTimeout(attesa);
+  }, [inChat, novita]);
+
   /* Il mazzo, il taglio e il ventaglio: a ogni fase si porta in vista la console. */
   useEffect(() => {
+    if (inChat) return;
     if (fase !== "mescolamento" && fase !== "taglio" && fase !== "scelta" && fase !== "pronto-mescolare") return;
     const attesaScroll = setTimeout(() => {
       document.getElementById("zona-mazzo")?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 350);
     return () => clearTimeout(attesaScroll);
-  }, [fase]);
+  }, [fase, inChat]);
 
   /* Sul telefono (v8.5): tema e schema si scelgono in due dialoghi all'apertura della pagina (la domanda, se arriva
    * dall'oracolo o da un invito, è già scritta); le fasi del rito si aprono in un dialogo. Chi chiude il dialogo del
@@ -813,7 +855,8 @@ export function LetturaV2() {
     return (
       <>
         <section className="band band-tight">
-          <div className="read-layout">
+          {/* In chat (v9.5) i due pannelli stanno uno sopra l'altro, in una colonna sola. */}
+          <div className={inChat ? stili.chatColonna : "read-layout"}>
             <section className="read-panel" aria-labelledby="titolo-conversazione">
               <p className="eyebrow">{l.pannello_conversazione}</p>
               {fase === "preparazione" ? (
@@ -920,7 +963,7 @@ export function LetturaV2() {
                   : fase === "annullata" ? { etichetta: l.pausa_titolo }
                     : { etichetta: l.console_sintesi };
 
-  const ritoInDialogo = stretto && !ritoChiuso
+  const ritoInDialogo = !inChat && stretto && !ritoChiuso
     && (fase === "mescolamento" || fase === "taglio" || fase === "scelta" || fase === "rivelazione" || fase === "pronto-sintesi");
   const contenutoRito = (
     <>
@@ -974,33 +1017,86 @@ export function LetturaV2() {
     </>
   );
 
+  const scena = (
+    <div className={stili.scena}>
+      <small>
+        {stesa ? `${nomeStesa(stesa, ll)} · ${plurale(stesa.posizioni.length, tl.n_carte)}` : ""}
+        {nomePartner ? ` · ${f(tl.tu_e, { nome: nomePartner })}` : ""}
+      </small>
+      {domandaLettura && <q dir="auto">{domandaLettura}</q>}
+    </div>
+  );
+  const dialogo = (
+    <Dialogo battute={battute} attesa={attesa} fluido={inChat}
+      inputAttivo={fase === "intervista" && (modo === "risposta" || modo === "libero")}
+      libero={modo === "libero"}
+      onRispondi={modo === "libero" ? (t) => { void suLibero(t); } : suRisposta}
+      scelte={sceltePossibili} />
+  );
+  const riprovaIntervista = errore && fase === "intervista" && (
+    <div className="button-row" style={{ marginTop: ".8rem" }}>
+      <p className="error" role="alert" style={{ flex: "1 1 100%" }}>{errore}</p>
+      {id && !attesa && <button type="button" className="button button-quiet button-small" onClick={() => passoIntervista(id, null)}>{l.riprova}</button>}
+    </div>
+  );
+  const finale = (fase === "svelamento" || fase === "sintesi" || fase === "completata" || posate.some((p) => p.rivelata)) && stesa && id && (
+    <>
+      <CarteSvelate stesa={stesa} posate={posate} attiva={fase === "svelamento" || rivelazioneInCorso} lettoreLegge={lettoreLegge} />
+      {fase === "sintesi" && !testoResponso && <FaseResponso fase={faseResponso} />}
+      {testoResponso && (
+        <Responso
+          id={id} testo={testoResponso} finito={fase === "completata"}
+          disclaimer={fine?.disclaimer ?? disclaimer ?? ""} commitment={fine?.commitment ?? null} saldo={fine?.saldo ?? null}
+          anonimo={fine?.anonimo ?? !sessione.autenticata} omaggi={nOmaggi} onNuova={nuova} onRegistrati={registrati}
+        />
+      )}
+      {fase === "completata" && <NotaStampa />}
+    </>
+  );
+
+  /* v9.5, la chat: una sola colonna. La conversazione, poi il rito come un messaggio dell'oracolo (mescolare,
+   * tagliare, il tavolo e il ventaglio, il pulsante per girare le carte), poi le carte svelate e l'interpretazione. */
+  if (inChat) {
+    const ritoAperto = inRito && fase !== "svelamento" && fase !== "sintesi" && fase !== "completata";
+    return (
+      <ProviderMazzoAttivo slug={slugAttivo}>
+        <LinguaNomi valore={linguaLettura}>
+          <section className="band band-tight">
+            <div className={stili.chatColonna}>
+              {scena}
+              <section aria-labelledby="titolo-dialogo">
+                <h2 id="titolo-dialogo" className="sr-only">{l.pannello_conversazione}</h2>
+                {dialogo}
+                {riprovaIntervista}
+              </section>
+              {ritoAperto && (
+                <section className={`read-panel dark ${stili.chatRito}`} aria-labelledby="titolo-console" id="zona-mazzo"
+                  data-chat-blocco="rito">
+                  <span className={stili.autore}>{l.lettore}</span>
+                  <div className={stili.console}>{contenutoRito}</div>
+                </section>
+              )}
+              {finale && <div id="zona-responso" className={stili.chatBlocco} data-chat-blocco="responso">{finale}</div>}
+            </div>
+          </section>
+          {dialoghiComuni}
+        </LinguaNomi>
+      </ProviderMazzoAttivo>
+    );
+  }
+
   return (
     <ProviderMazzoAttivo slug={slugAttivo}>
       <LinguaNomi valore={linguaLettura}>
         <section className="band band-tight">
-          <div className={stili.scena}>
-            <small>
-              {stesa ? `${nomeStesa(stesa, ll)} · ${plurale(stesa.posizioni.length, tl.n_carte)}` : ""}
-              {nomePartner ? ` · ${f(tl.tu_e, { nome: nomePartner })}` : ""}
-            </small>
-            {domandaLettura && <q dir="auto">{domandaLettura}</q>}
-          </div>
+          {scena}
 
           <div className={`read-layout ${inRito ? stili.inRito : ""}`}>
             <section className="read-panel" aria-labelledby="titolo-dialogo" id="pannello-dialogo">
               <p className="eyebrow">{l.pannello_conversazione}</p>
               <h2 id="titolo-dialogo" className="sr-only">{l.pannello_conversazione}</h2>
-              <Dialogo battute={battute} attesa={attesa}
-                inputAttivo={fase === "intervista" && (modo === "risposta" || modo === "libero")}
-                libero={modo === "libero"}
-                onRispondi={modo === "libero" ? (t) => { void suLibero(t); } : suRisposta}
-                scelte={sceltePossibili} />
-              {errore && fase === "intervista" && (
-                <div className="button-row" style={{ marginTop: ".8rem" }}>
-                  <p className="error" role="alert" style={{ flex: "1 1 100%" }}>{errore}</p>
-                  {id && !attesa && <button type="button" className="button button-quiet button-small" onClick={() => passoIntervista(id, null)}>{l.riprova}</button>}
-                </div>
-              )}
+              {dialogo}
+              {riprovaIntervista}
             </section>
 
             <section className={`read-panel dark ${stili.pannelloRito}`} aria-labelledby="titolo-console" id="zona-mazzo">
@@ -1022,19 +1118,8 @@ export function LetturaV2() {
           <div className={`${stili.console} ${stili.ritoInDialogo}`}>{contenutoRito}</div>
         </Modale>
 
-        {(fase === "svelamento" || fase === "sintesi" || fase === "completata" || posate.some((p) => p.rivelata)) && stesa && id && (
-          <section className="band band-tight" id="zona-responso" style={{ paddingTop: 0 }}>
-            <CarteSvelate stesa={stesa} posate={posate} attiva={fase === "svelamento" || rivelazioneInCorso} lettoreLegge={lettoreLegge} />
-            {fase === "sintesi" && !testoResponso && <FaseResponso fase={faseResponso} />}
-            {testoResponso && (
-              <Responso
-                id={id} testo={testoResponso} finito={fase === "completata"}
-                disclaimer={fine?.disclaimer ?? disclaimer ?? ""} commitment={fine?.commitment ?? null} saldo={fine?.saldo ?? null}
-                anonimo={fine?.anonimo ?? !sessione.autenticata} omaggi={nOmaggi} onNuova={nuova} onRegistrati={registrati}
-              />
-            )}
-            {fase === "completata" && <NotaStampa />}
-          </section>
+        {finale && (
+          <section className="band band-tight" id="zona-responso" style={{ paddingTop: 0 }}>{finale}</section>
         )}
         {dialoghiComuni}
       </LinguaNomi>

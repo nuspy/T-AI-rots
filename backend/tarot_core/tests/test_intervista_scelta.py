@@ -95,7 +95,8 @@ async def test_minimo_e_massimo_dalla_console(client, principal_admin):
     client.identita.principal = principal_admin
     r = await client.get("/admin/impostazioni-intervista")
     assert r.status_code == 200, r.text
-    controlli = {"validatore_domande": "dubbi", "guardia_responso": "dubbi", "memoria_stato_nei_prompt": False}
+    controlli = {"validatore_domande": "dubbi", "guardia_responso": "dubbi", "memoria_stato_nei_prompt": False,
+                 "chat_percentuale": 90}
     # v9.5: predefiniti 0–2 (prima 2–6), e il minimo può essere 0.
     assert r.json() == {"min_domande": 0, "max_domande": 2, **controlli}
     assert (await client.put("/admin/impostazioni-intervista", json={"min_domande": 5, "max_domande": 3})).status_code == 422
@@ -105,3 +106,15 @@ async def test_minimo_e_massimo_dalla_console(client, principal_admin):
     r = await client.put("/admin/impostazioni-intervista", json={"validatore_domande": "spento", "guardia_responso": "acceso"})
     assert r.json()["validatore_domande"] == "spento" and r.json()["guardia_responso"] == "acceso"
     assert (await client.put("/admin/impostazioni-intervista", json={"guardia_responso": "forse"})).status_code == 422
+    # v9.5: la percentuale della lettura in chat, anche nelle impostazioni pubbliche (lo smistatore la legge).
+    assert (await client.put("/admin/impostazioni-intervista", json={"chat_percentuale": 101})).status_code == 422
+    assert (await client.put("/admin/impostazioni-intervista", json={"chat_percentuale": 50})).json()["chat_percentuale"] == 50
+    assert (await client.get("/impostazioni-pubbliche")).json()["lettura_chat_percentuale"] == 50
+
+
+@richiede_database
+async def test_la_prima_variante_diventa_quella_della_persona(client):
+    assert (await client.get("/me/profile")).json()["variante_lettura"] is None
+    await client.post("/readings", json={"spread_id": "tre-carte", "question": QUESITO, "variante": "chat"})
+    await client.post("/readings", json={"spread_id": "tre-carte", "question": QUESITO, "variante": "classica"})
+    assert (await client.get("/me/profile")).json()["variante_lettura"] == "chat"

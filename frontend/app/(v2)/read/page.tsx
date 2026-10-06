@@ -10,6 +10,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return metaV2(t.lettura.meta_titolo, t.lettura.meta_descrizione, "/read");
 }
 
+/* v9.5: `/read` non si mostra più: il proxy (`proxy.ts`) sceglie la variante e manda a `/read-chat` o
+ * `/read-classic`. Questa pagina resta solo come ripiego (la classica), se il proxy non intervenisse. */
 export default function PaginaLeggi() {
   return (
     <Pagina>

@@ -29,6 +29,8 @@ class ImpostazioniIntervistaModifica(BaseModel):
     guardia_responso: Optional[Literal["dubbi", "spento", "acceso"]] = None
     #: Lo stato sintetico della memoria nei prompt di oracolo, intervista e sintesi.
     memoria_stato_nei_prompt: Optional[bool] = None
+    #: v9.5: quante persone su cento ricevono la lettura in chat (le altre la classica).
+    chat_percentuale: Optional[int] = Field(default=None, ge=0, le=100)
 
 
 @router.get("/impostazioni-intervista")

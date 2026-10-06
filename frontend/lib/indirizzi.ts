@@ -45,7 +45,7 @@ const DALLA_V1 = new Map<string, string>([
 ]);
 
 /** Le pagine personali o di servizio: non si indicizzano, e la lingua non la decide l'indirizzo da sola. */
-const PRIVATE = new Set(["read", "my-story", "profile", "shared", "cart"]);
+const PRIVATE = new Set(["read", "read-chat", "read-classic", "my-story", "profile", "shared", "cart"]);
 
 /** Vero per le pagine da indicizzare: home, carte, stese, prezzi, carta del giorno, mazzi, negozio, blog… */
 export function indicizzabile(interno: string): boolean {

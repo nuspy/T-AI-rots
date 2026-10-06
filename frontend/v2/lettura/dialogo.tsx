@@ -30,8 +30,10 @@ function Macchina({ testo }: { testo: string }) {
 }
 
 export function Dialogo({
-  battute, attesa, inputAttivo, onRispondi, scelte = [], libero = false,
+  battute, attesa, inputAttivo, onRispondi, scelte = [], libero = false, fluido = false,
 }: {
+  /** v9.5, la lettura in chat: niente riquadro con lo scorrimento interno, la conversazione scorre con la pagina. */
+  fluido?: boolean;
   battute: Battuta[];
   attesa: boolean;
   /** Il campo c'è solo quando si risponde a una domanda o si scrive il testo libero (v9.5): durante la scelta no. */
@@ -91,7 +93,7 @@ export function Dialogo({
 
   return (
     <div className={stili.dialogo}>
-      <div className={stili.battute} aria-live="polite" ref={contenitore}>
+      <div className={`${stili.battute} ${fluido ? stili.battuteFluide : ""}`} aria-live="polite" ref={contenitore}>
         <AnimatePresence initial={false}>
           {battute.map((b) => (
             <motion.div

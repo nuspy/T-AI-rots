@@ -130,7 +130,9 @@ async def impostazioni_pubbliche(session: DbSession) -> Dict[str, int]:
     regole = await correnti_intervista(session)
     # v9.5: minimo e massimo delle domande, perché la lettura sappia quali scelte mostrare anche alla riapertura.
     return {**pubblico(await correnti(session)),
-            "intervista_min_domande": regole.min_domande, "intervista_max_domande": regole.max_domande}
+            "intervista_min_domande": regole.min_domande, "intervista_max_domande": regole.max_domande,
+            # la prova della lettura in chat: lo smistatore di `/read` del sito e dell'app
+            "lettura_chat_percentuale": 90 if regole.chat_percentuale is None else regole.chat_percentuale}
 
 
 @router.get("/consenso")

@@ -194,6 +194,14 @@
 
 /* ---- 3/10: pulsanti sotto la risposta, scelta riassunta sul telefono, carte svelate ------------------------- */
 .rispostaAzioni { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }
+/* v9.5, la lettura in chat: una colonna sola che scorre con la pagina; il rito è un messaggio largo quanto la chat,
+ * scuro come la console della classica. `scroll-margin-top` lascia spazio alla testata quando la pagina si ferma
+ * all'inizio di un messaggio. */
+.chatColonna { display: grid; gap: 1rem; width: 100%; max-width: 760px; margin: 0 auto; }
+.battuteFluide { max-height: none; overflow: visible; padding-right: 0; }
+.chatRito { display: grid; gap: .6rem; padding: 1rem; }
+.chatRito .autore { color: var(--brass-pale, #e9d9a8); }
+.battuta, .chatRito, .chatBlocco { scroll-margin-top: 88px; }
 /* v9.5: le due strade dentro la chat, sotto l'ultima domanda dell'oracolo. */
 .sceltaChat { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: flex-start; padding: .2rem 0 .4rem; }
 .sceltaChat .button { min-height: 44px; }

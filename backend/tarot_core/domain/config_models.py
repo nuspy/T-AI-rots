@@ -215,6 +215,7 @@ class ImpostazioniIntervista(Base, TimestampMixin):
         ),
         CheckConstraint("validatore_domande IN ('dubbi', 'spento', 'acceso')", name="ck_impostazioni_intervista_validatore"),
         CheckConstraint("guardia_responso IN ('dubbi', 'spento', 'acceso')", name="ck_impostazioni_intervista_guardia"),
+        CheckConstraint("chat_percentuale >= 0 AND chat_percentuale <= 100", name="ck_impostazioni_intervista_chat"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
@@ -231,6 +232,9 @@ class ImpostazioniIntervista(Base, TimestampMixin):
     #: Lo stato sintetico della memoria (`tarot/stato_memoria.py`) entra nei prompt di oracolo, intervista e sintesi al
     #: posto delle memorie di prima. Spento finché l'operatore non approva: lo stato si aggiorna comunque.
     memoria_stato_nei_prompt: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    #: v9.5: la prova della lettura in chat: quante persone su cento (al primo arrivo su `/read`) ricevono la
+    #: versione in chat; le altre la classica. Chi ha già una variante la tiene.
+    chat_percentuale: Mapped[int] = mapped_column(Integer, nullable=False, default=90)
     updated_by: Mapped[Optional[int]] = mapped_column(
         BigInteger, ForeignKey("users.id", ondelete="SET NULL"),
     )
