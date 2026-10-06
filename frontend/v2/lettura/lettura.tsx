@@ -260,11 +260,19 @@ export function LetturaV2() {
    * chiude l'intervista, passando al rito. */
   const [puoiFermarti, setPuoiFermarti] = useState(false);
 
+  const risposteDate = useRef(0);
   const passoIntervista = useCallback(async (lid: string, risposta: string | null, basta = false) => {
     setAttesa(true);
     setErrore(null);
     try {
       const passo = await rispondi(sessione.token, lid, risposta, basta);
+      /* v9.5: il numero della domanda, per vedere dopo quante domande ci si ferma (mai il testo). */
+      if (risposta !== null) {
+        risposteDate.current += 1;
+        traccia("interview_answered", { n: risposteDate.current });
+      }
+      if (basta) traccia("interview_skipped", { n: risposteDate.current });
+      if (passo.domanda && !passo.completa) traccia("interview_question", { n: risposteDate.current + 1 });
       if (passo.crisi) {
         aggiungi({ autore: "sistema", testo: passo.messaggio ?? "" });
         setFase("crisi");
@@ -281,7 +289,7 @@ export function LetturaV2() {
     } finally {
       setAttesa(false);
     }
-  }, [sessione.token, l.err_oracolo]);
+  }, [sessione.token, l.err_oracolo, traccia]);
 
   const basta = () => { if (id) void passoIntervista(id, null, true); };
 
@@ -462,7 +470,7 @@ export function LetturaV2() {
     scegliendo.current = true;
     try {
       const r = await scegliCarta(sessione.token, id, slot);
-      traccia("card_drawn");
+      traccia("card_drawn", { n: scelte.size + 1 });
       setScelte((s) => new Set(s).add(slot));
       setPosate((p) => [
         ...p,
@@ -498,7 +506,7 @@ export function LetturaV2() {
     try {
       for await (const ev of rivela(sessione.token, id, posizione)) {
         if (ev.tipo === "carta") {
-          traccia("card_revealed");
+          traccia("card_revealed", { n: posizione });
           aggiornaPosata((p) => ({ ...p, rivelata: true, carta: ev.carta, rovescio: ev.rovescio, dignita: ev.dignita, doppia: ev.doppia_valenza, interpretazione: "" }));
           setLettoreLegge(true);
         } else if (ev.tipo === "token") {
@@ -535,7 +543,7 @@ export function LetturaV2() {
     try {
       for await (const ev of rivelaTutte(sessione.token, id)) {
         if (ev.tipo === "carta") {
-          traccia("card_revealed");
+          traccia("card_revealed", { n: ev.posizione, tutte: true });
           aggiorna(ev.posizione, (p) => ({ ...p, rivelata: true, carta: ev.carta, rovescio: ev.rovescio, dignita: ev.dignita, doppia: ev.doppia_valenza, interpretazione: "" }));
         } else if (ev.tipo === "fase") {
           if (ev.fase === "lettura") setLettoreLegge(true);

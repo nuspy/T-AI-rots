@@ -328,3 +328,27 @@ export interface EsitoUscite {
 
 export const calcolaUscite = (t: string, r: { da: string; a: string; limite?: number }) =>
   chiamata<EsitoUscite>(t, "/admin/analytics/uscite", { method: "POST", body: JSON.stringify(r) });
+
+/* ---- dove si fermano le letture (v9.5): dal database delle letture, anche senza consenso alle statistiche ---- */
+
+export type GruppoLetture = "tutti" | "iscritti" | "anonimi";
+
+export interface EsitoLettureFerme {
+  da: string;
+  a: string;
+  gruppo: GruppoLetture;
+  letture: number;
+  annullate: number;
+  imbuto: {
+    passo: string; etichetta: string; letture: number; quota: number | null;
+    perse_dal_passo_prima: number | null; tasso_passaggio: number | null;
+  }[];
+  ferme: {
+    stato: string; etichetta: string; letture: number; quota: number | null;
+    dettaglio?: { etichetta: string; letture: number }[];
+  }[];
+  anteprima?: { completate: number; passate_a_un_account: number; quota: number | null };
+}
+
+export const calcolaLettureFerme = (t: string, r: { da: string; a: string; gruppo: GruppoLetture }) =>
+  chiamata<EsitoLettureFerme>(t, "/admin/analytics/letture-ferme", { method: "POST", body: JSON.stringify(r) });

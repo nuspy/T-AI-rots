@@ -69,6 +69,18 @@ ETICHETTE: Dict[str, str] = {
 }
 
 
+#: Gli eventi della lettura che portano un numero (v9.5): la domanda dell'intervista, la carta scelta o rivelata.
+#: L'azione diventa «nome:n» («card_revealed:3»), con l'etichetta di `NUMERATE`.
+CON_NUMERO = ("interview_question", "interview_answered", "interview_skipped", "card_drawn", "card_revealed")
+NUMERATE: Dict[str, str] = {
+    "interview_question": "Intervista: ha ricevuto la domanda {n}",
+    "interview_answered": "Intervista: ha risposto alla domanda {n}",
+    "interview_skipped": "Intervista: ha chiesto di fermarsi dopo {n} risposte",
+    "card_drawn": "Ha scelto la carta {n}",
+    "card_revealed": "Ha rivelato la carta in posizione {n}",
+}
+
+
 def e_lettura(percorso: Optional[str]) -> bool:
     if not percorso:
         return False
@@ -81,6 +93,9 @@ def _condizione_lettura(colonna):
 
 
 def etichetta(azione: str) -> str:
+    nome, _, n = azione.partition(":")
+    if nome in NUMERATE and n:
+        return NUMERATE[nome].format(n=n)
     return ETICHETTE.get(azione, azione.replace("lettura_fase:", "Fase: ") if azione.startswith("lettura_fase:") else azione)
 
 
@@ -132,6 +147,9 @@ async def uscite(session: AsyncSession, da: date, a: date, *, limite: int = 25) 
     )
     azione_evento = case(
         (E.c.nome == "lettura_fase", literal("lettura_fase:") + func.coalesce(E.c.proprieta["fase"].astext, literal("?"))),
+        # v9.5: dopo quale domanda, a quale carta (il numero, mai il contenuto)
+        (and_(E.c.nome.in_(CON_NUMERO), E.c.proprieta["n"].isnot(None)),
+         E.c.nome + literal(":") + E.c.proprieta["n"].astext),
         else_=E.c.nome,
     )
     ultima = (

@@ -14,6 +14,7 @@ import { Barre, Tessera, percento } from "../../grafici";
 import grafici from "../../grafici.module.css";
 import stili from "../../statistiche.module.css";
 import { FiltriPeriodo, etichettaPeriodo, formatta, useApprofondisci, usePeriodo } from "../comuni";
+import { LettureFerme } from "./letture-ferme";
 
 const barreAzioni = (azioni: AzioneUscita[], quante = 15) =>
   azioni.slice(0, quante).map((a) => ({
@@ -106,6 +107,8 @@ export default function Uscite() {
           )}
         </div>
       )}
+
+      <LettureFerme da={da} a={a} />
     </>
   );
 }

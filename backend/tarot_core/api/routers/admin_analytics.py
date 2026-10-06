@@ -446,6 +446,22 @@ async def calcola_uscite(r: RichiestaUscite, session: DbSession) -> Dict[str, An
         raise _errore(exc) from exc
 
 
+class RichiestaLettureFerme(BaseModel):
+    da: date
+    a: date
+    gruppo: Literal["tutti", "iscritti", "anonimi"] = "tutti"
+
+
+@router.post("/letture-ferme")
+async def calcola_letture_ferme(r: RichiestaLettureFerme, session: DbSession) -> Dict[str, Any]:
+    """Fino a che punto arrivano le letture aperte nel periodo e dove si fermano (v9.5), dal database delle letture."""
+    from ...analytics import letture_ferme
+
+    if r.a < r.da or (r.a - r.da).days > 366:
+        raise HTTPException(status_code=422, detail="intervallo non valido (massimo un anno)")
+    return await letture_ferme.letture_ferme(session, r.da, r.a, r.gruppo)
+
+
 @router.get("/tempo-reale")
 async def tempo_reale(session: DbSession) -> Dict[str, Any]:
     from lanterna.tempo_reale import adesso
