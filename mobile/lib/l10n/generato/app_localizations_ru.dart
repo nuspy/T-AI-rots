@@ -5492,6 +5492,36 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get app_lingua_titolo => 'Язык чтения';
+
+  @override
+  String get app_lingua_testo =>
+      'Статьи, карты и расклады написаны на английском. Выбери язык, на котором хочешь их читать: телефон переводит их сам, никуда не отправляя. Для каждого языка, кроме английского, нужно один раз скачать около 30 МБ.';
+
+  @override
+  String get app_lingua_cerca => 'Найти язык';
+
+  @override
+  String get app_lingua_continua => 'Продолжить';
+
+  @override
+  String app_lingua_scarico(Object lingua) {
+    return 'Скачиваю $lingua… это может занять минуту.';
+  }
+
+  @override
+  String get app_lingua_errore =>
+      'Скачать не получилось (есть ли интернет?). Пока материалы остаются на английском: попробуем снова, когда ты их откроешь.';
+
+  @override
+  String app_lingua_voce(Object lingua) {
+    return 'Язык чтения: $lingua';
+  }
+
+  @override
+  String get app_lingua_cambia => 'Изменить';
+
+  @override
   String get notifiche_titolo => 'Уведомления';
 
   @override

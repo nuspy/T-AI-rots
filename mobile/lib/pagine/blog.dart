@@ -43,6 +43,7 @@ import '../rotte/indirizzi.dart';
 import '../rotte/navigazione.dart';
 import '../rotte/percorsi.dart';
 import '../tema/tema.dart';
+import '../traduzione/con_traduzione.dart';
 import 'prezzi.dart' show FasciaStretta;
 import 'stese.dart' show nomeStesa;
 
@@ -1712,173 +1713,186 @@ class Articolo extends ConsumerWidget {
       }
     }
 
-    return Pagina(
-      sezioni: [
-        _Apertura(
-          children: [
-            _Briciole(
-              voci: [
-                (testo: t.blog_eyebrow, href: R.blog),
-                for (final y in x.briciole) (testo: y.nome, href: R.blogSezione(y.slug)),
-              ],
-            ),
-            _titoloApertura(context, x.titolo, maxCh: 22),
-            if ((x.sottotitolo ?? '').isNotEmpty) IntroSezione(x.sottotitolo!),
-            Padding(
-              padding: EdgeInsets.only(top: w.telefono ? 9.6 : 0),
-              child: Text(meta, style: piccolo),
-            ),
-          ],
-        ),
-        FasciaStretta(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+    // v9.5: gli articoli sono in inglese: il telefono li traduce nella lingua di lettura (titolo, testo, domande).
+    return ConTraduzione(
+      da: x.lang.split('-').first,
+      testi: [
+        x.titolo,
+        if ((x.sottotitolo ?? '').isNotEmpty) x.sottotitolo!,
+        for (final q in x.faq) ...[q.domanda, q.risposta],
+      ],
+      markdown: [x.testo],
+      costruisci: (context, tr, avviso) => Pagina(
+        sezioni: [
+          _Apertura(
             children: [
-              if (immagine != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 11.2),
-                  child: Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 960),
-                      child: AspectRatio(
-                        aspectRatio: (x.immagine?.larghezza ?? 1200) / (x.immagine?.altezza ?? 675),
-                        child: Image(
-                          image: ref.watch(immagineMediaProvider)(immagine),
-                          fit: BoxFit.cover,
-                          semanticLabel: (x.immagine?.alt ?? '').isEmpty ? null : x.immagine!.alt,
-                          excludeFromSemantics: (x.immagine?.alt ?? '').isEmpty,
-                          errorBuilder: (context, e, s) => const SizedBox.shrink(),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              TestoArticolo(testo: x.testo, riferimenti: riferimentiDi(x)),
-              if (x.faq.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 13.6),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: larghezzaCh(Stile.corpo, MediaQuery.textScalerOf(context)) * 68,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Eyebrow(t.blog_domande),
-                        Container(
-                          decoration: const BoxDecoration(
-                            border: Border(top: BorderSide(color: Token.line)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [for (final q in x.faq) _Domanda(domanda: q.domanda, risposta: q.risposta)],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              if (x.collegamenti.carte.isNotEmpty || x.collegamenti.stese.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 13.6),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Eyebrow(t.blog_si_parla_di),
-                      Pillole(
-                        children: [
-                          for (final c in x.collegamenti.carte)
-                            Pillola('✦ ${c.nome}', alTocco: () => vai(context, R.carta(c.id))),
-                          for (final s in x.collegamenti.stese)
-                            Pillola('▦ ${s.nome}', alTocco: () => vai(context, R.stesa(s.id))),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              if (x.tags.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: Semantics(
-                    container: true,
-                    label: t.blog_etichette,
-                    child: Pillole(
-                      children: [
-                        for (final e in x.tags) Pillola('#${e.nome}', alTocco: () => vai(context, R.blogTag(e.slug))),
-                      ],
-                    ),
-                  ),
-                ),
-              Padding(
-                padding: const EdgeInsets.only(top: 8.8),
-                child: Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Bottone(
-                    t.blog_condividi,
-                    variante: Variante.quieto,
-                    piccolo: true,
-                    alTocco: () => unawaited(condividi()),
-                  ),
-                ),
+              _Briciole(
+                voci: [
+                  (testo: t.blog_eyebrow, href: R.blog),
+                  for (final y in x.briciole) (testo: y.nome, href: R.blogSezione(y.slug)),
+                ],
               ),
-              const _Ponte(),
-              if (x.correlati.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16.8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Eyebrow(t.blog_correlati),
-                      GrigliaDiario(
-                        children: [for (final (i, y) in x.correlati.take(3).indexed) TesseraDiario(a: y, indice: i)],
-                      ),
-                    ],
-                  ),
-                ),
-              if (x.precedente != null || x.successivo != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 11.2),
-                  child: Semantics(
-                    container: true,
-                    label: t.blog_articoli,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: x.precedente == null
-                              ? const SizedBox.shrink()
-                              : Collegamento('← ${x.precedente!.titolo}', href: R.articolo(x.precedente!.slug)),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: x.successivo == null
-                              ? const SizedBox.shrink()
-                              : Align(
-                                  alignment: AlignmentDirectional.centerEnd,
-                                  child: Collegamento(
-                                    '${x.successivo!.titolo} →',
-                                    href: R.articolo(x.successivo!.slug),
-                                  ),
-                                ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              Container(
-                margin: const EdgeInsets.only(top: 11.2),
-                padding: const EdgeInsets.only(top: 8),
-                decoration: const BoxDecoration(
-                  border: Border(top: BorderSide(color: Token.line)),
-                ),
-                child: Paragrafo(t.blog_copyright(anno.length >= 4 ? anno.substring(0, 4) : anno), style: piccolo),
+              _titoloApertura(context, tr(x.titolo), maxCh: 22),
+              if ((x.sottotitolo ?? '').isNotEmpty) IntroSezione(tr(x.sottotitolo!)),
+              Padding(
+                padding: EdgeInsets.only(top: w.telefono ? 9.6 : 0),
+                child: Text(meta, style: piccolo),
               ),
             ],
           ),
-        ),
-        DiarioNove(contesto: _query({'articolo': x.slug}), sceltiPrima: true),
-      ],
+          FasciaStretta(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                avviso,
+                if (immagine != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 11.2),
+                    child: Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 960),
+                        child: AspectRatio(
+                          aspectRatio: (x.immagine?.larghezza ?? 1200) / (x.immagine?.altezza ?? 675),
+                          child: Image(
+                            image: ref.watch(immagineMediaProvider)(immagine),
+                            fit: BoxFit.cover,
+                            semanticLabel: (x.immagine?.alt ?? '').isEmpty ? null : x.immagine!.alt,
+                            excludeFromSemantics: (x.immagine?.alt ?? '').isEmpty,
+                            errorBuilder: (context, e, s) => const SizedBox.shrink(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                TestoArticolo(testo: tr(x.testo), riferimenti: riferimentiDi(x)),
+                if (x.faq.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 13.6),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: larghezzaCh(Stile.corpo, MediaQuery.textScalerOf(context)) * 68,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Eyebrow(t.blog_domande),
+                          Container(
+                            decoration: const BoxDecoration(
+                              border: Border(top: BorderSide(color: Token.line)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                for (final q in x.faq) _Domanda(domanda: tr(q.domanda), risposta: tr(q.risposta)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (x.collegamenti.carte.isNotEmpty || x.collegamenti.stese.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 13.6),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Eyebrow(t.blog_si_parla_di),
+                        Pillole(
+                          children: [
+                            for (final c in x.collegamenti.carte)
+                              Pillola('✦ ${c.nome}', alTocco: () => vai(context, R.carta(c.id))),
+                            for (final s in x.collegamenti.stese)
+                              Pillola('▦ ${s.nome}', alTocco: () => vai(context, R.stesa(s.id))),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                if (x.tags.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Semantics(
+                      container: true,
+                      label: t.blog_etichette,
+                      child: Pillole(
+                        children: [
+                          for (final e in x.tags) Pillola('#${e.nome}', alTocco: () => vai(context, R.blogTag(e.slug))),
+                        ],
+                      ),
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.8),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Bottone(
+                      t.blog_condividi,
+                      variante: Variante.quieto,
+                      piccolo: true,
+                      alTocco: () => unawaited(condividi()),
+                    ),
+                  ),
+                ),
+                const _Ponte(),
+                if (x.correlati.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16.8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Eyebrow(t.blog_correlati),
+                        GrigliaDiario(
+                          children: [for (final (i, y) in x.correlati.take(3).indexed) TesseraDiario(a: y, indice: i)],
+                        ),
+                      ],
+                    ),
+                  ),
+                if (x.precedente != null || x.successivo != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 11.2),
+                    child: Semantics(
+                      container: true,
+                      label: t.blog_articoli,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: x.precedente == null
+                                ? const SizedBox.shrink()
+                                : Collegamento('← ${x.precedente!.titolo}', href: R.articolo(x.precedente!.slug)),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: x.successivo == null
+                                ? const SizedBox.shrink()
+                                : Align(
+                                    alignment: AlignmentDirectional.centerEnd,
+                                    child: Collegamento(
+                                      '${x.successivo!.titolo} →',
+                                      href: R.articolo(x.successivo!.slug),
+                                    ),
+                                  ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                Container(
+                  margin: const EdgeInsets.only(top: 11.2),
+                  padding: const EdgeInsets.only(top: 8),
+                  decoration: const BoxDecoration(
+                    border: Border(top: BorderSide(color: Token.line)),
+                  ),
+                  child: Paragrafo(t.blog_copyright(anno.length >= 4 ? anno.substring(0, 4) : anno), style: piccolo),
+                ),
+              ],
+            ),
+          ),
+          DiarioNove(contesto: _query({'articolo': x.slug}), sceltiPrima: true),
+        ],
+      ),
     );
   }
 }

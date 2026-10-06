@@ -20,6 +20,7 @@ import '../lingua/lingua.dart';
 import '../modelli/carta.dart';
 import '../rotte/percorsi.dart';
 import '../tema/tema.dart';
+import '../traduzione/con_traduzione.dart';
 import 'blog.dart' show ArticoliSu;
 
 /// L'ordine degli stili delle stese speciali.
@@ -75,7 +76,10 @@ class TesseraStesa extends ConsumerWidget {
           alignment: AlignmentDirectional.centerStart,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 220),
-            child: ColoredBox(color: Token.plumDeep, child: MiniaturaStesa(stesa: stesa)),
+            child: ColoredBox(
+              color: Token.plumDeep,
+              child: MiniaturaStesa(stesa: stesa),
+            ),
           ),
         ),
       ),
@@ -96,9 +100,19 @@ class Stese extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = context.t;
     final stese = ref.watch(steseProvider);
-    final apertura = Sottotitolo(eyebrow: t.stese_eyebrow, titolo: t.stese_titolo, intro: t.stese_intro, compatta: true);
+    final apertura = Sottotitolo(
+      eyebrow: t.stese_eyebrow,
+      titolo: t.stese_titolo,
+      intro: t.stese_intro,
+      compatta: true,
+    );
     if (stese.hasError && !stese.hasValue) {
-      return Pagina(sezioni: [apertura, StatoFascia(errore: stese.error)]);
+      return Pagina(
+        sezioni: [
+          apertura,
+          StatoFascia(errore: stese.error),
+        ],
+      );
     }
     final tutte = stese.value ?? const <Stesa>[];
     List<Stesa> per(String c) => tutte.where((s) => s.categoria == c).toList();
@@ -134,9 +148,7 @@ class Stese extends ConsumerWidget {
                       children: [
                         Eyebrow('${stileStesa(t, stile).nome} · ${stileStesa(t, stile).testo}'),
                         GrigliaDifferenze(
-                          children: [
-                            for (final s in elenco.where((s) => s.stile == stile)) TesseraStesa(stesa: s),
-                          ],
+                          children: [for (final s in elenco.where((s) => s.stile == stile)) TesseraStesa(stesa: s)],
                         ),
                       ],
                     ),
@@ -201,7 +213,17 @@ class DettaglioStesa extends ConsumerWidget {
 
     final altre = tutte.where((x) => x.categoria == s.categoria && x.id != s.id).take(4).toList();
     final w = larghezza(context);
-    final posizioni = Column(
+    // v9.5: la stesa arriva in italiano o in inglese; il telefono la traduce nella lingua di lettura (i nomi delle
+    // posizioni restano quelli ufficiali).
+    final contenuti = [
+      s.descrizione,
+      for (final p in s.posizioni) ...[p.significato, p.domanda],
+      ...s.regole,
+      for (final c in s.coppie)
+        if (c.length >= 3) '${c[2]}',
+      s.origine,
+    ];
+    Widget posizioni(String Function(String) tr) => Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         TitoloPannelloLettura(t.stese_stesa_posizioni),
@@ -210,84 +232,89 @@ class DettaglioStesa extends ConsumerWidget {
             occhiello: t.stese_stesa_posizione(p.n),
             titolo: nomePos(p.n),
             figli: [
-              Paragrafo(p.significato, style: stileVoceMemoria()),
+              Paragrafo(tr(p.significato), style: stileVoceMemoria()),
               if (p.domanda.isNotEmpty)
                 // `p.small` in corsivo: dentro `.memory-entry` vale la sua misura (.88rem), senza margini.
-                Paragrafo(p.domanda, style: stileVoceMemoria().copyWith(fontStyle: FontStyle.italic)),
+                Paragrafo(tr(p.domanda), style: stileVoceMemoria().copyWith(fontStyle: FontStyle.italic)),
             ],
           ),
       ],
     );
 
-    return Pagina(
-      sezioni: [
-        AperturaCatalogo(
-          eyebrow: '${t.stese_stesa_eyebrow} · ${t.lettura_n_carte(s.posizioni.length)}',
-          titolo: nomeStesa(s, lingua),
-          intro: s.descrizione,
-          sotto: Padding(
-            padding: EdgeInsets.only(top: w.telefono ? 8 : 0),
-            child: FilaBottoni(
-              children: [
-                Bottone(
-                  t.stese_stesa_cta,
-                  href: '${R.leggi}?spread=${Uri.encodeQueryComponent(s.id)}&source=spread',
-                  variante: Variante.ottone,
-                ),
-                Bottone(t.stese_stesa_tutte, href: R.stese, variante: Variante.quieto),
-              ],
+    return ConTraduzione(
+      da: linguaContenuti(lingua),
+      testi: contenuti,
+      costruisci: (context, tr, avviso) => Pagina(
+        sezioni: [
+          AperturaCatalogo(
+            eyebrow: '${t.stese_stesa_eyebrow} · ${t.lettura_n_carte(s.posizioni.length)}',
+            titolo: nomeStesa(s, lingua),
+            intro: tr(s.descrizione),
+            sotto: Padding(
+              padding: EdgeInsets.only(top: w.telefono ? 8 : 0),
+              child: FilaBottoni(
+                children: [
+                  Bottone(
+                    t.stese_stesa_cta,
+                    href: '${R.leggi}?spread=${Uri.encodeQueryComponent(s.id)}&source=spread',
+                    variante: Variante.ottone,
+                  ),
+                  Bottone(t.stese_stesa_tutte, href: R.stese, variante: Variante.quieto),
+                ],
+              ),
             ),
           ),
-        ),
-        Fascia(
-          compatta: true,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              LayoutLettura(
-                scuro: Semantics(
-                  label: t.stese_stesa_diagramma,
-                  image: true,
-                  child: Tavolo(stesa: s, posate: const []),
-                ),
-                chiaro: posizioni,
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 11.2),
-                child: BloccoProsa([
-                  if (s.regole.isNotEmpty) ...[
-                    TitoloProsa(t.stese_stesa_come),
-                    ElencoProsa([for (final r in s.regole) (null, r)]),
-                  ],
-                  if (s.coppie.isNotEmpty) ...[
-                    TitoloProsa(t.stese_stesa_coppie),
-                    ElencoProsa([
-                      for (final c in s.coppie)
-                        if (c.length >= 3)
-                          ('${nomePos((c[0]! as num).toInt())} ↔ ${nomePos((c[1]! as num).toInt())}.', '${c[2]}'),
-                    ]),
-                  ],
-                  if (s.origine.isNotEmpty) ...[TitoloProsa(t.stese_stesa_origine), ParagrafoProsa(s.origine)],
-                ]),
-              ),
-            ],
-          ),
-        ),
-        if (altre.isNotEmpty)
           Fascia(
             compatta: true,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Eyebrow(t.stese_stesa_altre),
-                GrigliaDifferenze(children: [for (final x in altre) TesseraStesa(stesa: x)]),
+                avviso,
+                LayoutLettura(
+                  scuro: Semantics(
+                    label: t.stese_stesa_diagramma,
+                    image: true,
+                    child: Tavolo(stesa: s, posate: const []),
+                  ),
+                  chiaro: posizioni(tr),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 11.2),
+                  child: BloccoProsa([
+                    if (s.regole.isNotEmpty) ...[
+                      TitoloProsa(t.stese_stesa_come),
+                      ElencoProsa([for (final r in s.regole) (null, tr(r))]),
+                    ],
+                    if (s.coppie.isNotEmpty) ...[
+                      TitoloProsa(t.stese_stesa_coppie),
+                      ElencoProsa([
+                        for (final c in s.coppie)
+                          if (c.length >= 3)
+                            ('${nomePos((c[0]! as num).toInt())} ↔ ${nomePos((c[1]! as num).toInt())}.', tr('${c[2]}')),
+                      ]),
+                    ],
+                    if (s.origine.isNotEmpty) ...[TitoloProsa(t.stese_stesa_origine), ParagrafoProsa(tr(s.origine))],
+                  ]),
+                ),
               ],
             ),
           ),
-        // Prima gli articoli che parlano di questa stesa, poi gli ultimi; sotto, l'elenco completo a pagine.
-        DiarioNove(contesto: 'stesa=${Uri.encodeQueryComponent(s.id)}', sceltiPrima: true),
-        ArticoliSu(tipo: 'stesa', id: s.id, nome: nomeStesa(s, lingua), base: R.stesa(id), parametri: parametri),
-      ],
+          if (altre.isNotEmpty)
+            Fascia(
+              compatta: true,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Eyebrow(t.stese_stesa_altre),
+                  GrigliaDifferenze(children: [for (final x in altre) TesseraStesa(stesa: x)]),
+                ],
+              ),
+            ),
+          // Prima gli articoli che parlano di questa stesa, poi gli ultimi; sotto, l'elenco completo a pagine.
+          DiarioNove(contesto: 'stesa=${Uri.encodeQueryComponent(s.id)}', sceltiPrima: true),
+          ArticoliSu(tipo: 'stesa', id: s.id, nome: nomeStesa(s, lingua), base: R.stesa(id), parametri: parametri),
+        ],
+      ),
     );
   }
 }

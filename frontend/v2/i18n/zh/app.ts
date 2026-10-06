@@ -73,4 +73,13 @@ export const app = {
   canale_promozioni_testo: "Only if you turned on promotions in your privacy choices.",
   /* Fase 9: deleting the account with a subscription bought in a store */
   elimina_store: "A subscription bought with {store} doesn't stop on its own: cancel it in {store} so it isn't renewed.",
+  /* v9.5: the reading language of the contents (ML Kit, on the device) */
+  lingua_titolo: "Reading language",
+  lingua_testo: "Articles, cards and spreads are written in English. Choose the language you want to read them in: your phone translates them by itself, without sending them anywhere. Every language except English needs a download of about 30 MB, only once.",
+  lingua_cerca: "Search for a language",
+  lingua_continua: "Continue",
+  lingua_scarico: "Downloading {lingua}… it can take a minute.",
+  lingua_errore: "The download didn't work (are you online?). The contents stay in English for now: we'll try again when you open them.",
+  lingua_voce: "Reading language: {lingua}",
+  lingua_cambia: "Change",
 };

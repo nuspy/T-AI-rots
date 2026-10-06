@@ -5,7 +5,9 @@
 ///    dati tecnici; finché non si sceglie la pagina resta usabile, come nel sito. Dove il banner parla di cookie e di
 ///    browser l'app ha testi suoi, sui dati del dispositivo (la sezione `app` dei dizionari, `frontend/v2/i18n/*/app.ts`);
 /// 2. **l'età minima** (`privacy-accesso.tsx`): «ho almeno N anni», in un dialogo; «Not now» lo chiude per questa
-///    volta.
+///    volta;
+/// 3. **la lingua di lettura** (v9.5, `traduzione/scelta_lingua.dart`): in che lingua tradurre sul telefono articoli,
+///    carte e stese; solo dove il telefono sa tradurre, una volta.
 library;
 
 import 'dart:async';
@@ -22,6 +24,8 @@ import '../l10n/testi.dart';
 import '../rotte/percorsi.dart';
 import '../rotte/router.dart';
 import '../tema/tema.dart';
+import '../traduzione/lingua_contenuti.dart';
+import '../traduzione/scelta_lingua.dart';
 import 'consensi.dart';
 import 'eta.dart';
 
@@ -56,6 +60,8 @@ class PrimoAvvio extends ConsumerWidget {
       );
     } else if (anni != null && eta.daChiedere(anni)) {
       sopra = DialogoEta(anni: anni);
+    } else if (ref.watch(linguaContenutiDaChiedereProvider)) {
+      sopra = const DialogoLinguaContenuti();
     } else {
       sopra = null;
     }

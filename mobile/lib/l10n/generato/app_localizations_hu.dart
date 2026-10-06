@@ -5490,6 +5490,36 @@ class AppLocalizationsHu extends AppLocalizations {
   }
 
   @override
+  String get app_lingua_titolo => 'Olvasási nyelv';
+
+  @override
+  String get app_lingua_testo =>
+      'A cikkek, a kártyák és a kirakások angolul íródtak. Válaszd ki, milyen nyelven szeretnéd olvasni őket: a telefonod maga fordítja le őket, sehová sem küldi el. Az angolon kívül minden nyelvhez egyszer kell letölteni kb. 30 MB-ot.';
+
+  @override
+  String get app_lingua_cerca => 'Nyelv keresése';
+
+  @override
+  String get app_lingua_continua => 'Tovább';
+
+  @override
+  String app_lingua_scarico(Object lingua) {
+    return '$lingua letöltése… egy percig is eltarthat.';
+  }
+
+  @override
+  String get app_lingua_errore =>
+      'A letöltés nem sikerült (van internet?). A tartalom egyelőre angolul marad: újra megpróbáljuk, amikor megnyitod.';
+
+  @override
+  String app_lingua_voce(Object lingua) {
+    return 'Olvasási nyelv: $lingua';
+  }
+
+  @override
+  String get app_lingua_cambia => 'Módosítás';
+
+  @override
   String get notifiche_titolo => 'Értesítések';
 
   @override

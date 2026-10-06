@@ -62,4 +62,13 @@ export const app: typeof Base = {
   canale_promozioni: "Offerte e novità",
   canale_promozioni_testo: "Solo se hai acceso le promozioni nelle scelte sulla privacy.",
   elimina_store: "Un abbonamento comprato con {store} non si ferma da solo: disdicilo in {store}, così non si rinnova.",
+  /* v9.5: the reading language of the contents (ML Kit, on the device) */
+  lingua_titolo: "Lingua di lettura",
+  lingua_testo: "Articoli, carte e stese sono scritti in inglese. Scegli la lingua in cui vuoi leggerli: il telefono li traduce da sé, senza mandarli da nessuna parte. Ogni lingua tranne l'inglese richiede di scaricare circa 30 MB, una volta sola.",
+  lingua_cerca: "Cerca una lingua",
+  lingua_continua: "Continua",
+  lingua_scarico: "Scarico {lingua}… può volerci un minuto.",
+  lingua_errore: "Lo scaricamento non è riuscito (sei in rete?). Per ora i contenuti restano in inglese: riproveremo quando li apri.",
+  lingua_voce: "Lingua di lettura: {lingua}",
+  lingua_cambia: "Cambia",
 };

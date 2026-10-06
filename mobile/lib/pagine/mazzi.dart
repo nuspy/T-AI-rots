@@ -26,6 +26,7 @@ import '../modelli/voto.dart';
 import '../rotte/navigazione.dart';
 import '../rotte/percorsi.dart';
 import '../tema/tema.dart';
+import '../traduzione/con_traduzione.dart';
 import 'voto.dart' show CampioniVoto, BarraPercentuale;
 
 /// Le carte d'esempio di un mazzo.
@@ -56,10 +57,7 @@ class Mazzi extends ConsumerWidget {
           Fascia(
             compatta: true,
             child: DisposizioneMazzo(
-              sinistra: VentaglioMazzo(
-                ids: [campioneMazzo[i.isOdd ? 1 : 0], 'maj-06', 'maj-19'],
-                mazzo: cartellaDi(m),
-              ),
+              sinistra: VentaglioMazzo(ids: [campioneMazzo[i.isOdd ? 1 : 0], 'maj-06', 'maj-19'], mazzo: cartellaDi(m)),
               destra: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -162,63 +160,69 @@ class DettaglioMazzo extends ConsumerWidget {
     final leggiQui = m.predefinito ? '${R.leggi}?deck=${m.slug}' : '${R.leggi}?deck=${m.slug}&source=deck';
     final w = larghezza(context);
     final collegamento = Stile.sans(14.08, altezza: 1.6);
-    return Pagina(
-      sezioni: [
-        AperturaCatalogo(
-          sopra: Disponibile(t.mazzi_disponibile),
-          eyebrow: t.mazzi_mazzo_eyebrow(m.nome),
-          titolo: m.predefinito ? t.mazzi_thoth_titolo : m.nome,
-          intro: m.predefinito ? t.mazzi_thoth_intro : (m.descrizione ?? t.mazzi_altro_titolo),
-        ),
-        Fascia(
-          compatta: true,
-          child: DisposizioneMazzo(
-            sinistra: VentaglioMazzo(ids: const ['maj-02', 'maj-06', 'maj-17'], mazzo: cartella),
-            destra: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TitoloSezione(t.mazzi_slogan),
-                IntroSezione(t.mazzi_slogan_testo),
-                // `.minor-cta`: i collegamenti sottolineati in fila (`gap: .4rem 1rem`).
-                Padding(
-                  padding: EdgeInsets.only(top: w.telefono ? 9.6 : 16),
-                  child: Wrap(
-                    spacing: 16,
-                    runSpacing: 6.4,
-                    children: [
-                      Collegamento(
-                        t.mazzi_cta_leggi,
-                        href: leggiQui,
-                        stile: collegamento,
-                        an: 'deck_viewed',
-                        anProprieta: {'mazzo': m.slug},
-                      ),
-                      Collegamento(t.mazzi_cta_carte, href: R.carte, stile: collegamento),
-                      Collegamento(t.mazzi_cta_fisica, href: '${R.fisica}?deck=${m.slug}', stile: collegamento),
-                      Collegamento(t.mazzi_cta_negozio, href: R.negozio, stile: collegamento),
-                    ],
+    // v9.5: la descrizione di un mazzo (in inglese, o nella lingua dei contenuti se c'è) si traduce sul telefono;
+    // quella del Thoth è un testo dell'app, già tradotto.
+    final descrizione = m.predefinito ? null : m.descrizione;
+    return ConTraduzione(
+      da: linguaContenuti(ref.watch(linguaProvider)),
+      testi: [?descrizione],
+      costruisci: (context, tr, avviso) => Pagina(
+        sezioni: [
+          AperturaCatalogo(
+            sopra: Disponibile(t.mazzi_disponibile),
+            eyebrow: t.mazzi_mazzo_eyebrow(m.nome),
+            titolo: m.predefinito ? t.mazzi_thoth_titolo : m.nome,
+            intro: m.predefinito ? t.mazzi_thoth_intro : (descrizione == null ? t.mazzi_altro_titolo : tr(descrizione)),
+            sotto: avviso,
+          ),
+          Fascia(
+            compatta: true,
+            child: DisposizioneMazzo(
+              sinistra: VentaglioMazzo(ids: const ['maj-02', 'maj-06', 'maj-17'], mazzo: cartella),
+              destra: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TitoloSezione(t.mazzi_slogan),
+                  IntroSezione(t.mazzi_slogan_testo),
+                  // `.minor-cta`: i collegamenti sottolineati in fila (`gap: .4rem 1rem`).
+                  Padding(
+                    padding: EdgeInsets.only(top: w.telefono ? 9.6 : 16),
+                    child: Wrap(
+                      spacing: 16,
+                      runSpacing: 6.4,
+                      children: [
+                        Collegamento(
+                          t.mazzi_cta_leggi,
+                          href: leggiQui,
+                          stile: collegamento,
+                          an: 'deck_viewed',
+                          anProprieta: {'mazzo': m.slug},
+                        ),
+                        Collegamento(t.mazzi_cta_carte, href: R.carte, stile: collegamento),
+                        Collegamento(t.mazzi_cta_fisica, href: '${R.fisica}?deck=${m.slug}', stile: collegamento),
+                        Collegamento(t.mazzi_cta_negozio, href: R.negozio, stile: collegamento),
+                      ],
+                    ),
                   ),
+                  StampaMazzo(mazzo: m),
+                ],
+              ),
+            ),
+          ),
+          Fascia(
+            compatta: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Eyebrow(t.mazzi_campione),
+                GrigliaCarte(
+                  children: [for (final id in campioneMazzo) TesseraCarta(id: id, href: R.carta(id), mazzo: cartella)],
                 ),
-                StampaMazzo(mazzo: m),
               ],
             ),
           ),
-        ),
-        Fascia(
-          compatta: true,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Eyebrow(t.mazzi_campione),
-              GrigliaCarte(
-                children: [
-                  for (final id in campioneMazzo) TesseraCarta(id: id, href: R.carta(id), mazzo: cartella),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

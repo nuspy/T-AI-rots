@@ -31,6 +31,8 @@ import 'package:tarots/lettura/variante.dart';
 import 'package:tarots/notifiche/fuso.dart';
 import 'package:tarots/notifiche/push.dart';
 import 'package:tarots/rotte/router.dart';
+import 'package:tarots/traduzione/lingua_contenuti.dart';
+import 'package:tarots/traduzione/motore.dart';
 
 import 'finti.dart';
 
@@ -105,6 +107,8 @@ List<Override> sostituzioni({
   Negozio? negozio,
   ServizioPush? push,
   String varianteLettura = VarianteLettura.classica,
+  String? linguaContenuti,
+  MotoreTraduzione? motore,
 }) {
   final archivio =
       memoria ??
@@ -115,10 +119,13 @@ List<Override> sostituzioni({
         chiaveEta: '16',
         // v9.5: la prova 90/10 sorteggia la versione della lettura; i test scelgono la loro (qui la classica).
         chiaveVarianteLettura: varianteLettura,
+        // v9.5: la lingua di lettura (traduzione sul telefono), se il test la sceglie.
+        chiaveLinguaContenuti: ?linguaContenuti,
       });
   final adattatore = rete ?? apiDaFixture();
   return [
     archivioProvider.overrideWithValue(archivio),
+    motoreTraduzioneProvider.overrideWithValue(motore ?? const MotoreSpento()),
     authDisattivataProvider.overrideWithValue(autenticata),
     configAccessoProvider.overrideWithValue(accesso),
     statisticheGoogleProvider.overrideWithValue(StatisticheGoogleSpente()),
@@ -160,6 +167,8 @@ Future<ProviderContainer> montaApp(
   Negozio? negozio,
   ServizioPush? push,
   String varianteLettura = VarianteLettura.classica,
+  String? linguaContenuti,
+  MotoreTraduzione? motore,
 }) async {
   // I file veri (caratteri di sistema) si leggono fuori dal tempo finto del test.
   await tester.runAsync(caricaCaratteri);
@@ -180,6 +189,8 @@ Future<ProviderContainer> montaApp(
       negozio: negozio,
       push: push,
       varianteLettura: varianteLettura,
+      linguaContenuti: linguaContenuti,
+      motore: motore,
     ),
     retry: (_, _) => null,
   );

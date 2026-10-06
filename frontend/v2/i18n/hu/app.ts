@@ -62,4 +62,13 @@ export const app: typeof Base = {
   canale_promozioni: "Ajánlatok és újdonságok",
   canale_promozioni_testo: "Csak ha bekapcsoltad az ajánlatokat az adatvédelmi beállításokban.",
   elimina_store: "A(z) {store} rendszerén vásárolt előfizetés nem áll le magától: mondd le a(z) {store} oldalán, hogy ne újuljon meg.",
+  /* v9.5: the reading language of the contents (ML Kit, on the device) */
+  lingua_titolo: "Olvasási nyelv",
+  lingua_testo: "A cikkek, a kártyák és a kirakások angolul íródtak. Válaszd ki, milyen nyelven szeretnéd olvasni őket: a telefonod maga fordítja le őket, sehová sem küldi el. Az angolon kívül minden nyelvhez egyszer kell letölteni kb. 30 MB-ot.",
+  lingua_cerca: "Nyelv keresése",
+  lingua_continua: "Tovább",
+  lingua_scarico: "{lingua} letöltése… egy percig is eltarthat.",
+  lingua_errore: "A letöltés nem sikerült (van internet?). A tartalom egyelőre angolul marad: újra megpróbáljuk, amikor megnyitod.",
+  lingua_voce: "Olvasási nyelv: {lingua}",
+  lingua_cambia: "Módosítás",
 };

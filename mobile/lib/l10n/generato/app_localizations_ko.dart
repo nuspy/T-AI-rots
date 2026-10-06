@@ -5490,6 +5490,36 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get app_lingua_titolo => 'Reading language';
+
+  @override
+  String get app_lingua_testo =>
+      'Articles, cards and spreads are written in English. Choose the language you want to read them in: your phone translates them by itself, without sending them anywhere. Every language except English needs a download of about 30 MB, only once.';
+
+  @override
+  String get app_lingua_cerca => 'Search for a language';
+
+  @override
+  String get app_lingua_continua => 'Continue';
+
+  @override
+  String app_lingua_scarico(Object lingua) {
+    return 'Downloading $lingua… it can take a minute.';
+  }
+
+  @override
+  String get app_lingua_errore =>
+      'The download didn\'t work (are you online?). The contents stay in English for now: we\'ll try again when you open them.';
+
+  @override
+  String app_lingua_voce(Object lingua) {
+    return 'Reading language: $lingua';
+  }
+
+  @override
+  String get app_lingua_cambia => 'Change';
+
+  @override
   String get notifiche_titolo => 'Notifications';
 
   @override

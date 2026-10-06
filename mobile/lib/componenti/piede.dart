@@ -10,6 +10,7 @@ import '../l10n/testi.dart';
 import '../rotte/navigazione.dart';
 import '../rotte/percorsi.dart';
 import '../tema/tema.dart';
+import '../traduzione/scelta_lingua.dart';
 import 'marchio.dart';
 import 'premibile.dart';
 import 'selettore_lingua.dart';
@@ -83,6 +84,8 @@ class Piede extends StatelessWidget {
           padding: EdgeInsets.only(top: 16 - 13.44),
           child: SelettoreLingua(colore: Colori.voceMenu),
         ),
+        // v9.5: la lingua in cui il telefono traduce articoli, carte e stese.
+        const VoceLinguaContenuti(colore: Colori.voceMenu),
       ],
     );
 

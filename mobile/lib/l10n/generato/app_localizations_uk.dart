@@ -5495,6 +5495,36 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get app_lingua_titolo => 'Мова читання';
+
+  @override
+  String get app_lingua_testo =>
+      'Статті, карти й розклади написані англійською. Обери мову, якою хочеш їх читати: телефон перекладає їх сам, нікуди не надсилаючи. Для кожної мови, крім англійської, треба один раз завантажити близько 30 МБ.';
+
+  @override
+  String get app_lingua_cerca => 'Знайти мову';
+
+  @override
+  String get app_lingua_continua => 'Продовжити';
+
+  @override
+  String app_lingua_scarico(Object lingua) {
+    return 'Завантажую $lingua… це може тривати хвилину.';
+  }
+
+  @override
+  String get app_lingua_errore =>
+      'Завантажити не вдалося (чи є інтернет?). Поки що матеріали лишаються англійською: спробуємо знову, коли ти їх відкриєш.';
+
+  @override
+  String app_lingua_voce(Object lingua) {
+    return 'Мова читання: $lingua';
+  }
+
+  @override
+  String get app_lingua_cambia => 'Змінити';
+
+  @override
   String get notifiche_titolo => 'Сповіщення';
 
   @override

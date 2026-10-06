@@ -5503,6 +5503,36 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get app_lingua_titolo => 'Idioma de lectura';
+
+  @override
+  String get app_lingua_testo =>
+      'Los artículos, las cartas y las tiradas están escritos en inglés. Elige el idioma en que quieres leerlos: tu teléfono los traduce por sí solo, sin enviarlos a ninguna parte. Cada idioma salvo el inglés necesita una descarga de unos 30 MB, una sola vez.';
+
+  @override
+  String get app_lingua_cerca => 'Buscar un idioma';
+
+  @override
+  String get app_lingua_continua => 'Continuar';
+
+  @override
+  String app_lingua_scarico(Object lingua) {
+    return 'Descargando $lingua… puede tardar un minuto.';
+  }
+
+  @override
+  String get app_lingua_errore =>
+      'La descarga no funcionó (¿tienes conexión?). Por ahora los contenidos siguen en inglés: lo intentaremos de nuevo cuando los abras.';
+
+  @override
+  String app_lingua_voce(Object lingua) {
+    return 'Idioma de lectura: $lingua';
+  }
+
+  @override
+  String get app_lingua_cambia => 'Cambiar';
+
+  @override
   String get notifiche_titolo => 'Notificaciones';
 
   @override

@@ -9829,6 +9829,54 @@ abstract class AppLocalizations {
   /// **'A subscription bought with {store} doesn\'t stop on its own: cancel it in {store} so it isn\'t renewed.'**
   String app_elimina_store(Object store);
 
+  /// No description provided for @app_lingua_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading language'**
+  String get app_lingua_titolo;
+
+  /// No description provided for @app_lingua_testo.
+  ///
+  /// In en, this message translates to:
+  /// **'Articles, cards and spreads are written in English. Choose the language you want to read them in: your phone translates them by itself, without sending them anywhere. Every language except English needs a download of about 30 MB, only once.'**
+  String get app_lingua_testo;
+
+  /// No description provided for @app_lingua_cerca.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for a language'**
+  String get app_lingua_cerca;
+
+  /// No description provided for @app_lingua_continua.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get app_lingua_continua;
+
+  /// No description provided for @app_lingua_scarico.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading {lingua}… it can take a minute.'**
+  String app_lingua_scarico(Object lingua);
+
+  /// No description provided for @app_lingua_errore.
+  ///
+  /// In en, this message translates to:
+  /// **'The download didn\'t work (are you online?). The contents stay in English for now: we\'ll try again when you open them.'**
+  String get app_lingua_errore;
+
+  /// No description provided for @app_lingua_voce.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading language: {lingua}'**
+  String app_lingua_voce(Object lingua);
+
+  /// No description provided for @app_lingua_cambia.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get app_lingua_cambia;
+
   /// No description provided for @notifiche_titolo.
   ///
   /// In en, this message translates to:

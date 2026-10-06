@@ -21,6 +21,7 @@ import '../lingua/lingua.dart';
 import '../modelli/carta.dart';
 import '../rotte/percorsi.dart';
 import '../tema/tema.dart';
+import '../traduzione/con_traduzione.dart';
 import 'blog.dart' show ArticoliSu;
 
 /// I filtri della biblioteca, nell'ordine del sito.
@@ -184,8 +185,7 @@ class _SchedaCarta extends ConsumerWidget {
     final lettera = c.letteraEbraica;
     final corrispondenze = [
       if (lettera != null) '${lettera.nome} ${lettera.glifo}',
-      if (c.percorso != null)
-        t.carte_sentiero(c.percorso!) + (c.collega != null ? ' (${c.collega!.join(' – ')})' : ''),
+      if (c.percorso != null) t.carte_sentiero(c.percorso!) + (c.collega != null ? ' (${c.collega!.join(' – ')})' : ''),
       ?c.sefira,
       c.elementoLabel ?? c.elemento,
       c.astrologia,
@@ -195,111 +195,131 @@ class _SchedaCarta extends ConsumerWidget {
     final ambiti = t.carteAmbiti;
     final significati = c.significati ?? const <String, String>{};
     final ambitiCarta = c.ambiti ?? const <String, String>{};
+    // v9.5: la scheda arriva in italiano o in inglese; il telefono la traduce nella lingua di lettura.
+    final contenuti = [
+      c.paroleChiave.join(' · '),
+      ?c.dritto,
+      ...significati.values,
+      ?c.rovescio,
+      ...ambitiCarta.values,
+      corrispondenze.join(' · '),
+      ?c.notaCrowley,
+    ];
 
-    final immagine = Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 300),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // `.card-large`: la cornice crema di 5 px e l'ombra lunga.
-            Container(
-              decoration: const BoxDecoration(
-                border: Border.fromBorderSide(BorderSide(color: Colori.cornice, width: 5)),
-                boxShadow: [BoxShadow(color: Color(0x47201026), offset: Offset(0, 24), blurRadius: 40)],
-              ),
-              child: ImmagineCarta(c.id, alt: nome, mazzo: ''),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Paragrafo(c.paroleChiave.join(' · '), style: stilePiccolo()),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    final testo = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Eyebrow(t.carte_carta_riflessione),
-        TitoloSezione(t.carte_carta_domanda(nome)),
-        IntroSezione(t.carte_carta_nota),
-        Padding(
-          padding: const EdgeInsets.only(top: 8, bottom: 13.6),
-          child: FilaBottoni(
-            children: [
-              Bottone(t.carte_cta_leggi, href: '${R.leggi}?card=${Uri.encodeQueryComponent(c.slug ?? c.id)}&source=card'),
-              Bottone(t.carte_cta_fisica, href: R.fisica, variante: Variante.quieto),
-            ],
-          ),
-        ),
-        BloccoProsa([
-          if (c.dritto != null) ...[TitoloProsa(t.carte_dritta), ParagrafoProsa(c.dritto!)],
-          for (final e in significati.entries) ...[TitoloProsa(livelli[e.key] ?? e.key), ParagrafoProsa(e.value)],
-          if (c.rovescio != null) ...[
-            TitoloProsa(t.carte_rovesciata),
-            ParagrafoProsa(t.carte_rovesciata_nota, piccolo: true, tenue: true),
-            ParagrafoProsa(c.rovescio!),
-          ],
-          if (ambitiCarta.isNotEmpty) ...[
-            TitoloProsa(t.carte_ambiti_titolo),
-            for (final e in ambitiCarta.entries) ParagrafoProsa(e.value, inGrassetto: '${ambiti[e.key] ?? e.key}.'),
-          ],
-          TitoloProsa(t.carte_corrispondenze),
-          ParagrafoProsa(corrispondenze.join(' · '), piccolo: true),
-          if (c.notaCrowley != null) ...[TitoloProsa(t.carte_crowley), ParagrafoProsa(c.notaCrowley!)],
-        ]),
-        // `.pager`: la carta prima a sinistra, quella dopo a destra.
-        Padding(
-          padding: const EdgeInsets.only(top: 11.2),
-          child: Semantics(
-            label: t.carte_torna,
-            container: true,
-            child: Row(
+    return ConTraduzione(
+      da: linguaContenuti(lingua),
+      testi: contenuti,
+      costruisci: (context, tr, avviso) {
+        final immagine = Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 300),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Flexible(
-                  child: prima == null
-                      ? const SizedBox.shrink()
-                      : Collegamento(
-                          '← ${nomeDi(prima, lingua)}',
-                          href: R.carta(prima.slug ?? prima.id),
-                          stile: Stile.sans(16, altezza: 1.6),
-                        ),
-                ),
-                const SizedBox(width: 16),
-                Flexible(
-                  child: Align(
-                    alignment: AlignmentDirectional.centerEnd,
-                    child: dopo == null
-                        ? const SizedBox.shrink()
-                        : Collegamento(
-                            '${nomeDi(dopo, lingua)} →',
-                            href: R.carta(dopo.slug ?? dopo.id),
-                            stile: Stile.sans(16, altezza: 1.6),
-                          ),
+                // `.card-large`: la cornice crema di 5 px e l'ombra lunga.
+                Container(
+                  decoration: const BoxDecoration(
+                    border: Border.fromBorderSide(BorderSide(color: Colori.cornice, width: 5)),
+                    boxShadow: [BoxShadow(color: Color(0x47201026), offset: Offset(0, 24), blurRadius: 40)],
                   ),
+                  child: ImmagineCarta(c.id, alt: nome, mazzo: ''),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Paragrafo(tr(c.paroleChiave.join(' · ')), style: stilePiccolo()),
                 ),
               ],
             ),
           ),
-        ),
-      ],
-    );
+        );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        AperturaCatalogo(
-          eyebrow: t.carte_carta_eyebrow(arcano),
-          titolo: nome,
-          intro: c.titoloThoth,
-        ),
-        Fascia(
-          compatta: true,
-          child: DisposizioneMazzo(inAlto: true, sinistra: immagine, destra: testo),
-        ),
-      ],
+        final testo = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Eyebrow(t.carte_carta_riflessione),
+            TitoloSezione(t.carte_carta_domanda(nome)),
+            IntroSezione(t.carte_carta_nota),
+            Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 13.6),
+              child: FilaBottoni(
+                children: [
+                  Bottone(
+                    t.carte_cta_leggi,
+                    href: '${R.leggi}?card=${Uri.encodeQueryComponent(c.slug ?? c.id)}&source=card',
+                  ),
+                  Bottone(t.carte_cta_fisica, href: R.fisica, variante: Variante.quieto),
+                ],
+              ),
+            ),
+            avviso,
+            BloccoProsa([
+              if (c.dritto != null) ...[TitoloProsa(t.carte_dritta), ParagrafoProsa(tr(c.dritto!))],
+              for (final e in significati.entries) ...[
+                TitoloProsa(livelli[e.key] ?? e.key),
+                ParagrafoProsa(tr(e.value)),
+              ],
+              if (c.rovescio != null) ...[
+                TitoloProsa(t.carte_rovesciata),
+                ParagrafoProsa(t.carte_rovesciata_nota, piccolo: true, tenue: true),
+                ParagrafoProsa(tr(c.rovescio!)),
+              ],
+              if (ambitiCarta.isNotEmpty) ...[
+                TitoloProsa(t.carte_ambiti_titolo),
+                for (final e in ambitiCarta.entries)
+                  ParagrafoProsa(tr(e.value), inGrassetto: '${ambiti[e.key] ?? e.key}.'),
+              ],
+              TitoloProsa(t.carte_corrispondenze),
+              ParagrafoProsa(tr(corrispondenze.join(' · ')), piccolo: true),
+              if (c.notaCrowley != null) ...[TitoloProsa(t.carte_crowley), ParagrafoProsa(tr(c.notaCrowley!))],
+            ]),
+            // `.pager`: la carta prima a sinistra, quella dopo a destra.
+            Padding(
+              padding: const EdgeInsets.only(top: 11.2),
+              child: Semantics(
+                label: t.carte_torna,
+                container: true,
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: prima == null
+                          ? const SizedBox.shrink()
+                          : Collegamento(
+                              '← ${nomeDi(prima, lingua)}',
+                              href: R.carta(prima.slug ?? prima.id),
+                              stile: Stile.sans(16, altezza: 1.6),
+                            ),
+                    ),
+                    const SizedBox(width: 16),
+                    Flexible(
+                      child: Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: dopo == null
+                            ? const SizedBox.shrink()
+                            : Collegamento(
+                                '${nomeDi(dopo, lingua)} →',
+                                href: R.carta(dopo.slug ?? dopo.id),
+                                stile: Stile.sans(16, altezza: 1.6),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AperturaCatalogo(eyebrow: t.carte_carta_eyebrow(arcano), titolo: nome, intro: c.titoloThoth),
+            Fascia(
+              compatta: true,
+              child: DisposizioneMazzo(inAlto: true, sinistra: immagine, destra: testo),
+            ),
+          ],
+        );
+      },
     );
   }
 }
