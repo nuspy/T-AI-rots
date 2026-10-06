@@ -13,6 +13,7 @@ export const privacy: typeof Base = {
   letture_titolo: "Le tue letture e la tua memoria",
   letture_testo: "Le letture si conservano nel tuo account perché tu possa tornarci. Ciò che il tuo lettore ricorda nasce dalle tue letture e conversazioni, e puoi rivederlo, modificarlo o cancellarlo in qualsiasi momento da La mia storia. Eliminare una lettura la cancella per sempre.",
   letture_cta: "Gestisci ciò che viene ricordato",
+  letture_accesso: "Solo per ragioni di sicurezza (per esempio per gestire una segnalazione di abuso o una richiesta di aiuto), gli amministratori di TAROTS chat possono leggere le tue letture, le conversazioni, ciò che il lettore ricorda e i dati del tuo profilo. Ogni accesso richiede un motivo dichiarato e resta registrato.",
   ai_titolo: "Come si usa l'AI",
   ai_testo: "Un'intelligenza artificiale interpreta le carte nel contesto della tua domanda e delle tue parole. I nomi non arrivano mai al fornitore dell'AI: riceve un segnaposto («Persona_1») e tu leggi il nome vero; il cognome dell'altra persona non parte mai. L'AI non conosce il futuro, e nessuna lettura è una previsione. A ogni richiesta chiediamo al fornitore di non conservare le risposte: i tuoi testi non restano da lui per addestrare i suoi modelli.",
 

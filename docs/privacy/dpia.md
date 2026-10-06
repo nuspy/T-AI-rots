@@ -92,7 +92,7 @@ Scala: probabilità e gravità **bassa / media / alta**. «Residuo» è il livel
 | R11 | IP interi nei log dei pod (uvicorn) e di Nginx Proxy Manager, senza durata documentata. | Alta | Bassa | Nessuna specifica. | **Media**. Azione A11. |
 | R12 | Presa di un account altrui tramite un social con la stessa email. | Bassa | Alta | Unione da confermare: Keycloak toglie i vecchi accessi di un account mai verificato e chiede alla persona; separazione dei dati se l'account non era suo. | **Bassa**. |
 | R13 | Uso futuro dei testi per il blog con frasi riconoscibili. | Media | Alta | Consenso separato `testi_statistiche`; regole in `testi-statistiche.md` (anonimizzazione, k≥5, mai citazioni, esclusione dei testi sensibili). Oggi nessuna estrazione. | **Bassa** se le regole si applicano; da rivalutare prima del rilascio. |
-| R14 | Accesso degli amministratori alle letture oltre il necessario. | Bassa | Media | Console riservata al ruolo `admin`; la scheda utente mostra conteggi, non contenuti; registro delle azioni. | **Bassa–media**: chi ha accesso al database vede tutto. Azione A14. |
+| R14 | Accesso degli amministratori alle letture oltre il necessario. Dalla v9.5 (decisione dell'operatore del 6/10/2026) la console può mostrare, per ragioni di sicurezza, letture, intervista, chat, memorie e dati di profilazione di un utente. | Media | Alta | Console riservata al ruolo `admin`; i contenuti si aprono solo scrivendo un motivo (accesso di 30 minuti, per quell'utente e quell'amministratore); ogni accesso e ogni scheda letta restano nel registro append-only (`admin.contenuti.accesso` / `admin.contenuti.lettura`), visibile nella scheda dell'utente; non escono stato del mazzo, vettori delle memorie, token dei dispositivi; l'informativa lo dichiara (sezione «Letture»). | **Media**: dipende dalla disciplina degli amministratori e dalla revisione del registro. Azioni A14 e A15. **`TODO_OPERATORE: il consulente confermi la base giuridica (art. 6.1.f e, per i dati art. 9, la deroga applicabile) e se serve aggiornare la versione dell'informativa (oggi «v1») per chiedere di nuovo il consenso.`** |
 | R15 | Effetti sulle decisioni personali (la persona prende per vera una «previsione»). | Media | Media | Il servizio dichiara che l'AI non conosce il futuro e che nessuna lettura è una previsione; guardrail sul responso. | **Bassa–media**. |
 
 ## 5. Azioni aperte
@@ -113,6 +113,7 @@ Scala: probabilità e gravità **bassa / media / alta**. «Residuo» è il livel
 | A12 | Pulsante di cancellazione per la lettura anonima (oggi solo via email e console). | Sviluppo | **`TODO_OPERATORE`** |
 | A13 | Procedura e registro per le richieste degli interessati che arrivano via email. | Operatore | **`TODO_OPERATORE`** |
 | A14 | Istruzioni scritte agli amministratori (art. 29) e accesso al database solo per manutenzione. | Operatore | **`TODO_OPERATORE`** |
+| A15 | Contenuti degli utenti in console (v9.5): casi in cui è lecito aprirli (segnalazioni, abusi, richieste di supporto), revisione periodica del registro degli accessi, 2FA obbligatoria per gli amministratori. | Operatore | **`TODO_OPERATORE`** |
 | A15 | Rivedere questa DPIA prima della Fase 5 (notifiche e marketing) e prima di attivare la pipeline dei testi. | Operatore | Pianificata |
 
 ## 6. Consultazione preventiva (art. 36)

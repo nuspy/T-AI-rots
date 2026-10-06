@@ -165,6 +165,7 @@ export function Privacy() {
         <section className="panel" aria-labelledby="pv-letture">
           <h2 id="pv-letture">{k.letture_titolo}</h2>
           <p className="small">{k.letture_testo}</p>
+          <p className="small">{k.letture_accesso}</p>
           <LinkV2 className="button button-quiet button-small" href={R.storia}>{k.letture_cta}</LinkV2>
         </section>
         <section className="panel" aria-labelledby="pv-ai">

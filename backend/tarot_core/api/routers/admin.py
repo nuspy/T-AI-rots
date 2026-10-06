@@ -4,10 +4,10 @@ Tutto il router pretende il ruolo `admin`, dichiarato una volta sola sul
 router: ripeterlo endpoint per endpoint significa dimenticarlo su quello
 aggiunto di fretta.
 
-**La console non legge le letture.** Vede quante sono, di che stesa, quali
-carte escono, come le giudicano gli utenti; non vede le domande né i
-responsi. Sono dati intimi, e l'amministrazione del servizio non ha bisogno
-di conoscerli per farlo funzionare.
+**Qui la console non legge le letture.** Vede quante sono, di che stesa, quali
+carte escono, come le giudicano gli utenti. Dalla v9.5 domande, responsi, chat,
+memorie e profilazione di un utente si leggono solo da `admin_contenuti_utente.py`,
+dopo aver indicato un motivo, e ogni accesso resta nel registro.
 """
 from __future__ import annotations
 

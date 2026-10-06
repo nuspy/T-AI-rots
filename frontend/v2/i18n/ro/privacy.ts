@@ -12,6 +12,7 @@ export const privacy = {
   letture_titolo: "Your readings and your memory",
   letture_testo: "Readings are kept in your account so you can return to them. What your reader remembers comes from your readings and conversations, and you can review, edit or delete it at any time from My story. Deleting a reading removes it for good.",
   letture_cta: "Manage what is remembered",
+  letture_accesso: "For security reasons only (for example to handle a report of abuse or a request for help), the administrators of TAROTS chat can read your readings, conversations, what the reader remembers and your profile data. Each access requires a stated reason and is recorded in a log.",
   ai_titolo: "How the AI is used",
   ai_testo: "An AI interprets the cards in the context of your question and your words. Names never reach the AI provider: it receives a placeholder (“Persona_1”) and you read the real name; the other person's surname is never sent. The AI does not know the future, and no reading is a prediction. With every request we ask the provider not to store the answers: your texts are not kept by it to train its models.",
 

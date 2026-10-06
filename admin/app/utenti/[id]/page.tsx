@@ -17,12 +17,14 @@ import comuni from "../../comuni.module.css";
 import { TabellaPagamenti } from "../../pagamenti/tabella";
 import stili from "./dettaglio.module.css";
 import { AcquistiStore } from "./acquisti-store";
+import { ContenutiUtente } from "./contenuti";
 import { Movimenti } from "./movimenti";
 
 /* Un utente, visto da chi amministra.
  *
  * Si vede il conto — saldo, abbonamento, movimenti, pagamenti — e quante
- * letture ha fatto, mai che cosa ha chiesto. Si può sospendere l'account,
+ * letture ha fatto. Che cosa ha chiesto (letture, chat, memorie, profilazione)
+ * si apre solo in fondo, con un motivo, e resta nel registro (`contenuti.tsx`). Si può sospendere l'account,
  * regalare crediti, rettificare il saldo e stornare un incasso (`movimenti.tsx`).
  * Tutto finisce nel registro, con chi l'ha fatto.
  */
@@ -139,6 +141,8 @@ function Scheda({ utente, ricarica }: { utente: UtenteDettaglio; ricarica: () =>
       </section>
 
       <AcquistiStore acquisti={utente.acquisti_store ?? []} />
+
+      <ContenutiUtente id={utente.id} />
     </>
   );
 }

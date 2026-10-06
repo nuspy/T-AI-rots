@@ -13,6 +13,7 @@ export const privacy: typeof Base = {
   letture_titolo: "A jóslásaid és az emlékezeted",
   letture_testo: "A jóslásokat a fiókodban őrizzük, hogy visszatérhess hozzájuk. Amire a tarotolvasód emlékszik, az a jóslásaidból és beszélgetéseidből származik, és A történetemben bármikor átnézheted, módosíthatod vagy törölheted. Egy jóslás törlése véglegesen eltávolítja.",
   letture_cta: "Kezeld, mire emlékszik",
+  letture_accesso: "Kizárólag biztonsági okokból (például visszaélésről szóló bejelentés vagy segítségkérés kezelésére) a TAROTS chat adminisztrátorai elolvashatják a jóslásaidat, a beszélgetéseidet, azt, amire a tarotolvasód emlékszik, és a profiladataidat. Minden hozzáféréshez meg kell adni az okát, és naplózásra kerül.",
   ai_titolo: "Hogyan használjuk a mesterséges intelligenciát",
   ai_testo: "Egy MI a kérdésed és a szavaid összefüggésében értelmezi a kártyákat. A nevek soha nem jutnak el az MI szolgáltatójához: az egy helyettesítő jelölést kap („Persona_1”), te pedig a valódi nevet olvasod; a másik személy vezetékneve soha nem kerül továbbításra. Az MI nem ismeri a jövőt, és egyetlen jóslás sem jóslat a jövőről. Minden kérésnél megkérjük a szolgáltatót, hogy ne tárolja a válaszokat: a szövegeid nem maradnak nála a modelljei tanítására.",
 

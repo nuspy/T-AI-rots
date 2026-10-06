@@ -41,6 +41,11 @@ Valgono per tutti i trattamenti; le schede citano solo le misure in più.
   del partner non entra mai nei prompt (`tarot/persone.py`).
 - **M6 — Registro append-only.** Ogni azione rilevante (consensi, cancellazioni, azioni degli amministratori) lascia
   una riga in `audit_log`, che l'applicazione non modifica né cancella.
+- **M6b — Contenuti degli utenti in console (v9.5).** Per ragioni di sicurezza gli amministratori possono leggere, nella
+  scheda di un utente, letture, intervista, chat, memorie e dati di profilazione, solo dopo aver scritto un motivo
+  (accesso di 30 minuti); ogni accesso e ogni scheda letta finiscono in `audit_log` e si rivedono nella scheda stessa
+  (`api/routers/admin_contenuti_utente.py`). L'informativa lo dichiara. **`TODO_OPERATORE: base giuridica e deroga
+  art. 9 da confermare col consulente (vedi DPIA, R14 e A15)`**.
 - **M7 — Backup.** Copia notturna del database sul NAS dell'operatore in Italia via SFTP con chiave dell'host
   verificata e impronta SHA-256 di ogni file; rotazione automatica (`tarot/backup.py`). I file del dump non sono
   cifrati a riposo. **`TODO_OPERATORE: valutare la cifratura dei dump sul NAS e documentare chi accede al NAS`**.

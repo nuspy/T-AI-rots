@@ -35,6 +35,7 @@ from .routers import admin_configurazioni  # v9 Fase 2c: Stripe, posta, titolare
 from .routers import admin_notifiche, notifiche  # v9 Fase 5: notifiche push (app e sito) e la console «Notifications»
 from .routers import billing_store  # v9 Fase 4: acquisti nelle app (Google Play, App Store) e le loro notifiche
 from .routers import collega  # v9 Fase 6: collegare Apple e Google all'account (profilo e codice dell'app)
+from .routers import admin_contenuti_utente  # v9.5: letture, chat, memorie e profilazione di un utente, con motivo
 
 # Le chiamate ai fornitori LLM (e a qualunque altro servizio HTTPS esterno) verificano il certificato con
 # l'archivio del sistema operativo, non solo con quello di `certifi`: su Windows, dietro un antivirus o un proxy
@@ -199,6 +200,7 @@ def create_app() -> FastAPI:
     app.include_router(collega.router)
     app.include_router(privacy.router)
     app.include_router(admin_conservazione.router)
+    app.include_router(admin_contenuti_utente.router)
     app.include_router(billing.router)
     app.include_router(billing.router_admin)
     app.include_router(abbonamenti.router)
