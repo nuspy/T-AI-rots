@@ -132,9 +132,9 @@ TITLES_OVERLAP = datetime.timedelta(minutes=10)      # `dal` starts this much be
 TITLES_SHOWN = 100                                   # lines `titles` prints without --all
 
 #: A copy of the card rules of `tarots_images.py`: a blog picture is never a picture of cards (no card as the
-#: subject, no two or more cards, no spread or layout, no hand holding a card), while cards may stay in the context
-#: ("tarot" as an adjective, the names of the cards as a world or a symbol; one single small card only for an
-#: article about that very card). CARD_PATTERNS, CARD_WORD, LEAD_WORDS, LEAD_SKIP, DECK, NOT_A_CARD_DECK,
+#: subject, no spread or layout, no hand holding a card), while cards may stay in the context ("tarot" as an
+#: adjective, the names of the cards as a world or a symbol, even several cards as a marginal element or a
+#: reference: operator, 6/10/2026). MARGINAL_FAMILIES, MARGINAL_WORDS, CARD_PATTERNS, CARD_WORD, LEAD_WORDS, LEAD_SKIP, DECK, NOT_A_CARD_DECK,
 #: `card_problems()` and the card rule of the article (MAJOR_ARCANA… `card_rule_problems()`, after
 #: `card_problem()`) are kept identical to the original by a test (`tests/test_immagini.py`); change both together.
 SPREAD = "spread"
@@ -180,6 +180,16 @@ CARD_PATTERNS = [
     (r"\brider[- ]?waite\b|\bwaite[- ]smith\b|\bsmith[- ]waite\b|\bmarseilles?\s+tarot\b|\btarot\s+de\s+marseilles?\b",
      "a named deck's artwork", "subject"),
 ]
+#: Operator, 6/10/2026: cards may be in the picture, even many, as a marginal element or a reference; what is refused
+#: is cards as the main subject, in meaning or in size. The families below are therefore no longer refusals:
+#: `card_problems()` skips them, and `card_rule_problems()` warns instead (keep them small, at the edge).
+MARGINAL_FAMILIES = frozenset({"many"})
+#: Cards named at the start of a prompt (first clause or first LEAD_WORDS content words) are its subject: one card or
+#: many, a deck, the arcana. A ship's deck or "the style of the Thoth deck" (NOT_A_CARD_DECK) is taken out first.
+CARD_LEAD = r"\bcards?\b|\barcan(?:um|a)\b|\btarocc(?:o|hi)\b|\bdecks?\b"
+#: Words that say a card is a marginal element, not the subject (a warning when a prompt draws cards without them).
+MARGINAL_WORDS = (r"\b(?:small|tiny|little|miniature|background|corner|edge|edges|margin|aside|half[- ]hidden"
+                  r"|distance|distant|far|tucked|peeking|partly)\b")
 CARD_WORD = r"\bcard\b|\barcanum\b|\btarocco\b"
 LEAD_WORDS = 8
 LEAD_SKIP = frozenset("""
@@ -1487,13 +1497,12 @@ def card_problems(text: str) -> List[tuple]:
     low = " ".join(text.lower().split()).replace("’", "'")
     found = []
     for pattern, what, family in CARD_PATTERNS:
+        if family in MARGINAL_FAMILIES:  # allowed since 6/10/2026: many cards, a deck, as a marginal element
+            continue
         m = re.search(pattern, low)
         if m:
             found.append((family, m.group(0), what))
-    m = re.search(DECK, re.sub(NOT_A_CARD_DECK, " ", low))
-    if m:
-        found.append(("many", m.group(0), "a deck: many cards"))
-    m = re.search(CARD_WORD, _lead(low))
+    m = re.search(CARD_LEAD, _lead(re.sub(NOT_A_CARD_DECK, " ", low)))
     if m:
         found.append(("subject", m.group(0), f"a card as the subject: in the first clause or the first {LEAD_WORDS} words"))
     return found
@@ -1675,39 +1684,39 @@ def shows_a_card(prompt: str) -> bool:
 def card_rule_problems(prompt: str, texts: List[str], title: str = "") -> tuple:
     """(problems, warnings) of the card a prompt draws, for the article whose title and focus keyword are `texts`
     (empty for a section, a spread or an unknown article). ([], []) when the prompt draws no card.
-    Relaxed by the operator on 6/10/2026: one single small card is allowed as context in any picture; refused only
-    are more than one card and a copy of a deck's artwork (`card_problems()` still refuses a card as the subject,
-    decks, spreads and hands holding cards). The rest are warnings."""
-    shown = cards_shown(prompt) if not card_problems(prompt) else None
-    if shown is None:
+    Relaxed by the operator on 6/10/2026: cards are allowed in any picture, even several, as a marginal element or a
+    reference; refused here is only a copy of a deck's artwork (`card_problems()` still refuses cards as the subject,
+    a reading laid out and hands holding cards). The rest are warnings."""
+    if card_problems(prompt):
+        return [], []
+    low = " ".join(prompt.lower().split()).replace("’", "'")
+    many = any(re.search(p, low) for p, _what, family in CARD_PATTERNS if family in MARGINAL_FAMILIES) or bool(
+        re.search(DECK, re.sub(NOT_A_CARD_DECK, " ", low)))
+    shown = cards_shown(prompt) or []
+    if not shown and not many:
         return [], []
     own = cards_of_article(texts)
     about = f"«{title}»" if title else "this picture"
     plain = _card_plain(prompt)
-    problems: List[str] = []
     named = []
     for card in shown:
         if card and card not in named:
             named.append(card)
-    if len(named) > 1:
-        problems.append(f"the prompt draws more than one card ({', '.join(named)}): one single small card at most")
     if re.search(COPY_OF_ARTWORK, plain):
-        problems.append("it asks for a copy of a deck's artwork: the card is a new drawing in the style of the Thoth "
-                        "deck, never a reproduction")
+        return ["it asks for a copy of a deck's artwork: a card is a new drawing in the style of the Thoth deck, never "
+                "a reproduction"], []
     warnings: List[str] = []
-    if problems:
-        return problems, warnings
+    if not re.search(MARGINAL_WORDS, plain):
+        warnings.append("the prompt does not say the cards are marginal: say they are small, in the background or at "
+                        "the edge, or the model may make them the subject; the subject must be something else")
     if not re.search(r"\bthoth\b", plain):
-        warnings.append("the prompt does not say the card is in the style of the Thoth deck: add «in the style of "
+        warnings.append("the prompt does not say the cards are in the style of the Thoth deck: add «in the style of "
                         "the Thoth deck» (a new drawing, not a copy; never Rider-Waite or Marseille), or the model "
                         "paints the deck it knows best")
-    if not re.search(r"\b(?:small|tiny|little|miniature)\b", plain):
-        warnings.append("the prompt does not say the card is small: write «a single small card», or the model may "
-                        "make it the subject of the picture")
-    if own and named and named[0] not in own:
-        warnings.append(f"the card drawn ({named[0]}) is not the card of {about} (about {', '.join(own)}): allowed "
-                        "as context, but the article's own card would say more")
-    return problems, warnings
+    if own and named and not any(card in own for card in named):
+        warnings.append(f"the card drawn ({', '.join(named)}) is not the card of {about} (about {', '.join(own)}): "
+                        "allowed as a reference, but the article's own card would say more")
+    return [], warnings
 
 
 # ---- the subject of an article: the card it is about, declared ------------------------------------------------
@@ -1863,9 +1872,7 @@ def check_card_in_picture(path: str, prompt: str, *, article: Optional[str], abo
     """The card rule (see `card_rule_problems`): one single small card as context is accepted in any picture; more
     than one card, or a copy of a deck's artwork, is refused. `about` is (texts, title) when the article is at hand
     (`post`); without it the rule is the same, only the warning about the article's own card is lost."""
-    if not shows_a_card(prompt):
-        return
-    if about is None and article:
+    if about is None and article and shows_a_card(prompt):
         about = article_texts(article)
     problems, warnings = card_rule_problems(prompt, *(about or ([], "")))
     for warning in warnings:

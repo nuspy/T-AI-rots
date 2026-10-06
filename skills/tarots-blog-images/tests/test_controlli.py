@@ -77,7 +77,10 @@ def test_hermes_prompts_are_still_refused(prompt):
 
 
 REFUSED = {
-    # the card as the subject: at the start, in the first clause, in the first 8 words, a close-up
+    # the card as the subject: at the start, in the first clause, in the first 8 words, a close-up. Since the
+    # second revision of 6/10/2026, "cards", "arcana", "tarocchi" and "deck(s)" at the lead count too (CARD_LEAD):
+    # several cards are no longer refused as a family of their own ("many" is gone, MARGINAL_FAMILIES), only when
+    # they are named this early, which makes them the subject regardless of how many there are.
     "subject": [
         "a single card tucked between the pages of a notebook on a windowsill",
         "a tarot card showing the High Priestess between two pillars",
@@ -90,15 +93,12 @@ REFUSED = {
         "a Rider-Waite style illustration of a woman with a lion",
         "a lighthouse in a storm in tarot-style artwork with a card frame",
         "Atu XVI of the Thoth trumps",
-    ],
-    # more than one card
-    "many": [
+        # formerly their own "many" family (more than one card): still refused, but as the lead subject now
         "CARDS in an old wooden box on a dusty shelf",
         "a worn deck wrapped in black silk on an altar of river stones",
         "an old wooden deck tied with a ribbon",
         "Thoth deck illustrations, Egyptian motifs, purple and gold",
         "a garden at dawn, a bench, and three cards forgotten on it",
-        "a pile of tarot under a reading lamp",
         "the Major Arcana painted on the walls of a chapel",
         "a vintage tarocchi box on a shelf",
     ],
@@ -168,6 +168,11 @@ def test_cards_as_the_picture_are_refused(family, prompt):
     # article decides (only for an article about that very card: test_carta_articolo.py)
     "A rain-streaked kitchen window at dawn, a kettle steaming on the stove, a coat on the chair, bread on the "
     "board, and on the windowsill a single card tucked in a notebook",
+    # several cards, late in the scene, as a marginal element or a reference (second revision, 6/10/2026): the
+    # family "many" is gone from card_problems() itself; the card rule (test_carta_articolo.py) only warns.
+    "a pile of tarot under a reading lamp",
+    "A cluttered attic workshop at dusk, old photographs and ribbons in a drawer, and among them a few worn tarot "
+    "cards from a forgotten set",
 ])
 def test_cards_as_context_are_accepted(prompt):
     assert ti.card_problems(prompt) == [], (prompt, ti.card_problems(prompt))

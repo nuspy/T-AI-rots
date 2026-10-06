@@ -286,8 +286,8 @@ def test_the_cover_found_in_foto_passes_every_check_of_the_record(blog, capsys):
     assert tb.main(["post", "samhain-tarot-spread"]) == tb.EXIT_RULE
     assert "already a picture of article another-article" in capsys.readouterr().err
     cover.unlink()
-    # a single small card, in the Thoth style, as context: admitted even though this article is about no card
-    # (the warning that it is not the article's own card is lost here: `post` discards card warnings)
+    # a single small card, marginal and in the Thoth style: admitted even though this article is about no card
+    # (nothing of its own to compare the Fool against, so not even a mismatch warning is printed)
     _generated_cover(folder, content=b"\xff\xd8 fool", prompt=(
         "A quiet garden at dawn with a stone bench and a cup of tea, and beside it a single small card of the Fool "
         "in the style of the Thoth deck, seen from above, " + ti.HOUSE_STYLE))

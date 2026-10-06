@@ -51,13 +51,15 @@ and refuse the file before uploading anything (exit 7) when:
   `--operator-image` and a warning; that option is never a way around a refusal;
 - the same picture (same sha256, whatever the name) is already used by another article;
 - the prompt it was generated from makes cards the picture (the same rules as `generate`, copied in
-  `tarots_blog.py`: a card as the subject, two or more cards, a spread, a hand holding a card);
-- the prompt draws **more than one card**, or asks for a **copy** of a deck's artwork (the same card rule as
-  `generate`, copied too, relaxed 6/10/2026: one single small card as context is admitted in any picture, of any
-  article, with or without `--for`). Missing "Thoth", missing "small", or a card that is not the article's own
+  `tarots_blog.py`: **a card or cards as the subject** — including at the very start of the prompt, however many —
+  a spread, a hand holding a card);
+- the prompt asks for a **copy** of a deck's artwork (the same card rule as `generate`, copied too, relaxed twice,
+  6/10/2026: cards, even several, are admitted as a marginal element or a reference in any picture, of any article,
+  with or without `--for`, as long as the subject — in meaning and in size — is something else). Missing "Thoth",
+  missing "marginal" (small, in the background, at the edge…), or none of the cards named being the article's own
   (for `post`, its article.json: `title`, `focus_keyword`, `subject`; for `upload`, the `--for` slug or id, looked
-  for in its work folder, then in the titles copy) are no longer refusals here — check them yourself with
-  `tarots-blog-images`'s `prompt-check`, which still prints them as warnings; `post` and `upload` do not.
+  for in its work folder, then in the titles copy) are no longer refusals here — `post` and `upload` print them as
+  `card warning:` lines on their own, and `tarots-blog-images`'s `prompt-check` prints them too, before generating.
 
 A file that is not PNG, JPEG or WebP is refused first, as a usage error (exit 2).
 
@@ -70,24 +72,26 @@ Write it with `tarots-blog-images/references/prompts.md`: the reasons and the ru
 line, examples. In short:
 - **The subject is this article's content**: a concrete scene, place, object or gesture from its text; never a
   prompt per section or a template.
-- **Cards as context, never as the picture.** Refused: a card as the subject (at the start, in the first clause or
-  the first 8 content words, a close-up of a card), more than one card (cards, a deck, a pile, the arcana), a spread
-  or layout (cards on a table, a reading, a fan of cards, cards face down), hands holding or turning a card.
-  Accepted: "tarot" as an adjective, the names of the cards as a world or a symbol, without the word *card* ("a
-  lighthouse struck by lightning, the energy of the Tower").
-- **One single small card, as context, is allowed in any picture** (relaxed 6/10/2026: an article on any topic,
-  with or without `--article`, a section, a spread). Refused only: **more than one card**, or a **copy** of a
-  deck's artwork (never, not even of the article's own card — always a new drawing). Everything else is a
-  **warning**: the prompt does not say the card is **small**, does not say it is **in the style of the Thoth
-  deck** (Thoth and Rider-Waite names are the same card: Adjustment = Justice, Lust = Strength, Art = Temperance,
-  Aeon = Judgement, Universe = World…), or draws a card that is **not the one the article's title, focus keyword or
-  `subject` names** — allowed as context, but the article's own card would say more.
+- **Cards may be a marginal element or a reference, even several of them; the subject must be something else.**
+  Refused: a card or cards as the subject (at the start, in the first clause or the first 8 content words, a
+  close-up of a card — one card is as much the subject as fifty), a spread or layout (cards on a table, a reading,
+  a fan of cards, cards face down), hands holding or turning a card, a copy of a deck's artwork. Accepted: "tarot"
+  as an adjective, the names of the cards as a world or a symbol, without the word *card* ("a lighthouse struck by
+  lightning, the energy of the Tower"), and one or several cards named later in the scene, as a detail.
+- **A card drawn in the picture, past the lead, is never refused for being more than one** (relaxed twice,
+  6/10/2026: an article on any topic, with or without `--article`, a section, a spread). Refused only: a **copy**
+  of a deck's artwork (never, not even of the article's own card — always a new drawing). Everything else is a
+  **warning**: the prompt does not say the cards are **marginal** (small, in the background, at the edge, tucked,
+  half-hidden…), does not say they are **in the style of the Thoth deck** (Thoth and Rider-Waite names are the same
+  card: Adjustment = Justice, Lust = Strength, Art = Temperance, Aeon = Judgement, Universe = World…), or none of
+  the cards named is **the one the article's title, focus keyword or `subject` names** — allowed as a reference,
+  but the article's own card would say more.
   Accepted, no warning, for *The Tower tarot card meaning*: "…a wool coat drying by the door, seen through the
   window, on the shelf a single small card of the Tower leaning on a cup, in the style of the Thoth deck". Also
   accepted, for *Tarot Meditation for Libra Season Balance* (an article about no card — the case that first made
   this rule, 5/10/2026, by coming out as a large Rider-Waite Fool): "…and beside it a single small card of the Fool
   in the style of the Thoth deck" — said small and in the Thoth style, so admitted with nothing to warn about
-  either; the case still shows *why* the card must be said small and in the Thoth style, not that it must be left
+  either; the case still shows *why* cards must be said marginal and in the Thoth style, not that they must be left
   out. The full rule (which names count, *Full Moon* vs *The Moon tarot card*):
   `tarots-blog-images/references/prompts.md`.
 - **The form changes every time**, declared with four required options: `--kind` (17 values: landscape,

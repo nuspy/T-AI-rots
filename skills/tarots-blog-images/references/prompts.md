@@ -11,47 +11,50 @@ Every picture must now answer one question: **what is this article about, seen r
 thousands of articles to come, every picture must also **look different from the last ones**: that is what the
 four dimensions below are for.
 
-## Cards: context yes, subject never
+## Cards: marginal or a reference, never the subject
 The blog is about tarot. The names of the cards (the Sun, the Moon, the Star, the Tower, the Empress, the Wands,
 the Cups, the Swords, the Disks, the Queen of Cups…) are the very world the pictures show, and a card somewhere in
-the scene does no harm. What the blog never shows is **a picture of cards**.
+the scene does no harm. What the blog never shows is **a picture of cards**: that is, cards as the subject, in
+meaning or in size — never how many of them there are.
 
 `tarots_images.py` refuses (exit 7, nothing generated, nothing spent):
-- **a card as the subject**: the prompt starts with it, or the word *card* falls in the first clause or in the
-  first 8 content words, a *close-up of a card*, *a tarot card showing…*, a large or glowing card, a card in the
-  foreground; also *tarot imagery/artwork/style*, a *card frame*, *Atu XVI*, a named deck's art (*Rider-Waite*,
-  *Marseille tarot*): the model paints the card;
-- **more than one card**: *cards*, *a deck* (a ship's deck or a deck chair is fine), *a pile/stack/pack of tarot*,
-  *three cards*, *a hand of cards*, *the arcana*, *the Thoth trumps*, *tarocchi*;
+- **a card or cards as the subject**: the prompt starts with *card*, *cards*, *arcanum*, *arcana*, *tarocco*,
+  *tarocchi* or *deck(s)*, or one of them falls in the first clause or in the first 8 content words — one card is
+  as much the subject as fifty; also a *close-up of a card*, *a tarot card showing…*, a large or glowing card, a
+  card in the foreground, *tarot imagery/artwork/style*, a *card frame*, *Atu XVI*, a named deck's art
+  (*Rider-Waite*, *Marseille tarot*): the model paints the card;
 - **a spread or a layout**: *a three-card spread*, *a Celtic Cross layout*, *cards on a table*, *a reading table*,
   *a tarot reading*, *a fan of cards*, *cards face down*, a cartomancer's parlour;
-- **a hand holding or turning a card**.
+- **a hand holding or turning a card**;
+- **a copy** of a deck's artwork (*reproduction*, *replica*, *exact copy*…), or Rider-Waite or Marseille — never,
+  not even of the article's own card: it is always a new drawing.
 
 It accepts:
 - **"tarot" as an adjective of context**: *a tarot-inspired scene*, *a tarot reader walking home at dusk*;
 - **the names of the cards as a world or a symbol**: *a lighthouse struck by lightning, the energy of the Tower*;
   *the Queen of Cups on a throne by the sea*; *a stone fountain overflowing in a cloister, the Ace of Cups as a
   spring*;
-- **one single small card, later in the scene, admitted as context in any picture**: see the next section.
+- **one or several cards, later in the scene, as a marginal element or a reference**: see the next section.
 
-### A card in the picture: one single small card, as context, admitted anywhere
-A card drawn in the picture (the word *card*, *arcanum* or *tarocco* later in the scene) is admitted **in any
-picture, of an article on any topic, with or without `--article`, a section or a spread**. The rule was stricter
-until 5/10/2026 — a card only for an article about that very card — after an agent added "one single small card"
-to the picture of *Tarot Meditation for Libra Season Balance*, an article about no card, and out came a large
-Rider-Waite Fool; it was relaxed the next day, because refusing every other card went too far. `generate` and
-`prompt-check` still refuse (exit 7) a prompt that draws a card:
-- when it names **more than one card** (two different names): one single small card at most;
-- when it asks for **a copy** of a deck's artwork (*reproduction*, *replica*, *exact copy*…), or for Rider-Waite or
-  Marseille (refused anyway) — never, not even of the article's own card: it is always a new drawing.
+### A card in the picture: marginal or a reference, never the subject
+Cards drawn in the picture (the word *card*, *cards*, *arcanum* or *tarocco*, past the lead words checked above)
+are admitted **in any picture, of an article on any topic, with or without `--article`, a section or a spread** —
+even several of them. The rule was stricter until 5/10/2026 — a card only for an article about that very card, then
+one single card only — after an agent added "one single small card" to the picture of *Tarot Meditation for Libra
+Season Balance*, an article about no card, and out came a large Rider-Waite Fool; it was relaxed twice the same
+week, because refusing every other card, and then every second card, went too far. The operator's rule now: *"if
+there are several cards but as a marginal element it does no harm; the main subject, in meaning and as size, must
+be something else; if they are a reference it is fine."* `generate` and `prompt-check` still refuse (exit 7) only
+when the cards ARE the subject (see above, and `references/prompts.md`'s subject rule) or a copy of a deck's
+artwork.
 
-Everything else is a **warning**, not a refusal:
-- the prompt does not say the card is **small** (*a single small card*): write it, or the model may make the card
-  the subject;
-- the prompt does not say it is **in the style of the Thoth deck**: write it, or the model paints the deck it
+Everything else, once the cards are not the subject, is a **warning**, not a refusal:
+- the prompt does not say the cards are **marginal** (*small*, *tiny*, *in the background*, *at the edge*,
+  *tucked*, *half-hidden*, *in the distance*…): write it, or the model may make them the subject after all;
+- the prompt does not say they are **in the style of the Thoth deck**: write it, or the model paints the deck it
   knows best, usually Rider-Waite;
-- the card drawn **is not the one the article is about** (its title, focus keyword or subject): allowed as
-  context, but the article's own card would say more. A card with no name at all (*a single card tucked under a
+- none of the cards named **is the one the article is about** (its title, focus keyword or subject): allowed as a
+  reference, but the article's own card would say more. A card with no name at all (*a single card tucked under a
   stone*) has nothing to compare and draws no such warning.
 
 A card's name **without the word "card"** (*the energy of the Tower*) is a world or a symbol and stays allowed
@@ -61,7 +64,7 @@ everywhere, and never warns.
 `subject`, `slug`), then in the titles copy that `tarots_blog.py titles` keeps (`~/.tarots-blog/titles-cache.json`,
 by slug or id), then, with a media key, through the API (`GET /media-posts/{id}`). Only a prompt that draws a card
 looks for it, and only to judge the "not the article's own card" warning above: with no `--article`, or one the
-script cannot find, the card is still admitted, simply with nothing of the article's own to compare it against.
+script cannot find, the cards are still admitted, simply with nothing of the article's own to compare them against.
 
 **Which cards an article is about**: those named in its **title** or its **focus keyword**, and the card of its
 **subject** when article.json declares one (`"subject": {"type": "card", "ref": "maj-16"}`: a card id of the site —
@@ -86,18 +89,23 @@ a wool coat drying by the door, seen through the window, on the shelf a single s
 cup, in the style of the Thoth deck"
 
 Also accepted, for *Tarot Meditation for Libra Season Balance* (an article about no card — the case that first made
-this rule, 5/10/2026; it taught **why** the card must be said small and in the Thoth style, not that it must be
+this rule, 5/10/2026; it taught **why** cards must be said marginal and in the Thoth style, not that they must be
 refused):
 "…a balance scale on a windowsill at dusk, and beside it a single small card of the Fool in the style of the Thoth
 deck" — said small and in the Thoth style, so no warning either; there is simply nothing of this article's own to
 compare the Fool against. The safer picture still shows the balance, the autumn light, the scales of Libra, with no
-card at all: not because the card would be refused, but because the world of the article says more.
+card at all: not because a card would be refused, but because the world of the article says more.
+
+Also accepted, no warning (several cards, marginal, in the Thoth style, late in the scene — the subject stays the
+attic, not the cards): "A cluttered attic workshop at dusk, old photographs and ribbons in a drawer, and tucked
+among them a few small tarot cards in the style of the Thoth deck, half-hidden under a letter"
 
 Ordinary words are never mistaken for cards: *cardinal*, *cardigan*, *discard*, *the deck of a ship*, *wings
 spread*, *a map spread out*, *a Celtic cross of stone on a hillside*, *an arcane astrolabe*.
 
-The safest picture still shows the card **through its world**: the places, people, seasons, objects and
-metaphors the article speaks about. A card is a detail at most, never required.
+The safest picture still shows the cards **through the article's world**: the places, people, seasons, objects and
+metaphors it speaks about. Cards are a detail at most, however many, never the point of the picture, and never
+required.
 
 ## Read the article first, then write the prompt
 ```
@@ -299,21 +307,22 @@ the other; in a real run the options must also be free in `progress`.
 
 ## The pictures of the sections and of the spreads
 The same rules, the same four dimensions, the same house style; `generate --section <slug>` or `--spread <id>`
-instead of `--article`. **The same card rule as any picture**: at most one single small card, as context, in the
-style of the Thoth deck (a warning if it is not said so); refused only with two cards or a copy of a deck's
-artwork. A section is about many cards and a spread about positions the site draws itself, so its own world is
-almost always the better picture, but a single small card is no longer forbidden there.
+instead of `--article`. **The same card rule as any picture**: cards, even several, only as a marginal element or a
+reference, small and in the style of the Thoth deck (a warning if that is not said); refused only when a card or
+cards are the subject (including at the very start of the prompt), a layout, or a copy of a deck's artwork. A
+section is about many cards and a spread about positions the site draws itself, so its own world is almost always
+the better picture, but cards are no longer forbidden there as a detail.
 - *A section of cards* shows the **world** of its cards: for **Cups**, water and feeling (a tidal pool at dawn, a
   well in a cloister garden); for **Wands**, fire and will (a forge, a dry hillside at noon); for **Swords**, air and
   thought (a windy ridge, a scriptorium); for **Disks**, earth and work (a terraced vineyard, a bakery at first
   light); for the **Major Arcana**, the great passages (a road between mountains at dawn, a lighthouse, a starry
-  pass). A card's name at most as context ("the energy of the Tower"), or one single small card, never a pile or
-  many cards as the subject. «By number» (Aces, Twos… Princesses): what that number or rank means across the four
-  suits (a seed for the Aces, a crossroads for the Twos).
+  pass). A card's name at most as context ("the energy of the Tower"), or one or a few small cards as a marginal
+  detail, never a pile or many cards as the subject. «By number» (Aces, Twos… Princesses): what that number or rank
+  means across the four suits (a seed for the Aces, a crossroads for the Twos).
 - *A section of spreads or of articles* shows its theme, from its description: love, career, journaling, symbolism.
 - *A spread* gets an **evocative** illustration of its question and its tradition: a Celtic stone crossroads for
   the Celtic Cross, a horseshoe on a stable door for the Horseshoe, two paths in a wood for a choice. Never a
-  layout or the positions (the site draws the scheme next to it) and never more than one card.
+  layout or the positions (the site draws the scheme next to it) and never cards as the subject.
 
 Example, *Cups* (`generate --section cups`):
 `--kind water-and-reflection --shot reflection --light dawn --setting "Breton tidal pool"`
@@ -321,9 +330,9 @@ Example, *Cups* (`generate --section cups`):
 abalone shell at the bottom, sea anemones open like small cups, a gull's feather floating, reflected in the pool"
 
 ## Refuse, regenerate or rewrite if
-- the picture is a picture of cards anyway (a card filling the frame, a spread, a deck, hands holding cards, more
-  than one card), or a card shows up big where the prompt asked for none; the single small card that came out
-  large, or looking like Rider-Waite or Marseille instead of the Thoth style;
+- the picture is a picture of cards anyway (cards filling the frame or dominating it by size, a spread, hands
+  holding cards), or a card shows up big where the prompt asked for none; a marginal card that came out large or as
+  the real subject, or looking like Rider-Waite or Marseille instead of the Thoth style;
 - there is text, letters, numbers or a logo anywhere (even fake writing);
 - hands or faces are malformed, or a face looks like a real, recognisable person;
 - it looks like a stock photo or like the actual Thoth deck artwork;

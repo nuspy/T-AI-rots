@@ -150,19 +150,23 @@ def test_the_card_of_the_article_named_in_the_prompt_is_accepted(env):
 
 
 @pytest.mark.parametrize("prompt,expected_warnings", [
-    (NAMELESS_CARD, ["does not say the card is in the style of the Thoth deck", "does not say the card is small"]),
+    # NAMELESS_CARD says "tucked": MARGINAL_WORDS is already satisfied, so only the Thoth warning is left
+    (NAMELESS_CARD, ["does not say the cards are in the style of the Thoth deck"]),
     (FOOL_CARD, ["is not the card of"]),
 ])
-def test_post_admits_a_card_that_is_not_the_one_of_the_article(env, prompt, expected_warnings):
-    # `post` no longer refuses this (relaxed 6/10/2026): `check_card_in_picture` drops the warning, so verify it
-    # straight from `card_rule_problems`, the function it is built from (same test used in tarots-blog-images).
+def test_post_admits_a_card_that_is_not_the_one_of_the_article(env, prompt, expected_warnings, capsys):
+    # `post` no longer refuses this (relaxed 6/10/2026, twice): `check_card_in_picture` now prints the warning
+    # itself ("card warning: <file>: <text>"), so it is checked both on stderr and straight from `card_rule_problems`
+    # (the function it is built from, kept identical to tarots-blog-images's by a separate test).
     tmp, api, article = env  # article.json: title «The Tower»
     cover = _generated(tmp, "cover.jpg", b"\xff\xd8 lighthouse", prompt=prompt)
     assert tb.main(["post", article, "--cover", cover]) == tb.EXIT_OK
+    err = capsys.readouterr().err
     problems, warnings = tb.card_rule_problems(prompt, ["The Tower"], "The Tower")
     assert problems == [] and len(warnings) == len(expected_warnings)
     for text in expected_warnings:
         assert any(text in w for w in warnings)
+        assert text in err
 
 
 def test_the_subject_of_the_article_lets_its_card_in(env, capsys):

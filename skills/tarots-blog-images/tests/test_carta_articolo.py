@@ -1,14 +1,18 @@
-"""A card in the picture: one single small card is admitted as context in any picture, of any article (operator's
-rule, relaxed 6/10/2026); refused only are more than one card and a copy of a deck's artwork. The rest (missing
-"Thoth", missing "small", a card that is not the article's own) are warnings, not refusals. Offline.
+"""Cards in the picture: refused only as the **subject** (the lead word of the prompt: card/cards/arcanum/arcana/
+tarocco/tarocchi/deck(s) in the first clause or the first 8 content words), a **spread**, **hands** holding a card,
+or a **copy** of a deck's artwork. Several cards are fine as a marginal element or a reference (operator's rule,
+second revision, same day 6/10/2026: "if there are several cards but as a marginal element it does no harm; the
+main subject, in meaning and in size, must be something else; if they are a reference it is fine"). Warnings, not
+refusals: the prompt does not say the cards are marginal (small, in the background, at the edge…), does not say
+they are in the style of the Thoth deck, or none of the cards named is the article's own. Offline.
 
     backend/.venv/Scripts/python.exe -m pytest skills/tarots-blog-images/tests -q -p no:cacheprovider
 
 The case that first made the rule strict (5/10/2026): for «Tarot Meditation for Libra Season Balance», an article
 about no card, Hermes added "one single small card" to the prompt and out came a large Rider-Waite Fool. The rule
-was relaxed the next day: refusing it was too much; a small card in the Thoth style, named or not, is now only
-warned about when it is not the article's own. No network, no LitMedia, no key: the article comes from a work
-folder, from the titles copy, or from a fake of the API.
+was relaxed the next day (one single small card, as context, in any picture), then relaxed again the same day to
+allow several cards too, as long as they stay marginal and the subject is something else. No network, no LitMedia,
+no key: the article comes from a work folder, from the titles copy, or from a fake of the API.
 """
 from __future__ import annotations
 
@@ -40,6 +44,10 @@ NAMELESS_CARD = SCENE + ", on the shelf a single small card leaning on a cup, in
 FOOL_CARD = SCENE + (", on the shelf a single small card of the Fool leaning on a cup, in the style of the Thoth "
                      "deck, " + STYLE)
 SYMBOL_ONLY = SCENE + ", the sudden energy of the Tower in the storm, " + STYLE
+# two different cards, late in the scene, as a marginal element: admitted (second revision, 6/10/2026)
+TWO_CARDS_MARGINAL = SCENE + ", a single card of the Tower on the shelf; a single card of the Star by the door, " + STYLE
+# two different cards named right at the start: still the subject of the prompt, still refused
+TWO_CARDS_AS_SUBJECT = "Two tarot cards of the Tower and the Star glowing above a quiet harbour at dusk, " + STYLE
 
 
 @pytest.fixture(autouse=True)
@@ -178,7 +186,7 @@ def test_the_card_of_the_article_from_its_work_folder_is_accepted(isolated, caps
     assert "ok:" in out and "card warning" not in out
 
 
-def test_another_card_or_a_nameless_one_is_admitted_but_two_cards_are_refused(isolated, capsys):
+def test_another_card_or_a_nameless_one_is_admitted_and_two_marginal_cards_too(isolated, capsys):
     _work_folder(isolated, "tower-tarot-meaning", "The Tower: sudden change", "tower tarot card meaning")
     assert _check(FOOL_CARD, "--article", "tower-tarot-meaning") == ti.EXIT_OK
     out = capsys.readouterr().out
@@ -186,15 +194,22 @@ def test_another_card_or_a_nameless_one_is_admitted_but_two_cards_are_refused(is
     # a card with no name at all: nothing to compare, no warning
     assert _check(NAMELESS_CARD, "--article", "tower-tarot-meaning") == ti.EXIT_OK
     assert "card warning" not in capsys.readouterr().out
-    two = SCENE + ", a single card of the Tower on the shelf; a single card of the Star by the door, " + STYLE
-    assert _check(two, "--article", "tower-tarot-meaning") == ti.EXIT_RULE
-    assert "more than one card" in capsys.readouterr().out
+    # two different cards, late in the scene: a marginal element, not the subject. Admitted (second revision,
+    # 6/10/2026), with warnings; no mismatch warning here since one of the two (the Tower) is the article's own
+    assert _check(TWO_CARDS_MARGINAL, "--article", "tower-tarot-meaning") == ti.EXIT_OK
+    out = capsys.readouterr().out
+    assert "card warning: the prompt does not say the cards are marginal" in out
+    assert "card warning: the prompt does not say the cards are in the style of the Thoth deck" in out
+    assert "is not the card of" not in out
+    # two cards named right at the start are still the picture's subject: refused, as any card-as-subject prompt
+    assert _check(TWO_CARDS_AS_SUBJECT, "--article", "tower-tarot-meaning") == ti.EXIT_RULE
+    assert "a card as the subject" in capsys.readouterr().out
 
 
 def test_without_thoth_a_warning_and_a_copy_or_rider_waite_is_refused(isolated, capsys):
     _work_folder(isolated, "tower-tarot-meaning", "The Tower: sudden change", "tower tarot card meaning")
     assert _check(TOWER_NO_THOTH, "--article", "tower-tarot-meaning") == ti.EXIT_OK
-    assert "card warning: the prompt does not say the card is in the style of the Thoth deck" in capsys.readouterr().out
+    assert "card warning: the prompt does not say the cards are in the style of the Thoth deck" in capsys.readouterr().out
     copy = TOWER_CARD.replace("in the style of the Thoth deck",
                               "in the style of the Thoth deck, a faithful reproduction of the original painting")
     assert _check(copy, "--article", "tower-tarot-meaning") == ti.EXIT_RULE
@@ -203,13 +218,19 @@ def test_without_thoth_a_warning_and_a_copy_or_rider_waite_is_refused(isolated, 
     assert _check(rider, "--article", "tower-tarot-meaning") == ti.EXIT_RULE
 
 
-def test_the_rest_is_refused_whatever_the_article(isolated):
+def test_the_rest_is_refused_whatever_the_article(isolated, capsys):
     _work_folder(isolated, "tower-tarot-meaning", "The Tower: sudden change", "tower tarot card meaning")
-    for prompt in (SCENE + ", three cards of the Tower on the shelf, " + STYLE,
-                   SCENE + ", a Celtic Cross spread on the table, " + STYLE,
+    for prompt in (SCENE + ", a Celtic Cross spread on the table, " + STYLE,
                    SCENE + ", a hand turning over a card of the Tower, " + STYLE,
                    "a single card of the Tower on a shelf, " + SCENE + ", " + STYLE):
         assert _check(prompt, "--article", "tower-tarot-meaning") == ti.EXIT_RULE, prompt
+    # "three cards…", late in the scene, is a marginal mention now (second revision): admitted, with warnings
+    capsys.readouterr()
+    assert _check(SCENE + ", three cards of the Tower on the shelf, " + STYLE,
+                  "--article", "tower-tarot-meaning") == ti.EXIT_OK
+    out = capsys.readouterr().out
+    assert "card warning: the prompt does not say the cards are marginal" in out
+    assert "card warning: the prompt does not say the cards are in the style of the Thoth deck" in out
 
 
 def test_the_style_of_the_thoth_deck_is_not_a_deck_in_the_picture():
@@ -270,13 +291,13 @@ def test_with_a_media_key_the_api_is_asked_last(monkeypatch):
 def test_generate_refuses_before_litmedia_and_finds_the_folder_of_an_id(isolated, monkeypatch, capsys):
     folder = _work_folder(isolated, "the-tower", "The Tower tarot card", "tower tarot")
     _titles(isolated, {"id": TOWER_ID, "slug": "the-tower", "titolo": "The Tower tarot card", "parola_chiave": "tower"})
-    two = SCENE + ", a single card of the Tower on the shelf; a single card of the Star by the door, " + STYLE
-    assert ti.main(["generate", "--prompt", two, *DIMS, "--out", str(isolated / "a.jpg"), "--dry-run"]) == ti.EXIT_RULE
-    assert "more than one card" in capsys.readouterr().err   # refused before `_litmedia` is ever called (isolated: no_network)
+    assert ti.main(["generate", "--prompt", TWO_CARDS_AS_SUBJECT, *DIMS, "--out", str(isolated / "a.jpg"),
+                   "--dry-run"]) == ti.EXIT_RULE
+    assert "a card as the subject" in capsys.readouterr().err   # refused before `_litmedia` is ever called (isolated: no_network)
     assert ti.main(["generate", "--prompt", TOWER_NO_THOTH, *DIMS, "--article", TOWER_ID, "--dry-run"]) == ti.EXIT_OK
     captured = capsys.readouterr()
     assert str(folder / "foto" / "cover-") in captured.out   # a name of its own: cover-<date-time>.jpg
-    assert "warning: the prompt does not say the card is in the style of the Thoth deck" in captured.err
+    assert "warning: the prompt does not say the cards are in the style of the Thoth deck" in captured.err
 
 
 def test_a_file_whose_prompt_draws_another_card_is_admitted_on_any_article(isolated):
@@ -290,14 +311,20 @@ def test_a_file_whose_prompt_draws_another_card_is_admitted_on_any_article(isola
     assert ti.check_file("libra-1", str(pic)) == ti.sha256_of(pic)
 
 
-def test_a_file_whose_prompt_draws_two_cards_cannot_go_on_any_article(isolated):
+def test_a_file_whose_prompt_draws_two_cards_as_subject_cannot_go_on_any_article(isolated):
     pic = isolated / "two-cards.jpg"
     pic.write_bytes(b"\xff\xd8 two cards")
-    two = SCENE + ", a single card of the Tower on the shelf; a single card of the Star by the door, " + STYLE
-    Path(str(pic) + ".prompt.txt").write_text(two, encoding="utf-8")
+    Path(str(pic) + ".prompt.txt").write_text(TWO_CARDS_AS_SUBJECT, encoding="utf-8")
     with pytest.raises(ti.Failure) as err:
         ti.check_file("some-article", str(pic))
-    assert err.value.code == ti.EXIT_RULE and "more than one card" in str(err.value)
+    assert err.value.code == ti.EXIT_RULE and "a card as the subject" in str(err.value)
+
+
+def test_a_file_whose_prompt_draws_two_different_cards_marginally_is_admitted(isolated):
+    pic = isolated / "two-cards-marginal.jpg"
+    pic.write_bytes(b"\xff\xd8 two cards marginal")
+    Path(str(pic) + ".prompt.txt").write_text(TWO_CARDS_MARGINAL, encoding="utf-8")
+    assert ti.check_file("some-article", str(pic)) == ti.sha256_of(pic)
 
 
 # ---- the subject of article.json counts as a title naming the card (5/10/2026) ------------------------------------
@@ -342,12 +369,17 @@ def test_the_subject_of_the_titles_copy_counts_too(isolated):
 
 
 @pytest.mark.parametrize("option", [["--section", "major-arcana"], ["--spread", "croce-celtica"]])
-def test_the_picture_of_a_section_or_a_spread_admits_one_small_card_but_not_two(option, capsys):
+def test_the_picture_of_a_section_or_a_spread_admits_several_cards_as_marginal_but_not_as_subject(option, capsys):
     assert _check(TOWER_CARD, *option) == ti.EXIT_OK
     assert "card warning" not in capsys.readouterr().out       # own=[] for a section/spread: nothing to compare
-    two = SCENE + ", a single card of the Tower on the shelf; a single card of the Star by the door, " + STYLE
-    assert _check(two, *option) == ti.EXIT_RULE
-    assert "more than one card" in capsys.readouterr().out
+    # two different cards, late in the scene, as a marginal element: admitted, with warnings (second revision)
+    assert _check(TWO_CARDS_MARGINAL, *option) == ti.EXIT_OK
+    out = capsys.readouterr().out
+    assert "card warning: the prompt does not say the cards are marginal" in out
+    assert "card warning: the prompt does not say the cards are in the style of the Thoth deck" in out
+    # two cards named right at the start are still the subject: refused
+    assert _check(TWO_CARDS_AS_SUBJECT, *option) == ti.EXIT_RULE
+    assert "a card as the subject" in capsys.readouterr().out
     assert _check(SYMBOL_ONLY, *option) == ti.EXIT_OK                         # a card's name as a symbol: fine
     with pytest.raises(SystemExit):                                           # one target at a time
         _check(SYMBOL_ONLY, "--article", "x", *option)
@@ -368,11 +400,17 @@ def test_a_file_of_a_section_drawing_one_card_is_admitted(isolated):
     assert ti.check_file("", str(pic), target=("section", "major-arcana")) == ti.sha256_of(pic)
 
 
-def test_a_file_of_a_section_drawing_two_cards_is_refused(isolated):
+def test_a_file_of_a_section_drawing_two_cards_as_subject_is_refused(isolated):
     pic = isolated / "section-two.jpg"
     pic.write_bytes(b"\xff\xd8 section two cards")
-    two = SCENE + ", a single card of the Tower on the shelf; a single card of the Star by the door, " + STYLE
-    Path(str(pic) + ".prompt.txt").write_text(two, encoding="utf-8")
+    Path(str(pic) + ".prompt.txt").write_text(TWO_CARDS_AS_SUBJECT, encoding="utf-8")
     with pytest.raises(ti.Failure) as err:
         ti.check_file("", str(pic), target=("section", "major-arcana"))
-    assert err.value.code == ti.EXIT_RULE and "more than one card" in str(err.value)
+    assert err.value.code == ti.EXIT_RULE and "a card as the subject" in str(err.value)
+
+
+def test_a_file_of_a_section_drawing_two_different_cards_marginally_is_admitted(isolated):
+    pic = isolated / "section-two-marginal.jpg"
+    pic.write_bytes(b"\xff\xd8 section two cards marginal")
+    Path(str(pic) + ".prompt.txt").write_text(TWO_CARDS_MARGINAL, encoding="utf-8")
+    assert ti.check_file("", str(pic), target=("section", "major-arcana")) == ti.sha256_of(pic)
