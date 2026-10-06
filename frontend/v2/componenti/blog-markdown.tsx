@@ -156,7 +156,8 @@ export function BlogMarkdownV2({
                 // eslint-disable-next-line @next/next/no-img-element -- la carta vera, piccola
                 <img src={`/cards/${p.idCarta ?? p.id}.webp`} alt="" width={72} height={128} loading="lazy" />
               )}
-              <span><small>{etichette[p.tipo]}</small><strong>{p.nome}</strong></span>
+              {/* v9.5: etichetta e nome sono già nella lingua del sito: la traduzione automatica non li tocca */}
+              <span data-no-trad><small>{etichette[p.tipo]}</small><strong>{p.nome}</strong></span>
             </LinkV2>
           )}
         </Fragment>

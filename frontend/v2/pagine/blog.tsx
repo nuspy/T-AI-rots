@@ -7,7 +7,7 @@
  * Gli spazi pubblicitari (spenti per default): negli elenchi fra i blocchi della colonna (`ConPubblicita`), prima del
  * ponte verso la lettura; nell'articolo dentro il testo a un terzo e a due terzi, e alla fine prima del ponte. */
 
-import { Fragment, Suspense, useState } from "react";
+import { Fragment, Suspense, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { leggiApi, type Carta } from "@/lib/api";
 import {
@@ -29,6 +29,8 @@ import { urlPubblico } from "@/lib/seo";
 import { useLingua } from "@/v2/lib/lingua";
 import { R, indirizzoV2 } from "@/v2/lib/percorsi";
 import { useCarica, usePubblico } from "@/v2/lib/usa";
+import { useTraduzione } from "@/v2/lib/usa-traduzione";
+import { AvvisoTraduzione } from "@/v2/componenti/avviso-traduzione";
 import { nomeDi } from "./carte";
 
 /** La pagina e gli articoli per pagina dall'indirizzo (`?page=`, `?per=`): solo nelle pagine del Journal e negli
@@ -608,12 +610,20 @@ function forme(id: string, slugs: Record<string, string>) {
 }
 
 export function ArticoloDiario({ slug }: { slug: string }) {
-  const { t, locale } = useLingua();
+  const { t, locale, lingua } = useLingua();
   const b = t.blog;
   const a = useCarica(() => articolo(slug), [slug], { pubblico: true, iniziale: P.articolo(slug) });
   const [copiato, setCopiato] = useState(false);
   /* Gli spazi pubblicitari dentro il testo (a un terzo e a due terzi): il testo si taglia solo se se ne vede uno. */
   const conInserti = usePubblicitaVisibile(["terzo", "due_terzi"]);
+  /* v9.5: gli articoli sono solo in inglese; dove il browser sa tradurre sul dispositivo, titolo, testo e domande
+   * si traducono nella lingua del sito (`AvvisoTraduzione` lo dice e offre l'originale). */
+  const testa = useRef<HTMLDivElement>(null);
+  const corpo = useRef<HTMLDivElement>(null);
+  const traduzione = useTraduzione([testa, corpo], lingua, {
+    sorgente: a.dati?.lang ?? null,
+    chiave: a.dati ? `${a.dati.slug}:${a.dati.aggiornato_il ?? a.dati.pubblicato_il ?? ""}` : undefined,
+  });
   if (a.errore) {
     return (
       <section className="band band-tight">
@@ -644,8 +654,11 @@ export function ArticoloDiario({ slug }: { slug: string }) {
           <LinkV2 className="inline" href={R.blog}>{b.eyebrow}</LinkV2>
           {x.briciole.map((y) => <span key={y.slug}> · <LinkV2 className="inline" href={R.blogSezione(y.slug)}>{y.nome}</LinkV2></span>)}
         </nav>
-        <h1 className="display" style={{ maxWidth: "22ch" }}>{x.titolo}</h1>
-        {x.sottotitolo && <p className="section-intro">{x.sottotitolo}</p>}
+        <AvvisoTraduzione stato={traduzione} />
+        <div ref={testa} lang={x.lang}>
+          <h1 className="display" style={{ maxWidth: "22ch" }}>{x.titolo}</h1>
+          {x.sottotitolo && <p className="section-intro">{x.sottotitolo}</p>}
+        </div>
         <p className="small muted">
           {x.autore.nome && f(b.di, { nome: x.autore.nome })}
           {x.pubblicato_il && ` · ${dataLeggibile(x.pubblicato_il, locale)}`} · {f(b.min, { n: x.tempo_lettura })}
@@ -658,15 +671,17 @@ export function ArticoloDiario({ slug }: { slug: string }) {
           <img src={immagine} alt={x.immagine?.alt ?? ""} width={x.immagine?.larghezza ?? 1200} height={x.immagine?.altezza ?? 675}
             style={{ display: "block", width: "100%", maxWidth: 960, height: "auto", marginBottom: ".7rem" }} fetchPriority="high" />
         )}
-        <BlogMarkdownV2 testo={x.testo} riferimenti={rif} etichette={{ carta: b.tipo_carta, stesa: b.tipo_stesa, articolo: b.tipo_articolo }}
-          inserti={conInserti ? { terzo: <Pubblicita posizione="terzo" dentro />, due_terzi: <Pubblicita posizione="due_terzi" dentro /> } : undefined} />
+        <div ref={corpo} lang={x.lang}>
+          <BlogMarkdownV2 testo={x.testo} riferimenti={rif} etichette={{ carta: b.tipo_carta, stesa: b.tipo_stesa, articolo: b.tipo_articolo }}
+            inserti={conInserti ? { terzo: <Pubblicita posizione="terzo" dentro />, due_terzi: <Pubblicita posizione="due_terzi" dentro /> } : undefined} />
 
-        {x.faq.length > 0 && (
-          <div className="faq-list" style={{ maxWidth: "68ch", marginTop: ".85rem" }}>
-            <p className="eyebrow">{b.domande}</p>
-            {x.faq.map((q) => <details key={q.domanda} className="faq-item"><summary>{q.domanda}</summary><p>{q.risposta}</p></details>)}
-          </div>
-        )}
+          {x.faq.length > 0 && (
+            <div className="faq-list" style={{ maxWidth: "68ch", marginTop: ".85rem" }}>
+              <p className="eyebrow" data-no-trad>{b.domande}</p>
+              {x.faq.map((q) => <details key={q.domanda} className="faq-item"><summary>{q.domanda}</summary><p>{q.risposta}</p></details>)}
+            </div>
+          )}
+        </div>
 
         {(x.collegamenti.carte.length > 0 || x.collegamenti.stese.length > 0) && (
           <div style={{ marginTop: ".85rem" }}>
