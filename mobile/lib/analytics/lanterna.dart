@@ -130,13 +130,25 @@ class Lanterna {
     _scrollMax = 0;
   }
 
+  /// v9.5: la versione della lettura dal percorso (prova 90/10), come `varianteDaPercorso` del sito: `chat` sotto
+  /// `/read-chat`, `classica` sotto `/read` e `/read-classic` (anche `/it/…`); null fuori dalla lettura.
+  static String? varianteLettura(String percorso) {
+    final p = percorso.split(RegExp(r'[?#]')).first.replaceAll(RegExp(r'/$'), '');
+    bool sotto(String b) => p == b || p.startsWith('$b/');
+    if (sotto('/read-chat') || sotto('/it/read-chat')) return 'chat';
+    if (sotto('/read-classic') || sotto('/it/read-classic') || sotto('/read') || sotto('/it/read')) return 'classica';
+    return null;
+  }
+
   bool _escluso(String p) => esclusi.any((e) => p == e || p.startsWith('${e.replaceAll(RegExp(r'/$'), '')}/'));
 
   void _accoda(String n, {String? p, int? d, Map<String, Object?>? x, Map<String, String>? u}) {
     if (_ferma || !_nomeValido.hasMatch(n)) return;
     final percorso = p ?? _paginaCorrente ?? '/';
     if (_escluso(percorso)) return;
-    _coda.add(_Evento(n, percorso, _adesso(), d: d, x: {...?x, 'piattaforma': piattaforma}, u: u));
+    final variante = varianteLettura(percorso);
+    _coda.add(_Evento(n, percorso, _adesso(), d: d,
+        x: {...?x, 'piattaforma': piattaforma, 'variante': ?variante}, u: u));
     _avviaTimer();
     if (_coda.length >= maxInCoda) unawaited(svuota());
   }

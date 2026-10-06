@@ -326,7 +326,7 @@ export interface EsitoUscite {
   };
 }
 
-export const calcolaUscite = (t: string, r: { da: string; a: string; limite?: number }) =>
+export const calcolaUscite = (t: string, r: { da: string; a: string; limite?: number; piattaforma?: string }) =>
   chiamata<EsitoUscite>(t, "/admin/analytics/uscite", { method: "POST", body: JSON.stringify(r) });
 
 /* ---- dove si fermano le letture (v9.5): dal database delle letture, anche senza consenso alle statistiche ---- */
@@ -350,5 +350,11 @@ export interface EsitoLettureFerme {
   anteprima?: { completate: number; passate_a_un_account: number; quota: number | null };
 }
 
-export const calcolaLettureFerme = (t: string, r: { da: string; a: string; gruppo: GruppoLetture }) =>
+export type VarianteLettura = "tutte" | "classica" | "chat";
+export type PiattaformaAnalisi = "tutte" | "web" | "android" | "ios";
+
+export const calcolaLettureFerme = (
+  t: string,
+  r: { da: string; a: string; gruppo: GruppoLetture; variante?: VarianteLettura; piattaforma?: PiattaformaAnalisi | "nd" },
+) =>
   chiamata<EsitoLettureFerme>(t, "/admin/analytics/letture-ferme", { method: "POST", body: JSON.stringify(r) });

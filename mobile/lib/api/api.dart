@@ -275,6 +275,7 @@ class Api {
     List<({int posizione, String cardId})>? carteManuali,
     String? mazzo,
     String? oltreLimite,
+    String variante = 'classica',
   }) => _chiama(
     'POST',
     '/readings',
@@ -290,8 +291,14 @@ class Api {
         ],
       'deck_id': ?mazzo,
       'oltre_limite': ?oltreLimite,
+      // v9.5: da dove nasce e con quale versione (prova 90/10), per confrontare gli abbandoni.
+      'variante': variante,
+      'piattaforma': _piattaforma,
     },
   );
+
+  /// v9.5: la piattaforma dell'app, come nelle statistiche (`android` o `ios`).
+  static String get _piattaforma => Platform.isIOS ? 'ios' : 'android';
 
   /// `POST /readings/anonime`: la lettura gratuita senza account (il cookie `tarots_anon` la ricorda); [etaAnni] è
   /// l'età minima confermata («ho almeno N anni»), senza la quale il server risponde 403 `eta_da_confermare`.
@@ -300,6 +307,7 @@ class Api {
     required String domanda,
     required String lingua,
     int? etaAnni,
+    String variante = 'classica',
   }) => _chiama(
     'POST',
     '/readings/anonime',
@@ -309,6 +317,8 @@ class Api {
       'question': domanda,
       'lang': lingua,
       if (etaAnni != null) ...{'eta_confermata': true, 'eta_anni': etaAnni},
+      'variante': variante,
+      'piattaforma': _piattaforma,
     },
   );
 

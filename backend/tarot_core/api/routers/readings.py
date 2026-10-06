@@ -29,7 +29,7 @@ import logging
 import secrets
 import uuid
 from datetime import date
-from typing import Any, AsyncIterator, Dict, List, Optional
+from typing import Any, AsyncIterator, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from fastapi.responses import StreamingResponse
@@ -152,6 +152,9 @@ class NuovaLettura(BaseModel):
     #: `credito` (un credito del saldo). Se restano condoni si usa sempre un condono: mai un credito quando c'è il
     #: regalo.
     oltre_limite: Optional[str] = Field(default=None, pattern="^(condono|credito)$")
+    #: v9.5: con quale versione della lettura è nata (prova 90/10) e da dove; per confrontare gli abbandoni.
+    variante: Optional[Literal["classica", "chat"]] = None
+    piattaforma: Optional[Literal["web", "android", "ios"]] = None
 
 
 class AggiuntaIntervista(BaseModel):
@@ -590,6 +593,7 @@ async def apri(payload: NuovaLettura, user: CurrentUser, session: DbSession) -> 
         deck_id=mazzo_scelto.id if mazzo_scelto else None,
         memorie_recuperate=memorie_recuperate,
         limite=limite_superato if consumo != "omaggio" else None,
+        variante=payload.variante, piattaforma=payload.piattaforma,
     )
     if assegnazioni_manuali is not None:
         # `lettura` è appena stata creata (solo un flush, mai un `select`): la relazione `cards` non è
@@ -649,6 +653,9 @@ class NuovaLetturaAnonima(BaseModel):
     eta_confermata: bool = False
     #: L'età confermata (quella mostrata nella domanda, da `GET /eta-minima`).
     eta_anni: Optional[int] = Field(default=None, ge=13, le=21)
+    #: v9.5: versione della lettura e piattaforma (vedi `NuovaLettura`).
+    variante: Optional[Literal["classica", "chat"]] = None
+    piattaforma: Optional[Literal["web", "android", "ios"]] = None
 
 
 DURATA_COOKIE_ANONIMO = 60 * 60 * 24 * 365  # un anno
@@ -697,6 +704,7 @@ async def apri_anonima(
     lettura = Reading(
         owner_id=None, anon_id=nuovo_anon_id, spread_id=stesa["id"], question=payload.question.strip(),
         consumo="anonimo", lang=lang, status="intervista",
+        variante=payload.variante, piattaforma=payload.piattaforma,
     )
     session.add(lettura)
     if payload.eta_confermata:

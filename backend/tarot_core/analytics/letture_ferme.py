@@ -19,7 +19,7 @@ from datetime import date
 from typing import Any, Dict, List, Literal
 
 from lanterna.interroga import limiti
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..domain.models import DrawnCard, InterviewTurn, Reading
@@ -55,9 +55,29 @@ def _filtro_gruppo(gruppo: Gruppo):
     return None
 
 
-async def letture_ferme(session: AsyncSession, da: date, a: date, gruppo: Gruppo = "tutti") -> Dict[str, Any]:
+Variante = Literal["tutte", "classica", "chat"]
+Piattaforma = Literal["tutte", "web", "android", "ios", "nd"]
+
+
+def _filtri_versione(variante: Variante, piattaforma: Piattaforma) -> List[Any]:
+    """v9.5: la versione della lettura (le letture senza variante sono di prima della prova: classiche) e la
+    piattaforma (`nd`: non dichiarata, cioè di prima o da un'app non aggiornata)."""
+    filtri: List[Any] = []
+    if variante == "classica":
+        filtri.append(or_(Reading.variante == "classica", Reading.variante.is_(None)))
+    elif variante == "chat":
+        filtri.append(Reading.variante == "chat")
+    if piattaforma == "nd":
+        filtri.append(Reading.piattaforma.is_(None))
+    elif piattaforma != "tutte":
+        filtri.append(Reading.piattaforma == piattaforma)
+    return filtri
+
+
+async def letture_ferme(session: AsyncSession, da: date, a: date, gruppo: Gruppo = "tutti",
+                        variante: Variante = "tutte", piattaforma: Piattaforma = "tutte") -> Dict[str, Any]:
     inizio, fine = limiti(da, a, FUSO)
-    condizioni = [Reading.created_at >= inizio, Reading.created_at < fine]
+    condizioni = [Reading.created_at >= inizio, Reading.created_at < fine, *_filtri_versione(variante, piattaforma)]
     filtro = _filtro_gruppo(gruppo)
     if filtro is not None:
         condizioni.append(filtro)
@@ -128,7 +148,7 @@ async def letture_ferme(session: AsyncSession, da: date, a: date, gruppo: Gruppo
         ferme.append(voce)
 
     esito: Dict[str, Any] = {
-        "da": da.isoformat(), "a": a.isoformat(), "gruppo": gruppo,
+        "da": da.isoformat(), "a": a.isoformat(), "gruppo": gruppo, "variante": variante, "piattaforma": piattaforma,
         "letture": totale, "annullate": annullate, "imbuto": imbuto, "ferme": ferme,
     }
     if gruppo == "anonimi":

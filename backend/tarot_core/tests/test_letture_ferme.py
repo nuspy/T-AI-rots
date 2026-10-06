@@ -59,6 +59,37 @@ async def test_imbuto_e_dettaglio(client, utente, principal_admin, session):
     assert anonimi["letture"] == 1 and anonimi["anteprima"] == {"completate": 1, "passate_a_un_account": 0, "quota": 0.0}
 
 
+async def test_variante_e_piattaforma(client, utente, principal_admin, session):
+    """v9.5: le letture di prima (senza variante) contano come classiche; il filtro della piattaforma separa sito e app."""
+    vecchia = await _lettura(session, utente, "completata")
+    chat = await _lettura(session, utente, "intervista")
+    chat.variante, chat.piattaforma = "chat", "android"
+    classica = await _lettura(session, utente, "ventaglio")
+    classica.variante, classica.piattaforma = "classica", "web"
+    await session.commit()
+    client.identita.principal = principal_admin
+    oggi = utcnow().date()
+    base = {"da": (oggi - timedelta(days=1)).isoformat(), "a": (oggi + timedelta(days=1)).isoformat(), "gruppo": "iscritti"}
+    conta = lambda **f: client.post("/admin/analytics/letture-ferme", json={**base, **f})  # noqa: E731
+    assert (await conta(variante="classica")).json()["letture"] == 2
+    assert (await conta(variante="chat")).json()["letture"] == 1
+    assert (await conta(piattaforma="android")).json()["letture"] == 1
+    assert (await conta(piattaforma="nd")).json()["letture"] == 1
+    assert vecchia.variante is None
+
+
+async def test_la_lettura_salva_variante_e_piattaforma(client, session):
+    import uuid
+
+    r = await client.post("/readings", json={"spread_id": "tre-carte", "question": "Come andrà il lavoro?",
+                                             "variante": "chat", "piattaforma": "web"})
+    assert r.status_code == 201, r.text
+    salvata = await session.get(Reading, uuid.UUID(r.json()["id"]))
+    assert (salvata.variante, salvata.piattaforma) == ("chat", "web")
+    assert (await client.post("/readings", json={"spread_id": "tre-carte", "question": "Come andrà?",
+                                                  "variante": "boh"})).status_code == 422
+
+
 async def test_le_azioni_numerate_hanno_un_nome_leggibile():
     from tarot_core.analytics.uscite import etichetta
 

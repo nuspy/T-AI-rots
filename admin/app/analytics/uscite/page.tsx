@@ -6,8 +6,8 @@
  * gesto (mescola, taglia, sceglie, rivela), il paywall… «Nessuna azione» vuol dire entrata e uscita senza toccare
  * nulla. Una barra delle pagine si tocca per aprire l'Esploratore su quelle visite. */
 
-import { useCallback } from "react";
-import { calcolaUscite, type AzioneUscita } from "@/lib/analytics";
+import { useCallback, useState } from "react";
+import { calcolaUscite, type AzioneUscita, type PiattaformaAnalisi } from "@/lib/analytics";
 import { useDati } from "@/lib/usa";
 import comuni from "../../comuni.module.css";
 import { Barre, Tessera, percento } from "../../grafici";
@@ -27,7 +27,9 @@ const barreAzioni = (azioni: AzioneUscita[], quante = 15) =>
 export default function Uscite() {
   const { giorni, da, a, imposta } = usePeriodo();
   const approfondisci = useApprofondisci(giorni);
-  const esito = useDati(useCallback((t: string) => calcolaUscite(t, { da, a, limite: 25 }), [da, a]));
+  /* v9.5: sito, Android o iOS (l'app marca ogni evento; il sito dalla v9.5, prima senza marca = sito). */
+  const [piattaforma, setPiattaforma] = useState<PiattaformaAnalisi>("tutte");
+  const esito = useDati(useCallback((t: string) => calcolaUscite(t, { da, a, limite: 25, piattaforma }), [da, a, piattaforma]));
 
   const d = esito.dati;
   const letture = d?.letture;
@@ -46,6 +48,7 @@ export default function Uscite() {
         </div>
       </div>
       <FiltriPeriodo giorni={giorni} imposta={imposta} />
+      <SceltaPiattaforma valore={piattaforma} imposta={setPiattaforma} />
 
       {esito.errore && <p className={comuni.errore} role="alert">{esito.errore}</p>}
       {!d && esito.inCorso && <p className={comuni.caricamento}>Caricamento…</p>}
@@ -108,7 +111,22 @@ export default function Uscite() {
         </div>
       )}
 
-      <LettureFerme da={da} a={a} />
+      <LettureFerme da={da} a={a} piattaforma={piattaforma} />
     </>
+  );
+}
+
+const PIATTAFORME: [PiattaformaAnalisi, string][] = [["tutte", "Tutte"], ["web", "Sito"], ["android", "Android"], ["ios", "iOS"]];
+
+function SceltaPiattaforma({ valore, imposta }: { valore: PiattaformaAnalisi; imposta: (p: PiattaformaAnalisi) => void }) {
+  return (
+    <div role="group" aria-label="Piattaforma" style={{ display: "flex", flexWrap: "wrap", gap: ".5rem", margin: ".2rem 0 1rem" }}>
+      {PIATTAFORME.map(([p, nome]) => (
+        <button key={p} type="button" aria-pressed={valore === p} style={{ minHeight: 44 }}
+                className={valore === p ? comuni.primaria : comuni.secondaria} onClick={() => imposta(p)}>
+          {nome}
+        </button>
+      ))}
+    </div>
   );
 }

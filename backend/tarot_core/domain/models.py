@@ -269,6 +269,12 @@ class Reading(Base, TimestampMixin, OwnedMixin):
     #: con lo stesso cookie anche a registrazione avvenuta.
     anon_id: Mapped[Optional[str]] = mapped_column(String(64), index=True)
 
+    #: v9.5: con quale versione della lettura è nata (`classica` o `chat`, la prova 90/10) e da dove (`web`,
+    #: `android`, `ios`), per confrontare gli abbandoni. Nulle per le letture di prima e per i client che non le
+    #: mandano (le app già installate).
+    variante: Mapped[Optional[str]] = mapped_column(String(10))
+    piattaforma: Mapped[Optional[str]] = mapped_column(String(10))
+
     #: Il quadro emerso dall'intervista, riassunto dal modello.
     context_summary: Mapped[Optional[str]] = mapped_column(Text)
 

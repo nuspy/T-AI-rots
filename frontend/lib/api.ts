@@ -617,6 +617,8 @@ export interface OpzioniApertura {
   mazzo?: string | null;
   /* Oltre un limite dell'abbonamento (v9, Fase 2b): il consenso dato nel dialogo — un condono o un credito. */
   oltreLimite?: "condono" | "credito";
+  /* v9.5: la versione della lettura (prova 90/10). */
+  variante?: "classica" | "chat";
 }
 
 export const apriLettura = (token: string | null, o: OpzioniApertura) =>
@@ -630,6 +632,9 @@ export const apriLettura = (token: string | null, o: OpzioniApertura) =>
       ...(o.manualCards ? { manual_cards: o.manualCards.map((c) => ({ posizione: c.posizione, card_id: c.cardId })) } : {}),
       ...(o.mazzo ? { deck_id: o.mazzo } : {}),
       ...(o.oltreLimite ? { oltre_limite: o.oltreLimite } : {}),
+      /* v9.5: da dove nasce e con quale versione (prova 90/10): per confrontare gli abbandoni. */
+      piattaforma: "web",
+      ...(o.variante ? { variante: o.variante } : {}),
     },
   });
 
@@ -638,10 +643,15 @@ export const apriLettura = (token: string | null, o: OpzioniApertura) =>
  * anti-abuso (`credentials: "include"`, sopra) fa il resto. Un 409 significa "già usata: registrati". */
 /* `etaAnni` (GDPR, Fase 1): l'età minima che la persona ha confermato di avere («ho almeno N anni»); senza, il server
  * risponde 403 `eta_da_confermare` con gli anni da chiedere. */
-export const apriLetturaAnonima = (spreadId: string, domanda: string, lang: string, etaAnni?: number) =>
+export const apriLetturaAnonima = (
+  spreadId: string, domanda: string, lang: string, etaAnni?: number, variante?: "classica" | "chat",
+) =>
   chiama<Apertura>(null, "/readings/anonime", {
     method: "POST",
-    body: { spread_id: spreadId, question: domanda, lang, ...(etaAnni ? { eta_confermata: true, eta_anni: etaAnni } : {}) },
+    body: {
+      spread_id: spreadId, question: domanda, lang, ...(etaAnni ? { eta_confermata: true, eta_anni: etaAnni } : {}),
+      piattaforma: "web", ...(variante ? { variante } : {}),
+    },
   });
 
 export interface PassoIntervista {

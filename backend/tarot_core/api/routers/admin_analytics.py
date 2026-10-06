@@ -430,6 +430,8 @@ class RichiestaUscite(BaseModel):
     da: date
     a: date
     limite: int = Field(default=25, ge=1, le=100)
+    #: v9.5: solo le visite del sito, di Android o di iOS.
+    piattaforma: Literal["tutte", "web", "android", "ios"] = "tutte"
 
 
 @router.post("/uscite")
@@ -440,7 +442,7 @@ async def calcola_uscite(r: RichiestaUscite, session: DbSession) -> Dict[str, An
     if r.a < r.da or (r.a - r.da).days > 366:
         raise HTTPException(status_code=422, detail="intervallo non valido (massimo un anno)")
     try:
-        return await uscite.uscite(session, r.da, r.a, limite=r.limite)
+        return await uscite.uscite(session, r.da, r.a, limite=r.limite, piattaforma=r.piattaforma)
     except DBAPIError as exc:
         await session.rollback()
         raise _errore(exc) from exc
@@ -450,6 +452,9 @@ class RichiestaLettureFerme(BaseModel):
     da: date
     a: date
     gruppo: Literal["tutti", "iscritti", "anonimi"] = "tutti"
+    #: v9.5: la versione della lettura (prova 90/10) e la piattaforma.
+    variante: Literal["tutte", "classica", "chat"] = "tutte"
+    piattaforma: Literal["tutte", "web", "android", "ios", "nd"] = "tutte"
 
 
 @router.post("/letture-ferme")
@@ -459,7 +464,7 @@ async def calcola_letture_ferme(r: RichiestaLettureFerme, session: DbSession) ->
 
     if r.a < r.da or (r.a - r.da).days > 366:
         raise HTTPException(status_code=422, detail="intervallo non valido (massimo un anno)")
-    return await letture_ferme.letture_ferme(session, r.da, r.a, r.gruppo)
+    return await letture_ferme.letture_ferme(session, r.da, r.a, r.gruppo, r.variante, r.piattaforma)
 
 
 @router.get("/tempo-reale")

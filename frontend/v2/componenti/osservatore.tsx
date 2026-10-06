@@ -12,6 +12,7 @@ import { ENDPOINT_ANALYTICS, idPerAnalytics } from "@/lib/analytics";
 import { useSessione } from "@/lib/sessione";
 import { useConsensi } from "@/v2/lib/consensi";
 import { useLingua } from "@/v2/lib/lingua";
+import { proprietaEventi } from "@/v2/lib/varianti";
 
 export function OsservatoreV2({ children }: { children: React.ReactNode }) {
   const percorso = usePathname();
@@ -32,6 +33,8 @@ export function OsservatoreV2({ children }: { children: React.ReactNode }) {
       lingua: () => linguaRef.current,
       token: () => tokenRef.current,
       idBrowser: idPerAnalytics,
+      /* v9.5: `piattaforma: web` in ogni evento e, sulle pagine di lettura, la `variante` (prova 90/10). */
+      proprieta: proprietaEventi,
     });
     setOsservatore(o);
     return () => o.ferma();

@@ -418,9 +418,10 @@ export function LetturaV2() {
       const a = sessione.autenticata
         ? await apriLettura(sessione.token, {
             spreadId: stesaId, domanda: testoDomanda, lang: lingua, mazzo: mazzoDaInviare, oltreLimite,
+            variante: "classica",
             ...(speciale ? { partner: partnerDa(persone), ricordaPartner: persone.ricorda } : {}),
           })
-        : await apriLetturaAnonima(stesaId, testoDomanda, lingua, etaAnni);
+        : await apriLetturaAnonima(stesaId, testoDomanda, lingua, etaAnni, "classica");
       traccia("reading_started", { categoria, anonima: !sessione.autenticata });
       if (a.crisi) {
         setLinguaLettura(null);

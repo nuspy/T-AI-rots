@@ -103,10 +103,29 @@ def etichetta(azione: str) -> str:
     return ETICHETTE.get(azione, azione.replace("lettura_fase:", "Fase: ") if azione.startswith("lettura_fase:") else azione)
 
 
-async def uscite(session: AsyncSession, da: date, a: date, *, limite: int = 25) -> Dict[str, Any]:
+#: v9.5: le piattaforme. L'app (Android, iOS) mette `piattaforma` in ogni evento da sempre; il sito dalla v9.5
+#: (`web`), prima niente: una sessione senza eventi dell'app è del sito.
+PIATTAFORME_APP = ("android", "ios")
+
+
+def _condizione_piattaforma(S, E, piattaforma: Optional[str]):
+    if not piattaforma or piattaforma == "tutte":
+        return true()
+    dell_app = select(E.c.id).where(
+        E.c.sessione_id == S.c.id, E.c.proprieta["piattaforma"].astext.in_(PIATTAFORME_APP),
+    ).correlate(S).exists()
+    if piattaforma == "web":
+        return ~dell_app
+    return select(E.c.id).where(
+        E.c.sessione_id == S.c.id, E.c.proprieta["piattaforma"].astext == piattaforma,
+    ).correlate(S).exists()
+
+
+async def uscite(session: AsyncSession, da: date, a: date, *, limite: int = 25,
+                 piattaforma: Optional[str] = None) -> Dict[str, Any]:
     S, E = TABELLE.sessioni, TABELLE.eventi
     inizio, fine = limiti(da, a, FUSO)
-    nel_periodo = and_(S.c.inizio >= inizio, S.c.inizio < fine)
+    nel_periodo = and_(S.c.inizio >= inizio, S.c.inizio < fine, _condizione_piattaforma(S, E, piattaforma))
 
     totale = (await session.execute(select(func.count()).select_from(S).where(nel_periodo))).scalar_one()
 
@@ -124,9 +143,16 @@ async def uscite(session: AsyncSession, da: date, a: date, *, limite: int = 25) 
     percorsi = [r.pagina for r in righe if r.pagina != ND]
     viste: Dict[str, int] = {}
     if percorsi:
+        della_piattaforma = true()
+        if piattaforma in PIATTAFORME_APP:
+            della_piattaforma = E.c.proprieta["piattaforma"].astext == piattaforma
+        elif piattaforma == "web":
+            della_piattaforma = or_(E.c.proprieta["piattaforma"].astext.is_(None),
+                                    E.c.proprieta["piattaforma"].astext.not_in(PIATTAFORME_APP))
         viste = dict((await session.execute(
             select(E.c.percorso, func.count())
-            .where(E.c.nome == "page_view", E.c.ts >= inizio, E.c.ts < fine, E.c.percorso.in_(percorsi))
+            .where(E.c.nome == "page_view", E.c.ts >= inizio, E.c.ts < fine, E.c.percorso.in_(percorsi),
+                   della_piattaforma)
             .group_by(E.c.percorso)
         )).all())
 
