@@ -45,7 +45,7 @@ const Map<String, String> _dallaV1 = {
 };
 
 /// Le pagine personali o di servizio: non si indicizzano.
-const Set<String> _private = {'read', 'my-story', 'profile', 'shared', 'cart'};
+const Set<String> _private = {'read', 'read-chat', 'read-classic', 'my-story', 'profile', 'shared', 'cart'};
 
 /// Vero per le pagine da indicizzare.
 bool indicizzabile(String interno) {

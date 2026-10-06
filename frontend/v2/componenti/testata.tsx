@@ -12,6 +12,7 @@ import { useCarrello } from "@/v2/lib/carrello";
 import { useLingua } from "@/v2/lib/lingua";
 import { SincroniaLinguaProfilo, salvaNelProfilo, segnaScelta } from "@/v2/lib/lingua-profilo";
 import { R, indirizzoV2, senzaPrefisso } from "@/v2/lib/percorsi";
+import { PAGINE_VARIANTI } from "@/v2/lib/varianti";
 import LinkV2 from "./link";
 import { useConto } from "@/v2/lib/dati";
 
@@ -55,7 +56,7 @@ function Icona({ nome }: { nome: keyof typeof ICONE }) {
  * vanno su due righe (`\n` nel dizionario) per stare nella barra. */
 type Voce = "leggi" | "fisica" | "giorno" | "diario" | "esplora" | "storia" | "negozio";
 const SEZIONI: { chiave: Voce; href: string; pagine: string[] }[] = [
-  { chiave: "leggi", href: R.leggi, pagine: [R.leggi] },
+  { chiave: "leggi", href: R.leggi, pagine: [R.leggi, ...PAGINE_VARIANTI] },
   { chiave: "fisica", href: R.fisica, pagine: [R.fisica] },
   { chiave: "giorno", href: R.giorno, pagine: [R.giorno] },
   { chiave: "diario", href: R.blog, pagine: [R.blog] },

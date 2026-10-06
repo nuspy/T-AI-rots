@@ -497,6 +497,51 @@ class AppLocalizationsEs extends AppLocalizations {
   String get comune_testata_entra => 'Iniciar\nsesión';
 
   @override
+  String comune_traduzione_offerta(Object lingua) {
+    return '¿Leer esta página en $lingua? Tu navegador puede traducirla en tu dispositivo.';
+  }
+
+  @override
+  String get comune_traduzione_traduci => 'Traducir';
+
+  @override
+  String comune_traduzione_scarico(Object p) {
+    return 'Descargando el modelo de traducción… $p%';
+  }
+
+  @override
+  String get comune_traduzione_in_corso => 'Traduciendo…';
+
+  @override
+  String comune_traduzione_tradotta(Object da) {
+    return 'Traducida automáticamente en tu dispositivo desde el original en $da.';
+  }
+
+  @override
+  String comune_traduzione_originale(Object da) {
+    return 'Mostrar el original ($da)';
+  }
+
+  @override
+  String comune_traduzione_e_originale(Object da) {
+    return 'Estás leyendo el original en $da.';
+  }
+
+  @override
+  String comune_traduzione_traduci_in_lingua(Object lingua) {
+    return 'Traducir al $lingua';
+  }
+
+  @override
+  String get comune_traduzione_errore => 'La traducción no ha funcionado: estás leyendo el original.';
+
+  @override
+  String get comune_traduzione_altra_lingua => 'Otro idioma:';
+
+  @override
+  String get comune_traduzione_mai => 'No traducir automáticamente';
+
+  @override
   String get home_meta_titolo => 'TAROTS chat — un ritual vivo del Tarot';
 
   @override
@@ -1324,6 +1369,24 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get lettura_basta_domande => 'Basta de preguntas';
+
+  @override
+  String get lettura_scelta_titolo => '¿Qué quieres hacer?';
+
+  @override
+  String get lettura_scelta_lettura => 'Pasar a la lectura';
+
+  @override
+  String get lettura_scelta_libero => 'Quiero decir algo libremente';
+
+  @override
+  String get lettura_scelta_altra => 'Quiero responder a otra pregunta';
+
+  @override
+  String get lettura_libero_segnaposto => 'Escribe libremente lo que se te pase por la cabeza…';
+
+  @override
+  String get lettura_libero_invia => 'Enviar';
 
   @override
   String get lettura_stampa_pdf => 'Imprimir en PDF';
@@ -4359,6 +4422,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get privacy_letture_cta => 'Gestionar lo que se recuerda';
+
+  @override
+  String get privacy_letture_accesso =>
+      'Solo por motivos de seguridad (por ejemplo, para gestionar una denuncia de abuso o una petición de ayuda), los administradores de TAROTS chat pueden leer tus lecturas, tus conversaciones, lo que recuerda tu lector y los datos de tu perfil. Cada acceso exige un motivo declarado y queda registrado.';
 
   @override
   String get privacy_ai_titolo => 'Cómo se usa la IA';

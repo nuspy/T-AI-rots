@@ -19,7 +19,9 @@ import '../analytics/tracciato.dart';
 import '../archivio.dart';
 import '../cassa/pagamento.dart' show eRitornoApp;
 import '../componenti/pagina.dart';
+import '../dati/dati.dart' show impostazioniProvider;
 import '../dati/inviti.dart';
+import '../lettura/variante.dart';
 import '../lingua/lingua.dart';
 import '../pagine/blog.dart';
 import '../pagine/carte.dart';
@@ -59,7 +61,16 @@ List<RouteBase> rotte() => [
     builder: (context, stato, figlio) => Guscio(child: figlio),
     routes: [
       _rotta(R.home, (_) => const Home()),
+      // v9.5: `/read` smista (vedi `redirect`); la sua pagina resta solo come ripiego, la classica.
       _rotta(R.leggi, (s) => PaginaLettura(key: ValueKey(s.uri.toString()), parametri: s.uri.queryParameters)),
+      _rotta(
+        R.letturaChat,
+        (s) => PaginaLettura(key: ValueKey(s.uri.toString()), parametri: s.uri.queryParameters, inChat: true),
+      ),
+      _rotta(
+        R.letturaClassica,
+        (s) => PaginaLettura(key: ValueKey(s.uri.toString()), parametri: s.uri.queryParameters),
+      ),
       _rotta(R.fisica, (s) => LetturaFisica(parametri: s.uri.queryParameters)),
       _rotta(R.storia, (_) => const Storia()),
       _rotta('${R.storia}/:id', (s) => DettaglioLettura(id: _p(s, 'id'))),
@@ -126,7 +137,12 @@ final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
     initialLocation: R.home,
     routes: rotte(),
-    redirect: (context, stato) => reindirizza(stato.uri),
+    redirect: (context, stato) {
+      final verso = reindirizza(stato.uri);
+      final percentuale = ref.read(impostazioniProvider).value?.letturaChatPercentuale ?? 90;
+      // v9.5: `/read` sceglie la versione della lettura (prova 90/10), anche dopo la traduzione di un indirizzo.
+      return smistaLettura(Uri.parse(verso ?? stato.uri.toString()), ref.read(archivioProvider), percentuale) ?? verso;
+    },
     errorPageBuilder: (context, stato) => NoTransitionPage(
       key: stato.pageKey,
       child: const Guscio(child: Errore404()),

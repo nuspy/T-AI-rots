@@ -12,6 +12,7 @@ import 'package:tarots/componenti/oracolo.dart';
 import 'package:tarots/consensi/consensi.dart';
 import 'package:tarots/consensi/eta.dart';
 import 'package:tarots/dati/carrello.dart';
+import 'package:tarots/lettura/variante.dart';
 import 'package:tarots/rotte/percorso.dart';
 import 'package:tarots/rotte/router.dart';
 
@@ -22,6 +23,8 @@ ArchivioMemoria _archivio() => ArchivioMemoria({
   'lingua': 'en',
   chiaveConsensi: const StatoConsensi(valori: {'statistiche': 'rifiutato', 'google_analytics': 'rifiutato'}).inJson(),
   chiaveEta: '16',
+  // v9.5: la versione della lettura (prova 90/10) è fissata, non sorteggiata.
+  chiaveVarianteLettura: VarianteLettura.classica,
 });
 
 Future<ProviderContainer> _monta(
@@ -56,7 +59,8 @@ void main() {
     await tester.pump();
     await tester.testTextInput.receiveAction(TextInputAction.send);
     await assesta(tester);
-    expect(c.read(percorsoProvider).path, '/read');
+    // `/read` smista sulla versione di questa persona (v9.5), con gli stessi parametri.
+    expect(c.read(percorsoProvider).path, '/read-classic');
     final uri = uriVisibile(c.read(routerProvider).routerDelegate.currentConfiguration);
     expect(uri.queryParameters, {'question': 'Will I find my way?', 'source': 'dock'});
     // Sulla lettura la barra non c'è (la conversazione è già nella pagina).

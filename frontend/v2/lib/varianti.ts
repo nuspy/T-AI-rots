@@ -1,12 +1,15 @@
 /* La prova della lettura (v9.5): la versione classica e quella tutta in chat, con indirizzi propri. Qui come si
  * riconosce la variante dal percorso, per marcare gli eventi delle statistiche (`piattaforma` e `variante` in ogni
- * evento, vedi `componenti/osservatore.tsx`) e le letture salvate. Finché la lettura in chat non c'è, le pagine della
- * lettura sono quelle classiche. */
+ * evento, vedi `componenti/osservatore.tsx`) e le letture salvate. `/read` smista fra le due (`proxy.ts`). */
 
 export type VarianteLettura = "classica" | "chat";
 
 const CHAT = ["/read-chat", "/it/read-chat"];
 const CLASSICA = ["/read-classic", "/it/read-classic", "/read", "/it/read", "/v2/read", "/it/v2/read"];
+
+/** Le pagine delle due versioni (senza `/it`): per la testata (la voce «Leggi») e per nascondere la barra
+ *  dell'oracolo, come su `/read`. Mai in un collegamento. */
+export const PAGINE_VARIANTI = ["/read-chat", "/read-classic"];
 
 const sotto = (p: string, base: string) => p === base || p.startsWith(`${base}/`);
 

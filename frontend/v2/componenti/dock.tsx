@@ -26,6 +26,7 @@ import { useSessione } from "@/lib/sessione";
 import { f } from "@/v2/i18n";
 import { useLingua } from "@/v2/lib/lingua";
 import { R, indirizzoV2, senzaPrefisso } from "@/v2/lib/percorsi";
+import { PAGINE_VARIANTI } from "@/v2/lib/varianti";
 import { useCarica } from "@/v2/lib/usa";
 
 const CHIAVE_MUTO = "tarots.chat.muto";
@@ -57,7 +58,7 @@ const leggiMuto = () => {
   }
 };
 
-const NASCOSTO = [R.leggi, R.fisica, R.condivise];
+const NASCOSTO = [R.leggi, ...PAGINE_VARIANTI, R.fisica, R.condivise];
 
 export function DockLettore() {
   const { t, prefissoIt } = useLingua();

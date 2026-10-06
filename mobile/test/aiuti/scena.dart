@@ -27,6 +27,7 @@ import 'package:tarots/componenti/diario.dart';
 import 'package:tarots/componenti/oracolo.dart';
 import 'package:tarots/consensi/consensi.dart';
 import 'package:tarots/consensi/eta.dart';
+import 'package:tarots/lettura/variante.dart';
 import 'package:tarots/notifiche/fuso.dart';
 import 'package:tarots/notifiche/push.dart';
 import 'package:tarots/rotte/router.dart';
@@ -103,6 +104,7 @@ List<Override> sostituzioni({
   ConfigAccesso? accesso,
   Negozio? negozio,
   ServizioPush? push,
+  String varianteLettura = VarianteLettura.classica,
 }) {
   final archivio =
       memoria ??
@@ -111,6 +113,8 @@ List<Override> sostituzioni({
         chiaveConsensi: const StatoConsensi(valori: {'statistiche': 'rifiutato', 'google_analytics': 'rifiutato'})
             .inJson(),
         chiaveEta: '16',
+        // v9.5: la prova 90/10 sorteggia la versione della lettura; i test scelgono la loro (qui la classica).
+        chiaveVarianteLettura: varianteLettura,
       });
   final adattatore = rete ?? apiDaFixture();
   return [
@@ -155,6 +159,7 @@ Future<ProviderContainer> montaApp(
   AdattatoreFinto? rete,
   Negozio? negozio,
   ServizioPush? push,
+  String varianteLettura = VarianteLettura.classica,
 }) async {
   // I file veri (caratteri di sistema) si leggono fuori dal tempo finto del test.
   await tester.runAsync(caricaCaratteri);
@@ -168,7 +173,14 @@ Future<ProviderContainer> montaApp(
   tester.view.physicalSize = Size(larghezza, altezza);
   addTearDown(tester.view.reset);
   final contenitore = ProviderContainer(
-    overrides: sostituzioni(lingua: lingua, autenticata: autenticata, rete: rete, negozio: negozio, push: push),
+    overrides: sostituzioni(
+      lingua: lingua,
+      autenticata: autenticata,
+      rete: rete,
+      negozio: negozio,
+      push: push,
+      varianteLettura: varianteLettura,
+    ),
     retry: (_, _) => null,
   );
   addTearDown(contenitore.dispose);

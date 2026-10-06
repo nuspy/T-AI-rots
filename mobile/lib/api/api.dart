@@ -323,12 +323,29 @@ class Api {
   );
 
   /// `POST /readings/{id}/interview`: una risposta, l'inizio (risposta assente) o «basta così» ([basta]).
-  Future<PassoIntervista> rispondi(String id, String? risposta, {bool basta = false}) => _chiama(
+  ///
+  /// v9.5: dopo una risposta il server non fa subito un'altra domanda (`continua: false`) e risponde `scelta`; [altra]
+  /// chiede un'altra domanda anche oltre il minimo («Voglio rispondere a un'altra domanda»).
+  Future<PassoIntervista> rispondi(String id, String? risposta, {bool basta = false, bool altra = false}) => _chiama(
     'POST',
     '/readings/${Uri.encodeComponent(id)}/interview',
     (d) => PassoIntervista.fromJson(_mappa(d)),
-    corpo: basta ? {'basta': true} : (risposta != null && risposta.isNotEmpty ? {'risposta': risposta} : {}),
+    corpo: basta
+        ? {'basta': true}
+        : {
+            if (risposta != null && risposta.isNotEmpty) 'risposta': risposta,
+            'continua': false,
+            if (altra) 'altra': true,
+          },
   );
+
+  /// `POST /readings/{id}/addition` (v9.5): «Voglio dire qualcosa di libero». Il testo entra nell'interpretazione;
+  /// `crisi` e `messaggio` come nell'intervista.
+  Future<({bool crisi, String? messaggio})> aggiungiAllIntervista(String id, String testo) =>
+      _chiama('POST', '/readings/${Uri.encodeComponent(id)}/addition', (d) {
+        final m = _mappa(d);
+        return (crisi: m['crisi'] == true, messaggio: m['messaggio'] as String?);
+      }, corpo: {'testo': testo});
 
   /// `POST /readings/{id}/fan`: mescola e taglia (il [taglio] è dove si è toccato il mazzo, da 0 a 1).
   Future<Ventaglio> apriVentaglio(String id, {double? taglio}) => _chiama(

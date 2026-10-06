@@ -43,6 +43,9 @@ abstract class ImpostazioniPubbliche with _$ImpostazioniPubbliche {
     required int creditiIscrizione,
     required int creditiInvito,
     @Default(0) num commissioneReferralPercentuale,
+
+    /// v9.5: quante persone su cento ricevono la lettura in chat (prova 90/10, dalla console).
+    @Default(90) int letturaChatPercentuale,
   }) = _ImpostazioniPubbliche;
 
   /// Dal JSON dell'API.

@@ -44,6 +44,8 @@ _ImpostazioniPubbliche _$ImpostazioniPubblicheFromJson(
   creditiInvito: (json['crediti_invito'] as num).toInt(),
   commissioneReferralPercentuale:
       json['commissione_referral_percentuale'] as num? ?? 0,
+  letturaChatPercentuale:
+      (json['lettura_chat_percentuale'] as num?)?.toInt() ?? 90,
 );
 
 Map<String, dynamic> _$ImpostazioniPubblicheToJson(
@@ -52,6 +54,7 @@ Map<String, dynamic> _$ImpostazioniPubblicheToJson(
   'crediti_iscrizione': instance.creditiIscrizione,
   'crediti_invito': instance.creditiInvito,
   'commissione_referral_percentuale': instance.commissioneReferralPercentuale,
+  'lettura_chat_percentuale': instance.letturaChatPercentuale,
 };
 
 _EtaMinima _$EtaMinimaFromJson(Map<String, dynamic> json) => _EtaMinima(

@@ -496,6 +496,51 @@ class AppLocalizationsRu extends AppLocalizations {
   String get comune_testata_entra => 'Войти';
 
   @override
+  String comune_traduzione_offerta(Object lingua) {
+    return 'Прочитать эту страницу на языке: $lingua? Браузер может перевести её прямо на твоём устройстве.';
+  }
+
+  @override
+  String get comune_traduzione_traduci => 'Перевести';
+
+  @override
+  String comune_traduzione_scarico(Object p) {
+    return 'Загружается модель перевода… $p%';
+  }
+
+  @override
+  String get comune_traduzione_in_corso => 'Идёт перевод…';
+
+  @override
+  String comune_traduzione_tradotta(Object da) {
+    return 'Переведено автоматически на твоём устройстве, оригинал: $da.';
+  }
+
+  @override
+  String comune_traduzione_originale(Object da) {
+    return 'Показать оригинал ($da)';
+  }
+
+  @override
+  String comune_traduzione_e_originale(Object da) {
+    return 'Ты читаешь оригинал ($da).';
+  }
+
+  @override
+  String comune_traduzione_traduci_in_lingua(Object lingua) {
+    return 'Перевести: $lingua';
+  }
+
+  @override
+  String get comune_traduzione_errore => 'Перевод не удался: ты читаешь оригинал.';
+
+  @override
+  String get comune_traduzione_altra_lingua => 'Другой язык:';
+
+  @override
+  String get comune_traduzione_mai => 'Не переводить автоматически';
+
+  @override
   String get home_meta_titolo => 'TAROTS chat — живой ритуал Таро';
 
   @override
@@ -1318,6 +1363,24 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get lettura_basta_domande => 'Хватит вопросов';
+
+  @override
+  String get lettura_scelta_titolo => 'Что ты хочешь сделать?';
+
+  @override
+  String get lettura_scelta_lettura => 'Перейти к раскладу';
+
+  @override
+  String get lettura_scelta_libero => 'Хочу свободно что-то сказать';
+
+  @override
+  String get lettura_scelta_altra => 'Хочу ответить ещё на один вопрос';
+
+  @override
+  String get lettura_libero_segnaposto => 'Напиши свободно всё, что приходит в голову…';
+
+  @override
+  String get lettura_libero_invia => 'Отправить';
 
   @override
   String get lettura_stampa_pdf => 'Печать в PDF';
@@ -4350,6 +4413,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get privacy_letture_cta => 'Управлять тем, что запомнено';
+
+  @override
+  String get privacy_letture_accesso =>
+      'Только по соображениям безопасности (например, чтобы разобраться с жалобой на злоупотребление или с просьбой о помощи) администраторы TAROTS chat могут читать твои расклады, разговоры, то, что помнит твой чтец, и данные профиля. Для каждого доступа нужно указать причину, и он записывается в журнал.';
 
   @override
   String get privacy_ai_titolo => 'Как используется ИИ';

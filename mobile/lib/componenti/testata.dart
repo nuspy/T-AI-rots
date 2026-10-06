@@ -31,7 +31,7 @@ import 'selettore_lingua.dart';
 
 /// Quale voce del menu accendere: ogni sezione possiede alcune pagine (come `SEZIONI` del sito).
 const List<({Voce voce, String href, List<String> pagine})> sezioni = [
-  (voce: Voce.leggi, href: R.leggi, pagine: [R.leggi]),
+  (voce: Voce.leggi, href: R.leggi, pagine: [R.leggi, R.letturaChat, R.letturaClassica]),
   (voce: Voce.fisica, href: R.fisica, pagine: [R.fisica]),
   (voce: Voce.giorno, href: R.giorno, pagine: [R.giorno]),
   (voce: Voce.diario, href: R.blog, pagine: [R.blog]),

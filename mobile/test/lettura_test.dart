@@ -8,12 +8,16 @@ import 'dart:io';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tarots/archivio.dart';
+import 'package:tarots/componenti/modale.dart';
 import 'package:tarots/componenti/premibile.dart';
 import 'package:tarots/lettura/dialogo.dart';
 import 'package:tarots/lettura/responso.dart';
 import 'package:tarots/lettura/tavolo.dart';
+import 'package:tarots/lettura/variante.dart';
 import 'package:tarots/lettura/ventaglio.dart';
 import 'package:tarots/pagine/lettura.dart';
+import 'package:tarots/rotte/router.dart';
 
 import 'aiuti/finti.dart';
 import 'aiuti/scena.dart';
@@ -329,5 +333,117 @@ void main() {
     expect(comeCategoria('couple'), 'coppia');
     expect(comeCategoria('business'), 'lavoro');
     expect(comeCategoria('x'), isNull);
+  });
+
+  /* ---- v9.5: la lettura in chat e i tre pulsanti dell'intervista ---- */
+
+  /// L'intervista del server v9.5: una domanda, poi (dopo la risposta) la scelta; «Passa alla lettura» la chiude.
+  AdattatoreFinto reteChat() {
+    final rete = reteRito();
+    rete.risposte['POST /readings/$idLettura/interview'] = (r) {
+      final c = jsonDecode(rete.corpi.last ?? '{}') as Map<String, Object?>;
+      const regole = {'min_domande': 0, 'max_domande': 2};
+      if (c['basta'] == true) return RispostaFinta.json({'completa': true, 'riassunto': 'Ready for the cards.'});
+      if (c['risposta'] != null) return RispostaFinta.json({'scelta': true, 'poste': 1, ...regole});
+      return RispostaFinta.json({
+        'domanda': 'How long has this been with you?',
+        'poste': 1,
+        'facoltativa': true,
+        ...regole,
+      });
+    };
+    rete.risposte['POST /readings/$idLettura/addition'] = (_) => RispostaFinta.json({'ok': true});
+    return rete;
+  }
+
+  testWidgets('la lettura in chat sul telefono: i tre pulsanti, il testo libero, poi il rito nella pagina', (
+    tester,
+  ) async {
+    final rete = reteChat();
+    final app = await montaApp(
+      tester,
+      rotta: '/read?question=Will%20my%20new%20project%20at%20work%20go%20well%3F&type=standard&spread=tre-carte',
+      larghezza: 390,
+      altezza: 844,
+      rete: rete,
+      varianteLettura: 'chat',
+    );
+    // `/read` smista: questa persona ha la chat, e i parametri restano.
+    final uri = app.read(routerProvider).routerDelegate.currentConfiguration.uri;
+    expect(uri.path, '/read-chat');
+    expect(uri.queryParameters['spread'], 'tre-carte');
+
+    await tocca(tester, 'Stop with the question and go to the ritual');
+    await attendi(tester);
+    await tester.tap(find.text('I understand, let us begin'));
+    await attendi(tester);
+    await attendi(tester);
+    expect(corpo(rete, '/readings')['variante'], 'chat');
+    expect(corpo(rete, '/readings')['piattaforma'], anyOf('android', 'ios'));
+
+    // Sotto la prima domanda: il campo, il testo libero e (minimo 0) «Passa alla lettura»; non «un'altra domanda».
+    expect(find.text('How long has this been with you?'), findsOneWidget);
+    expect(find.text('Go to the reading'), findsOneWidget);
+    expect(find.text('I want to say something freely'), findsOneWidget);
+    expect(find.text('I want to answer another question'), findsNothing);
+
+    // La risposta: il campo si chiude e arrivano i tre pulsanti.
+    await tester.enterText(find.byType(EditableText).last, 'Started last month.');
+    await tester.pump();
+    await tocca(tester, 'Answer');
+    await attendi(tester);
+    expect(corpo(rete, '/readings/$idLettura/interview')['continua'], isFalse);
+    expect(find.text('Answer'), findsNothing);
+    expect(find.text('I want to answer another question'), findsOneWidget);
+
+    // Il testo libero va al server e tornano i pulsanti.
+    await tocca(tester, 'I want to say something freely');
+    await attendi(tester);
+    expect(find.text('Send'), findsOneWidget);
+    await tester.enterText(find.byType(EditableText).last, 'My team is new.');
+    await tester.pump();
+    await tocca(tester, 'Send');
+    await attendi(tester);
+    expect(corpo(rete, '/readings/$idLettura/addition')['testo'], 'My team is new.');
+    expect(find.text('Go to the reading'), findsOneWidget);
+
+    // «Passa alla lettura»: l'intervista si chiude; il rito sta nella pagina, mai nel dialogo scuro.
+    await tocca(tester, 'Go to the reading');
+    await attendi(tester);
+    expect(corpo(rete, '/readings/$idLettura/interview')['basta'], isTrue);
+    await tocca(tester, 'Begin the shuffle');
+    await attendi(tester);
+    expect(find.byType(Mescolamento), findsOneWidget);
+    expect(find.byType(FinestraModale), findsNothing);
+    await tester.tap(find.text('Interrupt the shuffle'));
+    await attendi(tester);
+    await tester.ensureVisible(find.byType(Taglio));
+    await tester.tap(find.byType(Taglio));
+    await attendi(tester, 1200);
+    await attendi(tester);
+    expect(find.byType(Ventaglio), findsOneWidget);
+    expect(find.byType(FinestraModale), findsNothing);
+    expect(tester.takeException(), isNull);
+    finisci();
+  });
+
+  testWidgets('chi ha un account torna alla versione del suo profilo, con gli stessi parametri', (tester) async {
+    final rete = reteRito();
+    final profilo = jsonDecode(File('test/fixtures/profilo.json').readAsStringSync()) as Map<String, Object?>;
+    rete.risposte['/me/profile'] = (_) => RispostaFinta.json({...profilo, 'variante_lettura': 'chat'});
+    final app = await montaApp(
+      tester,
+      rotta: '/read?spread=tre-carte&type=standard',
+      larghezza: 1024,
+      altezza: 1366,
+      rete: rete,
+    );
+    await attendi(tester);
+    final uri = app.read(routerProvider).routerDelegate.currentConfiguration.uri;
+    expect(uri.path, '/read-chat');
+    expect(uri.queryParameters['spread'], 'tre-carte');
+    expect(app.read(archivioProvider).leggi(chiaveVarianteLettura), 'chat');
+    expect(tester.takeException(), isNull);
+    finisci();
   });
 }

@@ -1,6 +1,7 @@
 /// La conversazione con il lettore (`frontend/v2/lettura/dialogo.tsx`): le domande dell'intervista e le risposte. Si
 /// scorre solo dentro il riquadro, mai la pagina: una battuta nuova del lettore si porta in vista dal suo inizio (e si
-/// scrive a macchina, due lettere ogni 18 ms), la propria in fondo.
+/// scrive a macchina, due lettere ogni 18 ms), la propria in fondo. Nella lettura in chat (v9.5, `fluido`) il
+/// riquadro non c'è: la conversazione scorre con la pagina, che decide lei quando seguirla.
 library;
 
 import 'dart:async';
@@ -49,6 +50,26 @@ class Battuta {
   final bool macchina;
 }
 
+/// v9.5: un pulsante in fondo alla chat («Passa alla lettura», «Voglio dire qualcosa di libero», «Voglio rispondere a
+/// un'altra domanda»).
+@immutable
+class SceltaDialogo {
+  /// Un pulsante.
+  const SceltaDialogo({required this.etichetta, required this.azione, this.primaria = false, this.an});
+
+  /// Il testo.
+  final String etichetta;
+
+  /// Cosa fa.
+  final VoidCallback azione;
+
+  /// Il pulsante principale (ottone).
+  final bool primaria;
+
+  /// Il nome per le statistiche dei clic.
+  final String? an;
+}
+
 /// La conversazione.
 class Dialogo extends StatefulWidget {
   /// La conversazione con le [battute].
@@ -58,8 +79,10 @@ class Dialogo extends StatefulWidget {
     required this.attesa,
     required this.inputAttivo,
     required this.alRispondi,
-    this.alBasta,
-    this.puoiFermarti = false,
+    this.scelte = const [],
+    this.libero = false,
+    this.fluido = false,
+    this.alNovita,
   });
 
   /// Le battute.
@@ -68,17 +91,24 @@ class Dialogo extends StatefulWidget {
   /// Il lettore sta pensando.
   final bool attesa;
 
-  /// Il campo della risposta (solo durante l'intervista).
+  /// Il campo c'è solo quando si risponde a una domanda o si scrive il testo libero (v9.5): durante la scelta no.
   final bool inputAttivo;
 
-  /// Una risposta.
+  /// Una risposta (o il testo libero, con [libero]).
   final ValueChanged<String> alRispondi;
 
-  /// «Basta con le domande» (v8.5): chiude l'intervista; attivo solo dopo il minimo di domande.
-  final VoidCallback? alBasta;
+  /// v9.5: i pulsanti in fondo alla chat, già filtrati da chi chiama.
+  final List<SceltaDialogo> scelte;
 
-  /// Il minimo di domande è raggiunto.
-  final bool puoiFermarti;
+  /// v9.5: il campo è per il testo libero, non per una risposta.
+  final bool libero;
+
+  /// v9.5, la lettura in chat: niente riquadro con lo scorrimento interno, la conversazione scorre con la pagina, e
+  /// a ogni novità si chiama [alNovita] (la pagina decide se scorrere).
+  final bool fluido;
+
+  /// Con [fluido]: una battuta nuova ([allInizio] vero: va mostrata dal suo inizio) o i pulsanti (falso: in vista).
+  final void Function(BuildContext contesto, {required bool allInizio})? alNovita;
 
   @override
   State<Dialogo> createState() => _DialogoState();
@@ -88,6 +118,7 @@ class _DialogoState extends State<Dialogo> {
   final ScrollController _scorri = ScrollController();
   final TextEditingController _testo = TextEditingController();
   final Map<String, GlobalKey> _chiavi = {};
+  final GlobalKey _chiaveScelte = GlobalKey(debugLabel: 'scelte');
   String? _ultima;
 
   @override
@@ -95,7 +126,7 @@ class _DialogoState extends State<Dialogo> {
     super.initState();
     _testo.addListener(() => setState(() {}));
     _ultima = widget.battute.lastOrNull?.id;
-    WidgetsBinding.instance.addPostFrameCallback((_) => _inFondo(animato: false));
+    if (!widget.fluido) WidgetsBinding.instance.addPostFrameCallback((_) => _inFondo(animato: false));
   }
 
   @override
@@ -105,14 +136,31 @@ class _DialogoState extends State<Dialogo> {
     if (ultima != null && ultima.id != _ultima) {
       _ultima = ultima.id;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (ultima.autore == Autore.utente) {
+        if (widget.fluido) {
+          final ctx = _chiavi[ultima.id]?.currentContext;
+          if (mounted && ctx != null) widget.alNovita?.call(ctx, allInizio: true);
+        } else if (ultima.autore == Autore.utente) {
           _inFondo();
         } else {
           _allInizio(ultima.id);
         }
       });
     }
-    if (widget.attesa && !vecchio.attesa) WidgetsBinding.instance.addPostFrameCallback((_) => _inFondo());
+    final sceltePronte = !widget.attesa && widget.scelte.isNotEmpty;
+    final eranoPronte = !vecchio.attesa && vecchio.scelte.isNotEmpty;
+    if (sceltePronte && !eranoPronte) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!widget.fluido) {
+          _inFondo();
+        } else {
+          final ctx = _chiaveScelte.currentContext;
+          if (mounted && ctx != null) widget.alNovita?.call(ctx, allInizio: false);
+        }
+      });
+    }
+    if (!widget.fluido && widget.attesa && !vecchio.attesa) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _inFondo());
+    }
   }
 
   @override
@@ -161,50 +209,80 @@ class _DialogoState extends State<Dialogo> {
     final media = MediaQuery.of(context);
     final stretto = media.size.width <= 640;
     final massima = stretto ? media.size.height * .58 : math.min(media.size.height * .62, 620.0);
-    final battute = ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: massima),
-      child: Semantics(
-        liveRegion: true,
-        child: ListView(
-          controller: _scorri,
-          shrinkWrap: true,
-          padding: const EdgeInsets.only(right: 4.8),
-          children: [
-            for (final (i, b) in widget.battute.indexed) ...[
-              if (i > 0) const SizedBox(height: 12.8),
-              _VoceBattuta(key: _chiavi.putIfAbsent(b.id, GlobalKey.new), battuta: b),
-            ],
-            if (widget.attesa)
-              Padding(
-                padding: const EdgeInsets.only(top: 12.8),
-                child: Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Puntini(etichetta: t.lettura_pensa, colore: Token.brass),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-
-    final campo = _Risposta(controllore: _testo, segnaposto: t.lettura_risposta_segnaposto, attivo: !widget.attesa);
-    final azioni = Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        Bottone(t.lettura_rispondi, alTocco: widget.attesa || _testo.text.trim().isEmpty ? null : _invia),
-        if (widget.alBasta != null)
-          Bottone(
-            t.lettura_basta_domande,
-            variante: Variante.quieto,
-            an: 'intervista_basta',
-            alTocco: widget.attesa || !widget.puoiFermarti ? null : widget.alBasta,
-          ),
+    final voci = <Widget>[
+      for (final (i, b) in widget.battute.indexed) ...[
+        if (i > 0) const SizedBox(height: 12.8),
+        _VoceBattuta(key: _chiavi.putIfAbsent(b.id, GlobalKey.new), battuta: b),
       ],
+      if (widget.attesa)
+        Padding(
+          padding: const EdgeInsets.only(top: 12.8),
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Puntini(etichetta: t.lettura_pensa, colore: Token.brass),
+          ),
+        ),
+      // v9.5: le scelte stanno dentro la chat, in fondo alla conversazione, ben visibili.
+      if (!widget.attesa && widget.scelte.isNotEmpty)
+        Padding(
+          key: _chiaveScelte,
+          padding: const EdgeInsets.only(top: 16),
+          child: Semantics(
+            container: true,
+            label: t.lettura_scelta_titolo,
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final s in widget.scelte)
+                  Bottone(
+                    s.etichetta,
+                    variante: s.primaria ? Variante.ottone : Variante.quieto,
+                    an: s.an,
+                    alTocco: s.azione,
+                  ),
+              ],
+            ),
+          ),
+        ),
+    ];
+    final battute = widget.fluido
+        ? Semantics(
+            liveRegion: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: voci,
+            ),
+          )
+        : ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: massima),
+            child: Semantics(
+              liveRegion: true,
+              child: ListView(
+                controller: _scorri,
+                shrinkWrap: true,
+                padding: const EdgeInsets.only(right: 4.8),
+                children: voci,
+              ),
+            ),
+          );
+
+    final segnaposto = widget.libero ? t.lettura_libero_segnaposto : t.lettura_risposta_segnaposto;
+    final campo = _Risposta(
+      controllore: _testo,
+      segnaposto: segnaposto,
+      attivo: !widget.attesa,
+      fuocoSubito: widget.libero,
+    );
+    // Sotto il campo solo l'invio: le scelte stanno nella chat (v9.5).
+    final azioni = Bottone(
+      widget.libero ? t.lettura_libero_invia : t.lettura_rispondi,
+      alTocco: widget.attesa || _testo.text.trim().isEmpty ? null : _invia,
     );
 
     return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: 360),
+      constraints: BoxConstraints(minHeight: widget.fluido ? 0 : 360),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -224,7 +302,7 @@ class _DialogoState extends State<Dialogo> {
                         children: [
                           campo,
                           const SizedBox(height: 9.6 + 8),
-                          azioni,
+                          Align(alignment: AlignmentDirectional.centerStart, child: azioni),
                         ],
                       )
                     : Row(
@@ -378,11 +456,19 @@ class _VoceBattutaState extends State<_VoceBattuta> with SingleTickerProviderSta
 
 /// `.risposta textarea`: il campo della risposta (alto almeno 52 px, due righe, cresce col testo).
 class _Risposta extends StatefulWidget {
-  const _Risposta({required this.controllore, required this.segnaposto, required this.attivo});
+  const _Risposta({
+    required this.controllore,
+    required this.segnaposto,
+    required this.attivo,
+    this.fuocoSubito = false,
+  });
 
   final TextEditingController controllore;
   final String segnaposto;
   final bool attivo;
+
+  /// v9.5: il campo del testo libero prende subito il fuoco (si è appena scelto di scrivere).
+  final bool fuocoSubito;
 
   @override
   State<_Risposta> createState() => _RispostaState();
@@ -395,6 +481,7 @@ class _RispostaState extends State<_Risposta> {
   void initState() {
     super.initState();
     _fuoco.addListener(() => setState(() {}));
+    if (widget.fuocoSubito) WidgetsBinding.instance.addPostFrameCallback((_) => _fuoco.requestFocus());
   }
 
   @override

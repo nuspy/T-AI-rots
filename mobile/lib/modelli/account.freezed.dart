@@ -1419,7 +1419,9 @@ as String,
 /// @nodoc
 mixin _$Profilo {
 
- int get id; String? get email; String? get displayName; String get locale;/// Fase 2d: quando la lingua è stata scelta dal sito o dall'app; `null` = mai.
+ int get id; String? get email; String? get displayName; String get locale;/// v9.5: la versione della lettura di questa persona (`chat` o `classica`), fissata alla sua prima lettura e
+/// uguale su tutti i dispositivi; `null` = ancora nessuna.
+ String? get varianteLettura;/// Fase 2d: quando la lingua è stata scelta dal sito o dall'app; `null` = mai.
  String? get localeSceltaIl; String? get birthDate;/// `donna`, `uomo`, `non_binario`, `altro`, `non_dice`.
  String? get gender; String? get genderCustom; bool get isTrans;@JsonKey(name: 'promemoria_2fa') bool get promemoria2fa; String? get nomePubblico;/// `esoterico` o `quotidiano`.
  String get registroLinguistico; int? get mazzoPredefinitoId; String get nomeMostrato;/// Percorso relativo dell'API.
@@ -1437,20 +1439,20 @@ $ProfiloCopyWith<Profilo> get copyWith => _$ProfiloCopyWithImpl<Profilo>(this as
 @override
 bool operator ==(Object other) {
   final _this = this as Profilo;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Profilo&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.email, _this.email) || other.email == _this.email)&&(identical(other.displayName, _this.displayName) || other.displayName == _this.displayName)&&(identical(other.locale, _this.locale) || other.locale == _this.locale)&&(identical(other.localeSceltaIl, _this.localeSceltaIl) || other.localeSceltaIl == _this.localeSceltaIl)&&(identical(other.birthDate, _this.birthDate) || other.birthDate == _this.birthDate)&&(identical(other.gender, _this.gender) || other.gender == _this.gender)&&(identical(other.genderCustom, _this.genderCustom) || other.genderCustom == _this.genderCustom)&&(identical(other.isTrans, _this.isTrans) || other.isTrans == _this.isTrans)&&(identical(other.promemoria2fa, _this.promemoria2fa) || other.promemoria2fa == _this.promemoria2fa)&&(identical(other.nomePubblico, _this.nomePubblico) || other.nomePubblico == _this.nomePubblico)&&(identical(other.registroLinguistico, _this.registroLinguistico) || other.registroLinguistico == _this.registroLinguistico)&&(identical(other.mazzoPredefinitoId, _this.mazzoPredefinitoId) || other.mazzoPredefinitoId == _this.mazzoPredefinitoId)&&(identical(other.nomeMostrato, _this.nomeMostrato) || other.nomeMostrato == _this.nomeMostrato)&&(identical(other.avatar, _this.avatar) || other.avatar == _this.avatar)&&(identical(other.partnerRicordato, _this.partnerRicordato) || other.partnerRicordato == _this.partnerRicordato)&&(identical(other.relazioni, _this.relazioni) || other.relazioni == _this.relazioni)&&(identical(other.referralCode, _this.referralCode) || other.referralCode == _this.referralCode)&&(identical(other.invitato, _this.invitato) || other.invitato == _this.invitato)&&(identical(other.condivisioni, _this.condivisioni) || other.condivisioni == _this.condivisioni)&&(identical(other.cartaAnima, _this.cartaAnima) || other.cartaAnima == _this.cartaAnima)&&(identical(other.cartaAnno, _this.cartaAnno) || other.cartaAnno == _this.cartaAnno)&&(identical(other.nome, _this.nome) || other.nome == _this.nome)&&(identical(other.cognome, _this.cognome) || other.cognome == _this.cognome)&&(identical(other.posizione, _this.posizione) || other.posizione == _this.posizione)&&const DeepCollectionEquality().equals(other.datiSocial, _this.datiSocial)&&(identical(other.importaSocial, _this.importaSocial) || other.importaSocial == _this.importaSocial)&&(identical(other.rilevaPosizione, _this.rilevaPosizione) || other.rilevaPosizione == _this.rilevaPosizione));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Profilo&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.email, _this.email) || other.email == _this.email)&&(identical(other.displayName, _this.displayName) || other.displayName == _this.displayName)&&(identical(other.locale, _this.locale) || other.locale == _this.locale)&&(identical(other.varianteLettura, _this.varianteLettura) || other.varianteLettura == _this.varianteLettura)&&(identical(other.localeSceltaIl, _this.localeSceltaIl) || other.localeSceltaIl == _this.localeSceltaIl)&&(identical(other.birthDate, _this.birthDate) || other.birthDate == _this.birthDate)&&(identical(other.gender, _this.gender) || other.gender == _this.gender)&&(identical(other.genderCustom, _this.genderCustom) || other.genderCustom == _this.genderCustom)&&(identical(other.isTrans, _this.isTrans) || other.isTrans == _this.isTrans)&&(identical(other.promemoria2fa, _this.promemoria2fa) || other.promemoria2fa == _this.promemoria2fa)&&(identical(other.nomePubblico, _this.nomePubblico) || other.nomePubblico == _this.nomePubblico)&&(identical(other.registroLinguistico, _this.registroLinguistico) || other.registroLinguistico == _this.registroLinguistico)&&(identical(other.mazzoPredefinitoId, _this.mazzoPredefinitoId) || other.mazzoPredefinitoId == _this.mazzoPredefinitoId)&&(identical(other.nomeMostrato, _this.nomeMostrato) || other.nomeMostrato == _this.nomeMostrato)&&(identical(other.avatar, _this.avatar) || other.avatar == _this.avatar)&&(identical(other.partnerRicordato, _this.partnerRicordato) || other.partnerRicordato == _this.partnerRicordato)&&(identical(other.relazioni, _this.relazioni) || other.relazioni == _this.relazioni)&&(identical(other.referralCode, _this.referralCode) || other.referralCode == _this.referralCode)&&(identical(other.invitato, _this.invitato) || other.invitato == _this.invitato)&&(identical(other.condivisioni, _this.condivisioni) || other.condivisioni == _this.condivisioni)&&(identical(other.cartaAnima, _this.cartaAnima) || other.cartaAnima == _this.cartaAnima)&&(identical(other.cartaAnno, _this.cartaAnno) || other.cartaAnno == _this.cartaAnno)&&(identical(other.nome, _this.nome) || other.nome == _this.nome)&&(identical(other.cognome, _this.cognome) || other.cognome == _this.cognome)&&(identical(other.posizione, _this.posizione) || other.posizione == _this.posizione)&&const DeepCollectionEquality().equals(other.datiSocial, _this.datiSocial)&&(identical(other.importaSocial, _this.importaSocial) || other.importaSocial == _this.importaSocial)&&(identical(other.rilevaPosizione, _this.rilevaPosizione) || other.rilevaPosizione == _this.rilevaPosizione));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as Profilo;
-  return Object.hashAll([runtimeType,_this.id,_this.email,_this.displayName,_this.locale,_this.localeSceltaIl,_this.birthDate,_this.gender,_this.genderCustom,_this.isTrans,_this.promemoria2fa,_this.nomePubblico,_this.registroLinguistico,_this.mazzoPredefinitoId,_this.nomeMostrato,_this.avatar,_this.partnerRicordato,_this.relazioni,_this.referralCode,_this.invitato,_this.condivisioni,_this.cartaAnima,_this.cartaAnno,_this.nome,_this.cognome,_this.posizione,const DeepCollectionEquality().hash(_this.datiSocial),_this.importaSocial,_this.rilevaPosizione]);
+  return Object.hashAll([runtimeType,_this.id,_this.email,_this.displayName,_this.locale,_this.varianteLettura,_this.localeSceltaIl,_this.birthDate,_this.gender,_this.genderCustom,_this.isTrans,_this.promemoria2fa,_this.nomePubblico,_this.registroLinguistico,_this.mazzoPredefinitoId,_this.nomeMostrato,_this.avatar,_this.partnerRicordato,_this.relazioni,_this.referralCode,_this.invitato,_this.condivisioni,_this.cartaAnima,_this.cartaAnno,_this.nome,_this.cognome,_this.posizione,const DeepCollectionEquality().hash(_this.datiSocial),_this.importaSocial,_this.rilevaPosizione]);
 }
 
 @override
 String toString() {
   final _this = this as Profilo;
-  return 'Profilo(id: ${_this.id}, email: ${_this.email}, displayName: ${_this.displayName}, locale: ${_this.locale}, localeSceltaIl: ${_this.localeSceltaIl}, birthDate: ${_this.birthDate}, gender: ${_this.gender}, genderCustom: ${_this.genderCustom}, isTrans: ${_this.isTrans}, promemoria2fa: ${_this.promemoria2fa}, nomePubblico: ${_this.nomePubblico}, registroLinguistico: ${_this.registroLinguistico}, mazzoPredefinitoId: ${_this.mazzoPredefinitoId}, nomeMostrato: ${_this.nomeMostrato}, avatar: ${_this.avatar}, partnerRicordato: ${_this.partnerRicordato}, relazioni: ${_this.relazioni}, referralCode: ${_this.referralCode}, invitato: ${_this.invitato}, condivisioni: ${_this.condivisioni}, cartaAnima: ${_this.cartaAnima}, cartaAnno: ${_this.cartaAnno}, nome: ${_this.nome}, cognome: ${_this.cognome}, posizione: ${_this.posizione}, datiSocial: ${_this.datiSocial}, importaSocial: ${_this.importaSocial}, rilevaPosizione: ${_this.rilevaPosizione})';
+  return 'Profilo(id: ${_this.id}, email: ${_this.email}, displayName: ${_this.displayName}, locale: ${_this.locale}, varianteLettura: ${_this.varianteLettura}, localeSceltaIl: ${_this.localeSceltaIl}, birthDate: ${_this.birthDate}, gender: ${_this.gender}, genderCustom: ${_this.genderCustom}, isTrans: ${_this.isTrans}, promemoria2fa: ${_this.promemoria2fa}, nomePubblico: ${_this.nomePubblico}, registroLinguistico: ${_this.registroLinguistico}, mazzoPredefinitoId: ${_this.mazzoPredefinitoId}, nomeMostrato: ${_this.nomeMostrato}, avatar: ${_this.avatar}, partnerRicordato: ${_this.partnerRicordato}, relazioni: ${_this.relazioni}, referralCode: ${_this.referralCode}, invitato: ${_this.invitato}, condivisioni: ${_this.condivisioni}, cartaAnima: ${_this.cartaAnima}, cartaAnno: ${_this.cartaAnno}, nome: ${_this.nome}, cognome: ${_this.cognome}, posizione: ${_this.posizione}, datiSocial: ${_this.datiSocial}, importaSocial: ${_this.importaSocial}, rilevaPosizione: ${_this.rilevaPosizione})';
 }
 
 
@@ -1461,7 +1463,7 @@ abstract mixin class $ProfiloCopyWith<$Res>  {
   factory $ProfiloCopyWith(Profilo value, $Res Function(Profilo) _then) = _$ProfiloCopyWithImpl;
 @useResult
 $Res call({
- int id, String? email, String? displayName, String locale, String? localeSceltaIl, String? birthDate, String? gender, String? genderCustom, bool isTrans,@JsonKey(name: 'promemoria_2fa') bool promemoria2fa, String? nomePubblico, String registroLinguistico, int? mazzoPredefinitoId, String nomeMostrato, String? avatar, PersonaSalvata? partnerRicordato, Relazioni relazioni, String? referralCode, bool invitato, Condivisioni condivisioni, Carta? cartaAnima, Carta? cartaAnno, String? nome, String? cognome, PosizioneAttuale? posizione, Map<String, OrigineDato> datiSocial, bool? importaSocial, bool? rilevaPosizione
+ int id, String? email, String? displayName, String locale, String? varianteLettura, String? localeSceltaIl, String? birthDate, String? gender, String? genderCustom, bool isTrans,@JsonKey(name: 'promemoria_2fa') bool promemoria2fa, String? nomePubblico, String registroLinguistico, int? mazzoPredefinitoId, String nomeMostrato, String? avatar, PersonaSalvata? partnerRicordato, Relazioni relazioni, String? referralCode, bool invitato, Condivisioni condivisioni, Carta? cartaAnima, Carta? cartaAnno, String? nome, String? cognome, PosizioneAttuale? posizione, Map<String, OrigineDato> datiSocial, bool? importaSocial, bool? rilevaPosizione
 });
 
 
@@ -1478,13 +1480,14 @@ class _$ProfiloCopyWithImpl<$Res>
 
 /// Create a copy of Profilo
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? email = freezed,Object? displayName = freezed,Object? locale = null,Object? localeSceltaIl = freezed,Object? birthDate = freezed,Object? gender = freezed,Object? genderCustom = freezed,Object? isTrans = null,Object? promemoria2fa = null,Object? nomePubblico = freezed,Object? registroLinguistico = null,Object? mazzoPredefinitoId = freezed,Object? nomeMostrato = null,Object? avatar = freezed,Object? partnerRicordato = freezed,Object? relazioni = null,Object? referralCode = freezed,Object? invitato = null,Object? condivisioni = null,Object? cartaAnima = freezed,Object? cartaAnno = freezed,Object? nome = freezed,Object? cognome = freezed,Object? posizione = freezed,Object? datiSocial = null,Object? importaSocial = freezed,Object? rilevaPosizione = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? email = freezed,Object? displayName = freezed,Object? locale = null,Object? varianteLettura = freezed,Object? localeSceltaIl = freezed,Object? birthDate = freezed,Object? gender = freezed,Object? genderCustom = freezed,Object? isTrans = null,Object? promemoria2fa = null,Object? nomePubblico = freezed,Object? registroLinguistico = null,Object? mazzoPredefinitoId = freezed,Object? nomeMostrato = null,Object? avatar = freezed,Object? partnerRicordato = freezed,Object? relazioni = null,Object? referralCode = freezed,Object? invitato = null,Object? condivisioni = null,Object? cartaAnima = freezed,Object? cartaAnno = freezed,Object? nome = freezed,Object? cognome = freezed,Object? posizione = freezed,Object? datiSocial = null,Object? importaSocial = freezed,Object? rilevaPosizione = freezed,}) {
   return _then(Profilo(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String?,displayName: freezed == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
 as String?,locale: null == locale ? _self.locale : locale // ignore: cast_nullable_to_non_nullable
-as String,localeSceltaIl: freezed == localeSceltaIl ? _self.localeSceltaIl : localeSceltaIl // ignore: cast_nullable_to_non_nullable
+as String,varianteLettura: freezed == varianteLettura ? _self.varianteLettura : varianteLettura // ignore: cast_nullable_to_non_nullable
+as String?,localeSceltaIl: freezed == localeSceltaIl ? _self.localeSceltaIl : localeSceltaIl // ignore: cast_nullable_to_non_nullable
 as String?,birthDate: freezed == birthDate ? _self.birthDate : birthDate // ignore: cast_nullable_to_non_nullable
 as String?,gender: freezed == gender ? _self.gender : gender // ignore: cast_nullable_to_non_nullable
 as String?,genderCustom: freezed == genderCustom ? _self.genderCustom : genderCustom // ignore: cast_nullable_to_non_nullable
@@ -1659,10 +1662,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String? email,  String? displayName,  String locale,  String? localeSceltaIl,  String? birthDate,  String? gender,  String? genderCustom,  bool isTrans, @JsonKey(name: 'promemoria_2fa')  bool promemoria2fa,  String? nomePubblico,  String registroLinguistico,  int? mazzoPredefinitoId,  String nomeMostrato,  String? avatar,  PersonaSalvata? partnerRicordato,  Relazioni relazioni,  String? referralCode,  bool invitato,  Condivisioni condivisioni,  Carta? cartaAnima,  Carta? cartaAnno,  String? nome,  String? cognome,  PosizioneAttuale? posizione,  Map<String, OrigineDato> datiSocial,  bool? importaSocial,  bool? rilevaPosizione)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String? email,  String? displayName,  String locale,  String? varianteLettura,  String? localeSceltaIl,  String? birthDate,  String? gender,  String? genderCustom,  bool isTrans, @JsonKey(name: 'promemoria_2fa')  bool promemoria2fa,  String? nomePubblico,  String registroLinguistico,  int? mazzoPredefinitoId,  String nomeMostrato,  String? avatar,  PersonaSalvata? partnerRicordato,  Relazioni relazioni,  String? referralCode,  bool invitato,  Condivisioni condivisioni,  Carta? cartaAnima,  Carta? cartaAnno,  String? nome,  String? cognome,  PosizioneAttuale? posizione,  Map<String, OrigineDato> datiSocial,  bool? importaSocial,  bool? rilevaPosizione)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Profilo() when $default != null:
-return $default(_that.id,_that.email,_that.displayName,_that.locale,_that.localeSceltaIl,_that.birthDate,_that.gender,_that.genderCustom,_that.isTrans,_that.promemoria2fa,_that.nomePubblico,_that.registroLinguistico,_that.mazzoPredefinitoId,_that.nomeMostrato,_that.avatar,_that.partnerRicordato,_that.relazioni,_that.referralCode,_that.invitato,_that.condivisioni,_that.cartaAnima,_that.cartaAnno,_that.nome,_that.cognome,_that.posizione,_that.datiSocial,_that.importaSocial,_that.rilevaPosizione);case _:
+return $default(_that.id,_that.email,_that.displayName,_that.locale,_that.varianteLettura,_that.localeSceltaIl,_that.birthDate,_that.gender,_that.genderCustom,_that.isTrans,_that.promemoria2fa,_that.nomePubblico,_that.registroLinguistico,_that.mazzoPredefinitoId,_that.nomeMostrato,_that.avatar,_that.partnerRicordato,_that.relazioni,_that.referralCode,_that.invitato,_that.condivisioni,_that.cartaAnima,_that.cartaAnno,_that.nome,_that.cognome,_that.posizione,_that.datiSocial,_that.importaSocial,_that.rilevaPosizione);case _:
   return orElse();
 
 }
@@ -1680,10 +1683,10 @@ return $default(_that.id,_that.email,_that.displayName,_that.locale,_that.locale
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String? email,  String? displayName,  String locale,  String? localeSceltaIl,  String? birthDate,  String? gender,  String? genderCustom,  bool isTrans, @JsonKey(name: 'promemoria_2fa')  bool promemoria2fa,  String? nomePubblico,  String registroLinguistico,  int? mazzoPredefinitoId,  String nomeMostrato,  String? avatar,  PersonaSalvata? partnerRicordato,  Relazioni relazioni,  String? referralCode,  bool invitato,  Condivisioni condivisioni,  Carta? cartaAnima,  Carta? cartaAnno,  String? nome,  String? cognome,  PosizioneAttuale? posizione,  Map<String, OrigineDato> datiSocial,  bool? importaSocial,  bool? rilevaPosizione)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String? email,  String? displayName,  String locale,  String? varianteLettura,  String? localeSceltaIl,  String? birthDate,  String? gender,  String? genderCustom,  bool isTrans, @JsonKey(name: 'promemoria_2fa')  bool promemoria2fa,  String? nomePubblico,  String registroLinguistico,  int? mazzoPredefinitoId,  String nomeMostrato,  String? avatar,  PersonaSalvata? partnerRicordato,  Relazioni relazioni,  String? referralCode,  bool invitato,  Condivisioni condivisioni,  Carta? cartaAnima,  Carta? cartaAnno,  String? nome,  String? cognome,  PosizioneAttuale? posizione,  Map<String, OrigineDato> datiSocial,  bool? importaSocial,  bool? rilevaPosizione)  $default,) {final _that = this;
 switch (_that) {
 case _Profilo():
-return $default(_that.id,_that.email,_that.displayName,_that.locale,_that.localeSceltaIl,_that.birthDate,_that.gender,_that.genderCustom,_that.isTrans,_that.promemoria2fa,_that.nomePubblico,_that.registroLinguistico,_that.mazzoPredefinitoId,_that.nomeMostrato,_that.avatar,_that.partnerRicordato,_that.relazioni,_that.referralCode,_that.invitato,_that.condivisioni,_that.cartaAnima,_that.cartaAnno,_that.nome,_that.cognome,_that.posizione,_that.datiSocial,_that.importaSocial,_that.rilevaPosizione);case _:
+return $default(_that.id,_that.email,_that.displayName,_that.locale,_that.varianteLettura,_that.localeSceltaIl,_that.birthDate,_that.gender,_that.genderCustom,_that.isTrans,_that.promemoria2fa,_that.nomePubblico,_that.registroLinguistico,_that.mazzoPredefinitoId,_that.nomeMostrato,_that.avatar,_that.partnerRicordato,_that.relazioni,_that.referralCode,_that.invitato,_that.condivisioni,_that.cartaAnima,_that.cartaAnno,_that.nome,_that.cognome,_that.posizione,_that.datiSocial,_that.importaSocial,_that.rilevaPosizione);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1700,10 +1703,10 @@ return $default(_that.id,_that.email,_that.displayName,_that.locale,_that.locale
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String? email,  String? displayName,  String locale,  String? localeSceltaIl,  String? birthDate,  String? gender,  String? genderCustom,  bool isTrans, @JsonKey(name: 'promemoria_2fa')  bool promemoria2fa,  String? nomePubblico,  String registroLinguistico,  int? mazzoPredefinitoId,  String nomeMostrato,  String? avatar,  PersonaSalvata? partnerRicordato,  Relazioni relazioni,  String? referralCode,  bool invitato,  Condivisioni condivisioni,  Carta? cartaAnima,  Carta? cartaAnno,  String? nome,  String? cognome,  PosizioneAttuale? posizione,  Map<String, OrigineDato> datiSocial,  bool? importaSocial,  bool? rilevaPosizione)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String? email,  String? displayName,  String locale,  String? varianteLettura,  String? localeSceltaIl,  String? birthDate,  String? gender,  String? genderCustom,  bool isTrans, @JsonKey(name: 'promemoria_2fa')  bool promemoria2fa,  String? nomePubblico,  String registroLinguistico,  int? mazzoPredefinitoId,  String nomeMostrato,  String? avatar,  PersonaSalvata? partnerRicordato,  Relazioni relazioni,  String? referralCode,  bool invitato,  Condivisioni condivisioni,  Carta? cartaAnima,  Carta? cartaAnno,  String? nome,  String? cognome,  PosizioneAttuale? posizione,  Map<String, OrigineDato> datiSocial,  bool? importaSocial,  bool? rilevaPosizione)?  $default,) {final _that = this;
 switch (_that) {
 case _Profilo() when $default != null:
-return $default(_that.id,_that.email,_that.displayName,_that.locale,_that.localeSceltaIl,_that.birthDate,_that.gender,_that.genderCustom,_that.isTrans,_that.promemoria2fa,_that.nomePubblico,_that.registroLinguistico,_that.mazzoPredefinitoId,_that.nomeMostrato,_that.avatar,_that.partnerRicordato,_that.relazioni,_that.referralCode,_that.invitato,_that.condivisioni,_that.cartaAnima,_that.cartaAnno,_that.nome,_that.cognome,_that.posizione,_that.datiSocial,_that.importaSocial,_that.rilevaPosizione);case _:
+return $default(_that.id,_that.email,_that.displayName,_that.locale,_that.varianteLettura,_that.localeSceltaIl,_that.birthDate,_that.gender,_that.genderCustom,_that.isTrans,_that.promemoria2fa,_that.nomePubblico,_that.registroLinguistico,_that.mazzoPredefinitoId,_that.nomeMostrato,_that.avatar,_that.partnerRicordato,_that.relazioni,_that.referralCode,_that.invitato,_that.condivisioni,_that.cartaAnima,_that.cartaAnno,_that.nome,_that.cognome,_that.posizione,_that.datiSocial,_that.importaSocial,_that.rilevaPosizione);case _:
   return null;
 
 }
@@ -1715,13 +1718,16 @@ return $default(_that.id,_that.email,_that.displayName,_that.locale,_that.locale
 @JsonSerializable()
 
 class _Profilo implements Profilo {
-  const _Profilo({required this.id, this.email, this.displayName, this.locale = 'it', this.localeSceltaIl, this.birthDate, this.gender, this.genderCustom, this.isTrans = false, @JsonKey(name: 'promemoria_2fa') this.promemoria2fa = true, this.nomePubblico, this.registroLinguistico = 'esoterico', this.mazzoPredefinitoId, this.nomeMostrato = '', this.avatar, this.partnerRicordato, this.relazioni = const Relazioni(), this.referralCode, this.invitato = false, this.condivisioni = const Condivisioni(), this.cartaAnima, this.cartaAnno, this.nome, this.cognome, this.posizione,  Map<String, OrigineDato> datiSocial = const <String, OrigineDato>{}, this.importaSocial, this.rilevaPosizione}): _datiSocial = datiSocial;
+  const _Profilo({required this.id, this.email, this.displayName, this.locale = 'it', this.varianteLettura, this.localeSceltaIl, this.birthDate, this.gender, this.genderCustom, this.isTrans = false, @JsonKey(name: 'promemoria_2fa') this.promemoria2fa = true, this.nomePubblico, this.registroLinguistico = 'esoterico', this.mazzoPredefinitoId, this.nomeMostrato = '', this.avatar, this.partnerRicordato, this.relazioni = const Relazioni(), this.referralCode, this.invitato = false, this.condivisioni = const Condivisioni(), this.cartaAnima, this.cartaAnno, this.nome, this.cognome, this.posizione,  Map<String, OrigineDato> datiSocial = const <String, OrigineDato>{}, this.importaSocial, this.rilevaPosizione}): _datiSocial = datiSocial;
   factory _Profilo.fromJson(Map<String, dynamic> json) => _$ProfiloFromJson(json);
 
 @override final  int id;
 @override final  String? email;
 @override final  String? displayName;
 @override@JsonKey() final  String locale;
+/// v9.5: la versione della lettura di questa persona (`chat` o `classica`), fissata alla sua prima lettura e
+/// uguale su tutti i dispositivi; `null` = ancora nessuna.
+@override final  String? varianteLettura;
 /// Fase 2d: quando la lingua è stata scelta dal sito o dall'app; `null` = mai.
 @override final  String? localeSceltaIl;
 @override final  String? birthDate;
@@ -1770,18 +1776,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Profilo&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.locale, locale) || other.locale == locale)&&(identical(other.localeSceltaIl, localeSceltaIl) || other.localeSceltaIl == localeSceltaIl)&&(identical(other.birthDate, birthDate) || other.birthDate == birthDate)&&(identical(other.gender, gender) || other.gender == gender)&&(identical(other.genderCustom, genderCustom) || other.genderCustom == genderCustom)&&(identical(other.isTrans, isTrans) || other.isTrans == isTrans)&&(identical(other.promemoria2fa, promemoria2fa) || other.promemoria2fa == promemoria2fa)&&(identical(other.nomePubblico, nomePubblico) || other.nomePubblico == nomePubblico)&&(identical(other.registroLinguistico, registroLinguistico) || other.registroLinguistico == registroLinguistico)&&(identical(other.mazzoPredefinitoId, mazzoPredefinitoId) || other.mazzoPredefinitoId == mazzoPredefinitoId)&&(identical(other.nomeMostrato, nomeMostrato) || other.nomeMostrato == nomeMostrato)&&(identical(other.avatar, avatar) || other.avatar == avatar)&&(identical(other.partnerRicordato, partnerRicordato) || other.partnerRicordato == partnerRicordato)&&(identical(other.relazioni, relazioni) || other.relazioni == relazioni)&&(identical(other.referralCode, referralCode) || other.referralCode == referralCode)&&(identical(other.invitato, invitato) || other.invitato == invitato)&&(identical(other.condivisioni, condivisioni) || other.condivisioni == condivisioni)&&(identical(other.cartaAnima, cartaAnima) || other.cartaAnima == cartaAnima)&&(identical(other.cartaAnno, cartaAnno) || other.cartaAnno == cartaAnno)&&(identical(other.nome, nome) || other.nome == nome)&&(identical(other.cognome, cognome) || other.cognome == cognome)&&(identical(other.posizione, posizione) || other.posizione == posizione)&&const DeepCollectionEquality().equals(other.datiSocial, _datiSocial)&&(identical(other.importaSocial, importaSocial) || other.importaSocial == importaSocial)&&(identical(other.rilevaPosizione, rilevaPosizione) || other.rilevaPosizione == rilevaPosizione));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Profilo&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.locale, locale) || other.locale == locale)&&(identical(other.varianteLettura, varianteLettura) || other.varianteLettura == varianteLettura)&&(identical(other.localeSceltaIl, localeSceltaIl) || other.localeSceltaIl == localeSceltaIl)&&(identical(other.birthDate, birthDate) || other.birthDate == birthDate)&&(identical(other.gender, gender) || other.gender == gender)&&(identical(other.genderCustom, genderCustom) || other.genderCustom == genderCustom)&&(identical(other.isTrans, isTrans) || other.isTrans == isTrans)&&(identical(other.promemoria2fa, promemoria2fa) || other.promemoria2fa == promemoria2fa)&&(identical(other.nomePubblico, nomePubblico) || other.nomePubblico == nomePubblico)&&(identical(other.registroLinguistico, registroLinguistico) || other.registroLinguistico == registroLinguistico)&&(identical(other.mazzoPredefinitoId, mazzoPredefinitoId) || other.mazzoPredefinitoId == mazzoPredefinitoId)&&(identical(other.nomeMostrato, nomeMostrato) || other.nomeMostrato == nomeMostrato)&&(identical(other.avatar, avatar) || other.avatar == avatar)&&(identical(other.partnerRicordato, partnerRicordato) || other.partnerRicordato == partnerRicordato)&&(identical(other.relazioni, relazioni) || other.relazioni == relazioni)&&(identical(other.referralCode, referralCode) || other.referralCode == referralCode)&&(identical(other.invitato, invitato) || other.invitato == invitato)&&(identical(other.condivisioni, condivisioni) || other.condivisioni == condivisioni)&&(identical(other.cartaAnima, cartaAnima) || other.cartaAnima == cartaAnima)&&(identical(other.cartaAnno, cartaAnno) || other.cartaAnno == cartaAnno)&&(identical(other.nome, nome) || other.nome == nome)&&(identical(other.cognome, cognome) || other.cognome == cognome)&&(identical(other.posizione, posizione) || other.posizione == posizione)&&const DeepCollectionEquality().equals(other.datiSocial, _datiSocial)&&(identical(other.importaSocial, importaSocial) || other.importaSocial == importaSocial)&&(identical(other.rilevaPosizione, rilevaPosizione) || other.rilevaPosizione == rilevaPosizione));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hashAll([runtimeType,id,email,displayName,locale,localeSceltaIl,birthDate,gender,genderCustom,isTrans,promemoria2fa,nomePubblico,registroLinguistico,mazzoPredefinitoId,nomeMostrato,avatar,partnerRicordato,relazioni,referralCode,invitato,condivisioni,cartaAnima,cartaAnno,nome,cognome,posizione,const DeepCollectionEquality().hash(_datiSocial),importaSocial,rilevaPosizione]);
+    return Object.hashAll([runtimeType,id,email,displayName,locale,varianteLettura,localeSceltaIl,birthDate,gender,genderCustom,isTrans,promemoria2fa,nomePubblico,registroLinguistico,mazzoPredefinitoId,nomeMostrato,avatar,partnerRicordato,relazioni,referralCode,invitato,condivisioni,cartaAnima,cartaAnno,nome,cognome,posizione,const DeepCollectionEquality().hash(_datiSocial),importaSocial,rilevaPosizione]);
 }
 
 @override
 String toString() {
-    return 'Profilo(id: $id, email: $email, displayName: $displayName, locale: $locale, localeSceltaIl: $localeSceltaIl, birthDate: $birthDate, gender: $gender, genderCustom: $genderCustom, isTrans: $isTrans, promemoria2fa: $promemoria2fa, nomePubblico: $nomePubblico, registroLinguistico: $registroLinguistico, mazzoPredefinitoId: $mazzoPredefinitoId, nomeMostrato: $nomeMostrato, avatar: $avatar, partnerRicordato: $partnerRicordato, relazioni: $relazioni, referralCode: $referralCode, invitato: $invitato, condivisioni: $condivisioni, cartaAnima: $cartaAnima, cartaAnno: $cartaAnno, nome: $nome, cognome: $cognome, posizione: $posizione, datiSocial: $datiSocial, importaSocial: $importaSocial, rilevaPosizione: $rilevaPosizione)';
+    return 'Profilo(id: $id, email: $email, displayName: $displayName, locale: $locale, varianteLettura: $varianteLettura, localeSceltaIl: $localeSceltaIl, birthDate: $birthDate, gender: $gender, genderCustom: $genderCustom, isTrans: $isTrans, promemoria2fa: $promemoria2fa, nomePubblico: $nomePubblico, registroLinguistico: $registroLinguistico, mazzoPredefinitoId: $mazzoPredefinitoId, nomeMostrato: $nomeMostrato, avatar: $avatar, partnerRicordato: $partnerRicordato, relazioni: $relazioni, referralCode: $referralCode, invitato: $invitato, condivisioni: $condivisioni, cartaAnima: $cartaAnima, cartaAnno: $cartaAnno, nome: $nome, cognome: $cognome, posizione: $posizione, datiSocial: $datiSocial, importaSocial: $importaSocial, rilevaPosizione: $rilevaPosizione)';
 }
 
 
@@ -1792,7 +1798,7 @@ abstract mixin class _$ProfiloCopyWith<$Res> implements $ProfiloCopyWith<$Res> {
   factory _$ProfiloCopyWith(_Profilo value, $Res Function(_Profilo) _then) = __$ProfiloCopyWithImpl;
 @override @useResult
 $Res call({
- int id, String? email, String? displayName, String locale, String? localeSceltaIl, String? birthDate, String? gender, String? genderCustom, bool isTrans,@JsonKey(name: 'promemoria_2fa') bool promemoria2fa, String? nomePubblico, String registroLinguistico, int? mazzoPredefinitoId, String nomeMostrato, String? avatar, PersonaSalvata? partnerRicordato, Relazioni relazioni, String? referralCode, bool invitato, Condivisioni condivisioni, Carta? cartaAnima, Carta? cartaAnno, String? nome, String? cognome, PosizioneAttuale? posizione, Map<String, OrigineDato> datiSocial, bool? importaSocial, bool? rilevaPosizione
+ int id, String? email, String? displayName, String locale, String? varianteLettura, String? localeSceltaIl, String? birthDate, String? gender, String? genderCustom, bool isTrans,@JsonKey(name: 'promemoria_2fa') bool promemoria2fa, String? nomePubblico, String registroLinguistico, int? mazzoPredefinitoId, String nomeMostrato, String? avatar, PersonaSalvata? partnerRicordato, Relazioni relazioni, String? referralCode, bool invitato, Condivisioni condivisioni, Carta? cartaAnima, Carta? cartaAnno, String? nome, String? cognome, PosizioneAttuale? posizione, Map<String, OrigineDato> datiSocial, bool? importaSocial, bool? rilevaPosizione
 });
 
 
@@ -1809,13 +1815,14 @@ class __$ProfiloCopyWithImpl<$Res>
 
 /// Create a copy of Profilo
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? email = freezed,Object? displayName = freezed,Object? locale = null,Object? localeSceltaIl = freezed,Object? birthDate = freezed,Object? gender = freezed,Object? genderCustom = freezed,Object? isTrans = null,Object? promemoria2fa = null,Object? nomePubblico = freezed,Object? registroLinguistico = null,Object? mazzoPredefinitoId = freezed,Object? nomeMostrato = null,Object? avatar = freezed,Object? partnerRicordato = freezed,Object? relazioni = null,Object? referralCode = freezed,Object? invitato = null,Object? condivisioni = null,Object? cartaAnima = freezed,Object? cartaAnno = freezed,Object? nome = freezed,Object? cognome = freezed,Object? posizione = freezed,Object? datiSocial = null,Object? importaSocial = freezed,Object? rilevaPosizione = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? email = freezed,Object? displayName = freezed,Object? locale = null,Object? varianteLettura = freezed,Object? localeSceltaIl = freezed,Object? birthDate = freezed,Object? gender = freezed,Object? genderCustom = freezed,Object? isTrans = null,Object? promemoria2fa = null,Object? nomePubblico = freezed,Object? registroLinguistico = null,Object? mazzoPredefinitoId = freezed,Object? nomeMostrato = null,Object? avatar = freezed,Object? partnerRicordato = freezed,Object? relazioni = null,Object? referralCode = freezed,Object? invitato = null,Object? condivisioni = null,Object? cartaAnima = freezed,Object? cartaAnno = freezed,Object? nome = freezed,Object? cognome = freezed,Object? posizione = freezed,Object? datiSocial = null,Object? importaSocial = freezed,Object? rilevaPosizione = freezed,}) {
   return _then(_Profilo(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String?,displayName: freezed == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
 as String?,locale: null == locale ? _self.locale : locale // ignore: cast_nullable_to_non_nullable
-as String,localeSceltaIl: freezed == localeSceltaIl ? _self.localeSceltaIl : localeSceltaIl // ignore: cast_nullable_to_non_nullable
+as String,varianteLettura: freezed == varianteLettura ? _self.varianteLettura : varianteLettura // ignore: cast_nullable_to_non_nullable
+as String?,localeSceltaIl: freezed == localeSceltaIl ? _self.localeSceltaIl : localeSceltaIl // ignore: cast_nullable_to_non_nullable
 as String?,birthDate: freezed == birthDate ? _self.birthDate : birthDate // ignore: cast_nullable_to_non_nullable
 as String?,gender: freezed == gender ? _self.gender : gender // ignore: cast_nullable_to_non_nullable
 as String?,genderCustom: freezed == genderCustom ? _self.genderCustom : genderCustom // ignore: cast_nullable_to_non_nullable
@@ -6011,7 +6018,10 @@ $StesaCopyWith<$Res>? get stesa {
 mixin _$PassoIntervista {
 
  bool get completa; String? get domanda; int? get ordine; String? get riassunto; bool get crisi; String? get messaggio;/// Il minimo di domande è raggiunto: ci si può fermare («Basta con le domande»).
- bool get facoltativa;
+ bool get facoltativa;/// v9.5: dopo una risposta il server non chiede subito un'altra domanda: tocca a chi legge scegliere (i tre
+/// pulsanti).
+ bool get scelta;/// v9.5: le domande poste finora, e il minimo e il massimo della console.
+ int? get poste; int? get minDomande; int? get maxDomande;
 /// Create a copy of PassoIntervista
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -6025,20 +6035,20 @@ $PassoIntervistaCopyWith<PassoIntervista> get copyWith => _$PassoIntervistaCopyW
 @override
 bool operator ==(Object other) {
   final _this = this as PassoIntervista;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PassoIntervista&&(identical(other.completa, _this.completa) || other.completa == _this.completa)&&(identical(other.domanda, _this.domanda) || other.domanda == _this.domanda)&&(identical(other.ordine, _this.ordine) || other.ordine == _this.ordine)&&(identical(other.riassunto, _this.riassunto) || other.riassunto == _this.riassunto)&&(identical(other.crisi, _this.crisi) || other.crisi == _this.crisi)&&(identical(other.messaggio, _this.messaggio) || other.messaggio == _this.messaggio)&&(identical(other.facoltativa, _this.facoltativa) || other.facoltativa == _this.facoltativa));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PassoIntervista&&(identical(other.completa, _this.completa) || other.completa == _this.completa)&&(identical(other.domanda, _this.domanda) || other.domanda == _this.domanda)&&(identical(other.ordine, _this.ordine) || other.ordine == _this.ordine)&&(identical(other.riassunto, _this.riassunto) || other.riassunto == _this.riassunto)&&(identical(other.crisi, _this.crisi) || other.crisi == _this.crisi)&&(identical(other.messaggio, _this.messaggio) || other.messaggio == _this.messaggio)&&(identical(other.facoltativa, _this.facoltativa) || other.facoltativa == _this.facoltativa)&&(identical(other.scelta, _this.scelta) || other.scelta == _this.scelta)&&(identical(other.poste, _this.poste) || other.poste == _this.poste)&&(identical(other.minDomande, _this.minDomande) || other.minDomande == _this.minDomande)&&(identical(other.maxDomande, _this.maxDomande) || other.maxDomande == _this.maxDomande));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as PassoIntervista;
-  return Object.hash(runtimeType,_this.completa,_this.domanda,_this.ordine,_this.riassunto,_this.crisi,_this.messaggio,_this.facoltativa);
+  return Object.hash(runtimeType,_this.completa,_this.domanda,_this.ordine,_this.riassunto,_this.crisi,_this.messaggio,_this.facoltativa,_this.scelta,_this.poste,_this.minDomande,_this.maxDomande);
 }
 
 @override
 String toString() {
   final _this = this as PassoIntervista;
-  return 'PassoIntervista(completa: ${_this.completa}, domanda: ${_this.domanda}, ordine: ${_this.ordine}, riassunto: ${_this.riassunto}, crisi: ${_this.crisi}, messaggio: ${_this.messaggio}, facoltativa: ${_this.facoltativa})';
+  return 'PassoIntervista(completa: ${_this.completa}, domanda: ${_this.domanda}, ordine: ${_this.ordine}, riassunto: ${_this.riassunto}, crisi: ${_this.crisi}, messaggio: ${_this.messaggio}, facoltativa: ${_this.facoltativa}, scelta: ${_this.scelta}, poste: ${_this.poste}, minDomande: ${_this.minDomande}, maxDomande: ${_this.maxDomande})';
 }
 
 
@@ -6049,7 +6059,7 @@ abstract mixin class $PassoIntervistaCopyWith<$Res>  {
   factory $PassoIntervistaCopyWith(PassoIntervista value, $Res Function(PassoIntervista) _then) = _$PassoIntervistaCopyWithImpl;
 @useResult
 $Res call({
- bool completa, String? domanda, int? ordine, String? riassunto, bool crisi, String? messaggio, bool facoltativa
+ bool completa, String? domanda, int? ordine, String? riassunto, bool crisi, String? messaggio, bool facoltativa, bool scelta, int? poste, int? minDomande, int? maxDomande
 });
 
 
@@ -6066,7 +6076,7 @@ class _$PassoIntervistaCopyWithImpl<$Res>
 
 /// Create a copy of PassoIntervista
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? completa = null,Object? domanda = freezed,Object? ordine = freezed,Object? riassunto = freezed,Object? crisi = null,Object? messaggio = freezed,Object? facoltativa = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? completa = null,Object? domanda = freezed,Object? ordine = freezed,Object? riassunto = freezed,Object? crisi = null,Object? messaggio = freezed,Object? facoltativa = null,Object? scelta = null,Object? poste = freezed,Object? minDomande = freezed,Object? maxDomande = freezed,}) {
   return _then(PassoIntervista(
 completa: null == completa ? _self.completa : completa // ignore: cast_nullable_to_non_nullable
 as bool,domanda: freezed == domanda ? _self.domanda : domanda // ignore: cast_nullable_to_non_nullable
@@ -6075,7 +6085,11 @@ as int?,riassunto: freezed == riassunto ? _self.riassunto : riassunto // ignore:
 as String?,crisi: null == crisi ? _self.crisi : crisi // ignore: cast_nullable_to_non_nullable
 as bool,messaggio: freezed == messaggio ? _self.messaggio : messaggio // ignore: cast_nullable_to_non_nullable
 as String?,facoltativa: null == facoltativa ? _self.facoltativa : facoltativa // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,scelta: null == scelta ? _self.scelta : scelta // ignore: cast_nullable_to_non_nullable
+as bool,poste: freezed == poste ? _self.poste : poste // ignore: cast_nullable_to_non_nullable
+as int?,minDomande: freezed == minDomande ? _self.minDomande : minDomande // ignore: cast_nullable_to_non_nullable
+as int?,maxDomande: freezed == maxDomande ? _self.maxDomande : maxDomande // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
@@ -6160,10 +6174,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool completa,  String? domanda,  int? ordine,  String? riassunto,  bool crisi,  String? messaggio,  bool facoltativa)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool completa,  String? domanda,  int? ordine,  String? riassunto,  bool crisi,  String? messaggio,  bool facoltativa,  bool scelta,  int? poste,  int? minDomande,  int? maxDomande)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PassoIntervista() when $default != null:
-return $default(_that.completa,_that.domanda,_that.ordine,_that.riassunto,_that.crisi,_that.messaggio,_that.facoltativa);case _:
+return $default(_that.completa,_that.domanda,_that.ordine,_that.riassunto,_that.crisi,_that.messaggio,_that.facoltativa,_that.scelta,_that.poste,_that.minDomande,_that.maxDomande);case _:
   return orElse();
 
 }
@@ -6181,10 +6195,10 @@ return $default(_that.completa,_that.domanda,_that.ordine,_that.riassunto,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool completa,  String? domanda,  int? ordine,  String? riassunto,  bool crisi,  String? messaggio,  bool facoltativa)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool completa,  String? domanda,  int? ordine,  String? riassunto,  bool crisi,  String? messaggio,  bool facoltativa,  bool scelta,  int? poste,  int? minDomande,  int? maxDomande)  $default,) {final _that = this;
 switch (_that) {
 case _PassoIntervista():
-return $default(_that.completa,_that.domanda,_that.ordine,_that.riassunto,_that.crisi,_that.messaggio,_that.facoltativa);case _:
+return $default(_that.completa,_that.domanda,_that.ordine,_that.riassunto,_that.crisi,_that.messaggio,_that.facoltativa,_that.scelta,_that.poste,_that.minDomande,_that.maxDomande);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -6201,10 +6215,10 @@ return $default(_that.completa,_that.domanda,_that.ordine,_that.riassunto,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool completa,  String? domanda,  int? ordine,  String? riassunto,  bool crisi,  String? messaggio,  bool facoltativa)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool completa,  String? domanda,  int? ordine,  String? riassunto,  bool crisi,  String? messaggio,  bool facoltativa,  bool scelta,  int? poste,  int? minDomande,  int? maxDomande)?  $default,) {final _that = this;
 switch (_that) {
 case _PassoIntervista() when $default != null:
-return $default(_that.completa,_that.domanda,_that.ordine,_that.riassunto,_that.crisi,_that.messaggio,_that.facoltativa);case _:
+return $default(_that.completa,_that.domanda,_that.ordine,_that.riassunto,_that.crisi,_that.messaggio,_that.facoltativa,_that.scelta,_that.poste,_that.minDomande,_that.maxDomande);case _:
   return null;
 
 }
@@ -6216,7 +6230,7 @@ return $default(_that.completa,_that.domanda,_that.ordine,_that.riassunto,_that.
 @JsonSerializable()
 
 class _PassoIntervista implements PassoIntervista {
-  const _PassoIntervista({this.completa = false, this.domanda, this.ordine, this.riassunto, this.crisi = false, this.messaggio, this.facoltativa = false});
+  const _PassoIntervista({this.completa = false, this.domanda, this.ordine, this.riassunto, this.crisi = false, this.messaggio, this.facoltativa = false, this.scelta = false, this.poste, this.minDomande, this.maxDomande});
   factory _PassoIntervista.fromJson(Map<String, dynamic> json) => _$PassoIntervistaFromJson(json);
 
 @override@JsonKey() final  bool completa;
@@ -6227,6 +6241,13 @@ class _PassoIntervista implements PassoIntervista {
 @override final  String? messaggio;
 /// Il minimo di domande è raggiunto: ci si può fermare («Basta con le domande»).
 @override@JsonKey() final  bool facoltativa;
+/// v9.5: dopo una risposta il server non chiede subito un'altra domanda: tocca a chi legge scegliere (i tre
+/// pulsanti).
+@override@JsonKey() final  bool scelta;
+/// v9.5: le domande poste finora, e il minimo e il massimo della console.
+@override final  int? poste;
+@override final  int? minDomande;
+@override final  int? maxDomande;
 
 /// Create a copy of PassoIntervista
 /// with the given fields replaced by the non-null parameter values.
@@ -6241,18 +6262,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PassoIntervista&&(identical(other.completa, completa) || other.completa == completa)&&(identical(other.domanda, domanda) || other.domanda == domanda)&&(identical(other.ordine, ordine) || other.ordine == ordine)&&(identical(other.riassunto, riassunto) || other.riassunto == riassunto)&&(identical(other.crisi, crisi) || other.crisi == crisi)&&(identical(other.messaggio, messaggio) || other.messaggio == messaggio)&&(identical(other.facoltativa, facoltativa) || other.facoltativa == facoltativa));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PassoIntervista&&(identical(other.completa, completa) || other.completa == completa)&&(identical(other.domanda, domanda) || other.domanda == domanda)&&(identical(other.ordine, ordine) || other.ordine == ordine)&&(identical(other.riassunto, riassunto) || other.riassunto == riassunto)&&(identical(other.crisi, crisi) || other.crisi == crisi)&&(identical(other.messaggio, messaggio) || other.messaggio == messaggio)&&(identical(other.facoltativa, facoltativa) || other.facoltativa == facoltativa)&&(identical(other.scelta, scelta) || other.scelta == scelta)&&(identical(other.poste, poste) || other.poste == poste)&&(identical(other.minDomande, minDomande) || other.minDomande == minDomande)&&(identical(other.maxDomande, maxDomande) || other.maxDomande == maxDomande));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,completa,domanda,ordine,riassunto,crisi,messaggio,facoltativa);
+    return Object.hash(runtimeType,completa,domanda,ordine,riassunto,crisi,messaggio,facoltativa,scelta,poste,minDomande,maxDomande);
 }
 
 @override
 String toString() {
-    return 'PassoIntervista(completa: $completa, domanda: $domanda, ordine: $ordine, riassunto: $riassunto, crisi: $crisi, messaggio: $messaggio, facoltativa: $facoltativa)';
+    return 'PassoIntervista(completa: $completa, domanda: $domanda, ordine: $ordine, riassunto: $riassunto, crisi: $crisi, messaggio: $messaggio, facoltativa: $facoltativa, scelta: $scelta, poste: $poste, minDomande: $minDomande, maxDomande: $maxDomande)';
 }
 
 
@@ -6263,7 +6284,7 @@ abstract mixin class _$PassoIntervistaCopyWith<$Res> implements $PassoIntervista
   factory _$PassoIntervistaCopyWith(_PassoIntervista value, $Res Function(_PassoIntervista) _then) = __$PassoIntervistaCopyWithImpl;
 @override @useResult
 $Res call({
- bool completa, String? domanda, int? ordine, String? riassunto, bool crisi, String? messaggio, bool facoltativa
+ bool completa, String? domanda, int? ordine, String? riassunto, bool crisi, String? messaggio, bool facoltativa, bool scelta, int? poste, int? minDomande, int? maxDomande
 });
 
 
@@ -6280,7 +6301,7 @@ class __$PassoIntervistaCopyWithImpl<$Res>
 
 /// Create a copy of PassoIntervista
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? completa = null,Object? domanda = freezed,Object? ordine = freezed,Object? riassunto = freezed,Object? crisi = null,Object? messaggio = freezed,Object? facoltativa = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? completa = null,Object? domanda = freezed,Object? ordine = freezed,Object? riassunto = freezed,Object? crisi = null,Object? messaggio = freezed,Object? facoltativa = null,Object? scelta = null,Object? poste = freezed,Object? minDomande = freezed,Object? maxDomande = freezed,}) {
   return _then(_PassoIntervista(
 completa: null == completa ? _self.completa : completa // ignore: cast_nullable_to_non_nullable
 as bool,domanda: freezed == domanda ? _self.domanda : domanda // ignore: cast_nullable_to_non_nullable
@@ -6289,7 +6310,11 @@ as int?,riassunto: freezed == riassunto ? _self.riassunto : riassunto // ignore:
 as String?,crisi: null == crisi ? _self.crisi : crisi // ignore: cast_nullable_to_non_nullable
 as bool,messaggio: freezed == messaggio ? _self.messaggio : messaggio // ignore: cast_nullable_to_non_nullable
 as String?,facoltativa: null == facoltativa ? _self.facoltativa : facoltativa // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,scelta: null == scelta ? _self.scelta : scelta // ignore: cast_nullable_to_non_nullable
+as bool,poste: freezed == poste ? _self.poste : poste // ignore: cast_nullable_to_non_nullable
+as int?,minDomande: freezed == minDomande ? _self.minDomande : minDomande // ignore: cast_nullable_to_non_nullable
+as int?,maxDomande: freezed == maxDomande ? _self.maxDomande : maxDomande // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 

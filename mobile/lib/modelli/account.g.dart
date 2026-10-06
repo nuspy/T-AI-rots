@@ -86,6 +86,7 @@ _Profilo _$ProfiloFromJson(Map<String, dynamic> json) => _Profilo(
   email: json['email'] as String?,
   displayName: json['display_name'] as String?,
   locale: json['locale'] as String? ?? 'it',
+  varianteLettura: json['variante_lettura'] as String?,
   localeSceltaIl: json['locale_scelta_il'] as String?,
   birthDate: json['birth_date'] as String?,
   gender: json['gender'] as String?,
@@ -135,6 +136,7 @@ Map<String, dynamic> _$ProfiloToJson(_Profilo instance) => <String, dynamic>{
   'email': ?instance.email,
   'display_name': ?instance.displayName,
   'locale': instance.locale,
+  'variante_lettura': ?instance.varianteLettura,
   'locale_scelta_il': ?instance.localeSceltaIl,
   'birth_date': ?instance.birthDate,
   'gender': ?instance.gender,
@@ -511,6 +513,10 @@ _PassoIntervista _$PassoIntervistaFromJson(Map<String, dynamic> json) =>
       crisi: json['crisi'] as bool? ?? false,
       messaggio: json['messaggio'] as String?,
       facoltativa: json['facoltativa'] as bool? ?? false,
+      scelta: json['scelta'] as bool? ?? false,
+      poste: (json['poste'] as num?)?.toInt(),
+      minDomande: (json['min_domande'] as num?)?.toInt(),
+      maxDomande: (json['max_domande'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$PassoIntervistaToJson(_PassoIntervista instance) =>
@@ -522,6 +528,10 @@ Map<String, dynamic> _$PassoIntervistaToJson(_PassoIntervista instance) =>
       'crisi': instance.crisi,
       'messaggio': ?instance.messaggio,
       'facoltativa': instance.facoltativa,
+      'scelta': instance.scelta,
+      'poste': ?instance.poste,
+      'min_domande': ?instance.minDomande,
+      'max_domande': ?instance.maxDomande,
     };
 
 _Ventaglio _$VentaglioFromJson(Map<String, dynamic> json) => _Ventaglio(

@@ -495,6 +495,51 @@ class AppLocalizationsHu extends AppLocalizations {
   String get comune_testata_entra => 'Belépés';
 
   @override
+  String comune_traduzione_offerta(Object lingua) {
+    return 'Elolvasod ezt az oldalt ezen a nyelven: $lingua? A böngésződ le tudja fordítani a saját eszközödön.';
+  }
+
+  @override
+  String get comune_traduzione_traduci => 'Fordítás';
+
+  @override
+  String comune_traduzione_scarico(Object p) {
+    return 'A fordítási modell letöltése… $p%';
+  }
+
+  @override
+  String get comune_traduzione_in_corso => 'Fordítás folyamatban…';
+
+  @override
+  String comune_traduzione_tradotta(Object da) {
+    return 'Automatikusan lefordítva az eszközödön, eredeti nyelv: $da.';
+  }
+
+  @override
+  String comune_traduzione_originale(Object da) {
+    return 'Eredeti megjelenítése ($da)';
+  }
+
+  @override
+  String comune_traduzione_e_originale(Object da) {
+    return 'Az eredetit olvasod, nyelv: $da.';
+  }
+
+  @override
+  String comune_traduzione_traduci_in_lingua(Object lingua) {
+    return 'Fordítás erre: $lingua';
+  }
+
+  @override
+  String get comune_traduzione_errore => 'A fordítás nem sikerült: az eredetit olvasod.';
+
+  @override
+  String get comune_traduzione_altra_lingua => 'Másik nyelv:';
+
+  @override
+  String get comune_traduzione_mai => 'Ne fordítson automatikusan';
+
+  @override
   String get home_meta_titolo => 'TAROTS chat — élő tarot-rituálé';
 
   @override
@@ -1322,6 +1367,24 @@ class AppLocalizationsHu extends AppLocalizations {
 
   @override
   String get lettura_basta_domande => 'Elég a kérdésekből';
+
+  @override
+  String get lettura_scelta_titolo => 'Mit szeretnél tenni?';
+
+  @override
+  String get lettura_scelta_lettura => 'Térjünk rá a jóslásra';
+
+  @override
+  String get lettura_scelta_libero => 'Szeretnék szabadon mondani valamit';
+
+  @override
+  String get lettura_scelta_altra => 'Szeretnék még egy kérdésre válaszolni';
+
+  @override
+  String get lettura_libero_segnaposto => 'Írd le szabadon, ami eszedbe jut…';
+
+  @override
+  String get lettura_libero_invia => 'Küldés';
 
   @override
   String get lettura_stampa_pdf => 'Nyomtatás PDF-be';
@@ -4346,6 +4409,10 @@ class AppLocalizationsHu extends AppLocalizations {
 
   @override
   String get privacy_letture_cta => 'Kezeld, mire emlékszik';
+
+  @override
+  String get privacy_letture_accesso =>
+      'Kizárólag biztonsági okokból (például visszaélésről szóló bejelentés vagy segítségkérés kezelésére) a TAROTS chat adminisztrátorai elolvashatják a jóslásaidat, a beszélgetéseidet, azt, amire a tarotolvasód emlékszik, és a profiladataidat. Minden hozzáféréshez meg kell adni az okát, és naplózásra kerül.';
 
   @override
   String get privacy_ai_titolo => 'Hogyan használjuk a mesterséges intelligenciát';

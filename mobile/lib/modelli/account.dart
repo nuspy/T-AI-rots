@@ -85,6 +85,10 @@ abstract class Profilo with _$Profilo {
     String? displayName,
     @Default('it') String locale,
 
+    /// v9.5: la versione della lettura di questa persona (`chat` o `classica`), fissata alla sua prima lettura e
+    /// uguale su tutti i dispositivi; `null` = ancora nessuna.
+    String? varianteLettura,
+
     /// Fase 2d: quando la lingua è stata scelta dal sito o dall'app; `null` = mai.
     String? localeSceltaIl,
     String? birthDate,
@@ -369,6 +373,15 @@ abstract class PassoIntervista with _$PassoIntervista {
 
     /// Il minimo di domande è raggiunto: ci si può fermare («Basta con le domande»).
     @Default(false) bool facoltativa,
+
+    /// v9.5: dopo una risposta il server non chiede subito un'altra domanda: tocca a chi legge scegliere (i tre
+    /// pulsanti).
+    @Default(false) bool scelta,
+
+    /// v9.5: le domande poste finora, e il minimo e il massimo della console.
+    int? poste,
+    int? minDomande,
+    int? maxDomande,
   }) = _PassoIntervista;
 
   /// Dal JSON dell'API.

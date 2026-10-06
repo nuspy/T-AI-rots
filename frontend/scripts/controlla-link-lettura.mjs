@@ -13,14 +13,16 @@ const AMMESSI = new Set([
   "frontend/proxy.ts",                         // lo smistatore
   "frontend/v2/lib/varianti.ts",               // la variante dal percorso (statistiche)
   "frontend/v2/lettura/lettura.tsx",           // l'allineamento alla variante del profilo
-  "frontend/app/(v2)/read/page.tsx",           // il ripiego, che spiega lo smistamento
   "frontend/app/(v2)/read-chat/page.tsx",
   "frontend/app/(v2)/read-classic/page.tsx",
   "frontend/scripts/controlla-link-lettura.mjs",
   "mobile/lib/analytics/lanterna.dart",        // la variante dal percorso (statistiche)
+  "mobile/lib/rotte/percorsi.dart",            // i due percorsi, usati solo dallo smistatore dell'app
 ]);
 const ESTENSIONI = /\.(tsx?|mjs|dart)$/;
 const DIRETTO = /\/read-(chat|classic)\b/;
+// Un commento non è un collegamento: le righe che iniziano con //, /* o * non contano.
+const COMMENTO = /^\s*(\/\/|\/\*|\*)/;
 
 function* file(percorso) {
   const s = statSync(percorso, { throwIfNoEntry: false });
@@ -38,7 +40,7 @@ for (const cartella of CARTELLE) {
     const rel = relative(RADICE, f).split(sep).join("/");
     if (!ESTENSIONI.test(f) || AMMESSI.has(rel)) continue;
     readFileSync(f, "utf8").split("\n").forEach((riga, i) => {
-      if (DIRETTO.test(riga)) trovati.push(`${rel}:${i + 1}: ${riga.trim()}`);
+      if (!COMMENTO.test(riga) && DIRETTO.test(riga)) trovati.push(`${rel}:${i + 1}: ${riga.trim()}`);
     });
   }
 }

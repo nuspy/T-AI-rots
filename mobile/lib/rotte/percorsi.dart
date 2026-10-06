@@ -4,7 +4,13 @@
 /// di app e sito si sommano pagina per pagina.
 abstract final class R {
   static const String home = '/';
+
+  /// La lettura: un collegamento punta sempre qui, e il router sceglie la versione (`lettura/variante.dart`).
   static const String leggi = '/read';
+
+  /// v9.5: le due versioni della lettura (prova 90/10). Mai in un collegamento: solo il router ci arriva.
+  static const String letturaChat = '/read-chat';
+  static const String letturaClassica = '/read-classic';
   static const String fisica = '/physical-reading';
   static const String storia = '/my-story';
   static String lettura(String id) => '/my-story/${Uri.encodeComponent(id)}';

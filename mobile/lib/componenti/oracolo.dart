@@ -39,7 +39,7 @@ import 'campi.dart' show Puntini;
 import 'premibile.dart';
 
 /// Le pagine senza la barra (la conversazione c'è già).
-const List<String> paginaSenzaOracolo = [R.leggi, R.fisica, R.condivise];
+const List<String> paginaSenzaOracolo = [R.leggi, R.letturaChat, R.letturaClassica, R.fisica, R.condivise];
 
 /// Vero se la barra si vede sul percorso [p].
 bool oracoloVisibile(String p) => !paginaSenzaOracolo.any((x) => p == x || p.startsWith('$x/'));

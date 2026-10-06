@@ -1033,6 +1033,72 @@ abstract class AppLocalizations {
   /// **'Sign\nin'**
   String get comune_testata_entra;
 
+  /// No description provided for @comune_traduzione_offerta.
+  ///
+  /// In en, this message translates to:
+  /// **'Read this page in {lingua}? Your browser can translate it on your device.'**
+  String comune_traduzione_offerta(Object lingua);
+
+  /// No description provided for @comune_traduzione_traduci.
+  ///
+  /// In en, this message translates to:
+  /// **'Translate'**
+  String get comune_traduzione_traduci;
+
+  /// No description provided for @comune_traduzione_scarico.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading the translation model… {p}%'**
+  String comune_traduzione_scarico(Object p);
+
+  /// No description provided for @comune_traduzione_in_corso.
+  ///
+  /// In en, this message translates to:
+  /// **'Translating…'**
+  String get comune_traduzione_in_corso;
+
+  /// No description provided for @comune_traduzione_tradotta.
+  ///
+  /// In en, this message translates to:
+  /// **'Translated automatically on your device from {da}.'**
+  String comune_traduzione_tradotta(Object da);
+
+  /// No description provided for @comune_traduzione_originale.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the original ({da})'**
+  String comune_traduzione_originale(Object da);
+
+  /// No description provided for @comune_traduzione_e_originale.
+  ///
+  /// In en, this message translates to:
+  /// **'You are reading the original in {da}.'**
+  String comune_traduzione_e_originale(Object da);
+
+  /// No description provided for @comune_traduzione_traduci_in_lingua.
+  ///
+  /// In en, this message translates to:
+  /// **'Translate into {lingua}'**
+  String comune_traduzione_traduci_in_lingua(Object lingua);
+
+  /// No description provided for @comune_traduzione_errore.
+  ///
+  /// In en, this message translates to:
+  /// **'The translation did not work: you are reading the original.'**
+  String get comune_traduzione_errore;
+
+  /// No description provided for @comune_traduzione_altra_lingua.
+  ///
+  /// In en, this message translates to:
+  /// **'Another language:'**
+  String get comune_traduzione_altra_lingua;
+
+  /// No description provided for @comune_traduzione_mai.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t translate automatically'**
+  String get comune_traduzione_mai;
+
   /// No description provided for @home_meta_titolo.
   ///
   /// In en, this message translates to:
@@ -2586,6 +2652,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enough questions'**
   String get lettura_basta_domande;
+
+  /// No description provided for @lettura_scelta_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'What would you like to do?'**
+  String get lettura_scelta_titolo;
+
+  /// No description provided for @lettura_scelta_lettura.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to the reading'**
+  String get lettura_scelta_lettura;
+
+  /// No description provided for @lettura_scelta_libero.
+  ///
+  /// In en, this message translates to:
+  /// **'I want to say something freely'**
+  String get lettura_scelta_libero;
+
+  /// No description provided for @lettura_scelta_altra.
+  ///
+  /// In en, this message translates to:
+  /// **'I want to answer another question'**
+  String get lettura_scelta_altra;
+
+  /// No description provided for @lettura_libero_segnaposto.
+  ///
+  /// In en, this message translates to:
+  /// **'Write freely whatever comes to mind…'**
+  String get lettura_libero_segnaposto;
+
+  /// No description provided for @lettura_libero_invia.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get lettura_libero_invia;
 
   /// No description provided for @lettura_stampa_pdf.
   ///
@@ -7980,6 +8082,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Manage what is remembered'**
   String get privacy_letture_cta;
+
+  /// No description provided for @privacy_letture_accesso.
+  ///
+  /// In en, this message translates to:
+  /// **'For security reasons only (for example to handle a report of abuse or a request for help), the administrators of TAROTS chat can read your readings, conversations, what the reader remembers and your profile data. Each access requires a stated reason and is recorded in a log.'**
+  String get privacy_letture_accesso;
 
   /// No description provided for @privacy_ai_titolo.
   ///

@@ -8,6 +8,10 @@
 /// sotto l'altra, e durante il rito prima la console). Sul telefono tipo e stesa si scelgono in due dialoghi
 /// all'apertura, e le fasi del rito si aprono in un dialogo scuro; chi lo chiude lo ritrova nella pagina.
 ///
+/// v9.5, la prova 90/10 (`lettura/variante.dart`): `/read` sceglie fra questa pagina classica (`/read-classic`) e la
+/// lettura tutta in chat (`/read-chat`, [PaginaLettura.inChat]): una colonna sola, dove domande, mazzo, taglio,
+/// ventaglio, carte e responso arrivano uno dopo l'altro come messaggi, e la pagina li segue solo se si è in fondo.
+///
 /// Dall'indirizzo: `id` riprende una lettura; `question` precompila la domanda; `topic` la propone da un tema; `type`
 /// sceglie il tipo; `spread` la stesa; `card` propone una domanda sulla carta; `deck` sceglie le immagini di un mazzo;
 /// `source` (hero, dock, qr…) va solo alle statistiche. Chi non ha un account fa la lettura gratuita (una per
@@ -16,15 +20,19 @@
 library;
 
 import 'dart:async';
+import 'dart:math' as math;
 
+import 'package:flutter/rendering.dart' show RenderAbstractViewport;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../analytics/tracciato.dart';
 import '../api/api.dart';
 import '../api/errori.dart';
 import '../api/sse.dart';
+import '../archivio.dart';
 import '../auth/sessione.dart';
 import '../componenti/bottoni.dart';
 import '../componenti/campi.dart';
@@ -45,6 +53,7 @@ import '../lettura/preparazione.dart';
 import '../lettura/responso.dart';
 import '../lettura/stampa.dart';
 import '../lettura/tavolo.dart';
+import '../lettura/variante.dart';
 import '../lettura/ventaglio.dart';
 import '../lingua/lingua.dart';
 import '../modelli/account.dart' hide Ventaglio;
@@ -136,10 +145,13 @@ final carteLetturaProvider = FutureProvider.family<List<Carta>, String>(
 /// La pagina della lettura.
 class PaginaLettura extends ConsumerStatefulWidget {
   /// La lettura, coi [parametri] dell'indirizzo.
-  const PaginaLettura({super.key, required this.parametri});
+  const PaginaLettura({super.key, required this.parametri, this.inChat = false});
 
   /// I parametri della query (`question`, `type`, `spread`, `id`…).
   final Map<String, String> parametri;
+
+  /// v9.5: la lettura tutta in chat (`/read-chat`); falso: la classica.
+  final bool inChat;
 
   @override
   ConsumerState<PaginaLettura> createState() => _PaginaLetturaState();
@@ -187,7 +199,20 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
   /// Le carte sono girate e il lettore le sta leggendo tutte insieme (una chiamata sola): un solo momento d'attesa.
   bool _lettoreLegge = false;
   bool _scegliendo = false;
-  bool _puoiFermarti = false;
+
+  /// v9.5, i tre pulsanti. L'oracolo fa la prima domanda da sé; dopo ogni risposta il campo si chiude e chi legge
+  /// sceglie fra «Passa alla lettura», «Voglio dire qualcosa di libero» e «Voglio rispondere a un'altra domanda»
+  /// (quest'ultima finché non si arriva al massimo). Sotto la prima domanda ci sono già «Passa alla lettura» (se il
+  /// minimo lo consente) e il testo libero.
+  _ModoIntervista _modo = _ModoIntervista.risposta;
+  int _minDomande = 0;
+  int _maxDomande = 2;
+  int _poste = 0;
+
+  /// v9.5, la chat: chi legge è in fondo alla pagina (la pagina segue i messaggi nuovi solo allora).
+  bool _inFondo = true;
+  String _novita = '';
+  bool _varianteAllineata = false;
 
   String _faseResponso = 'unione';
   String _testoResponso = '';
@@ -228,11 +253,16 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
       if (!mounted) return;
       _set(() => _errore = null);
     });
+    _scorri.addListener(_misuraFondo);
   }
+
+  /// v9.5: la versione di questa pagina, coi nomi del server.
+  String get _variante => widget.inChat ? VarianteLettura.chat : VarianteLettura.classica;
 
   @override
   void dispose() {
     _vivo = false;
+    _scorri.removeListener(_misuraFondo);
     _scorri.dispose();
     _cambi.dispose();
     _voloPagina.dispose();
@@ -369,6 +399,20 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
       _precompilato = true;
       _persone = personeDaProfilo(profilo, _persone);
     }
+    // v9.5: chi ha un account ha la sua versione nel profilo (la prima con cui ha letto): se questa pagina è l'altra,
+    // si passa a quella giusta con gli stessi parametri, e il dispositivo si allinea (lo smistatore lo legge).
+    final sua = profilo?.varianteLettura;
+    if (!_varianteAllineata && VarianteLettura.valida(sua)) {
+      _varianteAllineata = true;
+      final archivio = ref.read(archivioProvider);
+      if (archivio.leggi(chiaveVarianteLettura) != sua) unawaited(archivio.scrivi(chiaveVarianteLettura, sua));
+      if (sua != _variante) {
+        final verso = Uri(path: VarianteLettura.percorso(sua!), queryParameters: _p.isEmpty ? null : _p).toString();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) GoRouter.of(context).replace<void>(verso);
+        });
+      }
+    }
     // La ripresa di una lettura (`?id=`).
     if (_p['id'] != null && !_caricata && sessione.pronta) {
       _caricata = true;
@@ -428,6 +472,8 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
         if (lt.contextSummary != null)
           Battuta(id: _nuovoId(), autore: Autore.oracolo, titolo: '✦', testo: lt.contextSummary!),
       ];
+      _poste = lt.interview.where((x) => x.ruolo != 'utente').length;
+      _modo = lt.interview.lastOrNull?.ruolo == 'utente' ? _ModoIntervista.scelta : _ModoIntervista.risposta;
       _scelte = {...lt.pickedSlots};
       _slotTotali = lt.slotCount ?? 0;
       final ordinati = [...lt.cards]..sort((a, b) => a.posizione.compareTo(b.posizione));
@@ -462,24 +508,33 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
 
   /* ---- l'intervista ---- */
 
-  Future<void> _passoIntervista(String id, String? risposta, {bool basta = false}) async {
+  Future<void> _passoIntervista(String id, String? risposta, {bool basta = false, bool altra = false}) async {
     _set(() {
       _attesa = true;
       _errore = null;
     });
     try {
-      final passo = await ref.read(apiProvider).rispondi(id, risposta, basta: basta);
+      final passo = await ref.read(apiProvider).rispondi(id, risposta, basta: basta, altra: altra);
+      // v9.5: il numero della domanda, per vedere dopo quante domande ci si ferma (mai il testo).
+      if (risposta != null) _traccia('interview_answered', {'n': passo.poste ?? 0});
       _set(() {
+        if (passo.minDomande != null && passo.maxDomande != null) {
+          _minDomande = passo.minDomande!;
+          _maxDomande = passo.maxDomande!;
+        }
+        if (passo.poste != null) _poste = passo.poste!;
         if (passo.crisi) {
           _aggiungi(Autore.sistema, passo.messaggio ?? '');
           _fase = FaseLettura.crisi;
         } else if (passo.completa) {
-          _puoiFermarti = false;
           _aggiungi(Autore.oracolo, passo.riassunto ?? '', titolo: '✦', macchina: true);
           _fase = FaseLettura.prontoMescolare;
+        } else if (passo.scelta) {
+          _modo = _ModoIntervista.scelta;
         } else if (passo.domanda != null) {
-          _puoiFermarti = passo.facoltativa;
+          _traccia('interview_question', {'n': passo.poste ?? 0});
           _aggiungi(Autore.oracolo, passo.domanda!, macchina: true);
+          _modo = _ModoIntervista.risposta;
         }
       });
     } on ErroreApi catch (e) {
@@ -494,6 +549,76 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
     if (id == null) return;
     _set(() => _aggiungi(Autore.utente, testo));
     unawaited(_passoIntervista(id, testo));
+  }
+
+  void _passaAllaLettura() {
+    final id = _id;
+    if (id == null) return;
+    _traccia('interview_choice', {'scelta': 'lettura', 'n': _poste});
+    _traccia('interview_skipped', {'n': _poste});
+    unawaited(_passoIntervista(id, null, basta: true));
+  }
+
+  void _altraDomanda() {
+    final id = _id;
+    if (id == null) return;
+    _traccia('interview_choice', {'scelta': 'altra', 'n': _poste});
+    unawaited(_passoIntervista(id, null, altra: true));
+  }
+
+  void _testoLibero() {
+    _traccia('interview_choice', {'scelta': 'libero', 'n': _poste});
+    _set(() => _modo = _ModoIntervista.libero);
+  }
+
+  /// v9.5: «Voglio dire qualcosa di libero». Il testo entra nell'interpretazione; poi tornano i pulsanti.
+  Future<void> _suLibero(String testo) async {
+    final id = _id;
+    if (id == null) return;
+    _set(() {
+      _aggiungi(Autore.utente, testo);
+      _attesa = true;
+      _errore = null;
+    });
+    try {
+      final esito = await ref.read(apiProvider).aggiungiAllIntervista(id, testo);
+      if (esito.crisi) {
+        _set(() {
+          _aggiungi(Autore.sistema, esito.messaggio ?? '');
+          _fase = FaseLettura.crisi;
+        });
+        return;
+      }
+      _traccia('interview_addition', {'n': _poste});
+      _set(() => _modo = _ModoIntervista.scelta);
+    } on ErroreApi catch (e) {
+      _set(() => _errore = e.messaggio(context.t));
+    } finally {
+      _set(() => _attesa = false);
+    }
+  }
+
+  /// Le scelte in fondo alla chat: sotto la prima domanda «Passa alla lettura» (se il minimo lo consente) e il testo
+  /// libero; dopo una risposta o un testo libero i tre pulsanti, «un'altra domanda» solo prima del massimo.
+  List<SceltaDialogo> _sceltePossibili(AppLocalizations t) {
+    if (_fase != FaseLettura.intervista || _attesa || _id == null) return const [];
+    final risposta = _modo == _ModoIntervista.risposta;
+    final scelta = _modo == _ModoIntervista.scelta;
+    final puoiPassare = _poste - (risposta ? 1 : 0) >= _minDomande;
+    final sottoLaPrima = risposta && _poste <= 1;
+    return [
+      if (scelta && _poste < _maxDomande)
+        SceltaDialogo(etichetta: t.lettura_scelta_altra, azione: _altraDomanda, an: 'intervista_altra'),
+      if (scelta || sottoLaPrima)
+        SceltaDialogo(etichetta: t.lettura_scelta_libero, azione: _testoLibero, an: 'intervista_libero'),
+      if ((scelta || sottoLaPrima) && puoiPassare)
+        SceltaDialogo(
+          etichetta: t.lettura_scelta_lettura,
+          azione: _passaAllaLettura,
+          primaria: true,
+          an: 'intervista_lettura',
+        ),
+    ];
   }
 
   /* ---- l'apertura ---- */
@@ -632,6 +757,7 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
           oltreLimite: oltreLimite,
           partner: speciale ? partnerDa(_persone) : null,
           ricordaPartner: speciale && _persone.ricorda,
+          variante: _variante,
         );
       } else {
         // L'età confermata al primo avvio vale anche qui: il server non la richiede una seconda volta.
@@ -640,6 +766,7 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
           domanda: testoDomanda,
           lingua: _lingua,
           etaAnni: etaAnni ?? ref.read(etaProvider).anniConfermati,
+          variante: _variante,
         );
       }
       _traccia('reading_started', {'categoria': categoria, 'anonima': !_autenticata});
@@ -661,6 +788,8 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
         _domandaLettura = testoDomanda;
         _battute = [Battuta(id: _nuovoId(), autore: Autore.utente, testo: testoDomanda)];
         _fase = FaseLettura.intervista;
+        _modo = _ModoIntervista.risposta;
+        _poste = 0;
       });
       ref.invalidate(contoProvider);
       ref.invalidate(profiloProvider);
@@ -954,7 +1083,10 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
       _fase = FaseLettura.svelamento;
     });
     unawaited(
-      Future<void>.delayed(const Duration(milliseconds: 250), () => _portaInVista(_zonaResponso, allineamento: 0)),
+      Future<void>.delayed(
+        const Duration(milliseconds: 250),
+        () => widget.inChat ? null : _portaInVista(_zonaResponso, allineamento: 0),
+      ),
     );
     try {
       final coperte = [
@@ -1043,6 +1175,8 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
       _manuale = false;
       _mazzoLetturaFatto = false;
       _caricata = true;
+      _modo = _ModoIntervista.risposta;
+      _poste = 0;
     });
     _domanda.clear();
     ref.invalidate(profiloProvider);
@@ -1124,7 +1258,8 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
 
   bool _ritoInDialogo() {
     final stretto = MediaQuery.sizeOf(context).width.telefono;
-    return stretto &&
+    return !widget.inChat &&
+        stretto &&
         !_ritoChiuso &&
         const {
           FaseLettura.mescolamento,
@@ -1188,6 +1323,53 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
     ),
   );
 
+  /// v9.5, la chat: chi legge è in fondo se mancano meno di 180 px alla fine della pagina.
+  void _misuraFondo() {
+    if (!_scorri.hasClients) return;
+    final p = _scorri.position;
+    _inFondo = p.pixels >= p.maxScrollExtent - 180;
+  }
+
+  /// v9.5, la chat: la pagina segue una novità solo se chi legge è già in fondo (se sta rileggendo più su non si
+  /// muove), e si ferma all'INIZIO del messaggio nuovo ([allInizio]: una domanda, il mazzo, una carta che si gira, il
+  /// responso), non alla fine; i pulsanti invece si portano solo in vista.
+  void _segui(BuildContext? contesto, {required bool allInizio}) {
+    if (!widget.inChat || !_inFondo || contesto == null || !mounted || !_scorri.hasClients) return;
+    final oggetto = contesto.findRenderObject();
+    if (oggetto == null || !oggetto.attached) return;
+    final viewport = RenderAbstractViewport.maybeOf(oggetto);
+    if (viewport == null) return;
+    final p = _scorri.position;
+    final verso = allInizio
+        ? viewport.getOffsetToReveal(oggetto, 0).offset - 12
+        : math.max(p.pixels, viewport.getOffsetToReveal(oggetto, 1).offset + 12);
+    final meta = verso.clamp(p.minScrollExtent, p.maxScrollExtent);
+    if ((meta - p.pixels).abs() < 2) return;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _scorri.jumpTo(meta);
+    } else {
+      unawaited(_scorri.animateTo(meta, duration: const Duration(milliseconds: 400), curve: Curves.ease));
+    }
+  }
+
+  /// v9.5, la chat: dopo ogni disegno, se è cambiata la fase, il numero di carte girate o il responso, si segue
+  /// l'inizio del blocco nuovo (il mazzo o le carte svelate). Le battute le segnala il dialogo ([_segui]).
+  void _seguiRito() {
+    if (!widget.inChat) return;
+    final rivelate = _posate.where((p) => p.rivelata).length;
+    final novita = '${_fase.nome}|$rivelate|${_testoResponso.isEmpty ? 0 : 1}';
+    if (novita == _novita) return;
+    final prima = _novita;
+    _novita = novita;
+    if (prima.isEmpty || _fase == FaseLettura.intervista) return;
+    final suResponso =
+        rivelate > 0 || const {FaseLettura.svelamento, FaseLettura.sintesi, FaseLettura.completata}.contains(_fase);
+    final chiave = suResponso ? _zonaResponso : _zonaMazzo;
+    Future<void>.delayed(const Duration(milliseconds: 120), () {
+      if (_vivo) _segui(chiave.currentContext, allInizio: true);
+    });
+  }
+
   void _portaInVista(GlobalKey chiave, {double allineamento = .5}) {
     final ctx = chiave.currentContext;
     if (ctx == null || !mounted) return;
@@ -1233,6 +1415,7 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
     _steseCorrenti = stese;
     _slugCorrente = _slugAttivo();
     _effetti(stese, categoria);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _seguiRito());
     final preparazione = _fase == FaseLettura.preparazione || _fase == FaseLettura.persone;
     final sezioni = <Widget>[
       Sottotitolo(
@@ -1402,7 +1585,18 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
 
     return Fascia(
       compatta: true,
-      child: PannelliLettura(sinistra: conversazione, destra: rito),
+      // v9.5, la chat: anche la preparazione in una colonna sola.
+      child: widget.inChat
+          ? Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: _larghezzaChat),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [conversazione, const SizedBox(height: 16), rito],
+                ),
+              ),
+            )
+          : PannelliLettura(sinistra: conversazione, destra: rito),
     );
   }
 
@@ -1457,13 +1651,13 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
         Dialogo(
           battute: _battute,
           attesa: _attesa,
-          inputAttivo: _fase == FaseLettura.intervista,
-          alRispondi: _suRisposta,
-          alBasta: () {
-            final id = _id;
-            if (id != null) unawaited(_passoIntervista(id, null, basta: true));
-          },
-          puoiFermarti: _puoiFermarti,
+          inputAttivo:
+              _fase == FaseLettura.intervista && (_modo == _ModoIntervista.risposta || _modo == _ModoIntervista.libero),
+          libero: _modo == _ModoIntervista.libero,
+          alRispondi: _modo == _ModoIntervista.libero ? (testo) => unawaited(_suLibero(testo)) : _suRisposta,
+          scelte: _sceltePossibili(t),
+          fluido: widget.inChat,
+          alNovita: _segui,
         ),
         if (_errore != null && _fase == FaseLettura.intervista)
           Padding(
@@ -1522,19 +1716,28 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
         _id != null;
 
     final w = MediaQuery.sizeOf(context).width;
+    // v9.5, la chat: una colonna sola, la conversazione e sotto, quando serve, il rito come un messaggio.
+    final pannelli = widget.inChat
+        ? Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: _larghezzaChat),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  conversazione,
+                  if (inRito) Padding(padding: const EdgeInsets.only(top: 16), child: rito),
+                ],
+              ),
+            ),
+          )
+        : PannelliLettura(sinistra: conversazione, destra: rito, primaDestra: inRito);
     return [
       _ambito(
         KeyedSubtree(
           key: _scena,
           child: Fascia(
             compatta: true,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                scena,
-                PannelliLettura(sinistra: conversazione, destra: rito, primaDestra: inRito),
-              ],
-            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [scena, pannelli]),
           ),
         ),
       ),
@@ -1544,7 +1747,9 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
           child: _ambito(
             Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: Token.larghezzaBanda),
+                constraints: BoxConstraints(
+                  maxWidth: widget.inChat ? _larghezzaChat + 2 * w.gutter : Token.larghezzaBanda,
+                ),
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(w.gutter, 0, w.gutter, w.telefono ? 16 : w.clampVw(16, 1.75, 22.4)),
                   child: Column(
@@ -1698,7 +1903,7 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
         FaseLettura.prontoMescolare,
       }.contains(_fase)) {
         Future<void>.delayed(const Duration(milliseconds: 350), () {
-          if (_vivo && !_ritoInDialogo()) _portaInVista(_zonaMazzo);
+          if (_vivo && !widget.inChat && !_ritoInDialogo()) _portaInVista(_zonaMazzo);
         });
       }
     }
@@ -1706,6 +1911,12 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
 }
 
 /* ---- i pezzi della pagina ---------------------------------------------------------------------------------------- */
+
+/// v9.5, l'intervista: una domanda aspetta la risposta, i pulsanti aspettano una scelta, si scrive il testo libero.
+enum _ModoIntervista { risposta, scelta, libero }
+
+/// v9.5, la chat: la larghezza della colonna (come `.chatColonna` del sito, 46 rem).
+const double _larghezzaChat = 736;
 
 /// `.read-panel` (chiaro) e `.read-panel.dark` (prugna); durante il rito sul telefono `.inRito .pannelloRito`.
 class _PannelloLettura extends StatelessWidget {
