@@ -43,6 +43,8 @@ class FakeApi:
         self.calls.append((method, path))
         if path == "/media":
             return {"id": "img-1", "url": "/blog/media/img-1.webp", "larghezza": 1600, "altezza": 1067, "byte": 1000}
+        if path == "/titles":
+            return {"totale": 0, "pagina": 1, "per_pagina": 1000, "adesso": "2026-10-06T00:00:00+00:00", "articoli": []}
         if path == "/posts" and (kwargs.get("body") or {}).get("dry_run"):
             return {"seo": {"punteggio": 92, "giudizio": "ottimo", "controlli": [], "statistiche": {}}}
         if path == "/posts":
@@ -147,15 +149,20 @@ def test_the_card_of_the_article_named_in_the_prompt_is_accepted(env):
     assert tb.main(["post", article, "--cover", cover]) == tb.EXIT_OK
 
 
-@pytest.mark.parametrize("prompt,words", [
-    (NAMELESS_CARD, "without saying which"),
-    (FOOL_CARD, "is not a card of this article"),
+@pytest.mark.parametrize("prompt,expected_warnings", [
+    (NAMELESS_CARD, ["does not say the card is in the style of the Thoth deck", "does not say the card is small"]),
+    (FOOL_CARD, ["is not the card of"]),
 ])
-def test_post_refuses_a_card_that_is_not_the_one_of_the_article(env, capsys, prompt, words):
-    tmp, api, article = env
+def test_post_admits_a_card_that_is_not_the_one_of_the_article(env, prompt, expected_warnings):
+    # `post` no longer refuses this (relaxed 6/10/2026): `check_card_in_picture` drops the warning, so verify it
+    # straight from `card_rule_problems`, the function it is built from (same test used in tarots-blog-images).
+    tmp, api, article = env  # article.json: title «The Tower»
     cover = _generated(tmp, "cover.jpg", b"\xff\xd8 lighthouse", prompt=prompt)
-    assert tb.main(["post", article, "--cover", cover]) == tb.EXIT_RULE
-    assert words in capsys.readouterr().err and api.calls == []
+    assert tb.main(["post", article, "--cover", cover]) == tb.EXIT_OK
+    problems, warnings = tb.card_rule_problems(prompt, ["The Tower"], "The Tower")
+    assert problems == [] and len(warnings) == len(expected_warnings)
+    for text in expected_warnings:
+        assert any(text in w for w in warnings)
 
 
 def test_the_subject_of_the_article_lets_its_card_in(env, capsys):
@@ -168,18 +175,24 @@ def test_the_subject_of_the_article_lets_its_card_in(env, capsys):
     sent = [c for c in api.calls if c[1] == "/posts"]
     assert len(sent) == 2
     other = _generated(tmp, "cover-2.jpg", b"\xff\xd8 fool", prompt=FOOL_CARD)
-    assert tb.main(["post", str(article), "--cover", other]) == tb.EXIT_RULE   # the subject is the Tower, not the Fool
-    assert "is not a card of this article" in capsys.readouterr().err
+    # the subject is the Tower, not the Fool: admitted too now, with a warning (lost by `post`, kept by the function)
+    assert tb.main(["post", str(article), "--cover", other]) == tb.EXIT_OK
+    _problems, warnings = tb.card_rule_problems(FOOL_CARD, ["When everything falls at once", "the Tower"],
+                                                "When everything falls at once")
+    assert warnings and "is not the card of" in warnings[0] and "about the Tower" in warnings[0]
 
 
-def test_post_refuses_any_card_for_an_article_about_no_card(env, capsys):
+def test_post_admits_any_card_for_an_article_about_no_card(env, capsys):
     tmp, api, _ = env
     article = tmp / "libra.json"
     article.write_text(json.dumps({"title": "Tarot Meditation for Libra Season Balance", "body": "text",
                                    "focus_keyword": "libra season tarot", "status": "draft"}), encoding="utf-8")
     cover = _generated(tmp, "cover.jpg", b"\xff\xd8 lighthouse", prompt=FOOL_CARD)
-    assert tb.main(["post", str(article), "--cover", cover]) == tb.EXIT_RULE
-    assert "this article is not about a specific card" in capsys.readouterr().err and api.calls == []
+    # relaxed 6/10/2026: an article about no card still admits a card as context (nothing of its own to compare it to)
+    assert tb.main(["post", str(article), "--cover", cover]) == tb.EXIT_OK
+    problems, warnings = tb.card_rule_problems(FOOL_CARD, ["Tarot Meditation for Libra Season Balance",
+                                                           "libra season tarot"], "Tarot Meditation for Libra Season Balance")
+    assert problems == [] and warnings == []
 
 
 def test_upload_reads_the_article_of_for_in_its_work_folder_or_the_titles_copy(env, monkeypatch, capsys):
@@ -204,13 +217,19 @@ def test_upload_reads_the_article_of_for_in_its_work_folder_or_the_titles_copy(e
     assert tb.main(["upload", other, "--for", "id-tower"]) == tb.EXIT_OK                 # the titles copy, by id
     third = _generated(tmp, "inline-3.jpg", b"\xff\xd8 tower card 3", prompt=TOWER_CARD + ", wind")
     capsys.readouterr()
-    assert tb.main(["upload", third, "--for", "libra-season"]) == tb.EXIT_RULE           # the copy, by slug
-    assert "not about a specific card" in capsys.readouterr().err
-    assert tb.main(["upload", third, "--for", "nowhere"]) == tb.EXIT_RULE
-    assert "was not found" in capsys.readouterr().err
-    assert tb.main(["upload", third]) == tb.EXIT_RULE
-    assert "add --for" in capsys.readouterr().err
-    assert len(api.uploads) == 3
+    # the copy, by slug: the Libra article names no card, so the Tower is admitted too (`upload` shows no warning)
+    assert tb.main(["upload", third, "--for", "libra-season"]) == tb.EXIT_OK
+    about = tb.article_texts("libra-season")
+    assert about is not None and about[1] == "Tarot Meditation for Libra Season Balance"   # the copy was read
+    problems, warnings = tb.card_rule_problems(TOWER_CARD + ", wind", *about)
+    assert problems == [] and warnings == []
+    # relaxed 6/10/2026: a card is admitted even when --for names no known article, or there is no --for at all
+    # (the operator's rule now reads "with or without --article"); each needs its own, never-used-before picture
+    fourth = _generated(tmp, "inline-4.jpg", b"\xff\xd8 tower card 4", prompt=TOWER_CARD + ", fog")
+    assert tb.main(["upload", fourth, "--for", "nowhere"]) == tb.EXIT_OK
+    fifth = _generated(tmp, "inline-5.jpg", b"\xff\xd8 tower card 5", prompt=TOWER_CARD + ", snow")
+    assert tb.main(["upload", fifth]) == tb.EXIT_OK
+    assert len(api.uploads) == 6
 
 
 def test_a_file_that_is_not_an_image_is_a_usage_error_before_the_record(env, capsys):

@@ -32,31 +32,36 @@ It accepts:
 - **the names of the cards as a world or a symbol**: *a lighthouse struck by lightning, the energy of the Tower*;
   *the Queen of Cups on a throne by the sea*; *a stone fountain overflowing in a cloister, the Ace of Cups as a
   spring*;
-- **one single small card, later in the scene, only in the picture of an article about that very card**: see the
-  next section.
+- **one single small card, later in the scene, admitted as context in any picture**: see the next section.
 
-### A card in the picture: only the article's own card
-A card drawn in the picture (the word *card*, *arcanum* or *tarocco* later in the scene) is allowed **only when the
-article is about that very card**. On 5/10/2026 an agent added "one single small card" to the picture of *Tarot
-Meditation for Libra Season Balance*, an article about no card: out came a large Rider-Waite Fool. So `generate` and
-`prompt-check` refuse (exit 7) a prompt that draws a card:
-- **without `--article <slug or id>`**;
-- when **the article is not about a specific card**: *this article is not about a specific card: no card in its
-  picture; show its world instead*;
-- when **the prompt does not name the card it draws** in the same phrase (*a single small card of the Tower*), or
-  names **another card** than the article's, or **more than one**;
+### A card in the picture: one single small card, as context, admitted anywhere
+A card drawn in the picture (the word *card*, *arcanum* or *tarocco* later in the scene) is admitted **in any
+picture, of an article on any topic, with or without `--article`, a section or a spread**. The rule was stricter
+until 5/10/2026 — a card only for an article about that very card — after an agent added "one single small card"
+to the picture of *Tarot Meditation for Libra Season Balance*, an article about no card, and out came a large
+Rider-Waite Fool; it was relaxed the next day, because refusing every other card went too far. `generate` and
+`prompt-check` still refuse (exit 7) a prompt that draws a card:
+- when it names **more than one card** (two different names): one single small card at most;
 - when it asks for **a copy** of a deck's artwork (*reproduction*, *replica*, *exact copy*…), or for Rider-Waite or
-  Marseille (refused anyway).
+  Marseille (refused anyway) — never, not even of the article's own card: it is always a new drawing.
 
-When the card is allowed, the prompt says it is drawn **in the style of the Thoth deck** (a new drawing, never a
-copy of the artwork): without "Thoth" the check passes with a warning, and the model would paint the deck it knows
-best, Rider-Waite. A card's name **without the word "card"** (*the energy of the Tower*) is a world or a symbol and
-stays allowed in any article.
+Everything else is a **warning**, not a refusal:
+- the prompt does not say the card is **small** (*a single small card*): write it, or the model may make the card
+  the subject;
+- the prompt does not say it is **in the style of the Thoth deck**: write it, or the model paints the deck it
+  knows best, usually Rider-Waite;
+- the card drawn **is not the one the article is about** (its title, focus keyword or subject): allowed as
+  context, but the article's own card would say more. A card with no name at all (*a single card tucked under a
+  stone*) has nothing to compare and draws no such warning.
+
+A card's name **without the word "card"** (*the energy of the Tower*) is a world or a symbol and stays allowed
+everywhere, and never warns.
 
 **Which article.** `--article` is looked for in the work folder (`article.json`: `title`, `focus_keyword`,
 `subject`, `slug`), then in the titles copy that `tarots_blog.py titles` keeps (`~/.tarots-blog/titles-cache.json`,
 by slug or id), then, with a media key, through the API (`GET /media-posts/{id}`). Only a prompt that draws a card
-needs it.
+looks for it, and only to judge the "not the article's own card" warning above: with no `--article`, or one the
+script cannot find, the card is still admitted, simply with nothing of the article's own to compare it against.
 
 **Which cards an article is about**: those named in its **title** or its **focus keyword**, and the card of its
 **subject** when article.json declares one (`"subject": {"type": "card", "ref": "maj-16"}`: a card id of the site —
@@ -75,21 +80,24 @@ maj-00…maj-21, coppe-01, bastoni-cavaliere… — or a slug such as `the-tower
   tarot card meaning* is about the Moon; *Full Moon tarot spread* is about no card. Names like Hierophant, High
   Priestess, Hanged Man, Ace of Cups, Knight of Wands count anywhere.
 
-Accepted, for *The Tower tarot card meaning* (`--article the-tower-tarot-card-meaning`):
+Accepted, for *The Tower tarot card meaning* (`--article the-tower-tarot-card-meaning`), no warning:
 "A lighthouse keeper's kitchen on a stormy night, rain on the glass, lightning over the sea, a kettle on the stove,
 a wool coat drying by the door, seen through the window, on the shelf a single small card of the Tower leaning on a
 cup, in the style of the Thoth deck"
 
-Refused, for *Tarot Meditation for Libra Season Balance* (an article about no card):
-"…a balance scale on a windowsill at dusk, and beside it a single small card of the Fool" → *this article is not
-about a specific card: no card in its picture; show its world instead*. Show the balance, the autumn light, the
-scales of Libra: no card.
+Also accepted, for *Tarot Meditation for Libra Season Balance* (an article about no card — the case that first made
+this rule, 5/10/2026; it taught **why** the card must be said small and in the Thoth style, not that it must be
+refused):
+"…a balance scale on a windowsill at dusk, and beside it a single small card of the Fool in the style of the Thoth
+deck" — said small and in the Thoth style, so no warning either; there is simply nothing of this article's own to
+compare the Fool against. The safer picture still shows the balance, the autumn light, the scales of Libra, with no
+card at all: not because the card would be refused, but because the world of the article says more.
 
 Ordinary words are never mistaken for cards: *cardinal*, *cardigan*, *discard*, *the deck of a ship*, *wings
 spread*, *a map spread out*, *a Celtic cross of stone on a hillside*, *an arcane astrolabe*.
 
 The safest picture still shows the card **through its world**: the places, people, seasons, objects and
-metaphors the article speaks about. A card is a detail at most.
+metaphors the article speaks about. A card is a detail at most, never required.
 
 ## Read the article first, then write the prompt
 ```
@@ -291,19 +299,21 @@ the other; in a real run the options must also be free in `progress`.
 
 ## The pictures of the sections and of the spreads
 The same rules, the same four dimensions, the same house style; `generate --section <slug>` or `--spread <id>`
-instead of `--article`. **No card is ever drawn** (the word *card* in the scene is refused): a section is about many
-cards, a spread about positions that the site draws itself.
+instead of `--article`. **The same card rule as any picture**: at most one single small card, as context, in the
+style of the Thoth deck (a warning if it is not said so); refused only with two cards or a copy of a deck's
+artwork. A section is about many cards and a spread about positions the site draws itself, so its own world is
+almost always the better picture, but a single small card is no longer forbidden there.
 - *A section of cards* shows the **world** of its cards: for **Cups**, water and feeling (a tidal pool at dawn, a
   well in a cloister garden); for **Wands**, fire and will (a forge, a dry hillside at noon); for **Swords**, air and
   thought (a windy ridge, a scriptorium); for **Disks**, earth and work (a terraced vineyard, a bakery at first
   light); for the **Major Arcana**, the great passages (a road between mountains at dawn, a lighthouse, a starry
-  pass). A card's name at most as context ("the energy of the Tower"), never as the subject. «By number» (Aces,
-  Twos… Princesses): what that number or rank means across the four suits (a seed for the Aces, a crossroads for the
-  Twos).
+  pass). A card's name at most as context ("the energy of the Tower"), or one single small card, never a pile or
+  many cards as the subject. «By number» (Aces, Twos… Princesses): what that number or rank means across the four
+  suits (a seed for the Aces, a crossroads for the Twos).
 - *A section of spreads or of articles* shows its theme, from its description: love, career, journaling, symbolism.
 - *A spread* gets an **evocative** illustration of its question and its tradition: a Celtic stone crossroads for
-  the Celtic Cross, a horseshoe on a stable door for the Horseshoe, two paths in a wood for a choice. Never cards,
-  never a layout, never the positions: the site draws the scheme next to it.
+  the Celtic Cross, a horseshoe on a stable door for the Horseshoe, two paths in a wood for a choice. Never a
+  layout or the positions (the site draws the scheme next to it) and never more than one card.
 
 Example, *Cups* (`generate --section cups`):
 `--kind water-and-reflection --shot reflection --light dawn --setting "Breton tidal pool"`
@@ -311,9 +321,9 @@ Example, *Cups* (`generate --section cups`):
 abalone shell at the bottom, sea anemones open like small cups, a gull's feather floating, reflected in the pool"
 
 ## Refuse, regenerate or rewrite if
-- the picture is a picture of cards anyway (a card filling the frame, a spread, a deck, hands holding cards), or a
-  card shows up big where the prompt asked for none; the article's own card that came out large, or looking like
-  Rider-Waite or Marseille instead of the Thoth style;
+- the picture is a picture of cards anyway (a card filling the frame, a spread, a deck, hands holding cards, more
+  than one card), or a card shows up big where the prompt asked for none; the single small card that came out
+  large, or looking like Rider-Waite or Marseille instead of the Thoth style;
 - there is text, letters, numbers or a logo anywhere (even fake writing);
 - hands or faces are malformed, or a face looks like a real, recognisable person;
 - it looks like a stock photo or like the actual Thoth deck artwork;

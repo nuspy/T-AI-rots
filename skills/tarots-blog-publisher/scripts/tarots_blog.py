@@ -1505,13 +1505,13 @@ def card_problem(text: str) -> Optional[str]:
     return f"«{found[0][1]}» ({found[0][2]})" if found else None
 
 
-# ---- a card in the picture: only for an article about that very card ------------------------------------------
-# Operator's rule (5/10/2026). In a test run Hermes added "one single small card" to the picture of «Tarot Meditation
-# for Libra Season Balance», an article about no card, and out came a large Rider-Waite Fool. A card drawn in the
-# picture (CARD_WORD: "card", "arcanum", "tarocco" in a prompt that `card_problems()` lets through) is allowed only
-# when the article's title or focus keyword names that very card, when the prompt names it in the same phrase ("a
-# single small card of the Tower") and draws it in the style of the Thoth deck, never as a copy of its artwork. The
-# names of the cards as a world or a symbol, without the word "card" ("the energy of the Tower"), stay free.
+# ---- a card in the picture: one single small card, as context -------------------------------------------------
+# Operator's rule, relaxed on 6/10/2026 (the rule of 5/10 allowed a card only for an article about that very card,
+# after a small Fool added "as context" came out as a large Rider-Waite Fool; it refused too much). A card drawn in
+# the picture (CARD_WORD: "card", "arcanum", "tarocco" in a prompt that `card_problems()` lets through) is allowed in
+# any picture, of an article, a section or a spread, when it is ONE card and not a copy of a deck's artwork. Warnings
+# (not refusals): say it is small, draw it in the style of the Thoth deck, prefer the article's own card. The names of
+# the cards as a world or a symbol, without the word "card" ("the energy of the Tower"), stay free.
 # MAJOR_ARCANA, CONTEXT_NAMES, MINOR_RANKS, MINOR_SUITS, CARD_CONTEXT, NAME_GAP, NOT_A_CARD_NAME, COPY_OF_ARTWORK,
 # CLAUSE_BREAK and the functions down to `card_rule_problems()` are the same in tarots_images.py and tarots_blog.py
 # (a test in tarots-blog-publisher keeps them identical): change both together.
@@ -1673,40 +1673,40 @@ def shows_a_card(prompt: str) -> bool:
 
 
 def card_rule_problems(prompt: str, texts: List[str], title: str = "") -> tuple:
-    """(problems, warnings) of the card a prompt draws, for the article whose title and focus keyword are `texts`.
-    ([], []) when the prompt draws no card."""
+    """(problems, warnings) of the card a prompt draws, for the article whose title and focus keyword are `texts`
+    (empty for a section, a spread or an unknown article). ([], []) when the prompt draws no card.
+    Relaxed by the operator on 6/10/2026: one single small card is allowed as context in any picture; refused only
+    are more than one card and a copy of a deck's artwork (`card_problems()` still refuses a card as the subject,
+    decks, spreads and hands holding cards). The rest are warnings."""
     shown = cards_shown(prompt) if not card_problems(prompt) else None
     if shown is None:
         return [], []
     own = cards_of_article(texts)
-    about = f"«{title}»" if title else "this article"
-    if not own:
-        return [f"this article is not about a specific card: no card in its picture; show its world instead "
-                f"({about} names no card in its title or focus keyword; a card's name without the word «card», "
-                "as a world or a symbol, stays allowed)"], []
+    about = f"«{title}»" if title else "this picture"
+    plain = _card_plain(prompt)
     problems: List[str] = []
     named = []
     for card in shown:
         if card and card not in named:
             named.append(card)
-    if None in shown:
-        problems.append(f"the prompt draws a card without saying which: name it in the same phrase, e.g. «a single "
-                        f"small card of {own[0]}» ({about} is about {', '.join(own)})")
     if len(named) > 1:
         problems.append(f"the prompt draws more than one card ({', '.join(named)}): one single small card at most")
-    for card in named:
-        if card not in own:
-            problems.append(f"the card drawn ({card}) is not a card of this article ({about} is about "
-                            f"{', '.join(own)}): only the article's own card may appear; show {card} as a world or "
-                            "a symbol, without the word «card», or take it out")
-    if re.search(COPY_OF_ARTWORK, _card_plain(prompt)):
+    if re.search(COPY_OF_ARTWORK, plain):
         problems.append("it asks for a copy of a deck's artwork: the card is a new drawing in the style of the Thoth "
                         "deck, never a reproduction")
     warnings: List[str] = []
-    if not problems and not re.search(r"\bthoth\b", _card_plain(prompt)):
+    if problems:
+        return problems, warnings
+    if not re.search(r"\bthoth\b", plain):
         warnings.append("the prompt does not say the card is in the style of the Thoth deck: add «in the style of "
                         "the Thoth deck» (a new drawing, not a copy; never Rider-Waite or Marseille), or the model "
                         "paints the deck it knows best")
+    if not re.search(r"\b(?:small|tiny|little|miniature)\b", plain):
+        warnings.append("the prompt does not say the card is small: write «a single small card», or the model may "
+                        "make it the subject of the picture")
+    if own and named and named[0] not in own:
+        warnings.append(f"the card drawn ({named[0]}) is not the card of {about} (about {', '.join(own)}): allowed "
+                        "as context, but the article's own card would say more")
     return problems, warnings
 
 
@@ -1860,18 +1860,16 @@ def article_texts(arg: str) -> Optional[tuple]:
 
 
 def check_card_in_picture(path: str, prompt: str, *, article: Optional[str], about: Optional[tuple]) -> None:
-    """The card rule of the article (see `card_rule_problems`): a prompt that draws a card is accepted only for an
-    article about that very card. `about` is (texts, title) when the article is at hand (`post`)."""
+    """The card rule (see `card_rule_problems`): one single small card as context is accepted in any picture; more
+    than one card, or a copy of a deck's artwork, is refused. `about` is (texts, title) when the article is at hand
+    (`post`); without it the rule is the same, only the warning about the article's own card is lost."""
     if not shows_a_card(prompt):
         return
     if about is None and article:
         about = article_texts(article)
-    if about is None:
-        why = ("no article was given (add --for SLUG_OR_ID)" if not article else
-               f"the article {article} was not found in the work folders or in the titles copy (`titles` refreshes it)")
-        raise Failure(f"{path} was generated from a prompt that draws a card, and {why}: a card may appear only in "
-                      "the picture of an article about that very card.", EXIT_RULE)
-    problems, _warnings = card_rule_problems(prompt, about[0], about[1])
+    problems, warnings = card_rule_problems(prompt, *(about or ([], "")))
+    for warning in warnings:
+        print(f"card warning: {path}: {warning}", file=sys.stderr)
     if problems:
         raise Failure(f"{path} was generated from a prompt that draws a card: {problems[0]}. Generate a new one.",
                       EXIT_RULE)

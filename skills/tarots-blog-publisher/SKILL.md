@@ -152,12 +152,13 @@ recorded and then deleted: generate the cover (step 7) and run `post` again. `--
 `assets/example-article.json` + `.md` show the shape (abridged, not a template to copy).
 
 ### 6. Pictures: cover and inline
-3:2 cover, no text in the image, **never a picture of cards** (cards only as context), its own subject from this
-article, in a form that differs from the last pictures. **One small card may appear only if the article is about
-that very card** (its title, focus keyword or `subject` names it): the prompt names it ("a single small card of the Tower") and
-draws it "in the style of the Thoth deck"; in any other article a card is refused (exit 7: *this article is not
-about a specific card: no card in its picture; show its world instead*), as happened to *Tarot Meditation for Libra
-Season Balance* when a small Fool was added "as context". Made **only** by the `tarots-blog-images` skill:
+3:2 cover, no text in the image, **never a picture of cards** (one single small card, as context, is admitted in
+any picture; never more than one, never a copy of a deck's artwork), its own subject from this article, in a form
+that differs from the last pictures. **One small card is allowed in any article, not only its own** (relaxed
+6/10/2026): write it small ("a single small card of the Tower") and "in the style of the Thoth deck", or get a
+warning instead of a refusal; a card that is not the one the article's title, focus keyword or `subject` names
+(*Tarot Meditation for Libra Season Balance*, an article about no card, still admits a small Fool "as context") is
+a warning too, not exit 7. Made **only** by the `tarots-blog-images` skill:
 ```
 python ../tarots-blog-images/scripts/tarots_images.py progress
 python ../tarots-blog-images/scripts/tarots_images.py prompt-check --prompt "<prompt>" --kind <kind> --shot <shot> --light <light> --setting "<setting>" --alt "<cover alt>" --article <slug>
@@ -205,8 +206,8 @@ python scripts/tarots_blog.py post <slug>
 and prints the URL.
 - **The cover**: without `--cover`, `post` takes the **last cover recorded for this slug** by `tarots_images.py
   generate --article <slug>` whose file is still in `foto/`, names it in a `note:` line, and prints `cover: <file>`
-  after saving; every check of the record still applies (made by `generate`, not used by another article, no card
-  outside the rule). A work folder from before the pictures had their own names: its `foto/cover.*`, with a
+  after saving; every check of the record still applies (made by `generate`, not used by another article, never two
+  cards or a copy of a deck's artwork). A work folder from before the pictures had their own names: its `foto/cover.*`, with a
   `warning:` line. With no cover it **stops (exit 11)**, nothing saved, naming the recorded file that is missing if
   there is one: generate it with `tarots_images.py generate --article <slug> …`, then `post` again. `--no-cover`
   saves without a cover **only if the generation failed**: write the reason in the report. The `WARN immagine` of

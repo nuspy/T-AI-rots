@@ -771,13 +771,13 @@ def card_problem(text: str) -> Optional[str]:
     return f"«{found[0][1]}» ({found[0][2]})" if found else None
 
 
-# ---- a card in the picture: only for an article about that very card ------------------------------------------
-# Operator's rule (5/10/2026). In a test run Hermes added "one single small card" to the picture of «Tarot Meditation
-# for Libra Season Balance», an article about no card, and out came a large Rider-Waite Fool. A card drawn in the
-# picture (CARD_WORD: "card", "arcanum", "tarocco" in a prompt that `card_problems()` lets through) is allowed only
-# when the article's title or focus keyword names that very card, when the prompt names it in the same phrase ("a
-# single small card of the Tower") and draws it in the style of the Thoth deck, never as a copy of its artwork. The
-# names of the cards as a world or a symbol, without the word "card" ("the energy of the Tower"), stay free.
+# ---- a card in the picture: one single small card, as context -------------------------------------------------
+# Operator's rule, relaxed on 6/10/2026 (the rule of 5/10 allowed a card only for an article about that very card,
+# after a small Fool added "as context" came out as a large Rider-Waite Fool; it refused too much). A card drawn in
+# the picture (CARD_WORD: "card", "arcanum", "tarocco" in a prompt that `card_problems()` lets through) is allowed in
+# any picture, of an article, a section or a spread, when it is ONE card and not a copy of a deck's artwork. Warnings
+# (not refusals): say it is small, draw it in the style of the Thoth deck, prefer the article's own card. The names of
+# the cards as a world or a symbol, without the word "card" ("the energy of the Tower"), stay free.
 # MAJOR_ARCANA, CONTEXT_NAMES, MINOR_RANKS, MINOR_SUITS, CARD_CONTEXT, NAME_GAP, NOT_A_CARD_NAME, COPY_OF_ARTWORK,
 # CLAUSE_BREAK and the functions down to `card_rule_problems()` are the same in tarots_images.py and tarots_blog.py
 # (a test in tarots-blog-publisher keeps them identical): change both together.
@@ -939,40 +939,40 @@ def shows_a_card(prompt: str) -> bool:
 
 
 def card_rule_problems(prompt: str, texts: List[str], title: str = "") -> tuple:
-    """(problems, warnings) of the card a prompt draws, for the article whose title and focus keyword are `texts`.
-    ([], []) when the prompt draws no card."""
+    """(problems, warnings) of the card a prompt draws, for the article whose title and focus keyword are `texts`
+    (empty for a section, a spread or an unknown article). ([], []) when the prompt draws no card.
+    Relaxed by the operator on 6/10/2026: one single small card is allowed as context in any picture; refused only
+    are more than one card and a copy of a deck's artwork (`card_problems()` still refuses a card as the subject,
+    decks, spreads and hands holding cards). The rest are warnings."""
     shown = cards_shown(prompt) if not card_problems(prompt) else None
     if shown is None:
         return [], []
     own = cards_of_article(texts)
-    about = f"«{title}»" if title else "this article"
-    if not own:
-        return [f"this article is not about a specific card: no card in its picture; show its world instead "
-                f"({about} names no card in its title or focus keyword; a card's name without the word «card», "
-                "as a world or a symbol, stays allowed)"], []
+    about = f"«{title}»" if title else "this picture"
+    plain = _card_plain(prompt)
     problems: List[str] = []
     named = []
     for card in shown:
         if card and card not in named:
             named.append(card)
-    if None in shown:
-        problems.append(f"the prompt draws a card without saying which: name it in the same phrase, e.g. «a single "
-                        f"small card of {own[0]}» ({about} is about {', '.join(own)})")
     if len(named) > 1:
         problems.append(f"the prompt draws more than one card ({', '.join(named)}): one single small card at most")
-    for card in named:
-        if card not in own:
-            problems.append(f"the card drawn ({card}) is not a card of this article ({about} is about "
-                            f"{', '.join(own)}): only the article's own card may appear; show {card} as a world or "
-                            "a symbol, without the word «card», or take it out")
-    if re.search(COPY_OF_ARTWORK, _card_plain(prompt)):
+    if re.search(COPY_OF_ARTWORK, plain):
         problems.append("it asks for a copy of a deck's artwork: the card is a new drawing in the style of the Thoth "
                         "deck, never a reproduction")
     warnings: List[str] = []
-    if not problems and not re.search(r"\bthoth\b", _card_plain(prompt)):
+    if problems:
+        return problems, warnings
+    if not re.search(r"\bthoth\b", plain):
         warnings.append("the prompt does not say the card is in the style of the Thoth deck: add «in the style of "
                         "the Thoth deck» (a new drawing, not a copy; never Rider-Waite or Marseille), or the model "
                         "paints the deck it knows best")
+    if not re.search(r"\b(?:small|tiny|little|miniature)\b", plain):
+        warnings.append("the prompt does not say the card is small: write «a single small card», or the model may "
+                        "make it the subject of the picture")
+    if own and named and named[0] not in own:
+        warnings.append(f"the card drawn ({named[0]}) is not the card of {about} (about {', '.join(own)}): allowed "
+                        "as context, but the article's own card would say more")
     return problems, warnings
 
 
@@ -1208,15 +1208,10 @@ def dimension_problems(prompt: str, dims: Dict[str, str], history: List[Dict[str
     return problems
 
 
-def target_card_problems(prompt: str, kind: str, ref: str) -> List[str]:
-    """The picture of a section or of a spread never draws a card: it is about many cards, or about positions the
-    site draws itself. A card's name as a world or a symbol (without the word «card») stays allowed."""
-    if not shows_a_card(prompt):
-        return []
-    what = f"the section «{ref}»" if kind == "section" else f"the spread «{ref}»"
-    return [f"it draws a card, and the picture of {what} never shows one (a card may appear only in the picture of "
-            "an article about that very card): show the world of the " + ("section" if kind == "section" else
-            "spread") + " instead; a card's name without the word «card», as a world or a symbol, stays allowed"]
+def target_card_problems(prompt: str, kind: str, ref: str) -> tuple:
+    """(problems, warnings) of the card the picture of a section or of a spread draws: the same rule as any picture
+    (one single small card as context; never a layout, which `card_problems()` refuses)."""
+    return card_rule_problems(prompt, [], f"the {kind} «{ref}»")
 
 
 def check_prompt(prompt: str, dims: Dict[str, str], article: Optional[str] = None,
@@ -1224,7 +1219,7 @@ def check_prompt(prompt: str, dims: Dict[str, str], article: Optional[str] = Non
     """Refuse the prompt (EXIT_RULE) if it breaks a rule; return the warnings of the card rule. `target` is
     ("section", slug) or ("spread", id) for the picture of a section or of a spread."""
     data = _progress()
-    cards, warnings = (target_card_problems(prompt, *target), []) if target else article_card_problems(prompt, article)
+    cards, warnings = target_card_problems(prompt, *target) if target else article_card_problems(prompt, article)
     problems = (prompt_problems(prompt, _known_prompts(data)) + cards
                 + dimension_problems(prompt, dims, dimension_history(data)))
     if problems:
@@ -1330,16 +1325,9 @@ def article_card_problems(prompt: str, article: Optional[str]) -> tuple:
     """(problems, warnings) of the card the prompt draws, for `article`; ([], []) when it draws none."""
     if not shows_a_card(prompt):
         return [], []
-    if not article:
-        return ["it draws a card, and a card may appear only in the picture of an article about that very card: "
-                "give --article <slug or id> (its title, focus keyword or subject must name the card), or take the "
-                "card out and show the article's world instead"], []
-    found = find_article(article)
-    if found is None:
-        return [f"it draws a card, and the article «{article}» was not found (work folders in {work_root()}, the "
-                f"titles copy {titles_cache_path()}, the API if a media key is set): a card may appear only for an "
-                "article known to be about it. Check the slug or id (`tarots_blog.py titles` refreshes the copy), "
-                "or take the card out"], []
+    found = find_article(article) if article else None
+    if found is None:  # no article, or not found: the same rule, without the warning about the article's own card
+        return card_rule_problems(prompt, [], "")
     return card_rule_problems(prompt, found["texts"], found["title"])
 
 
@@ -1362,7 +1350,7 @@ def check_file(post_id: str, path: str, used: Optional[Dict[str, str]] = None, t
     if prompt and (card := card_problem(prompt)):
         raise Failure(f"{path} was generated from a prompt that makes cards the picture ({card}): it cannot go on "
                       "the blog.", EXIT_RULE)
-    if prompt and target and (cards := target_card_problems(prompt, *target)):
+    if prompt and target and (cards := target_card_problems(prompt, *target)[0]):
         raise Failure(f"{path} was generated from a prompt that draws a card: {cards[0]}. Generate a new picture.",
                       EXIT_RULE)
     if prompt and not target and (cards := article_card_problems(prompt, post_id)[0]):
@@ -1759,7 +1747,7 @@ def cmd_prompt_check(a) -> int:
     history = dimension_history(data)
     if a.section or a.spread:
         target = ("section", a.section.strip()) if a.section else ("spread", a.spread.strip())
-        cards, card_warnings = target_card_problems(a.prompt, *target), []
+        cards, card_warnings = target_card_problems(a.prompt, *target)
     else:
         cards, card_warnings = article_card_problems(a.prompt, a.article)
     problems = prompt_problems(a.prompt, earlier) + cards + dimension_problems(a.prompt, dims, history)
@@ -1988,10 +1976,10 @@ def parser() -> argparse.ArgumentParser:
     pc.add_argument("--alt", help="also check this alt text")
     for_what = pc.add_mutually_exclusive_group()
     for_what.add_argument("--article", metavar="SLUG_OR_ID",
-                          help="the article the picture is for: needed when the prompt draws a card (only the "
-                               "article's own card, named in its title, focus keyword or subject, may appear)")
-    for_what.add_argument("--section", metavar="SLUG", help="the picture is for this section (no card drawn)")
-    for_what.add_argument("--spread", metavar="ID", help="the picture is for this spread (no card drawn)")
+                          help="the article the picture is for (a single small card may appear in any picture; "
+                               "with the article, a warning says if it is not the article's own card)")
+    for_what.add_argument("--section", metavar="SLUG", help="the picture is for this section")
+    for_what.add_argument("--spread", metavar="ID", help="the picture is for this spread")
     pc.set_defaults(fn=cmd_prompt_check)
     g = sub.add_parser("generate", help=f"one picture with {MODEL} through litmedia-skill")
     g.add_argument("--prompt", required=True)
@@ -1999,8 +1987,7 @@ def parser() -> argparse.ArgumentParser:
     target = g.add_mutually_exclusive_group()
     target.add_argument("--article", metavar="SLUG_OR_ID",
                         help="the article's slug (or id): the picture goes in its work folder's foto/ with a name of "
-                             "its own (cover-<date-time>.jpg, inline-<date-time>.jpg), recorded with the article, and "
-                             "a card may appear only if the article is about that very card")
+                             "its own (cover-<date-time>.jpg, inline-<date-time>.jpg), recorded with the article")
     target.add_argument("--section", metavar="SLUG",
                         help="a picture for this section of the Journal: work/sezioni/<slug>/foto/section-<date-time>.jpg")
     target.add_argument("--spread", metavar="ID",

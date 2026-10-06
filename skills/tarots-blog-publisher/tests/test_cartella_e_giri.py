@@ -286,12 +286,13 @@ def test_the_cover_found_in_foto_passes_every_check_of_the_record(blog, capsys):
     assert tb.main(["post", "samhain-tarot-spread"]) == tb.EXIT_RULE
     assert "already a picture of article another-article" in capsys.readouterr().err
     cover.unlink()
-    # a card outside the rule (this article is about no card): refused
+    # a single small card, in the Thoth style, as context: admitted even though this article is about no card
+    # (the warning that it is not the article's own card is lost here: `post` discards card warnings)
     _generated_cover(folder, content=b"\xff\xd8 fool", prompt=(
-        "A quiet garden at dawn with a stone bench and a cup of tea, and beside it a single small card of the Fool, "
-        "seen from above, " + ti.HOUSE_STYLE))
-    assert tb.main(["post", "samhain-tarot-spread"]) == tb.EXIT_RULE
-    assert "/posts" not in blog.paths() and "/media" not in blog.paths()
+        "A quiet garden at dawn with a stone bench and a cup of tea, and beside it a single small card of the Fool "
+        "in the style of the Thoth deck, seen from above, " + ti.HOUSE_STYLE))
+    assert tb.main(["post", "samhain-tarot-spread"]) == tb.EXIT_OK
+    assert "/posts" in blog.paths() and "/media" in blog.paths()
 
 
 def test_two_covers_in_foto_ask_to_choose(blog, capsys):

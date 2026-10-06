@@ -52,10 +52,12 @@ and refuse the file before uploading anything (exit 7) when:
 - the same picture (same sha256, whatever the name) is already used by another article;
 - the prompt it was generated from makes cards the picture (the same rules as `generate`, copied in
   `tarots_blog.py`: a card as the subject, two or more cards, a spread, a hand holding a card);
-- the prompt draws one small card and the article is not about that very card (the same card rule as `generate`,
-  copied too): for `post` the article is its article.json (`title`, `focus_keyword`, `subject`); for `upload` it is the
-  `--for` slug or id, looked for in its work folder, then in the titles copy (`titles` refreshes it). `upload`
-  without `--for` refuses a picture with a card.
+- the prompt draws **more than one card**, or asks for a **copy** of a deck's artwork (the same card rule as
+  `generate`, copied too, relaxed 6/10/2026: one single small card as context is admitted in any picture, of any
+  article, with or without `--for`). Missing "Thoth", missing "small", or a card that is not the article's own
+  (for `post`, its article.json: `title`, `focus_keyword`, `subject`; for `upload`, the `--for` slug or id, looked
+  for in its work folder, then in the titles copy) are no longer refusals here — check them yourself with
+  `tarots-blog-images`'s `prompt-check`, which still prints them as warnings; `post` and `upload` do not.
 
 A file that is not PNG, JPEG or WebP is refused first, as a usage error (exit 2).
 
@@ -73,16 +75,20 @@ line, examples. In short:
   or layout (cards on a table, a reading, a fan of cards, cards face down), hands holding or turning a card.
   Accepted: "tarot" as an adjective, the names of the cards as a world or a symbol, without the word *card* ("a
   lighthouse struck by lightning, the energy of the Tower").
-- **A card in the picture only for an article about that very card.** One single small card later in the scene
-  is allowed only when the article's **title, focus keyword or `subject` names that card** (Thoth and Rider-Waite names are the
-  same card: Adjustment = Justice, Lust = Strength, Art = Temperance, Aeon = Judgement, Universe = World…), the
-  prompt **names it in the same phrase** and draws it **in the style of the Thoth deck** (a new drawing, never a
-  copy, never Rider-Waite or Marseille). `generate` and `prompt-check` then need `--article <slug or id>`.
-  Accepted, for *The Tower tarot card meaning*: "…a wool coat drying by the door, seen through the window, on the
-  shelf a single small card of the Tower leaning on a cup, in the style of the Thoth deck". Refused, for *Tarot
-  Meditation for Libra Season Balance* (an agent added a small Fool there and got a large Rider-Waite Fool): "…and
-  beside it a single small card of the Fool" → *this article is not about a specific card: no card in its picture;
-  show its world instead*. The full rule (which names count, *Full Moon* vs *The Moon tarot card*):
+- **One single small card, as context, is allowed in any picture** (relaxed 6/10/2026: an article on any topic,
+  with or without `--article`, a section, a spread). Refused only: **more than one card**, or a **copy** of a
+  deck's artwork (never, not even of the article's own card — always a new drawing). Everything else is a
+  **warning**: the prompt does not say the card is **small**, does not say it is **in the style of the Thoth
+  deck** (Thoth and Rider-Waite names are the same card: Adjustment = Justice, Lust = Strength, Art = Temperance,
+  Aeon = Judgement, Universe = World…), or draws a card that is **not the one the article's title, focus keyword or
+  `subject` names** — allowed as context, but the article's own card would say more.
+  Accepted, no warning, for *The Tower tarot card meaning*: "…a wool coat drying by the door, seen through the
+  window, on the shelf a single small card of the Tower leaning on a cup, in the style of the Thoth deck". Also
+  accepted, for *Tarot Meditation for Libra Season Balance* (an article about no card — the case that first made
+  this rule, 5/10/2026, by coming out as a large Rider-Waite Fool): "…and beside it a single small card of the Fool
+  in the style of the Thoth deck" — said small and in the Thoth style, so admitted with nothing to warn about
+  either; the case still shows *why* the card must be said small and in the Thoth style, not that it must be left
+  out. The full rule (which names count, *Full Moon* vs *The Moon tarot card*):
   `tarots-blog-images/references/prompts.md`.
 - **The form changes every time**, declared with four required options: `--kind` (17 values: landscape,
   sky-and-weather, architecture, interior, street-or-market, figure-from-behind, figure-at-distance,

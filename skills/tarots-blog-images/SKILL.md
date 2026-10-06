@@ -1,6 +1,6 @@
 ---
 name: tarots-blog-images
-description: Generate and swap the images of TAROTS chat (tarots.chat) blog articles — the cover and the pictures inside the text — with the LitMedia skill (litmedia-skill, API, Seedream 5.0 2K) through this skill's own `tarots_images.py generate`, one article at a time. Every picture is a scene written for that article, different in form from the previous ones (kind, shot, light and setting declared and checked), and never a picture of cards (one small card only in an article about that very card). Use when asked to replace, refresh, fix, vary or add images on TAROTS blog posts, to give an article a picture inside its text, to give the Journal's sections and the spreads their pictures, or when tarots-blog-publisher needs a cover. Not browser-image-gen, not the agent's own image tool.
+description: Generate and swap the images of TAROTS chat (tarots.chat) blog articles — the cover and the pictures inside the text — with the LitMedia skill (litmedia-skill, API, Seedream 5.0 2K) through this skill's own `tarots_images.py generate`, one article at a time. Every picture is a scene written for that article, different in form from the previous ones (kind, shot, light and setting declared and checked), and never a picture of cards (one single small card, as context, is admitted in any picture; never more than one, never a copy of a deck's artwork). Use when asked to replace, refresh, fix, vary or add images on TAROTS blog posts, to give an article a picture inside its text, to give the Journal's sections and the spreads their pictures, or when tarots-blog-publisher needs a cover. Not browser-image-gen, not the agent's own image tool.
 ---
 
 # TAROTS chat blog images
@@ -9,7 +9,7 @@ The blog's covers went wrong twice: first every article had tarot cards laid out
 about fifty covers from one fixed prompt per section, with cards in almost all of them, the same picture again and
 again, sometimes the same file on two articles. This skill gives every article **its own** picture — a scene, a
 place, a person, a season, an object or a metaphor from what the article is actually about, **never a picture of
-cards** — in a form (kind, shot, light, setting) that differs from the last pictures, and replaces cover and inline
+cards (a single small card, as context, in the Thoth style, is allowed anywhere)** — in a form (kind, shot, light, setting) that differs from the last pictures, and replaces cover and inline
 pictures through the REST API, without touching the text, the SEO fields or the status. It also makes the pictures
 of the Journal's sections and the illustrations of the spreads (see the section about them below).
 
@@ -81,22 +81,28 @@ Every picture of an article lives in its work folder, the one `tarots_blog.py ne
   "tarot" as an adjective, the **names of the cards** as a world or a symbol, without the word *card* ("a lighthouse
   struck by lightning, the energy of the Tower"). An alt text describing a spread is refused; one mentioning a card
   gets a warning. Details and examples: `references/prompts.md`.
-- **A card in the picture only for an article about that very card.** A prompt that draws one single small card
-  (the word *card* later in the scene) needs `--article <slug or id>` (also on `prompt-check`), and is refused
-  (exit 7) unless the article's **title, focus keyword or subject names that card** (`"subject": {"type": "card",
-  "ref": "maj-16"}` of article.json; looked for in the work folder's article.json, then in the titles copy
-  `~/.tarots-blog/titles-cache.json`, then through the API with the media key) and the prompt **names it in the
-  same phrase**: "a single small card of the Tower". The card is drawn **in the
-  style of the Thoth deck** (say it, or you get a warning; never a copy, never Rider-Waite or Marseille). Thoth and
-  Rider-Waite names are the same card (Adjustment = Justice, Lust = Strength, Art = Temperance, Aeon = Judgement,
-  Universe = World…). Accepted, for *The Tower tarot card meaning*: "…seen through the window, on the shelf a single
-  small card of the Tower leaning on a cup, in the style of the Thoth deck". Refused, for *Tarot Meditation for
-  Libra Season Balance* (an agent added a small Fool there "as context" and got a large Rider-Waite Fool): "…and
-  beside it a single small card of the Fool" → *this article is not about a specific card: no card in its picture;
-  show its world instead*. Not sure? Leave the card out: the world of the article is always the better picture.
-- **The picture of a section or of a spread never draws a card** (`generate --section` / `--spread`, `prompt-check
-  --section` / `--spread`, `section-cover`, `spread-cover`): it shows the world of the section or the theme of the
-  spread; a card's name only as a world or a symbol, without the word *card*.
+- **One single small card, as context, is allowed in any picture** (an article on any topic, with or without
+  `--article`, a section, a spread). A prompt that draws one single small card (the word *card* later in the scene)
+  is refused (exit 7) only when it draws **more than one card** (two different names) or asks for **a copy of a
+  deck's artwork** (a reproduction, never even of the article's own card: it is always a new drawing). Everything
+  else is a **warning**, not a refusal: the prompt does not say the card is **small** ("a single small card", or
+  the model may make it the subject), the prompt does not say it is **in the style of the Thoth deck** (or the
+  model paints the deck it knows best; never Rider-Waite or Marseille, never a reproduction), or the card drawn is
+  not the one the article (its title, focus keyword or subject — `"subject": {"type": "card", "ref": "maj-16"}` of
+  article.json; looked for in the work folder's article.json, then in the titles copy
+  `~/.tarots-blog/titles-cache.json`, then through the API with the media key) is about: allowed as context, but
+  the article's own card would say more. Thoth and Rider-Waite names are the same card (Adjustment = Justice, Lust
+  = Strength, Art = Temperance, Aeon = Judgement, Universe = World…). Accepted, for *The Tower tarot card meaning*:
+  "…seen through the window, on the shelf a single small card of the Tower leaning on a cup, in the style of the
+  Thoth deck" (no warning). Also accepted, for *Tarot Meditation for Libra Season Balance* (an article about no
+  card; the case that first made this rule, 5/10/2026): "…and beside it a single small card of the Fool in the
+  style of the Thoth deck" — said small and in the Thoth style, there is nothing of the article's own to compare
+  it against. Not sure it earns its place? Leave the card out: the world of the article is still the better
+  picture, and never draws a warning.
+- **The picture of a section or of a spread follows the same rule** (`generate --section` / `--spread`,
+  `prompt-check --section` / `--spread`, `section-cover`, `spread-cover`): it shows the world of the section or the
+  theme of the spread, with at most one single small card as context, small and in the Thoth style; never two
+  cards, never a copy.
 - **A concrete scene from this article**: at least 12 content words once the house style and the empty words
   ("mystical", "ethereal", "professional photography"…) are out.
 - **A new form**: `generate` and `prompt-check` require `--kind` (17 values), `--shot` (12), `--light` (10) and
@@ -291,8 +297,9 @@ python scripts/tarots_images.py spread-cover croce-celtica "<the file generate p
 
 ## Hard rules
 - Only pictures: never try to change text, title, SEO fields or status (the key cannot, and should not try).
-- **Never a picture of cards** (a card at most as a small detail, and only in an article about that very card). No text in pictures. No recognisable real people, no fake photos of real
-  events, no copy of the Thoth deck's actual artwork (copyrighted).
+- **Never a picture of cards** (at most one single small card as context, in the style of the Thoth deck, in any
+  picture; never two, never a copy of a deck's artwork). No text in pictures. No recognisable real people, no fake
+  photos of real events, no copy of the Thoth deck's actual artwork (copyrighted).
 - **Only `tarots_images.py generate`** makes pictures (through `litmedia-skill`). Never `browser-image-gen`, never a
   built-in image tool, never the LitMedia website.
 - **Never write your own script** (a loop, a batch, a "publish_sequential" helper) to generate or swap pictures in
@@ -314,8 +321,9 @@ python scripts/tarots_images.py spread-cover croce-celtica "<the file generate p
 - `tests/test_cartella_e_python.py`: offline tests of the work folder (`--article`, `foto/`, names of their own,
   article and role in the record, the next command; `--section`, `--spread`) and of the choice of the Python that
   runs LitMedia.
-- `tests/test_carta_articolo.py`: offline tests of the card rule (a card only for an article about that very card,
-  also by its subject; never on a section or a spread).
+- `tests/test_carta_articolo.py`: offline tests of the card rule (one single small card admitted as context in any
+  picture, also by the article's subject; refused only with two cards or a copy of a deck's artwork; the same on a
+  section or a spread).
 - `tests/test_sezioni_e_stese.py`: offline tests of `sections`, `spreads`, `section-cover`, `spread-cover` and
   `list --no-cover`.
 - `tests/test_una_chiave.py`: offline tests of the one key for both skills (the publisher's key, the 403 message).

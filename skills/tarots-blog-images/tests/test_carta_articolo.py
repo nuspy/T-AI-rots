@@ -1,10 +1,14 @@
-"""A card in the picture only for an article about that very card (operator's rule, 5/10/2026), offline.
+"""A card in the picture: one single small card is admitted as context in any picture, of any article (operator's
+rule, relaxed 6/10/2026); refused only are more than one card and a copy of a deck's artwork. The rest (missing
+"Thoth", missing "small", a card that is not the article's own) are warnings, not refusals. Offline.
 
     backend/.venv/Scripts/python.exe -m pytest skills/tarots-blog-images/tests -q -p no:cacheprovider
 
-The case that made the rule: for «Tarot Meditation for Libra Season Balance», an article about no card, Hermes
-added "one single small card" to the prompt and out came a large Rider-Waite Fool. No network, no LitMedia, no key:
-the article comes from a work folder, from the titles copy, or from a fake of the API.
+The case that first made the rule strict (5/10/2026): for «Tarot Meditation for Libra Season Balance», an article
+about no card, Hermes added "one single small card" to the prompt and out came a large Rider-Waite Fool. The rule
+was relaxed the next day: refusing it was too much; a small card in the Thoth style, named or not, is now only
+warned about when it is not the article's own. No network, no LitMedia, no key: the article comes from a work
+folder, from the titles copy, or from a fake of the API.
 """
 from __future__ import annotations
 
@@ -151,17 +155,18 @@ def test_the_card_drawn_is_the_one_named_in_its_phrase():
 
 # ---- prompt-check and generate -------------------------------------------------------------------------------------
 
-def test_a_card_without_article_is_refused(capsys):
-    assert _check(TOWER_CARD) == ti.EXIT_RULE
+def test_a_card_without_article_is_admitted_as_context(capsys):
+    assert _check(TOWER_CARD) == ti.EXIT_OK
     out = capsys.readouterr().out
-    assert "give --article <slug or id>" in out and "about that very card" in out
+    assert "card warning" not in out and "ok:" in out
 
 
-def test_libra_case_an_article_about_no_card_gets_no_card(isolated, capsys):
+def test_libra_case_an_article_about_no_card_still_gets_a_card_as_context(isolated, capsys):
     _work_folder(isolated, "libra-season-tarot", "Tarot Meditation for Libra Season Balance", "libra season tarot")
-    assert _check(FOOL_CARD, "--article", "libra-season-tarot") == ti.EXIT_RULE
+    assert _check(FOOL_CARD, "--article", "libra-season-tarot") == ti.EXIT_OK
     out = capsys.readouterr().out
-    assert "this article is not about a specific card: no card in its picture; show its world instead" in out
+    # nothing of the article's own to compare the Fool against: no mismatch warning
+    assert "card warning" not in out
     # its world, without a drawn card, is fine; so is a card's name as a symbol
     assert _check(SYMBOL_ONLY, "--article", "libra-season-tarot") == ti.EXIT_OK
 
@@ -173,13 +178,14 @@ def test_the_card_of_the_article_from_its_work_folder_is_accepted(isolated, caps
     assert "ok:" in out and "card warning" not in out
 
 
-def test_another_card_or_a_nameless_one_is_refused(isolated, capsys):
+def test_another_card_or_a_nameless_one_is_admitted_but_two_cards_are_refused(isolated, capsys):
     _work_folder(isolated, "tower-tarot-meaning", "The Tower: sudden change", "tower tarot card meaning")
-    assert _check(FOOL_CARD, "--article", "tower-tarot-meaning") == ti.EXIT_RULE
+    assert _check(FOOL_CARD, "--article", "tower-tarot-meaning") == ti.EXIT_OK
     out = capsys.readouterr().out
-    assert "the card drawn (the Fool) is not a card of this article" in out and "is about the Tower" in out
-    assert _check(NAMELESS_CARD, "--article", "tower-tarot-meaning") == ti.EXIT_RULE
-    assert "name it in the same phrase, e.g. «a single small card of the Tower»" in capsys.readouterr().out
+    assert "card warning: the card drawn (the Fool) is not the card of" in out and "about the Tower" in out
+    # a card with no name at all: nothing to compare, no warning
+    assert _check(NAMELESS_CARD, "--article", "tower-tarot-meaning") == ti.EXIT_OK
+    assert "card warning" not in capsys.readouterr().out
     two = SCENE + ", a single card of the Tower on the shelf; a single card of the Star by the door, " + STYLE
     assert _check(two, "--article", "tower-tarot-meaning") == ti.EXIT_RULE
     assert "more than one card" in capsys.readouterr().out
@@ -219,8 +225,9 @@ def test_the_titles_copy_finds_the_article_by_slug_or_id(isolated, capsys):
              "parola_chiave": "libra season tarot", "lang": "en"})
     assert _check(TOWER_CARD, "--article", "the-tower-card") == ti.EXIT_OK
     assert _check(TOWER_CARD, "--article", TOWER_ID) == ti.EXIT_OK
-    assert _check(TOWER_CARD, "--article", "libra-season") == ti.EXIT_RULE
-    assert "not about a specific card" in capsys.readouterr().out
+    assert _check(TOWER_CARD, "--article", "libra-season") == ti.EXIT_OK
+    # the Libra article names no card of its own: nothing to compare the Tower against, so no mismatch warning
+    assert "card warning" not in capsys.readouterr().out
     assert ti.find_article("the-tower-card")["source"].startswith("the titles copy")
 
 
@@ -230,9 +237,10 @@ def test_the_work_folder_comes_before_the_titles_copy(isolated):
     assert ti.find_article("the-tower-card")["source"].endswith("article.json")
 
 
-def test_an_unknown_article_is_refused_without_a_key(capsys):
-    assert _check(TOWER_CARD, "--article", "nowhere-to-be-found") == ti.EXIT_RULE
-    assert "«nowhere-to-be-found» was not found" in capsys.readouterr().out
+def test_an_unknown_article_is_admitted_without_a_key(capsys):
+    # unknown, like no --article at all: the card is still admitted, with nothing to compare it against
+    assert _check(TOWER_CARD, "--article", "nowhere-to-be-found") == ti.EXIT_OK
+    assert "card warning" not in capsys.readouterr().out
 
 
 def test_with_a_media_key_the_api_is_asked_last(monkeypatch):
@@ -251,7 +259,7 @@ def test_with_a_media_key_the_api_is_asked_last(monkeypatch):
     monkeypatch.setattr(ti, "call", fake_call)
     assert _check(TOWER_CARD, "--article", TOWER_ID) == ti.EXIT_OK
     assert asked == [("GET", f"/media-posts/{TOWER_ID}")]
-    assert _check(TOWER_CARD, "--article", "libra") == ti.EXIT_RULE
+    assert _check(TOWER_CARD, "--article", "libra") == ti.EXIT_OK   # Libra names no card: admitted, no mismatch warning
     assert asked[-1] == ("GET", "/media-posts")
     # a prompt without a card never looks for its article
     asked.clear()
@@ -262,24 +270,34 @@ def test_with_a_media_key_the_api_is_asked_last(monkeypatch):
 def test_generate_refuses_before_litmedia_and_finds_the_folder_of_an_id(isolated, monkeypatch, capsys):
     folder = _work_folder(isolated, "the-tower", "The Tower tarot card", "tower tarot")
     _titles(isolated, {"id": TOWER_ID, "slug": "the-tower", "titolo": "The Tower tarot card", "parola_chiave": "tower"})
-    assert ti.main(["generate", "--prompt", TOWER_CARD, *DIMS, "--out", str(isolated / "a.jpg"), "--dry-run"]) == ti.EXIT_RULE
-    assert "give --article" in capsys.readouterr().err
+    two = SCENE + ", a single card of the Tower on the shelf; a single card of the Star by the door, " + STYLE
+    assert ti.main(["generate", "--prompt", two, *DIMS, "--out", str(isolated / "a.jpg"), "--dry-run"]) == ti.EXIT_RULE
+    assert "more than one card" in capsys.readouterr().err   # refused before `_litmedia` is ever called (isolated: no_network)
     assert ti.main(["generate", "--prompt", TOWER_NO_THOTH, *DIMS, "--article", TOWER_ID, "--dry-run"]) == ti.EXIT_OK
     captured = capsys.readouterr()
     assert str(folder / "foto" / "cover-") in captured.out   # a name of its own: cover-<date-time>.jpg
     assert "warning: the prompt does not say the card is in the style of the Thoth deck" in captured.err
 
 
-def test_a_file_whose_prompt_draws_another_card_cannot_go_on_an_article(isolated):
+def test_a_file_whose_prompt_draws_another_card_is_admitted_on_any_article(isolated):
     _titles(isolated, {"id": TOWER_ID, "slug": "the-tower", "titolo": "The Tower tarot card", "parola_chiave": "tower"},
             {"id": "libra-1", "slug": "libra", "titolo": "Libra season balance", "parola_chiave": "libra tarot"})
     pic = isolated / "tower.jpg"
     pic.write_bytes(b"\xff\xd8 tower card")
     Path(str(pic) + ".prompt.txt").write_text(TOWER_CARD, encoding="utf-8")
     assert ti.check_file(TOWER_ID, str(pic)) == ti.sha256_of(pic)
+    # the Libra article is about no card: the Tower is still admitted as context, no mismatch to warn about
+    assert ti.check_file("libra-1", str(pic)) == ti.sha256_of(pic)
+
+
+def test_a_file_whose_prompt_draws_two_cards_cannot_go_on_any_article(isolated):
+    pic = isolated / "two-cards.jpg"
+    pic.write_bytes(b"\xff\xd8 two cards")
+    two = SCENE + ", a single card of the Tower on the shelf; a single card of the Star by the door, " + STYLE
+    Path(str(pic) + ".prompt.txt").write_text(two, encoding="utf-8")
     with pytest.raises(ti.Failure) as err:
-        ti.check_file("libra-1", str(pic))
-    assert err.value.code == ti.EXIT_RULE and "not about a specific card" in str(err.value)
+        ti.check_file("some-article", str(pic))
+    assert err.value.code == ti.EXIT_RULE and "more than one card" in str(err.value)
 
 
 # ---- the subject of article.json counts as a title naming the card (5/10/2026) ------------------------------------
@@ -300,15 +318,18 @@ def test_the_card_of_a_subject(ref, card):
 
 def test_a_subject_card_lets_the_card_in_even_when_the_title_does_not_name_it(isolated, capsys):
     folder = _work_folder(isolated, "sudden-change", "When everything falls at once", "sudden change tarot")
-    assert _check(TOWER_CARD, "--article", "sudden-change") == ti.EXIT_RULE    # no card named: refused
-    assert "not about a specific card" in capsys.readouterr().out
+    # no card named in the title or the keyword: the Tower is still admitted, with nothing to compare it against
+    assert _check(TOWER_CARD, "--article", "sudden-change") == ti.EXIT_OK
+    assert "card warning" not in capsys.readouterr().out
     data = json.loads((folder / "article.json").read_text(encoding="utf-8"))
     (folder / "article.json").write_text(json.dumps({**data, "subject": {"type": "card", "ref": "maj-16"}}),
                                          encoding="utf-8")
     ti._articles_found.clear()
-    assert _check(TOWER_CARD, "--article", "sudden-change") == ti.EXIT_OK      # the subject is the Tower
-    assert _check(FOOL_CARD, "--article", "sudden-change") == ti.EXIT_RULE     # but only the Tower
-    assert "is not a card of this article" in capsys.readouterr().out
+    assert _check(TOWER_CARD, "--article", "sudden-change") == ti.EXIT_OK      # the subject is the Tower: no mismatch
+    assert "card warning" not in capsys.readouterr().out
+    assert _check(FOOL_CARD, "--article", "sudden-change") == ti.EXIT_OK       # another card: admitted, with a warning
+    out = capsys.readouterr().out
+    assert "is not the card of" in out and "about the Tower" in out
 
 
 def test_the_subject_of_the_titles_copy_counts_too(isolated):
@@ -317,22 +338,41 @@ def test_the_subject_of_the_titles_copy_counts_too(isolated):
     assert _check(TOWER_CARD, "--article", "falling-towers") == ti.EXIT_OK
 
 
-# ---- a section or a spread never shows a card --------------------------------------------------------------------
+# ---- a section or a spread: one small card as context is admitted too, never two or a copy of artwork -------------
 
 
 @pytest.mark.parametrize("option", [["--section", "major-arcana"], ["--spread", "croce-celtica"]])
-def test_the_picture_of_a_section_or_a_spread_draws_no_card(option, capsys):
-    assert _check(TOWER_CARD, *option) == ti.EXIT_RULE
-    assert "never shows one" in capsys.readouterr().out
+def test_the_picture_of_a_section_or_a_spread_admits_one_small_card_but_not_two(option, capsys):
+    assert _check(TOWER_CARD, *option) == ti.EXIT_OK
+    assert "card warning" not in capsys.readouterr().out       # own=[] for a section/spread: nothing to compare
+    two = SCENE + ", a single card of the Tower on the shelf; a single card of the Star by the door, " + STYLE
+    assert _check(two, *option) == ti.EXIT_RULE
+    assert "more than one card" in capsys.readouterr().out
     assert _check(SYMBOL_ONLY, *option) == ti.EXIT_OK                         # a card's name as a symbol: fine
     with pytest.raises(SystemExit):                                           # one target at a time
         _check(SYMBOL_ONLY, "--article", "x", *option)
 
 
-def test_a_file_of_a_section_drawing_a_card_is_refused(isolated):
+@pytest.mark.parametrize("option", [["--section", "major-arcana"], ["--spread", "croce-celtica"]])
+def test_the_picture_of_a_section_or_a_spread_refuses_a_copy_of_artwork(option, capsys):
+    copy = TOWER_CARD.replace("in the style of the Thoth deck",
+                              "in the style of the Thoth deck, a faithful reproduction of the original painting")
+    assert _check(copy, *option) == ti.EXIT_RULE
+    assert "never a reproduction" in capsys.readouterr().out
+
+
+def test_a_file_of_a_section_drawing_one_card_is_admitted(isolated):
     pic = isolated / "section.jpg"
     pic.write_bytes(b"\xff\xd8 section")
     Path(str(pic) + ".prompt.txt").write_text(TOWER_CARD, encoding="utf-8")
+    assert ti.check_file("", str(pic), target=("section", "major-arcana")) == ti.sha256_of(pic)
+
+
+def test_a_file_of_a_section_drawing_two_cards_is_refused(isolated):
+    pic = isolated / "section-two.jpg"
+    pic.write_bytes(b"\xff\xd8 section two cards")
+    two = SCENE + ", a single card of the Tower on the shelf; a single card of the Star by the door, " + STYLE
+    Path(str(pic) + ".prompt.txt").write_text(two, encoding="utf-8")
     with pytest.raises(ti.Failure) as err:
         ti.check_file("", str(pic), target=("section", "major-arcana"))
-    assert err.value.code == ti.EXIT_RULE and "never shows one" in str(err.value)
+    assert err.value.code == ti.EXIT_RULE and "more than one card" in str(err.value)

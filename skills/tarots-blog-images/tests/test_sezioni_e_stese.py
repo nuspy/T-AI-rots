@@ -137,9 +137,13 @@ def test_spread_cover_and_its_dry_run(api, tmp_path, capsys):
     assert "croce-celtica" in json.loads(ti.PROGRESS_PATH.read_text(encoding="utf-8"))["_spreads"]
 
 
-def test_a_picture_of_a_section_with_a_card_or_a_spread_alt_is_refused(api, tmp_path):
+def test_a_section_picture_with_a_small_card_is_admitted_but_a_spread_alt_is_refused(api, tmp_path, capsys):
+    # one single small card, in the style of the Thoth deck, is admitted as context on a section too (6/10/2026)
     pic = _picture(tmp_path, "moon.jpg", b"\xff\xd8 moon card", prompt=CARD_PROMPT)
-    assert ti.main(["section-cover", "major-arcana", pic, "--alt", "Boats on a beach"]) == ti.EXIT_RULE
+    assert ti.main(["section-cover", "major-arcana", pic, "--alt", "Boats on a beach"]) == ti.EXIT_OK
+    assert ("PUT", "/media-sections/major-arcana") in [(c[0], c[1]) for c in api.calls]
+    # an alt text describing a spread is still refused: that part of the rule never changed
     ok = _picture(tmp_path, "ok.jpg", b"\xff\xd8 ok")
     assert ti.main(["spread-cover", "croce-celtica", ok, "--alt", "Ten tarot cards laid out on velvet"]) == ti.EXIT_RULE
-    assert not [c for c in api.calls if c[0] == "PUT"]
+    assert "describes a spread" in capsys.readouterr().err
+    assert not [c for c in api.calls if c[0] == "PUT" and c[1].startswith("/media-spreads")]
