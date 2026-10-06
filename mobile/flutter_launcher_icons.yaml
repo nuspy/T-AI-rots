@@ -1,0 +1,11 @@
+# L'icona dell'app (v9.5, due carte a ventaglio con la stella del marchio): le immagini le disegna `tool/icona.py` in
+# `assets/icona/`; `dart run flutter_launcher_icons` ne fa tutte le misure di Android (adattiva e a tema) e di iOS.
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/icona/icona.png"
+  remove_alpha_ios: true
+  min_sdk_android: 24
+  adaptive_icon_background: "assets/icona/sfondo.png"
+  adaptive_icon_foreground: "assets/icona/primo_piano.png"
+  adaptive_icon_monochrome: "assets/icona/monocromo.png"
