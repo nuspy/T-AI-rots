@@ -61,8 +61,10 @@ ETICHETTE: Dict[str, str] = {
     "card_drawn": "Ha scelto una carta",
     "card_revealed": "Ha rivelato una carta",
     "reading_completed": "Lettura completata",
-    "interview_addition": "Ha aggiunto qualcosa dopo l'intervista",
-    "interview_addition_skipped": "Non ha aggiunto nulla: è passato alle carte",
+    "interview_addition": "Ha scritto un testo libero",
+    "interview_choice:lettura": "Ha scelto «Passa alla lettura»",
+    "interview_choice:libero": "Ha scelto «Voglio dire qualcosa di libero»",
+    "interview_choice:altra": "Ha scelto «Voglio rispondere a un'altra domanda»",
     "paywall_viewed": "Ha visto il paywall (crediti finiti)",
     "signup_started": "È andato a iscriversi",
     "share_completed": "Ha condiviso",
@@ -149,6 +151,9 @@ async def uscite(session: AsyncSession, da: date, a: date, *, limite: int = 25) 
     )
     azione_evento = case(
         (E.c.nome == "lettura_fase", literal("lettura_fase:") + func.coalesce(E.c.proprieta["fase"].astext, literal("?"))),
+        # v9.5: quale dei tre pulsanti dell'intervista
+        (E.c.nome == "interview_choice",
+         literal("interview_choice:") + func.coalesce(E.c.proprieta["scelta"].astext, literal("?"))),
         # v9.5: dopo quale domanda, a quale carta (il numero, mai il contenuto)
         (and_(E.c.nome.in_(CON_NUMERO), E.c.proprieta["n"].isnot(None)),
          E.c.nome + literal(":") + E.c.proprieta["n"].astext),

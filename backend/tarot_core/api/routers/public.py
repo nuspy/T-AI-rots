@@ -125,9 +125,12 @@ def disclaimer(lang: str = "it") -> Dict[str, str]:
 async def impostazioni_pubbliche(session: DbSession) -> Dict[str, int]:
     """I numeri del regalo d'iscrizione e del referral: niente di sensibile, servono alla home e al profilo per
     mostrare cifre vere invece di un testo fisso che l'amministrazione potrebbe aver cambiato."""
-    from ...domain.impostazioni_repositories import correnti, pubblico
+    from ...domain.impostazioni_repositories import correnti, correnti_intervista, pubblico
 
-    return pubblico(await correnti(session))
+    regole = await correnti_intervista(session)
+    # v9.5: minimo e massimo delle domande, perché la lettura sappia quali scelte mostrare anche alla riapertura.
+    return {**pubblico(await correnti(session)),
+            "intervista_min_domande": regole.min_domande, "intervista_max_domande": regole.max_domande}
 
 
 @router.get("/consenso")

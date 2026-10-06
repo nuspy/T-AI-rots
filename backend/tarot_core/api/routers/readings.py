@@ -75,7 +75,7 @@ from ...tarot.persone import (
 from ...tarot.shuffle import mescola
 from ...tarot.lingue import in_lingua, lingua, rileva_lingua
 from ...tarot.testi import (
-    AGGIUNTA_DOMANDA, AGGIUNTA_ETICHETTA, AIUTO, CREDITI_ESAURITI, DISCLAIMER, INTERPRETAZIONE_NON_DISPONIBILE,
+    AGGIUNTA_ETICHETTA, AIUTO, CREDITI_ESAURITI, DISCLAIMER, INTERPRETAZIONE_NON_DISPONIBILE,
     SALDO_NEGATIVO,
     MODELLO_NON_DISPONIBILE, PARTNER_MANCANTE, PARTNER_NON_AMMESSO,
     PROFILO_INCOMPLETO, RESPONSO_BLOCCATO, RESPONSO_NON_GENERATO,
@@ -155,7 +155,8 @@ class NuovaLettura(BaseModel):
 
 
 class AggiuntaIntervista(BaseModel):
-    """v9.5: ciò che chi consulta aggiunge liberamente dopo l'ultima domanda, prima delle carte."""
+    """v9.5: ciò che chi consulta dice liberamente («Voglio dire qualcosa di libero»), durante l'intervista o dopo,
+    prima delle carte."""
     testo: str = Field(min_length=1, max_length=2000)
 
 
@@ -165,6 +166,12 @@ class RispostaIntervista(BaseModel):
     #: «No, basta così» (v8.5): dopo il minimo di domande chi consulta chiude l'intervista e passa alle carte.
     #: La domanda facoltativa rimasta senza risposta si toglie dal colloquio.
     basta: bool = False
+    #: v9.5: falso = si salva la risposta e NON si chiede subito la domanda successiva: chi consulta sceglie fra
+    #: «Passa alla lettura», «Voglio dire qualcosa di libero», «Voglio rispondere a un'altra domanda». Vero (il
+    #: predefinito) = come prima, per le app già installate.
+    continua: bool = True
+    #: v9.5: «Voglio rispondere a un'altra domanda»: l'oracolo DEVE farne una (fino al massimo), non chiudere.
+    altra: bool = False
 
 
 class Scelta(BaseModel):
@@ -757,6 +764,15 @@ async def intervista(
         lettura.turns.append(InterviewTurn(
             ordine=len(turni) + 1, ruolo="utente", testo=testo, created_at=utcnow(),
         ))
+        if not payload.continua:
+            # v9.5: la risposta è salvata; la prossima domanda arriva solo se chi consulta la chiede.
+            await session.commit()
+            poste = sum(1 for t in lettura.turns if t.ruolo == "oracolo")
+            return {"completa": False, "scelta": True, "poste": poste,
+                    "min_domande": min_domande, "max_domande": max_domande}
+    elif payload.altra and not attende_risposta:
+        if sum(1 for t in turni if t.ruolo == "oracolo") >= max_domande:
+            raise _conflitto("Le domande previste sono finite: passa alla lettura")
     elif attende_risposta:
         # Una seconda chiamata vuota (una pagina ricaricata) ripropone la
         # domanda in attesa invece di generarne un'altra.
@@ -776,6 +792,10 @@ async def intervista(
     # Nelle letture speciali il profilo del prompt sono le due persone (col
     # partner senza cognome); nella standard, la carta dell'anima e dell'anno.
     profilo = (_profilo(user) if user else "") if persone is None else blocco_persone(persone, conoscenza) + "\n"
+    # v9.5: la prima domanda c'è sempre (anche col minimo a 0, chi vuole passa alle carte da lì), e «un'altra
+    # domanda» chiesta da chi consulta va fatta: per il modello il minimo diventa «una in più di quelle già poste».
+    poste_ora = sum(1 for t in lettura.turns if t.ruolo == "oracolo")
+    minimo_modello = max(min_domande, poste_ora + 1) if (payload.altra or poste_ora == 0) else min_domande
     try:
         passo = await prossimo_passo(
             provider_intervista=provider_per(Compito.INTERVISTA, persone, lettura=reading_id),
@@ -787,7 +807,7 @@ async def intervista(
                 + "; ".join(f"{p['n']}. {p['nome']}" for p in stesa["posizioni"])
             ),
             turni=turni_da(lettura.turns),
-            min_domande=min_domande,
+            min_domande=minimo_modello,
             max_domande=max_domande,
             lang=lettura.lang,
             profilo=profilo,
@@ -824,9 +844,12 @@ async def intervista(
         ordine=ordine, ruolo="oracolo", testo=passo.domanda, created_at=utcnow(),
     ))
     await session.commit()
+    poste = poste_ora + 1
     return {
         "completa": False, "domanda": passo.domanda, "ordine": ordine, "scartate": passo.scartate,
-        "facoltativa": passo.facoltativa,
+        # col minimo vero (non quello forzato per il modello): si può smettere se le domande già risposte bastano
+        "facoltativa": poste - 1 >= min_domande,
+        "poste": poste, "min_domande": min_domande, "max_domande": max_domande,
     }
 
 
@@ -834,31 +857,33 @@ async def intervista(
 async def aggiunta(
     reading_id: uuid.UUID, payload: AggiuntaIntervista, user: OptionalUser, session: DbSession, request: Request,
 ) -> Dict[str, Any]:
-    """«Vuoi aggiungere qualcosa?» (v9.5): dopo l'ultima domanda dell'intervista, prima di scegliere le carte, chi
-    consulta scrive liberamente. Entra in tutto ciò che il modello legge dopo: nel colloquio salvato (la domanda e
-    la risposta, che la sintesi rilegge) e in coda al quadro emerso (che legge l'interpretazione di ogni carta).
-    Lo stesso controllo dei segnali di crisi delle risposte dell'intervista."""
+    """«Voglio dire qualcosa di libero» (v9.5): durante l'intervista (quando nessuna domanda aspetta risposta) o dopo,
+    prima delle carte, chi consulta scrive liberamente. Si salva nel colloquio come un intervento di chi consulta,
+    con un'etichetta che lo distingue da una risposta: l'intervista e il riassunto finale lo leggono, la sintesi
+    rilegge il colloquio. Se l'intervista è già chiusa si aggiunge anche in coda al quadro emerso (che legge
+    l'interpretazione di ogni carta). Non conta come domanda. Stesso controllo dei segnali di crisi delle risposte."""
     anon_id = None if user else request.cookies.get(COOKIE_ANONIMO)
     repo = ReadingRepository(session)
     lettura = await _lettura_o_404(repo, user, reading_id, lock=True, anon_id=anon_id)
+    turni = list(lettura.turns)
+    in_intervista = lettura.status == "intervista"
     prima_delle_carte = lettura.status == "ventaglio" or (
         lettura.manuale and lettura.status == "rivelazione" and not any(c.rivelata for c in lettura.cards)
     )
-    if not prima_delle_carte:
-        raise _conflitto("Si può aggiungere qualcosa solo dopo l'intervista e prima delle carte")
+    if not (in_intervista or prima_delle_carte):
+        raise _conflitto("Si può aggiungere qualcosa solo prima delle carte")
+    if in_intervista and turni and turni[-1].ruolo == "oracolo":
+        raise _conflitto("C'è una domanda che aspetta risposta")
     testo = payload.testo.strip()
     if not testo:
         raise HTTPException(status_code=422, detail="Scrivi qualcosa da aggiungere")
     if segnale_di_crisi(testo):
         return await _chiudi_per_crisi(session, user, lettura)
-    adesso = utcnow()
-    n = len(lettura.turns)
-    lettura.turns.append(InterviewTurn(ordine=n + 1, ruolo="oracolo", testo=in_lingua(AGGIUNTA_DOMANDA, lettura.lang),
-                                       created_at=adesso))
-    lettura.turns.append(InterviewTurn(ordine=n + 2, ruolo="utente", testo=testo, created_at=adesso))
-    lettura.context_summary = (
-        f"{lettura.context_summary or ''}\n\n{in_lingua(AGGIUNTA_ETICHETTA, lettura.lang)}: {testo}".strip()
-    )
+    etichetta = in_lingua(AGGIUNTA_ETICHETTA, lettura.lang)
+    lettura.turns.append(InterviewTurn(ordine=len(turni) + 1, ruolo="utente", testo=f"({etichetta}) {testo}",
+                                       created_at=utcnow()))
+    if not in_intervista:
+        lettura.context_summary = f"{lettura.context_summary or ''}\n\n{etichetta}: {testo}".strip()
     await session.commit()
     return {"aggiunto": True}
 

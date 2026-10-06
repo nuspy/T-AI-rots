@@ -54,24 +54,40 @@ async def test_dopo_il_minimo_la_domanda_e_facoltativa_e_basta_cosi_chiude(clien
 
 
 @richiede_database
-async def test_con_minimo_zero_si_passa_alle_carte_dalla_prima_domanda_e_si_puo_aggiungere(client, principal_utente):
-    """v9.5: con i predefiniti (0–2) «basta» vale già alla prima domanda; dopo l'intervista ciò che si aggiunge
-    liberamente entra nel colloquio e nel quadro emerso, e solo prima delle carte."""
-    r = await _apri(client)
-    lid = r.json()["id"]
-    assert (await client.post(f"/readings/{lid}/addition", json={"testo": "troppo presto"})).status_code == 409
+async def test_tre_scelte_risposta_senza_domanda_successiva_testo_libero_e_altra_domanda(client, principal_utente):
+    """v9.5, i tre pulsanti (predefiniti 0–2): la prima domanda arriva sempre ed è già facoltativa; con `continua`
+    falso la risposta si salva senza chiedere la domanda successiva; il testo libero entra nel colloquio (non conta
+    come domanda); «un'altra domanda» la ottiene fino al massimo; dopo il massimo si rifiuta; «basta» chiude."""
+    lid = (await _apri(client)).json()["id"]
     prima = (await client.post(f"/readings/{lid}/interview", json={})).json()
-    assert prima["facoltativa"] is True
-    fine = await client.post(f"/readings/{lid}/interview", json={"basta": True})
-    assert fine.status_code == 200, fine.text
+    assert prima["completa"] is False and prima["facoltativa"] is True
+    assert (prima["poste"], prima["min_domande"], prima["max_domande"]) == (1, 0, 2)
+    # Con la domanda in attesa il testo libero non si può: prima si risponde (o si passa alla lettura).
+    assert (await client.post(f"/readings/{lid}/addition", json={"testo": "libero"})).status_code == 409
+
+    salvata = (await client.post(f"/readings/{lid}/interview",
+                                  json={"risposta": "Da gennaio.", "continua": False})).json()
+    assert salvata == {"completa": False, "scelta": True, "poste": 1, "min_domande": 0, "max_domande": 2}
 
     r = await client.post(f"/readings/{lid}/addition", json={"testo": "Ho paura di cambiare città."})
     assert r.status_code == 200, r.text
+
+    seconda = (await client.post(f"/readings/{lid}/interview", json={"altra": True})).json()
+    assert seconda["completa"] is False and seconda["domanda"] and seconda["poste"] == 2
+    await client.post(f"/readings/{lid}/interview", json={"risposta": "Sì.", "continua": False})
+    assert (await client.post(f"/readings/{lid}/interview", json={"altra": True})).status_code == 409
+
+    fine = await client.post(f"/readings/{lid}/interview", json={"basta": True})
+    assert fine.status_code == 200 and fine.json()["completa"] is True
     lettura = (await client.get(f"/me/readings/{lid}")).json()
-    assert lettura["interview"][-1] == {"ruolo": "utente", "testo": "Ho paura di cambiare città.", "ordine": 2}
-    assert lettura["interview"][-2]["ruolo"] == "oracolo"
-    assert lettura["context_summary"].endswith("Ho paura di cambiare città.")
     assert lettura["status"] == "ventaglio"
+    assert [t["ruolo"] for t in lettura["interview"]] == ["oracolo", "utente", "utente", "oracolo", "utente"]
+    assert lettura["interview"][2]["testo"].endswith("Ho paura di cambiare città.")
+
+    # A intervista chiusa, prima delle carte, il testo libero va anche in coda al quadro emerso.
+    assert (await client.post(f"/readings/{lid}/addition", json={"testo": "Anche il lavoro."})).status_code == 200
+    lettura = (await client.get(f"/me/readings/{lid}")).json()
+    assert lettura["context_summary"].endswith("Anche il lavoro.")
 
 
 @richiede_database

@@ -48,7 +48,7 @@ import { Mescolamento, Taglio, Ventaglio } from "./ventaglio";
 import stili from "./lettura.module.css";
 
 type Fase =
-  | "preparazione" | "persone" | "intervista" | "aggiunta" | "pronto-mescolare" | "mescolamento" | "taglio" | "scelta"
+  | "preparazione" | "persone" | "intervista" | "pronto-mescolare" | "mescolamento" | "taglio" | "scelta"
   | "rivelazione" | "svelamento" | "pronto-sintesi" | "sintesi" | "completata" | "crisi" | "annullata";
 
 /* `?type=` accetta i nomi inglesi della v2 e quelli italiani del sito. */
@@ -256,48 +256,64 @@ export function LetturaV2() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lingua]);
 
-  /* v8.5: dopo il minimo di domande la prossima è facoltativa: sotto il campo «Basta con le domande» si accende e
-   * chiude l'intervista, passando al rito. */
-  const [puoiFermarti, setPuoiFermarti] = useState(false);
+  /* v9.5, i tre pulsanti. L'oracolo fa la prima domanda da sé; dopo ogni risposta il campo si chiude e chi legge
+   * sceglie fra «Passa alla lettura», «Voglio dire qualcosa di libero» e «Voglio rispondere a un'altra domanda»
+   * (quest'ultima finché non si arriva al massimo). Sotto la prima domanda ci sono già «Passa alla lettura» (se il
+   * minimo lo consente) e il testo libero. `modo`: `risposta` (una domanda aspetta), `scelta` (i pulsanti),
+   * `libero` (si scrive un testo libero). */
+  const [modo, setModo] = useState<"risposta" | "scelta" | "libero">("risposta");
+  const [regole, setRegole] = useState({ min: 0, max: 2 });
+  const [poste, setPoste] = useState(0);
 
-  const risposteDate = useRef(0);
-  const passoIntervista = useCallback(async (lid: string, risposta: string | null, basta = false) => {
+  const passoIntervista = useCallback(async (
+    lid: string, risposta: string | null, opzioni: { basta?: boolean; altra?: boolean } = {},
+  ) => {
     setAttesa(true);
     setErrore(null);
     try {
-      const passo = await rispondi(sessione.token, lid, risposta, basta);
-      /* v9.5: il numero della domanda, per vedere dopo quante domande ci si ferma (mai il testo). */
-      if (risposta !== null) {
-        risposteDate.current += 1;
-        traccia("interview_answered", { n: risposteDate.current });
+      const passo = await rispondi(sessione.token, lid, risposta, !!opzioni.basta,
+        { continua: false, altra: !!opzioni.altra });
+      if (passo.min_domande !== undefined && passo.max_domande !== undefined) {
+        setRegole({ min: passo.min_domande, max: passo.max_domande });
       }
-      if (basta) traccia("interview_skipped", { n: risposteDate.current });
-      if (passo.domanda && !passo.completa) traccia("interview_question", { n: risposteDate.current + 1 });
+      if (passo.poste !== undefined) setPoste(passo.poste);
+      /* v9.5: il numero della domanda, per vedere dopo quante domande ci si ferma (mai il testo). */
+      if (risposta !== null) traccia("interview_answered", { n: passo.poste ?? 0 });
       if (passo.crisi) {
         aggiungi({ autore: "sistema", testo: passo.messaggio ?? "" });
         setFase("crisi");
       } else if (passo.completa) {
-        setPuoiFermarti(false);
         aggiungi({ autore: "oracolo", titolo: "✦", testo: passo.riassunto ?? "", macchina: true });
-        if (basta) {
-          setFase("pronto-mescolare");
-        } else {
-          /* v9.5: finite le domande previste, prima delle carte si può aggiungere liberamente ciò che si vuole. */
-          aggiungi({ autore: "oracolo", testo: l.aggiunta_domanda, macchina: true });
-          setFase("aggiunta");
-        }
+        setFase("pronto-mescolare");
+      } else if (passo.scelta) {
+        setModo("scelta");
       } else if (passo.domanda) {
-        setPuoiFermarti(!!passo.facoltativa);
+        traccia("interview_question", { n: passo.poste ?? 0 });
         aggiungi({ autore: "oracolo", testo: passo.domanda, macchina: true });
+        setModo("risposta");
       }
     } catch (e) {
       setErrore(e instanceof ErroreApi ? e.message : l.err_oracolo);
     } finally {
       setAttesa(false);
     }
-  }, [sessione.token, l.err_oracolo, l.aggiunta_domanda, traccia]);
+  }, [sessione.token, l.err_oracolo, traccia]);
 
-  const basta = () => { if (id) void passoIntervista(id, null, true); };
+  const passaAllaLettura = () => {
+    if (!id) return;
+    traccia("interview_choice", { scelta: "lettura", n: poste });
+    traccia("interview_skipped", { n: poste });
+    void passoIntervista(id, null, { basta: true });
+  };
+  const altraDomanda = () => {
+    if (!id) return;
+    traccia("interview_choice", { scelta: "altra", n: poste });
+    void passoIntervista(id, null, { altra: true });
+  };
+  const testoLibero = () => {
+    traccia("interview_choice", { scelta: "libero", n: poste });
+    setModo("libero");
+  };
 
   const caricata = useRef(false);
   useEffect(() => {
@@ -316,7 +332,15 @@ export function LetturaV2() {
       .then((lt) => {
         riprendi(lt);
         const ultima = lt.interview[lt.interview.length - 1];
-        if (lt.status === "intervista" && (!ultima || ultima.ruolo === "utente")) void passoIntervista(lt.id, null);
+        if (lt.status !== "intervista") return;
+        /* v9.5: nessuna domanda ancora → la prima; l'ultima parola è di chi legge → i pulsanti, senza chiamare il
+         * modello; una domanda aspetta → si risponde. Minimo e massimo dalle impostazioni pubbliche. */
+        setPoste(lt.interview.filter((x) => x.ruolo === "oracolo").length);
+        void impostazioniPubbliche().then((imp) => {
+          if (imp.intervista_max_domande) setRegole({ min: imp.intervista_min_domande ?? 0, max: imp.intervista_max_domande });
+        }).catch(() => undefined);
+        if (!ultima) void passoIntervista(lt.id, null);
+        else setModo(ultima.ruolo === "utente" ? "scelta" : "risposta");
       })
       .catch(() => {
         setFase("preparazione");
@@ -417,6 +441,8 @@ export function LetturaV2() {
         { id: nuovoId(), autore: "utente", testo: testoDomanda },
       ]);
       setFase("intervista");
+      setPoste(0);
+      setModo("risposta");
       conto.ricarica();
       profilo.ricarica();
       await passoIntervista(a.id, null);
@@ -446,8 +472,8 @@ export function LetturaV2() {
     void passoIntervista(id, testo);
   };
 
-  /* v9.5: «vuoi aggiungere qualcosa?». Il testo entra nell'interpretazione (colloquio e quadro emerso). */
-  const suAggiunta = async (testo: string) => {
+  /* v9.5: «Voglio dire qualcosa di libero». Il testo entra nell'interpretazione; poi tornano i pulsanti. */
+  const suLibero = async (testo: string) => {
     if (!id) return;
     aggiungi({ autore: "utente", testo });
     setAttesa(true);
@@ -459,19 +485,28 @@ export function LetturaV2() {
         setFase("crisi");
         return;
       }
-      traccia("interview_addition");
-      aggiungi({ autore: "oracolo", testo: l.aggiunta_grazie, macchina: true });
-      setFase("pronto-mescolare");
+      traccia("interview_addition", { n: poste });
+      setModo("scelta");
     } catch (e) {
       setErrore(e instanceof ErroreApi ? e.message : l.err_oracolo);
     } finally {
       setAttesa(false);
     }
   };
-  const saltaAggiunta = () => {
-    traccia("interview_addition_skipped");
-    setFase("pronto-mescolare");
-  };
+
+  /* Le scelte in fondo alla chat: sotto la prima domanda «Passa alla lettura» (se il minimo lo consente) e il testo
+   * libero; dopo una risposta o un testo libero i tre pulsanti, «un'altra domanda» solo prima del massimo. */
+  const sceltePossibili: { etichetta: string; azione: () => void; primaria?: boolean }[] = [];
+  if (fase === "intervista" && !attesa) {
+    const puoiPassare = poste - (modo === "risposta" ? 1 : 0) >= regole.min;
+    if (modo === "scelta" && poste < regole.max) sceltePossibili.push({ etichetta: l.scelta_altra, azione: altraDomanda });
+    if (modo === "scelta" || (modo === "risposta" && poste <= 1)) {
+      sceltePossibili.push({ etichetta: l.scelta_libero, azione: testoLibero });
+    }
+    if ((modo === "scelta" || (modo === "risposta" && poste <= 1)) && puoiPassare) {
+      sceltePossibili.push({ etichetta: l.scelta_lettura, azione: passaAllaLettura, primaria: true });
+    }
+  }
 
   /* ---- 3. mescolata, taglio, scelta ---- */
 
@@ -872,9 +907,9 @@ export function LetturaV2() {
   /* ---- la lettura ---- */
 
   const daScegliere = stesa ? stesa.carte_da_scegliere - posate.filter((p) => !p.calcolata).length : 0;
-  const inRito = fase !== "intervista" && fase !== "aggiunta";
+  const inRito = fase !== "intervista";
   const stato: { etichetta: string; testo?: string } =
-    fase === "intervista" || fase === "aggiunta" ? { etichetta: l.console_intervista, testo: l.console_intervista_testo }
+    fase === "intervista" ? { etichetta: l.console_intervista, testo: l.console_intervista_testo }
       : fase === "pronto-mescolare" ? { etichetta: l.console_pronto, testo: l.console_pronto_testo }
         : fase === "mescolamento" ? { etichetta: l.console_mescola, testo: l.console_mescola_testo }
           : fase === "taglio" ? { etichetta: l.console_taglio, testo: l.console_taglio_testo }
@@ -954,10 +989,11 @@ export function LetturaV2() {
             <section className="read-panel" aria-labelledby="titolo-dialogo" id="pannello-dialogo">
               <p className="eyebrow">{l.pannello_conversazione}</p>
               <h2 id="titolo-dialogo" className="sr-only">{l.pannello_conversazione}</h2>
-              <Dialogo battute={battute} attesa={attesa} inputAttivo={fase === "intervista" || fase === "aggiunta"}
-                onRispondi={fase === "aggiunta" ? (t) => { void suAggiunta(t); } : suRisposta}
-                onBasta={basta} puoiFermarti={puoiFermarti}
-                aggiunta={fase === "aggiunta" ? { onSalta: saltaAggiunta } : undefined} />
+              <Dialogo battute={battute} attesa={attesa}
+                inputAttivo={fase === "intervista" && (modo === "risposta" || modo === "libero")}
+                libero={modo === "libero"}
+                onRispondi={modo === "libero" ? (t) => { void suLibero(t); } : suRisposta}
+                scelte={sceltePossibili} />
               {errore && fase === "intervista" && (
                 <div className="button-row" style={{ marginTop: ".8rem" }}>
                   <p className="error" role="alert" style={{ flex: "1 1 100%" }}>{errore}</p>

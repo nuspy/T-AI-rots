@@ -653,13 +653,28 @@ export interface PassoIntervista {
   messaggio?: string;
   /** v8.5: il minimo di domande è raggiunto, chi consulta può fermarsi qui («No, basta così»). */
   facoltativa?: boolean;
+  /** v9.5: risposta salvata senza domanda successiva: chi legge sceglie con i pulsanti. */
+  scelta?: boolean;
+  /** v9.5: domande già poste dall'oracolo, e minimo e massimo in vigore. */
+  poste?: number;
+  min_domande?: number;
+  max_domande?: number;
 }
 
 /* `basta` (v8.5): chiude l'intervista dopo il minimo di domande e passa alle carte. */
-export const rispondi = (token: string | null, id: string, risposta: string | null, basta = false) =>
+/* v9.5: `continua: false` salva la risposta senza chiedere subito la domanda successiva (si sceglie poi con i
+ * pulsanti); `altra: true` chiede un'altra domanda. Senza opzioni, come prima (la v1 e le app già installate). */
+export const rispondi = (
+  token: string | null, id: string, risposta: string | null, basta = false,
+  opzioni: { continua?: boolean; altra?: boolean } = {},
+) =>
   chiama<PassoIntervista>(token, `/readings/${id}/interview`, {
     method: "POST",
-    body: basta ? { basta: true } : risposta ? { risposta } : {},
+    body: basta ? { basta: true } : {
+      ...(risposta ? { risposta } : {}),
+      ...(opzioni.continua === false ? { continua: false } : {}),
+      ...(opzioni.altra ? { altra: true } : {}),
+    },
   });
 
 /* v9.5: «vuoi aggiungere qualcosa?» dopo l'ultima domanda, prima delle carte. Con un segnale di crisi il server
@@ -1073,6 +1088,9 @@ export interface ImpostazioniPubbliche {
   crediti_iscrizione: number;
   crediti_invito: number;
   commissione_referral_percentuale: number;
+  /** v9.5: minimo e massimo delle domande dell'intervista (quali scelte mostrare alla riapertura). */
+  intervista_min_domande?: number;
+  intervista_max_domande?: number;
 }
 
 export const impostazioniPubbliche = () => chiama<ImpostazioniPubbliche>(null, "/impostazioni-pubbliche");

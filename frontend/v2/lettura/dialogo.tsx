@@ -30,17 +30,18 @@ function Macchina({ testo }: { testo: string }) {
 }
 
 export function Dialogo({
-  battute, attesa, inputAttivo, onRispondi, onBasta, puoiFermarti = false, aggiunta,
+  battute, attesa, inputAttivo, onRispondi, scelte = [], libero = false,
 }: {
-  /** v9.5: «vuoi aggiungere qualcosa?» dopo l'ultima domanda: il campo invia l'aggiunta, accanto «No, basta». */
-  aggiunta?: { onSalta: () => void };
   battute: Battuta[];
   attesa: boolean;
+  /** Il campo c'è solo quando si risponde a una domanda o si scrive il testo libero (v9.5): durante la scelta no. */
   inputAttivo: boolean;
   onRispondi: (testo: string) => void;
-  /** «Basta con le domande» (v8.5): chiude l'intervista; attivo solo dopo il minimo di domande. */
-  onBasta?: () => void;
-  puoiFermarti?: boolean;
+  /** v9.5: i pulsanti in fondo alla chat («Passa alla lettura», «Voglio dire qualcosa di libero», «Voglio
+   *  rispondere a un'altra domanda»), già filtrati da chi chiama. */
+  scelte?: { etichetta: string; azione: () => void; primaria?: boolean }[];
+  /** v9.5: il campo è per il testo libero, non per una risposta. */
+  libero?: boolean;
 }) {
   const { t } = useLingua();
   const l = t.lettura;
@@ -112,16 +113,15 @@ export function Dialogo({
           ))}
         </AnimatePresence>
         {attesa && <div className={stili.attesa} aria-label={l.pensa} role="status"><span /><span /><span /></div>}
-        {/* v9.5: dentro la chat, sotto l'ultima domanda dell'oracolo, le due strade ben visibili: rispondere o
-         * passare subito alle carte (prima il pulsante stava sotto il campo e si vedeva poco). */}
-        {onBasta && puoiFermarti && inputAttivo && !attesa && ultima?.autore === "oracolo" && (
-          <div className={stili.sceltaChat} role="group" aria-label={l.basta_domande}>
-            <button type="button" className="button button-quiet" onClick={() => campo.current?.focus()}>
-              {l.rispondo_domanda}
-            </button>
-            <button type="button" className="button" onClick={onBasta} data-an="intervista_basta">
-              {l.basta_mescola}
-            </button>
+        {/* v9.5: le scelte stanno dentro la chat, in fondo alla conversazione, ben visibili. */}
+        {!attesa && scelte.length > 0 && (
+          <div className={stili.sceltaChat} role="group" aria-label={l.scelta_titolo}>
+            {scelte.map((s) => (
+              <button key={s.etichetta} type="button" className={s.primaria ? "button button-brass" : "button button-quiet"}
+                onClick={s.azione}>
+                {s.etichetta}
+              </button>
+            ))}
           </div>
         )}
       </div>
@@ -132,20 +132,16 @@ export function Dialogo({
             value={testo}
             onChange={(e) => setTesto(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); invia(); } }}
-            placeholder={aggiunta ? l.aggiunta_segnaposto : l.risposta_segnaposto}
-            aria-label={aggiunta ? l.aggiunta_segnaposto : l.risposta_segnaposto}
+            placeholder={libero ? l.libero_segnaposto : l.risposta_segnaposto}
+            aria-label={libero ? l.libero_segnaposto : l.risposta_segnaposto}
             dir="auto" rows={2} maxLength={2000} disabled={attesa}
+            autoFocus={libero}
           />
-          {/* Sotto il campo solo l'invio: la scelta di fermarsi sta nella chat (v9.5). */}
+          {/* Sotto il campo solo l'invio: le scelte stanno nella chat (v9.5). */}
           <div className={stili.rispostaAzioni}>
             <button className="button" type="submit" disabled={attesa || !testo.trim()}>
-              {aggiunta ? l.aggiunta_invia : l.rispondi}
+              {libero ? l.libero_invia : l.rispondi}
             </button>
-            {aggiunta && (
-              <button className="button button-brass" type="button" onClick={aggiunta.onSalta} disabled={attesa}>
-                {l.aggiunta_salta}
-              </button>
-            )}
           </div>
         </form>
       )}
