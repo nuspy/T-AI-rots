@@ -156,8 +156,9 @@ class Settings(BaseSettings):
     # --- letture -----------------------------------------------------------
     #: Quante domande di contesto prima della stesa: le sceglie il modello in
     #: base al quesito, ma mai meno del minimo né più del massimo.
-    intervista_min_domande: int = 2
-    intervista_max_domande: int = 6
+    #: v9.5: 0–2 (prima 2–6), dopo i dati sugli abbandoni nell'intervista.
+    intervista_min_domande: int = 0
+    intervista_max_domande: int = 2
     #: I crediti con cui nasce un utente di prova creato dal seed.
     crediti_utente_di_prova: int = 1000
     #: Il sale delle impronte anonime di chi visita un link condiviso (indirizzo e

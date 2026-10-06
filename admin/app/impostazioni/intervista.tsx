@@ -57,7 +57,7 @@ function Modulo({ valori, ricarica }: { valori: ImpostazioniIntervista; ricarica
     setSalvato(false);
     const a = Number(minimo);
     const b = Number(massimo);
-    if (!Number.isInteger(a) || a < 1 || a > 12) return setProblema("Il minimo è un intero fra 1 e 12.");
+    if (!Number.isInteger(a) || a < 0 || a > 12) return setProblema("Il minimo è un intero fra 0 e 12 (0: si può passare alle carte fin dalla prima domanda).");
     if (!Number.isInteger(b) || b < 1 || b > 12) return setProblema("Il massimo è un intero fra 1 e 12.");
     if (a > b) return setProblema("Il minimo non può superare il massimo.");
     const fatto = await esegui((t) => salva(t, {
@@ -78,8 +78,9 @@ function Modulo({ valori, ricarica }: { valori: ImpostazioniIntervista; ricarica
           <span className={comuni.campoEtichetta}>Minimo di domande</span>
           <input className={comuni.ingresso} inputMode="numeric" value={minimo} onChange={(e) => setMinimo(e.target.value)} />
           <span className={comuni.campoAiuto}>
-            Prima di questo numero l&apos;oracolo non passa alle carte. Dopo, a ogni domanda chi consulta sceglie
-            fra «Sì, continuiamo» e «No, basta così».
+            Prima di questo numero l&apos;oracolo non passa alle carte. Dopo, sotto ogni domanda, nella chat, chi
+            consulta ha «Rispondi» e «Basta domande: mescola le carte». Con 0 può passare alle carte fin dalla prima
+            domanda (consigliato: 0–2, dai dati sugli abbandoni).
           </span>
         </label>
         <label className={comuni.campo}>

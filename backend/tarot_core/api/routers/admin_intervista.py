@@ -20,7 +20,8 @@ router = APIRouter(prefix="/admin", tags=["impostazioni"], dependencies=[Depends
 
 
 class ImpostazioniIntervistaModifica(BaseModel):
-    min_domande: Optional[int] = Field(default=None, ge=1, le=12)
+    #: v9.5: anche 0 (si passa alle carte fin dalla prima domanda).
+    min_domande: Optional[int] = Field(default=None, ge=0, le=12)
     max_domande: Optional[int] = Field(default=None, ge=1, le=12)
     #: dubbi (predefinito): il controllo LLM parte solo sui casi che una regola deterministica segnala; spento: mai;
     #: acceso: sempre.

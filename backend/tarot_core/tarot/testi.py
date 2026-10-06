@@ -116,6 +116,25 @@ MODELLO_NON_CONFIGURATO = {
     ),
 }
 
+#: v9.5: dopo l'ultima domanda dell'intervista chi consulta può aggiungere liberamente ciò che vuole. La domanda
+#: entra nel colloquio salvato (e nella storia), l'etichetta precede il testo aggiunto in coda al quadro emerso.
+AGGIUNTA_DOMANDA = {
+    "it": "Prima di passare alle carte: vuoi aggiungere qualcosa?",
+    "en": "Before we turn to the cards: would you like to add anything?",
+    "hu": "Mielőtt a lapokhoz fordulunk: szeretnél még valamit hozzátenni?",
+    "es": "Antes de pasar a las cartas: ¿quieres añadir algo?",
+    "ru": "Прежде чем перейти к картам: хочешь что-нибудь добавить?",
+    "uk": "Перш ніж перейти до карт: хочеш щось додати?",
+}
+AGGIUNTA_ETICHETTA = {
+    "it": "Aggiunto liberamente da chi consulta",
+    "en": "Added freely by the querent",
+    "hu": "A kérdező szabadon hozzátette",
+    "es": "Añadido libremente por quien consulta",
+    "ru": "Свободно добавлено тем, кто спрашивает",
+    "uk": "Вільно додано тим, хто питає",
+}
+
 #: Quando il modello non risponde a metà lettura: si può riprovare.
 MODELLO_NON_DISPONIBILE = {
     "it": (

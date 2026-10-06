@@ -662,6 +662,14 @@ export const rispondi = (token: string | null, id: string, risposta: string | nu
     body: basta ? { basta: true } : risposta ? { risposta } : {},
   });
 
+/* v9.5: «vuoi aggiungere qualcosa?» dopo l'ultima domanda, prima delle carte. Con un segnale di crisi il server
+ * ferma la lettura e risponde come l'intervista (`crisi`, `messaggio`). */
+export const aggiungiAllIntervista = (token: string | null, id: string, testo: string) =>
+  chiama<{ aggiunto?: boolean; crisi?: boolean; messaggio?: string }>(token, `/readings/${id}/addition`, {
+    method: "POST",
+    body: { testo },
+  });
+
 /* `taglio`: dove chi consulta ha cliccato per tagliare il mazzo, da 0 a 1. */
 export const apriVentaglio = (token: string | null, id: string, taglio?: number) =>
   chiama<{ slot_count: number; commitment: string; da_scegliere: number; picked_slots: number[] }>(

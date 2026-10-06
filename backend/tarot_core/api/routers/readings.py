@@ -75,7 +75,8 @@ from ...tarot.persone import (
 from ...tarot.shuffle import mescola
 from ...tarot.lingue import in_lingua, lingua, rileva_lingua
 from ...tarot.testi import (
-    AIUTO, CREDITI_ESAURITI, DISCLAIMER, INTERPRETAZIONE_NON_DISPONIBILE, SALDO_NEGATIVO,
+    AGGIUNTA_DOMANDA, AGGIUNTA_ETICHETTA, AIUTO, CREDITI_ESAURITI, DISCLAIMER, INTERPRETAZIONE_NON_DISPONIBILE,
+    SALDO_NEGATIVO,
     MODELLO_NON_DISPONIBILE, PARTNER_MANCANTE, PARTNER_NON_AMMESSO,
     PROFILO_INCOMPLETO, RESPONSO_BLOCCATO, RESPONSO_NON_GENERATO,
 )
@@ -151,6 +152,11 @@ class NuovaLettura(BaseModel):
     #: `credito` (un credito del saldo). Se restano condoni si usa sempre un condono: mai un credito quando c'è il
     #: regalo.
     oltre_limite: Optional[str] = Field(default=None, pattern="^(condono|credito)$")
+
+
+class AggiuntaIntervista(BaseModel):
+    """v9.5: ciò che chi consulta aggiunge liberamente dopo l'ultima domanda, prima delle carte."""
+    testo: str = Field(min_length=1, max_length=2000)
 
 
 class RispostaIntervista(BaseModel):
@@ -822,6 +828,39 @@ async def intervista(
         "completa": False, "domanda": passo.domanda, "ordine": ordine, "scartate": passo.scartate,
         "facoltativa": passo.facoltativa,
     }
+
+
+@router.post("/readings/{reading_id}/addition")
+async def aggiunta(
+    reading_id: uuid.UUID, payload: AggiuntaIntervista, user: OptionalUser, session: DbSession, request: Request,
+) -> Dict[str, Any]:
+    """«Vuoi aggiungere qualcosa?» (v9.5): dopo l'ultima domanda dell'intervista, prima di scegliere le carte, chi
+    consulta scrive liberamente. Entra in tutto ciò che il modello legge dopo: nel colloquio salvato (la domanda e
+    la risposta, che la sintesi rilegge) e in coda al quadro emerso (che legge l'interpretazione di ogni carta).
+    Lo stesso controllo dei segnali di crisi delle risposte dell'intervista."""
+    anon_id = None if user else request.cookies.get(COOKIE_ANONIMO)
+    repo = ReadingRepository(session)
+    lettura = await _lettura_o_404(repo, user, reading_id, lock=True, anon_id=anon_id)
+    prima_delle_carte = lettura.status == "ventaglio" or (
+        lettura.manuale and lettura.status == "rivelazione" and not any(c.rivelata for c in lettura.cards)
+    )
+    if not prima_delle_carte:
+        raise _conflitto("Si può aggiungere qualcosa solo dopo l'intervista e prima delle carte")
+    testo = payload.testo.strip()
+    if not testo:
+        raise HTTPException(status_code=422, detail="Scrivi qualcosa da aggiungere")
+    if segnale_di_crisi(testo):
+        return await _chiudi_per_crisi(session, user, lettura)
+    adesso = utcnow()
+    n = len(lettura.turns)
+    lettura.turns.append(InterviewTurn(ordine=n + 1, ruolo="oracolo", testo=in_lingua(AGGIUNTA_DOMANDA, lettura.lang),
+                                       created_at=adesso))
+    lettura.turns.append(InterviewTurn(ordine=n + 2, ruolo="utente", testo=testo, created_at=adesso))
+    lettura.context_summary = (
+        f"{lettura.context_summary or ''}\n\n{in_lingua(AGGIUNTA_ETICHETTA, lettura.lang)}: {testo}".strip()
+    )
+    await session.commit()
+    return {"aggiunto": True}
 
 
 async def _basta_cosi(session, repo, user, lettura: Reading, reading_id, anon_id, min_domande: int) -> Dict[str, Any]:

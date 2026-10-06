@@ -107,8 +107,9 @@ async def correnti_intervista(session: AsyncSession) -> ImpostazioniIntervista:
     riga = await session.get(ImpostazioniIntervista, ID_RIGA)
     if riga is None:
         s = get_settings()
-        minimo = max(1, s.intervista_min_domande)
-        riga = ImpostazioniIntervista(id=ID_RIGA, min_domande=minimo, max_domande=max(minimo, s.intervista_max_domande))
+        minimo = max(0, s.intervista_min_domande)
+        riga = ImpostazioniIntervista(id=ID_RIGA, min_domande=minimo,
+                                      max_domande=max(minimo, 1, s.intervista_max_domande))
         session.add(riga)
         await session.flush()
     return riga

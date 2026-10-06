@@ -61,6 +61,8 @@ ETICHETTE: Dict[str, str] = {
     "card_drawn": "Ha scelto una carta",
     "card_revealed": "Ha rivelato una carta",
     "reading_completed": "Lettura completata",
+    "interview_addition": "Ha aggiunto qualcosa dopo l'intervista",
+    "interview_addition_skipped": "Non ha aggiunto nulla: è passato alle carte",
     "paywall_viewed": "Ha visto il paywall (crediti finiti)",
     "signup_started": "È andato a iscriversi",
     "share_completed": "Ha condiviso",

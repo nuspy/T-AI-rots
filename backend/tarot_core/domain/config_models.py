@@ -210,7 +210,7 @@ class ImpostazioniIntervista(Base, TimestampMixin):
     __table_args__ = (
         CheckConstraint("id = 1", name="ck_impostazioni_intervista_singleton"),
         CheckConstraint(
-            "min_domande >= 1 AND max_domande >= min_domande AND max_domande <= 12",
+            "min_domande >= 0 AND max_domande >= 1 AND max_domande >= min_domande AND max_domande <= 12",
             name="ck_impostazioni_intervista_limiti",
         ),
         CheckConstraint("validatore_domande IN ('dubbi', 'spento', 'acceso')", name="ck_impostazioni_intervista_validatore"),
@@ -218,8 +218,9 @@ class ImpostazioniIntervista(Base, TimestampMixin):
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
-    min_domande: Mapped[int] = mapped_column(Integer, nullable=False, default=2)
-    max_domande: Mapped[int] = mapped_column(Integer, nullable=False, default=6)
+    #: v9.5: da 0 (si può passare alle carte fin dalla prima domanda) e predefiniti 0–2 (prima 2–6).
+    min_domande: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    max_domande: Mapped[int] = mapped_column(Integer, nullable=False, default=2)
     #: Il controllo LLM delle domande candidate (`tarot/intervista.py::_giudica`), dopo i controlli deterministici che
     #: restano sempre: `dubbi` solo quando una regola leggera segnala un sospetto (`sospetta`), `spento` mai, `acceso`
     #: per ogni domanda (com'era prima).

@@ -19,7 +19,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { useOsservatore, useTraccia } from "lanterna-osservatore/react";
 import {
-  ErroreApi, aggiornaProfilo, apriLettura, apriLetturaAnonima, apriVentaglio, cancellaPartner, elencaCarte, mieiMazzi, elencaStese, impostazioniPubbliche, leggiDisclaimer, leggiLettura, leggiProfilo, rispondi, rivela, rivelaTutte, scegliCarta, sintesi, type Categoria, type Genere, type Lettura, type Stesa,
+  ErroreApi, aggiornaProfilo, aggiungiAllIntervista, apriLettura, apriLetturaAnonima, apriVentaglio, cancellaPartner, elencaCarte, mieiMazzi, elencaStese, impostazioniPubbliche, leggiDisclaimer, leggiLettura, leggiProfilo, rispondi, rivela, rivelaTutte, scegliCarta, sintesi, type Categoria, type Genere, type Lettura, type Stesa,
 } from "@/lib/api";
 import { comeLingua, type Lingua } from "@/lib/i18n/lingue";
 import { nomeCarta, nomeStesa } from "@/lib/i18n/nomi";
@@ -48,7 +48,7 @@ import { Mescolamento, Taglio, Ventaglio } from "./ventaglio";
 import stili from "./lettura.module.css";
 
 type Fase =
-  | "preparazione" | "persone" | "intervista" | "pronto-mescolare" | "mescolamento" | "taglio" | "scelta"
+  | "preparazione" | "persone" | "intervista" | "aggiunta" | "pronto-mescolare" | "mescolamento" | "taglio" | "scelta"
   | "rivelazione" | "svelamento" | "pronto-sintesi" | "sintesi" | "completata" | "crisi" | "annullata";
 
 /* `?type=` accetta i nomi inglesi della v2 e quelli italiani del sito. */
@@ -279,7 +279,13 @@ export function LetturaV2() {
       } else if (passo.completa) {
         setPuoiFermarti(false);
         aggiungi({ autore: "oracolo", titolo: "✦", testo: passo.riassunto ?? "", macchina: true });
-        setFase("pronto-mescolare");
+        if (basta) {
+          setFase("pronto-mescolare");
+        } else {
+          /* v9.5: finite le domande previste, prima delle carte si può aggiungere liberamente ciò che si vuole. */
+          aggiungi({ autore: "oracolo", testo: l.aggiunta_domanda, macchina: true });
+          setFase("aggiunta");
+        }
       } else if (passo.domanda) {
         setPuoiFermarti(!!passo.facoltativa);
         aggiungi({ autore: "oracolo", testo: passo.domanda, macchina: true });
@@ -289,7 +295,7 @@ export function LetturaV2() {
     } finally {
       setAttesa(false);
     }
-  }, [sessione.token, l.err_oracolo, traccia]);
+  }, [sessione.token, l.err_oracolo, l.aggiunta_domanda, traccia]);
 
   const basta = () => { if (id) void passoIntervista(id, null, true); };
 
@@ -438,6 +444,33 @@ export function LetturaV2() {
     if (!id) return;
     aggiungi({ autore: "utente", testo });
     void passoIntervista(id, testo);
+  };
+
+  /* v9.5: «vuoi aggiungere qualcosa?». Il testo entra nell'interpretazione (colloquio e quadro emerso). */
+  const suAggiunta = async (testo: string) => {
+    if (!id) return;
+    aggiungi({ autore: "utente", testo });
+    setAttesa(true);
+    setErrore(null);
+    try {
+      const esito = await aggiungiAllIntervista(sessione.token, id, testo);
+      if (esito.crisi) {
+        aggiungi({ autore: "sistema", testo: esito.messaggio ?? "" });
+        setFase("crisi");
+        return;
+      }
+      traccia("interview_addition");
+      aggiungi({ autore: "oracolo", testo: l.aggiunta_grazie, macchina: true });
+      setFase("pronto-mescolare");
+    } catch (e) {
+      setErrore(e instanceof ErroreApi ? e.message : l.err_oracolo);
+    } finally {
+      setAttesa(false);
+    }
+  };
+  const saltaAggiunta = () => {
+    traccia("interview_addition_skipped");
+    setFase("pronto-mescolare");
   };
 
   /* ---- 3. mescolata, taglio, scelta ---- */
@@ -839,9 +872,9 @@ export function LetturaV2() {
   /* ---- la lettura ---- */
 
   const daScegliere = stesa ? stesa.carte_da_scegliere - posate.filter((p) => !p.calcolata).length : 0;
-  const inRito = fase !== "intervista";
+  const inRito = fase !== "intervista" && fase !== "aggiunta";
   const stato: { etichetta: string; testo?: string } =
-    fase === "intervista" ? { etichetta: l.console_intervista, testo: l.console_intervista_testo }
+    fase === "intervista" || fase === "aggiunta" ? { etichetta: l.console_intervista, testo: l.console_intervista_testo }
       : fase === "pronto-mescolare" ? { etichetta: l.console_pronto, testo: l.console_pronto_testo }
         : fase === "mescolamento" ? { etichetta: l.console_mescola, testo: l.console_mescola_testo }
           : fase === "taglio" ? { etichetta: l.console_taglio, testo: l.console_taglio_testo }
@@ -921,8 +954,10 @@ export function LetturaV2() {
             <section className="read-panel" aria-labelledby="titolo-dialogo" id="pannello-dialogo">
               <p className="eyebrow">{l.pannello_conversazione}</p>
               <h2 id="titolo-dialogo" className="sr-only">{l.pannello_conversazione}</h2>
-              <Dialogo battute={battute} attesa={attesa} inputAttivo={fase === "intervista"} onRispondi={suRisposta}
-                onBasta={basta} puoiFermarti={puoiFermarti} />
+              <Dialogo battute={battute} attesa={attesa} inputAttivo={fase === "intervista" || fase === "aggiunta"}
+                onRispondi={fase === "aggiunta" ? (t) => { void suAggiunta(t); } : suRisposta}
+                onBasta={basta} puoiFermarti={puoiFermarti}
+                aggiunta={fase === "aggiunta" ? { onSalta: saltaAggiunta } : undefined} />
               {errore && fase === "intervista" && (
                 <div className="button-row" style={{ marginTop: ".8rem" }}>
                   <p className="error" role="alert" style={{ flex: "1 1 100%" }}>{errore}</p>
