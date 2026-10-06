@@ -7,10 +7,11 @@
  * Gli spazi pubblicitari (`Pubblicita`, spenti per default) stanno nei modelli: nella biblioteca fra i terzi della
  * griglia e in fondo, nella scheda dentro il testo e dopo la scheda. */
 
-import { Fragment, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import { elencaCarte, leggiCarta, type Carta } from "@/lib/api";
 import { nomeCarta } from "@/lib/i18n/nomi";
 import { f } from "@/v2/i18n";
+import { AvvisoTraduzione } from "@/v2/componenti/avviso-traduzione";
 import { ImmagineCarta } from "@/v2/componenti/carta";
 import LinkV2 from "@/v2/componenti/link";
 import { Pubblicita } from "@/v2/componenti/pubblicita";
@@ -19,6 +20,7 @@ import { useLingua } from "@/v2/lib/lingua";
 import { R } from "@/v2/lib/percorsi";
 import { inTerzi, type Posizione } from "@/v2/lib/pubblicita";
 import { useCarica } from "@/v2/lib/usa";
+import { useTraduzione } from "@/v2/lib/usa-traduzione";
 import { ArticoliSu, DiarioNove } from "./blog";
 
 const FILTRI = ["tutte", "maggiori", "bastoni", "coppe", "spade", "dischi"] as const;
@@ -67,6 +69,13 @@ export function SchedaCarta({ id }: { id: string }) {
   const k = t.carte;
   const carta = useCarica(() => leggiCarta(id, linguaContenuti(lingua)), [id, lingua], { pubblico: true, iniziale: P.carta(id, lingua) });
   const tutte = useCarica(() => elencaCarte(linguaContenuti(lingua)), [lingua], { pubblico: true, iniziale: P.carte(lingua) });
+  /* v9.5: la scheda esiste in italiano e in inglese; nelle altre lingue si traduce dall'inglese sul dispositivo
+   * (`AvvisoTraduzione` lo dice e offre l'originale). Le etichette del sito, già tradotte, restano `data-no-trad`. */
+  const parole = useRef<HTMLParagraphElement>(null);
+  const testo = useRef<HTMLDivElement>(null);
+  const traduzione = useTraduzione([parole, testo], lingua, {
+    sorgente: linguaContenuti(lingua), chiave: carta.dati?.id,
+  });
 
   if (carta.errore) {
     return (
@@ -99,7 +108,7 @@ export function SchedaCarta({ id }: { id: string }) {
       <section className="band band-tight deck-layout" style={{ alignItems: "start" }}>
         <div style={{ maxWidth: 300, justifySelf: "center", width: "100%" }}>
           <ImmagineCarta id={c.id} alt={nome} mazzo={null} priorita classe="card-large" />
-          <p className="small muted" style={{ marginTop: "1rem" }}>{c.parole_chiave.join(" · ")}</p>
+          <p ref={parole} lang={linguaContenuti(lingua)} className="small muted" style={{ marginTop: "1rem" }}>{c.parole_chiave.join(" · ")}</p>
         </div>
         <div>
           <p className="eyebrow">{k.carta_riflessione}</p>
@@ -110,25 +119,26 @@ export function SchedaCarta({ id }: { id: string }) {
             <LinkV2 className="button button-quiet" href={R.fisica}>{k.cta_fisica}</LinkV2>
           </div>
 
-          <div className="prose-block">
-            {c.dritto && (<><h3>{k.dritta}</h3><p>{c.dritto}</p></>)}
+          <AvvisoTraduzione stato={traduzione} />
+          <div ref={testo} lang={linguaContenuti(lingua)} className="prose-block">
+            {c.dritto && (<><h3 data-no-trad>{k.dritta}</h3><p>{c.dritto}</p></>)}
             {Object.entries(c.significati ?? {}).map(([chiave, v]) => (
-              <div key={chiave}><h3>{k.livelli[chiave] ?? chiave}</h3><p>{v}</p></div>
+              <div key={chiave}><h3 data-no-trad>{k.livelli[chiave] ?? chiave}</h3><p>{v}</p></div>
             ))}
             {/* Spazi pubblicitari (spenti per default): a un terzo dopo i significati, a due terzi dopo rovesciata e
                 ambiti, alla fine dopo la scheda, prima del diario. */}
             <Pubblicita posizione="terzo" dentro />
-            {c.rovescio && (<><h3>{k.rovesciata}</h3><p className="small muted">{k.rovesciata_nota}</p><p>{c.rovescio}</p></>)}
+            {c.rovescio && (<><h3 data-no-trad>{k.rovesciata}</h3><p className="small muted" data-no-trad>{k.rovesciata_nota}</p><p>{c.rovescio}</p></>)}
             {Object.keys(c.ambiti ?? {}).length > 0 && (
               <>
-                <h3>{k.ambiti_titolo}</h3>
-                {Object.entries(c.ambiti ?? {}).map(([chiave, v]) => <p key={chiave}><b>{k.ambiti[chiave] ?? chiave}.</b> {v}</p>)}
+                <h3 data-no-trad>{k.ambiti_titolo}</h3>
+                {Object.entries(c.ambiti ?? {}).map(([chiave, v]) => <p key={chiave}><b data-no-trad>{k.ambiti[chiave] ?? chiave}.</b> {v}</p>)}
               </>
             )}
             <Pubblicita posizione="due_terzi" dentro />
-            <h3>{k.corrispondenze}</h3>
+            <h3 data-no-trad>{k.corrispondenze}</h3>
             <p className="small">{corrispondenze.join(" · ")}</p>
-            {c.nota_crowley && (<><h3>{k.crowley}</h3><p>{c.nota_crowley}</p></>)}
+            {c.nota_crowley && (<><h3 data-no-trad>{k.crowley}</h3><p>{c.nota_crowley}</p></>)}
           </div>
 
           <nav className="pager" aria-label={k.torna}>

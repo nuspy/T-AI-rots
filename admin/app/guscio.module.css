@@ -277,3 +277,36 @@
   padding: 0.15rem 0.45rem;
   white-space: nowrap;
 }
+
+/* v9.5: la lingua della console (traduzione automatica del browser, temporanea) e il riquadro che la annuncia. */
+.lingua select {
+  height: 40px;
+  min-height: 40px;
+  padding: 0 0.5rem;
+  border: 1px solid var(--filo);
+  background: transparent;
+  color: var(--inchiostro-tenue);
+  font-size: 0.8125rem;
+}
+
+.avvisoTraduzione {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.9rem;
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--filo);
+  background: var(--carta-alta);
+  color: var(--inchiostro-tenue);
+  font-size: 0.875rem;
+}
+
+.avvisoTraduzione button {
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--filo);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}

@@ -6,9 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint && node scripts/controlla-link-lettura.mjs",
+    "lint": "eslint && node scripts/controlla-link-lettura.mjs && node scripts/controlla-traduzione.mjs",
     "carte": "node scripts/genera-carte.mjs",
-    "controlla-lettura": "node scripts/controlla-link-lettura.mjs"
+    "controlla-lettura": "node scripts/controlla-link-lettura.mjs",
+    "controlla-traduzione": "node scripts/controlla-traduzione.mjs"
   },
   "dependencies": {
     "@types/three": "^0.186.0",

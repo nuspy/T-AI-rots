@@ -5,8 +5,10 @@
  * delle immagini, la biblioteca, la lettura, l'edizione fisica. */
 
 import { useRouter } from "next/navigation";
+import { useRef } from "react";
 import { euro, urlPdfGratuito, votoHome, type Mazzo } from "@/lib/api";
 import { f } from "@/v2/i18n";
+import { AvvisoTraduzione } from "@/v2/componenti/avviso-traduzione";
 import { CampioniVoto } from "@/v2/componenti/campioni-voto";
 import { ImmagineCarta } from "@/v2/componenti/carta";
 import LinkV2 from "@/v2/componenti/link";
@@ -15,6 +17,7 @@ import { useCarrello } from "@/v2/lib/carrello";
 import { useLingua } from "@/v2/lib/lingua";
 import { R, indirizzoV2 } from "@/v2/lib/percorsi";
 import { useCarica } from "@/v2/lib/usa";
+import { useTraduzione } from "@/v2/lib/usa-traduzione";
 import { P, useMazzi } from "@/v2/lib/dati";
 
 /* Le immagini di un mazzo: il predefinito (Thoth) nella cartella piatta, gli altri nella propria. */
@@ -68,9 +71,13 @@ export function Mazzi() {
 }
 
 export function SchedaMazzo({ slug }: { slug: string }) {
-  const { t } = useLingua();
+  const { t, lingua } = useLingua();
   const k = t.mazzi;
   const mazzi = useMazzi();
+  /* v9.5: la descrizione di un mazzo è scritta in una lingua sola: si traduce sul dispositivo nella lingua del sito
+   * (la lingua di partenza la riconosce il browser). Quella del Thoth è un testo del sito, già tradotto. */
+  const intro = useRef<HTMLParagraphElement>(null);
+  const traduzione = useTraduzione([intro], lingua, { chiave: mazzi.dati ? slug : undefined });
   if (mazzi.errore) return <section className="band band-tight"><p className="error">{mazzi.errore}</p></section>;
   if (!mazzi.dati) return <section className="band band-tight"><p className="muted">{t.comune.carica}</p></section>;
   const m = mazzi.dati.find((x) => x.slug === slug);
@@ -90,7 +97,10 @@ export function SchedaMazzo({ slug }: { slug: string }) {
         <span className="available">{k.disponibile}</span>
         <p className="eyebrow">{f(k.mazzo_eyebrow, { mazzo: m.nome })}</p>
         <h1 className="display">{m.predefinito ? k.thoth_titolo : m.nome}</h1>
-        <p className="section-intro">{m.predefinito ? k.thoth_intro : (m.descrizione ?? k.altro_titolo)}</p>
+        <p ref={m.predefinito || !m.descrizione ? undefined : intro} className="section-intro">
+          {m.predefinito ? k.thoth_intro : (m.descrizione ?? k.altro_titolo)}
+        </p>
+        <AvvisoTraduzione stato={traduzione} />
       </section>
       {/* Gli spazi pubblicitari (spenti per default): dopo la presentazione e dopo il campione delle carte. */}
       <ConPubblicita>

@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useRef } from "react";
 import { AUTENTICAZIONE_SPENTA, useSessione } from "@/lib/sessione";
+import { useTraduzione } from "@/lib/usa-traduzione";
 import { Logo } from "./logo";
+import { AvvisoTraduzioneConsole, SceltaLinguaConsole, useLinguaConsole } from "./traduzione-console";
 import stili from "./guscio.module.css";
 
 const SEZIONI = [
@@ -51,6 +54,15 @@ function attiva(percorso: string, href: string): boolean {
 export function Guscio({ children }: { children: React.ReactNode }) {
   const sessione = useSessione();
   const percorso = usePathname();
+  /* v9.5: la console in un'altra lingua con la traduzione automatica del browser (temporanea): si traducono la
+   * navigazione e il contenuto, dall'italiano. I nuovi testi delle pagine li segue il motore da sé. */
+  const [lingua] = useLinguaConsole();
+  const navigazione = useRef<HTMLElement>(null);
+  const contenuto = useRef<HTMLElement>(null);
+  const dentro = !sessione.inCaricamento && sessione.autenticato;
+  const traduzione = useTraduzione([navigazione, contenuto], lingua, {
+    sorgente: "it", chiave: dentro ? "dentro" : "fuori",
+  });
 
   if (sessione.inCaricamento) {
     return <p className={stili.attesa}>Verifica della sessione…</p>;
@@ -89,7 +101,7 @@ export function Guscio({ children }: { children: React.ReactNode }) {
         </Link>
 
         {amministratore && (
-          <nav className={stili.navigazione}>
+          <nav ref={navigazione} className={stili.navigazione}>
             {SEZIONI.map((s) => (
               <Link
                 key={s.href}
@@ -102,6 +114,8 @@ export function Guscio({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
         )}
+
+        <SceltaLinguaConsole className={stili.lingua} />
 
         {AUTENTICAZIONE_SPENTA ? (
           <span
@@ -120,7 +134,8 @@ export function Guscio({ children }: { children: React.ReactNode }) {
         )}
       </header>
 
-      <main className={stili.contenuto}>
+      <main ref={contenuto} className={stili.contenuto}>
+        <AvvisoTraduzioneConsole stato={traduzione} className={stili.avvisoTraduzione} />
         {amministratore ? (
           children
         ) : (
