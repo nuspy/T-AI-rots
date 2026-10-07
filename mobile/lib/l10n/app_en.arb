@@ -24,6 +24,17 @@
   "comune_esci": "Sign out",
   "comune_profilo": "Your account",
   "comune_inizia_lettura": "Start reading",
+  "comune_testo_gruppo": "Text size",
+  "comune_testo_meno": "Smaller text",
+  "comune_testo_piu": "Larger text",
+  "comune_testo_misura": "Text at {n}%",
+  "@comune_testo_misura": {
+    "placeholders": {
+      "n": {
+        "type": "Object"
+      }
+    }
+  },
   "comune_admin": "Console",
   "comune_piede_motto": "A living Tarot experience: question, ritual, interpretation and the thread you choose to keep.",
   "comune_piede_leggi": "Read",

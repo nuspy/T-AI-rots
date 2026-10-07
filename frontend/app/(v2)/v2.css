@@ -25,7 +25,18 @@
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
-body { margin: 0; min-width: 320px; color: var(--ink); background: var(--paper); font: 400 16px/1.6 var(--sans); }
+body { margin: 0; min-width: 320px; color: var(--ink); background: var(--paper); font: 400 1rem/1.6 var(--sans); }
+/* A− / A+ (`v2/lib/testo.tsx`): un'ancora alta zero fra testata e contenuto; i due pulsanti stanno nell'angolo in alto
+ * a destra, sopra il primo contenuto, e scorrono con la pagina. In px: non cambiano con la dimensione che regolano. */
+.dimensione-testo-ancora { position: relative; z-index: 30; height: 0; }
+.dimensione-testo { position: absolute; top: 6px; right: max(16px, env(safe-area-inset-right)); display: flex; gap: 6px; }
+.dimensione-testo button { min-width: 44px; min-height: 44px; padding: 0 8px; border: 1px solid var(--line); border-radius: 999px;
+  color: var(--ink); background: rgba(255, 252, 245, .92); font: 600 15px/1 var(--sans); cursor: pointer;
+  box-shadow: 0 2px 8px rgba(32, 16, 38, .12); }
+.dimensione-testo button span { margin-left: 1px; font-size: 13px; }
+.dimensione-testo button:hover:not(:disabled) { border-color: var(--brass); }
+.dimensione-testo button:focus-visible { outline: 2px solid var(--verdigris, #19706f); outline-offset: 2px; }
+.dimensione-testo button:disabled { opacity: .4; cursor: default; }
 body::before { content: ""; position: fixed; inset: 0; z-index: -2; opacity: .6; pointer-events: none; background-image: radial-gradient(circle at 15% 5%, rgba(178,131,54,.12), transparent 22rem), radial-gradient(circle at 85% 35%, rgba(25,112,111,.1), transparent 24rem), repeating-linear-gradient(0deg, transparent 0 5px, rgba(60,24,70,.018) 6px); }
 img { max-width: 100%; height: auto; }
 a { color: inherit; text-decoration: none; }

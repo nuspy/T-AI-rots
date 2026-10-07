@@ -27,6 +27,10 @@ export const comune: typeof Base = {
   esci: "Esci",
   profilo: "Il tuo account",
   inizia_lettura: "Inizia a leggere",
+  testo_gruppo: "Dimensione del testo",
+  testo_meno: "Testo più piccolo",
+  testo_piu: "Testo più grande",
+  testo_misura: "Testo al {n}%",
   admin: "Console",
 
   piede_motto: "Un'esperienza viva dei Tarocchi: la domanda, il rito, l'interpretazione e il filo che scegli di tenere.",

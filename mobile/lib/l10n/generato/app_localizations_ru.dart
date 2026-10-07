@@ -82,6 +82,20 @@ class AppLocalizationsRu extends AppLocalizations {
   String get comune_inizia_lettura => 'Начать расклад';
 
   @override
+  String get comune_testo_gruppo => 'Размер текста';
+
+  @override
+  String get comune_testo_meno => 'Текст мельче';
+
+  @override
+  String get comune_testo_piu => 'Текст крупнее';
+
+  @override
+  String comune_testo_misura(Object n) {
+    return 'Текст: $n%';
+  }
+
+  @override
   String get comune_admin => 'Консоль';
 
   @override

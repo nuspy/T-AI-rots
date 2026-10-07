@@ -16,6 +16,7 @@ import 'api/errori.dart';
 import 'archivio.dart';
 import 'auth/sessione.dart';
 import 'cassa/ritorno.dart';
+import 'componenti/dimensione_testo.dart';
 import 'consensi/consensi.dart';
 import 'consensi/primo_avvio.dart';
 import 'dati/inviti.dart';
@@ -139,9 +140,12 @@ class _TarotsAppState extends ConsumerState<TarotsApp> {
         // Il testo di base del sito (`body`): senza, Flutter disegna il testo fuori da Material sottolineato.
         child: DefaultTextStyle(
           style: Stile.corpo,
-          child: OsservatoreApp(
-            child: PrimoAvvio(
-              child: AvvisoSessione(child: RitornoPagamento(child: figlio ?? const SizedBox.shrink())),
+          // La dimensione del testo scelta con A− / A+ (`componenti/dimensione_testo.dart`).
+          child: ScalaTesto(
+            child: OsservatoreApp(
+              child: PrimoAvvio(
+                child: AvvisoSessione(child: RitornoPagamento(child: figlio ?? const SizedBox.shrink())),
+              ),
             ),
           ),
         ),

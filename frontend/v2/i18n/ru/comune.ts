@@ -27,6 +27,10 @@ export const comune: typeof Base = {
   esci: "Выйти",
   profilo: "Твой аккаунт",
   inizia_lettura: "Начать расклад",
+  testo_gruppo: "Размер текста",
+  testo_meno: "Текст мельче",
+  testo_piu: "Текст крупнее",
+  testo_misura: "Текст: {n}%",
   admin: "Консоль",
 
   piede_motto: "Живой опыт Таро: вопрос, ритуал, толкование и нить, которую ты решаешь сохранить.",

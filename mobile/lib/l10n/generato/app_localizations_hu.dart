@@ -82,6 +82,20 @@ class AppLocalizationsHu extends AppLocalizations {
   String get comune_inizia_lettura => 'Jóslás indítása';
 
   @override
+  String get comune_testo_gruppo => 'Szövegméret';
+
+  @override
+  String get comune_testo_meno => 'Kisebb szöveg';
+
+  @override
+  String get comune_testo_piu => 'Nagyobb szöveg';
+
+  @override
+  String comune_testo_misura(Object n) {
+    return 'Szöveg: $n%';
+  }
+
+  @override
   String get comune_admin => 'Konzol';
 
   @override

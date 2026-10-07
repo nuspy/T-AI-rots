@@ -11,6 +11,7 @@ import { ProvidersV2 } from "@/v2/componenti/providers";
 import { COOKIE_PUBBLICITA, PERCORSO_PUBBLICITA, SPENTA, type ImpostazioniPubblicita } from "@/v2/lib/pubblicita";
 import { PERCORSO_PUBBLICO_ABBONAMENTI, type ImpostazioniPubblicheAbbonamenti } from "@/lib/abbonamenti";
 import { ProvaIniziale, SCRIPT_BANNER_PROVA } from "@/v2/lib/prova";
+import { SCRIPT_TESTO } from "@/v2/lib/testo-script";
 import { classiFontV2 } from "./fonts";
 import "./v2.css";
 
@@ -47,6 +48,8 @@ export default async function LayoutV2({ children }: { children: React.ReactNode
     <html lang={lingua} className={classiFontV2} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: SCRIPT_BANNER_PROVA }} />
+        {/* La dimensione del testo scelta con A− / A+ (`v2/lib/testo.tsx`), prima del disegno. */}
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT_TESTO }} />
       </head>
       <body suppressHydrationWarning>
         <ProvidersV2 linguaIniziale={lingua} pubblicita={statoPubblicita}>

@@ -265,6 +265,30 @@ abstract class AppLocalizations {
   /// **'Start reading'**
   String get comune_inizia_lettura;
 
+  /// No description provided for @comune_testo_gruppo.
+  ///
+  /// In en, this message translates to:
+  /// **'Text size'**
+  String get comune_testo_gruppo;
+
+  /// No description provided for @comune_testo_meno.
+  ///
+  /// In en, this message translates to:
+  /// **'Smaller text'**
+  String get comune_testo_meno;
+
+  /// No description provided for @comune_testo_piu.
+  ///
+  /// In en, this message translates to:
+  /// **'Larger text'**
+  String get comune_testo_piu;
+
+  /// No description provided for @comune_testo_misura.
+  ///
+  /// In en, this message translates to:
+  /// **'Text at {n}%'**
+  String comune_testo_misura(Object n);
+
   /// No description provided for @comune_admin.
   ///
   /// In en, this message translates to:

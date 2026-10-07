@@ -27,6 +27,10 @@ export const comune: typeof Base = {
   esci: "Kilépés",
   profilo: "A fiókod",
   inizia_lettura: "Jóslás indítása",
+  testo_gruppo: "Szövegméret",
+  testo_meno: "Kisebb szöveg",
+  testo_piu: "Nagyobb szöveg",
+  testo_misura: "Szöveg: {n}%",
   admin: "Konzol",
 
   piede_motto: "Élő tarot-élmény: kérdés, rituálé, értelmezés és a szál, amelyet megtartasz.",

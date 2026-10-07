@@ -26,6 +26,10 @@ export const comune = {
   esci: "Sign out",
   profilo: "Your account",
   inizia_lettura: "Start reading",
+  testo_gruppo: "Text size",
+  testo_meno: "Smaller text",
+  testo_piu: "Larger text",
+  testo_misura: "Text at {n}%",
   admin: "Console",
 
   piede_motto: "A living Tarot experience: question, ritual, interpretation and the thread you choose to keep.",

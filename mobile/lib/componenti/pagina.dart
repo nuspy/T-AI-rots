@@ -5,9 +5,10 @@
 /// verderame a destra, fermi mentre la pagina scorre). La tastiera spinge in su pagina e barra, mai la testata.
 library;
 
+import 'dart:math' as math;
+
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/errori.dart';
@@ -16,6 +17,7 @@ import '../rotte/percorso.dart';
 import '../tema/tema.dart';
 import 'banner_prova.dart';
 import 'campi.dart' show Errore;
+import 'dimensione_testo.dart';
 import 'oracolo.dart';
 import 'piede.dart';
 import 'testata.dart';
@@ -113,7 +115,8 @@ class Guscio extends ConsumerWidget {
   }
 }
 
-/// Una pagina: il banner della prova, le sezioni una sotto l'altra, poi il piede; scorre sotto la testata.
+/// Una pagina: il banner della prova, le sezioni una sotto l'altra, poi il piede; scorre sotto la testata. In alto a
+/// destra, sopra la prima sezione, A− / A+ per la dimensione del testo (scorrono con la pagina).
 class Pagina extends StatelessWidget {
   /// Una pagina con le [sezioni].
   const Pagina({super.key, required this.sezioni, this.controllore});
@@ -133,7 +136,20 @@ class Pagina extends StatelessWidget {
         primary: controllore == null,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [const BannerProva(), ...sezioni, const Piede()],
+          children: [
+            const BannerProva(),
+            Stack(
+              children: [
+                Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: sezioni),
+                PositionedDirectional(
+                  top: 6,
+                  end: math.max(16, MediaQuery.paddingOf(context).right),
+                  child: const DimensioneTesto(),
+                ),
+              ],
+            ),
+            const Piede(),
+          ],
         ),
       ),
     );

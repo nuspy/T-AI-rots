@@ -82,6 +82,20 @@ class AppLocalizationsIt extends AppLocalizations {
   String get comune_inizia_lettura => 'Inizia a leggere';
 
   @override
+  String get comune_testo_gruppo => 'Dimensione del testo';
+
+  @override
+  String get comune_testo_meno => 'Testo più piccolo';
+
+  @override
+  String get comune_testo_piu => 'Testo più grande';
+
+  @override
+  String comune_testo_misura(Object n) {
+    return 'Testo al $n%';
+  }
+
+  @override
   String get comune_admin => 'Console';
 
   @override

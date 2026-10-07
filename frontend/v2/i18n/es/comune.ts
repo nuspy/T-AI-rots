@@ -27,6 +27,10 @@ export const comune: typeof Base = {
   esci: "Cerrar sesión",
   profilo: "Tu cuenta",
   inizia_lettura: "Empezar una lectura",
+  testo_gruppo: "Tamaño del texto",
+  testo_meno: "Texto más pequeño",
+  testo_piu: "Texto más grande",
+  testo_misura: "Texto al {n} %",
   admin: "Consola",
 
   piede_motto: "Una experiencia viva del Tarot: la pregunta, el ritual, la interpretación y el hilo que decides conservar.",

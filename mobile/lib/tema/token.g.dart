@@ -92,10 +92,10 @@ abstract final class Token {
   /// `.button-small { min-height: 44px }`
   static const double altezzaBottonePiccolo = 44.0;
 
-  /// `body { font: 400 16px/1.6 var(--sans) }`
+  /// `body { font: 400 1rem/1.6 var(--sans) }`
   static const double corpo = 16.0;
 
-  /// `body { font: 400 16px/1.6 var(--sans) }`
+  /// `body { font: 400 1rem/1.6 var(--sans) }`
   static const double interlinea = 1.6;
 
   /// `.band { max-width: 1200px }`

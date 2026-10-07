@@ -82,6 +82,20 @@ class AppLocalizationsUk extends AppLocalizations {
   String get comune_inizia_lettura => 'Почати читання';
 
   @override
+  String get comune_testo_gruppo => 'Розмір тексту';
+
+  @override
+  String get comune_testo_meno => 'Дрібніший текст';
+
+  @override
+  String get comune_testo_piu => 'Більший текст';
+
+  @override
+  String comune_testo_misura(Object n) {
+    return 'Текст: $n%';
+  }
+
+  @override
   String get comune_admin => 'Консоль';
 
   @override
