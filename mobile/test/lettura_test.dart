@@ -114,7 +114,7 @@ void main() {
     expect(find.text('Three cards'), findsWidgets);
 
     // Inizia: l'avvertenza, poi l'apertura e la prima domanda del lettore.
-    await tester.tap(find.text('Stop with the question and go to the ritual'));
+    await tocca(tester, 'Send my question, and feel free to ask me');
     await attendi(tester);
     expect(find.text('Before we begin'), findsOneWidget);
     await tester.tap(find.text('I understand, let us begin'));
@@ -187,7 +187,7 @@ void main() {
     expect(find.text('Change'), findsOneWidget);
     await tester.enterText(find.byType(EditableText).first, 'Will my new project go well?');
     await tester.pump();
-    await tester.tap(find.text('Stop with the question and go to the ritual'));
+    await tocca(tester, 'Send my question, and feel free to ask me');
     await attendi(tester);
     await tester.tap(find.text('I understand, let us begin'));
     await attendi(tester);
@@ -212,7 +212,7 @@ void main() {
       altezza: 844,
       rete: rete,
     );
-    await tocca(tester, 'Stop with the question and go to the ritual');
+    await tocca(tester, 'Send my question, and feel free to ask me');
     await attendi(tester);
     await tester.tap(find.text('I understand, let us begin'));
     await attendi(tester);
@@ -276,7 +276,7 @@ void main() {
       return RispostaFinta.fixture('lettura/apertura.json', stato: 201);
     };
     await montaApp(tester, rotta: '/read?question=Will%20it%20work%3F', larghezza: 1024, altezza: 1366, rete: rete);
-    await tester.tap(find.text('Stop with the question and go to the ritual'));
+    await tocca(tester, 'Send my question, and feel free to ask me');
     await attendi(tester);
     await tester.tap(find.text('I understand, let us begin'));
     await attendi(tester);
@@ -303,7 +303,7 @@ void main() {
       autenticata: false,
       rete: rete,
     );
-    await tester.tap(find.text('Stop with the question and go to the ritual'));
+    await tocca(tester, 'Send my question, and feel free to ask me');
     await attendi(tester);
     await tester.tap(find.text('I understand, let us begin'));
     await attendi(tester);
@@ -328,7 +328,7 @@ void main() {
       autenticata: false,
       rete: rete,
     );
-    await tester.tap(find.text('Stop with the question and go to the ritual'));
+    await tocca(tester, 'Send my question, and feel free to ask me');
     await attendi(tester);
     await tester.tap(find.text('I understand, let us begin'));
     await attendi(tester);
@@ -387,7 +387,7 @@ void main() {
     expect(uri.path, '/read-chat');
     expect(uri.queryParameters['spread'], 'tre-carte');
 
-    await tocca(tester, 'Stop with the question and go to the ritual');
+    await tocca(tester, 'Send my question, and feel free to ask me');
     await attendi(tester);
     await tester.tap(find.text('I understand, let us begin'));
     await attendi(tester);
@@ -435,6 +435,56 @@ void main() {
     expect(find.byType(Ventaglio), findsOneWidget);
     expect(find.byType(FinestraModale), findsNothing);
     expect(tester.takeException(), isNull);
+    finisci();
+  });
+
+  testWidgets('«Invia quesito e inizia a mescolare»: niente intervista, la mescolata parte subito', (tester) async {
+    final rete = reteRito();
+    await montaApp(
+      tester,
+      rotta: '/read?question=Will%20my%20new%20project%20at%20work%20go%20well%3F',
+      larghezza: 1024,
+      altezza: 1366,
+      rete: rete,
+    );
+    // I due invii stanno sotto la domanda; nel pannello del rito non c'è più il pulsante.
+    expect(find.text('Send my question and start shuffling the cards'), findsOneWidget);
+    expect(find.text('Send my question, and feel free to ask me'), findsOneWidget);
+    expect(find.text('Stop with the question and go to the ritual'), findsNothing);
+    await tocca(tester, 'Send my question and start shuffling the cards');
+    await attendi(tester);
+    await tester.tap(find.text('I understand, let us begin'));
+    await attendi(tester);
+    await attendi(tester);
+    expect(corpo(rete, '/readings/$idLettura/interview'), {'basta': true});
+    expect(find.byType(Mescolamento), findsOneWidget);
+    // L'istruzione sta sopra il mazzo ed è il pulsante che ferma la mescolata.
+    await tester.tap(find.text('Interrupt the shuffle'));
+    await attendi(tester);
+    expect(find.byType(Taglio), findsOneWidget);
+    expect(find.text('Cut the deck'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    finisci();
+  });
+
+  testWidgets('col minimo di domande sopra zero resta solo «Invia domanda e chiedimi pure»', (tester) async {
+    final rete = reteRito();
+    rete.risposte['/impostazioni-pubbliche'] = (_) => RispostaFinta.json({
+      'crediti_iscrizione': 3,
+      'crediti_invito': 2,
+      'intervista_min_domande': 1,
+      'intervista_max_domande': 2,
+    });
+    await montaApp(
+      tester,
+      rotta: '/read?question=Will%20my%20new%20project%20at%20work%20go%20well%3F',
+      larghezza: 1024,
+      altezza: 1366,
+      rete: rete,
+    );
+    await attendi(tester);
+    expect(find.text('Send my question and start shuffling the cards'), findsNothing);
+    expect(find.text('Send my question, and feel free to ask me'), findsOneWidget);
     finisci();
   });
 

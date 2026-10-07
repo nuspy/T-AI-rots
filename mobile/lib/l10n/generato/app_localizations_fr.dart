@@ -1349,6 +1349,24 @@ class AppLocalizationsFr extends AppLocalizations {
   String get lettura_inizia => 'Stop with the question and go to the ritual';
 
   @override
+  String get lettura_domanda_invia_mescola => 'Send my question and start shuffling the cards';
+
+  @override
+  String get lettura_domanda_invia_chiedi => 'Send my question, and feel free to ask me';
+
+  @override
+  String get lettura_versione_titolo => 'Which version of the reading?';
+
+  @override
+  String get lettura_versione_classica => 'Classic';
+
+  @override
+  String get lettura_versione_chat => 'All in chat';
+
+  @override
+  String get lettura_versione_nota => 'Admins only: this opening does not change your saved version or the test.';
+
+  @override
   String get lettura_carte_svelate => 'The cards, one by one';
 
   @override

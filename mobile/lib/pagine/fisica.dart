@@ -385,6 +385,7 @@ class _CampoDomanda extends StatefulWidget {
 
 class _CampoDomandaState extends State<_CampoDomanda> {
   final FocusNode _fuoco = FocusNode(debugLabel: 'domanda-fisica');
+  final GlobalKey<EditableTextState> _campo = GlobalKey(debugLabel: 'campo');
 
   @override
   void dispose() {
@@ -399,7 +400,7 @@ class _CampoDomandaState extends State<_CampoDomanda> {
       textField: true,
       label: widget.etichetta,
       child: GestureDetector(
-        onTap: _fuoco.requestFocus,
+        onTap: () => mostraTastiera(_fuoco, _campo),
         child: Container(
           constraints: const BoxConstraints(minHeight: 120),
           padding: const EdgeInsets.all(13.6),
@@ -419,6 +420,7 @@ class _CampoDomandaState extends State<_CampoDomanda> {
                     : const SizedBox.shrink(),
               ),
               EditableText(
+                key: _campo,
                 controller: widget.controllore,
                 focusNode: _fuoco,
                 style: stile,

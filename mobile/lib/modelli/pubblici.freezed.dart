@@ -611,7 +611,8 @@ $CartaCopyWith<$Res> get carta {
 mixin _$ImpostazioniPubbliche {
 
  int get creditiIscrizione; int get creditiInvito; num get commissioneReferralPercentuale;/// v9.5: quante persone su cento ricevono la lettura in chat (prova 90/10, dalla console).
- int get letturaChatPercentuale;
+ int get letturaChatPercentuale;/// Il minimo di domande dell'intervista: a zero si può saltarla («Invia quesito e inizia a mescolare le carte»).
+ int get intervistaMinDomande;
 /// Create a copy of ImpostazioniPubbliche
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -625,20 +626,20 @@ $ImpostazioniPubblicheCopyWith<ImpostazioniPubbliche> get copyWith => _$Impostaz
 @override
 bool operator ==(Object other) {
   final _this = this as ImpostazioniPubbliche;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ImpostazioniPubbliche&&(identical(other.creditiIscrizione, _this.creditiIscrizione) || other.creditiIscrizione == _this.creditiIscrizione)&&(identical(other.creditiInvito, _this.creditiInvito) || other.creditiInvito == _this.creditiInvito)&&(identical(other.commissioneReferralPercentuale, _this.commissioneReferralPercentuale) || other.commissioneReferralPercentuale == _this.commissioneReferralPercentuale)&&(identical(other.letturaChatPercentuale, _this.letturaChatPercentuale) || other.letturaChatPercentuale == _this.letturaChatPercentuale));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ImpostazioniPubbliche&&(identical(other.creditiIscrizione, _this.creditiIscrizione) || other.creditiIscrizione == _this.creditiIscrizione)&&(identical(other.creditiInvito, _this.creditiInvito) || other.creditiInvito == _this.creditiInvito)&&(identical(other.commissioneReferralPercentuale, _this.commissioneReferralPercentuale) || other.commissioneReferralPercentuale == _this.commissioneReferralPercentuale)&&(identical(other.letturaChatPercentuale, _this.letturaChatPercentuale) || other.letturaChatPercentuale == _this.letturaChatPercentuale)&&(identical(other.intervistaMinDomande, _this.intervistaMinDomande) || other.intervistaMinDomande == _this.intervistaMinDomande));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as ImpostazioniPubbliche;
-  return Object.hash(runtimeType,_this.creditiIscrizione,_this.creditiInvito,_this.commissioneReferralPercentuale,_this.letturaChatPercentuale);
+  return Object.hash(runtimeType,_this.creditiIscrizione,_this.creditiInvito,_this.commissioneReferralPercentuale,_this.letturaChatPercentuale,_this.intervistaMinDomande);
 }
 
 @override
 String toString() {
   final _this = this as ImpostazioniPubbliche;
-  return 'ImpostazioniPubbliche(creditiIscrizione: ${_this.creditiIscrizione}, creditiInvito: ${_this.creditiInvito}, commissioneReferralPercentuale: ${_this.commissioneReferralPercentuale}, letturaChatPercentuale: ${_this.letturaChatPercentuale})';
+  return 'ImpostazioniPubbliche(creditiIscrizione: ${_this.creditiIscrizione}, creditiInvito: ${_this.creditiInvito}, commissioneReferralPercentuale: ${_this.commissioneReferralPercentuale}, letturaChatPercentuale: ${_this.letturaChatPercentuale}, intervistaMinDomande: ${_this.intervistaMinDomande})';
 }
 
 
@@ -649,7 +650,7 @@ abstract mixin class $ImpostazioniPubblicheCopyWith<$Res>  {
   factory $ImpostazioniPubblicheCopyWith(ImpostazioniPubbliche value, $Res Function(ImpostazioniPubbliche) _then) = _$ImpostazioniPubblicheCopyWithImpl;
 @useResult
 $Res call({
- int creditiIscrizione, int creditiInvito, num commissioneReferralPercentuale, int letturaChatPercentuale
+ int creditiIscrizione, int creditiInvito, num commissioneReferralPercentuale, int letturaChatPercentuale, int intervistaMinDomande
 });
 
 
@@ -666,12 +667,13 @@ class _$ImpostazioniPubblicheCopyWithImpl<$Res>
 
 /// Create a copy of ImpostazioniPubbliche
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? creditiIscrizione = null,Object? creditiInvito = null,Object? commissioneReferralPercentuale = null,Object? letturaChatPercentuale = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? creditiIscrizione = null,Object? creditiInvito = null,Object? commissioneReferralPercentuale = null,Object? letturaChatPercentuale = null,Object? intervistaMinDomande = null,}) {
   return _then(ImpostazioniPubbliche(
 creditiIscrizione: null == creditiIscrizione ? _self.creditiIscrizione : creditiIscrizione // ignore: cast_nullable_to_non_nullable
 as int,creditiInvito: null == creditiInvito ? _self.creditiInvito : creditiInvito // ignore: cast_nullable_to_non_nullable
 as int,commissioneReferralPercentuale: null == commissioneReferralPercentuale ? _self.commissioneReferralPercentuale : commissioneReferralPercentuale // ignore: cast_nullable_to_non_nullable
 as num,letturaChatPercentuale: null == letturaChatPercentuale ? _self.letturaChatPercentuale : letturaChatPercentuale // ignore: cast_nullable_to_non_nullable
+as int,intervistaMinDomande: null == intervistaMinDomande ? _self.intervistaMinDomande : intervistaMinDomande // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }
@@ -757,10 +759,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int creditiIscrizione,  int creditiInvito,  num commissioneReferralPercentuale,  int letturaChatPercentuale)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int creditiIscrizione,  int creditiInvito,  num commissioneReferralPercentuale,  int letturaChatPercentuale,  int intervistaMinDomande)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ImpostazioniPubbliche() when $default != null:
-return $default(_that.creditiIscrizione,_that.creditiInvito,_that.commissioneReferralPercentuale,_that.letturaChatPercentuale);case _:
+return $default(_that.creditiIscrizione,_that.creditiInvito,_that.commissioneReferralPercentuale,_that.letturaChatPercentuale,_that.intervistaMinDomande);case _:
   return orElse();
 
 }
@@ -778,10 +780,10 @@ return $default(_that.creditiIscrizione,_that.creditiInvito,_that.commissioneRef
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int creditiIscrizione,  int creditiInvito,  num commissioneReferralPercentuale,  int letturaChatPercentuale)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int creditiIscrizione,  int creditiInvito,  num commissioneReferralPercentuale,  int letturaChatPercentuale,  int intervistaMinDomande)  $default,) {final _that = this;
 switch (_that) {
 case _ImpostazioniPubbliche():
-return $default(_that.creditiIscrizione,_that.creditiInvito,_that.commissioneReferralPercentuale,_that.letturaChatPercentuale);case _:
+return $default(_that.creditiIscrizione,_that.creditiInvito,_that.commissioneReferralPercentuale,_that.letturaChatPercentuale,_that.intervistaMinDomande);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -798,10 +800,10 @@ return $default(_that.creditiIscrizione,_that.creditiInvito,_that.commissioneRef
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int creditiIscrizione,  int creditiInvito,  num commissioneReferralPercentuale,  int letturaChatPercentuale)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int creditiIscrizione,  int creditiInvito,  num commissioneReferralPercentuale,  int letturaChatPercentuale,  int intervistaMinDomande)?  $default,) {final _that = this;
 switch (_that) {
 case _ImpostazioniPubbliche() when $default != null:
-return $default(_that.creditiIscrizione,_that.creditiInvito,_that.commissioneReferralPercentuale,_that.letturaChatPercentuale);case _:
+return $default(_that.creditiIscrizione,_that.creditiInvito,_that.commissioneReferralPercentuale,_that.letturaChatPercentuale,_that.intervistaMinDomande);case _:
   return null;
 
 }
@@ -813,7 +815,7 @@ return $default(_that.creditiIscrizione,_that.creditiInvito,_that.commissioneRef
 @JsonSerializable()
 
 class _ImpostazioniPubbliche implements ImpostazioniPubbliche {
-  const _ImpostazioniPubbliche({required this.creditiIscrizione, required this.creditiInvito, this.commissioneReferralPercentuale = 0, this.letturaChatPercentuale = 90});
+  const _ImpostazioniPubbliche({required this.creditiIscrizione, required this.creditiInvito, this.commissioneReferralPercentuale = 0, this.letturaChatPercentuale = 90, this.intervistaMinDomande = 0});
   factory _ImpostazioniPubbliche.fromJson(Map<String, dynamic> json) => _$ImpostazioniPubblicheFromJson(json);
 
 @override final  int creditiIscrizione;
@@ -821,6 +823,8 @@ class _ImpostazioniPubbliche implements ImpostazioniPubbliche {
 @override@JsonKey() final  num commissioneReferralPercentuale;
 /// v9.5: quante persone su cento ricevono la lettura in chat (prova 90/10, dalla console).
 @override@JsonKey() final  int letturaChatPercentuale;
+/// Il minimo di domande dell'intervista: a zero si può saltarla («Invia quesito e inizia a mescolare le carte»).
+@override@JsonKey() final  int intervistaMinDomande;
 
 /// Create a copy of ImpostazioniPubbliche
 /// with the given fields replaced by the non-null parameter values.
@@ -835,18 +839,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ImpostazioniPubbliche&&(identical(other.creditiIscrizione, creditiIscrizione) || other.creditiIscrizione == creditiIscrizione)&&(identical(other.creditiInvito, creditiInvito) || other.creditiInvito == creditiInvito)&&(identical(other.commissioneReferralPercentuale, commissioneReferralPercentuale) || other.commissioneReferralPercentuale == commissioneReferralPercentuale)&&(identical(other.letturaChatPercentuale, letturaChatPercentuale) || other.letturaChatPercentuale == letturaChatPercentuale));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ImpostazioniPubbliche&&(identical(other.creditiIscrizione, creditiIscrizione) || other.creditiIscrizione == creditiIscrizione)&&(identical(other.creditiInvito, creditiInvito) || other.creditiInvito == creditiInvito)&&(identical(other.commissioneReferralPercentuale, commissioneReferralPercentuale) || other.commissioneReferralPercentuale == commissioneReferralPercentuale)&&(identical(other.letturaChatPercentuale, letturaChatPercentuale) || other.letturaChatPercentuale == letturaChatPercentuale)&&(identical(other.intervistaMinDomande, intervistaMinDomande) || other.intervistaMinDomande == intervistaMinDomande));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,creditiIscrizione,creditiInvito,commissioneReferralPercentuale,letturaChatPercentuale);
+    return Object.hash(runtimeType,creditiIscrizione,creditiInvito,commissioneReferralPercentuale,letturaChatPercentuale,intervistaMinDomande);
 }
 
 @override
 String toString() {
-    return 'ImpostazioniPubbliche(creditiIscrizione: $creditiIscrizione, creditiInvito: $creditiInvito, commissioneReferralPercentuale: $commissioneReferralPercentuale, letturaChatPercentuale: $letturaChatPercentuale)';
+    return 'ImpostazioniPubbliche(creditiIscrizione: $creditiIscrizione, creditiInvito: $creditiInvito, commissioneReferralPercentuale: $commissioneReferralPercentuale, letturaChatPercentuale: $letturaChatPercentuale, intervistaMinDomande: $intervistaMinDomande)';
 }
 
 
@@ -857,7 +861,7 @@ abstract mixin class _$ImpostazioniPubblicheCopyWith<$Res> implements $Impostazi
   factory _$ImpostazioniPubblicheCopyWith(_ImpostazioniPubbliche value, $Res Function(_ImpostazioniPubbliche) _then) = __$ImpostazioniPubblicheCopyWithImpl;
 @override @useResult
 $Res call({
- int creditiIscrizione, int creditiInvito, num commissioneReferralPercentuale, int letturaChatPercentuale
+ int creditiIscrizione, int creditiInvito, num commissioneReferralPercentuale, int letturaChatPercentuale, int intervistaMinDomande
 });
 
 
@@ -874,12 +878,13 @@ class __$ImpostazioniPubblicheCopyWithImpl<$Res>
 
 /// Create a copy of ImpostazioniPubbliche
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? creditiIscrizione = null,Object? creditiInvito = null,Object? commissioneReferralPercentuale = null,Object? letturaChatPercentuale = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? creditiIscrizione = null,Object? creditiInvito = null,Object? commissioneReferralPercentuale = null,Object? letturaChatPercentuale = null,Object? intervistaMinDomande = null,}) {
   return _then(_ImpostazioniPubbliche(
 creditiIscrizione: null == creditiIscrizione ? _self.creditiIscrizione : creditiIscrizione // ignore: cast_nullable_to_non_nullable
 as int,creditiInvito: null == creditiInvito ? _self.creditiInvito : creditiInvito // ignore: cast_nullable_to_non_nullable
 as int,commissioneReferralPercentuale: null == commissioneReferralPercentuale ? _self.commissioneReferralPercentuale : commissioneReferralPercentuale // ignore: cast_nullable_to_non_nullable
 as num,letturaChatPercentuale: null == letturaChatPercentuale ? _self.letturaChatPercentuale : letturaChatPercentuale // ignore: cast_nullable_to_non_nullable
+as int,intervistaMinDomande: null == intervistaMinDomande ? _self.intervistaMinDomande : intervistaMinDomande // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }

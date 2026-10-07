@@ -1346,6 +1346,24 @@ class AppLocalizationsUk extends AppLocalizations {
   String get lettura_inizia => 'Досить питання — перейти до ритуалу';
 
   @override
+  String get lettura_domanda_invia_mescola => 'Надіслати питання й почати тасувати карти';
+
+  @override
+  String get lettura_domanda_invia_chiedi => 'Надіслати питання, і питай мене';
+
+  @override
+  String get lettura_versione_titolo => 'Яку версію читання?';
+
+  @override
+  String get lettura_versione_classica => 'Класична';
+
+  @override
+  String get lettura_versione_chat => 'Уся в чаті';
+
+  @override
+  String get lettura_versione_nota => 'Лише для адмінів: це відкриття не змінює твою збережену версію і тест.';
+
+  @override
   String get lettura_carte_svelate => 'Карти, одна за одною';
 
   @override

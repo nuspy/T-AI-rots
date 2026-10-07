@@ -68,6 +68,24 @@
 .console { display: grid; gap: 1rem; justify-items: center; text-align: center; }
 .consoleTesto { max-width: 34ch; margin: .2rem auto .6rem; font: italic 1.15rem/1.45 var(--serif); color: #fbf3e5; }
 .zona { width: 100%; display: grid; justify-items: center; gap: .8rem; }
+/* L'istruzione di ogni passo del rito (ferma la mescolata, taglia, scegli): grande, 5 px sopra il mazzo, nello stesso
+ * contenitore delle carte. Per la mescolata è un pulsante (anche il mazzo la ferma). */
+.conIstruzione { display: grid; justify-items: center; gap: 5px; }
+.istruzioneCarte { margin: 0; color: #fff7e8; font: 400 clamp(1.35rem, 5vw, 1.75rem)/1.2 var(--serif); text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .45); }
+/* Ogni mazzo lascia sopra le carte un margine per le sue animazioni (mescolata 18 + 10 px, taglio 8 + 12, ventaglio
+ * 30): la scritta ci scende dentro, così resta a 5 px dalle carte. Sta sopra, perché si legga e si tocchi. */
+.sopraMescolata, .sopraTaglio, .sopraVentaglio { position: relative; z-index: 50; }
+.sopraMescolata { margin-bottom: -28px; }
+.sopraTaglio { margin-bottom: -20px; }
+.sopraVentaglio { margin-bottom: -30px; }
+.istruzionePulsante { min-height: 48px; padding: .35rem 1.1rem; border: 1px solid var(--brass-pale); border-radius: 999px;
+  background: rgba(178, 131, 54, .22); cursor: pointer; }
+.istruzionePulsante:hover { background: rgba(178, 131, 54, .36); }
+.istruzionePulsante:focus-visible { outline: 2px solid var(--brass-pale); outline-offset: 3px; }
+/* I due invii della domanda, subito sotto il campo: uno per riga sul telefono. */
+.inviiDomanda { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .8rem; }
+.inviiDomanda .button { flex: 1 1 16rem; min-height: 48px; white-space: normal; }
 
 /* ---- the table ---- */
 .tavolo, .tavoloQuadrato { position: relative; width: 100%; aspect-ratio: 16 / 12; margin: .4rem 0 1rem; direction: ltr; }

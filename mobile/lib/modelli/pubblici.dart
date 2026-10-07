@@ -46,6 +46,9 @@ abstract class ImpostazioniPubbliche with _$ImpostazioniPubbliche {
 
     /// v9.5: quante persone su cento ricevono la lettura in chat (prova 90/10, dalla console).
     @Default(90) int letturaChatPercentuale,
+
+    /// Il minimo di domande dell'intervista: a zero si può saltarla («Invia quesito e inizia a mescolare le carte»).
+    @Default(0) int intervistaMinDomande,
   }) = _ImpostazioniPubbliche;
 
   /// Dal JSON dell'API.

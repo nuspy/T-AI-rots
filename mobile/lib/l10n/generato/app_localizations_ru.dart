@@ -1344,6 +1344,24 @@ class AppLocalizationsRu extends AppLocalizations {
   String get lettura_inizia => 'Хватит вопроса — перейти к ритуалу';
 
   @override
+  String get lettura_domanda_invia_mescola => 'Отправить вопрос и начать тасовать карты';
+
+  @override
+  String get lettura_domanda_invia_chiedi => 'Отправить вопрос, и спрашивай меня';
+
+  @override
+  String get lettura_versione_titolo => 'Какую версию чтения?';
+
+  @override
+  String get lettura_versione_classica => 'Классическая';
+
+  @override
+  String get lettura_versione_chat => 'Вся в чате';
+
+  @override
+  String get lettura_versione_nota => 'Только для админов: это открытие не меняет твою сохранённую версию и тест.';
+
+  @override
   String get lettura_carte_svelate => 'Карты, одна за другой';
 
   @override

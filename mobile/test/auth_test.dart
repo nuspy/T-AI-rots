@@ -146,4 +146,20 @@ void main() {
     expect(nomeDaToken('non.un.token!'), isNull);
     expect(nomeDaToken(null), isNull);
   });
+
+  test('ruoliDaToken legge realm_access.roles, e non si rompe', () {
+    expect(
+      ruoliDaToken(
+        jwtFinto({
+          'realm_access': {
+            'roles': ['admin', 'offline_access', 3],
+          },
+        }),
+      ),
+      ['admin', 'offline_access'],
+    );
+    expect(ruoliDaToken(jwtFinto({'name': 'Ada'})), isEmpty);
+    expect(ruoliDaToken('non.un.token!'), isEmpty);
+    expect(ruoliDaToken(null), isEmpty);
+  });
 }

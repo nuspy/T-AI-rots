@@ -11,7 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import '../componenti/bottoni.dart';
-import '../componenti/campi.dart' show Puntini;
+import '../componenti/campi.dart' show Puntini, mostraTastiera;
 import '../l10n/testi.dart';
 import '../tema/tema.dart';
 import 'comuni.dart';
@@ -215,8 +215,9 @@ class _DialogoState extends State<Dialogo> {
   }
 
   /// Ctrl+Invio: il pulsante principale, se si può usare; altrimenti il primo che si può usare.
-  void _predefinito() =>
-      _invia(widget.invii.where((i) => i.primaria && _usabile(i)).firstOrNull ?? widget.invii.where(_usabile).firstOrNull);
+  void _predefinito() => _invia(
+    widget.invii.where((i) => i.primaria && _usabile(i)).firstOrNull ?? widget.invii.where(_usabile).firstOrNull,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -310,7 +311,11 @@ class _DialogoState extends State<Dialogo> {
                 },
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [campo, const SizedBox(height: 9.6 + 8), invii],
+                  children: [
+                    campo,
+                    const SizedBox(height: 9.6 + 8),
+                    invii,
+                  ],
                 ),
               ),
             ),
@@ -475,6 +480,7 @@ class _Risposta extends StatefulWidget {
 
 class _RispostaState extends State<_Risposta> {
   final FocusNode _fuoco = FocusNode(debugLabel: 'risposta');
+  final GlobalKey<EditableTextState> _campo = GlobalKey(debugLabel: 'campo');
 
   @override
   void initState() {
@@ -496,7 +502,7 @@ class _RispostaState extends State<_Risposta> {
       textField: true,
       label: widget.segnaposto,
       child: GestureDetector(
-        onTap: _fuoco.requestFocus,
+        onTap: () => mostraTastiera(_fuoco, _campo),
         child: Opacity(
           opacity: widget.attivo ? 1 : .55,
           child: Container(
@@ -513,6 +519,7 @@ class _RispostaState extends State<_Risposta> {
                     child: Text(widget.segnaposto, style: stile.copyWith(color: Colori.segnaposto)),
                   ),
                 EditableText(
+                  key: _campo,
                   controller: widget.controllore,
                   focusNode: _fuoco,
                   readOnly: !widget.attivo,

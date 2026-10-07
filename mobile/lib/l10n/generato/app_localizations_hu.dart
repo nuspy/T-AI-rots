@@ -1348,6 +1348,25 @@ class AppLocalizationsHu extends AppLocalizations {
   String get lettura_inizia => 'Elég a kérdésből, irány a rituálé';
 
   @override
+  String get lettura_domanda_invia_mescola => 'Kérdés elküldése és a kártyák keverése';
+
+  @override
+  String get lettura_domanda_invia_chiedi => 'Kérdés elküldése, és nyugodtan kérdezz';
+
+  @override
+  String get lettura_versione_titolo => 'Melyik változat legyen?';
+
+  @override
+  String get lettura_versione_classica => 'Klasszikus';
+
+  @override
+  String get lettura_versione_chat => 'Teljesen csevegésben';
+
+  @override
+  String get lettura_versione_nota =>
+      'Csak adminoknak: ez a megnyitás nem változtat a mentett változatodon és a teszten.';
+
+  @override
   String get lettura_carte_svelate => 'A lapok, egyenként';
 
   @override

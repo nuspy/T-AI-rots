@@ -2611,6 +2611,42 @@ abstract class AppLocalizations {
   /// **'Stop with the question and go to the ritual'**
   String get lettura_inizia;
 
+  /// No description provided for @lettura_domanda_invia_mescola.
+  ///
+  /// In en, this message translates to:
+  /// **'Send my question and start shuffling the cards'**
+  String get lettura_domanda_invia_mescola;
+
+  /// No description provided for @lettura_domanda_invia_chiedi.
+  ///
+  /// In en, this message translates to:
+  /// **'Send my question, and feel free to ask me'**
+  String get lettura_domanda_invia_chiedi;
+
+  /// No description provided for @lettura_versione_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'Which version of the reading?'**
+  String get lettura_versione_titolo;
+
+  /// No description provided for @lettura_versione_classica.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic'**
+  String get lettura_versione_classica;
+
+  /// No description provided for @lettura_versione_chat.
+  ///
+  /// In en, this message translates to:
+  /// **'All in chat'**
+  String get lettura_versione_chat;
+
+  /// No description provided for @lettura_versione_nota.
+  ///
+  /// In en, this message translates to:
+  /// **'Admins only: this opening does not change your saved version or the test.'**
+  String get lettura_versione_nota;
+
   /// No description provided for @lettura_carte_svelate.
   ///
   /// In en, this message translates to:

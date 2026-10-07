@@ -11,6 +11,7 @@
 ///   1100 px) o in mezzo (oltre).
 library;
 
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
@@ -24,8 +25,10 @@ import '../rotte/navigazione.dart';
 import '../rotte/percorsi.dart';
 import '../rotte/percorso.dart';
 import '../tema/tema.dart';
+import 'bottoni.dart';
 import 'icone.dart';
 import 'marchio.dart';
+import 'modale.dart';
 import 'premibile.dart';
 import 'selettore_lingua.dart';
 
@@ -309,7 +312,10 @@ List<double> _parti(List<double> minimi, double spazio) {
     if (libere.isEmpty) break;
     final occupato = fisse.fold(0.0, (s, i) => s + minimi[i]);
     final parte = (spazio - occupato) / libere.length;
-    final nuove = [for (final i in libere) if (minimi[i] > parte) i];
+    final nuove = [
+      for (final i in libere)
+        if (minimi[i] > parte) i,
+    ];
     if (nuove.isEmpty) {
       for (final i in libere) {
         w[i] = parte;
@@ -415,8 +421,10 @@ class _VoceIcona extends StatelessWidget {
   }
 }
 
-/// «Start reading» (`.button.button-brass.button-small` con `data-an="cta_testata"`).
-class _BottoneInizia extends StatelessWidget {
+/// «Start reading» (`.button.button-brass.button-small` con `data-an="cta_testata"`). Per un admin, tenendolo premuto
+/// si sceglie la versione della lettura da vedere (`/read?anteprima=…`: né la prova né la versione del profilo
+/// cambiano), come sul sito.
+class _BottoneInizia extends ConsumerWidget {
   const _BottoneInizia({required this.testo, required this.stile, required this.imbottitura, this.larghezzaTesto});
 
   final String testo;
@@ -425,8 +433,9 @@ class _BottoneInizia extends StatelessWidget {
   final double? larghezzaTesto;
 
   @override
-  Widget build(BuildContext context) {
-    return Tracciato(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sessione = ref.watch(sessioneProvider);
+    final bottone = Tracciato(
       an: 'cta_testata',
       child: Premibile(
         alTocco: () => vai(context, R.leggi),
@@ -453,6 +462,27 @@ class _BottoneInizia extends StatelessWidget {
         ),
       ),
     );
+    if (!(sessione.autenticata && sessione.admin)) return bottone;
+    return GestureDetector(onLongPress: () => unawaited(_sceltaVersione(context)), child: bottone);
+  }
+
+  Future<void> _sceltaVersione(BuildContext context) async {
+    final t = context.t;
+    final versione = await apriModale<String>(
+      context,
+      titolo: t.lettura_versione_titolo,
+      costruisci: (context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Bottone(t.lettura_versione_classica, pieno: true, alTocco: () => Navigator.of(context).pop('classica')),
+          const SizedBox(height: 8),
+          Bottone(t.lettura_versione_chat, pieno: true, alTocco: () => Navigator.of(context).pop('chat')),
+          const SizedBox(height: 12),
+          Text(t.lettura_versione_nota, style: Stile.sans(13.44, colore: Token.inkSoft)),
+        ],
+      ),
+    );
+    if (versione != null && context.mounted) vai(context, '${R.leggi}?anteprima=$versione');
   }
 }
 

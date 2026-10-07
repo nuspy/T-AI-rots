@@ -41,6 +41,7 @@ class StatoSessione {
     this.sviluppo = false,
     this.email,
     this.interrotta = false,
+    this.admin = false,
   });
 
   /// Si sa già se c'è una sessione (all'avvio la ripresa dal refresh token richiede un momento).
@@ -62,6 +63,10 @@ class StatoSessione {
   /// sul sito e l'accesso è passato all'account di là): l'app lo dice e propone di rientrare.
   final bool interrotta;
 
+  /// Il ruolo `admin` di Keycloak (come `sessione.admin` del sito): per ora solo la scelta della versione della
+  /// lettura tenendo premuto «Inizia una lettura».
+  final bool admin;
+
   @override
   bool operator ==(Object other) =>
       other is StatoSessione &&
@@ -70,10 +75,11 @@ class StatoSessione {
       other.nome == nome &&
       other.sviluppo == sviluppo &&
       other.email == email &&
-      other.interrotta == interrotta;
+      other.interrotta == interrotta &&
+      other.admin == admin;
 
   @override
-  int get hashCode => Object.hash(pronta, autenticata, nome, sviluppo, email, interrotta);
+  int get hashCode => Object.hash(pronta, autenticata, nome, sviluppo, email, interrotta, admin);
 }
 
 /// La piattaforma corrente (Android → Google, iOS → Apple). I test la sostituiscono.
@@ -123,6 +129,25 @@ String? emailDaToken(String? token) {
   }
 }
 
+/// I ruoli del realm nel token d'accesso (`realm_access.roles`), senza verificarli: decide il server a ogni chiamata.
+List<String> ruoliDaToken(String? token) {
+  if (token == null) return const [];
+  final parti = token.split('.');
+  if (parti.length < 2) return const [];
+  try {
+    final dati = jsonDecode(utf8.decode(base64Url.decode(base64Url.normalize(parti[1]))));
+    final ruoli = dati is Map && dati['realm_access'] is Map ? (dati['realm_access'] as Map)['roles'] : null;
+    return ruoli is List
+        ? [
+            for (final r in ruoli)
+              if (r is String) r,
+          ]
+        : const [];
+  } on FormatException {
+    return const [];
+  }
+}
+
 /// Vero per un'email di «Nascondi la mia email» di Apple: l'account dell'app è nuovo anche se ce n'è uno sul sito.
 bool emailNascosta(String? email) => email?.toLowerCase().endsWith('@privaterelay.appleid.com') ?? false;
 
@@ -162,6 +187,7 @@ class Sessione extends Notifier<StatoSessione> implements FonteToken {
       autenticata: true,
       nome: nomeDaToken(c?.idToken ?? token),
       email: emailDaToken(c?.idToken ?? token),
+      admin: ruoliDaToken(token).contains('admin'),
     );
   }
 
@@ -172,6 +198,7 @@ class Sessione extends Notifier<StatoSessione> implements FonteToken {
       autenticata: true,
       nome: nomeDaToken(c.idToken ?? c.accessToken),
       email: emailDaToken(c.idToken ?? c.accessToken),
+      admin: ruoliDaToken(c.accessToken).contains('admin'),
     );
   }
 

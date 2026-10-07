@@ -5,6 +5,7 @@
  * scritta piccola sotto e il suggerimento al passaggio: meno spazio, sempre leggibili, mai solo al passaggio del
  * mouse (la scritta resta visibile, anche sul telefono). Solo destinazioni della v2 (specifica v2, §19). */
 
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { ADMIN_URL, useSessione } from "@/lib/sessione";
 import { LINGUE, comeLingua, f, plurale } from "@/v2/i18n";
@@ -130,6 +131,54 @@ function IconaCarrello({ percorso }: { percorso: string }) {
   );
 }
 
+/* «Inizia una lettura». Per un admin, tenendolo premuto (o col tasto destro) si apre la scelta della versione della
+ * lettura da vedere: `/read?anteprima=…`, che non tocca il cookie della prova né la versione del profilo. */
+function InizioLettura() {
+  const { t } = useLingua();
+  const sessione = useSessione();
+  const [aperto, setAperto] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tenuto = useRef(false);
+  const contenitore = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!aperto) return;
+    const fuori = (e: PointerEvent) => { if (!contenitore.current?.contains(e.target as Node)) setAperto(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setAperto(false); };
+    document.addEventListener("pointerdown", fuori);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("pointerdown", fuori); document.removeEventListener("keydown", esc); };
+  }, [aperto]);
+
+  const smetti = () => { if (timer.current) clearTimeout(timer.current); timer.current = null; };
+  const admin = sessione.autenticata && sessione.admin;
+  return (
+    <div className="cta-lettura" ref={contenitore}>
+      <LinkV2 className="button button-brass button-small" href={R.leggi} data-an="cta_testata"
+        {...(admin ? {
+          onPointerDown: () => { tenuto.current = false; smetti(); timer.current = setTimeout(() => { tenuto.current = true; setAperto(true); }, 600); },
+          onPointerUp: smetti, onPointerLeave: smetti, onPointerCancel: smetti,
+          onContextMenu: (e: MouseEvent) => { e.preventDefault(); smetti(); setAperto(true); },
+          onClick: (e: MouseEvent) => { if (tenuto.current) { e.preventDefault(); tenuto.current = false; } },
+        } : {})}>
+        {t.comune.inizia_lettura}
+      </LinkV2>
+      {admin && aperto && (
+        <div className="menu-versioni" role="menu" aria-label={t.lettura.versione_titolo}>
+          <p>{t.lettura.versione_titolo}</p>
+          <LinkV2 role="menuitem" className="button button-small" href={`${R.leggi}?anteprima=classica`} onClick={() => setAperto(false)}>
+            {t.lettura.versione_classica}
+          </LinkV2>
+          <LinkV2 role="menuitem" className="button button-small" href={`${R.leggi}?anteprima=chat`} onClick={() => setAperto(false)}>
+            {t.lettura.versione_chat}
+          </LinkV2>
+          <small>{t.lettura.versione_nota}</small>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Testata() {
   const { t } = useLingua();
   const sessione = useSessione();
@@ -187,9 +236,7 @@ export function Testata() {
             </button>
           )
         )}
-        <LinkV2 className="button button-brass button-small" href={R.leggi} data-an="cta_testata">
-          {t.comune.inizia_lettura}
-        </LinkV2>
+        <InizioLettura />
       </div>
     </header>
   );

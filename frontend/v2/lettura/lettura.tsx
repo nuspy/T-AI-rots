@@ -19,7 +19,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { useOsservatore, useTraccia } from "lanterna-osservatore/react";
 import {
-  ErroreApi, aggiornaProfilo, aggiungiAllIntervista, apriLettura, apriLetturaAnonima, apriVentaglio, cancellaPartner, elencaCarte, mieiMazzi, elencaStese, impostazioniPubbliche, leggiDisclaimer, leggiLettura, leggiProfilo, rispondi, rivela, rivelaTutte, scegliCarta, sintesi, type Categoria, type Genere, type Lettura, type Stesa,
+  ErroreApi, aggiornaProfilo, aggiungiAllIntervista, apriLettura, apriLetturaAnonima, apriVentaglio, cancellaPartner, elencaCarte, mieiMazzi, elencaStese, impostazioniPubbliche, leggiDisclaimer, leggiLettura, leggiProfilo, rispondi, rivela, rivelaTutte, scegliCarta, sintesi, type Categoria, type PassoIntervista, type Genere, type Lettura, type Stesa,
 } from "@/lib/api";
 import { comeLingua, type Lingua } from "@/lib/i18n/lingue";
 import { nomeCarta, nomeStesa } from "@/lib/i18n/nomi";
@@ -211,12 +211,15 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
 
   /* v9.5: chi ha un account ha la sua variante nel profilo (la prima con cui ha letto): se questa pagina è l'altra,
    * si passa a quella giusta con gli stessi parametri, e il cookie si allinea (lo smistatore di `/read` lo legge). */
+  /* Un admin che ha scelto la versione dal menu di «Inizia una lettura» (`?anteprima=`) la vede com'è, senza
+   * riallineamento né cookie. */
+  const anteprima = parametri.get("anteprima");
   useEffect(() => {
     const sua = profilo.dati?.variante_lettura;
-    if (!sua || sua === variante) return;
+    if (!sua || sua === variante || anteprima) return;
     document.cookie = `tarots_lettura=${sua}; Path=/; Max-Age=31536000; SameSite=Lax`;
     router.replace(`${prefissoIt ? "/it" : ""}${sua === "chat" ? "/read-chat" : "/read-classic"}${window.location.search}`);
-  }, [profilo.dati, variante, router, prefissoIt]);
+  }, [profilo.dati, variante, router, prefissoIt, anteprima]);
 
   const precompilato = useRef(false);
   useEffect(() => {
@@ -278,9 +281,10 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
   const [regole, setRegole] = useState({ min: 0, max: 2 });
   const [poste, setPoste] = useState(0);
 
+  /* Un passo dell'intervista; restituisce la risposta del server (null se la chiamata non è riuscita). */
   const passoIntervista = useCallback(async (
     lid: string, risposta: string | null, opzioni: { basta?: boolean; altra?: boolean } = {},
-  ) => {
+  ): Promise<PassoIntervista | null> => {
     setAttesa(true);
     setErrore(null);
     try {
@@ -305,12 +309,22 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
         aggiungi({ autore: "oracolo", testo: passo.domanda, macchina: true });
         setModo("risposta");
       }
+      return passo;
     } catch (e) {
       setErrore(e instanceof ErroreApi ? e.message : l.err_oracolo);
+      return null;
     } finally {
       setAttesa(false);
     }
   }, [sessione.token, l.err_oracolo, traccia]);
+
+  /* Il minimo di domande in vigore, prima ancora di aprire la lettura: «Invia quesito e inizia a mescolare» salta
+   * l'intervista, e si può solo col minimo a zero. */
+  useEffect(() => {
+    void impostazioniPubbliche().then((imp) => {
+      if (imp.intervista_max_domande) setRegole({ min: imp.intervista_min_domande ?? 0, max: imp.intervista_max_domande });
+    }).catch(() => undefined);
+  }, []);
 
   const caricata = useRef(false);
   useEffect(() => {
@@ -365,7 +379,14 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
     setStesaId(null);
   };
 
-  const chiediInizio = async () => {
+  /* I due invii della domanda: «Invia quesito e inizia a mescolare le carte» (senza intervista: `salta`) e «Invia
+   * domanda e chiedimi pure» (con l'intervista). La scelta resta fino all'apertura, anche dopo l'avvertenza, l'età o
+   * il dialogo del limite. */
+  const saltaIntervista = useRef(false);
+  const [senzaIntervista, setSenzaIntervista] = useState(false);
+  const chiediInizio = async (salta: boolean) => {
+    saltaIntervista.current = salta;
+    setSenzaIntervista(salta);
     if (!domandaValida) { setErrore(l.domanda_corta); return; }
     if (!stesaId) return;
     if (speciale && !personeFatte) { setFase("persone"); return; }
@@ -443,6 +464,18 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
       setModo("risposta");
       conto.ricarica();
       profilo.ricarica();
+      if (saltaIntervista.current) {
+        /* Senza domande: il quadro dalla sola domanda, poi subito la mescolata. Se il server rifiuta (il minimo è
+         * cambiato nel frattempo), si fa l'intervista. */
+        traccia("interview_choice", { scelta: "salta", n: 0 });
+        const passo = await passoIntervista(a.id, null, { basta: true });
+        if (passo?.completa) {
+          setFase("mescolamento");
+          traccia("shuffle_started");
+          return;
+        }
+        setErrore(null);
+      }
       await passoIntervista(a.id, null);
     } catch (e) {
       const dettaglio = e instanceof ErroreApi ? (e.dettaglio as { motivo?: string } | undefined) : undefined;
@@ -884,6 +917,33 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
                     onFocus={() => traccia("question_started")}
                   />
                   {speciale && <p className="muted small">{l.domanda_facoltativa}</p>}
+                  {/* I due invii, subito sotto la domanda: senza intervista (solo col minimo di domande a zero) o con. */}
+                  {!serveAccount && (
+                    <div className={stili.inviiDomanda}>
+                      {speciale && !personeFatte ? (
+                        <button type="button" className="button button-brass" disabled={!stesaId || inCorso}
+                          onClick={() => void chiediInizio(false)} data-an="rito" data-an-passo="inizia">
+                          {inCorso ? t.comune.carica : t.comune.avanti}
+                        </button>
+                      ) : (
+                        <>
+                          {regole.min === 0 && (
+                            <button type="button" className="button button-brass" disabled={!stesaId || inCorso || !domandaValida}
+                              onClick={() => void chiediInizio(true)} data-an="rito" data-an-passo="inizia_mescola">
+                              {inCorso && senzaIntervista ? t.comune.carica : l.domanda_invia_mescola}
+                            </button>
+                          )}
+                          <button type="button" className={regole.min === 0 ? "button button-quiet" : "button button-brass"}
+                            disabled={!stesaId || inCorso || !domandaValida}
+                            onClick={() => void chiediInizio(false)} data-an="rito" data-an-passo="inizia">
+                            {inCorso && !senzaIntervista ? t.comune.carica : l.domanda_invia_chiedi}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {!domandaValida && domanda.length > 0 && <p className="notice">{l.domanda_corta}</p>}
+                  {errore && <p className="error" role="alert">{errore}</p>}
                   {sceltaInline ? <SceltaTipo tema={tema} onScegli={scegliTipo} /> : (
                     /* Sul telefono: ciò che si è scelto nei dialoghi, e il modo di cambiarlo. */
                     <div className={stili.sceltaRiassunto}>
@@ -924,15 +984,7 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
             <section className="read-panel dark" aria-labelledby="titolo-rito">
               <p className="eyebrow">{l.pannello_rito}</p>
               <div className={stili.console}>
-                {/* Il pulsante subito sotto «Il tuo rito»: sul telefono non deve stare in fondo a un pannello lungo. */}
-                {fase === "preparazione" && !serveAccount && (
-                  <button type="button" className="button button-brass" disabled={!stesaId || inCorso || !domandaValida}
-                    onClick={chiediInizio} data-an="rito" data-an-passo="inizia">
-                    {inCorso ? t.comune.carica : speciale && !personeFatte ? t.comune.avanti : l.inizia}
-                  </button>
-                )}
-                {fase === "preparazione" && !domandaValida && domanda.length > 0 && <p className="notice dark">{l.domanda_corta}</p>}
-                {errore && fase === "preparazione" && <p className="error" role="alert">{errore}</p>}
+                {/* Gli invii stanno sotto la domanda, nel pannello della conversazione. */}
                 <h2 id="titolo-rito" className="console-status">{l.console_attesa}</h2>
                 {!(stesa && fase === "preparazione" && !serveAccount) && <p className={stili.consoleTesto}>{l.console_attesa_testo}</p>}
                 {/* Ciò che si può leggere se si vuole: in riquadri a parte, chiusi, perché si capisca che è facoltativo. */}
@@ -981,8 +1033,13 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
     && (fase === "mescolamento" || fase === "taglio" || fase === "scelta" || fase === "rivelazione" || fase === "pronto-sintesi");
   const contenutoRito = (
     <>
-                <h2 id="titolo-console" className={`console-status ${stili.istruzione}`} aria-live="polite">{stato.etichetta}</h2>
-                {stato.testo && <p className={`${stili.consoleTesto} ${stili.soloAmpio}`}>{stato.testo}</p>}
+                {/* Durante taglio e scelta l'istruzione sta sopra le carte (`istruzioneCarte`): qui resta solo per
+                  * chi usa un lettore di schermo. */}
+                <h2 id="titolo-console" aria-live="polite"
+                  className={fase === "taglio" || fase === "scelta" ? "sr-only" : `console-status ${stili.istruzione}`}>
+                  {stato.etichetta}
+                </h2>
+                {stato.testo && fase !== "scelta" && <p className={`${stili.consoleTesto} ${stili.soloAmpio}`}>{stato.testo}</p>}
                 {fase === "scelta" && <p className={`small ${stili.soloAmpio}`} style={{ margin: 0, color: "#d9cade" }}>{l.console_scelta_sigillo}</p>}
                 <LayoutGroup>
                   {stesa && fase !== "crisi" && (
@@ -996,27 +1053,33 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
                   )}
                   <div className={stili.zona}>
                     <AnimatePresence mode="wait">
+                      {/* L'istruzione di ogni passo sta 5 px sopra il mazzo, grande: per la mescolata è anche il
+                        * pulsante che la ferma. */}
                       {fase === "mescolamento" && (
-                        <motion.div key="m" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <motion.div key="m" className={stili.conIstruzione} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                          <button type="button" className={`${stili.istruzioneCarte} ${stili.istruzionePulsante} ${stili.sopraMescolata}`} onClick={fermaMescolata}>
+                            {l.ferma}
+                          </button>
                           <Mescolamento onFerma={fermaMescolata} />
                         </motion.div>
                       )}
                       {fase === "taglio" && (
-                        <motion.div key="t" style={{ width: "100%" }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <motion.div key="t" className={stili.conIstruzione} style={{ width: "100%" }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                          <p className={`${stili.istruzioneCarte} ${stili.sopraTaglio}`} aria-hidden="true">{l.console_taglio}</p>
                           <Taglio onTaglia={taglia} />
                         </motion.div>
                       )}
                     </AnimatePresence>
                     {fase === "scelta" && (
-                      <Ventaglio quante={slotTotali} scelte={scelte} attivo={daScegliere > 0} onScegli={scegli} />
+                      <div className={stili.conIstruzione} style={{ width: "100%" }}>
+                        <p className={`${stili.istruzioneCarte} ${stili.sopraVentaglio}`}>{daScegliere === 1 ? l.scegli_uno : f(l.scegli_n, { n: daScegliere })}</p>
+                        <Ventaglio quante={slotTotali} scelte={scelte} attivo={daScegliere > 0} onScegli={scegli} />
+                      </div>
                     )}
                   </div>
                 </LayoutGroup>
                 {fase === "pronto-mescolare" && (
                   <button type="button" className={`button button-brass ${stili.pulsa}`} onClick={mescola}>{l.mescola}</button>
-                )}
-                {fase === "mescolamento" && (
-                  <button type="button" className="button button-light" onClick={fermaMescolata}>{l.ferma}</button>
                 )}
                 {(fase === "rivelazione" || fase === "pronto-sintesi") && (
                   <button type="button" className={`button button-brass ${stili.pulsa}`} disabled={rivelazioneInCorso} onClick={() => void rivelaTutto()}

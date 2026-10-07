@@ -41,10 +41,15 @@ String varianteDelDispositivo(Archivio archivio, int percentualeChat, {math.Rand
   return scelta;
 }
 
-/// `/read?…` → `/read-chat?…` o `/read-classic?…`; `null` per ogni altro percorso.
+/// `/read?…` → `/read-chat?…` o `/read-classic?…`; `null` per ogni altro percorso. Con `?anteprima=chat|classica`
+/// (la scelta di un admin tenendo premuto «Inizia una lettura») quella versione, senza toccare l'archivio; il parametro
+/// resta, e la pagina non si riallinea al profilo.
 String? smistaLettura(Uri uri, Archivio archivio, int percentualeChat, {math.Random? caso}) {
   final percorso = uri.path.replaceAll(RegExp(r'/$'), '');
   if (percorso != R.leggi) return null;
-  final verso = VarianteLettura.percorso(varianteDelDispositivo(archivio, percentualeChat, caso: caso));
+  final anteprima = uri.queryParameters['anteprima'];
+  final verso = VarianteLettura.valida(anteprima)
+      ? VarianteLettura.percorso(anteprima!)
+      : VarianteLettura.percorso(varianteDelDispositivo(archivio, percentualeChat, caso: caso));
   return uri.hasQuery ? '$verso?${uri.query}' : verso;
 }

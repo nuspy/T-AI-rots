@@ -189,6 +189,10 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
   String? _errore;
   bool _inCorso = false;
 
+  /// Quale dei due invii della domanda: «Invia quesito e inizia a mescolare le carte» (vero: senza intervista) o
+  /// «Invia domanda e chiedimi pure». Resta fino all'apertura, anche dopo l'avvertenza, l'età o il dialogo del limite.
+  bool _saltaIntervista = false;
+
   List<Battuta> _battute = [];
   bool _attesa = false;
   int _slotTotali = 0;
@@ -400,9 +404,10 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
       _persone = personeDaProfilo(profilo, _persone);
     }
     // v9.5: chi ha un account ha la sua versione nel profilo (la prima con cui ha letto): se questa pagina è l'altra,
-    // si passa a quella giusta con gli stessi parametri, e il dispositivo si allinea (lo smistatore lo legge).
+    // si passa a quella giusta con gli stessi parametri, e il dispositivo si allinea (lo smistatore lo legge). Non con
+    // `?anteprima=`: la versione l'ha scelta un admin tenendo premuto «Inizia una lettura».
     final sua = profilo?.varianteLettura;
-    if (!_varianteAllineata && VarianteLettura.valida(sua)) {
+    if (!_varianteAllineata && VarianteLettura.valida(sua) && _p['anteprima'] == null) {
       _varianteAllineata = true;
       final archivio = ref.read(archivioProvider);
       if (archivio.leggi(chiaveVarianteLettura) != sua) unawaited(archivio.scrivi(chiaveVarianteLettura, sua));
@@ -648,8 +653,9 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
     _stesaId = null;
   });
 
-  Future<void> _chiediInizio(String categoria, bool domandaValida) async {
+  Future<void> _chiediInizio(String categoria, bool domandaValida, {bool salta = false}) async {
     final t = context.t;
+    _set(() => _saltaIntervista = salta);
     if (!domandaValida) {
       _set(() => _errore = t.lettura_domanda_corta);
       return;
@@ -811,6 +817,17 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
       });
       ref.invalidate(contoProvider);
       ref.invalidate(profiloProvider);
+      if (_saltaIntervista) {
+        // Senza domande: il quadro dalla sola domanda, poi subito la mescolata. Se il server rifiuta (il minimo è
+        // cambiato nel frattempo), si fa l'intervista.
+        _traccia('interview_choice', {'scelta': 'salta', 'n': 0});
+        await _passoIntervista(id, null, basta: true);
+        if (_fase == FaseLettura.prontoMescolare) {
+          _mescola();
+          return;
+        }
+        _set(() => _errore = null);
+      }
       await _passoIntervista(id, null);
     } on ErroreApi catch (e) {
       await _erroreApertura(e);
@@ -1449,6 +1466,62 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
 
   /* ---- la preparazione ---- */
 
+  /// «Invia quesito e inizia a mescolare le carte» (solo col minimo di domande a zero) e «Invia domanda e chiedimi
+  /// pure»; nelle letture speciali, prima dei dati delle persone, solo «Avanti». Sul telefono uno per riga.
+  Widget _inviiDomanda(
+    AppLocalizations t,
+    String categoria,
+    bool domandaValida, {
+    required bool speciale,
+    required bool stretto,
+  }) {
+    final senzaMinimo = (ref.watch(impostazioniProvider).value?.intervistaMinDomande ?? 0) == 0;
+    final bloccato = _stesaId == null || _inCorso;
+    final bottoni = speciale && !_personeFatte
+        ? [
+            Bottone(
+              _inCorso ? t.comune_carica : t.comune_avanti,
+              variante: Variante.ottone,
+              pieno: stretto,
+              an: 'rito',
+              anProprieta: const {'passo': 'inizia'},
+              alTocco: bloccato ? null : () => unawaited(_chiediInizio(categoria, domandaValida)),
+            ),
+          ]
+        : [
+            if (senzaMinimo)
+              Bottone(
+                _inCorso && _saltaIntervista ? t.comune_carica : t.lettura_domanda_invia_mescola,
+                variante: Variante.ottone,
+                pieno: stretto,
+                an: 'rito',
+                anProprieta: const {'passo': 'inizia_mescola'},
+                alTocco: bloccato || !domandaValida
+                    ? null
+                    : () => unawaited(_chiediInizio(categoria, domandaValida, salta: true)),
+              ),
+            Bottone(
+              _inCorso && !_saltaIntervista ? t.comune_carica : t.lettura_domanda_invia_chiedi,
+              variante: senzaMinimo ? Variante.quieto : Variante.ottone,
+              pieno: stretto,
+              an: 'rito',
+              anProprieta: const {'passo': 'inizia'},
+              alTocco: bloccato || !domandaValida ? null : () => unawaited(_chiediInizio(categoria, domandaValida)),
+            ),
+          ];
+    return Padding(
+      padding: const EdgeInsets.only(top: 12.8),
+      child: stretto
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final (k, b) in bottoni.indexed) ...[if (k > 0) const SizedBox(height: 8), b],
+              ],
+            )
+          : Wrap(spacing: 8, runSpacing: 8, children: bottoni),
+    );
+  }
+
   Widget _preparazione(BuildContext context, List<Stesa> stese, Stesa? stesa, String categoria) {
     final t = context.t;
     final sessione = ref.watch(sessioneProvider);
@@ -1486,6 +1559,10 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
               padding: const EdgeInsets.only(top: 16),
               child: Paragrafo(t.lettura_domanda_facoltativa, style: stilePiccolo()),
             ),
+          // I due invii, subito sotto la domanda: senza intervista (solo col minimo di domande a zero) o con.
+          if (!serveAccount) _inviiDomanda(t, categoria, domandaValida, speciale: speciale, stretto: stretto),
+          if (!domandaValida && _domanda.text.isNotEmpty) Avviso(t.lettura_domanda_corta, sopra: 12),
+          if (_errore != null) Errore(_errore!, sopra: 12),
           if (sceltaInline)
             SceltaTipo(tema: _tema, alScegli: _scegliTipo)
           else
@@ -1554,23 +1631,7 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
         _Console(
           spazio: 16,
           children: [
-            if (pronto)
-              Bottone(
-                _inCorso
-                    ? t.comune_carica
-                    : speciale && !_personeFatte
-                    ? t.comune_avanti
-                    : t.lettura_inizia,
-                variante: Variante.ottone,
-                an: 'rito',
-                anProprieta: const {'passo': 'inizia'},
-                alTocco: _stesaId == null || _inCorso || !domandaValida
-                    ? null
-                    : () => unawaited(_chiediInizio(categoria, domandaValida)),
-              ),
-            if (_fase == FaseLettura.preparazione && !domandaValida && _domanda.text.isNotEmpty)
-              Avviso(t.lettura_domanda_corta, scuro: true, sopra: 0),
-            if (_errore != null && _fase == FaseLettura.preparazione) Errore(_errore!, sopra: 0),
+            // Gli invii stanno sotto la domanda, nel pannello della conversazione.
             Semantics(header: true, child: Text(t.lettura_console_attesa.toUpperCase(), style: stileStatoConsole())),
             if (!(stesa != null && pronto)) _TestoConsole(t.lettura_console_attesa_testo),
             if (stesa != null && pronto)
@@ -1831,11 +1892,26 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
       _ => null,
     };
 
+    // L'istruzione di ogni passo sta 5 px sopra il mazzo, grande (`_IstruzioneCarte`): per la mescolata è anche il
+    // pulsante che la ferma. Durante taglio e scelta non si ripete in cima alla console.
+    // Ogni mazzo lascia sopra le carte un margine per le sue animazioni (mescolata 18 + 10, taglio 8 + 12, ventaglio
+    // 30): il mazzo sale di tanto, così le carte restano a 5 px dalla scritta.
+    final (istruzioneCarte, margineMazzo) = switch (_fase) {
+      FaseLettura.mescolamento => (_IstruzioneCarte(t.lettura_ferma, alTocco: _fermaMescolata), 28.0),
+      FaseLettura.taglio => (_IstruzioneCarte(t.lettura_console_taglio), 20.0),
+      FaseLettura.scelta => (
+        _IstruzioneCarte(daScegliere == 1 ? t.lettura_scegli_uno : t.lettura_scegli_n(daScegliere)),
+        30.0,
+      ),
+      _ => (null, 0.0),
+    };
+    final sopraLeCarte = _fase == FaseLettura.taglio || _fase == FaseLettura.scelta;
+
     return _Console(
       spazio: inDialogo ? 9.6 : (telefono && inRito ? 8.8 : 16),
       children: [
-        if (!inDialogo) _Istruzione(stato.etichetta, pillola: telefono && inRito),
-        if (stato.testo != null && soloAmpio) _TestoConsole(stato.testo!),
+        if (!inDialogo && !sopraLeCarte) _Istruzione(stato.etichetta, pillola: telefono && inRito),
+        if (stato.testo != null && soloAmpio && _fase != FaseLettura.scelta) _TestoConsole(stato.testo!),
         if (_fase == FaseLettura.scelta && soloAmpio)
           Paragrafo(t.lettura_console_scelta_sigillo, style: Stile.sans(13.44, colore: const Color(0xFFD9CADE))),
         if (stesa != null && _fase != FaseLettura.crisi)
@@ -1862,17 +1938,25 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
             width: double.infinity,
             child: Column(
               children: [
-                AnimatedSwitcher(
-                  duration: durata,
-                  child: zona ?? const SizedBox.shrink(key: ValueKey('vuoto')),
-                ),
-                if (_fase == FaseLettura.scelta && stesa != null)
-                  Ventaglio(
-                    quante: _slotTotali,
-                    scelte: _scelte,
-                    attivo: daScegliere > 0,
-                    alScegli: (slot) => unawaited(_scegli(slot, stesa)),
+                if (istruzioneCarte != null) ...[istruzioneCarte, const SizedBox(height: 5)],
+                Transform.translate(
+                  offset: Offset(0, -margineMazzo),
+                  child: Column(
+                    children: [
+                      AnimatedSwitcher(
+                        duration: durata,
+                        child: zona ?? const SizedBox.shrink(key: ValueKey('vuoto')),
+                      ),
+                      if (_fase == FaseLettura.scelta && stesa != null)
+                        Ventaglio(
+                          quante: _slotTotali,
+                          scelte: _scelte,
+                          attivo: daScegliere > 0,
+                          alScegli: (slot) => unawaited(_scegli(slot, stesa)),
+                        ),
+                    ],
                   ),
+                ),
               ],
             ),
           ),
@@ -1880,8 +1964,6 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
           Respiro(
             child: Bottone(t.lettura_mescola, variante: Variante.ottone, alTocco: _mescola),
           ),
-        if (_fase == FaseLettura.mescolamento)
-          Bottone(t.lettura_ferma, variante: Variante.chiaro, alTocco: _fermaMescolata),
         if (_fase == FaseLettura.rivelazione || _fase == FaseLettura.prontoSintesi)
           Respiro(
             attivo: !_rivelazioneInCorso,
@@ -2023,6 +2105,43 @@ class _Istruzione extends StatelessWidget {
   }
 }
 
+/// L'istruzione di un passo del rito (ferma la mescolata, taglia, scegli), grande, subito sopra il mazzo. Con
+/// [alTocco] è un pulsante a pillola (tocco ≥ 48 px).
+class _IstruzioneCarte extends StatelessWidget {
+  const _IstruzioneCarte(this.testo, {this.alTocco});
+
+  final String testo;
+  final VoidCallback? alTocco;
+
+  @override
+  Widget build(BuildContext context) {
+    final scritta = Text(
+      testo,
+      textAlign: TextAlign.center,
+      style: Stile.serif(24, altezza: 1.2, colore: const Color(0xFFFFF7E8)).copyWith(
+        shadows: const [Shadow(color: Color(0x73000000), offset: Offset(0, 1), blurRadius: 2)],
+      ),
+    );
+    final tocco = alTocco;
+    if (tocco == null) return Semantics(header: true, liveRegion: true, child: scritta);
+    return Premibile(
+      alTocco: tocco,
+      pulsante: true,
+      etichetta: testo,
+      costruisci: (context, premuto) => Container(
+        constraints: const BoxConstraints(minHeight: 48),
+        padding: const EdgeInsets.symmetric(horizontal: 17.6, vertical: 5.6),
+        decoration: BoxDecoration(
+          color: premuto ? const Color(0x5CB28336) : const Color(0x38B28336),
+          border: Border.all(color: Token.brassPale),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Center(widthFactor: 1, child: scritta),
+      ),
+    );
+  }
+}
+
 /// `.consoleTesto`: il corsivo della console (al massimo 34ch).
 class _TestoConsole extends StatelessWidget {
   const _TestoConsole(this.testo);
@@ -2064,6 +2183,7 @@ class _CampoDomanda extends StatefulWidget {
 
 class _CampoDomandaState extends State<_CampoDomanda> {
   final FocusNode _fuoco = FocusNode(debugLabel: 'domanda');
+  final GlobalKey<EditableTextState> _campo = GlobalKey(debugLabel: 'campo');
 
   @override
   void initState() {
@@ -2087,7 +2207,7 @@ class _CampoDomandaState extends State<_CampoDomanda> {
       textField: true,
       label: widget.etichetta,
       child: GestureDetector(
-        onTap: _fuoco.requestFocus,
+        onTap: () => mostraTastiera(_fuoco, _campo),
         child: Container(
           constraints: const BoxConstraints(minHeight: 120),
           padding: const EdgeInsets.all(13.6),
@@ -2106,6 +2226,7 @@ class _CampoDomandaState extends State<_CampoDomanda> {
                   child: Text(widget.segnaposto, style: stile.copyWith(color: Colori.segnaposto)),
                 ),
               EditableText(
+                key: _campo,
                 controller: widget.controllore,
                 focusNode: _fuoco,
                 style: stile,

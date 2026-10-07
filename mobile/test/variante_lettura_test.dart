@@ -38,6 +38,18 @@ void main() {
     expect(chat, inInclusiveRange(860, 940));
   });
 
+  test('`?anteprima=` (la scelta di un admin) mostra quella versione senza toccare il dispositivo', () async {
+    final a = ArchivioMemoria({chiaveVarianteLettura: 'chat'});
+    expect(smistaLettura(Uri.parse('/read?anteprima=classica'), a, 100), '/read-classic?anteprima=classica');
+    final nuovo = ArchivioMemoria();
+    expect(smistaLettura(Uri.parse('/read?anteprima=chat'), nuovo, 0), '/read-chat?anteprima=chat');
+    await Future<void>.delayed(Duration.zero);
+    expect(a.valori[chiaveVarianteLettura], 'chat');
+    expect(nuovo.valori.containsKey(chiaveVarianteLettura), isFalse);
+    // Un valore che non è una versione non conta.
+    expect(smistaLettura(Uri.parse('/read?anteprima=boh'), a, 100), '/read-chat?anteprima=boh');
+  });
+
   test('un valore sconosciuto salvato si rifà; gli altri percorsi non si toccano', () {
     final a = ArchivioMemoria({chiaveVarianteLettura: 'boh'});
     expect(smistaLettura(Uri.parse('/read'), a, 100), '/read-chat');

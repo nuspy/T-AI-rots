@@ -48,6 +48,15 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .primary-nav a:hover, .primary-nav a[aria-current="page"] { color: var(--brass-pale); }
 .primary-nav a[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--brass-pale); }
 .header-actions { display: flex; align-items: center; gap: .6rem; }
+/* «Inizia una lettura» e, solo per gli admin (pressione lunga o tasto destro), la scelta della versione. */
+.cta-lettura { position: relative; }
+.cta-lettura > .button { -webkit-touch-callout: none; user-select: none; }
+.menu-versioni { position: absolute; top: calc(100% + .4rem); right: 0; z-index: 60; display: grid; gap: .5rem;
+  width: min(18rem, calc(100vw - 32px)); padding: .9rem; border: 1px solid var(--line); color: var(--ink);
+  background: var(--paper); box-shadow: 0 14px 30px rgba(0, 0, 0, .25); }
+.menu-versioni p { margin: 0; font-weight: 600; }
+.menu-versioni .button { min-height: 48px; }
+.menu-versioni small { color: var(--ink-soft); line-height: 1.4; }
 .text-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 .3rem; border: 0; background: none; font-size: .84rem; color: #f3e8d8; white-space: nowrap; }
 .text-link:hover { color: var(--brass-pale); }
 .lang-select { position: relative; display: inline-flex; align-items: center; }

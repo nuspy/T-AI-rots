@@ -1351,6 +1351,25 @@ class AppLocalizationsIt extends AppLocalizations {
   String get lettura_inizia => 'Basta con la domanda, vai al rito';
 
   @override
+  String get lettura_domanda_invia_mescola => 'Invia quesito e inizia a mescolare le carte';
+
+  @override
+  String get lettura_domanda_invia_chiedi => 'Invia domanda e chiedimi pure';
+
+  @override
+  String get lettura_versione_titolo => 'Quale versione della lettura?';
+
+  @override
+  String get lettura_versione_classica => 'Classica';
+
+  @override
+  String get lettura_versione_chat => 'Tutta in chat';
+
+  @override
+  String get lettura_versione_nota =>
+      'Solo per gli admin: questa apertura non cambia la tua versione salvata né la prova.';
+
+  @override
   String get lettura_carte_svelate => 'Le carte, una per una';
 
   @override

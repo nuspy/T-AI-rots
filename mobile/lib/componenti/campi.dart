@@ -126,6 +126,7 @@ class _CampoTestoState extends State<CampoTesto> {
 
   TextEditingController get _testo => widget.controllore ?? (_proprio ??= TextEditingController());
   FocusNode get _fuoco => widget.fuoco ?? (_fuocoProprio ??= FocusNode());
+  final GlobalKey<EditableTextState> _campo = GlobalKey(debugLabel: 'campo');
 
   @override
   void initState() {
@@ -177,6 +178,7 @@ class _CampoTestoState extends State<CampoTesto> {
                   : const SizedBox.shrink(),
             ),
           EditableText(
+            key: _campo,
             controller: _testo,
             focusNode: _fuoco,
             autofocus: widget.autofocus,
@@ -219,7 +221,7 @@ class _CampoTestoState extends State<CampoTesto> {
                     child: Text(widget.etichetta!, style: stileEtichettaCampo(scuro: widget.scuro)),
                   ),
                 ),
-              GestureDetector(onTap: _fuoco.requestFocus, child: campo),
+              GestureDetector(onTap: () => mostraTastiera(_fuoco, _campo), child: campo),
               if (widget.nota != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 5.6),
@@ -300,10 +302,7 @@ class CampoScelta<T> extends StatelessWidget {
                   color: v == valore ? Token.plum : (premuto ? Token.mist : null),
                   border: const Border(bottom: BorderSide(color: Token.line)),
                 ),
-                child: Text(
-                  testo,
-                  style: Stile.sans(16, colore: v == valore ? const Color(0xFFFFF7E8) : Token.ink),
-                ),
+                child: Text(testo, style: Stile.sans(16, colore: v == valore ? const Color(0xFFFFF7E8) : Token.ink)),
               ),
             ),
         ],
@@ -338,7 +337,9 @@ class CampoScelta<T> extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Expanded(child: Text(testo, style: Stile.sans(16, colore: Token.ink, altezza: 1.5))),
+                    Expanded(
+                      child: Text(testo, style: Stile.sans(16, colore: Token.ink, altezza: 1.5)),
+                    ),
                     Text('▾', style: Stile.sans(12, colore: Token.inkSoft)),
                   ],
                 ),
@@ -577,8 +578,7 @@ class Interruttore extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(titolo, style: Stile.sans(16, colore: Token.ink, altezza: 1.4)),
-                      if (testo != null)
-                        Text(testo!, style: Stile.sans(12.8, colore: Token.inkSoft, altezza: 1.4)),
+                      if (testo != null) Text(testo!, style: Stile.sans(12.8, colore: Token.inkSoft, altezza: 1.4)),
                     ],
                   ),
                 ),
@@ -902,4 +902,11 @@ class _PuntiniState extends State<Puntini> with SingleTickerProviderStateMixin {
       ),
     );
   }
+}
+
+/// Un tocco su un campo di testo: il fuoco e la tastiera. `requestFocus` da solo non basta quando il campo ha già il
+/// fuoco ma la tastiera è stata chiusa (tasto Indietro di Android): il campo resta evidenziato e la tastiera non torna.
+void mostraTastiera(FocusNode fuoco, GlobalKey<EditableTextState> campo) {
+  fuoco.requestFocus();
+  campo.currentState?.requestKeyboard();
 }

@@ -48,6 +48,14 @@ async function percentualeChat(): Promise<number> {
 }
 
 async function smistaLettura(richiesta: NextRequest, lingua: string): Promise<NextResponse> {
+  /* `?anteprima=chat|classica`: la versione scelta da un admin nel menu di «Inizia una lettura». Si mostra quella,
+   * senza toccare il cookie (la prova resta com'era); il parametro resta, così la pagina non si riallinea al profilo. */
+  const anteprima = richiesta.nextUrl.searchParams.get("anteprima");
+  if (anteprima === "chat" || anteprima === "classica") {
+    const url = richiesta.nextUrl.clone();
+    url.pathname = `${lingua === "it" ? "/it" : ""}${anteprima === "chat" ? "/read-chat" : "/read-classic"}`;
+    return NextResponse.redirect(url, 307);
+  }
   const salvata = richiesta.cookies.get(COOKIE_VARIANTE)?.value;
   const variante = salvata === "chat" || salvata === "classica"
     ? salvata
