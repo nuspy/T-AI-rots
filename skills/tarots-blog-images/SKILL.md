@@ -205,6 +205,9 @@ python scripts/tarots_images.py inline <id> --replace 0 "<the path generate prin
 ```
 (`generate --article <id>` prints these `cover` / `inline` lines ready, with the file; `cover <id> <file>
 --dry-run` shows what would change before the real swap.)
+- A `generate --article` that **gets no picture** (LitMedia error, not enough credits, budget) is recorded as a
+  failure for that article (`_failed` in the record): it is the only thing that lets `tarots_blog.py post
+  --no-cover` save an article without a cover. A refused prompt is not a failure: fix it and run `generate` again.
 - **Look at every picture before swapping it in** (open the file). Reject it if it is a picture of cards anyway (a
   card filling the frame, a spread, a deck, cards in a hand), has text or letters, a malformed hand or face, or has
   nothing to do with the article. A second try is a **rewritten** prompt with a new form (the same prompt and the

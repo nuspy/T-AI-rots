@@ -98,7 +98,7 @@ def make_article(slug="samhain-tarot-spread", *, keyword="samhain tarot spread",
     assert tb.main(["new", slug]) == tb.EXIT_OK
     folder = tb.work_root() / f"{TODAY}-{slug}"
     data = {**tb.skeleton(slug), "title": "A Samhain Tarot Spread for the Turning Year", "focus_keyword": keyword,
-            "seo_title": "Samhain Tarot Spread: Five Cards for the Thin Night", **fields}
+            "seo_title": "Samhain Tarot Spread: Five Cards for the Thin Night", "section": "learn-tarot", **fields}
     (folder / "article.json").write_text(json.dumps(data), encoding="utf-8")
     (folder / "article.md").write_text(body, encoding="utf-8")
     return folder
@@ -200,7 +200,8 @@ def test_an_article_inside_the_skill_folder_is_refused(blog, tmp_path, monkeypat
     (skill / "article.json").write_text(json.dumps({"title": "T", "body": "B"}), encoding="utf-8")
     assert tb.main(["check", str(skill / "article.json")]) == tb.EXIT_USAGE
     assert "inside the skill's folder" in capsys.readouterr().err and blog.calls == []
-    (skill / "assets" / "example.json").write_text(json.dumps({"title": "T", "body": "B"}), encoding="utf-8")
+    (skill / "assets" / "example.json").write_text(json.dumps({"title": "T", "body": "B", "section": "learn-tarot"}),
+                                                   encoding="utf-8")
     assert tb.main(["check", str(skill / "assets" / "example.json")]) == tb.EXIT_OK  # the example stays usable
 
 
@@ -231,6 +232,14 @@ def test_post_finds_a_bare_cover_name_in_foto(blog):
 
 COVER_PROMPT = ("An orchard of old apple trees at the edge of a village, lanterns hung in the branches for a harvest "
                 "feast, seen from above, " + ti.HOUSE_STYLE)
+
+
+def _failed_cover(slug="samhain-tarot-spread", reason="LitMedia did not return a picture"):
+    """A `tarots_images.py generate --article` that failed, as it records it: what `post --no-cover` asks for."""
+    data = json.loads(tb.PROGRESS_PATH.read_text(encoding="utf-8")) if tb.PROGRESS_PATH.exists() else {}
+    data.setdefault("_failed", []).append({"role": "cover", "article": slug, "reason": reason,
+                                           "when": "2099-01-01T00:00:00+00:00"})
+    tb.PROGRESS_PATH.write_text(json.dumps(data), encoding="utf-8")
 
 
 def _generated_cover(folder, name="cover.jpg", content=b"\xff\xd8 lantern orchard", prompt=COVER_PROMPT):
@@ -306,11 +315,13 @@ def test_two_covers_in_foto_ask_to_choose(blog, capsys):
 
 def test_no_cover_saves_without_a_picture_and_says_so(blog, capsys):
     make_article()
+    _failed_cover("samhain-tarot-spread")
     assert tb.main(["post", "samhain-tarot-spread", "--no-cover"]) == tb.EXIT_OK
     assert "saved WITHOUT a cover" in capsys.readouterr().err and "/media" not in blog.paths()
     # with a cover still in foto/, --no-cover leaves it out and says so
     folder = make_article("lantern-night", keyword="lantern night tarot")
     _generated_cover(folder)
+    _failed_cover("lantern-night")
     assert tb.main(["post", "lantern-night", "--no-cover"]) == tb.EXIT_OK
     assert "foto/ has cover.jpg, NOT used" in capsys.readouterr().err
     with pytest.raises(SystemExit):                          # --cover and --no-cover together: a usage error
@@ -428,7 +439,7 @@ def test_a_half_filled_subject_is_an_error(subject):
      'the subject is the Tower, but "section" is «love»: an article about a card goes in that card\'s section. '
      'Set "section": "major-arcana"'),
     ({"subject": {"type": "card", "ref": "coppe-01"}, "section": "major-arcana"}, "WARN", 'Set "section": "cups"'),
-    ({"subject": {"type": "card", "ref": "maj-16"}}, "note", "the server puts the article in «major-arcana»"),
+    ({"subject": {"type": "card", "ref": "maj-16"}, "section": ""}, "note", "the server puts the article in «major-arcana»"),
     ({"title": "The Hermit in the Thoth deck", "section": "love"}, "WARN",
      'no "subject" is set, and the title or the focus keyword names the Hermit, but "section" is «love»'),
     ({"subject": {"type": "card", "ref": "maj-99"}}, "WARN", "is not a card the script knows"),
@@ -500,7 +511,8 @@ def test_next_turns_every_warning_into_one_precise_instruction(blog, capsys):
     assert tb.main(["check", "samhain-tarot-spread"]) == tb.EXIT_SCORE
     out = capsys.readouterr().out
     assert "NEXT — fix only these, do not rewrite the rest (round 1 of 4):" in out
-    assert f'seo_title is {len(LONG_TITLE)} chars: cut it to ≤ 60, keyword first: current = "{LONG_TITLE}"' in out
+    assert (f'seo_title is {len(LONG_TITLE)} chars: cut it to ≤ 60, keep it a real title (never a list of keywords): '
+            f'current = "{LONG_TITLE}"') in out
     assert "seo_description is 68 chars: lengthen it to 120-160 (add 52+" in out
     assert ('the keyword "samhain tarot spread" is not in the first 100 words: edit ONLY the first paragraph and put '
             "the exact phrase in it") in out
@@ -549,6 +561,7 @@ def test_an_empty_alt_is_an_action(blog):
 def test_post_below_the_score_prints_next_and_saves_nothing(blog, capsys):
     make_article()
     blog.seo = report(70, item("collegamenti_esterni", esterni=0))
+    _failed_cover("samhain-tarot-spread")
     assert tb.main(["post", "samhain-tarot-spread", "--no-cover"]) == tb.EXIT_SCORE
     captured = capsys.readouterr()
     assert "no external link" in captured.out and "Not saved" in captured.err
@@ -559,6 +572,7 @@ def test_a_fix_left_is_not_a_pass_even_above_the_score(blog, capsys):
     make_article()
     blog.seo = report(88, item("descrizione_seo", "errore", 2, caratteri=0))
     assert tb.main(["check", "samhain-tarot-spread"]) == tb.EXIT_SCORE
+    _failed_cover("samhain-tarot-spread")
     assert tb.main(["post", "samhain-tarot-spread", "--no-cover"]) == tb.EXIT_SCORE
     blog.seo = report(88, item("collegamenti_esterni", esterni=0))
     assert tb.main(["check", "samhain-tarot-spread"]) == tb.EXIT_OK
@@ -640,6 +654,7 @@ def test_a_pass_on_the_fifth_round_is_not_a_stop(blog, capsys):
     blog.seo = report(90)
     assert tb.main(["check", "samhain-tarot-spread"]) == tb.EXIT_OK
     assert "PASS (round 5)" in capsys.readouterr().out
+    _failed_cover("samhain-tarot-spread")
     assert tb.main(["post", "samhain-tarot-spread", "--no-cover"]) == tb.EXIT_OK
 
 

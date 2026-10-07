@@ -65,7 +65,7 @@ def env(tmp_path, monkeypatch):
     api = FakeApi()
     monkeypatch.setattr(tb, "call", api)
     article = tmp_path / "article.json"
-    article.write_text(json.dumps({"title": "The Tower", "body": "text", "status": "draft"}), encoding="utf-8")
+    article.write_text(json.dumps({"title": "The Tower", "body": "text", "status": "draft", "section": "learn-tarot"}), encoding="utf-8")
     return tmp_path, api, str(article)
 
 
@@ -172,7 +172,7 @@ def test_post_admits_a_card_that_is_not_the_one_of_the_article(env, prompt, expe
 def test_the_subject_of_the_article_lets_its_card_in(env, capsys):
     tmp, api, _ = env
     article = tmp / "falls.json"
-    article.write_text(json.dumps({"title": "When everything falls at once", "body": "text", "status": "draft",
+    article.write_text(json.dumps({"title": "When everything falls at once", "body": "text", "status": "draft", "section": "learn-tarot",
                                    "subject": {"type": "card", "ref": "maj-16"}}), encoding="utf-8")
     cover = _generated(tmp, "cover.jpg", b"\xff\xd8 lighthouse", prompt=TOWER_CARD)
     assert tb.main(["post", str(article), "--cover", cover]) == tb.EXIT_OK
@@ -190,7 +190,7 @@ def test_post_admits_any_card_for_an_article_about_no_card(env, capsys):
     tmp, api, _ = env
     article = tmp / "libra.json"
     article.write_text(json.dumps({"title": "Tarot Meditation for Libra Season Balance", "body": "text",
-                                   "focus_keyword": "libra season tarot", "status": "draft"}), encoding="utf-8")
+                                   "focus_keyword": "libra season tarot", "status": "draft", "section": "learn-tarot"}), encoding="utf-8")
     cover = _generated(tmp, "cover.jpg", b"\xff\xd8 lighthouse", prompt=FOOL_CARD)
     # relaxed 6/10/2026: an article about no card still admits a card as context (nothing of its own to compare it to)
     assert tb.main(["post", str(article), "--cover", cover]) == tb.EXIT_OK
@@ -204,7 +204,8 @@ def test_upload_reads_the_article_of_for_in_its_work_folder_or_the_titles_copy(e
     work = tmp / "work"
     (work / "2026-10-05-the-tower-in-love").mkdir(parents=True)
     (work / "2026-10-05-the-tower-in-love" / "article.json").write_text(
-        json.dumps({"title": "The Tower in love", "focus_keyword": "tower tarot card love", "slug": "the-tower-in-love"}),
+        json.dumps({"title": "The Tower in love", "focus_keyword": "tower tarot card love", "slug": "the-tower-in-love",
+                "section": "learn-tarot"}),
         encoding="utf-8")
     monkeypatch.setenv("TAROTS_WORK_DIR", str(work))
     cache = tmp / "titles-cache.json"

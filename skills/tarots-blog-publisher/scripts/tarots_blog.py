@@ -110,7 +110,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 EXIT_OK, EXIT_USAGE, EXIT_SCORE, EXIT_API, EXIT_CONFIG, EXIT_RULE, EXIT_TAKEN = 0, 2, 3, 4, 5, 7, 8
-EXIT_KEYWORD, EXIT_STOP, EXIT_NO_COVER = 9, 10, 11
+EXIT_KEYWORD, EXIT_STOP, EXIT_NO_COVER, EXIT_TITLE, EXIT_SECTION = 9, 10, 11, 12, 13
 
 MAX_IMAGE_BYTES = 8_000_000
 IMAGE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
@@ -376,8 +376,8 @@ def normalize(article: Dict[str, Any], base_dir: Optional[Path] = None) -> Dict[
     out: Dict[str, Any] = {}
     unknown: List[str] = []
     for key, value in article.items():
-        if key == "body_file":
-            continue
+        if key in ("body_file", "series"):
+            continue  # `series` is read by `post` from article.json (article_series), never sent to the API
         if key == "subject":
             out.update(subject_fields(value))
             continue
@@ -387,7 +387,7 @@ def normalize(article: Dict[str, Any], base_dir: Optional[Path] = None) -> Dict[
         else:
             out[target] = value
     if unknown:
-        allowed = sorted(set(FIELDS) | SAME | {"body_file"})
+        allowed = sorted(set(FIELDS) | SAME | {"body_file", "series"})
         raise Failure(f"Unknown field(s): {', '.join(sorted(unknown))}. Allowed: {', '.join(allowed)}.", EXIT_USAGE)
     if "body_file" in article:
         path = Path(article["body_file"])
@@ -770,12 +770,12 @@ def next_steps(seo: Dict[str, Any], payload: Dict[str, Any]) -> List[tuple]:
         if cid == "titolo_seo":
             n = int(d.get("caratteri", len(title)))
             if not n:
-                text = f'there is no title: set "seo_title" ({TITLE_CHARS[0]}-{TITLE_CHARS[1]} chars, starting with {kq})'
+                text = f'there is no title: set "seo_title" ({TITLE_CHARS[0]}-{TITLE_CHARS[1]} chars, a real title with {kq} where it reads naturally)'
             elif n > TITLE_CHARS[1]:
-                text = f"seo_title is {n} chars: cut it to ≤ {TITLE_CHARS[1]}, keyword first: current = {_q(title)}"
+                text = f"seo_title is {n} chars: cut it to ≤ {TITLE_CHARS[1]}, keep it a real title (never a list of keywords): current = {_q(title)}"
             else:
-                text = (f"seo_title is {n} chars: lengthen it to {TITLE_CHARS[0]}-{TITLE_CHARS[1]} (add the benefit or "
-                        f"the year), keyword first: current = {_q(title)}")
+                text = (f"seo_title is {n} chars: lengthen it to {TITLE_CHARS[0]}-{TITLE_CHARS[1]} (a subtitle after a "
+                        f"colon says what the reader learns): current = {_q(title)}")
         elif cid == "descrizione_seo":
             n = int(d.get("caratteri", len(description)))
             lo, hi = DESCRIPTION_CHARS
@@ -790,7 +790,8 @@ def next_steps(seo: Dict[str, Any], payload: Dict[str, Any]) -> List[tuple]:
             text = ('there is no focus_keyword: set it to the phrase you checked with `topic-check` (2-5 words a person '
                     "would type in a search engine)")
         elif cid == "chiave_nel_titolo":
-            text = f"the keyword {kq} is not in seo_title: rewrite ONLY seo_title so it starts with the exact phrase (≤ {TITLE_CHARS[1]} chars): current = {_q(title)}"
+            text = (f"the keyword {kq} is not in seo_title: rewrite ONLY seo_title so the exact phrase is in it where it reads "
+                    f"naturally, e.g. after a colon (≤ {TITLE_CHARS[1]} chars); a title, never a list of keywords: current = {_q(title)}")
         elif cid == "chiave_nella_descrizione":
             text = f"the keyword {kq} is not in seo_description: put the exact phrase in it once, in a natural sentence: current = {_q(description, 200)}"
         elif cid == "chiave_nello_slug":
@@ -1372,8 +1373,19 @@ def cmd_new(a) -> int:
     existed = (folder / "article.json").exists()
     (folder / "foto").mkdir(parents=True, exist_ok=True)
     article, body = folder / "article.json", folder / "article.md"
+    brief: List[str] = []
     if not article.exists():
-        article.write_text(json.dumps(skeleton(slug), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        data = skeleton(slug)
+        if a.series:
+            plan = _editorial()
+            series = _series_of(plan, a.series)
+            part = next((p for p in series["parts"] if p["n"] == a.part), None)
+            if part is None:
+                raise Failure(f"--part {a.part}: the series «{series['title']}» has parts 1-{len(series['parts'])}", EXIT_USAGE)
+            data.update(title=part["title"], section=series.get("section") or "", tags=[series["tag"]],
+                        series={"id": series["id"], "part": part["n"]})
+            brief = _brief(series, part)
+        article.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     if not body.exists():
         body.write_text("", encoding="utf-8")
     paths = {"slug": slug, "folder": str(folder.resolve()), "article": str(article.resolve()),
@@ -1383,8 +1395,10 @@ def cmd_new(a) -> int:
         return EXIT_OK
     if existed:
         print("note: this work folder already exists: nothing was overwritten.")
+    for line in brief:
+        print(line)
     print(f"work folder: {paths['folder']}")
-    print(f"article:     {paths['article']}   (fill every empty field; \"subject\" and \"section\" may stay empty)")
+    print(f"article:     {paths['article']}   (fill every empty field; \"subject\" may stay empty, \"section\" not)")
     print(f"text:        {paths['body']}   (Markdown, no `# H1`, sections start at `##`)")
     print(f"pictures:    {paths['foto']}   (tarots_images.py generate ... --article {slug})")
     p = script_paths()
@@ -1407,6 +1421,10 @@ def cmd_check(a) -> int:
     payload = load_article(str(path))
     require_filled(payload, path)
     check_keyword(payload)
+    check_titles(payload)
+    check_section(payload)
+    for problem in series_problems(path, payload):
+        print(f"FIX [series] {problem}")
     seo = call("POST", "/seo-check", body={k: v for k, v in payload.items() if k != "dry_run"})
     ok = passes(seo, a.min_score)
     rounds["rounds"].append({"when": _utcnow().isoformat(timespec="seconds"), "score": seo["punteggio"]})
@@ -1955,6 +1973,14 @@ def cmd_post(a) -> int:
         cover: Optional[str] = resolve_picture(a.cover, folder)
     elif a.no_cover:
         cover = None
+        if not failed_cover_attempts(path, slug):
+            raise Failure(
+                f"--no-cover refused: no failed generation of the cover is recorded for {slug}. --no-cover is only for "
+                "a generation that FAILED (LitMedia error, no credits), and the record of tarots_images.py says it "
+                f"never ran for this article. Generate the cover now: tarots_images.py generate --article {slug} "
+                "--kind … --shot … --light … --setting \"…\" --prompt \"…\", then `post` again without --no-cover.",
+                EXIT_NO_COVER,
+            )
         left = [Path(e["file"]) for e in recorded_covers(path, slug) if Path(e["file"]).is_file()]
         left = left[-1:] or covers_in(folder or path.resolve().parent)
         print("note: --no-cover: the article is saved WITHOUT a cover. Allowed only when the generation failed: write "
@@ -1966,6 +1992,16 @@ def cmd_post(a) -> int:
     about = ([t for t in (title, payload.get("seo_parola_chiave"), subject) if t], title)
     sha = check_picture(cover, article=None, operator_image=a.operator_image, about=about) if cover else None
     check_keyword(payload)
+    check_titles(payload)
+    check_section(payload)
+    series_left = series_problems(path, payload)
+    if series_left:
+        raise Failure("part of a series, not saved: " + "; ".join(series_left) + ".", EXIT_RULE)
+    if (payload.get("stato") == "pubblicato" or payload.get("pubblicato_il")) and not a.publish:
+        payload["stato"] = "bozza"
+        payload.pop("pubblicato_il", None)
+        print("note: saved as a DRAFT: publishing (or scheduling) needs --publish, given only when the operator's "
+              "instructions for this run say to publish.", file=sys.stderr)
     if not cover and not a.no_cover:  # after the free checks: a refused keyword is fixed before a cover is generated
         raise no_cover(path, slug)
     print_subject_notes(subject_notes(payload), stream=sys.stderr)
@@ -1993,6 +2029,8 @@ def cmd_post(a) -> int:
     article = result["articolo"]
     if sha:
         record_picture(sha, cover, article=str(article["id"]), kind="cover", slug=article.get("slug"))
+    series_ref = article_series(path)
+    series_note = mark_series_part(series_ref, article, result.get("url", "")) if series_ref else None
     if a.json:
         show(result)
     else:
@@ -2001,6 +2039,10 @@ def cmd_post(a) -> int:
         print(f"cover: {cover}" if cover else "cover: none (--no-cover)")
         for warning in result.get("avvisi", []):
             print(f"note:  {warning}")
+        if series_note:
+            print(series_note)
+        print(f"RESULT saved {article.get('slug')} | status={article['stato']} | section={payload.get('sezione') or 'by subject'} "
+              f"| cover={'yes' if cover else 'NO'} | id={article['id']}")
     return EXIT_OK
 
 
@@ -2026,6 +2068,441 @@ def cmd_delete(a) -> int:
     call("DELETE", f"/posts/{urllib.parse.quote(a.id)}")
     print("deleted")
     return EXIT_OK
+
+
+# ---- titles that are titles, the section, the report of the run ------------------------------------------------
+# 7/10/2026, a small local model ran the skill five times overnight: titles made of keywords in a row («Scorpio
+# Kabalah Correspondences Tarot Spread», «Libra Season Autumn Equinox Tarot Spread») because the NEXT lines said
+# «keyword first»; no section; one article saved with --no-cover without ever generating its cover («since we can't
+# generate the cover»); a report saying five articles were posted when two were. The operator: «il titolo è
+# importante, non spazzatura per trucchi SEO».
+
+#: Words that make a sequence of nouns read as a phrase. A title of 4+ words with none of them (and no colon,
+#: question mark or dash) is a string of keywords.
+FUNCTION_WORDS = frozenset("""
+a an the of in on at to for from with without and or but nor as by into onto upon between beyond before after
+against through under over about across behind within toward towards among why how what when where who whom which
+whose is are was were be been not no its their his her this that these those than then vs versus while until
+""".split())
+#: Words a keyword-title adds to the keyword without saying anything (they do not make it a title).
+TITLE_FILLER = frozenset("""
+tarot tarots spread spreads reading readings guide guides meaning meanings card cards thoth deck decks complete
+ultimate beginner beginners explained tips practice practices correspondence correspondences
+""".split())
+
+
+def _title_words(text: str) -> List[str]:
+    return re.findall(r"[^\W\d_]+(?:'[^\W\d_]+)?", _plain(text))
+
+
+def title_problem(text: str, keyword: str) -> Optional[str]:
+    """Why a title is not a title, or None. Two cases: the keyword padded into a title (four words or more, or the
+    keyword plus filler words like «tarot spread guide»; a short name such as «Sefer Yetzirah Tarot» is a title), and
+    four or more words with no function word and no punctuation: nouns in a row."""
+    words = _title_words(text)
+    if not words:
+        return None
+    content = [w for w in words if w not in TITLE_FILLER]
+    key = [w for w in _title_words(keyword) if w not in TITLE_FILLER]
+    if key and sorted(content) == sorted(key) and (len(words) >= 4 or len(words) > len(_title_words(keyword))):
+        return "it is the focus keyword (plus words like «tarot», «spread», «guide»), not a title"
+    if len(words) >= 4 and not any(w in FUNCTION_WORDS for w in words) and not re.search(r"[:?!—–,]", text):
+        return "it is a string of keywords: nouns in a row, with no «of», «and», «the», no colon or question"
+    return None
+
+
+TITLE_EXAMPLES = (
+    "Good titles say something: «Why the Golden Dawn Swapped Strength and Justice», «The Thirty-Two Paths Before "
+    "the Tarot», «Teth and the Serpent: Reading Lust Through the Sefer Yetzirah», «What Court de Gébelin Saw in "
+    "1781, and Why It Was Wrong». The focus keyword does NOT have to be in the title: it goes in seo_title, "
+    "seo_description, the slug and the first paragraph, where it reads naturally."
+)
+
+
+def check_titles(payload: Dict[str, Any]) -> None:
+    """Free, before the API: the title and the SEO title must read as titles (exit 12)."""
+    keyword = str(payload.get("seo_parola_chiave") or "")
+    for field, name in (("titolo", "title"), ("seo_titolo", "seo_title")):
+        text = str(payload.get(field) or "").strip()
+        why = title_problem(text, keyword) if text else None
+        if why:
+            raise Failure(
+                f'{name} "{text}": {why}. Write it as an editor would: a phrase with a point, a question, or a '
+                f"name and a subtitle after a colon. {TITLE_EXAMPLES} Change only \"{name}\" in article.json.",
+                EXIT_TITLE,
+            )
+
+
+def check_section(payload: Dict[str, Any]) -> None:
+    """Every article goes in a section (exit 13). An article about a card or a spread may leave it empty: the server
+    puts it in the section of that card or spread."""
+    if str(payload.get("sezione") or "").strip():
+        return
+    subject = payload.get("subject")
+    if isinstance(subject, dict) and subject.get("tipo") in ("carta", "stesa"):
+        return
+    raise Failure(
+        '"section" is empty: every article goes in a section. Run `tarots_blog.py sections`, choose the one of type '
+        '«articoli» that fits (an essay on the Kabbalah: «kabbalah»; history; practice…) and set its slug in '
+        'article.json. A series uses the same section for every part.', EXIT_SECTION,
+    )
+
+
+def failed_cover_attempts(path: Path, slug: Optional[str]) -> List[Dict[str, Any]]:
+    """The failed `tarots_images.py generate --article` runs recorded for this article (LitMedia error, no credits),
+    after its last generated cover: the only reason `post --no-cover` accepts."""
+    slugs = _slugs_of(path, slug)
+    data = _progress()
+    covers = [e for e in data.get("_generated") or []
+              if isinstance(e, dict) and e.get("role") == "cover" and e.get("article") in slugs]
+    last_ok = str(covers[-1].get("when") or "") if covers else ""
+    return [e for e in data.get("_failed") or []
+            if isinstance(e, dict) and e.get("article") in slugs and e.get("role", "cover") == "cover"
+            and str(e.get("when") or "") > last_ok]
+
+
+def article_series(path: Path) -> Optional[Dict[str, Any]]:
+    """The `series` block of an article.json ({"id", "part"}), written by `new --series`."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    value = data.get("series") if isinstance(data, dict) else None
+    return value if isinstance(value, dict) and value.get("id") else None
+
+
+def cmd_run_report(a) -> int:
+    """What THIS key saved in the last hours, read back from the server: the only report an unattended run gives."""
+    cache = sync_titles(refresh=True)
+    since = _utcnow() - datetime.timedelta(hours=a.hours)
+    rows = [r for r in cache["articles"].values()
+            if r.get("mio") and (_parse_time(r.get("aggiornato")) or since) >= since]
+    rows.sort(key=lambda r: str(r.get("aggiornato") or ""))
+    lines = []
+    for r in rows:
+        try:
+            full = call("GET", f"/posts/{urllib.parse.quote(str(r['id']))}")
+        except Failure:
+            full = {}
+        art = full.get("articolo", full) if isinstance(full, dict) else {}
+        cover = "yes" if (art.get("immagine_id") or art.get("immagine")) else "NO"
+        lines.append({"slug": r.get("slug"), "title": r.get("titolo"), "status": r.get("stato"),
+                      "section": r.get("sezione") or "NONE", "cover": cover, "id": r.get("id")})
+    if a.json:
+        show(lines)
+        return EXIT_OK
+    print(f"# saved by this key in the last {a.hours} h, read from the server ({len(lines)}): copy these lines in "
+          "the report, as they are")
+    for x in lines:
+        print(f"SAVED {x['slug']} | {x['title']} | status={x['status']} | section={x['section']} | cover={x['cover']}")
+    if not lines:
+        print("NOTHING was saved by this key in that time.")
+    return EXIT_OK
+
+
+# ---- the editorial line: series for expert readers ---------------------------------------------------------------
+# The operator (7/10/2026): the topics were «da riviste femminili», «banalità da lettura della domenica». An evening
+# job writes ONE part of a series; the agent designs the series itself (web research), records it here, then writes
+# one part per run. The record also keeps the topics already proposed and rejected and the notes of the research,
+# so that a later run does not research the same thing again. Local file, no key in it.
+
+EDITORIAL_PATH = (Path(os.environ["TAROTS_EDITORIAL"]) if os.environ.get("TAROTS_EDITORIAL")
+                  else Path.home() / ".tarots-blog" / "editorial.json")
+SERIES_PARTS = (6, 12)
+#: Popular genres an unattended run must not choose (they filled the blog with the same article ten times).
+BANNED_TOPICS = [
+    (r"\b(?:aries|taurus|gemini|cancer|leo|virgo|libra|scorpio|sagittarius|capricorn|aquarius|pisces)\s+season\b",
+     "a «<sign> season» article"),
+    (r"\b(?:full|new|blue|harvest|super)\s+moon\b|\bmercury\s+retrograde\b|\beclipse\s+(?:spread|reading)\b",
+     "a moon-phase or transit reading"),
+    (r"\b(?:equinox|solstice|samhain|beltane|imbolc|lammas|mabon|ostara|yule|litha|halloween|new\s+year)\b"
+     r".{0,40}\b(?:spread|reading|ritual|meditation)\b|\bseasonal\s+(?:spread|reading)\b",
+     "a seasonal spread or ritual"),
+    (r"\bbeginners?\b|\bfor\s+dummies\b|\b101\b|\bhow\s+to\s+read\s+tarot\b|\bcheat\s+sheet\b",
+     "a beginner's guide"),
+    (r"\blove\b|\bsoul\s?mates?\b|\btwin\s+flames?\b|\bex\b|\bcrush\b|\brelationship\s+spread\b",
+     "a love reading"),
+    (r"\bhoroscope\b|\bmanifest\w*\b|\bself[- ]care\b|\bwitch\w*\b|\baffirmations?\b|\bmorning\s+routine\b",
+     "a lifestyle piece"),
+    (r"\b(?:yes|no)\s+(?:or|/)\s+(?:no|yes)\b|\bdaily\s+(?:card|draw|pull)\b", "a quick-answer piece"),
+]
+
+
+def banned_topic(text: str) -> Optional[str]:
+    low = _plain(text)
+    for pattern, what in BANNED_TOPICS:
+        if re.search(pattern, low):
+            return what
+    return None
+
+
+def _editorial() -> Dict[str, Any]:
+    try:
+        data = json.loads(EDITORIAL_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
+    for key in ("series", "ideas", "research"):
+        data.setdefault(key, [])
+    return data
+
+
+def _save_editorial(data: Dict[str, Any]) -> None:
+    EDITORIAL_PATH.parent.mkdir(parents=True, exist_ok=True)
+    tmp = EDITORIAL_PATH.with_name(EDITORIAL_PATH.name + ".tmp")
+    tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    os.replace(tmp, EDITORIAL_PATH)
+
+
+def open_series(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    return next((s for s in data["series"] if s.get("status") == "open"), None)
+
+
+def next_part(series: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    return next((p for p in series.get("parts") or [] if p.get("status") == "planned"), None)
+
+
+def _series_of(data: Dict[str, Any], sid: str) -> Dict[str, Any]:
+    found = next((s for s in data["series"] if s.get("id") == sid), None)
+    if found is None:
+        raise Failure(f"no series «{sid}» in {EDITORIAL_PATH}: `series status` lists them.", EXIT_USAGE)
+    return found
+
+
+def _brief(series: Dict[str, Any], part: Dict[str, Any]) -> List[str]:
+    total = len(series.get("parts") or [])
+    written = [p for p in series["parts"] if p.get("status") == "written"]
+    prev = written[-1] if written else None
+    lines = [
+        f"series: {series['title']}  (id {series['id']}, section {series.get('section') or '?'}, tag {series['tag']})",
+        f"  the series' thesis: {series.get('thesis', '')}",
+        f"part {part['n']} of {total}: {part['title']}",
+        f"  the question this part answers: {part.get('question', '')}",
+        "  sources to read and cite: " + "; ".join(part.get("sources") or series.get("sources") or []),
+    ]
+    if part.get("keyword"):
+        lines.append(f"  a possible focus keyword (check it with topic-check): {part['keyword']}")
+    if prev:
+        lines.append(f"  link the previous part inside a sentence: [[post:{prev.get('slug')}]] ({prev.get('title')})")
+    return lines
+
+
+def cmd_series(a) -> int:
+    data = _editorial()
+    action = a.action
+    if action == "status":
+        current = open_series(data)
+        if a.json:
+            show({"open": current, "closed": [s["title"] for s in data["series"] if s.get("status") == "closed"],
+                  "ideas": data["ideas"], "research": data["research"][-20:]})
+            return EXIT_OK
+        if current is None:
+            print("no open series. Design one (references/editorial-line.md): research, `ideas research` / `ideas add` for each "
+                  "candidate, then `series plan <file.json>`.")
+        else:
+            done = sum(1 for p in current["parts"] if p.get("status") == "written")
+            print(f"open series: {current['title']} ({done} of {len(current['parts'])} written)")
+            for p in current["parts"]:
+                print(f"  {p['n']:>2}. [{p.get('status')}] {p['title']}" + (f"  → {p.get('slug')}" if p.get("slug") else ""))
+            part = next_part(current)
+            if part:
+                print("next:")
+                for line in _brief(current, part):
+                    print("  " + line)
+                print(f"  start it with: tarots_blog.py new \"{slugify(part['title'])}\" --series {current['id']} "
+                      f"--part {part['n']}")
+        closed = [s for s in data["series"] if s.get("status") == "closed"]
+        if closed:
+            print("finished series (do not repeat them): " + "; ".join(s["title"] for s in closed))
+        rejected = [i for i in data["ideas"] if i.get("status") == "rejected"]
+        if rejected:
+            print(f"ideas already rejected ({len(rejected)}): " + "; ".join(i["title"] for i in rejected[-15:]))
+        return EXIT_OK
+    if action == "next":
+        current = open_series(data)
+        part = next_part(current) if current else None
+        if part is None:
+            print("no part to write: `series status` says why (no open series: design one).")
+            return EXIT_USAGE
+        for line in _brief(current, part):
+            print(line)
+        print(f"start it with: tarots_blog.py new \"{slugify(part['title'])}\" --series {current['id']} --part {part['n']}")
+        return EXIT_OK
+    if action == "plan":
+        if not a.file:
+            raise Failure("series plan needs the file of the series: series plan <series.json>", EXIT_USAGE)
+        return _plan_series(data, Path(a.file), force=a.force)
+    if action == "skip":
+        current = _series_of(data, a.series) if a.series else open_series(data)
+        if current is None or not a.part:
+            raise Failure("series skip --part N [--series ID] --reason TEXT", EXIT_USAGE)
+        part = next((p for p in current["parts"] if p["n"] == a.part), None)
+        if part is None:
+            raise Failure(f"no part {a.part} in «{current['title']}»", EXIT_USAGE)
+        part.update(status="skipped", reason=a.reason or "")
+        _close_if_done(current)
+        _save_editorial(data)
+        print(f"part {a.part} skipped")
+        return EXIT_OK
+    raise Failure(f"unknown action {action}", EXIT_USAGE)
+
+
+def _close_if_done(series: Dict[str, Any]) -> None:
+    if not any(p.get("status") == "planned" for p in series["parts"]):
+        series["status"] = "closed"
+        series["closed"] = _utcnow().isoformat(timespec="seconds")
+
+
+def _plan_series(data: Dict[str, Any], file: Path, *, force: bool) -> int:
+    try:
+        plan = json.loads(file.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise Failure(f"cannot read {file}: {exc}", EXIT_USAGE) from None
+    problems = []
+    title = str(plan.get("title") or "").strip()
+    parts = plan.get("parts") or []
+    for field in ("title", "thesis", "why", "section"):
+        if not str(plan.get(field) or "").strip():
+            problems.append(f'"{field}" is empty')
+    if len(plan.get("sources") or []) < 2:
+        problems.append('"sources": at least two real sources for the whole series (primary texts, scholars)')
+    if not SERIES_PARTS[0] <= len(parts) <= SERIES_PARTS[1]:
+        problems.append(f"{len(parts)} parts: a series has {SERIES_PARTS[0]}-{SERIES_PARTS[1]}")
+    texts = [title] + [str(p.get("title") or "") for p in parts if isinstance(p, dict)]
+    for text in texts:
+        what = banned_topic(text)
+        if what:
+            problems.append(f"«{text}» is {what}: not for this blog")
+        why = title_problem(text, "")
+        if why:
+            problems.append(f"«{text}»: {why}")
+    cache = sync_titles()
+    seen = set()
+    for i, p in enumerate(parts, 1):
+        if not isinstance(p, dict):
+            problems.append(f"part {i} is not an object")
+            continue
+        for field in ("title", "question"):
+            if not str(p.get(field) or "").strip():
+                problems.append(f'part {i}: "{field}" is empty')
+        if not p.get("sources"):
+            problems.append(f"part {i}: no sources")
+        key = _plain(str(p.get("title") or ""))
+        if key in seen:
+            problems.append(f"part {i} repeats another part's title")
+        seen.add(key)
+        matches = topic_matches(str(p.get("title") or ""), list(cache["articles"].values()))
+        if topic_verdict(matches) == "TAKEN":
+            problems.append(f"part {i} «{p.get('title')}» is TAKEN by {title_line(matches[0]['row'])}")
+    old = [s for s in data["series"] if topic_similarity(topic_words(s["title"]), topic_words(title)) >= TOPIC_TAKEN]
+    if old:
+        problems.append(f"the series «{title}» repeats «{old[0]['title']}»")
+    current = open_series(data)
+    if current and not force:
+        problems.append(f"«{current['title']}» is still open: finish it (or `series skip`) before planning another")
+    if problems:
+        raise Failure("series not recorded:\n  - " + "\n  - ".join(problems), EXIT_RULE)
+    sid = slugify(plan.get("id") or title, 60)
+    if any(s["id"] == sid for s in data["series"]):
+        sid = f"{sid}-{len(data['series']) + 1}"
+    series = {
+        "id": sid, "title": title, "thesis": plan["thesis"], "why": plan["why"], "section": plan["section"],
+        "tag": f"series-{sid}"[:60], "sources": plan["sources"], "status": "open",
+        "created": _utcnow().isoformat(timespec="seconds"),
+        "parts": [{"n": i, "title": p["title"], "question": p["question"], "sources": p.get("sources") or [],
+                   "keyword": p.get("keyword") or "", "status": "planned"} for i, p in enumerate(parts, 1)],
+    }
+    data["series"].append(series)
+    data["ideas"].append({"title": title, "status": "used", "when": series["created"], "why": plan["why"]})
+    _save_editorial(data)
+    print(f"series recorded: {title} (id {sid}, {len(parts)} parts, section {series['section']}, tag {series['tag']})")
+    print("next: tarots_blog.py series next")
+    return EXIT_OK
+
+
+def cmd_ideas(a) -> int:
+    data = _editorial()
+    if a.action == "list":
+        rows = data["ideas"] if a.all else data["ideas"][-40:]
+        if a.json:
+            show({"ideas": rows, "research": data["research"][-40:]})
+            return EXIT_OK
+        for i in rows:
+            print(f"[{i.get('status')}] {i['title']}" + (f" — {i.get('reason')}" if i.get("reason") else ""))
+        for r in data["research"][-15:]:
+            print(f"research: {r['query']} → {r.get('notes', '')[:160]}")
+        if not rows and not data["research"]:
+            print("(nothing recorded yet)")
+        return EXIT_OK
+    text = " ".join(a.text or []).strip()
+    if not text:
+        raise Failure("give the text: ideas add \"<title of a possible series>\" --why \"…\"", EXIT_USAGE)
+    now = _utcnow().isoformat(timespec="seconds")
+    if a.action == "research":
+        data["research"].append({"query": text, "notes": a.why or "", "sources": a.source or [], "when": now})
+        _save_editorial(data)
+        print("research recorded")
+        return EXIT_OK
+    known = next((i for i in data["ideas"] if _plain(i["title"]) == _plain(text)), None)
+    if a.action == "add":
+        if known:
+            print(f"already recorded as [{known.get('status')}]: {known['title']}")
+            return EXIT_OK
+        what = banned_topic(text)
+        data["ideas"].append({"title": text, "status": "rejected" if what else "proposed", "why": a.why or "",
+                              "sources": a.source or [], "reason": f"it is {what}" if what else "", "when": now})
+        _save_editorial(data)
+        print(f"idea recorded as {'rejected: it is ' + what if what else 'proposed'}")
+        return EXIT_OK
+    if a.action == "reject":
+        if known:
+            known.update(status="rejected", reason=a.why or "")
+        else:
+            data["ideas"].append({"title": text, "status": "rejected", "reason": a.why or "", "when": now})
+        _save_editorial(data)
+        print("idea marked rejected")
+        return EXIT_OK
+    raise Failure(f"unknown action {a.action}", EXIT_USAGE)
+
+
+def mark_series_part(series_ref: Dict[str, Any], article: Dict[str, Any], url: str) -> Optional[str]:
+    """After `post`: the part of the series is written (slug, id, url); the last one closes the series."""
+    data = _editorial()
+    series = next((s for s in data["series"] if s.get("id") == series_ref.get("id")), None)
+    if series is None:
+        return None
+    part = next((p for p in series["parts"] if p["n"] == int(series_ref.get("part") or 0)), None)
+    if part is None:
+        return None
+    part.update(status="written", slug=article.get("slug"), id=article.get("id"), url=url,
+                when=_utcnow().isoformat(timespec="seconds"))
+    _close_if_done(series)
+    _save_editorial(data)
+    return f"series: part {part['n']} of «{series['title']}» marked written" + (
+        "; the series is complete" if series["status"] == "closed" else "")
+
+
+def series_problems(path: Path, payload: Dict[str, Any]) -> List[str]:
+    """A part of a series links the previous part, goes in the series' section and carries its tag."""
+    ref = article_series(path)
+    if not ref:
+        return []
+    data = _editorial()
+    series = next((s for s in data["series"] if s.get("id") == ref.get("id")), None)
+    if series is None:
+        return [f"article.json says series «{ref.get('id')}», which is not in {EDITORIAL_PATH}"]
+    n = int(ref.get("part") or 0)
+    problems = []
+    before = [p for p in series["parts"] if p["n"] < n and p.get("status") == "written" and p.get("slug")]
+    body = str(payload.get("testo") or "")
+    if before and f"[[post:{before[-1]['slug']}]]" not in body:
+        problems.append(f"link the previous part inside a sentence: [[post:{before[-1]['slug']}]]")
+    if str(payload.get("sezione") or "") != str(series.get("section") or ""):
+        problems.append(f'"section" must be «{series.get("section")}», the section of the series')
+    if series["tag"] not in (payload.get("tags") or []):
+        problems.append(f'"tags" must include «{series["tag"]}», the tag of the series')
+    return problems
 
 
 # ---- entry point ----------------------------------------------------------------------------------------------------
@@ -2105,6 +2582,8 @@ def parser() -> argparse.ArgumentParser:
         ),
     )
     nw.add_argument("name", nargs="+", help="the slug or a working title (made into a slug)")
+    nw.add_argument("--series", metavar="ID", help="a part of this series (`series status`): title, section, tag filled in")
+    nw.add_argument("--part", type=int, default=1, help="which part of --series")
     nw.set_defaults(run=cmd_new)
     k = sub.add_parser(
         "check", help="SEO report without saving, then NEXT: the exact fixes",
@@ -2140,7 +2619,47 @@ def parser() -> argparse.ArgumentParser:
     r.add_argument("--min-score", type=int, default=85, help="refuse to save below this SEO score (default 85)")
     r.add_argument("--save-anyway", action="store_true", help="below the score, keep it as a draft instead of refusing")
     r.add_argument("--dry-run", action="store_true", help="check only; save nothing")
+    r.add_argument("--publish", action="store_true",
+                   help="keep \"status\": \"published\" (or publish_at): ONLY when the operator's instructions say to "
+                        "publish; without it the article is saved as a draft")
     r.set_defaults(run=cmd_post)
+    rr = sub.add_parser("run-report", help="what THIS key saved in the last hours, read from the server: the lines "
+                                           "to copy in the report of a run")
+    rr.add_argument("--hours", type=int, default=12)
+    rr.set_defaults(run=cmd_run_report)
+    se = sub.add_parser(
+        "series", help="the editorial line: the open series, its next part, plan a new one",
+        description=(
+            f"Series of 6-12 parts for expert readers, recorded in {EDITORIAL_PATH}. status: the open series and the "
+            "next part (with the brief and the `new` command); next: only the next part; plan FILE: record a new "
+            "series (title, thesis, why, section, sources, parts[{title, question, sources, keyword}]) after the "
+            "checks (no popular genre, no keyword-string title, nothing TAKEN, one open series at a time); skip: "
+            "leave out a part, with a reason."
+        ),
+    )
+    se.add_argument("action", nargs="?", default="status", choices=["status", "next", "plan", "skip"])
+    se.add_argument("file", nargs="?", help="plan: the JSON file of the series")
+    se.add_argument("--series", help="skip: the series id (default: the open one)")
+    se.add_argument("--part", type=int, help="skip: the part number")
+    se.add_argument("--reason", help="skip: why")
+    se.add_argument("--force", action="store_true", help="plan: even if another series is open (operator only)")
+    se.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
+    se.set_defaults(run=cmd_series)
+    ide = sub.add_parser(
+        "ideas", help="the record of topics already proposed or rejected and of the research done",
+        description=(
+            "add TEXT --why …: a candidate series (a popular genre is recorded as rejected); reject TEXT --why …; "
+            "research QUERY --why NOTES --source URL: what a web search found, so the next run does not repeat it; "
+            "list: what is recorded. Read it BEFORE searching the web."
+        ),
+    )
+    ide.add_argument("action", choices=["add", "reject", "research", "list"])
+    ide.add_argument("text", nargs="*")
+    ide.add_argument("--why", help="why it is worth it, why it was rejected, or the notes of the research")
+    ide.add_argument("--source", action="append", help="a source (URL or reference); repeatable")
+    ide.add_argument("--all", action="store_true", help="list: everything, not only the last 40")
+    ide.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
+    ide.set_defaults(run=cmd_ideas)
     x = sub.add_parser("update", help="change fields of any article (a published one needs blog:publish); only one "
                                       "the operator or the job names")
     x.add_argument("id")

@@ -508,6 +508,8 @@ def explain(exc: urllib.error.HTTPError) -> str:
 #     "_used":      {sha256: {"post", "kind", "file", "when"}}                every file swapped into an article
 #     "_sections":  {slug: {"file", "sha256", "url", "alt", "prompt", "when"}}   the picture set on each section
 #     "_spreads":   {id: {...the same}}                                           the illustration set on each spread
+#     "_failed":    [{"role", "article", "article_id", "reason", "when"}, ...] a `generate` that did not get a
+#                   picture (LitMedia error, no credits): the only reason `tarots_blog.py post --no-cover` accepts
 # ("kind" in `_used` is cover/inline/upload/section/spread; in `_generated` it is the kind of picture of KINDS. A
 # picture of a section or of a spread is in `_used` as the post "section:<slug>" / "spread:<id>", so it is never
 # reused on an article.) Older `_generated` entries without dimensions still count for the similarity of prompts, not
@@ -547,6 +549,14 @@ def _record(post_id: str, kind: str, entry: Dict[str, Any]) -> None:
         riga.setdefault("inline", []).append(entry)
     if entry.get("sha256"):
         data.setdefault("_used", {})[entry["sha256"]] = {"post": post_id, "kind": kind, "file": entry.get("file"), "when": entry["when"]}
+    _save(data)
+
+
+def _record_failed(target: Dict[str, Any], reason: str) -> None:
+    """A `generate` that did not get a picture (7/10/2026: an agent saved an article with --no-cover «since we can't
+    generate the cover» without ever running `generate`; now `post --no-cover` asks for one of these)."""
+    data = _progress()
+    data.setdefault("_failed", []).append({**target, "reason": reason[-300:], "when": _now()})
     _save(data)
 
 
@@ -1716,21 +1726,27 @@ def cmd_generate(a) -> int:
         print(f"form: {_form(dims)}")
         print(f"prompt: {a.prompt}")
         return EXIT_OK
-    credits = balance()
-    if credits < cost or credits - cost < a.reserve:
-        raise Failure(f"LitMedia balance {credits}: not enough for {cost} credits keeping a reserve of {a.reserve}.", EXIT_BUDGET)
-    if a.budget is not None and a.budget < cost:
-        raise Failure(f"The budget left for this run ({a.budget}) is below the cost of one picture ({cost}).", EXIT_BUDGET)
-    with tempfile.TemporaryDirectory(prefix="tarots-img-") as tmp:
-        done = _litmedia("ai_image.py", [
-            "run", "--type", "text2image", "--model", MODEL, "--prompt", a.prompt, "--aspect-ratio", a.aspect,
-            "--resolution", resolution, "--count", "1", "--output-dir", tmp, "--interval", "10",
-        ], timeout=900)
-        files = sorted(Path(tmp).glob("image_*"))
-        if done.returncode != 0 or not files:
-            raise Failure("LitMedia did not return a picture:\n  " + (done.stdout + done.stderr).strip()[-600:])
-        out.parent.mkdir(parents=True, exist_ok=True)
-        shutil.move(str(files[0]), out)
+    try:
+        credits = balance()
+        if credits < cost or credits - cost < a.reserve:
+            raise Failure(f"LitMedia balance {credits}: not enough for {cost} credits keeping a reserve of {a.reserve}.", EXIT_BUDGET)
+        if a.budget is not None and a.budget < cost:
+            raise Failure(f"The budget left for this run ({a.budget}) is below the cost of one picture ({cost}).", EXIT_BUDGET)
+        with tempfile.TemporaryDirectory(prefix="tarots-img-") as tmp:
+            done = _litmedia("ai_image.py", [
+                "run", "--type", "text2image", "--model", MODEL, "--prompt", a.prompt, "--aspect-ratio", a.aspect,
+                "--resolution", resolution, "--count", "1", "--output-dir", tmp, "--interval", "10",
+            ], timeout=900)
+            files = sorted(Path(tmp).glob("image_*"))
+            if done.returncode != 0 or not files:
+                raise Failure("LitMedia did not return a picture:\n  " + (done.stdout + done.stderr).strip()[-600:])
+            out.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(files[0]), out)
+    except Failure as exc:
+        # The generation itself failed (not a refused prompt, which is fixed and retried): recorded for --no-cover.
+        if record.get("article"):
+            _record_failed(record, str(exc))
+        raise
     Path(str(out) + ".prompt.txt").write_text(a.prompt, encoding="utf-8")
     _record_generated(a.prompt, out, a.aspect, dims, record)
     print(f"saved {out} ({out.stat().st_size // 1024} KB), {cost} credits; balance now about {credits - cost}")
