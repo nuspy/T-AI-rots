@@ -45,12 +45,13 @@ def test_senza_indizi_si_tiene_la_lingua_dell_interfaccia():
 
 
 @pytest.mark.parametrize("quesito", [
-    "Pioverà domani?", "Tornerà?", "Già finita?", "Perché ho paura?", "Lui mi ama ancora?", "Mi sposerò?",
+    "Pioverà domani?", "domani pioverá?", "Tornerà?", "Già finita?", "Perché ho paura?", "Lui mi ama ancora?", "Mi sposerò?",
     "Sarò felice?", "Riuscirò a superare l'esame?", "Devo lasciare Budapest?", "Andrà bene il colloquio di venerdì?",
 ])
 def test_una_domanda_italiana_su_una_pagina_italiana_resta_italiana(quesito):
     # Le sole lettere accentate (à, é) o una parola in comune con un'altra lingua non cambiano la lingua della pagina:
-    # prima «Pioverà domani?» diventava francese per la «à».
+    # prima «Pioverà domani?» diventava francese per la «à», e «domani pioverá?» (8/10, in produzione) ungherese
+    # per la «á» scritta per sbaglio: tutta la lettura era uscita in ungherese.
     assert rileva_lingua(quesito, fallback="it") == "it"
 
 
