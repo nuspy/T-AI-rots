@@ -54,7 +54,14 @@ AdattatoreFinto reteRito() {
     }),
     'POST /readings': (_) => RispostaFinta.fixture('lettura/apertura.json', stato: 201),
     'POST /readings/anonime': (_) => RispostaFinta.fixture('lettura/apertura.json', stato: 201),
-    'POST /readings/$idLettura/interview': (_) => RispostaFinta.json(passi[passo++ % passi.length]),
+    // Come il server: una risposta si salva e basta (`continua: false`), «basta» chiude col riassunto, una chiamata
+    // senza risposta (la prima, o «un'altra domanda») dà la domanda successiva.
+    'POST /readings/$idLettura/interview': (_) {
+      final c = jsonDecode(rete.corpi.last ?? '{}') as Map<String, Object?>;
+      if (c['basta'] == true) return RispostaFinta.json(passi.last);
+      if (c['risposta'] != null) return RispostaFinta.json({'scelta': true});
+      return RispostaFinta.json(passi[passo++ % passi.length]);
+    },
     'POST /readings/$idLettura/fan': (_) => RispostaFinta.fixture('lettura/ventaglio.json'),
     'POST /readings/$idLettura/pick': (_) => RispostaFinta.json(scelte[scelta++ % scelte.length]),
     'POST /readings/$idLettura/reveal/1': (_) => sse('rivela_1.sse'),
@@ -117,14 +124,18 @@ void main() {
     expect(find.byType(Dialogo), findsOneWidget);
     expect(find.textContaining('Da quanto tempo'), findsOneWidget);
 
-    // Due risposte: l'intervista finisce col riassunto.
-    for (final r in ['Started last month.', 'I want it to grow.']) {
+    // Due risposte: «un'altra domanda» dopo la prima, «basta» dopo la seconda; l'intervista finisce col riassunto.
+    for (final (r, invio) in [
+      ('Started last month.', 'Send and ask me another question'),
+      ('I want it to grow.', 'Send, no more questions'),
+    ]) {
       await tester.enterText(find.byType(EditableText).last, r);
       await tester.pump();
-      await tester.tap(find.text('Answer'));
+      await tester.tap(find.text(invio));
       await attendi(tester);
       await attendi(tester);
     }
+    expect(corpo(rete, '/readings/$idLettura/interview'), {'basta': true});
     expect(find.text('Begin the shuffle'), findsOneWidget);
 
     // Mescolata, interruzione, taglio, ventaglio.
@@ -206,10 +217,13 @@ void main() {
     await tester.tap(find.text('I understand, let us begin'));
     await attendi(tester);
     await attendi(tester);
-    for (final r in ['Started last month.', 'I want it to grow.']) {
+    for (final (r, invio) in [
+      ('Started last month.', 'Send and ask me another question'),
+      ('I want it to grow.', 'Send, no more questions'),
+    ]) {
       await tester.enterText(find.byType(EditableText).last, r);
       await tester.pump();
-      await tocca(tester, 'Answer');
+      await tocca(tester, invio);
       await attendi(tester);
       await attendi(tester);
     }
@@ -381,35 +395,32 @@ void main() {
     expect(corpo(rete, '/readings')['variante'], 'chat');
     expect(corpo(rete, '/readings')['piattaforma'], anyOf('android', 'ios'));
 
-    // Sotto la prima domanda: il campo, il testo libero e (minimo 0) «Passa alla lettura»; non «un'altra domanda».
+    // Sotto la prima domanda, subito, il campo e i tre invii; a campo vuoto aspettano il testo (la domanda attende
+    // una risposta), salvo «basta» quando il minimo (0) lo consente già.
     expect(find.text('How long has this been with you?'), findsOneWidget);
-    expect(find.text('Go to the reading'), findsOneWidget);
-    expect(find.text('I want to say something freely'), findsOneWidget);
-    expect(find.text('I want to answer another question'), findsNothing);
+    expect(find.text('Enough questions'), findsOneWidget);
+    expect(find.text('Send and ask me another question'), findsOneWidget);
+    expect(find.text('Send, I want to say something'), findsOneWidget);
+    expect(find.text('Answer'), findsNothing);
 
-    // La risposta: il campo si chiude e arrivano i tre pulsanti.
+    // «Invia e voglio dire una cosa»: la risposta è salvata senza chiedere la domanda dopo, e il campo resta per il
+    // testo libero.
     await tester.enterText(find.byType(EditableText).last, 'Started last month.');
     await tester.pump();
-    await tocca(tester, 'Answer');
+    expect(find.text('Send, no more questions'), findsOneWidget);
+    await tocca(tester, 'Send, I want to say something');
     await attendi(tester);
-    expect(corpo(rete, '/readings/$idLettura/interview')['continua'], isFalse);
-    expect(find.text('Answer'), findsNothing);
-    expect(find.text('I want to answer another question'), findsOneWidget);
+    expect(corpo(rete, '/readings/$idLettura/interview'), {'risposta': 'Started last month.', 'continua': false});
+    expect(find.text('Send, I want to say something else'), findsOneWidget);
+    expect(find.text('Ask me another question'), findsOneWidget);
 
-    // Il testo libero va al server e tornano i pulsanti.
-    await tocca(tester, 'I want to say something freely');
-    await attendi(tester);
-    expect(find.text('Send'), findsOneWidget);
+    // «Invia, basta con le domande»: il testo libero va al server, poi l'intervista si chiude; il rito sta nella
+    // pagina, mai nel dialogo scuro.
     await tester.enterText(find.byType(EditableText).last, 'My team is new.');
     await tester.pump();
-    await tocca(tester, 'Send');
+    await tocca(tester, 'Send, no more questions');
     await attendi(tester);
     expect(corpo(rete, '/readings/$idLettura/addition')['testo'], 'My team is new.');
-    expect(find.text('Go to the reading'), findsOneWidget);
-
-    // «Passa alla lettura»: l'intervista si chiude; il rito sta nella pagina, mai nel dialogo scuro.
-    await tocca(tester, 'Go to the reading');
-    await attendi(tester);
     expect(corpo(rete, '/readings/$idLettura/interview')['basta'], isTrue);
     await tocca(tester, 'Begin the shuffle');
     await attendi(tester);

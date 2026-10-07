@@ -2689,6 +2689,36 @@ abstract class AppLocalizations {
   /// **'Send'**
   String get lettura_libero_invia;
 
+  /// No description provided for @lettura_invia_basta.
+  ///
+  /// In en, this message translates to:
+  /// **'Send, no more questions'**
+  String get lettura_invia_basta;
+
+  /// No description provided for @lettura_invia_altra.
+  ///
+  /// In en, this message translates to:
+  /// **'Send and ask me another question'**
+  String get lettura_invia_altra;
+
+  /// No description provided for @lettura_altra_domanda.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask me another question'**
+  String get lettura_altra_domanda;
+
+  /// No description provided for @lettura_invia_dire.
+  ///
+  /// In en, this message translates to:
+  /// **'Send, I want to say something'**
+  String get lettura_invia_dire;
+
+  /// No description provided for @lettura_invia_dire_ancora.
+  ///
+  /// In en, this message translates to:
+  /// **'Send, I want to say something else'**
+  String get lettura_invia_dire_ancora;
+
   /// No description provided for @lettura_stampa_pdf.
   ///
   /// In en, this message translates to:

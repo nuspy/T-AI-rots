@@ -61,7 +61,7 @@
 .attesa span { width: 7px; height: 7px; border-radius: 50%; background: var(--brass); animation: pulsa 1.2s infinite ease-in-out; }
 .attesa span:nth-child(2) { animation-delay: .15s; }
 .attesa span:nth-child(3) { animation-delay: .3s; }
-.risposta { display: grid; grid-template-columns: 1fr auto; gap: .6rem; margin-top: 1rem; }
+.risposta { display: grid; grid-template-columns: 1fr; gap: .6rem; margin-top: 1rem; }
 .risposta textarea { min-height: 52px; padding: .75rem; border: 1px solid var(--line); border-radius: 0; color: var(--ink); background: #fff; font-size: 1rem; resize: vertical; }
 
 /* ---- the ritual console ---- */
@@ -193,7 +193,6 @@
 }
 
 /* ---- 3/10: pulsanti sotto la risposta, scelta riassunta sul telefono, carte svelate ------------------------- */
-.rispostaAzioni { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }
 /* v9.5, la lettura in chat: una colonna sola che scorre con la pagina; il rito è un messaggio largo quanto la chat,
  * scuro come la console della classica. `scroll-margin-top` lascia spazio alla testata quando la pagina si ferma
  * all'inizio di un messaggio. */
@@ -203,9 +202,9 @@
 .chatRito .autore { color: var(--brass-pale, #e9d9a8); }
 .battuta, .chatRito, .chatBlocco { scroll-margin-top: 88px; }
 /* v9.5: le due strade dentro la chat, sotto l'ultima domanda dell'oracolo. */
-.sceltaChat { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: flex-start; padding: .2rem 0 .4rem; }
-.sceltaChat .button { min-height: 44px; }
-.rispostaAzioni .button { min-height: 44px; }
+/* I tre invii dell'intervista sotto il campo: sempre visibili, a capo quando lo spazio manca. */
+.rispostaInvii { display: flex; flex-wrap: wrap; gap: .5rem; }
+.rispostaInvii .button { flex: 1 1 auto; min-height: 48px; white-space: normal; }
 .sceltaRiassunto { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin: .6rem 0; padding: .55rem .75rem; border: 1px solid var(--line); background: #fffaf1; }
 .sceltaRiassunto .button { min-height: 44px; }
 .carteSvelate { margin-bottom: 1rem; }

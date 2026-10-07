@@ -1390,6 +1390,21 @@ class AppLocalizationsIt extends AppLocalizations {
   String get lettura_libero_invia => 'Invia';
 
   @override
+  String get lettura_invia_basta => 'Invia, basta con le domande';
+
+  @override
+  String get lettura_invia_altra => 'Invia e fammi un\'altra domanda';
+
+  @override
+  String get lettura_altra_domanda => 'Fammi un\'altra domanda';
+
+  @override
+  String get lettura_invia_dire => 'Invia e voglio dire una cosa';
+
+  @override
+  String get lettura_invia_dire_ancora => 'Invia e voglio dire un\'altra cosa';
+
+  @override
   String get lettura_stampa_pdf => 'Stampa in PDF';
 
   @override

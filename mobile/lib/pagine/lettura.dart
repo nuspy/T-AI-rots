@@ -473,7 +473,7 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
           Battuta(id: _nuovoId(), autore: Autore.oracolo, titolo: '✦', testo: lt.contextSummary!),
       ];
       _poste = lt.interview.where((x) => x.ruolo != 'utente').length;
-      _modo = lt.interview.lastOrNull?.ruolo == 'utente' ? _ModoIntervista.scelta : _ModoIntervista.risposta;
+      _modo = lt.interview.lastOrNull?.ruolo == 'utente' ? _ModoIntervista.libero : _ModoIntervista.risposta;
       _scelte = {...lt.pickedSlots};
       _slotTotali = lt.slotCount ?? 0;
       final ordinati = [...lt.cards]..sort((a, b) => a.posizione.compareTo(b.posizione));
@@ -530,7 +530,7 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
           _aggiungi(Autore.oracolo, passo.riassunto ?? '', titolo: '✦', macchina: true);
           _fase = FaseLettura.prontoMescolare;
         } else if (passo.scelta) {
-          _modo = _ModoIntervista.scelta;
+          _modo = _ModoIntervista.libero;
         } else if (passo.domanda != null) {
           _traccia('interview_question', {'n': passo.poste ?? 0});
           _aggiungi(Autore.oracolo, passo.domanda!, macchina: true);
@@ -544,80 +544,98 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
     }
   }
 
-  void _suRisposta(String testo) {
-    final id = _id;
-    if (id == null) return;
-    _set(() => _aggiungi(Autore.utente, testo));
-    unawaited(_passoIntervista(id, testo));
-  }
-
-  void _passaAllaLettura() {
-    final id = _id;
-    if (id == null) return;
-    _traccia('interview_choice', {'scelta': 'lettura', 'n': _poste});
-    _traccia('interview_skipped', {'n': _poste});
-    unawaited(_passoIntervista(id, null, basta: true));
-  }
-
-  void _altraDomanda() {
-    final id = _id;
-    if (id == null) return;
-    _traccia('interview_choice', {'scelta': 'altra', 'n': _poste});
-    unawaited(_passoIntervista(id, null, altra: true));
-  }
-
-  void _testoLibero() {
-    _traccia('interview_choice', {'scelta': 'libero', 'n': _poste});
-    _set(() => _modo = _ModoIntervista.libero);
-  }
-
-  /// v9.5: «Voglio dire qualcosa di libero». Il testo entra nell'interpretazione; poi tornano i pulsanti.
-  Future<void> _suLibero(String testo) async {
-    final id = _id;
-    if (id == null) return;
+  /// Salva il testo scritto: la risposta alla domanda che aspetta (senza chiedere la successiva), o un testo libero.
+  /// Falso se la lettura si è fermata (un segnale di crisi) o la chiamata non è riuscita.
+  Future<bool> _salvaTesto(String id, String testo) async {
     _set(() {
       _aggiungi(Autore.utente, testo);
       _attesa = true;
       _errore = null;
     });
     try {
+      if (_modo == _ModoIntervista.risposta) {
+        final passo = await ref.read(apiProvider).rispondi(id, testo);
+        _traccia('interview_answered', {'n': passo.poste ?? 0});
+        _set(() {
+          if (passo.minDomande != null && passo.maxDomande != null) {
+            _minDomande = passo.minDomande!;
+            _maxDomande = passo.maxDomande!;
+          }
+          if (passo.poste != null) _poste = passo.poste!;
+          if (passo.crisi) {
+            _aggiungi(Autore.sistema, passo.messaggio ?? '');
+            _fase = FaseLettura.crisi;
+          }
+        });
+        return !passo.crisi;
+      }
       final esito = await ref.read(apiProvider).aggiungiAllIntervista(id, testo);
       if (esito.crisi) {
         _set(() {
           _aggiungi(Autore.sistema, esito.messaggio ?? '');
           _fase = FaseLettura.crisi;
         });
-        return;
+        return false;
       }
       _traccia('interview_addition', {'n': _poste});
-      _set(() => _modo = _ModoIntervista.scelta);
+      return true;
     } on ErroreApi catch (e) {
       _set(() => _errore = e.messaggio(context.t));
+      return false;
     } finally {
       _set(() => _attesa = false);
     }
   }
 
-  /// Le scelte in fondo alla chat: sotto la prima domanda «Passa alla lettura» (se il minimo lo consente) e il testo
-  /// libero; dopo una risposta o un testo libero i tre pulsanti, «un'altra domanda» solo prima del massimo.
-  List<SceltaDialogo> _sceltePossibili(AppLocalizations t) {
-    if (_fase != FaseLettura.intervista || _attesa || _id == null) return const [];
-    final risposta = _modo == _ModoIntervista.risposta;
-    final scelta = _modo == _ModoIntervista.scelta;
-    final puoiPassare = _poste - (risposta ? 1 : 0) >= _minDomande;
-    final sottoLaPrima = risposta && _poste <= 1;
+  /// Un invio: prima il testo (se c'è), poi il passo scelto (`basta`, `altra`, `dire`).
+  Future<void> _inviaIntervista(String testo, String dopo) async {
+    final id = _id;
+    if (id == null) return;
+    _traccia('interview_choice', {
+      'scelta': switch (dopo) {
+        'basta' => 'lettura',
+        'altra' => 'altra',
+        _ => 'libero',
+      },
+      'n': _poste,
+    });
+    if (testo.isNotEmpty && !await _salvaTesto(id, testo)) return;
+    if (dopo == 'dire') {
+      _set(() => _modo = _ModoIntervista.libero);
+      return;
+    }
+    if (dopo == 'basta') _traccia('interview_skipped', {'n': _poste});
+    await _passoIntervista(id, null, basta: dopo == 'basta', altra: dopo == 'altra');
+  }
+
+  /// Quali invii: «basta» quando le domande con risposta arrivano al minimo (a campo vuoto, solo se il minimo c'è già
+  /// senza la domanda che aspetta); «un'altra domanda» finché non si arriva al massimo (a campo vuoto solo se nessuna
+  /// domanda aspetta); «voglio dire una cosa» sempre, con un testo.
+  List<InvioDialogo> _invii(AppLocalizations t) {
+    if (_fase != FaseLettura.intervista || _id == null) return const [];
+    final aspetta = _modo == _ModoIntervista.risposta;
+    final risposte = _poste - (aspetta ? 1 : 0);
     return [
-      if (scelta && _poste < _maxDomande)
-        SceltaDialogo(etichetta: t.lettura_scelta_altra, azione: _altraDomanda, an: 'intervista_altra'),
-      if (scelta || sottoLaPrima)
-        SceltaDialogo(etichetta: t.lettura_scelta_libero, azione: _testoLibero, an: 'intervista_libero'),
-      if ((scelta || sottoLaPrima) && puoiPassare)
-        SceltaDialogo(
-          etichetta: t.lettura_scelta_lettura,
-          azione: _passaAllaLettura,
+      if (_poste >= _minDomande)
+        InvioDialogo(
+          chiave: 'basta',
+          etichetta: t.lettura_invia_basta,
+          etichettaVuoto: risposte >= _minDomande ? t.lettura_basta_domande : null,
           primaria: true,
-          an: 'intervista_lettura',
+          alInvio: (testo) => unawaited(_inviaIntervista(testo, 'basta')),
         ),
+      if (_poste < _maxDomande)
+        InvioDialogo(
+          chiave: 'altra',
+          etichetta: t.lettura_invia_altra,
+          etichettaVuoto: aspetta ? null : t.lettura_altra_domanda,
+          alInvio: (testo) => unawaited(_inviaIntervista(testo, 'altra')),
+        ),
+      InvioDialogo(
+        chiave: 'dire',
+        etichetta: aspetta ? t.lettura_invia_dire : t.lettura_invia_dire_ancora,
+        alInvio: (testo) => unawaited(_inviaIntervista(testo, 'dire')),
+      ),
     ];
   }
 
@@ -1651,11 +1669,9 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
         Dialogo(
           battute: _battute,
           attesa: _attesa,
-          inputAttivo:
-              _fase == FaseLettura.intervista && (_modo == _ModoIntervista.risposta || _modo == _ModoIntervista.libero),
+          inputAttivo: _fase == FaseLettura.intervista && _id != null,
           libero: _modo == _ModoIntervista.libero,
-          alRispondi: _modo == _ModoIntervista.libero ? (testo) => unawaited(_suLibero(testo)) : _suRisposta,
-          scelte: _sceltePossibili(t),
+          invii: _invii(t),
           fluido: widget.inChat,
           alNovita: _segui,
         ),
@@ -1913,7 +1929,7 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
 /* ---- i pezzi della pagina ---------------------------------------------------------------------------------------- */
 
 /// v9.5, l'intervista: una domanda aspetta la risposta, i pulsanti aspettano una scelta, si scrive il testo libero.
-enum _ModoIntervista { risposta, scelta, libero }
+enum _ModoIntervista { risposta, libero }
 
 /// v9.5, la chat: la larghezza della colonna (come `.chatColonna` del sito, 46 rem).
 const double _larghezzaChat = 736;

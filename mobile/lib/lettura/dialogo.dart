@@ -50,24 +50,34 @@ class Battuta {
   final bool macchina;
 }
 
-/// v9.5: un pulsante in fondo alla chat («Passa alla lettura», «Voglio dire qualcosa di libero», «Voglio rispondere a
-/// un'altra domanda»).
+/// Un pulsante sotto il campo dell'intervista: manda il testo scritto e dice cosa viene dopo («Invia, basta con le
+/// domande», «Invia e fammi un'altra domanda», «Invia e voglio dire una cosa»). Con il campo vuoto vale
+/// [etichettaVuoto] (senza «Invia»); se manca, il pulsante aspetta che si scriva qualcosa.
 @immutable
-class SceltaDialogo {
-  /// Un pulsante.
-  const SceltaDialogo({required this.etichetta, required this.azione, this.primaria = false, this.an});
+class InvioDialogo {
+  /// Un invio.
+  const InvioDialogo({
+    required this.chiave,
+    required this.etichetta,
+    required this.alInvio,
+    this.etichettaVuoto,
+    this.primaria = false,
+  });
 
-  /// Il testo.
+  /// Il nome dell'invio (`basta`, `altra`, `dire`): anche per le statistiche dei clic (`intervista_<chiave>`).
+  final String chiave;
+
+  /// Il testo, con qualcosa scritto nel campo.
   final String etichetta;
 
-  /// Cosa fa.
-  final VoidCallback azione;
+  /// Il testo a campo vuoto; null = il pulsante aspetta che si scriva.
+  final String? etichettaVuoto;
+
+  /// Cosa fa, col testo scritto (vuoto se non si è scritto nulla).
+  final ValueChanged<String> alInvio;
 
   /// Il pulsante principale (ottone).
   final bool primaria;
-
-  /// Il nome per le statistiche dei clic.
-  final String? an;
 }
 
 /// La conversazione.
@@ -78,8 +88,7 @@ class Dialogo extends StatefulWidget {
     required this.battute,
     required this.attesa,
     required this.inputAttivo,
-    required this.alRispondi,
-    this.scelte = const [],
+    this.invii = const [],
     this.libero = false,
     this.fluido = false,
     this.alNovita,
@@ -91,14 +100,11 @@ class Dialogo extends StatefulWidget {
   /// Il lettore sta pensando.
   final bool attesa;
 
-  /// Il campo c'è solo quando si risponde a una domanda o si scrive il testo libero (v9.5): durante la scelta no.
+  /// Il campo c'è per tutta l'intervista, finché non si passa alle carte.
   final bool inputAttivo;
 
-  /// Una risposta (o il testo libero, con [libero]).
-  final ValueChanged<String> alRispondi;
-
-  /// v9.5: i pulsanti in fondo alla chat, già filtrati da chi chiama.
-  final List<SceltaDialogo> scelte;
+  /// I pulsanti sotto il campo, già scelti da chi chiama (sempre visibili, dalla prima domanda).
+  final List<InvioDialogo> invii;
 
   /// v9.5: il campo è per il testo libero, non per una risposta.
   final bool libero;
@@ -107,7 +113,8 @@ class Dialogo extends StatefulWidget {
   /// a ogni novità si chiama [alNovita] (la pagina decide se scorrere).
   final bool fluido;
 
-  /// Con [fluido]: una battuta nuova ([allInizio] vero: va mostrata dal suo inizio) o i pulsanti (falso: in vista).
+  /// Con [fluido]: una battuta nuova ([allInizio] vero: va mostrata dal suo inizio) o il campo con gli invii
+  /// (falso: in vista).
   final void Function(BuildContext contesto, {required bool allInizio})? alNovita;
 
   @override
@@ -146,8 +153,8 @@ class _DialogoState extends State<Dialogo> {
         }
       });
     }
-    final sceltePronte = !widget.attesa && widget.scelte.isNotEmpty;
-    final eranoPronte = !vecchio.attesa && vecchio.scelte.isNotEmpty;
+    final sceltePronte = !widget.attesa && widget.inputAttivo && widget.invii.isNotEmpty;
+    final eranoPronte = !vecchio.attesa && vecchio.inputAttivo && vecchio.invii.isNotEmpty;
     if (sceltePronte && !eranoPronte) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!widget.fluido) {
@@ -196,12 +203,20 @@ class _DialogoState extends State<Dialogo> {
     );
   }
 
-  void _invia() {
-    final pulito = _testo.text.trim();
-    if (pulito.isEmpty) return;
+  String get _pulito => _testo.text.trim();
+
+  bool _usabile(InvioDialogo i) => !widget.attesa && (_pulito.isNotEmpty || i.etichettaVuoto != null);
+
+  void _invia(InvioDialogo? i) {
+    if (i == null || !_usabile(i)) return;
+    final pulito = _pulito;
     _testo.clear();
-    widget.alRispondi(pulito);
+    i.alInvio(pulito);
   }
+
+  /// Ctrl+Invio: il pulsante principale, se si può usare; altrimenti il primo che si può usare.
+  void _predefinito() =>
+      _invia(widget.invii.where((i) => i.primaria && _usabile(i)).firstOrNull ?? widget.invii.where(_usabile).firstOrNull);
 
   @override
   Widget build(BuildContext context) {
@@ -220,29 +235,6 @@ class _DialogoState extends State<Dialogo> {
           child: Align(
             alignment: AlignmentDirectional.centerStart,
             child: Puntini(etichetta: t.lettura_pensa, colore: Token.brass),
-          ),
-        ),
-      // v9.5: le scelte stanno dentro la chat, in fondo alla conversazione, ben visibili.
-      if (!widget.attesa && widget.scelte.isNotEmpty)
-        Padding(
-          key: _chiaveScelte,
-          padding: const EdgeInsets.only(top: 16),
-          child: Semantics(
-            container: true,
-            label: t.lettura_scelta_titolo,
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final s in widget.scelte)
-                  Bottone(
-                    s.etichetta,
-                    variante: s.primaria ? Variante.ottone : Variante.quieto,
-                    an: s.an,
-                    alTocco: s.azione,
-                  ),
-              ],
-            ),
           ),
         ),
     ];
@@ -275,10 +267,29 @@ class _DialogoState extends State<Dialogo> {
       attivo: !widget.attesa,
       fuocoSubito: widget.libero,
     );
-    // Sotto il campo solo l'invio: le scelte stanno nella chat (v9.5).
-    final azioni = Bottone(
-      widget.libero ? t.lettura_libero_invia : t.lettura_rispondi,
-      alTocco: widget.attesa || _testo.text.trim().isEmpty ? null : _invia,
+    // I tre invii, sempre visibili sotto il campo: ognuno manda il testo e dice cosa viene dopo. Sul telefono uno
+    // per riga, larghi quanto il campo; più largo affiancati.
+    final bottoni = [
+      for (final i in widget.invii)
+        Bottone(
+          _pulito.isEmpty && i.etichettaVuoto != null ? i.etichettaVuoto! : i.etichetta,
+          variante: i.primaria ? Variante.ottone : Variante.quieto,
+          pieno: stretto,
+          an: 'intervista_${i.chiave}',
+          alTocco: _usabile(i) ? () => _invia(i) : null,
+        ),
+    ];
+    final invii = Semantics(
+      container: true,
+      label: t.lettura_scelta_titolo,
+      child: stretto
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final (k, b) in bottoni.indexed) ...[if (k > 0) const SizedBox(height: 8), b],
+              ],
+            )
+          : Wrap(spacing: 8, runSpacing: 8, children: bottoni),
     );
 
     return ConstrainedBox(
@@ -290,29 +301,17 @@ class _DialogoState extends State<Dialogo> {
           battute,
           if (widget.inputAttivo)
             Padding(
+              key: _chiaveScelte,
               padding: const EdgeInsets.only(top: 16),
               child: CallbackShortcuts(
                 bindings: {
-                  const SingleActivator(LogicalKeyboardKey.enter, control: true): _invia,
-                  const SingleActivator(LogicalKeyboardKey.enter, meta: true): _invia,
+                  const SingleActivator(LogicalKeyboardKey.enter, control: true): _predefinito,
+                  const SingleActivator(LogicalKeyboardKey.enter, meta: true): _predefinito,
                 },
-                child: stretto
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          campo,
-                          const SizedBox(height: 9.6 + 8),
-                          Align(alignment: AlignmentDirectional.centerStart, child: azioni),
-                        ],
-                      )
-                    : Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(child: campo),
-                          const SizedBox(width: 9.6),
-                          Padding(padding: const EdgeInsets.only(top: 8), child: azioni),
-                        ],
-                      ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [campo, const SizedBox(height: 9.6 + 8), invii],
+                ),
               ),
             ),
         ],

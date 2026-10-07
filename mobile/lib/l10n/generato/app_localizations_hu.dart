@@ -1387,6 +1387,21 @@ class AppLocalizationsHu extends AppLocalizations {
   String get lettura_libero_invia => 'Küldés';
 
   @override
+  String get lettura_invia_basta => 'Küldés, elég a kérdésekből';
+
+  @override
+  String get lettura_invia_altra => 'Küldés, és kérdezz még valamit';
+
+  @override
+  String get lettura_altra_domanda => 'Kérdezz még valamit';
+
+  @override
+  String get lettura_invia_dire => 'Küldés, szeretnék mondani valamit';
+
+  @override
+  String get lettura_invia_dire_ancora => 'Küldés, szeretnék még valamit mondani';
+
+  @override
   String get lettura_stampa_pdf => 'Nyomtatás PDF-be';
 
   @override

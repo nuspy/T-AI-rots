@@ -1385,6 +1385,21 @@ class AppLocalizationsUk extends AppLocalizations {
   String get lettura_libero_invia => 'Надіслати';
 
   @override
+  String get lettura_invia_basta => 'Надіслати, досить питань';
+
+  @override
+  String get lettura_invia_altra => 'Надіслати й постав ще одне питання';
+
+  @override
+  String get lettura_altra_domanda => 'Постав ще одне питання';
+
+  @override
+  String get lettura_invia_dire => 'Надіслати, хочу дещо сказати';
+
+  @override
+  String get lettura_invia_dire_ancora => 'Надіслати, хочу сказати ще дещо';
+
+  @override
   String get lettura_stampa_pdf => 'Друк у PDF';
 
   @override

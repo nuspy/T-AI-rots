@@ -1389,6 +1389,21 @@ class AppLocalizationsEs extends AppLocalizations {
   String get lettura_libero_invia => 'Enviar';
 
   @override
+  String get lettura_invia_basta => 'Enviar, basta de preguntas';
+
+  @override
+  String get lettura_invia_altra => 'Enviar y hazme otra pregunta';
+
+  @override
+  String get lettura_altra_domanda => 'Hazme otra pregunta';
+
+  @override
+  String get lettura_invia_dire => 'Enviar, quiero decir algo';
+
+  @override
+  String get lettura_invia_dire_ancora => 'Enviar, quiero decir otra cosa';
+
+  @override
   String get lettura_stampa_pdf => 'Imprimir en PDF';
 
   @override

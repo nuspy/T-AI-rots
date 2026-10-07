@@ -1388,6 +1388,21 @@ class AppLocalizationsPt extends AppLocalizations {
   String get lettura_libero_invia => 'Send';
 
   @override
+  String get lettura_invia_basta => 'Send, no more questions';
+
+  @override
+  String get lettura_invia_altra => 'Send and ask me another question';
+
+  @override
+  String get lettura_altra_domanda => 'Ask me another question';
+
+  @override
+  String get lettura_invia_dire => 'Send, I want to say something';
+
+  @override
+  String get lettura_invia_dire_ancora => 'Send, I want to say something else';
+
+  @override
   String get lettura_stampa_pdf => 'Print to PDF';
 
   @override

@@ -1383,6 +1383,21 @@ class AppLocalizationsRu extends AppLocalizations {
   String get lettura_libero_invia => 'Отправить';
 
   @override
+  String get lettura_invia_basta => 'Отправить, хватит вопросов';
+
+  @override
+  String get lettura_invia_altra => 'Отправить и задай ещё вопрос';
+
+  @override
+  String get lettura_altra_domanda => 'Задай ещё вопрос';
+
+  @override
+  String get lettura_invia_dire => 'Отправить, хочу кое-что сказать';
+
+  @override
+  String get lettura_invia_dire_ancora => 'Отправить, хочу сказать ещё кое-что';
+
+  @override
   String get lettura_stampa_pdf => 'Печать в PDF';
 
   @override

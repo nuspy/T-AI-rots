@@ -29,19 +29,28 @@ function Macchina({ testo }: { testo: string }) {
   return <>{testo.slice(0, n)}{n < testo.length && <span className={stili.cursore}>▍</span>}</>;
 }
 
+/** Un pulsante sotto il campo dell'intervista: manda il testo scritto e dice cosa viene dopo («Invia, basta con le
+ *  domande», «Invia e fammi un'altra domanda», «Invia e voglio dire una cosa»). Con il campo vuoto vale
+ *  `etichettaVuoto` (senza «Invia»); se manca, il pulsante aspetta che si scriva qualcosa. */
+export interface Invio {
+  chiave: string;
+  etichetta: string;
+  etichettaVuoto?: string;
+  primaria?: boolean;
+  onInvia: (testo: string) => void;
+}
+
 export function Dialogo({
-  battute, attesa, inputAttivo, onRispondi, scelte = [], libero = false, fluido = false,
+  battute, attesa, inputAttivo, invii = [], libero = false, fluido = false,
 }: {
   /** v9.5, la lettura in chat: niente riquadro con lo scorrimento interno, la conversazione scorre con la pagina. */
   fluido?: boolean;
   battute: Battuta[];
   attesa: boolean;
-  /** Il campo c'è solo quando si risponde a una domanda o si scrive il testo libero (v9.5): durante la scelta no. */
+  /** Il campo c'è per tutta l'intervista, finché non si passa alle carte. */
   inputAttivo: boolean;
-  onRispondi: (testo: string) => void;
-  /** v9.5: i pulsanti in fondo alla chat («Passa alla lettura», «Voglio dire qualcosa di libero», «Voglio
-   *  rispondere a un'altra domanda»), già filtrati da chi chiama. */
-  scelte?: { etichetta: string; azione: () => void; primaria?: boolean }[];
+  /** I pulsanti sotto il campo, già scelti da chi chiama (sempre visibili, dalla prima domanda). */
+  invii?: Invio[];
   /** v9.5: il campo è per il testo libero, non per una risposta. */
   libero?: boolean;
 }) {
@@ -84,12 +93,15 @@ export function Dialogo({
 
   useEffect(() => { if (attesa) inFondo(); }, [attesa]);
 
-  const invia = () => {
-    const pulito = testo.trim();
-    if (!pulito) return;
+  const pulito = testo.trim();
+  const usabile = (i: Invio) => !attesa && (!!pulito || i.etichettaVuoto !== undefined);
+  const invia = (i: Invio | undefined) => {
+    if (!i || !usabile(i)) return;
     setTesto("");
-    onRispondi(pulito);
+    i.onInvia(pulito);
   };
+  /* Ctrl+Invio: il pulsante principale, se si può usare; altrimenti il primo che si può usare. */
+  const predefinito = () => invii.find((i) => i.primaria && usabile(i)) ?? invii.find(usabile);
 
   return (
     <div className={stili.dialogo}>
@@ -115,35 +127,29 @@ export function Dialogo({
           ))}
         </AnimatePresence>
         {attesa && <div className={stili.attesa} aria-label={l.pensa} role="status"><span /><span /><span /></div>}
-        {/* v9.5: le scelte stanno dentro la chat, in fondo alla conversazione, ben visibili. */}
-        {!attesa && scelte.length > 0 && (
-          <div className={stili.sceltaChat} role="group" aria-label={l.scelta_titolo}>
-            {scelte.map((s) => (
-              <button key={s.etichetta} type="button" className={s.primaria ? "button button-brass" : "button button-quiet"}
-                onClick={s.azione}>
-                {s.etichetta}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
       {inputAttivo && (
-        <form className={stili.risposta} onSubmit={(e) => { e.preventDefault(); invia(); }}>
+        <form className={stili.risposta} onSubmit={(e) => { e.preventDefault(); invia(predefinito()); }}>
           <textarea
             ref={campo}
             value={testo}
             onChange={(e) => setTesto(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); invia(); } }}
+            onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); invia(predefinito()); } }}
             placeholder={libero ? l.libero_segnaposto : l.risposta_segnaposto}
             aria-label={libero ? l.libero_segnaposto : l.risposta_segnaposto}
             dir="auto" rows={2} maxLength={2000} disabled={attesa}
             autoFocus={libero}
           />
-          {/* Sotto il campo solo l'invio: le scelte stanno nella chat (v9.5). */}
-          <div className={stili.rispostaAzioni}>
-            <button className="button" type="submit" disabled={attesa || !testo.trim()}>
-              {libero ? l.libero_invia : l.rispondi}
-            </button>
+          {/* I tre invii, sempre visibili sotto il campo: ognuno manda il testo e dice cosa viene dopo. */}
+          <div className={stili.rispostaInvii} role="group" aria-label={l.scelta_titolo}>
+            {invii.map((i) => (
+              <button key={i.chiave} type="button" disabled={!usabile(i)}
+                className={i.primaria ? "button button-brass" : "button button-quiet"}
+                data-an={`intervista_${i.chiave}`}
+                onClick={() => invia(i)}>
+                {!pulito && i.etichettaVuoto !== undefined ? i.etichettaVuoto : i.etichetta}
+              </button>
+            ))}
           </div>
         </form>
       )}
