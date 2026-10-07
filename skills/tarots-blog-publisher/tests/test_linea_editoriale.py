@@ -83,6 +83,8 @@ def blog(tmp_path, monkeypatch):
     monkeypatch.setattr(tb, "TITLES_CACHE_PATH", tmp_path / "titles-cache.json")
     monkeypatch.setattr(tb, "PROGRESS_PATH", tmp_path / "images-progress.json")
     monkeypatch.setattr(tb, "EDITORIAL_PATH", tmp_path / "editorial.json")
+    monkeypatch.setattr(tb, "SOURCES_CACHE_PATH", tmp_path / "sources-cache.json")
+    monkeypatch.setattr(tb, "check_source", lambda s: (True, ""))   # no catalogue in these tests (see FakeCatalogue)
     monkeypatch.setenv("TAROTS_WORK_DIR", str(tmp_path / "work"))
     return fake
 
@@ -457,3 +459,116 @@ def test_generate_records_a_failure_for_no_cover(tmp_path, monkeypatch):
     assert code == ti.EXIT_BUDGET
     failed = json.loads((tmp_path / "images-progress.json").read_text(encoding="utf-8"))["_failed"]
     assert failed[0]["article"] == "three-mothers" and failed[0]["role"] == "cover" and "balance" in failed[0]["reason"]
+
+
+# ---- sources that exist ------------------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("text, kind, fields", [
+    ("Michael Dummett, The Game of Tarot (1980)", "book", {"author": "Michael Dummett", "title": "The Game of Tarot", "year": 1980}),
+    ("Sefer Yetzirah, tr. Aryeh Kaplan (1990)", "book", {"author": "Aryeh Kaplan", "title": "Sefer Yetzirah", "year": 1990}),
+    ("Visconti–Sforza Tarot, Wikipedia", "wiki", {"page": "Visconti–Sforza Tarot"}),
+    ("Picatrix (Ghayat al-Hakim), Wikipedia", "wiki", {"page": "Picatrix"}),
+    ("https://archive.org/details/oedipusaegyptiac", "url", {"url": "https://archive.org/details/oedipusaegyptiac"}),
+    ("Golden Dawn Tarot Correspondences (blog)", "own", {}),
+    ("Sefer Yetzirah ch. 3 (Peter Hayman ed.)", "ref", {"name": "Sefer Yetzirah"}),
+    ("Harris letters, Warburg Institute", "ref", {}),
+])
+def test_sources_are_read_as_books_pages_links_or_references(text, kind, fields):
+    src = tb.parse_source(text)
+    assert src["kind"] == kind and all(src[k] == v for k, v in fields.items())
+
+
+class FakeCatalogue:
+    """Open Library and Wikipedia, as much as the tests need; counts the calls."""
+
+    BOOKS = [{"title": "The game of tarot", "author_name": ["Michael Dummett"], "first_publish_year": 1980,
+              "publish_year": [1980]},
+             {"title": "A wicked pack of cards", "author_name": ["Ronald Decker"], "first_publish_year": 1996,
+              "publish_year": [1996]}]
+    PAGES = {"Visconti–Sforza Tarot", "Picatrix"}
+
+    def __init__(self):
+        self.calls = 0
+        self.down = False
+
+    def __call__(self, url):
+        self.calls += 1
+        if self.down:
+            raise tb.Unreachable("no network")
+        q = dict(tb.urllib.parse.parse_qsl(url.split("?", 1)[1]))
+        if "wikipedia" in url:
+            if q.get("list") == "search":
+                return {"query": {"search": [{"title": t} for t in sorted(self.PAGES)]}}
+            known = q["titles"] in self.PAGES
+            return {"query": {"pages": {"12" if known else "-1": {"title": q["titles"]}}}}
+        author, title, free = q.get("author", "").lower(), q.get("title", "").lower(), q.get("q", "").lower()
+        docs = [b for b in self.BOOKS
+                if (not author or any(author.split()[-1] in n.lower() for n in b["author_name"]))
+                and (not title or all(w in b["title"].lower() for w in title.split() if w not in ("the", "a", "of")))
+                and (not free or any(n.lower().split()[-1] in free for n in b["author_name"]))]
+        return {"numFound": len(docs), "docs": docs}
+
+
+@pytest.fixture
+def catalogue(tmp_path, monkeypatch):
+    fake = FakeCatalogue()
+    monkeypatch.setattr(tb, "_fetch_json", fake)
+    monkeypatch.setattr(tb, "SOURCES_CACHE_PATH", tmp_path / "sources-cache.json")
+    return fake
+
+
+def test_a_real_book_passes(catalogue):
+    assert tb.check_source("Michael Dummett, The Game of Tarot (1980)") == (True, "")
+
+
+def test_an_invented_title_is_refused_with_the_authors_real_books(catalogue):
+    ok, why = tb.check_source("Michael Dummett, The History of the Playing Card (1980)")
+    assert not ok and "is not in Open Library" in why and "The game of tarot (1980)" in why
+
+
+def test_a_wrong_year_is_refused_with_the_real_editions(catalogue):
+    ok, why = tb.check_source("Ronald Decker, A Wicked Pack of Cards (1970)")
+    assert not ok and "not in 1970" in why and "1996" in why
+
+
+def test_a_wikipedia_page_must_exist(catalogue):
+    assert tb.check_source("Visconti–Sforza Tarot, Wikipedia")[0]
+    ok, why = tb.check_source("Visconti-Sforza Tarot Deck, Wikipedia")
+    assert not ok and "the closest: " in why and "Visconti–Sforza Tarot" in why
+
+
+def test_our_own_blog_is_not_a_source(catalogue):
+    ok, why = tb.check_source("Golden Dawn Tarot Correspondences (blog)")
+    assert not ok and "not a source" in why
+
+
+def test_answers_are_cached(catalogue):
+    tb.check_source("Michael Dummett, The Game of Tarot (1980)")
+    calls = catalogue.calls
+    assert tb.check_source("Michael Dummett, The Game of Tarot (1980)") == (True, "") and catalogue.calls == calls
+
+
+def test_without_network_a_source_is_not_refused_but_said_unverified(catalogue):
+    catalogue.down = True
+    ok, why = tb.check_source("Michael Dummett, The Game of Tarot (1980)")
+    assert ok and why.startswith("not verified")
+
+
+def test_sources_check_command(catalogue, capsys):
+    assert tb.main(["sources-check", "Michael Dummett, The Game of Tarot (1980)",
+                    "Ronald Decker, A Wicked Pack of Cards (1970)"]) == tb.EXIT_RULE
+    out = capsys.readouterr().out
+    assert "OK   Michael Dummett, The Game of Tarot (1980)" in out and "NO   Ronald Decker" in out
+
+
+def test_plan_add_refuses_an_item_with_an_invented_source(blog, tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(tb, "check_source", lambda s: (False, "not in Open Library") if "History of the Playing" in s
+                        else (True, ""))
+    bad = single("What Frieda Harris Changed in the Last Drafts")
+    bad["sources"] = ["Michael Dummett, The History of the Playing Card (1980)", "Kaczynski, Perdurabo (2010)"]
+    good = single("Why Crowley Renamed Strength as Lust")
+    assert tb.main(["plan", "add", str(plan_file(tmp_path, bad, good))]) == tb.EXIT_OK
+    out = capsys.readouterr().out
+    assert "REFUSED" in out and "The History of the Playing Card" in out and "not in Open Library" in out
+    assert [i["title"] for i in plan()["items"]] == ["Why Crowley Renamed Strength as Lust"]

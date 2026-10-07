@@ -2212,6 +2212,205 @@ def cmd_run_report(a) -> int:
     return EXIT_OK
 
 
+# ---- sources that exist: books in Open Library, pages in Wikipedia, links that answer ----------------------------
+# 7/10/2026: the first plan Hermes made cited books that do not exist (Dummett, «The History of the Playing Card»;
+# Idel, «Gnosis: An Introduction»; Hanegraaff, «A History of Western Esotericism») and wrong years (Decker, «A Wicked
+# Pack of Cards», 1970 instead of 1996). A prompt saying «do not invent sources» is not enough: the model does not
+# know it is wrong. Every source of the plan is now looked up: a book (author, title, year) in the Open Library
+# catalogue, a «…, Wikipedia» page in Wikipedia, a link by opening it. What is not found is refused, with what the
+# catalogue does have (the author's real titles, the real years, the closest Wikipedia pages), so the agent can fix it.
+# Answers are kept in a local cache: the same source is never looked up twice.
+
+SOURCES_CACHE_PATH = (Path(os.environ["TAROTS_SOURCES_CACHE"]) if os.environ.get("TAROTS_SOURCES_CACHE")
+                      else Path.home() / ".tarots-blog" / "sources-cache.json")
+SOURCES_UA = "tarots-blog-publisher (+https://tarots.chat)"
+_SRC_STOP = frozenset("a an the of and in on to for from with de la le les des du di da del della und der die das".split())
+
+
+def _fetch_json(url: str) -> Any:
+    """GET a public JSON (Open Library, Wikipedia); Unreachable when the network does not answer."""
+    request = urllib.request.Request(url, headers={"User-Agent": SOURCES_UA, "Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
+        raise Unreachable(f"{url.split('?')[0]}: {exc}") from None
+
+
+def _url_answers(url: str) -> bool:
+    request = urllib.request.Request(url, headers={"User-Agent": SOURCES_UA})
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            return response.status < 400
+    except urllib.error.HTTPError as exc:
+        return exc.code < 400 or exc.code in (401, 403, 429)  # a page behind a login or a rate limit exists
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        raise Unreachable(f"{url}: {exc}") from None
+
+
+def _src_words(text: str) -> set:
+    return {w for w in re.findall(r"[^\W_]+", _plain(text)) if w not in _SRC_STOP and len(w) > 1}
+
+
+def _same_title(wanted: str, found: str) -> bool:
+    """The title asked for and a catalogue title are the same book: the main title (before a colon) is contained, or
+    the words largely coincide."""
+    a, b = _src_words(wanted.split(":")[0]), _src_words(found)
+    if not a or not b:
+        return False
+    return a <= b or len(a & b) / len(a | b) >= 0.6
+
+
+def parse_source(text: str) -> Dict[str, Any]:
+    """«Author, Title (Year)» → a book; «Work, tr. Translator (Year)» → a book by its translator; «Page, Wikipedia» →
+    a Wikipedia page; a URL → a link; anything else → a reference (a primary text by its name)."""
+    s = " ".join(str(text).split())
+    url = re.search(r"https?://\S+", s)
+    if url:
+        return {"kind": "url", "url": url.group(0).rstrip(").,;"), "text": s}
+    year_m = re.search(r"\((?:[^()]*?\b)?(1[4-9]\d\d|20\d\d)\)\s*$", s)
+    year = int(year_m.group(1)) if year_m else None
+    body = re.sub(r"\s*\([^()]*\)\s*", " ", s).strip(" ,;")
+    if re.search(r"\bwikipedia\b", s, re.I):
+        page = re.split(r",\s*wikipedia\b", body, flags=re.I)[0].strip() or body
+        return {"kind": "wiki", "page": page, "text": s}
+    if re.search(r"\b(?:blog|tarots\.chat)\b", s, re.I):
+        return {"kind": "own", "text": s}
+    if "," in body:
+        first, rest = [x.strip() for x in body.split(",", 1)]
+        tr = re.match(r"(?:tr|trans|transl|ed|eds)\.?\s+(.+)$", rest, re.I)
+        if tr:
+            return {"kind": "book", "author": tr.group(1).split(",")[0], "title": first, "year": year, "text": s}
+        words = first.split()
+        if 1 <= len(words) <= 5 and all(w[:1].isupper() or w in ("de", "von", "van", "di", "da", "le", "la")
+                                        or re.match(r"^[A-Z]\.$", w) for w in words):
+            return {"kind": "book", "author": first, "title": rest, "year": year, "text": s}
+    return {"kind": "ref", "name": re.sub(r"\b(?:ch|chap|chapter|book|part|vol)\.?\s*[\divxlc]+\b.*$", "", body,
+                                           flags=re.I).strip(" ,;") or body, "year": year, "text": s}
+
+
+def _check_book(src: Dict[str, Any]) -> tuple:
+    q = urllib.parse.urlencode({"author": src["author"], "title": src["title"].split(":")[0],
+                                "fields": "title,author_name,first_publish_year,publish_year", "limit": 10})
+    docs = [d for d in (_fetch_json(f"https://openlibrary.org/search.json?{q}").get("docs") or [])
+            if _same_title(src["title"], d.get("title") or "")]
+    if docs:
+        years = sorted({y for d in docs for y in (d.get("publish_year") or []) if isinstance(y, int)}
+                       | {d["first_publish_year"] for d in docs if isinstance(d.get("first_publish_year"), int)})
+        if src["year"] and years and not any(abs(src["year"] - y) <= 1 for y in years):
+            return False, (f"«{docs[0]['title']}» by {', '.join(docs[0].get('author_name') or [src['author']])} exists, "
+                           f"but not in {src['year']}: its editions are {', '.join(map(str, years[:12]))}")
+        return True, ""
+    q = urllib.parse.urlencode({"author": src["author"], "fields": "title,first_publish_year", "limit": 12,
+                                "sort": "editions"})
+    titles = [f"{d['title']} ({d.get('first_publish_year', '?')})"
+              for d in _fetch_json(f"https://openlibrary.org/search.json?{q}").get("docs") or []]
+    q = urllib.parse.urlencode({"title": src["title"].split(":")[0], "fields": "title,author_name,first_publish_year",
+                                "limit": 5})
+    others = [f"{d['title']} by {', '.join(d.get('author_name') or ['?'])} ({d.get('first_publish_year', '?')})"
+              for d in _fetch_json(f"https://openlibrary.org/search.json?{q}").get("docs") or []
+              if _same_title(src["title"], d.get("title") or "")]
+    # The author's books on the same subject (author + the words of the title): the closest real titles first.
+    surname = (src["author"].split() or [""])[-1].lower()
+    q = urllib.parse.urlencode({"q": f"{src['author']} {' '.join(sorted(_src_words(src['title'])))}",
+                                "fields": "title,author_name,first_publish_year", "limit": 8})
+    near = []
+    for d in _fetch_json(f"https://openlibrary.org/search.json?{q}").get("docs") or []:
+        entry = f"{d['title']} ({d.get('first_publish_year', '?')})"
+        if surname and any(surname in str(n).lower() for n in d.get("author_name") or []) and entry not in near:
+            near.append(entry)
+    hint = (f"; on this subject by {src['author']}: {'; '.join(near[:6])}" if near else "")
+    hint += (f"; a book with that title exists by someone else: {'; '.join(others[:3])}" if others else "")
+    hint += (f"; other books by {src['author']}: {'; '.join(titles[:8])}" if titles else
+             f"; no author «{src['author']}» in the catalogue")
+    return False, f"«{src['title']}» by {src['author']} is not in Open Library" + hint
+
+
+def _check_wiki(page: str) -> tuple:
+    q = urllib.parse.urlencode({"action": "query", "titles": page, "redirects": 1, "format": "json"})
+    pages = (_fetch_json(f"https://en.wikipedia.org/w/api.php?{q}").get("query") or {}).get("pages") or {}
+    if any(int(k) > 0 for k in pages):
+        return True, ""
+    q = urllib.parse.urlencode({"action": "query", "list": "search", "srsearch": page, "srlimit": 4, "format": "json"})
+    near = [r["title"] for r in (_fetch_json(f"https://en.wikipedia.org/w/api.php?{q}").get("query") or {}).get("search") or []]
+    return False, f"no Wikipedia page «{page}»" + (f"; the closest: {'; '.join(near)}" if near else "")
+
+
+def _check_ref(src: Dict[str, Any]) -> tuple:
+    """A primary text named without author (Sefer Yetzirah, Picatrix, Liber 777): found if the catalogue or Wikipedia
+    knows a work by that name."""
+    q = urllib.parse.urlencode({"q": src["name"], "fields": "title", "limit": 5})
+    if any(_same_title(src["name"], d.get("title") or "")
+           for d in _fetch_json(f"https://openlibrary.org/search.json?{q}").get("docs") or []):
+        return True, ""
+    ok, why = _check_wiki(src["name"])
+    if ok:
+        return True, ""
+    return False, (f"«{src['name']}» is neither a work in Open Library nor a Wikipedia page ({why}). Cite it as "
+                   "«Author, Title (Year)» of an edition, or «Page, Wikipedia»")
+
+
+def check_source(text: str) -> tuple:
+    """(ok, reason) of one source. Not reachable (no network): ok, with the reason «not verified»."""
+    cache = _sources_cache()
+    key = " ".join(str(text).split())
+    if key in cache:
+        return tuple(cache[key])
+    src = parse_source(key)
+    try:
+        if src["kind"] == "own":
+            result = (False, "an article of this blog is not a source: cite what it rests on")
+        elif src["kind"] == "url":
+            result = (True, "") if _url_answers(src["url"]) else (False, f"the link {src['url']} does not answer")
+        elif src["kind"] == "wiki":
+            result = _check_wiki(src["page"])
+        elif src["kind"] == "book":
+            result = _check_book(src)
+        else:
+            result = _check_ref(src)
+    except Unreachable as exc:
+        return True, f"not verified (the catalogue did not answer: {exc})"
+    cache[key] = list(result)
+    _save_sources_cache(cache)
+    return result
+
+
+def _sources_cache() -> Dict[str, Any]:
+    try:
+        data = json.loads(SOURCES_CACHE_PATH.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _save_sources_cache(data: Dict[str, Any]) -> None:
+    SOURCES_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    tmp = SOURCES_CACHE_PATH.with_name(SOURCES_CACHE_PATH.name + ".tmp")
+    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+    os.replace(tmp, SOURCES_CACHE_PATH)
+
+
+def source_problems(sources: List[Any]) -> List[str]:
+    out = []
+    for s in sources or []:
+        ok, why = check_source(str(s))
+        if not ok:
+            out.append(f"source «{s}»: {why}")
+        elif why:
+            print(f"note: source «{s}»: {why}", file=sys.stderr)
+    return out
+
+
+def cmd_sources_check(a) -> int:
+    """Look up sources before writing them in a plan or an article."""
+    bad = 0
+    for s in a.sources:
+        ok, why = check_source(s)
+        bad += not ok
+        print(("OK   " if ok else "NO   ") + s + (f"\n     {why}" if why else ""))
+    return EXIT_OK if not bad else EXIT_RULE
+
+
 # ---- the editorial plan: series and single articles for expert readers -------------------------------------------
 # The operator (7/10/2026): the topics were «da riviste femminili». Then, the same day: series of 3-10 articles, each
 # series written and published in ONE session; a plan of about 100 posts (series and single articles) made in one
@@ -2401,6 +2600,8 @@ def _validate(raw: Any, data: Dict[str, Any], rows: List[Dict[str, Any]], planne
             problems.append(f"«{t}» is TAKEN by {title_line(matches[0]['row'])}")
         if any(topic_similarity(topic_words(t), topic_words(o)) >= TOPIC_TAKEN for o in planned):
             problems.append(f"«{t}» repeats a title already in the plan")
+    if not problems:  # only a well-formed item is looked up (the catalogue is slow): its sources must exist
+        problems = source_problems(list(raw.get("sources") or []) + [s for p in parts for s in p.get("sources") or []])
     if problems:
         return None, problems
     iid = slugify(raw.get("id") or title, 60)
@@ -2820,6 +3021,17 @@ def parser() -> argparse.ArgumentParser:
                                            "to copy in the report of a run")
     rr.add_argument("--hours", type=int, default=12)
     rr.set_defaults(run=cmd_run_report)
+    sc = sub.add_parser(
+        "sources-check", help="look up sources: books in Open Library (author, title, year), Wikipedia pages, links",
+        description=(
+            "Each SOURCE as it will be written: «Author, Title (Year)», «Work, tr. Translator (Year)», «Page, "
+            "Wikipedia», a URL, or the name of a primary text. Prints OK or NO with what the catalogue has instead "
+            f"(the author's real titles, the real years, the closest pages). `plan add` runs the same check. Answers "
+            f"are cached in {SOURCES_CACHE_PATH}."
+        ),
+    )
+    sc.add_argument("sources", nargs="+", metavar="SOURCE")
+    sc.set_defaults(run=cmd_sources_check)
     pl = sub.add_parser(
         "plan", help="the editorial plan: series (3-10 articles) and single articles, written in order",
         description=(

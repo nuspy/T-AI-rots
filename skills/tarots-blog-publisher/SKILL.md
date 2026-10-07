@@ -106,6 +106,9 @@ checks the record of `tarots_images.py` and refuses `--no-cover` (exit 11) when 
   it before choosing.
 - **Read the record before searching**: `ideas list` and `plan status` keep the topics already proposed, rejected
   and written, and the notes of earlier research. Do not search again what is there.
+- **Sources must exist**: `sources-check "<source>" …` looks each one up (books in Open Library with author, title
+  and year; Wikipedia pages; links), and `plan add` refuses an item with a source that is not found, saying what
+  exists instead. Format and rules: `references/editorial-line.md`, «Sources that exist».
 - Dates and facts: **verify every one** on a page you actually open. If you cannot verify it, drop it.
 - **The focus keyword comes after the topic**: the phrase an interested reader would really type into a search
   engine to find this article, in natural word order, **2–5 words** (`sefer yetzirah tarot`, `golden dawn tarot
@@ -335,5 +338,6 @@ reads, changes and deletes **any draft** of the blog (`blog:write`), whoever wro
 - `../tarots-blog-images/`: the picture skill (`scripts/tarots_images.py`, `references/prompts.md`).
 - `tests/`: offline tests (pictures, titles and topic-check, work folder, NEXT, keyword, rounds, the cover of the
   slug, subject and section, the editorial line: titles, section, --no-cover, --publish, run-report, series, ideas).
+- `~/.tarots-blog/sources-cache.json`: the answers of the catalogue for each source (`sources-check`, `plan add`).
 - `~/.tarots-blog/editorial.json`: the plan (items queued, open, closed; parts written or failed with their
   attempts), the ideas and the research (`plan`, `ideas`); local, no key.

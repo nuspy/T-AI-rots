@@ -79,6 +79,22 @@ spread invented to fit a season, a list of «10 ways to…».
 4. **Record each candidate** with `ideas add "<title>" --why "<the thesis, and why an expert would read it>"
    --source <url>`; drop the weak ones with `ideas reject "<title>" --why "<reason>"`.
 
+## Sources that exist
+
+Every source of the plan is looked up by `plan add` (and by `tarots_blog.py sources-check "<source>" …`, which you
+run first): a book in the Open Library catalogue, a Wikipedia page in Wikipedia, a link by opening it. **What is not
+found is refused** (7/10/2026: the first plan cited books that do not exist and wrong years). Write them like this:
+
+- a book: `Author, Title (Year)` — the year of the edition you cite: `Michael Dummett, The Game of Tarot (1980)`;
+- a translation: `Work, tr. Translator (Year)` — `Sefer Yetzirah, tr. Aryeh Kaplan (1990)`;
+- a Wikipedia page, with its exact title: `Visconti–Sforza Tarot, Wikipedia`;
+- a page you opened: its URL.
+
+When a source is refused, the message says what exists instead: the author's real books on that subject, the real
+years of the editions, the closest Wikipedia pages. Use them; never keep a refused source. A real book the catalogue
+does not know (it happens: Scholem's *Origins of the Kabbalah*) is replaced by one it knows, or by the page you read.
+Never cite this blog as a source.
+
 ## The plan
 
 Make it in one go: research, then one JSON file with **about 100 articles** in all, as series (3–10 parts each) and
