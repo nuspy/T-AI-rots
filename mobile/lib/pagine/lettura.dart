@@ -451,6 +451,7 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
       if (lt.status == 'intervista' && (ultima == null || ultima.ruolo == 'utente')) {
         await _passoIntervista(lt.id, null);
       }
+      _interpretaLeMieCarte();
     } on ErroreApi {
       _set(() {
         _fase = FaseLettura.preparazione;
@@ -533,7 +534,9 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
           _fase = FaseLettura.crisi;
         } else if (passo.completa) {
           _aggiungi(Autore.oracolo, passo.riassunto ?? '', titolo: '✦', macchina: true);
-          _fase = FaseLettura.prontoMescolare;
+          // Le proprie carte («Interpreta le mie carte»): già estratte e posate, niente mescolata né taglio. Il
+          // server è già passato alla rivelazione: l'interpretazione parte da sola.
+          _fase = _manuale ? FaseLettura.rivelazione : FaseLettura.prontoMescolare;
         } else if (passo.scelta) {
           _modo = _ModoIntervista.libero;
         } else if (passo.domanda != null) {
@@ -547,6 +550,17 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
     } finally {
       _set(() => _attesa = false);
     }
+    _interpretaLeMieCarte();
+  }
+
+  /// Le proprie carte, a intervista finita: niente da mescolare né da scegliere, si leggono subito (una volta: se
+  /// l'interpretazione non riesce resta il pulsante per riprovare).
+  bool _interpretazioneAvviata = false;
+
+  void _interpretaLeMieCarte() {
+    if (!_manuale || _fase != FaseLettura.rivelazione || _interpretazioneAvviata || !_vivo) return;
+    _interpretazioneAvviata = true;
+    unawaited(_rivelaTutto());
   }
 
   /// Salva il testo scritto: la risposta alla domanda che aspetta (senza chiedere la successiva), o un testo libero.
@@ -1217,6 +1231,7 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
       _fine = null;
       _linguaLettura = null;
       _manuale = false;
+      _interpretazioneAvviata = false;
       _mazzoLetturaFatto = false;
       _caricata = true;
       _modo = _ModoIntervista.risposta;

@@ -384,6 +384,45 @@ void main() {
     finisci();
   });
 
+  testWidgets('le proprie carte: dopo l\'intervista niente mescolata, l\'interpretazione parte da sola', (tester) async {
+    final rete = reteRito();
+    // «Interpreta le mie carte»: la lettura nasce con le carte già posate (manuale), coperte e senza interpretazione.
+    final lettura = fixture('lettura_completa.json')! as Map<String, Object?>;
+    lettura
+      ..['status'] = 'intervista'
+      ..['manuale'] = true
+      ..['interview'] = <Object?>[]
+      ..['context_summary'] = null
+      ..['synthesis'] = null
+      ..['completed_at'] = null
+      ..['cards'] = [
+        for (final c in (lettura['cards']! as List<Object?>).cast<Map<String, Object?>>())
+          {...c, 'rivelata': false, 'interpretazione': null},
+      ];
+    rete.risposte['/me/readings/$idLettura'] = (_) => RispostaFinta.json(lettura);
+    var rivelate = 0;
+    rete.risposte['POST /readings/$idLettura/reveal-all'] = (_) {
+      rivelate++;
+      return sse('rivela_1.sse');
+    };
+    await montaApp(tester, rotta: '/read?id=$idLettura', larghezza: 1024, altezza: 1366, rete: rete);
+    await attendi(tester);
+    await attendi(tester);
+    expect(find.textContaining('Da quanto tempo'), findsOneWidget);
+    await tester.enterText(find.byType(EditableText).last, 'Started last month.');
+    await tester.pump();
+    await tocca(tester, 'Send, no more questions');
+    for (var i = 0; i < 6; i++) {
+      await attendi(tester, 100);
+    }
+    expect(corpo(rete, '/readings/$idLettura/interview'), {'basta': true});
+    expect(find.text('Begin the shuffle'), findsNothing);
+    expect(find.byType(Mescolamento), findsNothing);
+    expect(rivelate, 1);
+    expect(tester.takeException(), isNull);
+    finisci();
+  });
+
   testWidgets('l\'avvertenza già accettata non si riapre', (tester) async {
     final rete = reteRito();
     final app = await montaApp(

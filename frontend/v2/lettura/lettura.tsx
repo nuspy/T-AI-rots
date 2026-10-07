@@ -303,7 +303,9 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
         setFase("crisi");
       } else if (passo.completa) {
         aggiungi({ autore: "oracolo", titolo: "✦", testo: passo.riassunto ?? "", macchina: true });
-        setFase("pronto-mescolare");
+        /* Le proprie carte («Interpreta le mie carte»): sono già estratte e posate, niente mescolata né taglio. Il
+         * server è già passato alla rivelazione, e l'interpretazione parte da sola (effetto più sotto). */
+        setFase(manuale ? "rivelazione" : "pronto-mescolare");
       } else if (passo.scelta) {
         setModo("libero");
       } else if (passo.domanda) {
@@ -318,7 +320,7 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
     } finally {
       setAttesa(false);
     }
-  }, [sessione.token, l.err_oracolo, traccia]);
+  }, [sessione.token, l.err_oracolo, traccia, manuale]);
 
   /* Il minimo di domande in vigore, prima ancora di aprire la lettura: «Invia quesito e inizia a mescolare» salta
    * l'intervista, e si può solo col minimo a zero. */
@@ -782,7 +784,9 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
     }
   };
 
+  const interpretazioneAvviata = useRef(false);
   const nuova = () => {
+    interpretazioneAvviata.current = false;
     setFase("preparazione");
     setTema("standard");
     setStesaId(null);
@@ -859,6 +863,14 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
   }, [stretto, fase, idIniziale, parametri]);
   const [ritoChiuso, setRitoChiuso] = useState(false);
   useEffect(() => { setRitoChiuso(false); }, [fase]);
+
+  /* Le proprie carte, a intervista finita: niente da mescolare né da scegliere, si leggono subito (una volta: se
+   * l'interpretazione non riesce resta il pulsante per riprovare). */
+  useEffect(() => {
+    if (fase !== "rivelazione" || !manuale || !stesa || !id || interpretazioneAvviata.current) return;
+    interpretazioneAvviata.current = true;
+    void rivelaTutto();
+  }, [fase, manuale, stesa, id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const nOmaggi = omaggi.dati?.crediti_iscrizione ?? 3;
   const dialoghiComuni = (
