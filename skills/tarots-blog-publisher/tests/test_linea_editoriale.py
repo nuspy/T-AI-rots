@@ -407,6 +407,41 @@ def test_an_item_left_incomplete_yesterday_comes_first(blog, tmp_path, capsys):
     assert "part 2 of 3" in capsys.readouterr().out
 
 
+def test_next_alone_opens_the_next_item_of_the_plan(blog, tmp_path, capsys):
+    f = plan_file(tmp_path, single("What Frieda Harris Changed in the Last Drafts"),
+                  series("The Letters Before the Cards: Sefer Yetzirah"))
+    assert tb.main(["plan", "add", str(f)]) == tb.EXIT_OK
+    capsys.readouterr()
+    assert tb.main(["plan", "next"]) == tb.EXIT_OK                     # no `plan session`: it opens the first item
+    out = capsys.readouterr().out
+    assert "opened: [single] What Frieda Harris Changed" in out and "start it with:" in out
+    assert [i["status"] for i in plan()["items"]] == ["open", "queued"]
+    assert write_part(blog, plan()["items"][0]["id"], 1, "s1") == tb.EXIT_OK
+    capsys.readouterr()
+    assert tb.main(["plan", "next"]) == tb.EXIT_OK                     # the single is written: the series, whole
+    assert "part 1 of 3" in capsys.readouterr().out
+    assert [i["status"] for i in plan()["items"]] == ["closed", "open"]
+
+
+def test_next_after_the_daily_session_opens_more_only_with_more(blog, tmp_path, capsys):
+    f = plan_file(tmp_path, single("What Frieda Harris Changed in the Last Drafts"),
+                  single("Why Crowley Renamed Strength as Lust"))
+    assert tb.main(["plan", "add", str(f)]) == tb.EXIT_OK
+    assert tb.main(["plan", "session", "--articles", "1"]) == tb.EXIT_OK
+    assert write_part(blog, plan()["items"][0]["id"], 1, "s1") == tb.EXIT_OK
+    capsys.readouterr()
+    assert tb.main(["plan", "next"]) == tb.EXIT_OK
+    assert "the session is done" in capsys.readouterr().out
+    assert plan()["items"][1]["status"] == "queued"
+    assert tb.main(["plan", "next", "--more"]) == tb.EXIT_OK
+    assert "single article: Why Crowley Renamed Strength as Lust" in capsys.readouterr().out
+
+
+def test_next_on_an_empty_plan_asks_for_a_lot(blog, capsys):
+    assert tb.main(["plan", "next"]) == tb.EXIT_PLAN_EMPTY
+    assert "PLAN EMPTY" in capsys.readouterr().out
+
+
 def test_a_request_opens_at_once_ahead_of_the_plan(blog, tmp_path, capsys):
     assert tb.main(["plan", "add", str(plan_file(tmp_path, single("What Frieda Harris Changed in the Last Drafts")))]) == tb.EXIT_OK
     assert tb.main(["plan", "session"]) == tb.EXIT_OK

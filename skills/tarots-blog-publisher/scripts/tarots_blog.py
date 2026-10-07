@@ -2671,11 +2671,25 @@ def _session(data: Dict[str, Any], articles: int) -> List[Dict[str, Any]]:
     for item in [i for i in data["items"] if i.get("status") == "queued"]:
         if left >= articles:
             break
-        item.update(status="open", opened=_utcnow().isoformat(timespec="seconds"))
+        item.update(status="open", opened=_utcnow().isoformat(timespec="seconds"), via="session")
         left += len(item["parts"])
         opened.append(item)
     _save_editorial(data)
     return opened
+
+
+def _session_today(data: Dict[str, Any]) -> bool:
+    """True when `plan session` opened something today: the daily session has its articles, `plan next` opens no more."""
+    return any(i.get("via") == "session" and str(i.get("opened") or "").startswith(_today()) for i in data["items"])
+
+
+def _open_next_queued(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Opens the first queued item (a whole series, never split), for `plan next` outside a daily session."""
+    item = next((i for i in data["items"] if i.get("status") == "queued"), None)
+    if item is not None:
+        item.update(status="open", opened=_utcnow().isoformat(timespec="seconds"), via="next")
+        _save_editorial(data)
+    return item
 
 
 def _print_open(data: Dict[str, Any]) -> None:
@@ -2716,13 +2730,24 @@ def cmd_plan(a) -> int:
         return EXIT_OK
     if a.action == "next":
         found = next_to_write(data)
+        stuck = [i for i in _open_plan_items(data) if _left(i)]
+        if found is None and not stuck and (a.more or not _session_today(data)):
+            # nothing open: outside a daily session (or with --more) the next queued item is opened here
+            opened = _open_next_queued(data)
+            if opened is not None:
+                print(f"opened: [{opened['kind']}] {opened['title']} ({len(opened['parts'])} article(s))")
+                found = next_to_write(data)
+            else:
+                print(f"PLAN EMPTY: nothing queued and nothing open. Add a lot now (references/editorial-line.md, «The "
+                      f"plan»): about {PLAN_LOT} articles, with `plan add <file.json>`; then run `plan next` again.")
+                return EXIT_PLAN_EMPTY
         if found is None:
-            stuck = [i for i in _open_plan_items(data) if _left(i)]
             if stuck:
                 print("the session is done for today, but these are NOT complete (they come first tomorrow):")
                 _print_open(data)
             else:
-                print("the session is done: every open item is written.")
+                print("the session is done: every open item is written (today's `plan session` articles are all "
+                      "out; `plan next --more` opens the next item of the plan).")
             return EXIT_OK
         item, part = found
         for line in _brief(item, part):
@@ -3056,6 +3081,8 @@ def parser() -> argparse.ArgumentParser:
     pl.add_argument("file", nargs="?", help="add: the JSON file")
     pl.add_argument("--now", action="store_true", help="add: open at once (on request), ahead of the plan")
     pl.add_argument("--articles", type=int, default=SESSION_ARTICLES, help="session: about how many articles")
+    pl.add_argument("--more", action="store_true",
+                    help="next: open the next item of the plan even after today's `plan session` is written")
     pl.add_argument("--item", help="skip: the item id")
     pl.add_argument("--part", type=int, help="skip: the part number")
     pl.add_argument("--reason", help="skip: why")

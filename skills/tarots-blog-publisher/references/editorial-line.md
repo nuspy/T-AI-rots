@@ -167,6 +167,10 @@ tarots_blog.py run-report --hours 24   # the SAVED lines, and INCOMPLETE / STUCK
   failures). Never mark a part written yourself, never skip it: only the operator may (`plan skip`).
 - If the session stops halfway (a crash, a timeout), nothing is lost: the next `plan session` starts from the parts
   left.
+- **Without `plan session`** (the operator says «write the next article of the plan», or «repeat it N times»):
+  `plan next` alone is enough. When nothing is open it opens the next item of the plan by itself (a whole series,
+  in order) and gives its first part. After a daily `plan session` it opens nothing more that day, so the session
+  stays at about 5 articles; `plan next --more` opens the next item anyway, when the operator asks for more.
 
 ## How to write one part
 
