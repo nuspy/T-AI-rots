@@ -259,8 +259,9 @@ look at (`note:` lines, claims you removed). Never the key, never the article bo
   save` in `~/.tarots-blog/credentials.json`. Both skills read it by themselves (`note: using the saved key (prefix
   tk_live_…)`): set no variable, look for no other key, never print it. A `403` on a picture command means that key
   lacks the media permission: report the line, do not work around it.
-- **Topic**: from the plan only (`plan session`, then `plan next` after every `post`; exit 14 of `plan session`:
-  the plan is empty, make a new one first). Never one `TAKEN`, never a popular genre (sign seasons, moon phases,
+- **Topic**: from the plan only (`plan session`, then `plan next` after every `post`). `PLAN LOW` from `plan
+  session` (fewer than 10 articles queued): add a lot of about 20 first; exit 14 (`PLAN EMPTY`): add a lot, then run
+  `plan session` again. Never one `TAKEN`, never a popular genre (sign seasons, moon phases,
   seasonal spreads, beginners, love).
 - **The session's articles, one after the other**, each researched, written, checked and illustrated on its own;
   **a series is finished in the same session**. Published with `post --publish` when the job says to publish,

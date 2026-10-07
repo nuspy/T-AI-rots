@@ -572,3 +572,23 @@ def test_plan_add_refuses_an_item_with_an_invented_source(blog, tmp_path, monkey
     out = capsys.readouterr().out
     assert "REFUSED" in out and "The History of the Playing Card" in out and "not in Open Library" in out
     assert [i["title"] for i in plan()["items"]] == ["Why Crowley Renamed Strength as Lust"]
+
+
+def test_a_low_plan_asks_for_a_lot_before_writing(blog, tmp_path, capsys):
+    f = plan_file(tmp_path, series("The Letters Before the Cards: Sefer Yetzirah", n=4),
+                  single("What Frieda Harris Changed in the Last Drafts"),
+                  series("Decans and Faces: The Minor Arcana as a Calendar", n=5))
+    assert tb.main(["plan", "add", str(f)]) == tb.EXIT_OK
+    capsys.readouterr()
+    assert tb.main(["plan", "session"]) == tb.EXIT_OK                  # 4 + 1 open, 5 left queued
+    assert "PLAN LOW: only 5 article(s) left" in capsys.readouterr().out
+
+
+def test_a_full_plan_says_nothing_about_lots(blog, tmp_path, capsys):
+    f = plan_file(tmp_path, series("The Letters Before the Cards: Sefer Yetzirah", n=5),
+                  *[series(f"Decans and Faces {k}: The Minor Arcana as a Calendar", n=10) for k in (1, 2)])
+    assert tb.main(["plan", "add", str(f)]) == tb.EXIT_OK
+    capsys.readouterr()
+    assert tb.main(["plan", "session"]) == tb.EXIT_OK
+    assert "PLAN LOW" not in capsys.readouterr().out
+

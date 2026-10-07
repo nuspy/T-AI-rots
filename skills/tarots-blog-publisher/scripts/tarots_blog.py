@@ -2427,6 +2427,8 @@ SERIES_PARTS = (3, 10)                # a series is 3-10 articles (operator, 7/1
 SESSION_ARTICLES = 5                  # the articles of a daily session, on average (never splitting a series)
 ATTEMPTS_PER_DAY = 3                  # failed attempts of one part in one day before the session moves on
 STUCK_AFTER = 3                       # failed attempts in total: the part is shown as STUCK in every report
+PLAN_LOW = 10                         # fewer queued articles than this: the session adds a lot first
+PLAN_LOT = 20                         # the articles of a lot (a refill of the plan)
 #: Popular genres the plan must not contain (they filled the blog with the same article ten times).
 BANNED_TOPICS = [
     (r"\b(?:aries|taurus|gemini|cancer|leo|virgo|libra|scorpio|sagittarius|capricorn|aquarius|pisces)\s+season\b",
@@ -2701,10 +2703,15 @@ def cmd_plan(a) -> int:
         if opened:
             print(f"opened for this session: {', '.join(i['title'] for i in opened)}")
         if not _open_plan_items(data):
-            print("PLAN EMPTY: nothing queued and nothing open. Make a new plan now (references/editorial-line.md, "
-                  "«The plan»): about 100 articles, series and single ones, with `plan add <file.json>`; then run "
+            print(f"PLAN EMPTY: nothing queued and nothing open. Add a lot now (references/editorial-line.md, «The "
+                  f"plan»): about {PLAN_LOT} articles, series and single ones, with `plan add <file.json>`; then run "
                   "`plan session` again.")
             return EXIT_PLAN_EMPTY
+        queued = sum(len(i["parts"]) for i in data["items"] if i.get("status") == "queued")
+        if queued < PLAN_LOW:
+            print(f"PLAN LOW: only {queued} article(s) left in the queue after this session. FIRST add a lot of about "
+                  f"{PLAN_LOT} articles (references/editorial-line.md, «The plan»: research, `plan add <file.json>`), "
+                  "then write this session's articles.")
         print("now: tarots_blog.py plan next   (repeat after every `post` until it says the session is done)")
         return EXIT_OK
     if a.action == "next":

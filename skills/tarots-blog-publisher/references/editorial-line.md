@@ -14,7 +14,7 @@ of the occult. Write for them. An article they would skim in ten seconds is a fa
 
 | The operator asks | You do |
 |---|---|
-| «make the plan» (or `plan session` exits 14: PLAN EMPTY) | research, then `plan add <file.json>` with about 100 articles: section «The plan» |
+| «make the plan» (or `plan session` says PLAN LOW, or exits 14: PLAN EMPTY) | research, then `plan add <file.json>`: about 100 articles the first time, a lot of about 20 when the plan runs low: section «The plan» |
 | the daily job | `plan session`, then `plan next` → write → `post --publish`, until `plan next` says the session is done: section «The daily session» |
 | «write an article / a series about X» | the same file format with that one item, `plan add <file.json> --now`, then `plan next` until it is written: it goes ahead of the plan |
 
@@ -97,8 +97,8 @@ Never cite this blog as a source.
 
 ## The plan
 
-Make it in one go: research, then one JSON file with **about 100 articles** in all, as series (3–10 parts each) and
-single articles, mixed so that a day's ~5 articles are varied (a series of 3 and two single articles; a series of 5;
+The first time, make it in one go: research, then one JSON file with **about 100 articles** in all, as series
+(3–10 parts each) and single articles, mixed so that a day's ~5 articles are varied (a series of 3 and two single articles; a series of 5;
 a long series alone). Put the items in the order they should be written. Then:
 
 ```
@@ -133,6 +133,11 @@ The file:
 ]}
 ```
 
+**Refill by lots.** When `plan session` prints `PLAN LOW` (fewer than 10 articles left in the queue), add **a lot of
+about 20 articles** before writing the session's articles, the same way: research, one JSON file, `plan add`. When it
+exits 14 (`PLAN EMPTY`), add a lot first, then run `plan session` again. The plan never runs dry, and no session has to
+plan 100 articles at once.
+
 `section` is a slug from `tarots_blog.py sections` (type «articoli»: `kabbalah`, `thoth-tarot`, `symbolism`,
 `spirituality`…). `plan add` checks every item: title, thesis or question, why, section, at least two sources; a
 series has 3–10 parts, each with a title, a question and sources; no popular genre, no keyword-string title, nothing
@@ -144,7 +149,7 @@ replace them. `plan status` shows how many articles are queued.
 
 ```
 tarots_blog.py guide
-tarots_blog.py plan session            # exit 14 (PLAN EMPTY): make a new plan first (section «The plan»), then again
+tarots_blog.py plan session            # PLAN LOW: add a lot of ~20 first; exit 14 (PLAN EMPTY): add a lot, then again
 tarots_blog.py plan next               # the part to write now: its brief and the exact `new` command
    … new … --series <id> --part <n>   # write, check, cover, then:
 tarots_blog.py post <slug> --publish   # published; the part is marked written
