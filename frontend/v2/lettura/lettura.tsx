@@ -33,6 +33,7 @@ import { DialogoLimite } from "@/v2/componenti/dialogo-limite";
 import { limiteSuperato, type LimiteSuperato } from "@/lib/abbonamenti";
 import { DialogoEta } from "@/v2/componenti/privacy-accesso";
 import { confermaEta, motivoEta } from "@/lib/privacy";
+import { avvertenzaAccettata, etaConfermata, ricordaAvvertenza, ricordaEta } from "@/v2/lib/ricordi-lettura";
 import { P, linguaContenuti, useConto, useMazzi } from "@/v2/lib/dati";
 import { LinguaNomi, useLingua } from "@/v2/lib/lingua";
 import { R, indirizzoV2 } from "@/v2/lib/percorsi";
@@ -134,6 +135,7 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
   }, [temaParam, l.temi]);
   const [disclaimer, setDisclaimer] = useState<string | null>(null);
   const [mostraDisclaimer, setMostraDisclaimer] = useState(false);
+  const [avvertenzaCapita, setAvvertenzaCapita] = useState(false);
   const [mostraAcquisto, setMostraAcquisto] = useState(false);
   /* Oltre un limite dell'abbonamento (v9, Fase 2b): il dialogo del condono o del consenso a un credito. */
   const [limite, setLimite] = useState<LimiteSuperato | null>(null);
@@ -391,6 +393,8 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
     if (!stesaId) return;
     if (speciale && !personeFatte) { setFase("persone"); return; }
     if (senzaCrediti) { setMostraAcquisto(true); traccia("paywall_viewed", { dove: "inizio" }); return; }
+    /* L'avvertenza si accetta una volta (casella «ho capito»), poi il cookie la ricorda: niente dialogo. */
+    if (avvertenzaAccettata()) { await inizia(); return; }
     if (!disclaimer) {
       try {
         setDisclaimer((await leggiDisclaimer(lingua)).testo);
@@ -411,6 +415,7 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
     }
   };
 
+  const etaRiprovata = useRef(false);
   const inizia = async (etaAnni?: number, oltreLimite?: "condono" | "credito") => {
     setMostraDisclaimer(false);
     setLimite(null);
@@ -439,7 +444,7 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
             variante,
             ...(speciale ? { partner: partnerDa(persone), ricordaPartner: persone.ricorda } : {}),
           })
-        : await apriLetturaAnonima(stesaId, testoDomanda, lingua, etaAnni, variante);
+        : await apriLetturaAnonima(stesaId, testoDomanda, lingua, etaAnni ?? etaConfermata() ?? undefined, variante);
       traccia("reading_started", { categoria, anonima: !sessione.autenticata });
       if (a.crisi) {
         setLinguaLettura(null);
@@ -481,6 +486,24 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
       const dettaglio = e instanceof ErroreApi ? (e.dettaglio as { motivo?: string } | undefined) : undefined;
       const perEta = motivoEta(e);
       const oltre = limiteSuperato(e);
+      /* L'età già confermata su questo dispositivo (cookie) basta: con un account la si porta nel profilo, senza
+       * chiederla di nuovo; una volta sola per apertura, poi il dialogo. */
+      const giaConfermata = etaConfermata();
+      if (perEta?.motivo === "eta_da_confermare" && giaConfermata !== null && giaConfermata >= perEta.anni
+        && !etaRiprovata.current) {
+        etaRiprovata.current = true;
+        try {
+          if (sessione.autenticata) {
+            await confermaEta(sessione.token, giaConfermata);
+            await inizia(undefined, oltreLimite);
+          } else {
+            await inizia(giaConfermata, oltreLimite);
+          }
+        } finally {
+          etaRiprovata.current = false;
+        }
+        return;
+      }
       if (perEta) setEta({ anni: perEta.anni, insufficiente: perEta.motivo === "eta_insufficiente" });
       else if (oltre) { setLimite(oltre); traccia("limit_reached", { limite: oltre.limite, scelta: oltre.scelta }); }
       else if (e instanceof ErroreApi && e.stato === 402) { setMostraAcquisto(true); traccia("paywall_viewed", { dove: "apertura" }); }
@@ -842,8 +865,15 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
     <>
       <Modale aperta={mostraDisclaimer} titolo={l.avviso_titolo} onChiudi={() => setMostraDisclaimer(false)}>
         <p className="prose" dir="auto">{disclaimer ?? ""}</p>
+        {/* «Ho capito»: solo con la casella si va avanti, e da lì il dialogo non si riapre più (cookie). */}
+        <label className="check" htmlFor="avvertenza-capita">
+          <input id="avvertenza-capita" type="checkbox" checked={avvertenzaCapita}
+            onChange={(e) => setAvvertenzaCapita(e.target.checked)} autoFocus />
+          <span>{l.avviso_capito}</span>
+        </label>
         <div className="button-row">
-          <button type="button" className="button button-brass" onClick={() => inizia()} autoFocus>{l.avviso_accetta}</button>
+          <button type="button" className="button button-brass" disabled={!avvertenzaCapita}
+            onClick={() => { ricordaAvvertenza(); void inizia(); }}>{l.avviso_accetta}</button>
         </div>
       </Modale>
       <Modale aperta={mostraAcquisto} titolo={l.crediti_finiti} onChiudi={() => setMostraAcquisto(false)}>
@@ -873,6 +903,7 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
       </Modale>
       <DialogoEta anni={eta?.anni ?? 16} aperta={eta !== null} insufficiente={eta?.insufficiente} onChiudi={() => setEta(null)}
         onConferma={async (anni) => {
+          ricordaEta(anni);
           if (sessione.autenticata) {
             try { await confermaEta(sessione.token, anni); } catch { setEta(null); return; }
             setEta(null);

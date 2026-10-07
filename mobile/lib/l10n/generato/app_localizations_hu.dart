@@ -1465,6 +1465,9 @@ class AppLocalizationsHu extends AppLocalizations {
   String get lettura_avviso_accetta => 'Értem, kezdjük';
 
   @override
+  String get lettura_avviso_capito => 'Megértettem, hogy a tarotnak nincs tudományos érvényessége';
+
+  @override
   String get lettura_tu => 'Te';
 
   @override

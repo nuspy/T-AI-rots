@@ -92,6 +92,13 @@ Future<void> tocca(WidgetTester tester, String testo) async {
   await tester.tap(find.text(testo).last);
 }
 
+/// L'avvertenza: la casella «ho capito», poi «Ho capito, cominciamo».
+Future<void> accetta(WidgetTester tester) async {
+  await tester.tap(find.text('I understand that tarot has no scientific validity'));
+  await tester.pump();
+  await tester.tap(find.text('I understand, let us begin'));
+}
+
 /// Le ombre come le vuole il controllo finale di flutter_test (montaApp le accende per i golden).
 void finisci() => debugDisableShadows = true;
 
@@ -117,7 +124,7 @@ void main() {
     await tocca(tester, 'Send my question, and feel free to ask me');
     await attendi(tester);
     expect(find.text('Before we begin'), findsOneWidget);
-    await tester.tap(find.text('I understand, let us begin'));
+    await accetta(tester);
     await attendi(tester);
     await attendi(tester);
     expect(corpo(rete, '/readings')['spread_id'], 'tre-carte');
@@ -189,7 +196,7 @@ void main() {
     await tester.pump();
     await tocca(tester, 'Send my question, and feel free to ask me');
     await attendi(tester);
-    await tester.tap(find.text('I understand, let us begin'));
+    await accetta(tester);
     await attendi(tester);
     await attendi(tester);
     // L'età confermata al primo avvio (16) va con la lettura anonima.
@@ -214,7 +221,7 @@ void main() {
     );
     await tocca(tester, 'Send my question, and feel free to ask me');
     await attendi(tester);
-    await tester.tap(find.text('I understand, let us begin'));
+    await accetta(tester);
     await attendi(tester);
     await attendi(tester);
     for (final (r, invio) in [
@@ -278,7 +285,7 @@ void main() {
     await montaApp(tester, rotta: '/read?question=Will%20it%20work%3F', larghezza: 1024, altezza: 1366, rete: rete);
     await tocca(tester, 'Send my question, and feel free to ask me');
     await attendi(tester);
-    await tester.tap(find.text('I understand, let us begin'));
+    await accetta(tester);
     await attendi(tester);
     expect(find.text('This one is on us'), findsOneWidget);
     expect(find.textContaining('Gifts left in this period after this one: 1'), findsOneWidget);
@@ -305,19 +312,53 @@ void main() {
     );
     await tocca(tester, 'Send my question, and feel free to ask me');
     await attendi(tester);
-    await tester.tap(find.text('I understand, let us begin'));
+    await accetta(tester);
     await attendi(tester);
     expect(find.textContaining('free reading on this device'), findsOneWidget);
     finisci();
   });
 
-  testWidgets('l\'età da confermare (403): il dialogo, poi la lettura riparte con gli anni', (tester) async {
+  testWidgets('l\'età già confermata sul telefono basta: niente dialogo, la lettura riparte con gli anni', (
+    tester,
+  ) async {
     final rete = reteRito();
     var aperture = 0;
     rete.risposte['POST /readings/anonime'] = (_) {
       aperture++;
       return aperture == 1
           ? RispostaFinta.fixture('lettura/eta_da_confermare.json', stato: 403)
+          : RispostaFinta.fixture('lettura/apertura.json', stato: 201);
+    };
+    final app = await montaApp(
+      tester,
+      rotta: '/read?question=Will%20it%20work%3F&spread=tre-carte',
+      larghezza: 1024,
+      altezza: 1366,
+      autenticata: false,
+      rete: rete,
+    );
+    await tocca(tester, 'Send my question, and feel free to ask me');
+    await attendi(tester);
+    await accetta(tester);
+    await attendi(tester);
+    await attendi(tester);
+    expect(find.text('Before you begin'), findsNothing);
+    expect(aperture, 2);
+    expect(corpo(rete, '/readings/anonime')['eta_anni'], 16);
+    // L'avvertenza è accettata una volta per tutte.
+    expect(app.read(archivioProvider).leggi(chiaveAvvertenza), '1');
+    finisci();
+  });
+
+  testWidgets('l\'età da confermare (403) oltre quella del telefono: il dialogo, poi la lettura riparte', (tester) async {
+    final rete = reteRito();
+    var aperture = 0;
+    rete.risposte['POST /readings/anonime'] = (_) {
+      aperture++;
+      return aperture == 1
+          ? RispostaFinta.json({
+              'detail': {'motivo': 'eta_da_confermare', 'anni': 18, 'messaggio': 'Please confirm you are 18.'},
+            }, stato: 403)
           : RispostaFinta.fixture('lettura/apertura.json', stato: 201);
     };
     await montaApp(
@@ -330,16 +371,34 @@ void main() {
     );
     await tocca(tester, 'Send my question, and feel free to ask me');
     await attendi(tester);
-    await tester.tap(find.text('I understand, let us begin'));
+    await accetta(tester);
     await attendi(tester);
     expect(find.text('Before you begin'), findsOneWidget);
-    await tester.tap(find.text('I am at least 16 years old'));
+    await tester.tap(find.text('I am at least 18 years old'));
     await tester.pump();
     await tester.tap(find.text('Confirm'));
     await attendi(tester);
     await attendi(tester);
     expect(aperture, 2);
-    expect(corpo(rete, '/readings/anonime')['eta_anni'], 16);
+    expect(corpo(rete, '/readings/anonime')['eta_anni'], 18);
+    finisci();
+  });
+
+  testWidgets('l\'avvertenza già accettata non si riapre', (tester) async {
+    final rete = reteRito();
+    final app = await montaApp(
+      tester,
+      rotta: '/read?question=Will%20my%20new%20project%20at%20work%20go%20well%3F',
+      larghezza: 1024,
+      altezza: 1366,
+      rete: rete,
+    );
+    await app.read(archivioProvider).scrivi(chiaveAvvertenza, '1');
+    await tocca(tester, 'Send my question, and feel free to ask me');
+    await attendi(tester);
+    await attendi(tester);
+    expect(find.text('Before we begin'), findsNothing);
+    expect(corpo(rete, '/readings')['spread_id'], 'tre-carte');
     finisci();
   });
 
@@ -389,7 +448,7 @@ void main() {
 
     await tocca(tester, 'Send my question, and feel free to ask me');
     await attendi(tester);
-    await tester.tap(find.text('I understand, let us begin'));
+    await accetta(tester);
     await attendi(tester);
     await attendi(tester);
     expect(corpo(rete, '/readings')['variante'], 'chat');
@@ -453,7 +512,7 @@ void main() {
     expect(find.text('Stop with the question and go to the ritual'), findsNothing);
     await tocca(tester, 'Send my question and start shuffling the cards');
     await attendi(tester);
-    await tester.tap(find.text('I understand, let us begin'));
+    await accetta(tester);
     await attendi(tester);
     await attendi(tester);
     expect(corpo(rete, '/readings/$idLettura/interview'), {'basta': true});

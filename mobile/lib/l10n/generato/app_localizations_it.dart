@@ -1468,6 +1468,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get lettura_avviso_accetta => 'Ho capito, cominciamo';
 
   @override
+  String get lettura_avviso_capito => 'Ho capito che i tarocchi non hanno validità scientifica';
+
+  @override
   String get lettura_tu => 'Tu';
 
   @override

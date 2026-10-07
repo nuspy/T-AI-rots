@@ -1462,6 +1462,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get lettura_avviso_accetta => 'Зрозуміло, почнімо';
 
   @override
+  String get lettura_avviso_capito => 'Я розумію, що таро не має наукової обґрунтованості';
+
+  @override
   String get lettura_tu => 'Ти';
 
   @override

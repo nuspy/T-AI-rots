@@ -44,6 +44,22 @@ def test_senza_indizi_si_tiene_la_lingua_dell_interfaccia():
     assert rileva_lingua("Tarot", fallback="fr") == "fr"
 
 
+@pytest.mark.parametrize("quesito", [
+    "Pioverà domani?", "Tornerà?", "Già finita?", "Perché ho paura?", "Lui mi ama ancora?", "Mi sposerò?",
+    "Sarò felice?", "Riuscirò a superare l'esame?", "Devo lasciare Budapest?", "Andrà bene il colloquio di venerdì?",
+])
+def test_una_domanda_italiana_su_una_pagina_italiana_resta_italiana(quesito):
+    # Le sole lettere accentate (à, é) o una parola in comune con un'altra lingua non cambiano la lingua della pagina:
+    # prima «Pioverà domani?» diventava francese per la «à».
+    assert rileva_lingua(quesito, fallback="it") == "it"
+
+
+def test_un_altra_lingua_vince_solo_con_parole_sue():
+    assert rileva_lingua("will rain tomorrow?", fallback="it") == "en"
+    assert rileva_lingua("Mikor találok munkát?", fallback="it") == "hu"
+    assert rileva_lingua("Kérdés?", fallback="it") == "it"            # solo lettere: resta la pagina
+
+
 def test_il_giapponese_non_c_e_si_tiene_l_interfaccia():
     assert rileva_lingua("私は新しい仕事を受けるべきですか？", fallback="en") == "en"
 

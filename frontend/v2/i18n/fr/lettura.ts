@@ -116,6 +116,7 @@ export const lettura = {
 
   avviso_titolo: "Before we begin",
   avviso_accetta: "I understand, let us begin",
+  avviso_capito: "I understand that tarot has no scientific validity",
 
   /* the reading */
   tu: "You",

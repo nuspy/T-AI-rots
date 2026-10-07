@@ -140,22 +140,32 @@ _LETTERE = {
     "pt": (("ãõ", 4.0), ("ç", 1.0)),
     "ro": (("ășțşţ", 4.0), ("âî", 1.0)),
     "pl": (("ąęłńśźż", 4.0), ("óć", 1.0)),
-    "it": (("ìò", 0.7),),
+    "it": (("ìò", 0.7), ("àèù", 0.4)),
 }
 
 _INSIEMI = {codice: set(parole.split()) for codice, parole in _PAROLE.items()}
 
+#: Quanto un'altra lingua deve superare quella dell'interfaccia per prenderne il posto: una parola comune in più.
+_SCARTO = 2.0
+
 
 def _punteggi_latino(testo: str) -> Dict[str, float]:
+    return _indizi_latino(testo)[0]
+
+
+def _indizi_latino(testo: str) -> tuple:
+    """(punteggi, parole trovate) per lingua: 2 punti per parola comune, più il peso delle lettere tipiche."""
     minuscolo = testo.lower()
     parole = re.findall(r"[^\W\d_]+", minuscolo)
     punteggi: Dict[str, float] = {}
+    trovate: Dict[str, int] = {}
     for codice in _INSIEMI:
-        punti = 2.0 * sum(1 for p in parole if p in _INSIEMI[codice])
+        trovate[codice] = sum(1 for p in parole if p in _INSIEMI[codice])
+        punti = 2.0 * trovate[codice]
         for lettere, peso in _LETTERE.get(codice, ()):
             punti += peso * sum(minuscolo.count(c) for c in lettere)
         punteggi[codice] = punti
-    return punteggi
+    return punteggi, trovate
 
 
 def rileva_lingua(testo: str, fallback: str = PREDEFINITA) -> str:
@@ -185,9 +195,15 @@ def rileva_lingua(testo: str, fallback: str = PREDEFINITA) -> str:
             return "uk"
         return "ru"
 
-    punteggi = _punteggi_latino(testo)
-    migliore = max(punteggi.values())
-    if migliore <= 0:
+    # Alfabeto latino: la lingua dell'interfaccia resta, salvo prove chiare. Un'altra lingua la sostituisce solo con
+    # almeno una sua parola comune e un punteggio più alto di almeno `_SCARTO`: le sole lettere accentate non bastano
+    # («Pioverà domani?» non è francese per una «à», e una «é» non fa ungherese una domanda italiana).
+    punteggi, trovate = _indizi_latino(testo)
+    base = punteggi.get(fallback, 0.0)
+    candidate = [c for c in ORDINE if c in punteggi and c != fallback and trovate[c] > 0]
+    if not candidate:
         return fallback
-    vincenti = [c for c in ORDINE if c in punteggi and punteggi[c] == migliore]
-    return fallback if fallback in vincenti else vincenti[0]
+    migliore = max(punteggi[c] for c in candidate)
+    if migliore < base + _SCARTO:
+        return fallback
+    return next(c for c in candidate if punteggi[c] == migliore)

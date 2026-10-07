@@ -18,6 +18,7 @@ import {
 } from "@/lib/privacy";
 import { useSessione } from "@/lib/sessione";
 import { useLingua } from "@/v2/lib/lingua";
+import { etaConfermata, ricordaEta } from "@/v2/lib/ricordi-lettura";
 import { R } from "@/v2/lib/percorsi";
 import LinkV2 from "./link";
 import { Modale } from "./modale";
@@ -82,7 +83,23 @@ export function PrivacyAccesso() {
     if (!sessione.autenticata) return;
     let attivo = true;
     leggiPrivacy(sessione.token)
-      .then((p) => { if (attivo) { setEta(p.eta); setCancellazione(null); } })
+      .then(async (p) => {
+        if (!attivo) return;
+        setCancellazione(null);
+        /* L'età già confermata su questo dispositivo (cookie, `ricordi-lettura.ts`) va nel profilo da sola: il dialogo
+         * non si ripresenta a chi ha già detto di sì, anche prima di entrare con l'account. */
+        const giaConfermata = etaConfermata();
+        if (p.eta.da_confermare && giaConfermata !== null && giaConfermata >= p.eta.anni) {
+          try {
+            const ora = await confermaEta(sessione.token, giaConfermata);
+            if (attivo) setEta(ora);
+            return;
+          } catch {
+            /* si chiede col dialogo */
+          }
+        }
+        if (attivo) setEta(p.eta);
+      })
       .catch((e: unknown) => { if (attivo) setCancellazione(inCancellazione(e)); });
     return () => { attivo = false; };
   }, [sessione.autenticata, sessione.token]);
@@ -120,6 +137,7 @@ export function PrivacyAccesso() {
   return (
     <DialogoEta anni={eta.anni} aperta insufficiente={eta.sotto_eta} onChiudi={() => setChiuso(true)}
       onConferma={async (anni) => {
+        ricordaEta(anni);
         try {
           setEta(await confermaEta(sessione.token, anni));
         } catch {

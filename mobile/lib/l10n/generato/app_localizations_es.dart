@@ -1467,6 +1467,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get lettura_avviso_accetta => 'Lo entiendo, empecemos';
 
   @override
+  String get lettura_avviso_capito => 'Entiendo que el tarot no tiene validez científica';
+
+  @override
   String get lettura_tu => 'Tú';
 
   @override

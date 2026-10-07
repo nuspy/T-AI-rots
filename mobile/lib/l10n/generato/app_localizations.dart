@@ -2839,6 +2839,12 @@ abstract class AppLocalizations {
   /// **'I understand, let us begin'**
   String get lettura_avviso_accetta;
 
+  /// No description provided for @lettura_avviso_capito.
+  ///
+  /// In en, this message translates to:
+  /// **'I understand that tarot has no scientific validity'**
+  String get lettura_avviso_capito;
+
   /// No description provided for @lettura_tu.
   ///
   /// In en, this message translates to:

@@ -116,6 +116,7 @@ export const lettura: typeof Base = {
 
   avviso_titolo: "Перш ніж почати",
   avviso_accetta: "Зрозуміло, почнімо",
+  avviso_capito: "Я розумію, що таро не має наукової обґрунтованості",
 
   /* the reading */
   tu: "Ти",

@@ -115,6 +115,7 @@ export const lettura: typeof Base = {
 
   avviso_titolo: "Mielőtt elkezdjük",
   avviso_accetta: "Értem, kezdjük",
+  avviso_capito: "Megértettem, hogy a tarotnak nincs tudományos érvényessége",
 
   tu: "Te",
   lettore: "A tarotolvasód",

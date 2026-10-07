@@ -1465,6 +1465,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get lettura_avviso_accetta => 'I understand, let us begin';
 
   @override
+  String get lettura_avviso_capito => 'I understand that tarot has no scientific validity';
+
+  @override
   String get lettura_tu => 'You';
 
   @override

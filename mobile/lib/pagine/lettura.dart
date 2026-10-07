@@ -670,6 +670,12 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
       await _mostraAcquisto();
       return;
     }
+    // L'avvertenza si accetta una volta (casella «ho capito»), poi il telefono la ricorda: niente dialogo.
+    final archivio = ref.read(archivioProvider);
+    if (archivio.leggi(chiaveAvvertenza) == '1') {
+      await _inizia();
+      return;
+    }
     if (_disclaimer == null) {
       try {
         _disclaimer = await ref.read(apiProvider).disclaimer(_lingua);
@@ -681,24 +687,12 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
     final ok = await apriModale<bool>(
       context,
       titolo: t.lettura_avviso_titolo,
-      costruisci: (context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Paragrafo(_disclaimer ?? '', style: Stile.sans(15.2, colore: Token.inkSoft)),
-          const SizedBox(height: 16),
-          FilaBottoni(
-            children: [
-              Bottone(
-                t.lettura_avviso_accetta,
-                variante: Variante.ottone,
-                alTocco: () => Navigator.of(context).pop(true),
-              ),
-            ],
-          ),
-        ],
-      ),
+      costruisci: (context) => _Avvertenza(testo: _disclaimer ?? ''),
     );
-    if (ok == true) await _inizia();
+    if (ok == true) {
+      await archivio.scrivi(chiaveAvvertenza, '1');
+      await _inizia();
+    }
   }
 
   Future<void> _mostraAcquisto() async {
@@ -873,9 +867,24 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
     }
   }
 
-  /// «Ho almeno N anni» (`DialogoEta` del sito): chi conferma, rifà la lettura.
+  /// Vero mentre si riprova l'apertura con l'età già confermata sul telefono (una volta sola, poi il dialogo).
+  bool _etaRiprovata = false;
+
+  /// «Ho almeno N anni» (`DialogoEta` del sito): chi conferma, rifà la lettura. Se il telefono l'ha già confermata
+  /// (per esempio prima di entrare con l'account), niente dialogo: la conferma va al server e la lettura riparte.
   Future<void> _dialogoEta(int anni, {required bool insufficiente}) async {
     final t = context.t;
+    final giaConfermati = ref.read(etaProvider).anniConfermati;
+    if (!insufficiente && !_etaRiprovata && giaConfermati != null && giaConfermati >= anni) {
+      _etaRiprovata = true;
+      try {
+        await ref.read(etaProvider.notifier).conferma(giaConfermati);
+        await _inizia(etaAnni: giaConfermati);
+      } finally {
+        _etaRiprovata = false;
+      }
+      return;
+    }
     final confermati = await apriModale<int>(
       context,
       titolo: insufficiente ? t.comune_eta_titolo_no : t.comune_eta_titolo,
@@ -2101,6 +2110,48 @@ class _Istruzione extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
       ),
       child: scritta,
+    );
+  }
+}
+
+/// La chiave dell'archivio: l'avvertenza accettata (i tarocchi non hanno validità scientifica), come il cookie
+/// `tarots_avvertenza` del sito.
+const String chiaveAvvertenza = 'avvertenza.accettata';
+
+/// Il contenuto del dialogo dell'avvertenza: il testo, la casella «ho capito» e il pulsante, attivo solo con la
+/// casella spuntata. Chiude il dialogo con `true`.
+class _Avvertenza extends StatefulWidget {
+  const _Avvertenza({required this.testo});
+
+  final String testo;
+
+  @override
+  State<_Avvertenza> createState() => _AvvertenzaState();
+}
+
+class _AvvertenzaState extends State<_Avvertenza> {
+  bool _capita = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.t;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Paragrafo(widget.testo, style: Stile.sans(15.2, colore: Token.inkSoft)),
+        const SizedBox(height: 12),
+        Casella(valore: _capita, alCambio: (v) => setState(() => _capita = v), titolo: t.lettura_avviso_capito),
+        const SizedBox(height: 16),
+        FilaBottoni(
+          children: [
+            Bottone(
+              t.lettura_avviso_accetta,
+              variante: Variante.ottone,
+              alTocco: _capita ? () => Navigator.of(context).pop(true) : null,
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

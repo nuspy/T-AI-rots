@@ -1460,6 +1460,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get lettura_avviso_accetta => 'Понимаю, начнём';
 
   @override
+  String get lettura_avviso_capito => 'Я понимаю, что таро не имеет научной обоснованности';
+
+  @override
   String get lettura_tu => 'Ты';
 
   @override

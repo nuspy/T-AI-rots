@@ -115,6 +115,7 @@ export const lettura: typeof Base = {
 
   avviso_titolo: "Antes de empezar",
   avviso_accetta: "Lo entiendo, empecemos",
+  avviso_capito: "Entiendo que el tarot no tiene validez científica",
 
   tu: "Tú",
   lettore: "Tu lector",
