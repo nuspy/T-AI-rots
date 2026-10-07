@@ -1,6 +1,6 @@
 """The editorial line, offline: titles that are titles, the section, --no-cover only after a failed generation,
-drafts unless --publish, the RESULT line and `run-report`, the series (plan, next, new --series, post) and the record
-of ideas and research.
+drafts unless --publish, the RESULT line and `run-report`, the plan (series of 3-10 and single articles, the daily
+session, failed parts retried and never skipped, requests at once) and the record of ideas and research.
 
     backend/.venv/Scripts/python.exe -m pytest skills/tarots-blog-publisher/tests -q -p no:cacheprovider
 
@@ -50,6 +50,7 @@ class FakeBlog:
     def __init__(self):
         self.calls = []
         self.saved = []
+        self.fail_post = False
         self.titles = [row(1, "the-tower-thoth", "The Tower in the Thoth Tarot")]
 
     def __call__(self, method, path, body=None, query=None, **kwargs):
@@ -64,6 +65,8 @@ class FakeBlog:
         if path == "/posts" and (body or {}).get("dry_run"):
             return {"seo": report()}
         if path == "/posts":
+            if self.fail_post:
+                raise tb.Failure("API 500: the server could not save the article", tb.EXIT_API)
             self.saved.append(body)
             return {"articolo": {"id": f"post-{len(self.saved)}", "slug": body.get("slug"), "stato": body.get("stato", "bozza"),
                                  "lang": "en"}, "url": f"https://tarots.chat/blog/{body.get('slug')}", "avvisi": []}
@@ -228,112 +231,188 @@ def test_run_report_reads_back_what_this_key_saved(blog, capsys):
     assert "old-one" not in out and "someone-else" not in out
 
 
-# ---- the series ----------------------------------------------------------------------------------------------------
+# ---- the plan: series and single articles -------------------------------------------------------------------------
 
 
-def plan_file(tmp_path, **changes):
-    parts = [{"title": t, "question": f"What does {t.lower()} change for a reader of the Thoth deck?",
-              "sources": ["Sefer Yetzirah, Kaplan tr. 1990", "Crowley, The Book of Thoth, 1944"],
-              "keyword": "sefer yetzirah tarot"}
-             for t in ["Three Mothers and the Breath Between Them", "The Seven Doubles and the Planets of the Trumps",
-                       "Twelve Simple Letters and the Zodiac", "Why Tzaddi Is Not the Star",
-                       "The Cube of Space and the Order of the Trumps", "From Kircher to the Golden Dawn",
-                       "Thirty-Two Paths, Twenty-Two Doors", "What the Sefer Yetzirah Does Not Say"]]
-    plan = {"title": "The Letters Before the Cards: The Sefer Yetzirah and the Tarot",
-            "thesis": "The letter attributions of the Thoth deck are a reading of a 3rd-6th century text.",
-            "why": "Experts know the attributions; few know their sources and their disputes.",
-            "section": "kabbalah", "sources": ["Kaplan 1990", "Scholem, Kabbalah, 1974"], "parts": parts}
-    plan.update(changes)
-    file = tmp_path / "series.json"
-    file.write_text(json.dumps(plan), encoding="utf-8")
+def series(title, n=3, section="kabbalah"):
+    words = ["Three Mothers and the Breath Between Them", "The Seven Doubles and the Planets of the Trumps",
+             "Twelve Simple Letters and the Zodiac", "Why Tzaddi Is Not the Star",
+             "The Cube of Space and the Order of the Trumps", "From Kircher to the Golden Dawn",
+             "Thirty-Two Paths and Twenty-Two Doors", "What the Book of Formation Does Not Say",
+             "Lévi and the Letters of the Trumps", "The Gra and the Order of the Doubles",
+             "A Note on the Mother Letters in Saadia"]
+    return {"kind": "series", "title": title, "thesis": "The attributions are a reading of a late antique text.",
+            "why": "Experts know the attributions, not their sources.", "section": section,
+            "sources": ["Kaplan 1990", "Hayman 2004"],
+            "parts": [{"title": f"{w} ({title.split(':')[0]})", "question": f"What does {w.lower()} change?",
+                       "sources": ["Sefer Yetzirah"], "keyword": "sefer yetzirah tarot"} for w in words[:n]]}
+
+
+def single(title, section="thoth-tarot"):
+    return {"kind": "single", "title": title, "question": "What did the painter change between the drafts?",
+            "why": "The letters of Harris are rarely read.", "section": section,
+            "sources": ["Kaczynski, Perdurabo 2010", "Harris letters, Warburg Institute"]}
+
+
+def plan_file(tmp_path, *items, name="plan.json"):
+    file = tmp_path / name
+    file.write_text(json.dumps({"items": list(items)}), encoding="utf-8")
     return file
 
 
-def test_a_series_is_recorded_and_its_next_part_briefed(blog, tmp_path, capsys):
-    assert tb.main(["series", "plan", str(plan_file(tmp_path))]) == tb.EXIT_OK
-    data = json.loads(tb.EDITORIAL_PATH.read_text(encoding="utf-8"))
-    series = data["series"][0]
-    assert series["status"] == "open" and len(series["parts"]) == 8 and series["tag"].startswith("series-")
-    assert data["ideas"][0]["status"] == "used"
-    capsys.readouterr()
-    assert tb.main(["series", "next"]) == tb.EXIT_OK
+def plan():
+    return json.loads(tb.EDITORIAL_PATH.read_text(encoding="utf-8"))
+
+
+def test_the_plan_queues_series_and_single_articles(blog, tmp_path, capsys):
+    f = plan_file(tmp_path, series("The Letters Before the Cards: Sefer Yetzirah"),
+                  single("What Frieda Harris Changed in the Last Drafts"))
+    assert tb.main(["plan", "add", str(f)]) == tb.EXIT_OK
+    items = plan()["items"]
+    assert [i["kind"] for i in items] == ["series", "single"] and {i["status"] for i in items} == {"queued"}
+    assert len(items[0]["parts"]) == 3 and items[0]["tag"].startswith("series-") and items[1]["tag"] == ""
+    assert "2 item(s), 4 article(s) added" in capsys.readouterr().out
+
+
+def test_bad_entries_are_refused_and_the_good_ones_kept(blog, tmp_path, capsys):
+    f = plan_file(tmp_path, single("A Full Moon Tarot Spread for Release"),
+                  series("Short Series: Two Parts Only", n=2), series("Too Long: Eleven Parts", n=11),
+                  series("Decans and Faces: The Minor Arcana as a Calendar", n=10))
+    assert tb.main(["plan", "add", str(f)]) == tb.EXIT_OK
     out = capsys.readouterr().out
-    assert "part 1 of 8: Three Mothers and the Breath Between Them" in out and f"--series {series['id']} --part 1" in out
+    assert "a moon-phase or transit reading" in out and "2 parts: a series has 3-10" in out
+    assert "11 parts: a series has 3-10" in out
+    data = plan()
+    assert [i["title"] for i in data["items"]] == ["Decans and Faces: The Minor Arcana as a Calendar"]
+    assert sum(1 for i in data["ideas"] if i["status"] == "rejected") == 3
 
 
-@pytest.mark.parametrize("change, words", [
-    ({"title": "Libra Season Tarot Spreads"}, "«<sign> season» article"),
-    ({"parts": [{"title": "Three Mothers and the Breath", "question": "q", "sources": ["s"]}]}, "a series has 6-12"),
-    ({"sources": []}, "at least two real sources"),
-    ({"section": ""}, '"section" is empty'),
-])
-def test_a_poor_series_is_not_recorded(blog, tmp_path, capsys, change, words):
-    assert tb.main(["series", "plan", str(plan_file(tmp_path, **change))]) == tb.EXIT_RULE
-    assert words in capsys.readouterr().err and not tb.EDITORIAL_PATH.exists()
+def test_a_part_already_on_the_blog_or_in_the_plan_is_refused(blog, tmp_path, capsys):
+    blog.titles.append(row(9, "why-tzaddi-is-not-the-star", "Why Tzaddi Is Not the Star (The Letters)"))
+    f = plan_file(tmp_path, series("The Letters: Sefer Yetzirah and the Trumps", n=4))
+    assert tb.main(["plan", "add", str(f)]) == tb.EXIT_RULE
+    assert "is TAKEN by" in capsys.readouterr().out
 
 
-def test_a_part_already_on_the_blog_is_refused(blog, tmp_path, capsys):
-    blog.titles.append(row(9, "why-tzaddi-is-not-the-star", "Why Tzaddi Is Not the Star"))
-    assert tb.main(["series", "plan", str(plan_file(tmp_path))]) == tb.EXIT_RULE
-    assert "is TAKEN by" in capsys.readouterr().err
+def test_a_session_opens_items_in_order_without_splitting_a_series(blog, tmp_path, capsys):
+    f = plan_file(tmp_path, single("What Frieda Harris Changed in the Last Drafts"),
+                  series("The Letters Before the Cards: Sefer Yetzirah", n=3),
+                  single("Why Crowley Renamed Strength as Lust"),
+                  series("Decans and Faces: The Minor Arcana as a Calendar", n=4))
+    assert tb.main(["plan", "add", str(f)]) == tb.EXIT_OK
+    assert tb.main(["plan", "session"]) == tb.EXIT_OK
+    status = [i["status"] for i in plan()["items"]]
+    assert status == ["open", "open", "open", "queued"]               # 1 + 3 + 1 = 5 articles
+    capsys.readouterr()
+    assert tb.main(["plan", "session"]) == tb.EXIT_OK                  # 5 left already: nothing more opens
+    assert [i["status"] for i in plan()["items"]][-1] == "queued"
 
 
-def test_only_one_open_series_at_a_time(blog, tmp_path, capsys):
-    assert tb.main(["series", "plan", str(plan_file(tmp_path))]) == tb.EXIT_OK
-    other = plan_file(tmp_path, title="Decans in the Minor Arcana: Thirty-Six Faces of the Year")
-    assert tb.main(["series", "plan", str(other)]) == tb.EXIT_RULE
-    assert "is still open" in capsys.readouterr().err
+def test_a_long_series_is_never_split(blog, tmp_path):
+    f = plan_file(tmp_path, series("Decans and Faces: The Minor Arcana as a Calendar", n=8),
+                  single("What Frieda Harris Changed in the Last Drafts"))
+    assert tb.main(["plan", "add", str(f)]) == tb.EXIT_OK
+    assert tb.main(["plan", "session"]) == tb.EXIT_OK
+    items = plan()["items"]
+    assert items[0]["status"] == "open" and items[1]["status"] == "queued"   # 8 ≥ 5: the series alone
 
 
-def test_new_with_series_fills_the_article_and_post_marks_the_part(blog, tmp_path, capsys):
-    assert tb.main(["series", "plan", str(plan_file(tmp_path))]) == tb.EXIT_OK
-    sid = json.loads(tb.EDITORIAL_PATH.read_text(encoding="utf-8"))["series"][0]["id"]
-    assert tb.main(["new", "three-mothers", "--series", sid, "--part", "1"]) == tb.EXIT_OK
-    folder = tb.work_root() / f"{TODAY}-three-mothers"
-    data = json.loads((folder / "article.json").read_text(encoding="utf-8"))
-    assert data["title"] == "Three Mothers and the Breath Between Them" and data["section"] == "kabbalah"
-    assert data["series"] == {"id": sid, "part": 1} and data["tags"] == [f"series-{sid}"[:60]]
-    data.update(focus_keyword="sefer yetzirah tarot", seo_title="Sefer Yetzirah Tarot: The Three Mother Letters")
-    (folder / "article.json").write_text(json.dumps(data), encoding="utf-8")
-    (folder / "article.md").write_text(BODY, encoding="utf-8")
-    generated_cover(folder)
-    assert tb.main(["post", "three-mothers"]) == tb.EXIT_OK
-    assert "series" not in blog.saved[-1]                                   # never sent to the API
-    part = json.loads(tb.EDITORIAL_PATH.read_text(encoding="utf-8"))["series"][0]["parts"][0]
-    assert part["status"] == "written" and part["slug"] == "three-mothers" and part["url"].endswith("three-mothers")
-    assert "part 1 of «The Letters Before the Cards" in capsys.readouterr().out
+def test_an_empty_plan_asks_for_a_new_one(blog, capsys):
+    assert tb.main(["plan", "session"]) == tb.EXIT_PLAN_EMPTY
+    assert "PLAN EMPTY" in capsys.readouterr().out
 
 
-def test_the_second_part_must_link_the_first(blog, tmp_path, capsys):
-    assert tb.main(["series", "plan", str(plan_file(tmp_path))]) == tb.EXIT_OK
-    data = json.loads(tb.EDITORIAL_PATH.read_text(encoding="utf-8"))
-    sid = data["series"][0]["id"]
-    data["series"][0]["parts"][0].update(status="written", slug="three-mothers")
-    tb.EDITORIAL_PATH.write_text(json.dumps(data), encoding="utf-8")
-    assert tb.main(["new", "seven-doubles", "--series", sid, "--part", "2"]) == tb.EXIT_OK
-    folder = tb.work_root() / f"{TODAY}-seven-doubles"
+def write_part(blog, item_id, part, slug, body=BODY):
+    """`plan next` → `new --series` → write → cover → post, as the daily job does."""
+    folder_name = slug
+    assert tb.main(["new", folder_name, "--series", item_id, "--part", str(part)]) == tb.EXIT_OK
+    folder = tb.work_root() / f"{TODAY}-{folder_name}"
     art = json.loads((folder / "article.json").read_text(encoding="utf-8"))
-    art.update(focus_keyword="sefer yetzirah planets", seo_title="Sefer Yetzirah Planets: The Seven Doubles")
+    art.update(focus_keyword="sefer yetzirah tarot",
+               seo_title=f"Sefer Yetzirah Tarot: Part {part} of the Letters")
     (folder / "article.json").write_text(json.dumps(art), encoding="utf-8")
-    (folder / "article.md").write_text(BODY, encoding="utf-8")
-    generated_cover(folder, "seven-doubles")
-    assert tb.main(["post", "seven-doubles"]) == tb.EXIT_RULE
-    assert "[[post:three-mothers]]" in capsys.readouterr().err and not blog.saved
-    (folder / "article.md").write_text(BODY + "\nAs the first part showed ([[post:three-mothers]]), air mediates.\n",
-                                       encoding="utf-8")
-    assert tb.main(["post", "seven-doubles"]) == tb.EXIT_OK
+    (folder / "article.md").write_text(body, encoding="utf-8")
+    generated_cover(folder, art["slug"])
+    return tb.main(["post", folder_name, "--publish"])
 
 
-def test_the_last_part_closes_the_series(blog, tmp_path):
-    assert tb.main(["series", "plan", str(plan_file(tmp_path))]) == tb.EXIT_OK
-    data = json.loads(tb.EDITORIAL_PATH.read_text(encoding="utf-8"))
-    series = data["series"][0]
-    for p in series["parts"][:-1]:
-        p["status"] = "written"
+def test_a_series_is_written_in_order_and_closed(blog, tmp_path, capsys):
+    assert tb.main(["plan", "add", str(plan_file(tmp_path, series("The Letters Before the Cards: Sefer Yetzirah")))]) == tb.EXIT_OK
+    assert tb.main(["plan", "session"]) == tb.EXIT_OK
+    iid = plan()["items"][0]["id"]
+    capsys.readouterr()
+    assert tb.main(["plan", "next"]) == tb.EXIT_OK
+    out = capsys.readouterr().out
+    assert "part 1 of 3" in out and f"--series {iid} --part 1" in out
+    assert write_part(blog, iid, 1, "p1") == tb.EXIT_OK
+    first = plan()["items"][0]["parts"][0]
+    assert first["status"] == "written" and blog.saved[-1]["stato"] == "pubblicato"
+    assert blog.saved[-1]["slug"] == first["slug"] and "series" not in blog.saved[-1]
+    # part 2 must link part 1
+    assert write_part(blog, iid, 2, "p2") == tb.EXIT_RULE
+    assert f"[[post:{first['slug']}]]" in capsys.readouterr().err
+    link = BODY + f"\nAs the first part showed ([[post:{first['slug']}]]), air mediates.\n"
+    assert write_part(blog, iid, 2, "p2b", body=link) == tb.EXIT_OK
+    second = plan()["items"][0]["parts"][1]["slug"]
+    assert write_part(blog, iid, 3, "p3", body=BODY + f"\nAfter [[post:{second}]], the zodiac.\n") == tb.EXIT_OK
+    assert plan()["items"][0]["status"] == "closed"
+    capsys.readouterr()
+    assert tb.main(["plan", "next"]) == tb.EXIT_OK
+    assert "every open item is written" in capsys.readouterr().out
+
+
+def test_a_failed_part_is_recorded_retried_and_never_skipped(blog, tmp_path, capsys):
+    f = plan_file(tmp_path, series("The Letters Before the Cards: Sefer Yetzirah"),
+                  single("What Frieda Harris Changed in the Last Drafts"))
+    assert tb.main(["plan", "add", str(f)]) == tb.EXIT_OK
+    assert tb.main(["plan", "session"]) == tb.EXIT_OK
+    iid = plan()["items"][0]["id"]
+    blog.fail_post = True                                              # the API refuses the save
+    assert write_part(blog, iid, 1, "p1") == tb.EXIT_API
+    part = plan()["items"][0]["parts"][0]
+    assert part["status"] == "failed" and len(part["attempts"]) == 1
+    capsys.readouterr()
+    assert tb.main(["plan", "next"]) == tb.EXIT_OK
+    out = capsys.readouterr().out
+    assert "part 1 of 3" in out and "RETRY: 1 failed attempt(s)" in out and "-retry2" in out
+    for k in (2, 3):
+        assert write_part(blog, iid, 1, f"p1-retry{k}") == tb.EXIT_API
+    capsys.readouterr()
+    assert tb.main(["plan", "next"]) == tb.EXIT_OK                     # three today: on to the next item
+    assert "single article: What Frieda Harris Changed" in capsys.readouterr().out
+    alarms = tb.plan_alarms()
+    assert alarms and alarms[0].startswith("STUCK [series] The Letters Before the Cards") and "failed 3 times" in alarms[0]
+    blog.fail_post = False
+    assert tb.main(["run-report"]) == tb.EXIT_OK
+    assert "STUCK [series]" in capsys.readouterr().out
+
+
+def test_an_item_left_incomplete_yesterday_comes_first(blog, tmp_path, capsys):
+    f = plan_file(tmp_path, series("The Letters Before the Cards: Sefer Yetzirah"),
+                  single("What Frieda Harris Changed in the Last Drafts"),
+                  single("Why Crowley Renamed Strength as Lust"))
+    assert tb.main(["plan", "add", str(f)]) == tb.EXIT_OK
+    data = plan()
+    data["items"][0].update(status="open", opened="2026-01-01T20:00:00+00:00")
+    data["items"][0]["parts"][0]["status"] = "written"
     tb.EDITORIAL_PATH.write_text(json.dumps(data), encoding="utf-8")
-    note = tb.mark_series_part({"id": series["id"], "part": 8}, {"slug": "last", "id": "p8"}, "https://x/last")
-    assert "the series is complete" in note
-    assert json.loads(tb.EDITORIAL_PATH.read_text(encoding="utf-8"))["series"][0]["status"] == "closed"
+    capsys.readouterr()
+    assert tb.main(["plan", "session"]) == tb.EXIT_OK
+    out = capsys.readouterr().out
+    assert "FIRST, finish what an earlier session left incomplete" in out and "INCOMPLETE since 2026-01-01" in out
+    assert [i["status"] for i in plan()["items"]] == ["open", "open", "open"]   # 2 left + 1 + 1 = 4 < 5
+    assert tb.main(["plan", "next"]) == tb.EXIT_OK
+    assert "part 2 of 3" in capsys.readouterr().out
+
+
+def test_a_request_opens_at_once_ahead_of_the_plan(blog, tmp_path, capsys):
+    assert tb.main(["plan", "add", str(plan_file(tmp_path, single("What Frieda Harris Changed in the Last Drafts")))]) == tb.EXIT_OK
+    assert tb.main(["plan", "session"]) == tb.EXIT_OK
+    asked = plan_file(tmp_path, single("Why Crowley Renamed Strength as Lust"), name="asked.json")
+    assert tb.main(["plan", "add", str(asked), "--now"]) == tb.EXIT_OK
+    capsys.readouterr()
+    assert tb.main(["plan", "next"]) == tb.EXIT_OK
+    assert "Why Crowley Renamed Strength as Lust" in capsys.readouterr().out
 
 
 # ---- ideas and research --------------------------------------------------------------------------------------------
@@ -352,12 +431,12 @@ def test_ideas_keep_what_was_proposed_rejected_and_researched(blog, capsys):
     assert "research: Kircher Oedipus Aegyptiacus tree → 1652, 22 paths" in out
 
 
-def test_status_lists_finished_series_and_rejected_ideas(blog, tmp_path, capsys):
+def test_status_lists_the_plan_and_rejected_ideas(blog, tmp_path, capsys):
     assert tb.main(["ideas", "reject", "Tarot", "and", "Self-Care", "--why", "lifestyle"]) == tb.EXIT_OK
     capsys.readouterr()
-    assert tb.main(["series"]) == tb.EXIT_OK
+    assert tb.main(["plan"]) == tb.EXIT_OK
     out = capsys.readouterr().out
-    assert "no open series" in out and "Tarot and Self-Care" in out
+    assert "queued: 0 item(s), 0 article(s)" in out and "Tarot and Self-Care" in out
 
 
 # ---- tarots_images: a failed generation is recorded --------------------------------------------------------------

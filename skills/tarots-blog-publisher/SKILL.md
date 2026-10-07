@@ -1,6 +1,6 @@
 ---
 name: tarots-blog-publisher
-description: Write one SEO-optimized English article and publish it on the TAROTS chat (tarots.chat) site's OWN blog, through the site's own REST API with this skill's script `tarots_blog.py` (draft, publish, schedule, update or delete a draft), using every SEO field (keyword, meta title and description, slug, tags, FAQ, alt text). Pictures come from the tarots-blog-images skill (LitMedia, never a picture of cards). Use whenever asked to write, publish, schedule, edit or post an article on the TAROTS chat blog, or to keep that blog fed with series of expert articles on the tarot, the Thoth deck, the Kabbalah, the Golden Dawn and the history of Western esotericism (one part of a series per run). This is not a social media or scheduling tool; it does not post to Postiz, SocialClaw, WordPress, Medium or any social network, and those tools never publish this blog.
+description: Write one SEO-optimized English article and publish it on the TAROTS chat (tarots.chat) site's OWN blog, through the site's own REST API with this skill's script `tarots_blog.py` (draft, publish, schedule, update or delete a draft), using every SEO field (keyword, meta title and description, slug, tags, FAQ, alt text). Pictures come from the tarots-blog-images skill (LitMedia, never a picture of cards). Use whenever asked to write, publish, schedule, edit or post an article on the TAROTS chat blog, or to keep that blog fed with an editorial plan of expert series and articles on the tarot, the Thoth deck, the Kabbalah, the Golden Dawn and the history of Western esotericism (make the plan, run the daily session, write an article or a series on request). This is not a social media or scheduling tool; it does not post to Postiz, SocialClaw, WordPress, Medium or any social network, and those tools never publish this blog.
 ---
 
 # TAROTS chat blog publisher
@@ -9,10 +9,13 @@ Publishes one article at a time to the **TAROTS chat** blog (an AI reading servi
 its REST API, and makes it as findable as it honestly can be. **International audience, English first**: the default
 language is `en`; an Italian article is optional and separate.
 
-**The blog is written for expert readers.** Unattended, you write **one part of a series** per run: a series of
-6–12 articles with a thesis, which **you design yourself** by research and record with `series plan`
-(`references/editorial-line.md`). Never seasonal spreads, sign seasons, beginner's guides, love readings or lifestyle
-pieces. **The title is a real title**, never a string of keywords.
+**The blog is written for expert readers**, from an **editorial plan** you make yourself by research: series of
+**3–10 articles** with a thesis, and single articles, about 100 articles in all (`plan add`). A **daily session**
+(`plan session`) writes about 5 of them in order and **never splits a series**: a series is written and published in
+one session, and a part that fails is retried the next day before anything else. An empty plan is refilled at the
+start of the session. Articles and series the operator asks for go ahead of the plan (`plan add --now`). All of it:
+**`references/editorial-line.md`**. Never seasonal spreads, sign seasons, beginner's guides, love readings or
+lifestyle pieces. **The title is a real title**, never a string of keywords.
 
 Works for any agent that can run a shell command and read files (Hermes, OpenClaw, Claude Code, a cron job), also
 through `execute_code` with `subprocess`. No dependency beyond Python 3.8+. The script is `scripts/tarots_blog.py`
@@ -67,7 +70,7 @@ Rules:
 This is the sequence for one article. Follow it in this order.
 ```
 python scripts/tarots_blog.py guide                                        # 1. key ok? today's date
-python scripts/tarots_blog.py series status                                 # 2. the open series and its next part (none: design one)
+python scripts/tarots_blog.py plan next                                    # 2. the part to write now, its brief and the `new` command
 python scripts/tarots_blog.py topic-check "three mothers sefer yetzirah"    #    the part against the blog: TAKEN = choose another
 python scripts/tarots_blog.py new "three-mothers" --series <id> --part 1    # 3. the work folder, title/section/tag filled in
 #  4. write article.md and fill article.json, in the folder printed by `new`
@@ -98,11 +101,10 @@ checks the record of `tarots_images.py` and refuses `--no-cover` (exit 11) when 
 
 ### 2. Choose the topic, then the focus keyword
 - **The operator named a topic** → use it exactly.
-- **Otherwise: the next part of the open series** (`series status`, `series next`). With no open series, **design
-  one**: research on the web, record what you find and each candidate (`ideas research`, `ideas add`), choose the
-  strongest, record it with `series plan <file.json>`, then write its part 1. How, what makes a series worth it, where
-  to look and what is never a series: **`references/editorial-line.md`** — read it before choosing.
-- **Read the record before searching**: `ideas list` and `series status` keep the topics already proposed, rejected
+- **Otherwise: the plan** (`plan next` gives the part to write now). The plan, the daily session, what makes a
+  series or an article worth it, where to look and what is never a topic: **`references/editorial-line.md`** — read
+  it before choosing.
+- **Read the record before searching**: `ideas list` and `plan status` keep the topics already proposed, rejected
   and written, and the notes of earlier research. Do not search again what is there.
 - Dates and facts: **verify every one** on a page you actually open. If you cannot verify it, drop it.
 - **The focus keyword comes after the topic**: the phrase an interested reader would really type into a search
@@ -159,7 +161,7 @@ checks the record of `tarots_images.py` and refuses `--no-cover` (exit 11) when 
 | `tags` | 2–6, reuse existing ones (`tags`). |
 | `subject` | what the article is about: `{"type": "card", "ref": "maj-16"}` or `{"type": "spread", "ref": "croce-celtica"}` (the id or slug from `catalog --grep <word>`). Leave `{"type": "", "ref": ""}` and the server works it out from the title and the keyword; `null` only for an article that names a card without being about it. |
 | `section` | **required** (exit 13 when empty, unless `subject` is a card or a spread, which the server places by itself). A slug from `sections`: an article about one card goes in the section of that card (`major-arcana`, or its suit under «By suit»: `wands`, `cups`, `swords`, `disks`); one about a spread in a section of spreads (`tarot-spreads`); an essay in a section of type «articoli» (the Kabbalah: `kabbalah`). A part of a series: the series' section (`new --series` fills it). `check` warns (`WARN [subject]`) when subject and section do not match. |
-| `series` | written by `new --series`: `{"id", "part"}`. Never sent to the API; `post` uses it to mark the part written. Leave it as it is. |
+| `series` | written by `new --series`: `{"id", "part"}` (the item of the plan and the part; 1 for a single article). Never sent to the API; `post` uses it to mark the part written, and a failed `check`/`post` records the attempt on it. Leave it as it is. |
 | `faq` | 3–5 real questions with 1–3 sentence direct answers (`question`, `answer`). |
 | `cover_alt` | what is in the picture; never a spread; a card only if the picture really shows one. |
 | `language` | `en` (default). |
@@ -254,11 +256,15 @@ look at (`note:` lines, claims you removed). Never the key, never the article bo
   save` in `~/.tarots-blog/credentials.json`. Both skills read it by themselves (`note: using the saved key (prefix
   tk_live_…)`): set no variable, look for no other key, never print it. A `403` on a picture command means that key
   lacks the media permission: report the line, do not work around it.
-- **Topic**: the next part of the open series (`series next`); with none open, design a series first
-  (`references/editorial-line.md`), record it with `series plan`, and write its part 1. Never a topic outside a
-  series, never one `TAKEN`, never a popular genre (sign seasons, moon phases, seasonal spreads, beginners, love).
-- **One article per run** (one part of a series). Saved as a draft; `--publish` only if the job's instructions say
-  to publish.
+- **Topic**: from the plan only (`plan session`, then `plan next` after every `post`; exit 14 of `plan session`:
+  the plan is empty, make a new one first). Never one `TAKEN`, never a popular genre (sign seasons, moon phases,
+  seasonal spreads, beginners, love).
+- **The session's articles, one after the other**, each researched, written, checked and illustrated on its own;
+  **a series is finished in the same session**. Published with `post --publish` when the job says to publish,
+  otherwise drafts.
+- **A part that fails is never abandoned**: a STOP of `check` or a `post` refused by the API is recorded on the part
+  by itself; `plan next` gives it again (a new work folder, `…-retry2`), up to 3 times a day, then goes on; the next
+  session starts from it, and every report shows it (`INCOMPLETE` / `STUCK` lines of `run-report`).
 - The job's instructions are the operator's standing ok for this article's pictures: a cover and at most one inline
   picture (10 credits each); pass the job's budget with `--budget` if it sets one.
 - **The cover is part of the article.** Run `generate --article <slug>` before `post`; `post <slug>` takes the
@@ -282,7 +288,8 @@ look at (`note:` lines, claims you removed). Never the key, never the article bo
 saved) · `4` the API refused · `5` configuration (key, URL) · `7` a picture rule refused the file · `8` topic or
 keyword TAKEN · `9` the focus keyword is not a search phrase (> 6 words, a repeated word) · `10` STOP after 4 rounds · `11` `post` found no cover
 generated for the slug and no `--cover` was given, or `--no-cover` without a failed generation recorded (nothing
-saved) · `12` the title or the SEO title is a string of keywords · `13` no section.
+saved) · `12` the title or the SEO title is a string of keywords · `13` no section · `14` `plan session`: the plan
+is empty (make a new one).
 
 ## Edit an existing article
 `list-posts` (every article, with ids), `mine` (this key's), `update <id> patch.json`, `delete-draft <id>`. One key
@@ -297,8 +304,8 @@ reads, changes and deletes **any draft** of the blog (`blog:write`), whoever wro
 - Article files only in the work folder made by `new`; never in the skill's folder or a repository; never search
   the disk for them.
 - Publish only what you would put your name to: original, verified, no invented facts.
-- **One article per run**, unless the operator explicitly asks for more; even then one after the other, each
-  researched, written, checked and illustrated on its own. A `429` means stop, not retry.
+- **The articles of the session (or the ones the operator asks for), one after the other**, each researched,
+  written, checked and illustrated on its own. A `429` means stop, not retry.
 - **Never write your own script** (a loop, a batch, a "publish_sequential" or "generate_articles" helper) that
   writes, illustrates or publishes articles in series. Running this skill's commands through `execute_code` /
   `subprocess` one at a time is fine.
@@ -328,4 +335,5 @@ reads, changes and deletes **any draft** of the blog (`blog:write`), whoever wro
 - `../tarots-blog-images/`: the picture skill (`scripts/tarots_images.py`, `references/prompts.md`).
 - `tests/`: offline tests (pictures, titles and topic-check, work folder, NEXT, keyword, rounds, the cover of the
   slug, subject and section, the editorial line: titles, section, --no-cover, --publish, run-report, series, ideas).
-- `~/.tarots-blog/editorial.json`: the record of series, ideas and research (`series`, `ideas`); local, no key.
+- `~/.tarots-blog/editorial.json`: the plan (items queued, open, closed; parts written or failed with their
+  attempts), the ideas and the research (`plan`, `ideas`); local, no key.

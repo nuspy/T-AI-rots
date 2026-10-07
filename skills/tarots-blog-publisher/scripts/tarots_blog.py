@@ -110,7 +110,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 EXIT_OK, EXIT_USAGE, EXIT_SCORE, EXIT_API, EXIT_CONFIG, EXIT_RULE, EXIT_TAKEN = 0, 2, 3, 4, 5, 7, 8
-EXIT_KEYWORD, EXIT_STOP, EXIT_NO_COVER, EXIT_TITLE, EXIT_SECTION = 9, 10, 11, 12, 13
+EXIT_KEYWORD, EXIT_STOP, EXIT_NO_COVER, EXIT_TITLE, EXIT_SECTION, EXIT_PLAN_EMPTY = 9, 10, 11, 12, 13, 14
 
 MAX_IMAGE_BYTES = 8_000_000
 IMAGE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
@@ -1378,13 +1378,14 @@ def cmd_new(a) -> int:
         data = skeleton(slug)
         if a.series:
             plan = _editorial()
-            series = _series_of(plan, a.series)
-            part = next((p for p in series["parts"] if p["n"] == a.part), None)
+            item = _item(plan, a.series)
+            part = next((p for p in item["parts"] if p["n"] == a.part), None)
             if part is None:
-                raise Failure(f"--part {a.part}: the series «{series['title']}» has parts 1-{len(series['parts'])}", EXIT_USAGE)
-            data.update(title=part["title"], section=series.get("section") or "", tags=[series["tag"]],
-                        series={"id": series["id"], "part": part["n"]})
-            brief = _brief(series, part)
+                raise Failure(f"--part {a.part}: «{item['title']}» has parts 1-{len(item['parts'])}", EXIT_USAGE)
+            # the slug of the part, not of the folder: a retry folder («…-retry2») keeps the planned slug
+            data.update(title=part["title"], slug=slugify(part["title"], 75), section=item.get("section") or "",
+                        tags=[item["tag"]] if item.get("tag") else [], series={"id": item["id"], "part": part["n"]})
+            brief = _brief(item, part)
         article.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     if not body.exists():
         body.write_text("", encoding="utf-8")
@@ -1997,7 +1998,9 @@ def cmd_post(a) -> int:
     series_left = series_problems(path, payload)
     if series_left:
         raise Failure("part of a series, not saved: " + "; ".join(series_left) + ".", EXIT_RULE)
-    if (payload.get("stato") == "pubblicato" or payload.get("pubblicato_il")) and not a.publish:
+    if a.publish and not payload.get("pubblicato_il"):
+        payload["stato"] = "pubblicato"  # --publish publishes now (a publish_at in article.json schedules instead)
+    elif (payload.get("stato") == "pubblicato" or payload.get("pubblicato_il")) and not a.publish:
         payload["stato"] = "bozza"
         payload.pop("pubblicato_il", None)
         print("note: saved as a DRAFT: publishing (or scheduling) needs --publish, given only when the operator's "
@@ -2031,6 +2034,10 @@ def cmd_post(a) -> int:
         record_picture(sha, cover, article=str(article["id"]), kind="cover", slug=article.get("slug"))
     series_ref = article_series(path)
     series_note = mark_series_part(series_ref, article, result.get("url", "")) if series_ref else None
+    try:
+        sync_titles()  # the local copy of every article knows this one now (topic-check of the next part)
+    except Failure:
+        pass
     if a.json:
         show(result)
     else:
@@ -2197,19 +2204,31 @@ def cmd_run_report(a) -> int:
         print(f"SAVED {x['slug']} | {x['title']} | status={x['status']} | section={x['section']} | cover={x['cover']}")
     if not lines:
         print("NOTHING was saved by this key in that time.")
+    alarms = plan_alarms()
+    for line in alarms:
+        print(line)
+    if alarms:
+        print("# the lines above are items of the plan NOT complete: they are written first in the next session")
     return EXIT_OK
 
 
-# ---- the editorial line: series for expert readers ---------------------------------------------------------------
-# The operator (7/10/2026): the topics were «da riviste femminili», «banalità da lettura della domenica». An evening
-# job writes ONE part of a series; the agent designs the series itself (web research), records it here, then writes
-# one part per run. The record also keeps the topics already proposed and rejected and the notes of the research,
-# so that a later run does not research the same thing again. Local file, no key in it.
+# ---- the editorial plan: series and single articles for expert readers -------------------------------------------
+# The operator (7/10/2026): the topics were «da riviste femminili». Then, the same day: series of 3-10 articles, each
+# series written and published in ONE session; a plan of about 100 posts (series and single articles) made in one
+# request, then a daily job that writes, in order, about 5 articles a day without ever splitting a series; and a part
+# that fails must never be abandoned: «la serie sarebbe incompleta e non ce ne accorgeremo mai». Articles and series
+# on a topic the operator gives stay possible at any time (`plan add --now`).
+#
+# The record is a local file (no key in it): the items of the plan in order (queued → open → closed), the ideas
+# already proposed or rejected, the notes of the research, so that no run researches the same thing twice.
 
 EDITORIAL_PATH = (Path(os.environ["TAROTS_EDITORIAL"]) if os.environ.get("TAROTS_EDITORIAL")
                   else Path.home() / ".tarots-blog" / "editorial.json")
-SERIES_PARTS = (6, 12)
-#: Popular genres an unattended run must not choose (they filled the blog with the same article ten times).
+SERIES_PARTS = (3, 10)                # a series is 3-10 articles (operator, 7/10/2026), all in one session
+SESSION_ARTICLES = 5                  # the articles of a daily session, on average (never splitting a series)
+ATTEMPTS_PER_DAY = 3                  # failed attempts of one part in one day before the session moves on
+STUCK_AFTER = 3                       # failed attempts in total: the part is shown as STUCK in every report
+#: Popular genres the plan must not contain (they filled the blog with the same article ten times).
 BANNED_TOPICS = [
     (r"\b(?:aries|taurus|gemini|cancer|leo|virgo|libra|scorpio|sagittarius|capricorn|aquarius|pisces)\s+season\b",
      "a «<sign> season» article"),
@@ -2236,6 +2255,10 @@ def banned_topic(text: str) -> Optional[str]:
     return None
 
 
+def _today() -> str:
+    return _utcnow().date().isoformat()
+
+
 def _editorial() -> Dict[str, Any]:
     try:
         data = json.loads(EDITORIAL_PATH.read_text(encoding="utf-8"))
@@ -2243,7 +2266,9 @@ def _editorial() -> Dict[str, Any]:
         data = {}
     if not isinstance(data, dict):
         data = {}
-    for key in ("series", "ideas", "research"):
+    if "items" not in data and isinstance(data.get("series"), list):  # the first version of the record
+        data["items"] = [{**s, "kind": "series"} for s in data.pop("series")]
+    for key in ("items", "ideas", "research"):
         data.setdefault(key, [])
     return data
 
@@ -2255,121 +2280,113 @@ def _save_editorial(data: Dict[str, Any]) -> None:
     os.replace(tmp, EDITORIAL_PATH)
 
 
-def open_series(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    return next((s for s in data["series"] if s.get("status") == "open"), None)
-
-
-def next_part(series: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    return next((p for p in series.get("parts") or [] if p.get("status") == "planned"), None)
-
-
-def _series_of(data: Dict[str, Any], sid: str) -> Dict[str, Any]:
-    found = next((s for s in data["series"] if s.get("id") == sid), None)
+def _item(data: Dict[str, Any], iid: str) -> Dict[str, Any]:
+    found = next((i for i in data["items"] if i.get("id") == iid), None)
     if found is None:
-        raise Failure(f"no series «{sid}» in {EDITORIAL_PATH}: `series status` lists them.", EXIT_USAGE)
+        raise Failure(f"no item «{iid}» in the plan ({EDITORIAL_PATH}): `plan status` lists them.", EXIT_USAGE)
     return found
 
 
-def _brief(series: Dict[str, Any], part: Dict[str, Any]) -> List[str]:
-    total = len(series.get("parts") or [])
-    written = [p for p in series["parts"] if p.get("status") == "written"]
-    prev = written[-1] if written else None
+def _left(item: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """The parts not written yet, in order."""
+    return [p for p in item.get("parts") or [] if p.get("status") != "written"]
+
+
+def _attempts_today(part: Dict[str, Any]) -> int:
+    return sum(1 for x in part.get("attempts") or [] if str(x.get("when", "")).startswith(_today()))
+
+
+def _stuck(part: Dict[str, Any]) -> bool:
+    return len(part.get("attempts") or []) >= STUCK_AFTER
+
+
+def _open_plan_items(data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """The items being written: the on-demand ones first, then the plan's, each in the order they were opened."""
+    items = [i for i in data["items"] if i.get("status") == "open"]
+    return sorted(items, key=lambda i: (i.get("origin") != "request", str(i.get("opened") or "")))
+
+
+def _incomplete(data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Open items left unfinished by an earlier day: they come first, always."""
+    return [i for i in _open_plan_items(data) if _left(i) and not str(i.get("opened") or "").startswith(_today())]
+
+
+def next_to_write(data: Dict[str, Any]) -> Optional[tuple]:
+    """(item, part): the first part not written of the first open item whose current part has not failed
+    ATTEMPTS_PER_DAY times today. The parts of a series are written in their order: a failing part 2 is retried,
+    never skipped for part 3."""
+    for item in _open_plan_items(data):
+        left = _left(item)
+        if left and _attempts_today(left[0]) < ATTEMPTS_PER_DAY:
+            return item, left[0]
+    return None
+
+
+def _brief(item: Dict[str, Any], part: Dict[str, Any]) -> List[str]:
+    total = len(item.get("parts") or [])
+    written = [p for p in item["parts"] if p.get("status") == "written" and p["n"] < part["n"]]
+    head = (f"series «{item['title']}», part {part['n']} of {total}" if item.get("kind") == "series"
+            else "single article")
     lines = [
-        f"series: {series['title']}  (id {series['id']}, section {series.get('section') or '?'}, tag {series['tag']})",
-        f"  the series' thesis: {series.get('thesis', '')}",
-        f"part {part['n']} of {total}: {part['title']}",
-        f"  the question this part answers: {part.get('question', '')}",
-        "  sources to read and cite: " + "; ".join(part.get("sources") or series.get("sources") or []),
+        f"{head}: {part['title']}   (item {item['id']}, section {item.get('section')}"
+        + (f", tag {item['tag']}" if item.get("tag") else "") + ")",
+        f"  the question it answers: {part.get('question', '')}",
     ]
+    if item.get("kind") == "series":
+        lines.insert(1, f"  the series' thesis: {item.get('thesis', '')}")
+    lines.append("  sources to open and cite: " + "; ".join(part.get("sources") or item.get("sources") or []))
     if part.get("keyword"):
         lines.append(f"  a possible focus keyword (check it with topic-check): {part['keyword']}")
-    if prev:
-        lines.append(f"  link the previous part inside a sentence: [[post:{prev.get('slug')}]] ({prev.get('title')})")
+    if written:
+        lines.append(f"  link the previous part inside a sentence: [[post:{written[-1].get('slug')}]] "
+                     f"({written[-1].get('title')})")
+    if part.get("attempts"):
+        last = part["attempts"][-1]
+        lines.append(f"  RETRY: {len(part['attempts'])} failed attempt(s), the last on {str(last.get('when'))[:16]}: "
+                     f"{last.get('error', '')[:200]}. Start a new work folder (the command below) and write it again.")
     return lines
 
 
-def cmd_series(a) -> int:
-    data = _editorial()
-    action = a.action
-    if action == "status":
-        current = open_series(data)
-        if a.json:
-            show({"open": current, "closed": [s["title"] for s in data["series"] if s.get("status") == "closed"],
-                  "ideas": data["ideas"], "research": data["research"][-20:]})
-            return EXIT_OK
-        if current is None:
-            print("no open series. Design one (references/editorial-line.md): research, `ideas research` / `ideas add` for each "
-                  "candidate, then `series plan <file.json>`.")
-        else:
-            done = sum(1 for p in current["parts"] if p.get("status") == "written")
-            print(f"open series: {current['title']} ({done} of {len(current['parts'])} written)")
-            for p in current["parts"]:
-                print(f"  {p['n']:>2}. [{p.get('status')}] {p['title']}" + (f"  → {p.get('slug')}" if p.get("slug") else ""))
-            part = next_part(current)
-            if part:
-                print("next:")
-                for line in _brief(current, part):
-                    print("  " + line)
-                print(f"  start it with: tarots_blog.py new \"{slugify(part['title'])}\" --series {current['id']} "
-                      f"--part {part['n']}")
-        closed = [s for s in data["series"] if s.get("status") == "closed"]
-        if closed:
-            print("finished series (do not repeat them): " + "; ".join(s["title"] for s in closed))
-        rejected = [i for i in data["ideas"] if i.get("status") == "rejected"]
-        if rejected:
-            print(f"ideas already rejected ({len(rejected)}): " + "; ".join(i["title"] for i in rejected[-15:]))
-        return EXIT_OK
-    if action == "next":
-        current = open_series(data)
-        part = next_part(current) if current else None
-        if part is None:
-            print("no part to write: `series status` says why (no open series: design one).")
-            return EXIT_USAGE
-        for line in _brief(current, part):
-            print(line)
-        print(f"start it with: tarots_blog.py new \"{slugify(part['title'])}\" --series {current['id']} --part {part['n']}")
-        return EXIT_OK
-    if action == "plan":
-        if not a.file:
-            raise Failure("series plan needs the file of the series: series plan <series.json>", EXIT_USAGE)
-        return _plan_series(data, Path(a.file), force=a.force)
-    if action == "skip":
-        current = _series_of(data, a.series) if a.series else open_series(data)
-        if current is None or not a.part:
-            raise Failure("series skip --part N [--series ID] --reason TEXT", EXIT_USAGE)
-        part = next((p for p in current["parts"] if p["n"] == a.part), None)
-        if part is None:
-            raise Failure(f"no part {a.part} in «{current['title']}»", EXIT_USAGE)
-        part.update(status="skipped", reason=a.reason or "")
-        _close_if_done(current)
-        _save_editorial(data)
-        print(f"part {a.part} skipped")
-        return EXIT_OK
-    raise Failure(f"unknown action {action}", EXIT_USAGE)
+def _new_command(item: Dict[str, Any], part: Dict[str, Any]) -> str:
+    name = slugify(part["title"])
+    if part.get("attempts"):
+        name = f"{name}-retry{len(part['attempts']) + 1}"
+    return f"tarots_blog.py new \"{name}\" --series {item['id']} --part {part['n']}"
 
 
-def _close_if_done(series: Dict[str, Any]) -> None:
-    if not any(p.get("status") == "planned" for p in series["parts"]):
-        series["status"] = "closed"
-        series["closed"] = _utcnow().isoformat(timespec="seconds")
-
-
-def _plan_series(data: Dict[str, Any], file: Path, *, force: bool) -> int:
-    try:
-        plan = json.loads(file.read_text(encoding="utf-8"))
-    except (OSError, ValueError) as exc:
-        raise Failure(f"cannot read {file}: {exc}", EXIT_USAGE) from None
-    problems = []
-    title = str(plan.get("title") or "").strip()
-    parts = plan.get("parts") or []
-    for field in ("title", "thesis", "why", "section"):
-        if not str(plan.get(field) or "").strip():
-            problems.append(f'"{field}" is empty')
-    if len(plan.get("sources") or []) < 2:
-        problems.append('"sources": at least two real sources for the whole series (primary texts, scholars)')
-    if not SERIES_PARTS[0] <= len(parts) <= SERIES_PARTS[1]:
-        problems.append(f"{len(parts)} parts: a series has {SERIES_PARTS[0]}-{SERIES_PARTS[1]}")
-    texts = [title] + [str(p.get("title") or "") for p in parts if isinstance(p, dict)]
+def _validate(raw: Any, data: Dict[str, Any], rows: List[Dict[str, Any]], planned: List[str]) -> tuple:
+    """(item or None, problems) of one entry of a plan file: a series (3-10 parts) or a single article."""
+    if not isinstance(raw, dict):
+        return None, ["an entry is not an object"]
+    kind = str(raw.get("kind") or ("series" if raw.get("parts") else "single"))
+    title = str(raw.get("title") or "").strip()
+    problems: List[str] = []
+    if kind not in ("series", "single"):
+        return None, [f"«{title}»: kind must be «series» or «single»"]
+    for field in ("title", "why", "section") + (("thesis",) if kind == "series" else ("question",)):
+        if not str(raw.get(field) or "").strip():
+            problems.append(f'«{title or "?"}»: "{field}" is empty')
+    if len(raw.get("sources") or []) < 2:
+        problems.append(f'«{title or "?"}»: "sources" needs at least two real sources (primary texts, scholars)')
+    if kind == "series":
+        parts_raw = raw.get("parts") or []
+        if not SERIES_PARTS[0] <= len(parts_raw) <= SERIES_PARTS[1]:
+            problems.append(f"«{title}»: {len(parts_raw)} parts: a series has {SERIES_PARTS[0]}-{SERIES_PARTS[1]}")
+        parts = []
+        for k, p in enumerate(parts_raw, 1):
+            if not isinstance(p, dict):
+                problems.append(f"«{title}»: part {k} is not an object")
+                continue
+            for field in ("title", "question"):
+                if not str(p.get(field) or "").strip():
+                    problems.append(f'«{title}» part {k}: "{field}" is empty')
+            if not p.get("sources"):
+                problems.append(f"«{title}» part {k}: no sources")
+            parts.append(p)
+    else:
+        parts = [{"title": title, "question": raw.get("question"), "sources": raw.get("sources"),
+                  "keyword": raw.get("keyword")}]
+    texts = ([title] if kind == "series" else []) + [str(p.get("title") or "") for p in parts]
     for text in texts:
         what = banned_topic(text)
         if what:
@@ -2377,48 +2394,172 @@ def _plan_series(data: Dict[str, Any], file: Path, *, force: bool) -> int:
         why = title_problem(text, "")
         if why:
             problems.append(f"«{text}»: {why}")
-    cache = sync_titles()
-    seen = set()
-    for i, p in enumerate(parts, 1):
-        if not isinstance(p, dict):
-            problems.append(f"part {i} is not an object")
-            continue
-        for field in ("title", "question"):
-            if not str(p.get(field) or "").strip():
-                problems.append(f'part {i}: "{field}" is empty')
-        if not p.get("sources"):
-            problems.append(f"part {i}: no sources")
-        key = _plain(str(p.get("title") or ""))
-        if key in seen:
-            problems.append(f"part {i} repeats another part's title")
-        seen.add(key)
-        matches = topic_matches(str(p.get("title") or ""), list(cache["articles"].values()))
-        if topic_verdict(matches) == "TAKEN":
-            problems.append(f"part {i} «{p.get('title')}» is TAKEN by {title_line(matches[0]['row'])}")
-    old = [s for s in data["series"] if topic_similarity(topic_words(s["title"]), topic_words(title)) >= TOPIC_TAKEN]
-    if old:
-        problems.append(f"the series «{title}» repeats «{old[0]['title']}»")
-    current = open_series(data)
-    if current and not force:
-        problems.append(f"«{current['title']}» is still open: finish it (or `series skip`) before planning another")
+    for p in parts:
+        t = str(p.get("title") or "")
+        matches = topic_matches(t, rows)
+        if matches and topic_verdict(matches) == "TAKEN":
+            problems.append(f"«{t}» is TAKEN by {title_line(matches[0]['row'])}")
+        if any(topic_similarity(topic_words(t), topic_words(o)) >= TOPIC_TAKEN for o in planned):
+            problems.append(f"«{t}» repeats a title already in the plan")
     if problems:
-        raise Failure("series not recorded:\n  - " + "\n  - ".join(problems), EXIT_RULE)
-    sid = slugify(plan.get("id") or title, 60)
-    if any(s["id"] == sid for s in data["series"]):
-        sid = f"{sid}-{len(data['series']) + 1}"
-    series = {
-        "id": sid, "title": title, "thesis": plan["thesis"], "why": plan["why"], "section": plan["section"],
-        "tag": f"series-{sid}"[:60], "sources": plan["sources"], "status": "open",
+        return None, problems
+    iid = slugify(raw.get("id") or title, 60)
+    taken_ids = {i["id"] for i in data["items"]}
+    if iid in taken_ids:
+        iid = f"{iid}-{len(data['items']) + 1}"
+    item = {
+        "id": iid, "kind": kind, "title": title, "thesis": raw.get("thesis") or raw.get("question"),
+        "why": raw["why"], "section": raw["section"], "sources": raw["sources"],
+        "tag": f"series-{iid}"[:60] if kind == "series" else "", "status": "queued",
         "created": _utcnow().isoformat(timespec="seconds"),
-        "parts": [{"n": i, "title": p["title"], "question": p["question"], "sources": p.get("sources") or [],
-                   "keyword": p.get("keyword") or "", "status": "planned"} for i, p in enumerate(parts, 1)],
+        "parts": [{"n": k, "title": p["title"], "question": p.get("question") or "", "sources": p.get("sources") or [],
+                   "keyword": p.get("keyword") or "", "status": "planned", "attempts": []}
+                  for k, p in enumerate(parts, 1)],
     }
-    data["series"].append(series)
-    data["ideas"].append({"title": title, "status": "used", "when": series["created"], "why": plan["why"]})
+    return item, []
+
+
+def _plan_titles(data: Dict[str, Any]) -> List[str]:
+    return [p["title"] for i in data["items"] for p in i.get("parts") or []] + [i["title"] for i in data["items"]]
+
+
+def _add_to_plan(data: Dict[str, Any], file: Path, *, now: bool) -> int:
+    try:
+        raw = json.loads(file.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise Failure(f"cannot read {file}: {exc}", EXIT_USAGE) from None
+    entries = raw.get("items") if isinstance(raw, dict) and "items" in raw else raw if isinstance(raw, list) else [raw]
+    rows = list(sync_titles()["articles"].values())
+    planned = _plan_titles(data)
+    accepted, refused = [], []
+    for entry in entries:
+        item, problems = _validate(entry, data, rows, planned)
+        if item is None:
+            refused.append(problems)
+            title = str(entry.get("title") if isinstance(entry, dict) else "") or "?"
+            data["ideas"].append({"title": title, "status": "rejected", "reason": "; ".join(problems)[:300],
+                                  "when": _utcnow().isoformat(timespec="seconds")})
+            continue
+        if now:
+            item.update(status="open", origin="request", opened=_utcnow().isoformat(timespec="seconds"))
+        else:
+            item["origin"] = "plan"
+        data["items"].append(item)
+        planned += [p["title"] for p in item["parts"]] + [item["title"]]
+        accepted.append(item)
     _save_editorial(data)
-    print(f"series recorded: {title} (id {sid}, {len(parts)} parts, section {series['section']}, tag {series['tag']})")
-    print("next: tarots_blog.py series next")
+    posts = sum(len(i["parts"]) for i in accepted)
+    for item in accepted:
+        print(f"{'OPEN NOW' if now else 'queued'}: [{item['kind']}] {item['title']} ({len(item['parts'])} "
+              f"article(s), section {item['section']}, id {item['id']})")
+    for problems in refused:
+        print("REFUSED: " + " | ".join(problems))
+    print(f"{len(accepted)} item(s), {posts} article(s) added; {len(refused)} refused (recorded among the ideas).")
+    queued = [i for i in data["items"] if i.get("status") == "queued"]
+    print(f"the plan now holds {len(queued)} queued item(s), {sum(len(i['parts']) for i in queued)} article(s).")
+    return EXIT_OK if accepted else EXIT_RULE
+
+
+def _session(data: Dict[str, Any], articles: int) -> List[Dict[str, Any]]:
+    """Opens queued items, in order, until the session has about `articles` articles to write (the parts left of
+    the items already open count first; a series is never split)."""
+    left = sum(len(_left(i)) for i in _open_plan_items(data))
+    opened = []
+    for item in [i for i in data["items"] if i.get("status") == "queued"]:
+        if left >= articles:
+            break
+        item.update(status="open", opened=_utcnow().isoformat(timespec="seconds"))
+        left += len(item["parts"])
+        opened.append(item)
+    _save_editorial(data)
+    return opened
+
+
+def _print_open(data: Dict[str, Any]) -> None:
+    for item in _open_plan_items(data):
+        late = " — INCOMPLETE since " + str(item.get("opened"))[:10] if item in _incomplete(data) else ""
+        print(f"[{item['kind']}] {item['title']} (id {item['id']}){late}")
+        for p in item["parts"]:
+            mark = "STUCK " if _stuck(p) and p.get("status") != "written" else ""
+            tries = f" ({len(p['attempts'])} failed attempt(s))" if p.get("attempts") else ""
+            print(f"    {p['n']}. [{mark}{p['status']}] {p['title']}{tries}" + (f"  → {p['slug']}" if p.get("slug") else ""))
+
+
+def cmd_plan(a) -> int:
+    data = _editorial()
+    if a.action == "add":
+        if not a.file:
+            raise Failure("plan add needs a file: plan add <items.json> [--now]", EXIT_USAGE)
+        return _add_to_plan(data, Path(a.file), now=a.now)
+    if a.action == "session":
+        opened = _session(data, a.articles)
+        late = _incomplete(data)
+        if late:
+            print("FIRST, finish what an earlier session left incomplete:")
+        _print_open(data)
+        if opened:
+            print(f"opened for this session: {', '.join(i['title'] for i in opened)}")
+        if not _open_plan_items(data):
+            print("PLAN EMPTY: nothing queued and nothing open. Make a new plan now (references/editorial-line.md, "
+                  "«The plan»): about 100 articles, series and single ones, with `plan add <file.json>`; then run "
+                  "`plan session` again.")
+            return EXIT_PLAN_EMPTY
+        print("now: tarots_blog.py plan next   (repeat after every `post` until it says the session is done)")
+        return EXIT_OK
+    if a.action == "next":
+        found = next_to_write(data)
+        if found is None:
+            stuck = [i for i in _open_plan_items(data) if _left(i)]
+            if stuck:
+                print("the session is done for today, but these are NOT complete (they come first tomorrow):")
+                _print_open(data)
+            else:
+                print("the session is done: every open item is written.")
+            return EXIT_OK
+        item, part = found
+        for line in _brief(item, part):
+            print(line)
+        print(f"start it with: {_new_command(item, part)}")
+        return EXIT_OK
+    if a.action == "skip":
+        if not a.item or not a.part:
+            raise Failure("plan skip --item ID --part N --reason TEXT (only when the operator says so)", EXIT_USAGE)
+        item = _item(data, a.item)
+        part = next((p for p in item["parts"] if p["n"] == a.part), None)
+        if part is None:
+            raise Failure(f"no part {a.part} in «{item['title']}»", EXIT_USAGE)
+        part.update(status="written", skipped=a.reason or "skipped by the operator")
+        _close_if_done(item)
+        _save_editorial(data)
+        print(f"part {a.part} of «{item['title']}» skipped")
+        return EXIT_OK
+    # status
+    if a.json:
+        show({"open": _open_plan_items(data), "queued": [i for i in data["items"] if i.get("status") == "queued"],
+              "closed": [i["title"] for i in data["items"] if i.get("status") == "closed"]})
+        return EXIT_OK
+    late = _incomplete(data)
+    if late:
+        print(f"INCOMPLETE: {len(late)} item(s) left unfinished by an earlier session: they are written first.")
+    if _open_plan_items(data):
+        print("open:")
+        _print_open(data)
+    queued = [i for i in data["items"] if i.get("status") == "queued"]
+    closed = [i for i in data["items"] if i.get("status") == "closed"]
+    print(f"queued: {len(queued)} item(s), {sum(len(i['parts']) for i in queued)} article(s); "
+          f"done: {len(closed)} item(s), {sum(len(i['parts']) for i in closed)} article(s)")
+    for item in queued[:10]:
+        print(f"  next in the plan: [{item['kind']}] {item['title']}")
+    rejected = [i for i in data["ideas"] if i.get("status") == "rejected"]
+    if rejected:
+        print(f"ideas already rejected ({len(rejected)}): " + "; ".join(i["title"] for i in rejected[-15:]))
     return EXIT_OK
+
+
+def _close_if_done(item: Dict[str, Any]) -> None:
+    if not _left(item):
+        item["status"] = "closed"
+        item["closed"] = _utcnow().isoformat(timespec="seconds")
 
 
 def cmd_ideas(a) -> int:
@@ -2437,7 +2578,7 @@ def cmd_ideas(a) -> int:
         return EXIT_OK
     text = " ".join(a.text or []).strip()
     if not text:
-        raise Failure("give the text: ideas add \"<title of a possible series>\" --why \"…\"", EXIT_USAGE)
+        raise Failure("give the text: ideas add \"<title of a possible series or article>\" --why \"…\"", EXIT_USAGE)
     now = _utcnow().isoformat(timespec="seconds")
     if a.action == "research":
         data["research"].append({"query": text, "notes": a.why or "", "sources": a.source or [], "when": now})
@@ -2466,42 +2607,93 @@ def cmd_ideas(a) -> int:
     raise Failure(f"unknown action {a.action}", EXIT_USAGE)
 
 
-def mark_series_part(series_ref: Dict[str, Any], article: Dict[str, Any], url: str) -> Optional[str]:
-    """After `post`: the part of the series is written (slug, id, url); the last one closes the series."""
+def mark_series_part(ref: Dict[str, Any], article: Dict[str, Any], url: str) -> Optional[str]:
+    """After `post`: the part is written (slug, id, url); the last part closes the item."""
     data = _editorial()
-    series = next((s for s in data["series"] if s.get("id") == series_ref.get("id")), None)
-    if series is None:
+    item = next((i for i in data["items"] if i.get("id") == ref.get("id")), None)
+    if item is None:
         return None
-    part = next((p for p in series["parts"] if p["n"] == int(series_ref.get("part") or 0)), None)
+    part = next((p for p in item["parts"] if p["n"] == int(ref.get("part") or 0)), None)
     if part is None:
         return None
     part.update(status="written", slug=article.get("slug"), id=article.get("id"), url=url,
                 when=_utcnow().isoformat(timespec="seconds"))
-    _close_if_done(series)
+    _close_if_done(item)
     _save_editorial(data)
-    return f"series: part {part['n']} of «{series['title']}» marked written" + (
-        "; the series is complete" if series["status"] == "closed" else "")
+    if item.get("kind") != "series":
+        return f"plan: «{item['title']}» written"
+    return f"plan: part {part['n']} of «{item['title']}» written" + (
+        "; the series is complete" if item["status"] == "closed" else
+        f"; {len(_left(item))} part(s) left: `plan next` (finish the series in this session)")
+
+
+#: The exits that end an attempt at a part: a STOP of `check`, and `post` failing on the API or the configuration.
+#: The others (score, title, section, keyword, cover) are instructions to follow, not failures.
+FAILED_EXITS = {"check": {EXIT_STOP}, "post": {EXIT_STOP, EXIT_API, EXIT_CONFIG}}
+
+
+def record_attempt(command: str, article_arg: str, code: int, error: str) -> None:
+    """A part of the plan that failed: recorded on the part, never lost. `plan next` retries it (in a new work
+    folder) up to ATTEMPTS_PER_DAY times a day, before going on; the next session starts from it."""
+    if code not in FAILED_EXITS.get(command, set()):
+        return
+    try:
+        ref = article_series(resolve_article(article_arg))
+    except Failure:
+        return
+    if not ref:
+        return
+    data = _editorial()
+    item = next((i for i in data["items"] if i.get("id") == ref.get("id")), None)
+    part = next((p for p in (item or {}).get("parts") or [] if p["n"] == int(ref.get("part") or 0)), None)
+    if part is None or part.get("status") == "written":
+        return
+    part["status"] = "failed"
+    part.setdefault("attempts", []).append({"when": _utcnow().isoformat(timespec="seconds"), "command": command,
+                                            "code": code, "error": error[:300]})
+    _save_editorial(data)
+    print(f"plan: the attempt at part {part['n']} of «{item['title']}» is recorded as failed "
+          f"({len(part['attempts'])} so far). Do not abandon it: run `tarots_blog.py plan next`.", file=sys.stderr)
+
+
+def plan_alarms() -> List[str]:
+    """The lines every report must carry: items left incomplete, parts that keep failing."""
+    data = _editorial()
+    lines = []
+    for item in _open_plan_items(data):
+        left = _left(item)
+        if not left:
+            continue
+        stuck = [p for p in left if _stuck(p)]
+        if item in _incomplete(data) or stuck:
+            what = "STUCK" if stuck else "INCOMPLETE"
+            lines.append(f"{what} [{item['kind']}] {item['title']}: {len(left)} of {len(item['parts'])} not written"
+                         + (f"; part {stuck[0]['n']} failed {len(stuck[0]['attempts'])} times: "
+                            f"{stuck[0]['attempts'][-1].get('error', '')[:160]}" if stuck else ""))
+    return lines
 
 
 def series_problems(path: Path, payload: Dict[str, Any]) -> List[str]:
-    """A part of a series links the previous part, goes in the series' section and carries its tag."""
+    """A part of a series links the previous part and carries the series' tag; every item of the plan goes in its
+    section."""
     ref = article_series(path)
     if not ref:
         return []
     data = _editorial()
-    series = next((s for s in data["series"] if s.get("id") == ref.get("id")), None)
-    if series is None:
-        return [f"article.json says series «{ref.get('id')}», which is not in {EDITORIAL_PATH}"]
+    item = next((i for i in data["items"] if i.get("id") == ref.get("id")), None)
+    if item is None:
+        return [f"article.json says plan item «{ref.get('id')}», which is not in {EDITORIAL_PATH}"]
     n = int(ref.get("part") or 0)
     problems = []
-    before = [p for p in series["parts"] if p["n"] < n and p.get("status") == "written" and p.get("slug")]
-    body = str(payload.get("testo") or "")
-    if before and f"[[post:{before[-1]['slug']}]]" not in body:
-        problems.append(f"link the previous part inside a sentence: [[post:{before[-1]['slug']}]]")
-    if str(payload.get("sezione") or "") != str(series.get("section") or ""):
-        problems.append(f'"section" must be «{series.get("section")}», the section of the series')
-    if series["tag"] not in (payload.get("tags") or []):
-        problems.append(f'"tags" must include «{series["tag"]}», the tag of the series')
+    if str(payload.get("sezione") or "") != str(item.get("section") or ""):
+        problems.append(f'"section" must be «{item.get("section")}», the section of this item of the plan')
+    if item.get("kind") == "series":
+        before = [p for p in item["parts"] if p["n"] < n and p.get("status") == "written" and p.get("slug")]
+        body = str(payload.get("testo") or "")
+        if before and f"[[post:{before[-1]['slug']}]]" not in body:
+            problems.append(f"link the previous part inside a sentence: [[post:{before[-1]['slug']}]]")
+        if item["tag"] not in (payload.get("tags") or []):
+            problems.append(f'"tags" must include «{item["tag"]}», the tag of the series')
     return problems
 
 
@@ -2582,8 +2774,9 @@ def parser() -> argparse.ArgumentParser:
         ),
     )
     nw.add_argument("name", nargs="+", help="the slug or a working title (made into a slug)")
-    nw.add_argument("--series", metavar="ID", help="a part of this series (`series status`): title, section, tag filled in")
-    nw.add_argument("--part", type=int, default=1, help="which part of --series")
+    nw.add_argument("--series", metavar="ID", help="an item of the plan (`plan next` prints the command): title, slug, "
+                                                    "section and the series' tag filled in")
+    nw.add_argument("--part", type=int, default=1, help="which part of --series (1 for a single article)")
     nw.set_defaults(run=cmd_new)
     k = sub.add_parser(
         "check", help="SEO report without saving, then NEXT: the exact fixes",
@@ -2620,33 +2813,37 @@ def parser() -> argparse.ArgumentParser:
     r.add_argument("--save-anyway", action="store_true", help="below the score, keep it as a draft instead of refusing")
     r.add_argument("--dry-run", action="store_true", help="check only; save nothing")
     r.add_argument("--publish", action="store_true",
-                   help="keep \"status\": \"published\" (or publish_at): ONLY when the operator's instructions say to "
-                        "publish; without it the article is saved as a draft")
+                   help="publish now (or at the publish_at of article.json): ONLY when the operator's or the job's "
+                        "instructions say to publish; without it the article is saved as a draft")
     r.set_defaults(run=cmd_post)
     rr = sub.add_parser("run-report", help="what THIS key saved in the last hours, read from the server: the lines "
                                            "to copy in the report of a run")
     rr.add_argument("--hours", type=int, default=12)
     rr.set_defaults(run=cmd_run_report)
-    se = sub.add_parser(
-        "series", help="the editorial line: the open series, its next part, plan a new one",
+    pl = sub.add_parser(
+        "plan", help="the editorial plan: series (3-10 articles) and single articles, written in order",
         description=(
-            f"Series of 6-12 parts for expert readers, recorded in {EDITORIAL_PATH}. status: the open series and the "
-            "next part (with the brief and the `new` command); next: only the next part; plan FILE: record a new "
-            "series (title, thesis, why, section, sources, parts[{title, question, sources, keyword}]) after the "
-            "checks (no popular genre, no keyword-string title, nothing TAKEN, one open series at a time); skip: "
-            "leave out a part, with a reason."
+            f"The plan of the blog, recorded in {EDITORIAL_PATH}. status: what is open, incomplete, queued, done. "
+            "add FILE [--now]: add series and single articles (a JSON object, a list, or {\"items\": [...]}) after the "
+            "checks (expert topics only, real titles, sources, nothing TAKEN); --now opens them at once, ahead of the "
+            "plan (an article or a series the operator asked for). session [--articles 5]: start the daily session: "
+            "the items left incomplete come first, then queued items in order until about that many articles, never "
+            f"splitting a series (exit {EXIT_PLAN_EMPTY}: the plan is empty, make a new one). next: the part to write "
+            "now, with its brief and the `new` command (a failed part is retried, never skipped). skip: leave out a "
+            "part, only when the operator says so."
         ),
     )
-    se.add_argument("action", nargs="?", default="status", choices=["status", "next", "plan", "skip"])
-    se.add_argument("file", nargs="?", help="plan: the JSON file of the series")
-    se.add_argument("--series", help="skip: the series id (default: the open one)")
-    se.add_argument("--part", type=int, help="skip: the part number")
-    se.add_argument("--reason", help="skip: why")
-    se.add_argument("--force", action="store_true", help="plan: even if another series is open (operator only)")
-    se.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
-    se.set_defaults(run=cmd_series)
+    pl.add_argument("action", nargs="?", default="status", choices=["status", "add", "session", "next", "skip"])
+    pl.add_argument("file", nargs="?", help="add: the JSON file")
+    pl.add_argument("--now", action="store_true", help="add: open at once (on request), ahead of the plan")
+    pl.add_argument("--articles", type=int, default=SESSION_ARTICLES, help="session: about how many articles")
+    pl.add_argument("--item", help="skip: the item id")
+    pl.add_argument("--part", type=int, help="skip: the part number")
+    pl.add_argument("--reason", help="skip: why")
+    pl.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
+    pl.set_defaults(run=cmd_plan)
     ide = sub.add_parser(
-        "ideas", help="the record of topics already proposed or rejected and of the research done",
+        "ideas", help="the record of topics already proposed or rejected and of the research done (read it first)",
         description=(
             "add TEXT --why …: a candidate series (a popular genre is recorded as rejected); reject TEXT --why …; "
             "research QUERY --why NOTES --source URL: what a web search found, so the next run does not repeat it; "
@@ -2680,10 +2877,13 @@ def main(argv: Optional[List[str]] = None) -> int:
             pass
     args = parser().parse_args(argv)
     try:
-        return args.run(args)
+        code, error = args.run(args), ""
     except Failure as exc:
         print(f"error: {exc}", file=sys.stderr)
-        return exc.code
+        code, error = exc.code, str(exc)
+    if args.command in FAILED_EXITS and code != EXIT_OK:
+        record_attempt(args.command, args.article, code, error or f"exit {code}")
+    return code
 
 
 if __name__ == "__main__":
