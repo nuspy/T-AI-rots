@@ -822,7 +822,7 @@ spec:
         - name: web
           # Gli indirizzi pubblici (API, Keycloak) sono cotti nella build:
           # vedi le --build-arg in deploy/k8s/LEGGIMI.md.
-          image: tarots-web:v9.5.2
+          image: tarots-web:v9.5.3
           imagePullPolicy: IfNotPresent
           env:
             # Il server di Next legge le anteprime delle letture condivise
