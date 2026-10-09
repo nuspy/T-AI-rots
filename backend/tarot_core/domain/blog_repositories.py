@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
-from sqlalchemy import Select, and_, case, delete, func, or_, select
+from sqlalchemy import Select, String, and_, case, cast, delete, func, or_, select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..tarot import blog as regole
@@ -59,6 +59,9 @@ async def assicura_miniatura(img: MediaImage) -> None:
 class BlogRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
+        #: Gli id delle sezioni visibili, letti una volta per repository (cioè per richiesta): `pubblico()` serve a
+        #: quasi ogni interrogazione, e rileggere le sezioni ogni volta costava decine di query per pagina.
+        self._visibili: Optional[List[int]] = None
 
     # ---- sezioni ------------------------------------------------------------------
 
@@ -137,8 +140,40 @@ class BlogRepository:
     # ---- articoli: lettura ---------------------------------------------------------
 
     async def pubblico(self):
-        """La condizione di visibilità pubblica (vedi `condizione_pubblica`)."""
-        return condizione_pubblica(s.id for s in await self.sezioni())
+        """La condizione di visibilità pubblica (vedi `condizione_pubblica`). Le sezioni visibili si leggono una volta
+        per repository."""
+        if self._visibili is None:
+            self._visibili = [s.id for s in await self.sezioni()]
+        return condizione_pubblica(self._visibili)
+
+    # ---- articoli a caso: una query sola -------------------------------------------------------------------------
+
+    async def a_caso(
+        self, *, seme: str, quanti: int, sezioni: Optional[Iterable[int]] = None, tag: Optional[str] = None,
+        lang: Optional[str] = None, escludi: Iterable[uuid.UUID] = (), escludi_slug: Optional[str] = None,
+    ) -> List[BlogPost]:
+        """`quanti` articoli pubblici a caso, con una query sola: l'ordine lo decide il database con
+        `md5(id || seme)`, a caso ma fisso finché non cambia `seme` (la data e il contesto della pagina), così la
+        stessa pagina mostra gli stessi articoli per tutto il giorno. Filtri come `elenco`; `escludi` toglie
+        l'articolo che si legge e quelli già mostrati (stessa query, nessun costo in più)."""
+        if quanti <= 0:
+            return []
+        q = await self._base(pubblico=True)
+        if sezioni is not None:
+            q = q.where(BlogPost.sezione_id.in_(list(sezioni)))
+        if tag:
+            q = q.where(BlogPost.id.in_(
+                select(BlogPostTag.post_id).join(BlogTag, BlogTag.id == BlogPostTag.tag_id).where(BlogTag.slug == tag)
+            ))
+        if lang:
+            q = q.where(BlogPost.lang == lang)
+        escludi = list(escludi)
+        if escludi:
+            q = q.where(BlogPost.id.not_in(escludi))
+        if escludi_slug:
+            q = q.where(BlogPost.slug != escludi_slug)
+        q = q.order_by(func.md5(func.concat(cast(BlogPost.id, String), seme))).limit(quanti)
+        return list((await self._session.execute(q)).scalars())
 
     async def _base(self, *, pubblico: bool) -> Select:
         q = select(BlogPost)
@@ -155,7 +190,7 @@ class BlogRepository:
         self, *, pubblico: bool = True, sezioni: Optional[Iterable[int]] = None, tag: Optional[str] = None,
         testo: str = "", lang: Optional[str] = None, evidenza: Optional[bool] = None, stato: Optional[str] = None,
         autore_id: Optional[int] = None, pagina: int = 1, per_pagina: int = 12,
-        riferimento: Optional[Tuple[str, str]] = None,
+        riferimento: Optional[Tuple[str, str]] = None, escludi_slug: Optional[str] = None,
     ) -> Tuple[List[BlogPost], int]:
         """Gli articoli, dal più recente. Con `riferimento=("carta", "maj-10")` (o una stesa) quelli che hanno quella
         carta come **soggetto**, per primi, e poi quelli che la **citano** (v9.4)."""
@@ -187,6 +222,8 @@ class BlogRepository:
             q = q.where(BlogPost.stato == stato)
         if autore_id is not None:
             q = q.where(BlogPost.autore_id == autore_id)
+        if escludi_slug:
+            q = q.where(BlogPost.slug != escludi_slug)
         totale = int((await self._session.execute(select(func.count()).select_from(q.subquery()))).scalar_one())
         ordine = (BlogPost.pubblicato_il.desc().nulls_last(), BlogPost.created_at.desc()) if pubblico else (
             BlogPost.updated_at.desc(),
@@ -271,10 +308,13 @@ class BlogRepository:
             )
         if post.sezione_id is not None:
             await somma(select(BlogPost.id).where(BlogPost.sezione_id == post.sezione_id, BlogPost.id != post.id), 2)
-        for tipo, rif in collegamenti:
+        if collegamenti:
+            # Una query sola per tutte le carte e le stese citate (prima una per citazione): ogni riga è una
+            # citazione in comune, 2 punti ciascuna.
             await somma(
                 select(BlogPostLink.post_id).where(
-                    BlogPostLink.tipo == tipo, BlogPostLink.riferimento == rif, BlogPostLink.post_id != post.id,
+                    tuple_(BlogPostLink.tipo, BlogPostLink.riferimento).in_(collegamenti),
+                    BlogPostLink.post_id != post.id,
                 ), 2,
             )
         return punteggio

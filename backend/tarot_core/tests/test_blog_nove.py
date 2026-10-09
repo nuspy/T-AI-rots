@@ -1,5 +1,6 @@
-"""I nove articoli di ogni pagina (v8.5): 3 recenti + 6 attinenti scelti a caso, stabili nella giornata, senza
-doppioni e senza l'articolo che si sta leggendo."""
+"""Gli articoli in fondo a ogni pagina: le recenti + quelli scelti a caso dal database (una query), stabili nella
+giornata, senza doppioni e senza l'articolo che si sta leggendo. Con una sezione o un'etichetta si pesca solo lì (dal
+9/10/2026 niente riempimento con il resto del diario e niente pertinenza: costavano secondi a ogni pagina)."""
 from __future__ import annotations
 
 import pytest
@@ -27,7 +28,7 @@ async def _articolo(c, titolo, **campi):
     return r.json()
 
 
-async def test_tre_recenti_e_sei_attinenti_senza_doppioni(admin):
+async def test_tre_recenti_e_le_altre_della_sezione_senza_doppioni(admin):
     amore = await _sezione(admin, "Amore")
     lavoro = await _sezione(admin, "Lavoro")
     for i in range(6):
@@ -39,16 +40,17 @@ async def test_tre_recenti_e_sei_attinenti_senza_doppioni(admin):
     assert r.status_code == 200, r.text
     dati = r.json()
     assert len(dati["recenti"]) == 3
-    assert len(dati["scelti"]) == 6
+    # Con una sezione recenti e scelte sono solo sue: le 3 recenti (Amore 5, 4, 3) e le altre 3, a caso.
+    assert len(dati["scelti"]) == 3
     slug = [a["slug"] for a in dati["recenti"] + dati["scelti"]]
     assert len(slug) == len(set(slug))
-    # Con una sezione le recenti sono le sue (Amore 5, 4, 3); le scelte partono dalle altre della sezione e poi
-    # si completano con il resto.
-    assert all((x["sezione"] or {}).get("slug") == amore["slug"] for x in dati["recenti"])
-    assert sum(1 for x in dati["scelti"] if (x["sezione"] or {}).get("slug") == amore["slug"]) == 3
+    assert all((x["sezione"] or {}).get("slug") == amore["slug"] for x in dati["recenti"] + dati["scelti"])
 
     # Stessa giornata, stesso contesto: stessa scelta.
     assert (await admin.get("/blog/nove", params={"sezione": amore["slug"]})).json() == dati
+    # Senza sezione si pesca da tutto il diario.
+    tutti = (await admin.get("/blog/nove")).json()
+    assert len(tutti["recenti"]) == 3 and len(tutti["scelti"]) == 6
 
 
 async def test_l_articolo_che_si_legge_non_compare(admin):

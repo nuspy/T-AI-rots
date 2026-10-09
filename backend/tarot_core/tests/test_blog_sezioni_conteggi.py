@@ -138,9 +138,9 @@ async def test_la_pagina_di_un_etichetta_non_pesca_fuori_dall_etichetta(admin):
     assert elenco["totale"] == basics["n"]
     nove = (await admin.get("/blog/nove", params={"tag": "basics", "recenti": 6, "scelti": 10, "completa": "false"})).json()
     assert {a["slug"] for a in nove["recenti"] + nove["scelti"]} == {a["slug"] for a in elenco["articoli"]}
-    # Senza `completa=false` (le altre pagine del sito) le scelte si completano col resto del diario, come prima.
+    # Dal 9/10/2026 `completa` non cambia nulla: con un'etichetta si pesca solo lì, sempre.
     tutti = (await admin.get("/blog/nove", params={"tag": "basics", "recenti": 6, "scelti": 10})).json()
-    assert len(tutti["recenti"]) + len(tutti["scelti"]) == 9
+    assert {a["slug"] for a in tutti["recenti"] + tutti["scelti"]} == {a["slug"] for a in elenco["articoli"]}
 
 
 async def test_una_sezione_che_non_ce_non_da_le_recenti_di_tutto_il_diario(admin):

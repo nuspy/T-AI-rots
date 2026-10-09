@@ -207,44 +207,24 @@ async def test_per_pagina_oltre_50_si_rifiuta_e_il_predefinito_resta_12(admin):
     assert (await admin.get("/blog/posts")).json()["per_pagina"] == 12
 
 
-# ---- «Chosen for this page» per pertinenza --------------------------------------------------------------------------
+# ---- «Chosen for this page»: a caso dal database, non più per pertinenza (9/10/2026) ---------------------------------
 
 
-async def test_nove_per_una_carta_prima_il_soggetto_poi_le_citazioni_e_niente_a_caso(admin):
-    sul_soggetto = [await _articolo(admin, f"Wheel of Fortune tarot {i}") for i in range(2)]
-    citanti = [await _articolo(admin, f"Cycles {i}", testo="See [[card:maj-10]].") for i in range(2)]
-    for i in range(6):
-        await _articolo(admin, f"Unrelated {i}")
+async def test_nove_a_caso_carta_e_stesa_non_cambiano_il_gruppo(admin):
+    for i in range(10):
+        await _articolo(admin, f"Article {i}")
     await _articolo(admin, "Ruota della fortuna nei tarocchi", lang="it")
+    letto = await _articolo(admin, "The Tower tarot card meaning")
 
-    dati = (await admin.get("/blog/nove", params={"carta": "maj-10", "lang": "en"})).json()
-    scelti = [a["slug"] for a in dati["scelti"]]
-    # Solo i pertinenti, prima chi ha la carta come soggetto: nessun riempimento con il resto del diario.
-    assert len(scelti) == 4
-    assert set(scelti[:2]) == {a["slug"] for a in sul_soggetto} and set(scelti[2:]) == {a["slug"] for a in citanti}
-    # Le recenti non ripetono le scelte; tutte in inglese.
-    assert not set(scelti) & {a["slug"] for a in dati["recenti"]} and len(dati["recenti"]) == 3
+    dati = (await admin.get("/blog/nove", params={"carta": "maj-10", "lang": "en", "articolo": letto["slug"]})).json()
+    scelti = {a["slug"] for a in dati["scelti"]}
+    recenti = {a["slug"] for a in dati["recenti"]}
+    # 3 recenti + 6 a caso, fra tutti gli articoli in inglese: carta e stesa non restringono più il gruppo.
+    assert len(recenti) == 3 and len(scelti) == 6 and not scelti & recenti
     assert all(a["lang"] == "en" for a in dati["scelti"] + dati["recenti"])
-    assert (await admin.get("/blog/nove", params={"carta": "maj-10", "lang": "en"})).json() == dati
-    # Senza lingua c'è anche l'articolo italiano sul soggetto, fra i primi.
-    tutti = (await admin.get("/blog/nove", params={"carta": "fortune"})).json()["scelti"]
-    assert "ruota-della-fortuna-nei-tarocchi" in [a["slug"] for a in tutti[:3]]
-
-
-async def test_nove_per_una_stesa_e_per_un_articolo(admin):
-    stesa = await _articolo(admin, "How to read the Celtic Cross")
-    citante = await _articolo(admin, "A big reading", testo="Use the [[spread:celtic-cross]].")
-    await _articolo(admin, "Unrelated")
-    dati = (await admin.get("/blog/nove", params={"stesa": "croce-celtica"})).json()
-    assert [a["slug"] for a in dati["scelti"]] == [stesa["slug"], citante["slug"]]
-
-    # Per un articolo: chi ha il suo stesso soggetto, poi chi lo cita, poi i correlati; poi il resto (completa).
-    letto = await _articolo(admin, "The Tower tarot card meaning", tags=["Change"])
-    stesso = await _articolo(admin, "The Tower in love: a tarot reading")
-    correlato = await _articolo(admin, "Sudden change", tags=["Change"])
-    cita = await _articolo(admin, "Lightning", testo="Like [[card:the-tower]].")
-    dati = (await admin.get("/blog/nove", params={"articolo": letto["slug"], "scelti": 6})).json()
-    scelti = [a["slug"] for a in dati["scelti"]]
-    assert letto["slug"] not in scelti
-    assert scelti[:3] == [stesso["slug"], cita["slug"], correlato["slug"]]
-    assert len(scelti) == 6        # completata con il resto del diario
+    assert letto["slug"] not in scelti | recenti
+    # Stabile nella giornata, per lo stesso contesto.
+    again = (await admin.get("/blog/nove", params={"carta": "maj-10", "lang": "en", "articolo": letto["slug"]})).json()
+    assert again == dati
+    stesa = (await admin.get("/blog/nove", params={"stesa": "croce-celtica", "lang": "en", "scelti": 20})).json()
+    assert len(stesa["recenti"]) + len(stesa["scelti"]) == 11    # tutti gli inglesi, nessuno escluso

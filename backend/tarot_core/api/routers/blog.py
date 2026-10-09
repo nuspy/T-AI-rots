@@ -9,10 +9,10 @@ immutabile: l'id è casuale e cambia a ogni caricamento, quindi il contenuto non
 """
 from __future__ import annotations
 
-import random
 import re
 import uuid
 from datetime import datetime, timezone
+from functools import lru_cache
 from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, HTTPException, Query, Response
@@ -103,13 +103,20 @@ async def _autori(session, posts: List[BlogPost]) -> Dict[int, User]:
     return {u.id: u for u in (await session.execute(select(User).where(User.id.in_(ids)))).scalars()}
 
 
+@lru_cache(maxsize=2048)
+def _estratto_elenco(testo: str) -> str:
+    """L'estratto degli elenchi: si ricava dal markdown (lavoro vero), quindi si ricorda per testo; un testo cambiato
+    è un'altra chiave."""
+    return regole.estratto(testo, 220, nome_riferimento)
+
+
 def post_breve_json(p: BlogPost, autori: Dict[int, User], sezioni: Dict[int, BlogSection]) -> Dict[str, Any]:
     sezione = sezioni.get(p.sezione_id) if p.sezione_id is not None else None
     return {
         "slug": p.slug,
         "titolo": p.titolo,
         "sottotitolo": p.sottotitolo,
-        "estratto": regole.estratto(p.testo, 220, nome_riferimento),
+        "estratto": _estratto_elenco(p.testo or ""),
         "immagine": (
             {"url": url_immagine(p.immagine_id), "mini": url_miniatura(p.immagine_id), "alt": p.immagine_alt or p.titolo}
             if p.immagine_id else None
@@ -127,9 +134,15 @@ def post_breve_json(p: BlogPost, autori: Dict[int, User], sezioni: Dict[int, Blo
     }
 
 
-async def articoli_json(session, posts: List[BlogPost]) -> List[Dict[str, Any]]:
-    repo = BlogRepository(session)
-    sezioni = {s.id: s for s in await repo.sezioni(solo_visibili=False)}
+async def articoli_json(
+    session, posts: List[BlogPost], sezioni: Optional[Dict[int, BlogSection]] = None,
+) -> List[Dict[str, Any]]:
+    """Gli articoli nel formato degli elenchi. `sezioni` (id → sezione, tutte): già lette da chi chiama, per non
+    rileggerle a ogni elenco della stessa pagina."""
+    if not posts:
+        return []
+    if sezioni is None:
+        sezioni = {s.id: s for s in await BlogRepository(session).sezioni(solo_visibili=False)}
     autori = await _autori(session, posts)
     return [post_breve_json(p, autori, sezioni) for p in posts]
 
@@ -260,14 +273,12 @@ def _nodo(s: BlogSection, figli: Dict[Optional[int], List[BlogSection]], contegg
 
 
 async def _articoli_a_caso(repo: BlogRepository, sezione: BlogSection, visibili: List[BlogSection], quanti: int = 3) -> List[BlogPost]:
-    """`quanti` articoli pubblici del ramo di una sezione scelti a caso, stabili per un giorno (seme = data UTC +
-    slug), dal più recente al più vecchio."""
-    candidati, _ = await repo.elenco(sezioni=repo.discendenti(sezione.id, visibili), per_pagina=60)
-    if len(candidati) <= quanti:
-        return candidati
-    caso = random.Random(f"{datetime.now(timezone.utc).date().isoformat()}|figlio|{sezione.slug}")
-    scelti = set(p.id for p in caso.sample(candidati, quanti))
-    return [p for p in candidati if p.id in scelti]
+    """`quanti` articoli pubblici del ramo di una sezione scelti a caso dal database con una query (stabili per un
+    giorno: seme = data UTC + slug), dal più recente al più vecchio."""
+    seme = f"{datetime.now(timezone.utc).date().isoformat()}|figlio|{sezione.slug}"
+    scelti = await repo.a_caso(seme=seme, quanti=quanti, sezioni=repo.discendenti(sezione.id, visibili))
+    zero = datetime.min.replace(tzinfo=timezone.utc)
+    return sorted(scelti, key=lambda p: p.pubblicato_il or zero, reverse=True)
 
 
 @router.get("/sections")
@@ -297,9 +308,12 @@ async def sezione(
         raise HTTPException(status_code=404, detail="Sezione non trovata")
     conteggi = await repo.conteggi_per_sezione()
     nodo = _nodo(s, _figli_di(visibili), conteggi)
+    sezioni_tutte = {x.id: x for x in await repo.sezioni(solo_visibili=False)}
     for figlio in nodo["figli"]:
         sezione_figlio = per_id[figlio["id"]]
-        figlio["articoli"] = await articoli_json(session, await _articoli_a_caso(repo, sezione_figlio, visibili))
+        figlio["articoli"] = await articoli_json(
+            session, await _articoli_a_caso(repo, sezione_figlio, visibili), sezioni_tutte,
+        )
     immagini = await immagini_catalogo(session, "stesa") if s.tipo == "stese" else None
     return nodo | {
         "seo_titolo": s.seo_titolo,
@@ -425,10 +439,14 @@ async def articolo(slug: str, session: DbSession) -> Dict[str, Any]:
     ]
     citati = [c.riferimento for c in collegamenti if c.tipo == "articolo"]
     articoli_citati: List[BlogPost] = []
-    for citato in citati:
-        altro = await repo.per_slug(citato)
-        if altro is not None:
-            articoli_citati.append(altro)
+    if citati:
+        # Una query sola per tutti gli articoli citati (prima una per citazione), nell'ordine del testo.
+        trovati = {
+            x.slug: x for x in (await session.execute(
+                select(BlogPost).where(BlogPost.slug.in_(citati), await repo.pubblico())
+            )).scalars()
+        }
+        articoli_citati = [trovati[c] for c in dict.fromkeys(citati) if c in trovati]
     correlati = await repo.correlati(p)
     precedente, successivo = await repo.vicini(p)
     sezione_p = per_id.get(p.sezione_id) if p.sezione_id is not None else None
@@ -451,11 +469,11 @@ async def articolo(slug: str, session: DbSession) -> Dict[str, Any]:
         "commenti_aperti": p.commenti_aperti,
         "briciole": [{"slug": x.slug, "nome": x.nome} for x in repo.percorso(sezione_p, per_id)],
         "collegamenti": {
-            "carte": carte, "stese": stese, "articoli": await articoli_json(session, articoli_citati),
+            "carte": carte, "stese": stese, "articoli": await articoli_json(session, articoli_citati, per_id),
         },
-        "correlati": await articoli_json(session, correlati),
-        "precedente": (await articoli_json(session, [precedente]))[0] if precedente else None,
-        "successivo": (await articoli_json(session, [successivo]))[0] if successivo else None,
+        "correlati": await articoli_json(session, correlati, per_id),
+        "precedente": (await articoli_json(session, [precedente], per_id))[0] if precedente else None,
+        "successivo": (await articoli_json(session, [successivo], per_id))[0] if successivo else None,
     }
 
 
@@ -477,74 +495,6 @@ async def articoli_che_citano(
 
 #: I punti della pertinenza (v9.4): il soggetto vince sempre sulle citazioni, le citazioni sui correlati, i correlati
 #: (3 per etichetta, 2 per sezione o citazione in comune: al più qualche decina) sulla sola sezione o etichetta.
-PUNTI_SOGGETTO = 10_000
-PUNTI_CITAZIONE = 1_000
-PUNTI_SEZIONE_O_ETICHETTA = 1
-
-
-async def _nove_per_pertinenza(
-    repo: BlogRepository, session, *, carta: Optional[str], stesa: Optional[str], sezione: Optional[str],
-    articolo: Optional[str], tag: Optional[str], recenti: int, scelti: int, completa: bool, lang: Optional[str],
-) -> Dict[str, Any]:
-    """Le scelte per una carta, una stesa o un articolo, ordinate per pertinenza (vedi `nove_articoli`)."""
-    conoscenza = get_conoscenza()
-    contesti: List[Tuple[str, str]] = []  # le carte e le stese della pagina: (tipo, id canonico)
-    if carta:
-        contesti.append(("carta", conoscenza.risolvi_carta(carta) or carta))
-    if stesa:
-        contesti.append(("stesa", conoscenza.risolvi_stesa(stesa) or stesa))
-    corrente = await repo.per_slug(articolo) if articolo else None
-    if corrente is not None and corrente.soggetto_tipo and corrente.soggetto_ref:
-        contesti.append((corrente.soggetto_tipo, corrente.soggetto_ref))
-
-    punti: Dict[uuid.UUID, int] = {}
-    per_id: Dict[uuid.UUID, BlogPost] = {}
-
-    def somma(posts: List[BlogPost], valore: int) -> None:
-        for p in posts:
-            if lang and p.lang != lang:
-                continue
-            per_id[p.id] = p
-            punti[p.id] = punti.get(p.id, 0) + valore
-
-    for tipo, rif in dict.fromkeys(contesti):
-        somma(await repo.per_soggetto(tipo, rif, 60, lang=lang), PUNTI_SOGGETTO)
-        somma(await repo.per_riferimento(tipo, rif, 60, lang=lang), PUNTI_CITAZIONE)
-    if corrente is not None:
-        affini = await repo.punteggi_correlati(corrente)
-        if affini:
-            q = select(BlogPost).where(BlogPost.id.in_(list(affini)), await repo.pubblico())
-            for p in (await session.execute(q)).scalars():
-                somma([p], affini[p.id])
-    if sezione:
-        visibili = await repo.sezioni()
-        radice = next((x for x in visibili if x.slug == sezione), None)
-        if radice is not None:
-            somma((await repo.elenco(sezioni=repo.discendenti(radice.id, visibili), lang=lang, per_pagina=60))[0],
-                  PUNTI_SEZIONE_O_ETICHETTA)
-    if tag:
-        somma((await repo.elenco(tag=tag, lang=lang, per_pagina=60))[0], PUNTI_SEZIONE_O_ETICHETTA)
-
-    caso = random.Random(f"{datetime.now(timezone.utc).date().isoformat()}|{carta}|{stesa}|{sezione}|{tag}|{articolo}|{lang}")
-    esclusi = {corrente.id} if corrente is not None else set()
-    # La casualità solo a parità di punteggio: un numero a caso per articolo, assegnato in un ordine fisso (per id).
-    sorteggio = {pid: caso.random() for pid in sorted(punti, key=str)}
-    ordinati = sorted((pid for pid in punti if pid not in esclusi), key=lambda pid: (-punti[pid], sorteggio[pid]))
-    scelti_post = [per_id[pid] for pid in ordinati[:scelti]]
-    if completa and len(scelti_post) < scelti:
-        visti = esclusi | {p.id for p in scelti_post}
-        resto = [p for p in (await repo.elenco(lang=lang, per_pagina=200))[0] if p.id not in visti]
-        caso.shuffle(resto)
-        scelti_post += resto[: scelti - len(scelti_post)]
-
-    visti = esclusi | {p.id for p in scelti_post}
-    recenti_post: List[BlogPost] = []
-    if recenti:
-        candidati, _ = await repo.elenco(lang=lang, per_pagina=recenti + len(visti))
-        recenti_post = [p for p in candidati if p.id not in visti][:recenti]
-    return {"recenti": await articoli_json(session, recenti_post), "scelti": await articoli_json(session, scelti_post)}
-
-
 @router.get("/nove")
 async def nove_articoli(
     session: DbSession,
@@ -558,64 +508,37 @@ async def nove_articoli(
     completa: bool = True,
     lang: Optional[str] = Query(default=None, pattern="^[a-z]{2}(-[A-Za-z]{2})?$"),
 ) -> Dict[str, Any]:
-    """I nove articoli che il sito mostra in ogni pagina (v8.5): i 3 più recenti, e 6 scelti a caso fra quelli
-    attinenti alla pagina — che citano la sua carta o la sua stesa, della sua sezione, con le etichette
-    dell'articolo che si sta leggendo —, completati a caso con gli altri se non bastano.
+    """Gli articoli che il sito mostra in fondo alle pagine: le `recenti` (le più nuove) e `scelti` a caso.
 
-    Il caso è stabile per un giorno (seme = data UTC + contesto): un motore di ricerca che passa due volte nello
-    stesso giorno vede la stessa pagina, e domani la scelta cambia. L'articolo che si sta leggendo non compare.
+    Due query, qualunque sia il numero di articoli del diario: le recenti in ordine di data, e le scelte a caso
+    direttamente nel database (`BlogRepository.a_caso`: ordine fisso per il giorno e il contesto della pagina, così
+    un motore di ricerca che passa due volte nello stesso giorno vede la stessa pagina). Con `sezione` o `tag` si
+    pesca solo lì (le pagine di sezione e di etichetta del Diario); l'articolo che si legge e le recenti non si
+    ripetono fra le scelte. `lang` tiene solo gli articoli in quella lingua.
 
-    Le pagine del Diario (indice, sezione, etichetta) lo usano con `recenti=6&scelti=10`: con `sezione` o `tag` le
-    recenti sono quelle della sezione o dell'etichetta (le stesse della prima pagina del loro elenco), e le 10 a
-    caso le escludono.
-
-    `completa=false` (le pagine di sezione e di etichetta del Diario): le scelte restano fra le attinenti, senza
-    completarle con il resto del diario. Così la pagina di una sezione mostra solo articoli della sezione (e delle
-    sotto-sezioni), tanti quanti ne conta l'albero delle sezioni; una sezione senza articoli non ne mostra.
-
-    **Per pertinenza** (v9.4) nelle pagine di una carta, di una stesa e di un articolo (`carta`, `stesa`, `articolo`),
-    dove «Chosen for this page» sta prima degli ultimi articoli: le scelte vengono **prima** delle recenti (che le
-    escludono) e sono ordinate per punteggio — gli articoli che hanno quella carta o stesa come **soggetto** (per un
-    articolo: il suo soggetto), poi quelli che la **citano**, poi i `correlati` dell'articolo (etichette, sezione,
-    citazioni in comune), e più sotto quelli della `sezione` o dell'`etichetta` se date. Il caso del giorno decide
-    solo a parità di punteggio. Con `carta` o `stesa` niente riempimento con il resto del diario (come
-    `completa=false`); con un articolo sì, in fondo. `lang` tiene solo gli articoli in quella lingua (recenti
-    comprese)."""
+    `carta`, `stesa` e `completa` restano accettati per i client già in giro, ma non cambiano più la scelta: fino
+    al 9/10/2026 si ordinava per pertinenza, caricando fino a 200 articoli interi a ogni pagina — secondi di calcolo
+    che facevano cadere l'API sotto carico."""
     repo = BlogRepository(session)
-    if carta or stesa or articolo:
-        return await _nove_per_pertinenza(
-            repo, session, carta=carta, stesa=stesa, sezione=sezione, articolo=articolo, tag=tag, recenti=recenti,
-            scelti=scelti, completa=completa and not (carta or stesa), lang=lang,
-        )
-    visibili = await repo.sezioni() if sezione else []
-    radice = next((x for x in visibili if x.slug == sezione), None) if sezione else None
-    # Una sezione che non c'è (o è nascosta) non ha articoli: le sue recenti sono nessuna, non tutto il diario.
-    ids_sezione = repo.discendenti(radice.id, visibili) if radice is not None else ([] if sezione else None)
-    recenti_post = (await repo.elenco(sezioni=ids_sezione, tag=tag, lang=lang, per_pagina=recenti))[0] if recenti else []
-    esclusi = {p.id for p in recenti_post}
-
-    attinenti: List[BlogPost] = []
-    if ids_sezione is not None:
-        attinenti += (await repo.elenco(sezioni=ids_sezione, lang=lang, per_pagina=60))[0]
-    if tag:
-        attinenti += (await repo.elenco(tag=tag, lang=lang, per_pagina=60))[0]
-    gruppi = [attinenti]
-    if completa:
-        gruppi.append((await repo.elenco(lang=lang, per_pagina=200))[0])
-
-    caso = random.Random(f"{datetime.now(timezone.utc).date().isoformat()}|{carta}|{stesa}|{sezione}|{tag}|{articolo}")
-    visti = set(esclusi)
-    quanti = scelti
-    scelti_post: List[BlogPost] = []
-    for gruppo in gruppi:
-        candidati = [p for p in {p.id: p for p in gruppo}.values() if p.id not in visti]
-        caso.shuffle(candidati)
-        for p in candidati[: quanti - len(scelti_post)]:
-            scelti_post.append(p)
-            visti.add(p.id)
-        if len(scelti_post) >= quanti:
-            break
-    return {"recenti": await articoli_json(session, recenti_post), "scelti": await articoli_json(session, scelti_post)}
+    ids_sezione = None
+    if sezione:
+        visibili = await repo.sezioni()
+        radice = next((x for x in visibili if x.slug == sezione), None)
+        # Una sezione che non c'è (o è nascosta) non ha articoli: niente recenti né scelte da tutto il diario.
+        ids_sezione = repo.discendenti(radice.id, visibili) if radice is not None else []
+    recenti_post = (await repo.elenco(
+        sezioni=ids_sezione, tag=tag, lang=lang, per_pagina=recenti, escludi_slug=articolo,
+    ))[0] if recenti else []
+    seme = f"{datetime.now(timezone.utc).date().isoformat()}|{carta}|{stesa}|{sezione}|{tag}|{articolo}|{lang}"
+    scelti_post = await repo.a_caso(
+        seme=seme, quanti=scelti, sezioni=ids_sezione, tag=tag, lang=lang,
+        escludi=[p.id for p in recenti_post], escludi_slug=articolo,
+    )
+    sezioni_tutte = {s.id: s for s in await repo.sezioni(solo_visibili=False)}
+    return {
+        "recenti": await articoli_json(session, recenti_post, sezioni_tutte),
+        "scelti": await articoli_json(session, scelti_post, sezioni_tutte),
+    }
 
 
 @router.get("/mappa")
