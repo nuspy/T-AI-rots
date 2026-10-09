@@ -35,10 +35,8 @@ async def test_dopo_il_minimo_la_domanda_e_facoltativa_e_basta_cosi_chiude(clien
 
     prima = (await client.post(f"/readings/{lid}/interview", json={})).json()
     assert prima["completa"] is False and prima["facoltativa"] is False
-
-    # Prima del minimo «basta così» non vale.
-    no = await client.post(f"/readings/{lid}/interview", json={"basta": True})
-    assert no.status_code == 409
+    # (Dal 9/10/2026 «basta» prima del minimo è «Saltiamo, basta con le domande»: chiude con la domanda saltata, vedi
+    # `test_lingua_conversazione.py`. Qui si risponde.)
 
     seconda = (await client.post(f"/readings/{lid}/interview", json={"risposta": "Da gennaio, col nuovo capo."})).json()
     assert seconda["completa"] is False and seconda["facoltativa"] is True
@@ -62,12 +60,11 @@ async def test_tre_scelte_risposta_senza_domanda_successiva_testo_libero_e_altra
     prima = (await client.post(f"/readings/{lid}/interview", json={})).json()
     assert prima["completa"] is False and prima["facoltativa"] is True
     assert (prima["poste"], prima["min_domande"], prima["max_domande"]) == (1, 0, 2)
-    # Con la domanda in attesa il testo libero non si può: prima si risponde (o si passa alla lettura).
-    assert (await client.post(f"/readings/{lid}/addition", json={"testo": "libero"})).status_code == 409
+    # (Dal 9/10/2026 il testo libero con una domanda in attesa la salta: vedi `test_lingua_conversazione.py`.)
 
     salvata = (await client.post(f"/readings/{lid}/interview",
                                   json={"risposta": "Da gennaio.", "continua": False})).json()
-    assert salvata == {"completa": False, "scelta": True, "poste": 1, "min_domande": 0, "max_domande": 2}
+    assert salvata == {"completa": False, "scelta": True, "poste": 1, "min_domande": 0, "max_domande": 2, "lang": "it"}
 
     r = await client.post(f"/readings/{lid}/addition", json={"testo": "Ho paura di cambiare città."})
     assert r.status_code == 200, r.text

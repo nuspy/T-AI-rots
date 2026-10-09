@@ -43,9 +43,11 @@ QUESITO = "Cosa mi riserva il lavoro nei prossimi mesi?"
 
 async def _lettura_completa(
     client, spread_id: str, da_scegliere: int, quesito: str = QUESITO, extra: dict | None = None,
+    risposta: str = "Da qualche mese, con alti e bassi.",
 ) -> dict:
     """Una lettura dall'apertura al responso. `extra` si aggiunge al corpo di
-    `POST /readings` (per le speciali: il partner)."""
+    `POST /readings` (per le speciali: il partner). `risposta` è la risposta a ogni domanda dell'intervista: dal
+    9/10/2026 una risposta piena in un'altra lingua sposta la lettura in quella lingua."""
     r = await client.post("/readings", json={"spread_id": spread_id, "question": quesito, **(extra or {})})
     assert r.status_code == 201, r.text
     lettura = r.json()
@@ -60,7 +62,7 @@ async def _lettura_completa(
     while not r.json().get("completa"):
         domande += 1
         assert r.json()["domanda"]
-        r = await client.post(f"/readings/{rid}/interview", json={"risposta": "Da qualche mese, con alti e bassi."})
+        r = await client.post(f"/readings/{rid}/interview", json={"risposta": risposta})
     assert domande == 2 and r.json()["riassunto"]
 
     r = await client.post(f"/readings/{rid}/fan")
@@ -326,7 +328,7 @@ async def test_la_lingua_e_quella_del_quesito_e_si_rinnova_a_ogni_quesito(
     await client.delete(f"/me/readings/{rid}")
     prompt_visti.clear()
 
-    await _lettura_completa(client, "tre-carte", 3, QUESITI["hu"])
+    await _lettura_completa(client, "tre-carte", 3, QUESITI["hu"], risposta="Néhány hónapja, és nem könnyű.")
     assert {v["compito"] for v in prompt_visti} >= {"intervista", "interpretazione_unica", "sintesi"}
     for v in prompt_visti:
         if v["compito"] in ("intervista", "interpretazione_unica", "sintesi"):
@@ -340,7 +342,7 @@ async def test_la_lingua_e_quella_del_quesito_e_si_rinnova_a_ogni_quesito(
     prompt_visti.clear()
     r = await client.post("/readings", json={"spread_id": "tre-carte", "question": QUESITI["en"], "lang": "hu"})
     assert r.json()["lang"] == "en"
-    await _lettura_completa(client, "tre-carte", 3, QUESITI["en"])
+    await _lettura_completa(client, "tre-carte", 3, QUESITI["en"], risposta="For a few months now, with ups and downs.")
     for v in prompt_visti:
         if v["compito"] in ("intervista", "interpretazione_unica", "sintesi"):
             assert "inglese" in v["utente"] and "ungherese" not in v["utente"], v["compito"]

@@ -207,3 +207,25 @@ def rileva_lingua(testo: str, fallback: str = PREDEFINITA) -> str:
     if migliore < base + _SCARTO:
         return fallback
     return next(c for c in candidate if punteggi[c] == migliore)
+
+
+#: Quanto deve essere lungo un messaggio per cambiare la lingua di una conversazione già avviata: tre parole, o sei
+#: lettere in una scrittura che non separa le parole (cinese).
+_PAROLE_PER_CAMBIARE = 3
+_LETTERE_SENZA_SPAZI = 6
+
+
+def lingua_del_messaggio(testo: str, attuale: str) -> str:
+    """La lingua in cui rispondere a un messaggio di chi consulta, in una conversazione che finora era in `attuale`.
+
+    Chi scrive in un'altra lingua riceve la risposta nella sua: è la lingua del messaggio che conta, non quella del
+    profilo o della pagina (9/10/2026: persone che scrivevano in inglese ricevevano risposte in italiano, la lingua
+    d'ufficio dell'account). Ma si cambia solo con prove chiare: un messaggio di almeno tre parole, riconosciuto con
+    `rileva_lingua` (che già non si lascia ingannare da un accento). «ok», «sì», un nome, «domani?» lasciano `attuale`."""
+    attuale = lingua(attuale)
+    testo = (testo or "").strip()
+    parole = re.findall(r"[^\W\d_]+", testo)
+    senza_spazi = bool(_SCRITTURE["han"].search(testo))
+    if len(parole) < _PAROLE_PER_CAMBIARE and not (senza_spazi and sum(map(len, parole)) >= _LETTERE_SENZA_SPAZI):
+        return attuale
+    return rileva_lingua(testo, fallback=attuale)

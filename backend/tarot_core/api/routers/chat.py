@@ -27,7 +27,7 @@ from ...domain.impostazioni_repositories import correnti_chat, pubblico_chat
 from ...llm.compiti import Compito
 from ...domain.base import utcnow
 from ...tarot.chat_proattiva import SPUNTI_APERTURA, genera_turno
-from ...tarot.lingue import lingua, rileva_lingua
+from ...tarot.lingue import lingua, lingua_del_messaggio, rileva_lingua
 from ...tarot.memoria_retrieval import formatta_memorie
 from ...tarot.pseudonimi import nomi_utente
 from ...analytics import eventi as analytics
@@ -138,9 +138,15 @@ async def messaggio(payload: MessaggioIn, user: CurrentUser, session: DbSession)
 
     memorie = await _memorie_recenti(session, user.id)
     provider = provider_per(Compito.CHAT_PROATTIVA, await nomi_utente(session, user), riferimento="chat")
+    # Si risponde nella lingua in cui la persona scrive (9/10/2026): il profilo è solo il punto di partenza, e un
+    # messaggio corto («ok», «sì») resta nella lingua dell'ultimo messaggio pieno o del profilo.
+    attuale = lingua(user.locale)
+    for t in turni_prima:
+        if t.ruolo == "utente":
+            attuale = lingua_del_messaggio(t.testo, attuale)
     esito = await genera_turno(
         provider, memorie=memorie, trascrizione=chat_repositories.trascrizione(turni_prima),
-        messaggio_utente=payload.testo.strip(), lingua=lingua(user.locale),
+        messaggio_utente=payload.testo.strip(), lingua=lingua_del_messaggio(payload.testo, attuale),
     )
     if not esito.messaggio:
         return {"turno": None}

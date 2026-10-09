@@ -73,9 +73,9 @@ from ...tarot.persone import (
     blocco_persone, compatibilita_json, da_json, mancanti, parole_neutre, pulisci, soggetto_testo,
 )
 from ...tarot.shuffle import mescola
-from ...tarot.lingue import in_lingua, lingua, rileva_lingua
+from ...tarot.lingue import in_lingua, lingua, lingua_del_messaggio, rileva_lingua
 from ...tarot.testi import (
-    AGGIUNTA_ETICHETTA, AIUTO, CREDITI_ESAURITI, DISCLAIMER, INTERPRETAZIONE_NON_DISPONIBILE,
+    AGGIUNTA_ETICHETTA, AIUTO, CREDITI_ESAURITI, DISCLAIMER, DOMANDA_SALTATA, INTERPRETAZIONE_NON_DISPONIBILE,
     SALDO_NEGATIVO,
     MODELLO_NON_DISPONIBILE, PARTNER_MANCANTE, PARTNER_NON_AMMESSO,
     PROFILO_INCOMPLETO, RESPONSO_BLOCCATO, RESPONSO_NON_GENERATO,
@@ -790,6 +790,9 @@ async def intervista(
         testo = payload.risposta.strip()
         if segnale_di_crisi(testo):
             return await _chiudi_per_crisi(session, user, lettura)
+        # La lingua segue chi scrive (9/10/2026): una risposta piena in un'altra lingua sposta tutta la lettura, finché
+        # le carte non sono uscite (`tarot/lingue.lingua_del_messaggio`).
+        lettura.lang = lingua_del_messaggio(testo, lettura.lang)
         lettura.turns.append(InterviewTurn(
             ordine=len(turni) + 1, ruolo="utente", testo=testo, created_at=utcnow(),
         ))
@@ -798,8 +801,16 @@ async def intervista(
             await session.commit()
             poste = sum(1 for t in lettura.turns if t.ruolo == "oracolo")
             return {"completa": False, "scelta": True, "poste": poste,
-                    "min_domande": min_domande, "max_domande": max_domande}
-    elif payload.altra and not attende_risposta:
+                    "min_domande": min_domande, "max_domande": max_domande, "lang": lettura.lang}
+    elif payload.altra and attende_risposta:
+        # «Non voglio rispondere, fai un'altra domanda» (9/10/2026): la domanda resta nel colloquio, con la nota che chi
+        # consulta ha preferito non rispondere, e si passa alla prossima.
+        if sum(1 for t in turni if t.ruolo == "oracolo") >= max_domande:
+            raise _conflitto("Le domande previste sono finite: passa alla lettura")
+        lettura.turns.append(InterviewTurn(
+            ordine=len(turni) + 1, ruolo="utente", testo=in_lingua(DOMANDA_SALTATA, lettura.lang), created_at=utcnow(),
+        ))
+    elif payload.altra:
         if sum(1 for t in turni if t.ruolo == "oracolo") >= max_domande:
             raise _conflitto("Le domande previste sono finite: passa alla lettura")
     elif attende_risposta:
@@ -808,7 +819,7 @@ async def intervista(
         poste = sum(1 for t in turni if t.ruolo == "oracolo")
         return {
             "completa": False, "domanda": turni[-1].testo, "ordine": turni[-1].ordine,
-            "facoltativa": poste - 1 >= min_domande,
+            "facoltativa": poste - 1 >= min_domande, "lang": lettura.lang,
         }
     await session.commit()
 
@@ -866,7 +877,7 @@ async def intervista(
         # aprire, si va dritti alla rivelazione.
         lettura.status = "rivelazione" if lettura.manuale else "ventaglio"
         await session.commit()
-        return {"completa": True, "riassunto": passo.riassunto}
+        return {"completa": True, "riassunto": passo.riassunto, "lang": lettura.lang}
 
     ordine = len(lettura.turns) + 1
     lettura.turns.append(InterviewTurn(
@@ -879,6 +890,8 @@ async def intervista(
         # col minimo vero (non quello forzato per il modello): si può smettere se le domande già risposte bastano
         "facoltativa": poste - 1 >= min_domande,
         "poste": poste, "min_domande": min_domande, "max_domande": max_domande,
+        # La lingua della lettura, che una risposta in un'altra lingua può aver cambiato: il client la segue.
+        "lang": lettura.lang,
     }
 
 
@@ -901,31 +914,46 @@ async def aggiunta(
     )
     if not (in_intervista or prima_delle_carte):
         raise _conflitto("Si può aggiungere qualcosa solo prima delle carte")
-    if in_intervista and turni and turni[-1].ruolo == "oracolo":
-        raise _conflitto("C'è una domanda che aspetta risposta")
     testo = payload.testo.strip()
     if not testo:
         raise HTTPException(status_code=422, detail="Scrivi qualcosa da aggiungere")
     if segnale_di_crisi(testo):
         return await _chiudi_per_crisi(session, user, lettura)
+    lettura.lang = lingua_del_messaggio(testo, lettura.lang)
+    if in_intervista and turni and turni[-1].ruolo == "oracolo":
+        # «Saltiamo, voglio dire un'altra cosa» (9/10/2026): la domanda in attesa resta senza risposta, con la nota,
+        # e si aggiunge ciò che chi consulta ha voluto dire.
+        turni.append(InterviewTurn(
+            ordine=len(turni) + 1, ruolo="utente", testo=in_lingua(DOMANDA_SALTATA, lettura.lang), created_at=utcnow(),
+        ))
+        lettura.turns.append(turni[-1])
     etichetta = in_lingua(AGGIUNTA_ETICHETTA, lettura.lang)
     lettura.turns.append(InterviewTurn(ordine=len(turni) + 1, ruolo="utente", testo=f"({etichetta}) {testo}",
                                        created_at=utcnow()))
     if not in_intervista:
         lettura.context_summary = f"{lettura.context_summary or ''}\n\n{etichetta}: {testo}".strip()
     await session.commit()
-    return {"aggiunto": True}
+    return {"aggiunto": True, "lang": lettura.lang}
 
 
 async def _basta_cosi(session, repo, user, lettura: Reading, reading_id, anon_id, min_domande: int) -> Dict[str, Any]:
     """«No, basta così»: chiude l'intervista col quadro emerso fin qui e passa alle carte.
 
     Solo dopo il minimo di domande con risposta; la domanda facoltativa rimasta senza risposta si toglie, così il
-    colloquio salvato (e la storia) non mostra una domanda sospesa."""
+    colloquio salvato (e la storia) non mostra una domanda sospesa. Se togliendola il minimo non basterebbe più
+    («Saltiamo, basta con le domande» sulla prima domanda, 9/10/2026), resta con la nota che chi consulta ha preferito
+    non rispondere: una domanda posta e saltata conta come posta."""
     turni = list(lettura.turns)
     if turni and turni[-1].ruolo == "oracolo":
-        lettura.turns.remove(turni[-1])
-        turni = turni[:-1]
+        if sum(1 for t in turni[:-1] if t.ruolo == "oracolo") >= min_domande:
+            lettura.turns.remove(turni[-1])
+            turni = turni[:-1]
+        else:
+            turni.append(InterviewTurn(
+                ordine=len(turni) + 1, ruolo="utente", testo=in_lingua(DOMANDA_SALTATA, lettura.lang),
+                created_at=utcnow(),
+            ))
+            lettura.turns.append(turni[-1])
     risposte = sum(1 for t in turni if t.ruolo == "oracolo")
     if risposte < min_domande:
         raise _conflitto("Servono ancora alcune risposte prima di passare alle carte")
@@ -941,7 +969,7 @@ async def _basta_cosi(session, repo, user, lettura: Reading, reading_id, anon_id
     lettura.context_summary = riassunto
     lettura.status = "rivelazione" if lettura.manuale else "ventaglio"
     await session.commit()
-    return {"completa": True, "riassunto": riassunto}
+    return {"completa": True, "riassunto": riassunto, "lang": lettura.lang}
 
 
 async def _chiudi_per_crisi(session, user: Optional[User], lettura: Reading) -> Dict[str, Any]:

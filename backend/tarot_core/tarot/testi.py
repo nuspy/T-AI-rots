@@ -127,6 +127,17 @@ AGGIUNTA_ETICHETTA = {
     "uk": "Вільно додано тим, хто питає",
 }
 
+#: La risposta di chi salta una domanda dell'intervista (9/10/2026: «Non voglio rispondere, fai un'altra domanda»,
+#: «Saltiamo, voglio dire un'altra cosa»): resta nel colloquio, così il modello sa che non deve riproporla.
+DOMANDA_SALTATA = {
+    "it": "(Preferisco non rispondere a questa domanda.)",
+    "en": "(I'd rather not answer this question.)",
+    "hu": "(Erre a kérdésre inkább nem válaszolok.)",
+    "es": "(Prefiero no responder a esta pregunta.)",
+    "ru": "(Я предпочитаю не отвечать на этот вопрос.)",
+    "uk": "(Я волію не відповідати на це питання.)",
+}
+
 #: Quando il modello non risponde a metà lettura: si può riprovare.
 MODELLO_NON_DISPONIBILE = {
     "it": (
