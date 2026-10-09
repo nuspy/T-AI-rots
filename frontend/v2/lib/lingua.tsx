@@ -37,6 +37,9 @@ interface ContestoLingua {
   rtl: boolean;
   /** Vero se l'indirizzo porta il prefisso `/it`: i collegamenti lo conservano. */
   prefissoIt: boolean;
+  /** C'è una scelta salvata (cookie o `localStorage`)? `null` finché non si è letto (sul server, al primo
+   *  rendering). Il dialogo della prima visita sul telefono (`dialogo-lingua.tsx`) si apre solo se è `false`. */
+  sceltaSalvata: boolean | null;
 }
 
 const Contesto = createContext<ContestoLingua | null>(null);
@@ -68,6 +71,7 @@ export function ProviderLinguaV2({ children, iniziale = PREDEFINITA }: { childre
   const percorso = usePathname() ?? "/";
   const prefissoIt = conPrefissoIt(percorso);
   const [salvata, setSalvata] = useState<Lingua | null>(null);
+  const [letta, setLetta] = useState(false);
   const [rilevata, setRilevata] = useState<Lingua | null>(null);
 
   useEffect(() => {
@@ -81,6 +85,7 @@ export function ProviderLinguaV2({ children, iniziale = PREDEFINITA }: { childre
     }
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSalvata(scelta);
+    setLetta(true);
     const browser = dalBrowser(navigator.languages?.length ? navigator.languages : [navigator.language]);
     setRilevata(browser);
     if (scelta || browser) return;
@@ -134,9 +139,10 @@ export function ProviderLinguaV2({ children, iniziale = PREDEFINITA }: { childre
     }
   }, []);
 
+  const sceltaSalvata = letta ? salvata !== null : null;
   const valore = useMemo(
-    () => ({ lingua, imposta, t, locale: dati.locale, rtl, prefissoIt }),
-    [lingua, imposta, t, dati.locale, rtl, prefissoIt],
+    () => ({ lingua, imposta, t, locale: dati.locale, rtl, prefissoIt, sceltaSalvata }),
+    [lingua, imposta, t, dati.locale, rtl, prefissoIt, sceltaSalvata],
   );
   return <Contesto.Provider value={valore}>{children}</Contesto.Provider>;
 }

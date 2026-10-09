@@ -171,4 +171,8 @@ export const comune: typeof Base = {
   traduzione_errore: "Перевод не удался: ты читаешь оригинал.",
   traduzione_altra_lingua: "Другой язык:",
   traduzione_mai: "Не переводить автоматически",
+  traduzione_lingua: "Перевести на",
+  lingua_titolo: "Выбери язык",
+  lingua_testo: "Его можно сменить в любой момент кодом языка вверху страницы.",
+  lingua_accetta: "Принять",
 };

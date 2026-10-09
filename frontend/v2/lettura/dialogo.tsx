@@ -31,7 +31,9 @@ function Macchina({ testo }: { testo: string }) {
 
 /** Un pulsante sotto il campo dell'intervista: manda il testo scritto e dice cosa viene dopo («Invia, basta con le
  *  domande», «Invia e fammi un'altra domanda», «Invia e voglio dire una cosa»). Con il campo vuoto vale
- *  `etichettaVuoto` (senza «Invia»); se manca, il pulsante aspetta che si scriva qualcosa. */
+ *  `etichettaVuoto` («Saltiamo, basta con le domande»…), e la scritta torna com'era appena si scrive; se manca, il
+ *  pulsante aspetta che si scriva qualcosa. `primaria`: quello di Ctrl+Invio (non cambia l'aspetto: dal 9/10 i
+ *  pulsanti hanno tutti lo stesso peso). */
 export interface Invio {
   chiave: string;
   etichetta: string;
@@ -41,8 +43,10 @@ export interface Invio {
 }
 
 export function Dialogo({
-  battute, attesa, inputAttivo, invii = [], libero = false, fluido = false,
+  battute, attesa, inputAttivo, invii = [], libero = false, fluido = false, fuocoLibero = 0,
 }: {
+  /** Cresce quando il campo passa al testo libero per un gesto («voglio dire…»): il fuoco va nel campo. */
+  fuocoLibero?: number;
   /** v9.5, la lettura in chat: niente riquadro con lo scorrimento interno, la conversazione scorre con la pagina. */
   fluido?: boolean;
   battute: Battuta[];
@@ -93,6 +97,11 @@ export function Dialogo({
 
   useEffect(() => { if (attesa) inFondo(); }, [attesa]);
 
+  /* «Voglio dire…» a campo vuoto: il campo diventa per il testo libero e lo si porta sotto le dita. */
+  useEffect(() => {
+    if (fuocoLibero > 0) campo.current?.focus();
+  }, [fuocoLibero]);
+
   const pulito = testo.trim();
   const usabile = (i: Invio) => !attesa && (!!pulito || i.etichettaVuoto !== undefined);
   const invia = (i: Invio | undefined) => {
@@ -100,8 +109,9 @@ export function Dialogo({
     setTesto("");
     i.onInvia(pulito);
   };
-  /* Ctrl+Invio: il pulsante principale, se si può usare; altrimenti il primo che si può usare. */
-  const predefinito = () => invii.find((i) => i.primaria && usabile(i)) ?? invii.find(usabile);
+  /* Ctrl+Invio: il pulsante principale («basta»), se si può usare; altrimenti il primo che si può usare. Solo con un
+   * testo scritto: a campo vuoto i pulsanti saltano la domanda, e un salto si chiede col dito, non per sbaglio. */
+  const predefinito = () => (pulito ? invii.find((i) => i.primaria && usabile(i)) ?? invii.find(usabile) : undefined);
 
   return (
     <div className={stili.dialogo}>
@@ -140,11 +150,12 @@ export function Dialogo({
             dir="auto" rows={2} maxLength={2000} disabled={attesa}
             autoFocus={libero}
           />
-          {/* I tre invii, sempre visibili sotto il campo: ognuno manda il testo e dice cosa viene dopo. */}
+          {/* I tre invii, sempre visibili sotto il campo: ognuno manda il testo e dice cosa viene dopo. Stesso
+            * aspetto per tutti (pieni, prugna): sono tre scelte di pari dignità, nessuna sembra una scritta. */}
           <div className={stili.rispostaInvii} role="group" aria-label={l.scelta_titolo}>
             {invii.map((i) => (
               <button key={i.chiave} type="button" disabled={!usabile(i)}
-                className={i.primaria ? "button button-brass" : "button button-quiet"}
+                className="button"
                 data-an={`intervista_${i.chiave}`}
                 onClick={() => invia(i)}>
                 {!pulito && i.etichettaVuoto !== undefined ? i.etichettaVuoto : i.etichetta}

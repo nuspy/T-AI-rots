@@ -105,6 +105,15 @@ export const lettura = {
   altra_domanda: "Ask me another question",
   invia_dire: "Send, I want to say something",
   invia_dire_ancora: "Send, I want to say something else",
+  /* The same three sends with an empty field: they skip the question that is waiting. */
+  salta_basta: "Skip — no more questions",
+  salta_altra: "I'd rather not answer — ask me another",
+  salta_dire: "Skip — I want to say something else",
+  dire_ancora: "I want to say something else",
+  /* The reading's language changed while writing: the offer to switch the site, in that language. */
+  offerta_lingua: "You're writing in {lingua}. Switch the site to {lingua}?",
+  offerta_lingua_si: "Switch",
+  offerta_lingua_no: "No, thanks",
   stampa_pdf: "Print to PDF",
   vero_info: "Why these are real cards (optional)",
   stesa_info: "About this spread (optional)",

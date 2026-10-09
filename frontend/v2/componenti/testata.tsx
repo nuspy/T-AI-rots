@@ -1,20 +1,21 @@
 "use client";
 
-/* La testata della v2: marchio, cinque sezioni (Shop compreso), poi a destra il carrello, la lingua, i crediti col
- * saldo (portano all'acquisto), il profilo e l'invito a cominciare. Carrello, crediti e profilo sono icone con una
+/* La testata della v2: marchio, cinque sezioni (Shop compreso), poi a destra il carrello, i crediti col saldo
+ * (portano all'acquisto), il profilo, l'invito a cominciare e per ultima la lingua (il codice, 9/10). Carrello, crediti e profilo sono icone con una
  * scritta piccola sotto e il suggerimento al passaggio: meno spazio, sempre leggibili, mai solo al passaggio del
  * mouse (la scritta resta visibile, anche sul telefono). Solo destinazioni della v2 (specifica v2, §19). */
 
 import { useEffect, useRef, useState, type MouseEvent } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { ADMIN_URL, useSessione } from "@/lib/sessione";
-import { LINGUE, comeLingua, f, plurale } from "@/v2/i18n";
+import { f, plurale } from "@/v2/i18n";
 import { useCarrello } from "@/v2/lib/carrello";
 import { useLingua } from "@/v2/lib/lingua";
-import { SincroniaLinguaProfilo, salvaNelProfilo, segnaScelta } from "@/v2/lib/lingua-profilo";
-import { R, indirizzoV2, senzaPrefisso } from "@/v2/lib/percorsi";
+import { SincroniaLinguaProfilo } from "@/v2/lib/lingua-profilo";
+import { R, senzaPrefisso } from "@/v2/lib/percorsi";
 import { PAGINE_VARIANTI } from "@/v2/lib/varianti";
 import LinkV2 from "./link";
+import { SelettoreLingua } from "./selettore-lingua";
 import { useConto } from "@/v2/lib/dati";
 
 /* Icone a tratto, 24×24, colore del testo: nessuna libreria per quattro disegni. */
@@ -69,34 +70,6 @@ const SEZIONI: { chiave: Voce; href: string; pagine: string[] }[] = [
 export function useEntra() {
   const sessione = useSessione();
   return () => sessione.entra(`${window.location.pathname}${window.location.search}`);
-}
-
-export function SelettoreLingua() {
-  const { t, lingua, imposta, prefissoIt } = useLingua();
-  const sessione = useSessione();
-  const router = useRouter();
-  const percorso = usePathname() ?? R.home;
-  const cambia = (valore: string) => {
-    const l = comeLingua(valore);
-    if (!l) return;
-    imposta(l);
-    /* v9, Fase 2d: una scelta esplicita. Chi è dentro la porta anche nel profilo (oracolo, email, notifiche). */
-    segnaScelta();
-    if (sessione.autenticata) void salvaNelProfilo(sessione.token, l);
-    /* Un indirizzo `/it/…` dice «italiano»: scegliendo un'altra lingua si va all'indirizzo inglese della stessa
-     * pagina, scegliendo l'italiano a quello italiano (`/cards/x` → `/it/carte/x`). */
-    const qui = `${senzaPrefisso(percorso)}${window.location.search}`;
-    if (prefissoIt && l !== "it") router.replace(indirizzoV2(qui, false));
-    else if (!prefissoIt && l === "it") router.replace(indirizzoV2(qui, true));
-  };
-  return (
-    <label className="lang-select">
-      <span className="sr-only">{t.comune.aria_lingua}</span>
-      <select value={lingua} onChange={(e) => cambia(e.target.value)}>
-        {LINGUE.map((l) => <option key={l.codice} value={l.codice}>{l.nome}</option>)}
-      </select>
-    </label>
-  );
 }
 
 /* Il saldo dei crediti: si rilegge a ogni cambio di pagina (una lettura consuma crediti). */
@@ -215,7 +188,6 @@ export function Testata() {
       </nav>
       <div className="header-actions">
         <IconaCarrello percorso={percorso} />
-        <SelettoreLingua />
         <Crediti percorso={percorso} />
         {sessione.autenticata ? (
           <>
@@ -237,6 +209,8 @@ export function Testata() {
           )
         )}
         <InizioLettura />
+        {/* La lingua per ultima (9/10), anche sul telefono: solo il codice, l'elenco si apre al tocco. */}
+        <SelettoreLingua />
       </div>
     </header>
   );

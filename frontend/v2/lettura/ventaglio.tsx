@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import { f } from "@/v2/i18n";
 import { Dorso } from "@/v2/componenti/carta";
 import { useLingua } from "@/v2/lib/lingua";
+import { useMenoMovimento } from "@/v2/lib/usa";
 import stili from "./lettura.module.css";
 
 const CARTE_PER_ARCO = 26;
@@ -106,8 +107,12 @@ function Arco({
 }
 
 /** La mescolata: il mazzo si divide e si ricompone finché non lo si tocca. */
+/* La mescolata parte da sola a intervista finita (9/10) e dura finché chi consulta non la ferma. Con «meno movimento»
+ * le carte non volano: il mazzo resta raccolto e respira appena (solo opacità, lenta), e l'istruzione sopra dice di
+ * fermarlo come sempre. */
 export function Mescolamento({ onFerma }: { onFerma: () => void }) {
   const { t } = useLingua();
+  const meno = useMenoMovimento();
   return (
     <button type="button" className={stili.mazzoCliccabile} onClick={onFerma} aria-label={t.lettura.ferma}
       data-an="rito" data-an-passo="shuffle_interrupted">
@@ -116,12 +121,17 @@ export function Mescolamento({ onFerma }: { onFerma: () => void }) {
           <motion.div
             key={i}
             className={stili.mazzettoCarta}
-            animate={{
+            animate={meno ? {
+              x: (i % 3 - 1) * 3, y: -i * 1.2, rotate: (i % 2 ? 1 : -1) * (i % 4),
+              opacity: i === 8 ? [1, .82, 1] : 1,
+            } : {
               x: [0, (i % 2 ? 1 : -1) * (46 + i * 5), 0, (i % 2 ? -1 : 1) * 28, 0],
               y: [0, -i * 2, i * 1.5, -i, 0],
               rotate: [0, i % 2 ? 8 : -8, 0, i % 2 ? -4 : 4, 0],
             }}
-            transition={{ duration: 1.6, repeat: Infinity, delay: i * 0.05, ease: "easeInOut" }}
+            transition={meno
+              ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" }
+              : { duration: 1.6, repeat: Infinity, delay: i * 0.05, ease: "easeInOut" }}
             style={{ zIndex: i }}
           >
             <Dorso />

@@ -1,48 +1,38 @@
 "use client";
 
-/* La lingua del menu e quella del profilo (v9, Fase 2d: decisione dell'operatore).
+/* La lingua del menu e quella del profilo (v9, Fase 2d; regola rivista il 9/10 su decisione dell'operatore).
  *
- * **Vince l'ultima scelta.** Chi è dentro e cambia lingua dal menu la cambia anche nel profilo (`PATCH /me/profile`,
- * che segna `locale_scelta_il`): oracolo, email e notifiche la seguono. Il browser ricorda quando l'ha scelta
- * (`lingua_il`), il server pure.
+ * **Un gesto vale ovunque.** Chi è dentro e cambia lingua (il codice in testata, il piede, il dialogo della prima
+ * visita, l'offerta nella lettura) la cambia anche nel profilo (`PATCH /me/profile`, che segna `locale_scelta_il`):
+ * oracolo, email e notifiche la seguono. Tutti questi gesti passano da `useCambiaLingua`.
  *
- * **All'accesso** (una volta per persona e per scheda) si confrontano le due scelte:
- *  - una scelta fatta qui più recente di quella del profilo (per esempio dal menu prima di entrare, o su questo
- *    dispositivo) → va nel profilo;
- *  - se no, se il profilo ha una scelta → **vince il profilo**: il sito passa alla lingua del profilo. È la proposta
- *    dell'operatore, ed è la regola giusta perché il profilo è la scelta esplicita della persona e vale ovunque —
- *    l'email del promemoria arriva in quella lingua — mentre la lingua di questo browser può essere solo quella di
- *    sistema di un computer in prestito;
- *  - nessuna delle due ha mai scelto → la lingua in cui la persona sta leggendo (quella del browser) va nel profilo:
- *    è la migliore che si sappia, meglio dell'«it» di ripiego con cui nasce un account senza lingua nel token.
+ * **All'accesso** (una volta per persona e per scheda):
+ *  - il profilo ha una scelta (`locale_scelta_il`) → **vince l'account**, sempre, qualunque cosa ricordi questo
+ *    browser: il sito passa alla lingua del profilo (interfaccia, cookie, indirizzo `/it`). L'account è la scelta
+ *    esplicita della persona e vale ovunque — l'email del promemoria arriva in quella lingua — mentre la lingua di
+ *    questo browser può essere quella di un computer in prestito;
+ *  - l'account non ha mai scelto → la lingua in cui la persona stava leggendo prima di entrare va nel profilo: è la
+ *    migliore che si sappia, meglio dell'«it» di ripiego con cui nasce un account senza lingua nel token.
  *
  * **Nessun ciclo.** Applicare la lingua del profilo non scrive nel profilo; scrivere nel profilo succede solo per un
- * gesto (il menu) o una volta all'accesso. Nessun effetto osserva la lingua per scriverla.
+ * gesto o una volta all'accesso. Nessun effetto osserva la lingua per scriverla.
  *
  * Le lingue del menu sono le quindici di `lib/i18n/lingue.ts`, le stesse che il profilo accetta (`tarot/lingue.py`:
  * lo controlla `test_lingua_profilo.py`). */
 
-import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { aggiornaProfilo, leggiProfilo } from "@/lib/api";
 import { useSessione } from "@/lib/sessione";
 import { comeLingua, type Lingua } from "@/v2/i18n";
 import { conPrefissoIt, useLingua } from "./lingua";
-import { indirizzoV2, senzaPrefisso } from "./percorsi";
+import { dimenticaLinguaTraduzione } from "./lingua-traduzione";
+import { R, indirizzoV2, senzaPrefisso } from "./percorsi";
 
 const CHIAVE_IL = "lingua_il";
 const CHIAVE_ALLINEATA = "lingua_allineata";
 
-function leggiNumero(chiave: string): number | null {
-  try {
-    const v = Number(window.localStorage.getItem(chiave));
-    return Number.isFinite(v) && v > 0 ? v : null;
-  } catch {
-    return null;
-  }
-}
-
-/** Il menu (o il profilo) ha scelto una lingua: lo si ricorda con l'ora, per il confronto all'accesso. */
+/** Una lingua è stata scelta: lo si ricorda con l'ora (serve a chi legge `lingua_il`, per esempio le app). */
 export function segnaScelta(quando: number = Date.now()) {
   try {
     window.localStorage.setItem(CHIAVE_IL, String(quando));
@@ -61,6 +51,31 @@ export async function salvaNelProfilo(token: string | null, lingua: Lingua): Pro
   } catch {
     /* rete o sessione: riprova il prossimo accesso */
   }
+}
+
+/** Un indirizzo `/it/…` dice «italiano»: con un'altra lingua si va all'indirizzo inglese della stessa pagina, con
+ *  l'italiano a quello italiano (`/cards/x` → `/it/carte/x`). Null se l'indirizzo va già bene. */
+function indirizzoPer(lingua: Lingua, percorso: string, ricerca: string): string | null {
+  const prefisso = conPrefissoIt(percorso);
+  if (prefisso === (lingua === "it")) return null;
+  return indirizzoV2(`${senzaPrefisso(percorso)}${ricerca}`, lingua === "it");
+}
+
+/** Il gesto «voglio il sito in questa lingua», uguale ovunque: interfaccia e cookie, l'ora della scelta, il profilo
+ *  per chi è dentro, l'indirizzo `/it` da sistemare. La lingua delle traduzioni automatiche torna a seguire il sito. */
+export function useCambiaLingua(): (l: Lingua) => void {
+  const { imposta } = useLingua();
+  const sessione = useSessione();
+  const router = useRouter();
+  const percorso = usePathname() ?? R.home;
+  return useCallback((l: Lingua) => {
+    imposta(l);
+    segnaScelta();
+    dimenticaLinguaTraduzione();
+    if (sessione.autenticata) void salvaNelProfilo(sessione.token, l);
+    const verso = indirizzoPer(l, percorso, window.location.search);
+    if (verso) router.replace(verso);
+  }, [imposta, sessione.autenticata, sessione.token, router, percorso]);
 }
 
 function soggetto(token: string | null): string {
@@ -107,20 +122,15 @@ export function SincroniaLinguaProfilo() {
       const delProfilo = comeLingua(profilo.locale);
       const qui = attuale.current;
       const profiloIl = profilo.locale_scelta_il ? Date.parse(profilo.locale_scelta_il) : null;
-      const localeIl = leggiNumero(CHIAVE_IL);
-      if (localeIl !== null && (profiloIl === null || localeIl > profiloIl)) {
-        if (delProfilo !== qui) await salvaNelProfilo(sessione.token, qui);
-      } else if (profiloIl !== null && delProfilo) {
+      if (profiloIl !== null && Number.isFinite(profiloIl) && delProfilo) {
+        /* L'account ha scelto: vince lui. Anche a lingua uguale si scrive il cookie, così questo browser la ricorda
+         * (e il dialogo della prima visita non si apre). */
         segnaScelta(profiloIl);
-        if (delProfilo !== qui) {
-          imposta(delProfilo);
-          // Come il menu: un indirizzo `/it/…` dice «italiano», gli altri sono inglesi o neutri.
-          const percorso = window.location.pathname;
-          const prefisso = conPrefissoIt(percorso);
-          const verso = `${senzaPrefisso(percorso)}${window.location.search}`;
-          if (prefisso !== (delProfilo === "it")) router.replace(indirizzoV2(verso, delProfilo === "it"));
-        }
-      } else if (delProfilo !== qui) {
+        imposta(delProfilo);
+        const verso = indirizzoPer(delProfilo, window.location.pathname, window.location.search);
+        if (verso) router.replace(verso);
+      } else {
+        /* L'account non ha mai scelto: gli va la lingua di prima dell'accesso. */
         await salvaNelProfilo(sessione.token, qui);
       }
     })();

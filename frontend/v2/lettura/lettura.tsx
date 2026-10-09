@@ -6,6 +6,10 @@
  *   preparazione (domanda, tipo, persone, stesa) → intervista → pronto-mescolare → mescolamento → taglio →
  *   scelta → rivelazione → pronto-sintesi → sintesi → completata      (e `crisi`, `annullata`)
  *
+ * Meno tocchi (9/10): finita l'intervista il mazzo si mescola da solo (`pronto-mescolare`, col suo pulsante, resta per
+ * una lettura ripresa e per un taglio non riuscito); chi consulta ferma la mescolata, taglia e sceglie; posata l'ultima
+ * carta, rivelazione e interpretazione partono da sole (il pulsante torna solo se qualcosa non riesce).
+ *
  * Cambia la messa in scena: la conversazione a sinistra, la console del rito a destra (il prototipo v2), la
  * domanda prima di tutto. Chi non ha un account fa la lettura gratuita vera (una per browser, il percorso già
  * esistente) e riceve una prima risposta con l'invito a tenere quella completa.
@@ -36,6 +40,8 @@ import { confermaEta, motivoEta } from "@/lib/privacy";
 import { avvertenzaAccettata, etaConfermata, ricordaAvvertenza, ricordaEta } from "@/v2/lib/ricordi-lettura";
 import { P, linguaContenuti, useConto, useMazzi } from "@/v2/lib/dati";
 import { LinguaNomi, useLingua } from "@/v2/lib/lingua";
+import { useCambiaLingua } from "@/v2/lib/lingua-profilo";
+import { useLinguaDaScegliere } from "@/v2/componenti/dialogo-lingua";
 import { R, indirizzoV2 } from "@/v2/lib/percorsi";
 import { useCarica, useStretto } from "@/v2/lib/usa";
 import { Dialogo, type Battuta, type Invio } from "./dialogo";
@@ -44,6 +50,7 @@ import { CarteSvelate } from "./carte-svelate";
 import { SceltaMazzo, SceltaStesa, SceltaTipo, StesaNellaConsole, nelTema, temaDi, type TemaLettura } from "./preparazione";
 import { NotaStampa } from "@/v2/componenti/stampa";
 import { FaseResponso, Responso } from "./responso";
+import { OffertaLingua } from "./offerta-lingua";
 import { Tavolo, type Posata } from "./tavolo";
 import { Mescolamento, Taglio, Ventaglio } from "./ventaglio";
 import stili from "./lettura.module.css";
@@ -151,8 +158,14 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
   const [scelte, setScelte] = useState<Set<number>>(new Set());
   const [posate, setPosate] = useState<Posata[]>([]);
   const [rivelazioneInCorso, setRivelazioneInCorso] = useState(false);
-  /* Le carte sono girate e il lettore le sta leggendo tutte insieme (una chiamata sola): un solo momento d'attesa. */
+  /* Le carte sono girate e il lettore le sta leggendo tutte insieme (una chiamata sola): un solo momento d'attesa,
+   * finché non arriva il primo pezzo di testo. */
   const [lettoreLegge, setLettoreLegge] = useState(false);
+  /* La carta il cui testo sta arrivando adesso (il cursore sta lì). */
+  const [cartaInScrittura, setCartaInScrittura] = useState<number | null>(null);
+  /* Vero quando la rivelazione e l'interpretazione partiranno da sole appena si è in `rivelazione` (ultima carta
+   * posata, o le proprie carte). Falso dopo un errore: allora c'è il pulsante per riprovare. */
+  const [rivelaDaSola, setRivelaDaSola] = useState(false);
   const scegliendo = useRef(false);
 
   const [faseResponso, setFaseResponso] = useState("unione");
@@ -163,6 +176,24 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
   const [manuale, setManuale] = useState(false);
   const ll: Lingua = linguaLettura ?? lingua;
   const tl = (dizionarioPronto(ll) ?? t).lettura;
+
+  /* La lingua della lettura può cambiare durante l'intervista (un messaggio intero scritto in un'altra lingua): il
+   * server la rimanda a ogni passo e la pagina la segue (nomi di carte e stese, passi dopo). Se non è quella
+   * dell'interfaccia, una volta per lettura compare sotto la conversazione un'offerta discreta, scritta in quella
+   * lingua se ne abbiamo i testi (se no in inglese): «Stai scrivendo in…: vuoi il sito in…?». Mai automatica. */
+  const cambiaLingua = useCambiaLingua();
+  const [offertaLingua, setOffertaLingua] = useState<Lingua | null>(null);
+  const [offerteFatte, setOfferteFatte] = useState<string[]>([]);
+  const seguiLingua = useCallback((lid: string, lang: string | undefined) => {
+    const nuova = comeLingua(lang ?? null);
+    if (!nuova) return;
+    setLinguaLettura(nuova);
+    if (nuova === lingua) setOffertaLingua(null);
+    else if (!offerteFatte.includes(lid)) {
+      setOfferteFatte([...offerteFatte, lid]);
+      setOffertaLingua(nuova);
+    }
+  }, [lingua, offerteFatte]);
 
   const stesa: Stesa | undefined = useMemo(() => stese.dati?.find((s) => s.id === stesaId), [stese.dati, stesaId]);
   /* La categoria vera (quella che il backend conosce) viene dalla stesa scelta; senza stesa, dal tema. */
@@ -242,6 +273,9 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
     setNomePartner(lt.persone?.partner.nome ?? null);
     setLinguaLettura(comeLingua(lt.lang));
     setManuale(lt.manuale);
+    /* Una lettura ripresa non riparte da sola (chi torna si riorienta, poi tocca il pulsante): tranne le proprie
+     * carte, che un pulsante per cominciare non l'hanno mai avuto. */
+    setRivelaDaSola(lt.manuale);
     setDomandaLettura(lt.question);
     setDisclaimer(lt.disclaimer);
     const storia: Battuta[] = [
@@ -266,6 +300,8 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
       dignita: lt.dignita?.[String(c.posizione)] ?? null,
     })));
     if (lt.synthesis) setTestoResponso(lt.synthesis);
+    /* `ventaglio` (intervista finita, mazzo non ancora tagliato) → `pronto-mescolare`, col pulsante: chi riapre la
+     * pagina non trova il mazzo già in movimento. */
     const mappa: Record<string, Fase> = {
       intervista: "intervista", ventaglio: "pronto-mescolare", scelta: "scelta", rivelazione: "rivelazione",
       sintesi: "rivelazione", completata: "completata", annullata: "annullata",
@@ -296,6 +332,7 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
         setRegole({ min: passo.min_domande, max: passo.max_domande });
       }
       if (passo.poste !== undefined) setPoste(passo.poste);
+      seguiLingua(lid, passo.lang);
       /* v9.5: il numero della domanda, per vedere dopo quante domande ci si ferma (mai il testo). */
       if (risposta !== null) traccia("interview_answered", { n: passo.poste ?? 0 });
       if (passo.crisi) {
@@ -304,8 +341,15 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
       } else if (passo.completa) {
         aggiungi({ autore: "oracolo", titolo: "✦", testo: passo.riassunto ?? "", macchina: true });
         /* Le proprie carte («Interpreta le mie carte»): sono già estratte e posate, niente mescolata né taglio. Il
-         * server è già passato alla rivelazione, e l'interpretazione parte da sola (effetto più sotto). */
-        setFase(manuale ? "rivelazione" : "pronto-mescolare");
+         * server è già passato alla rivelazione, e l'interpretazione parte da sola (effetto più sotto). Le carte del
+         * mazzo: il mazzo si mostra e si mescola da solo (9/10); chi consulta lo ferma, taglia e sceglie. */
+        if (manuale) {
+          setRivelaDaSola(true);
+          setFase("rivelazione");
+        } else {
+          setFase("mescolamento");
+          traccia("shuffle_started", { automatica: true });
+        }
       } else if (passo.scelta) {
         setModo("libero");
       } else if (passo.domanda) {
@@ -320,7 +364,7 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
     } finally {
       setAttesa(false);
     }
-  }, [sessione.token, l.err_oracolo, traccia, manuale]);
+  }, [sessione.token, l.err_oracolo, traccia, manuale, seguiLingua]);
 
   /* Il minimo di domande in vigore, prima ancora di aprire la lettura: «Invia quesito e inizia a mescolare» salta
    * l'intervista, e si può solo col minimo a zero. */
@@ -476,11 +520,7 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
          * cambiato nel frattempo), si fa l'intervista. */
         traccia("interview_choice", { scelta: "salta", n: 0 });
         const passo = await passoIntervista(a.id, null, { basta: true });
-        if (passo?.completa) {
-          setFase("mescolamento");
-          traccia("shuffle_started");
-          return;
-        }
+        if (passo?.completa) return;
         setErrore(null);
       }
       await passoIntervista(a.id, null);
@@ -535,6 +575,7 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
           setRegole({ min: passo.min_domande, max: passo.max_domande });
         }
         if (passo.poste !== undefined) setPoste(passo.poste);
+        seguiLingua(lid, passo.lang);
         traccia("interview_answered", { n: passo.poste ?? 0 });
         if (passo.crisi) {
           aggiungi({ autore: "sistema", testo: passo.messaggio ?? "" });
@@ -543,6 +584,7 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
         }
       } else {
         const esito = await aggiungiAllIntervista(sessione.token, lid, testo);
+        seguiLingua(lid, esito.lang);
         if (esito.crisi) {
           aggiungi({ autore: "sistema", testo: esito.messaggio ?? "" });
           setFase("crisi");
@@ -559,38 +601,48 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
     }
   };
 
-  /* Un invio: prima il testo (se c'è), poi il passo scelto. */
+  /* Un invio: prima il testo (se c'è), poi il passo scelto. A campo vuoto, con una domanda che aspetta, il passo la
+   * salta (9/10; la segna il server): «basta» chiude comunque l'intervista, «un'altra» chiede la domanda successiva,
+   * «voglio dire» passa il campo al testo libero, e il testo libero mandato dopo (`/addition`) salta la domanda. Nella
+   * conversazione il salto si vede come una battuta di chi consulta, con le parole del pulsante. */
+  const [fuocoLibero, setFuocoLibero] = useState(0);
   const inviaIntervista = async (testo: string, dopo: "basta" | "altra" | "dire") => {
     if (!id) return;
-    traccia("interview_choice", { scelta: dopo === "basta" ? "lettura" : dopo === "altra" ? "altra" : "libero", n: poste });
+    const salto = !testo && modo === "risposta";
+    traccia("interview_choice", { scelta: dopo === "basta" ? "lettura" : dopo === "altra" ? "altra" : "libero", n: poste, salto });
     if (testo && !(await salvaTesto(id, testo))) return;
-    if (dopo === "dire") { setModo("libero"); return; }
+    if (salto) aggiungi({ autore: "utente", testo: dopo === "basta" ? l.salta_basta : dopo === "altra" ? l.salta_altra : l.salta_dire });
+    if (dopo === "dire") {
+      setModo("libero");
+      setFuocoLibero((n) => n + 1);
+      return;
+    }
     if (dopo === "basta") traccia("interview_skipped", { n: poste });
     await passoIntervista(id, null, dopo === "basta" ? { basta: true } : { altra: true });
   };
 
-  /* Quali invii: «basta» quando le domande con risposta arrivano al minimo (a campo vuoto, solo se il minimo c'è
-   * già senza la domanda che aspetta); «un'altra domanda» finché non si arriva al massimo (a campo vuoto solo se
-   * nessuna domanda aspetta); «voglio dire una cosa» sempre, con un testo. */
+  /* Quali invii: «basta» quando le domande poste arrivano al minimo; «un'altra domanda» finché non si arriva al
+   * massimo; «voglio dire una cosa» sempre. Tutti si possono usare anche a campo vuoto (9/10): allora le scritte
+   * cambiano — con una domanda che aspetta dicono che la si salta — e tornano «Invia…» appena si scrive. */
   const invii: Invio[] = [];
   if (fase === "intervista") {
     const aspetta = modo === "risposta";
-    const risposte = poste - (aspetta ? 1 : 0);
     if (poste >= regole.min) {
       invii.push({
         chiave: "basta", etichetta: l.invia_basta, primaria: true,
-        etichettaVuoto: risposte >= regole.min ? l.basta_domande : undefined,
+        etichettaVuoto: aspetta ? l.salta_basta : l.basta_domande,
         onInvia: (testo) => { void inviaIntervista(testo, "basta"); },
       });
     }
     if (poste < regole.max) {
       invii.push({
-        chiave: "altra", etichetta: l.invia_altra, etichettaVuoto: aspetta ? undefined : l.altra_domanda,
+        chiave: "altra", etichetta: l.invia_altra, etichettaVuoto: aspetta ? l.salta_altra : l.altra_domanda,
         onInvia: (testo) => { void inviaIntervista(testo, "altra"); },
       });
     }
     invii.push({
       chiave: "dire", etichetta: aspetta ? l.invia_dire : l.invia_dire_ancora,
+      etichettaVuoto: aspetta ? l.salta_dire : l.dire_ancora,
       onInvia: (testo) => { void inviaIntervista(testo, "dire"); },
     });
   }
@@ -632,7 +684,12 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
         { posizione: r.posizione, slot, calcolata: false, rivelata: false },
         ...(r.tutte_scelte ? r.posizioni_calcolate.map((n) => ({ posizione: n, slot: null, calcolata: true, rivelata: false })) : []),
       ]);
-      if (r.tutte_scelte) setTimeout(() => setFase("rivelazione"), 700);
+      /* L'ultima carta: si lascia vedere posata, poi rivelazione e interpretazione partono da sole (effetto più
+       * sotto: da qui `rivelaTutto` vedrebbe le carte posate di prima). */
+      if (r.tutte_scelte) {
+        setRivelaDaSola(true);
+        setTimeout(() => setFase("rivelazione"), 700);
+      }
     } catch (e) {
       setErrore(e instanceof ErroreApi ? e.message : l.err_posa);
     } finally {
@@ -666,6 +723,7 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
           setLettoreLegge(true);
         } else if (ev.tipo === "token") {
           setLettoreLegge(false);
+          setCartaInScrittura(posizione);
           aggiornaPosata((p) => ({ ...p, interpretazione: (p.interpretazione ?? "") + ev.testo }));
         } else if (ev.tipo === "sostituisci") {
           aggiornaPosata((p) => ({ ...p, interpretazione: ev.testo }));
@@ -675,6 +733,7 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
           return false;
         } else if (ev.tipo === "fine") {
           setLettoreLegge(false);
+          setCartaInScrittura(null);
           aggiornaPosata((p) => ({ ...p, interpretazione: ev.interpretazione || p.interpretazione }));
         }
       }
@@ -684,12 +743,15 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
       return false;
     } finally {
       setLettoreLegge(false);
+      setCartaInScrittura(null);
     }
   };
 
   /* Tutte le carte insieme (v8.6): si girano subito, poi un solo momento d'attesa («il tuo lettore sta leggendo le
-   * carte…») mentre una chiamata sola le interpreta tutte, poi le spiegazioni carta per carta. `"vecchio"`: il server
-   * non conosce ancora lo svelamento di tutte le carte (404/405), si torna a una carta alla volta. */
+   * carte…») mentre una chiamata sola le interpreta tutte. Dal 9/10 i testi arrivano mentre il modello scrive: l'attesa
+   * sparisce al primo pezzo, ogni pezzo si accoda alla sua carta (anche alternando le carte), il cursore sta sulla
+   * carta che sta crescendo; `sostituisci` rimpiazza il testo di una carta, `fine` porta quello definitivo.
+   * `"vecchio"`: il server non conosce ancora lo svelamento di tutte le carte (404/405), si torna a una alla volta. */
   const rivelaInsieme = async (): Promise<boolean | "vecchio"> => {
     if (!id) return false;
     setErrore(null);
@@ -704,7 +766,11 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
           if (ev.fase === "lettura") setLettoreLegge(true);
         } else if (ev.tipo === "token") {
           setLettoreLegge(false);
-          if (ev.posizione != null) aggiorna(ev.posizione, (p) => ({ ...p, interpretazione: (p.interpretazione ?? "") + ev.testo }));
+          const n = ev.posizione;
+          if (n != null) {
+            setCartaInScrittura(n);
+            aggiorna(n, (p) => ({ ...p, interpretazione: (p.interpretazione ?? "") + ev.testo }));
+          }
         } else if (ev.tipo === "sostituisci") {
           if (ev.posizione != null) aggiorna(ev.posizione, (p) => ({ ...p, interpretazione: ev.testo }));
         } else if (ev.tipo === "errore") {
@@ -714,6 +780,7 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
           riuscita = false;
         } else if (ev.tipo === "fine") {
           setLettoreLegge(false);
+          setCartaInScrittura((n) => (n === ev.posizione ? null : n));
           aggiorna(ev.posizione, (p) => ({ ...p, interpretazione: ev.interpretazione || p.interpretazione }));
         }
       }
@@ -724,6 +791,7 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
       return false;
     } finally {
       setLettoreLegge(false);
+      setCartaInScrittura(null);
     }
   };
 
@@ -737,15 +805,20 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
     setFase("svelamento");
     if (!inChat) setTimeout(() => document.getElementById("zona-responso")?.scrollIntoView({ behavior: "smooth", block: "start" }), 250);
     try {
+      /* Qualcosa non è riuscito: si torna alla rivelazione col pulsante per riprovare (niente ripartenza da sola). */
+      const fallita = () => {
+        setRivelaDaSola(false);
+        setFase("rivelazione");
+      };
       const coperte = posate.filter((p) => !p.rivelata).map((p) => p.posizione).sort((a, b) => a - b);
       if (coperte.length) {
         const esito = await rivelaInsieme();
         if (esito === "vecchio") {
           for (const n of coperte) {
-            if (!(await rivelaCarta(n))) { setFase("rivelazione"); return; }
+            if (!(await rivelaCarta(n))) { fallita(); return; }
           }
         } else if (!esito) {
-          setFase("rivelazione");
+          fallita();
           return;
         }
       }
@@ -757,19 +830,28 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
 
   /* ---- 5. l'interpretazione ---- */
 
+  /* Il responso (9/10, chi ha un account): il testo arriva mentre il modello scrive e resta in vista anche durante il
+   * controllo (`guardia`, forse `revisione`: solo una nota discreta sotto il testo); `sostituisci` lo rimpiazza tutto
+   * ("" lo cancella). Gli eventi `fase` non toccano mai il testo. Chi non ha un account riceve l'anteprima dopo
+   * `fase` `responso`, come prima. */
   const chiediResponso = async () => {
     if (!id) return;
     setFase("sintesi");
     setFaseResponso("unione");
     setTestoResponso("");
     setErrore(null);
+    const fallita = () => {
+      setRivelaDaSola(false);
+      setFase("rivelazione");
+    };
     try {
       for await (const ev of sintesi(sessione.token, id)) {
         if (ev.tipo === "fase") setFaseResponso(ev.fase);
         else if (ev.tipo === "token") setTestoResponso((x) => x + ev.testo);
+        else if (ev.tipo === "sostituisci") setTestoResponso(ev.testo);
         else if (ev.tipo === "errore") {
           setErrore(ev.messaggio);
-          setFase("rivelazione");
+          fallita();
           return;
         } else if (ev.tipo === "fine") {
           setFine({ disclaimer: ev.disclaimer, commitment: ev.commitment, saldo: ev.saldo, anonimo: !!ev.anonimo });
@@ -780,13 +862,15 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
       }
     } catch (e) {
       setErrore(e instanceof ErroreApi ? e.message : l.err_responso);
-      setFase("rivelazione");
+      fallita();
     }
   };
 
   const interpretazioneAvviata = useRef(false);
   const nuova = () => {
     interpretazioneAvviata.current = false;
+    setRivelaDaSola(false);
+    setOffertaLingua(null);
     setFase("preparazione");
     setTema("standard");
     setStesaId(null);
@@ -816,15 +900,52 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
    * si muove), e si ferma all'INIZIO del messaggio nuovo (una domanda, il mazzo, una carta che si gira, il responso),
    * non alla fine: si legge dalla prima riga e la carta si vede intera. */
   const inFondo = useRef(true);
+  /* Il testo in diretta si segue finché chi legge non scorre da sé verso l'alto (rotella, dito, tasti); si torna a
+   * seguirlo quando si torna in fondo. Gli scorrimenti fatti da qui non lo interrompono. */
+  const segue = useRef(true);
   useEffect(() => {
     if (!inChat) return;
     const misura = () => {
       inFondo.current = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 180;
+      if (inFondo.current) segue.current = true;
     };
+    const smetti = () => { segue.current = false; };
+    const rotella = (e: WheelEvent) => { if (e.deltaY < 0) smetti(); };
+    const tasto = (e: KeyboardEvent) => { if (e.key === "ArrowUp" || e.key === "PageUp" || e.key === "Home") smetti(); };
     misura();
     window.addEventListener("scroll", misura, { passive: true });
-    return () => window.removeEventListener("scroll", misura);
+    window.addEventListener("wheel", rotella, { passive: true });
+    window.addEventListener("touchmove", smetti, { passive: true });
+    window.addEventListener("keydown", tasto);
+    return () => {
+      window.removeEventListener("scroll", misura);
+      window.removeEventListener("wheel", rotella);
+      window.removeEventListener("touchmove", smetti);
+      window.removeEventListener("keydown", tasto);
+    };
   }, [inChat]);
+  /* Mentre le carte e il responso si scrivono, la pagina scende con il testo: il punto in cui si scrive resta in
+   * vista, ma senza mai far uscire dall'alto l'inizio della carta (o del paragrafo del responso) che si sta
+   * scrivendo — si legge dalla prima riga. Niente animazione: piccoli passi che seguono le righe. */
+  const inDiretta = inChat && (fase === "svelamento" || fase === "sintesi");
+  useEffect(() => {
+    if (!inDiretta) return;
+    const zona = document.getElementById("zona-responso");
+    if (!zona || typeof ResizeObserver === "undefined") return;
+    const osserva = new ResizeObserver(() => {
+      if (!segue.current) return;
+      const bordo = zona.querySelector<HTMLElement>("[data-in-scrittura]");
+      if (!bordo) return;
+      const capo = bordo.dataset.inScrittura === "testo" ? (bordo.firstElementChild?.lastElementChild ?? bordo) : bordo;
+      const giu = bordo.getBoundingClientRect().bottom + 24 - window.innerHeight;
+      const tetto = capo.getBoundingClientRect().top - 88;
+      const passo = Math.min(giu, tetto);
+      /* `instant`: `auto` seguirebbe lo `scroll-behavior: smooth` della pagina, e i passi si accavallerebbero. */
+      if (passo > 1) window.scrollBy({ top: passo, behavior: "instant" });
+    });
+    osserva.observe(zona);
+    return () => osserva.disconnect();
+  }, [inDiretta]);
   const rivelate = posate.filter((p) => p.rivelata).length;
   const novita = `${battute.length}|${fase}|${rivelate}|${testoResponso ? 1 : 0}`;
   useEffect(() => {
@@ -855,22 +976,25 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
   const stretto = useStretto();
   const [sceltaMobile, setSceltaMobile] = useState<"tipo" | "stesa" | null>(null);
   const dialoghiAvviati = useRef(false);
+  /* Alla prima visita sul telefono viene prima la lingua (`dialogo-lingua.tsx`): questi dialoghi aspettano. */
+  const linguaDaScegliere = useLinguaDaScegliere().inAttesa;
   useEffect(() => {
-    if (!stretto || fase !== "preparazione" || dialoghiAvviati.current || idIniziale) return;
+    if (!stretto || fase !== "preparazione" || dialoghiAvviati.current || idIniziale || linguaDaScegliere) return;
     dialoghiAvviati.current = true;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!parametri.get("spread")) setSceltaMobile("tipo");
-  }, [stretto, fase, idIniziale, parametri]);
+  }, [stretto, fase, idIniziale, parametri, linguaDaScegliere]);
   const [ritoChiuso, setRitoChiuso] = useState(false);
   useEffect(() => { setRitoChiuso(false); }, [fase]);
 
-  /* Le proprie carte, a intervista finita: niente da mescolare né da scegliere, si leggono subito (una volta: se
-   * l'interpretazione non riesce resta il pulsante per riprovare). */
+  /* Posata l'ultima carta (o, con le proprie carte, a intervista finita) rivelazione e interpretazione partono da sole,
+   * una volta: se qualcosa non riesce resta il pulsante per riprovare. Da un effetto e non dal `setTimeout` di
+   * `scegli`, che vedrebbe le carte posate di prima. */
   useEffect(() => {
-    if (fase !== "rivelazione" || !manuale || !stesa || !id || interpretazioneAvviata.current) return;
+    if (fase !== "rivelazione" || !rivelaDaSola || !stesa || !id || interpretazioneAvviata.current) return;
     interpretazioneAvviata.current = true;
     void rivelaTutto();
-  }, [fase, manuale, stesa, id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fase, rivelaDaSola, stesa, id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const nOmaggi = omaggi.dati?.crediti_iscrizione ?? 3;
   const dialoghiComuni = (
@@ -960,24 +1084,25 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
                     onFocus={() => traccia("question_started")}
                   />
                   {speciale && <p className="muted small">{l.domanda_facoltativa}</p>}
-                  {/* I due invii, subito sotto la domanda: senza intervista (solo col minimo di domande a zero) o con. */}
+                  {/* I due invii, subito sotto la domanda: senza intervista (solo col minimo di domande a zero) o con.
+                    * Stesso aspetto e stesso peso (9/10); con una domanda troppo corta si possono toccare lo stesso, e
+                    * dicono perché non si parte. */}
                   {!serveAccount && (
                     <div className={stili.inviiDomanda}>
                       {speciale && !personeFatte ? (
-                        <button type="button" className="button button-brass" disabled={!stesaId || inCorso}
+                        <button type="button" className="button" disabled={!stesaId || inCorso}
                           onClick={() => void chiediInizio(false)} data-an="rito" data-an-passo="inizia">
                           {inCorso ? t.comune.carica : t.comune.avanti}
                         </button>
                       ) : (
                         <>
                           {regole.min === 0 && (
-                            <button type="button" className="button button-brass" disabled={!stesaId || inCorso || !domandaValida}
+                            <button type="button" className="button" disabled={!stesaId || inCorso}
                               onClick={() => void chiediInizio(true)} data-an="rito" data-an-passo="inizia_mescola">
                               {inCorso && senzaIntervista ? t.comune.carica : l.domanda_invia_mescola}
                             </button>
                           )}
-                          <button type="button" className={regole.min === 0 ? "button button-quiet" : "button button-brass"}
-                            disabled={!stesaId || inCorso || !domandaValida}
+                          <button type="button" className="button" disabled={!stesaId || inCorso}
                             onClick={() => void chiediInizio(false)} data-an="rito" data-an-passo="inizia">
                             {inCorso && !senzaIntervista ? t.comune.carica : l.domanda_invia_chiedi}
                           </button>
@@ -985,7 +1110,7 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
                       )}
                     </div>
                   )}
-                  {!domandaValida && domanda.length > 0 && <p className="notice">{l.domanda_corta}</p>}
+                  {!domandaValida && domanda.length > 0 && errore !== l.domanda_corta && <p className="notice">{l.domanda_corta}</p>}
                   {errore && <p className="error" role="alert">{errore}</p>}
                   {sceltaInline ? <SceltaTipo tema={tema} onScegli={scegliTipo} /> : (
                     /* Sul telefono: ciò che si è scelto nei dialoghi, e il modo di cambiarlo. */
@@ -1124,7 +1249,8 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
                 {fase === "pronto-mescolare" && (
                   <button type="button" className={`button button-brass ${stili.pulsa}`} onClick={mescola}>{l.mescola}</button>
                 )}
-                {(fase === "rivelazione" || fase === "pronto-sintesi") && (
+                {/* Il pulsante solo quando non parte da sé: dopo un errore, o in una lettura ripresa. */}
+                {(fase === "rivelazione" || fase === "pronto-sintesi") && !rivelaDaSola && (
                   <button type="button" className={`button button-brass ${stili.pulsa}`} disabled={rivelazioneInCorso} onClick={() => void rivelaTutto()}
                     data-an="rito" data-an-passo="rivela_e_interpreta">
                     {l.rivela_tutto}
@@ -1149,7 +1275,7 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
   const dialogo = (
     <Dialogo battute={battute} attesa={attesa} fluido={inChat}
       inputAttivo={fase === "intervista" && !!id}
-      libero={modo === "libero"}
+      libero={modo === "libero"} fuocoLibero={fuocoLibero}
       invii={invii} />
   );
   const riprovaIntervista = errore && fase === "intervista" && (
@@ -1158,13 +1284,22 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
       {id && !attesa && <button type="button" className="button button-quiet button-small" onClick={() => passoIntervista(id, null)}>{l.riprova}</button>}
     </div>
   );
+  /* L'offerta di passare il sito alla lingua in cui si scrive, sotto la conversazione (una volta per lettura). */
+  const scelta = offertaLingua;
+  const offerta = scelta && scelta !== lingua && (
+    <OffertaLingua lingua={scelta}
+      onCambia={() => { setOffertaLingua(null); cambiaLingua(scelta); traccia("language_offer", { scelta: "si", lingua: scelta }); }}
+      onChiudi={() => { setOffertaLingua(null); traccia("language_offer", { scelta: "no", lingua: scelta }); }} />
+  );
   const finale = (fase === "svelamento" || fase === "sintesi" || fase === "completata" || posate.some((p) => p.rivelata)) && stesa && id && (
     <>
-      <CarteSvelate stesa={stesa} posate={posate} attiva={fase === "svelamento" || rivelazioneInCorso} lettoreLegge={lettoreLegge} />
+      <CarteSvelate stesa={stesa} posate={posate} attiva={fase === "svelamento" || rivelazioneInCorso} lettoreLegge={lettoreLegge}
+        inScrittura={cartaInScrittura} />
       {fase === "sintesi" && !testoResponso && <FaseResponso fase={faseResponso} />}
       {testoResponso && (
         <Responso
-          id={id} testo={testoResponso} finito={fase === "completata"}
+          id={id} testo={testoResponso} finito={fase === "completata"} inCorso={fase === "sintesi"}
+          nota={fase === "sintesi" && (faseResponso === "guardia" || faseResponso === "revisione") ? l.fasi[faseResponso] ?? null : null}
           disclaimer={fine?.disclaimer ?? disclaimer ?? ""} commitment={fine?.commitment ?? null} saldo={fine?.saldo ?? null}
           anonimo={fine?.anonimo ?? !sessione.autenticata} omaggi={nOmaggi} onNuova={nuova} onRegistrati={registrati}
         />
@@ -1187,6 +1322,7 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
                 <h2 id="titolo-dialogo" className="sr-only">{l.pannello_conversazione}</h2>
                 {dialogo}
                 {riprovaIntervista}
+                {offerta}
               </section>
               {ritoAperto && (
                 <section className={`read-panel dark ${stili.chatRito}`} aria-labelledby="titolo-console" id="zona-mazzo"
@@ -1216,6 +1352,7 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
               <h2 id="titolo-dialogo" className="sr-only">{l.pannello_conversazione}</h2>
               {dialogo}
               {riprovaIntervista}
+              {offerta}
             </section>
 
             <section className={`read-panel dark ${stili.pannelloRito}`} aria-labelledby="titolo-console" id="zona-mazzo">

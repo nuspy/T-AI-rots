@@ -3,7 +3,7 @@
 import { useLingua } from "@/v2/lib/lingua";
 import { R } from "@/v2/lib/percorsi";
 import LinkV2 from "./link";
-import { SelettoreLingua } from "./testata";
+import { SelettoreLingua } from "./selettore-lingua";
 
 export function Piede() {
   const { t } = useLingua();
@@ -21,7 +21,7 @@ export function Piede() {
           <span>TAROTS <em>chat</em></span>
         </LinkV2>
         <p>{c.piede_motto}</p>
-        <div className="footer-lang"><SelettoreLingua /></div>
+        <div className="footer-lang"><SelettoreLingua su /></div>
       </section>
       {colonne.map((col) => (
         <section key={col.titolo}>

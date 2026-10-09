@@ -21,6 +21,7 @@ import { R } from "@/v2/lib/percorsi";
 import { inTerzi, type Posizione } from "@/v2/lib/pubblicita";
 import { useCarica } from "@/v2/lib/usa";
 import { useTraduzione } from "@/v2/lib/usa-traduzione";
+import { useLinguaTraduzione } from "@/v2/lib/lingua-traduzione";
 import { ArticoliSu, DiarioNove } from "./blog";
 
 const FILTRI = ["tutte", "maggiori", "bastoni", "coppe", "spade", "dischi"] as const;
@@ -73,7 +74,8 @@ export function SchedaCarta({ id }: { id: string }) {
    * (`AvvisoTraduzione` lo dice e offre l'originale). Le etichette del sito, già tradotte, restano `data-no-trad`. */
   const parole = useRef<HTMLParagraphElement>(null);
   const testo = useRef<HTMLDivElement>(null);
-  const traduzione = useTraduzione([parole, testo], lingua, {
+  const linguaTraduzione = useLinguaTraduzione().lingua;
+  const traduzione = useTraduzione([parole, testo], linguaTraduzione, {
     sorgente: linguaContenuti(lingua), chiave: carta.dati?.id,
   });
 

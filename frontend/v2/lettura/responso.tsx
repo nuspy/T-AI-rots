@@ -36,11 +36,15 @@ export function FaseResponso({ fase }: { fase: string }) {
 }
 
 export function Responso({
-  id, testo, finito, disclaimer, commitment, saldo, anonimo, omaggi, onNuova, onRegistrati,
+  id, testo, finito, inCorso = false, nota = null, disclaimer, commitment, saldo, anonimo, omaggi, onNuova, onRegistrati,
 }: {
   id: string;
   testo: string;
   finito: boolean;
+  /** Il testo sta ancora arrivando (9/10, in diretta): il cursore in fondo, e la chat lo segue. */
+  inCorso?: boolean;
+  /** Una nota discreta sotto il testo mentre lo si controlla (`guardia`, `revisione`): il testo resta in vista. */
+  nota?: string | null;
   disclaimer: string;
   commitment: string | null;
   saldo: number | null;
@@ -56,10 +60,19 @@ export function Responso({
 
   return (
     <motion.section className={stili.responso} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }} aria-live="polite" aria-labelledby="titolo-responso">
+      transition={{ duration: 0.6 }} aria-live="polite" aria-busy={inCorso} aria-labelledby="titolo-responso">
       <p className="eyebrow">✦</p>
       <h2 id="titolo-responso">{anonimo ? l.anteprima_titolo : l.il_responso}</h2>
-      <Markdown testo={testo} className={stili.testo} />
+      <div data-in-scrittura={inCorso ? "testo" : undefined}>
+        <Markdown testo={testo} className={stili.testo} />
+        {inCorso && <span className={`${stili.cursore} ${stili.cursoreResponso}`} aria-hidden="true">▍</span>}
+      </div>
+      {nota && (
+        <p className={stili.notaControllo} role="status">
+          <span className={stili.lettoreLeggePunti} aria-hidden="true"><i /><i /><i /></span>
+          {nota}
+        </p>
+      )}
 
       {finito && anonimo && (
         <div className={stili.anteprima}>

@@ -20,6 +20,7 @@ import { useConsensi } from "@/v2/lib/consensi";
 import { useLingua } from "@/v2/lib/lingua";
 import { R } from "@/v2/lib/percorsi";
 import { useStatoGoogle } from "./contatore-google";
+import { useLinguaDaScegliere } from "./dialogo-lingua";
 import LinkV2 from "./link";
 import { usePubblicita } from "./pubblicita";
 
@@ -37,9 +38,11 @@ export function BannerCookieV2() {
   const [aperto, setAperto] = useState(false);
   const [errore, setErrore] = useState(false);
   const [scelte, setScelte] = useState<Partial<Record<Categoria, boolean>>>({});
+  /* Sul telefono, alla prima visita, prima la lingua (`dialogo-lingua.tsx`): il banner arriva dopo, già tradotto. */
+  const linguaDaScegliere = useLinguaDaScegliere().inAttesa;
 
   const dati = consensi.dati;
-  if (!dati || nascosto) return null;
+  if (!dati || nascosto || linguaDaScegliere) return null;
   const sceltaAnnunci = pubblicita.consenso !== undefined ? pubblicita.consenso : dati.pubblicita;
   const daRinnovareGa = dati.google_analytics === "accettato" && google.misurazione !== null && google.daRinnovare;
   const chiedeAnnunci = pubblicita.attiva && sceltaAnnunci === null;

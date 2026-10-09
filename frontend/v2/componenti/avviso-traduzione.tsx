@@ -2,13 +2,14 @@
 
 /* Il riquadro della traduzione automatica (v9.5), in cima ai contenuti che esistono solo in inglese (articoli del
  * blog, schede di carte, stese e mazzi). Si vede solo dove il browser sa tradurre (Chrome desktop 138+) e la lingua
- * scelta non è quella del contenuto. Il menu è il selettore di lingua del sito: cambiarlo cambia e salva la lingua di
- * tutto il sito, e la pagina si ritraduce. */
+ * della traduzione non è quella del contenuto. Il menu è la lingua della TRADUZIONE (9/10): parte da quella del sito,
+ * e una scelta diversa resta in un cookie suo (`lingua-traduzione.ts`), senza cambiare la lingua del sito. */
 
+import { useId } from "react";
 import { f } from "@/v2/i18n";
 import { useLingua } from "@/v2/lib/lingua";
+import { LINGUE_TRADUZIONE, nomeNativo, useLinguaTraduzione } from "@/v2/lib/lingua-traduzione";
 import type { StatoTraduzione } from "@/v2/lib/usa-traduzione";
-import { SelettoreLingua } from "./testata";
 
 function nomeLingua(codice: string | null, locale: string): string {
   if (!codice) return "";
@@ -17,6 +18,21 @@ function nomeLingua(codice: string | null, locale: string): string {
   } catch {
     return codice;
   }
+}
+
+/** La lingua verso cui tradurre: codice e nome nativo, come il selettore del sito. */
+function SceltaLinguaTraduzione() {
+  const { t } = useLingua();
+  const { lingua, scegli } = useLinguaTraduzione();
+  const id = useId();
+  return (
+    <span className="small traduzione-lingua">
+      <label htmlFor={id}>{t.comune.traduzione_lingua}</label>
+      <select id={id} value={lingua} onChange={(e) => scegli(e.target.value)}>
+        {LINGUE_TRADUZIONE.map((c) => <option key={c} value={c}>{`${c.toUpperCase()} · ${nomeNativo(c)}`}</option>)}
+      </select>
+    </span>
+  );
 }
 
 export function AvvisoTraduzione({ stato }: { stato: StatoTraduzione }) {
@@ -57,10 +73,8 @@ export function AvvisoTraduzione({ stato }: { stato: StatoTraduzione }) {
         </>
       )}
       {stato.fase === "errore" && <span className="small">{k.traduzione_errore}</span>}
-      {(stato.fase === "tradotta" || stato.fase === "originale" || stato.fase === "offerta") && (
-        <span className="small" style={{ display: "inline-flex", alignItems: "center", gap: ".4rem" }}>
-          {k.traduzione_altra_lingua} <SelettoreLingua />
-        </span>
+      {(stato.fase === "tradotta" || stato.fase === "originale" || stato.fase === "offerta" || stato.fase === "errore") && (
+        <SceltaLinguaTraduzione />
       )}
       {stato.fase === "tradotta" && (
         <button type="button" className="button button-quiet button-small" style={{ minHeight: 44 }} onClick={stato.nonPiu}>

@@ -174,4 +174,9 @@ export const comune = {
   traduzione_errore: "The translation did not work: you are reading the original.",
   traduzione_altra_lingua: "Another language:",
   traduzione_mai: "Don't translate automatically",
+  traduzione_lingua: "Translate into",
+  /* The first visit on a phone: the language, chosen once, before everything else. */
+  lingua_titolo: "Choose your language",
+  lingua_testo: "You can change it at any time with the language code at the top of the page.",
+  lingua_accetta: "Accept",
 };

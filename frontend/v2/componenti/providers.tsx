@@ -23,6 +23,7 @@ import { ProviderLinguaV2, type Lingua } from "@/v2/lib/lingua";
 import { R } from "@/v2/lib/percorsi";
 import { BannerCookieV2 } from "./banner-cookie";
 import { ContatoreGoogle } from "./contatore-google";
+import { DialogoPrimaLingua } from "./dialogo-lingua";
 import { DockLettore } from "./dock";
 import { OsservatoreV2 } from "./osservatore";
 import { PrivacyAccesso } from "./privacy-accesso";
@@ -82,6 +83,8 @@ export function ProvidersV2({
     <OsservatoreV2>
       <ProviderPubblicita iniziale={pubblicita}>
         <ProviderCarrello>
+          {/* La lingua alla prima visita sul telefono, prima del banner dei cookie (che aspetta). */}
+          <DialogoPrimaLingua />
           <DockLettore />
           <BannerCookieV2 />
           <PrivacyAccesso />

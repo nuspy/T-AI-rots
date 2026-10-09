@@ -50,7 +50,8 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .prose a, a.inline { color: var(--plum); text-decoration: underline; text-decoration-color: var(--brass); text-underline-offset: 4px; }
 
 /* ---- header ---- */
-.site-header { position: sticky; top: 0; z-index: 30; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2rem; min-height: 76px; padding: .8rem var(--gutter); padding-top: max(.8rem, env(safe-area-inset-top)); padding-left: max(var(--gutter), env(safe-area-inset-left)); padding-right: max(var(--gutter), env(safe-area-inset-right)); border-bottom: 1px solid rgba(244,239,229,.16); color: #fff8eb; background: rgba(32,16,38,.94); backdrop-filter: blur(14px); }
+/* z-index 31: un gradino sopra A−/A+ (30), così l'elenco delle lingue che scende dalla testata li copre. */
+.site-header { position: sticky; top: 0; z-index: 31; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2rem; min-height: 76px; padding: .8rem var(--gutter); padding-top: max(.8rem, env(safe-area-inset-top)); padding-left: max(var(--gutter), env(safe-area-inset-left)); padding-right: max(var(--gutter), env(safe-area-inset-right)); border-bottom: 1px solid rgba(244,239,229,.16); color: #fff8eb; background: rgba(32,16,38,.94); backdrop-filter: blur(14px); }
 .brand { display: inline-flex; align-items: center; gap: .6rem; min-height: 44px; font-family: var(--serif); font-size: 1rem; letter-spacing: .04em; white-space: nowrap; }
 .brand-mark { display: grid; place-items: center; width: 33px; height: 40px; border: 1px solid var(--brass-pale); color: var(--brass-pale); clip-path: polygon(50% 0, 100% 18%, 100% 82%, 50% 100%, 0 82%, 0 18%); font-family: var(--serif); }
 .brand em { color: var(--brass-pale); }
@@ -70,10 +71,24 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .menu-versioni small { color: var(--ink-soft); line-height: 1.4; }
 .text-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 .3rem; border: 0; background: none; font-size: .84rem; color: #f3e8d8; white-space: nowrap; }
 .text-link:hover { color: var(--brass-pale); }
-.lang-select { position: relative; display: inline-flex; align-items: center; }
-.lang-select select { appearance: none; min-height: 44px; max-width: 7.5rem; padding: 0 1.6rem 0 .6rem; border: 1px solid rgba(214,182,109,.45); border-radius: 3px; color: #f3e8d8; background: transparent; font-size: .8rem; }
-.lang-select select option { color: var(--ink); background: var(--paper); }
-.lang-select::after { content: "▾"; position: absolute; right: .55rem; pointer-events: none; color: var(--brass-pale); font-size: .7rem; }
+/* La lingua (9/10, `selettore-lingua.tsx`): chiusa è il codice («IT ▾»), aperta un elenco «IT · Italiano» su carta
+ * chiara, voci alte 44 px, che scorre dentro di sé se lo schermo è basso. Nel piede si apre verso l'alto. */
+.lang-menu { position: relative; display: inline-flex; flex: none; }
+.lang-code { display: inline-flex; align-items: center; justify-content: center; gap: .3rem; min-width: 48px; min-height: 44px; padding: 0 .6rem; border: 1px solid rgba(214,182,109,.45); border-radius: 3px; color: #f3e8d8; background: transparent; font: 700 .8rem/1 var(--sans); letter-spacing: .06em; }
+.lang-code::after { content: "▾"; color: var(--brass-pale); font-size: .7rem; }
+.lang-code:hover, .lang-code[aria-expanded="true"] { border-color: var(--brass-pale); color: var(--brass-pale); }
+.lang-list { position: absolute; top: calc(100% + .4rem); right: 0; z-index: 70; width: max-content; min-width: 13.5rem; max-width: calc(100vw - 16px); max-height: min(70dvh, 34rem); overflow-y: auto; overscroll-behavior: contain; margin: 0; padding: .3rem 0; list-style: none; color: var(--ink); background: var(--paper-light); border: 1px solid var(--line); border-top: 3px solid var(--brass); box-shadow: 0 14px 30px rgba(0,0,0,.28); text-align: start; }
+.lang-menu-su .lang-list { top: auto; bottom: calc(100% + .4rem); left: 0; right: auto; }
+.lang-list:focus { outline: none; }
+.lang-list li { display: flex; align-items: center; gap: .45rem; min-height: 44px; padding: .35rem 2.2rem .35rem .9rem; position: relative; font-size: 1rem; line-height: 1.3; cursor: pointer; }
+.lang-list li b { min-width: 2.4ch; color: var(--plum); font-size: .84rem; letter-spacing: .06em; }
+.lang-list li span[aria-hidden] { color: var(--ink-soft); }
+.lang-list li.attiva { background: rgba(60,24,70,.09); }
+.lang-list:focus-visible li.attiva { outline: 2px solid var(--verdigris); outline-offset: -2px; }
+.lang-list li[aria-selected="true"] { font-weight: 700; }
+.lang-list li[aria-selected="true"]::after { content: "✓"; position: absolute; right: .8rem; color: var(--verdigris); }
+.traduzione-lingua { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+.traduzione-lingua select { min-height: 44px; max-width: 100%; padding: 0 .5rem; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); background: var(--paper-light); font-size: 1rem; }
 
 /* ---- buttons ---- */
 .button { display: inline-flex; min-height: 47px; align-items: center; justify-content: center; gap: .5rem; padding: .72rem 1.1rem; border: 1px solid transparent; border-radius: 3px; background: var(--plum); color: white; font-weight: 700; font-size: .88rem; line-height: 1.2; letter-spacing: .01em; text-align: center; transition: transform .18s ease, background .18s ease, box-shadow .18s ease; }
@@ -390,6 +405,21 @@ button.chip, a.chip { cursor: pointer; }
 .dialog h2 { margin: 0 2.5rem 1rem 0; font: 400 1.5rem/1.25 var(--serif); }
 .dialog-close { position: absolute; top: .5rem; right: .5rem; width: 44px; height: 44px; border: 0; color: var(--ink-soft); background: none; font-size: 1.1rem; }
 .dialog .prose { white-space: pre-line; color: var(--ink-soft); font-size: .95rem; }
+/* La lingua alla prima visita sul telefono (`dialogo-lingua.tsx`): il dialogo è una colonna alta al più quanto lo
+ * schermo meno le safe area; l'elenco scorre dentro il suo riquadro e «Accetta» resta sempre sotto, in vista. */
+.lingua-sfondo { z-index: 80; padding-top: max(1rem, env(safe-area-inset-top)); padding-left: max(1rem, env(safe-area-inset-left)); padding-right: max(1rem, env(safe-area-inset-right)); }
+.lingua-dialogo { display: flex; flex-direction: column; gap: .75rem; overflow: hidden; max-height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+.lingua-dialogo h2 { margin: 0; }
+.lingua-dialogo-testo { margin: 0; color: var(--ink-soft); font-size: 1rem; line-height: 1.5; }
+.lingua-scatola { position: relative; flex: 1 1 auto; min-height: 7rem; padding: .25rem 0; overflow-y: auto; overscroll-behavior: contain; border: 1px solid rgba(60,24,70,.35); border-radius: 3px; background: #fff; }
+.lingua-gruppo { min-width: 0; margin: 0; padding: 0; border: 0; }
+.lingua-voce { display: flex; align-items: center; gap: .55rem; min-height: 48px; padding: .3rem .9rem; font-size: 1rem; line-height: 1.3; cursor: pointer; }
+.lingua-voce + .lingua-voce { border-top: 1px solid rgba(60,24,70,.08); }
+.lingua-voce input { flex: none; width: 1.2rem; height: 1.2rem; margin: 0; accent-color: var(--plum); }
+.lingua-voce b { min-width: 2.4ch; color: var(--plum); font-size: .86rem; letter-spacing: .06em; }
+.lingua-voce span[aria-hidden] { color: var(--ink-soft); }
+.lingua-voce:has(input:checked) { background: rgba(60,24,70,.08); font-weight: 700; }
+.lingua-accetta { flex: none; width: 100%; min-height: 48px; font-size: 1rem; }
 
 /* ---- the reader's dock ---- */
 .dock { position: fixed; right: max(1rem, env(safe-area-inset-right)); bottom: max(1rem, env(safe-area-inset-bottom)); z-index: 40; display: flex; flex-direction: column; align-items: flex-end; gap: .6rem; }
@@ -421,12 +451,11 @@ button.chip, a.chip { cursor: pointer; }
 @media (max-width: 1100px) { .site-header { grid-template-columns: 1fr auto; gap: .7rem; } .primary-nav { grid-column: 1 / -1; grid-row: 2; justify-content: start; overflow-x: auto; scrollbar-width: none; margin-inline: -.45rem; } .primary-nav::-webkit-scrollbar { display: none; } }
 @media (max-width: 1000px) { .hero { grid-template-columns: 1fr 1fr; } .topic-grid { grid-template-columns: repeat(3, 1fr); } .ritual-steps { grid-template-columns: repeat(3, 1fr); row-gap: 1.6rem; } .difference-grid { grid-template-columns: 1fr 1fr; } .cards-grid { grid-template-columns: repeat(4, 1fr); } .method-grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 760px) { .site-header { min-height: 64px; } .header-actions .text-link.hide-sm { display: none; } .hero, .memory-layout, .deck-layout, .physical-layout, .faq, .read-layout, .story-grid, .shop-grid, .share-band { grid-template-columns: 1fr; } .hero { min-height: auto; padding-top: 2.2rem; gap: 1rem; } .ritual-object { min-height: 300px; } .hero-card { width: min(170px, 44vw); } .orbit-note { right: 2%; bottom: 2%; } .section-head { display: block; } .section-head > a { margin-top: 1.2rem; } .topic-grid { grid-template-columns: 1fr 1fr; } .ritual-steps { grid-template-columns: 1fr 1fr; } .difference-grid, .funnel-steps, .content-grid, .pricing-grid, .method-grid { grid-template-columns: 1fr; } .demo-stage { grid-template-columns: 1fr; } .cards-grid { grid-template-columns: repeat(3, 1fr); } .question-form { grid-template-columns: 1fr; } .question-form .button { width: 100%; } .site-footer { grid-template-columns: 1fr 1fr; } .physical-card { grid-template-columns: 86px 1fr; } .physical-card img { width: 86px; } .form-grid { grid-template-columns: 1fr; } .shop-object { grid-template-columns: 1fr; } .faq { gap: 1.5rem; } .topic { min-height: 140px; } .difference { min-height: 0; } .difference span { margin-bottom: 1.2rem; } .stat-row { grid-template-columns: 1fr; } }
-/* On narrow screens the language selector moves to the footer (it is always there too): the header keeps the
- * brand, sign-in and the call to begin, each on one line. */
-.site-footer .lang-select select { color: #e9decd; }
+/* The language code stays in the header on every screen (9/10), last item; the footer has it too. */
+.site-footer .lang-code { color: #e9decd; }
 .footer-lang { display: flex; align-items: center; gap: .6rem; margin-top: 1rem; }
-@media (max-width: 560px) { .site-header .lang-select { display: none; } .header-actions .button { white-space: nowrap; } }
-@media (max-width: 430px) { .brand { font-size: .9rem; } .brand-mark { width: 27px; height: 33px; } .header-actions .button { padding-inline: .7rem; font-size: .76rem; } .lang-select select { max-width: 4.6rem; } .display { font-size: 2.3rem; } .topic-grid, .cards-grid { grid-template-columns: 1fr 1fr; } .ritual-steps { grid-template-columns: 1fr; } .site-footer { grid-template-columns: 1fr; } .reveal { grid-template-columns: 90px 1fr; } .dock-toggle .label-long { display: none; } }
+@media (max-width: 560px) { .header-actions .button { white-space: nowrap; } }
+@media (max-width: 430px) { .brand { font-size: .9rem; } .brand-mark { width: 27px; height: 33px; } .header-actions .button { padding-inline: .7rem; font-size: .76rem; } .display { font-size: 2.3rem; } .topic-grid, .cards-grid { grid-template-columns: 1fr 1fr; } .ritual-steps { grid-template-columns: 1fr; } .site-footer { grid-template-columns: 1fr; } .reveal { grid-template-columns: 90px 1fr; } .dock-toggle .label-long { display: none; } }
 /* ---- negozio, carrello, carte di un mazzo, icone della testata (v8.5) ------------------------------------------ */
 .dialog-wide { width: min(1080px, 100%); }
 .deck-gallery-jump { position: sticky; top: calc(-1 * clamp(1.25rem, 4vw, 2rem)); z-index: 1; margin: .75rem 0 1rem; padding: .5rem 0; background: var(--paper-light); }
@@ -771,7 +800,9 @@ p, li, .section-intro, .lede, .faq-item p, .message { text-wrap: pretty; }
 @media (max-width: 760px) {
   .site-header { display: flex; flex-wrap: nowrap; align-items: center; gap: 0; min-height: 56px; padding-block: 4px; padding-top: max(4px, env(safe-area-inset-top)); padding-left: max(4px, env(safe-area-inset-left)); padding-right: max(4px, env(safe-area-inset-right)); }
   .site-header .brand { flex: none; gap: .4rem; margin-right: 2px; }
-  .primary-nav { display: flex; flex: 6 1 0; justify-content: space-between; gap: 0; min-width: 0; margin: 0; overflow: visible; }
+  /* Mai più stretto delle sue voci (9/10): con le etichette lunghe (ungherese) la sua parte non basta, e le ultime
+   * voci finivano sopra il carrello. */
+  .primary-nav { display: flex; flex: 6 1 0; justify-content: space-between; gap: 0; min-width: min-content; margin: 0; overflow: visible; }
   .primary-nav .nav-leggi { display: none; }
   .primary-nav a.nav-voce { flex: 1 1 0; flex-direction: column; justify-content: center; gap: .15rem; min-width: min-content; min-height: 44px; padding: 2px 1px; white-space: normal; }
   .primary-nav .nav-lungo { display: none; }
@@ -782,11 +813,30 @@ p, li, .section-intro, .lede, .faq-item p, .message { text-wrap: pretty; }
   .header-actions .hdr-icon { flex: 1 1 0; min-width: min-content; min-height: 44px; padding: 2px 1px; white-space: normal; }
   .header-actions .hdr-icon svg { width: 20px; height: 20px; }
   .header-actions .hdr-icon .hdr-label { white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 8px; letter-spacing: 0; text-align: center; word-break: keep-all; }
+  /* La scatola a righe contate non dichiara la sua larghezza minima: senza questa, una voce stretta lasciava la sua
+   * etichetta sopra quella accanto. Così ogni voce è larga almeno quanto la riga più lunga della sua etichetta. */
+  .primary-nav .nav-breve, .header-actions .hdr-icon .hdr-label { min-width: max-content; }
   .site-header .brand-mark { width: 22px; height: 27px; font-size: .8rem; }
   .header-actions .hdr-badge { top: 0; right: -2px; min-width: 15px; height: 15px; padding: 0 3px; font-size: .58rem; line-height: 15px; }
   .header-actions .button-small { flex: none; width: min-content; max-width: none; min-height: 44px; margin-left: 2px; padding: 2px 3px; border-width: 1px; font-size: .64rem; line-height: 1.08; white-space: normal; text-align: center; }
+  /* La lingua, ultima: come le altre voci, il segno sopra (il codice, in ottone) e sotto la freccina al posto
+   * dell'etichetta; alta 44 px, larga quanto il codice (in ungherese a 360 px la riga non ha un pixel in più). */
+  .header-actions .lang-menu { margin-left: 1px; }
+  .header-actions .lang-code { flex-direction: column; gap: 1px; min-width: 26px; padding: 0 2px; border-color: transparent; color: var(--brass-pale); font-size: .74rem; letter-spacing: 0; }
+  .header-actions .lang-code::after { font-size: .55rem; line-height: 1; }
+  .header-actions .lang-code[aria-expanded="true"] { border-color: rgba(214,182,109,.55); }
 }
 @media (max-width: 560px) { .site-header .brand-name { display: none; } }
+/* Fino a 374 px i pochi pixel fra marchio, «Inizia» e lingua tornano alle voci (l'ungherese a 360 px ne ha bisogno). */
+@media (max-width: 374px) {
+  .site-header .brand { margin-right: 0; }
+  .header-actions .button-small, .header-actions .lang-menu { margin-left: 0; }
+  /* Con il codice della lingua in fondo alla riga (9/10) servono pochi pixel: etichette a 7,5 px, l'ungherese (le
+   * parole più lunghe: «Felfedezés», «Történetem», «Kreditek») a 7 px, «Inizia» appena più piccolo. */
+  .primary-nav .nav-breve, .header-actions .hdr-icon .hdr-label { font-size: 7.5px; }
+  html[lang="hu"] .primary-nav .nav-breve, html[lang="hu"] .header-actions .hdr-icon .hdr-label { font-size: 7px; }
+  .header-actions .button-small { font-size: .6rem; }
+}
 
 /* ---- l'unione con un account mai verificato (unione-account.tsx) ---------------------------------------------- */
 .unione { display: grid; gap: .8rem; }
@@ -814,8 +864,13 @@ p, li, .section-intro, .lede, .faq-item p, .message { text-wrap: pretty; }
 @media (min-width: 761px) { .pubblicita-auto .adsbygoogle, .pubblicita-rectangle .adsbygoogle { min-height: 250px; } }
 /* La griglia della biblioteca tagliata in terzi: fra una parte e l'altra lo stesso passo che fra le righe. */
 .cards-grid + .cards-grid { margin-top: .5rem; }
-/* Sotto i 340 px (telefoni molto vecchi) le etichette a 7 px: a 8 px ungherese, russo e spagnolo non stanno in riga. */
-@media (max-width: 339px) { .primary-nav .nav-breve, .header-actions .hdr-icon .hdr-label { font-size: 7px; } .header-actions .button-small { font-size: .6rem; } }
+/* Sotto i 360 px (telefoni molto vecchi) le etichette a 7 px: a 8 px ungherese, russo e spagnolo non stanno in riga
+ * (dal 9/10, con il codice della lingua in fondo, già sotto i 360 invece che sotto i 340). */
+@media (max-width: 359px) { .primary-nav .nav-breve, .header-actions .hdr-icon .hdr-label { font-size: 7px; } .header-actions .button-small { font-size: .6rem; } }
+/* Sotto i 356 px la riga non ha posto per il codice della lingua (l'ungherese chiede 352 px): resta quello del piede, e
+ * la scelta si fa anche nel dialogo della prima visita. Le etichette tornano libere di stringersi, mai lo scorrimento
+ * orizzontale. */
+@media (max-width: 355px) { .site-header .lang-menu { display: none; } .primary-nav .nav-breve, .header-actions .hdr-icon .hdr-label { min-width: 0; } }
 
 /* ---- GDPR, Fase 1: il banner a categorie, i consensi, l'informativa, l'eliminazione dell'account ------------------- */
 /* Il banner: sul telefono un foglio in basso a tutta larghezza (sopra la barra dell'oracolo e la safe area), con le

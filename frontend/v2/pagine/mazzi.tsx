@@ -18,6 +18,7 @@ import { useLingua } from "@/v2/lib/lingua";
 import { R, indirizzoV2 } from "@/v2/lib/percorsi";
 import { useCarica } from "@/v2/lib/usa";
 import { useTraduzione } from "@/v2/lib/usa-traduzione";
+import { useLinguaTraduzione } from "@/v2/lib/lingua-traduzione";
 import { P, useMazzi } from "@/v2/lib/dati";
 
 /* Le immagini di un mazzo: il predefinito (Thoth) nella cartella piatta, gli altri nella propria. */
@@ -71,13 +72,14 @@ export function Mazzi() {
 }
 
 export function SchedaMazzo({ slug }: { slug: string }) {
-  const { t, lingua } = useLingua();
+  const { t } = useLingua();
   const k = t.mazzi;
   const mazzi = useMazzi();
   /* v9.5: la descrizione di un mazzo è scritta in una lingua sola: si traduce sul dispositivo nella lingua del sito
    * (la lingua di partenza la riconosce il browser). Quella del Thoth è un testo del sito, già tradotto. */
   const intro = useRef<HTMLParagraphElement>(null);
-  const traduzione = useTraduzione([intro], lingua, { chiave: mazzi.dati ? slug : undefined });
+  const linguaTraduzione = useLinguaTraduzione().lingua;
+  const traduzione = useTraduzione([intro], linguaTraduzione, { chiave: mazzi.dati ? slug : undefined });
   if (mazzi.errore) return <section className="band band-tight"><p className="error">{mazzi.errore}</p></section>;
   if (!mazzi.dati) return <section className="band band-tight"><p className="muted">{t.comune.carica}</p></section>;
   const m = mazzi.dati.find((x) => x.slug === slug);

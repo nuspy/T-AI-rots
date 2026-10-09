@@ -671,6 +671,9 @@ export interface PassoIntervista {
   poste?: number;
   min_domande?: number;
   max_domande?: number;
+  /** La lingua della lettura dopo questo passo: cambia se chi consulta scrive un messaggio intero in un'altra
+   *  lingua. Il client la segue (nomi di carte e stese, passi dopo). */
+  lang?: string;
 }
 
 /* `basta` (v8.5): chiude l'intervista dopo il minimo di domande e passa alle carte. */
@@ -690,9 +693,10 @@ export const rispondi = (
   });
 
 /* v9.5: «vuoi aggiungere qualcosa?» dopo l'ultima domanda, prima delle carte. Con un segnale di crisi il server
- * ferma la lettura e risponde come l'intervista (`crisi`, `messaggio`). */
+ * ferma la lettura e risponde come l'intervista (`crisi`, `messaggio`). Con una domanda in attesa il server la segna
+ * come saltata, poi aggiunge il testo. `lang`: la lingua della lettura, come nell'intervista. */
 export const aggiungiAllIntervista = (token: string | null, id: string, testo: string) =>
-  chiama<{ aggiunto?: boolean; crisi?: boolean; messaggio?: string }>(token, `/readings/${id}/addition`, {
+  chiama<{ aggiunto?: boolean; crisi?: boolean; messaggio?: string; lang?: string }>(token, `/readings/${id}/addition`, {
     method: "POST",
     body: { testo },
   });
@@ -763,7 +767,9 @@ export const urlImmagineCondivisa = (linkToken: string) =>
 
 /* `posizione` su token, sostituisci ed errore c'è solo nello svelamento di tutte le carte (`rivelaTutte`): lì un
  * flusso porta i testi di più carte. `fase` (`lettura`: il lettore sta leggendo le carte) e `battito` arrivano mentre
- * la chiamata unica lavora. */
+ * la chiamata unica lavora. I `token` arrivano mentre il modello scrive, anche alternati fra più posizioni: si
+ * accodano posizione per posizione; `sostituisci` prende il posto del testo di quella carta ("" lo cancella, e i token
+ * ricominciano); `fine` porta il testo definitivo. */
 export type EventoRivelazione =
   | { tipo: "carta"; posizione: number; carta: Carta; rovescio: boolean; calcolata: boolean; doppia_valenza: boolean; dignita: Dignita | null }
   | { tipo: "token"; testo: string; posizione?: number }
@@ -773,10 +779,15 @@ export type EventoRivelazione =
   | { tipo: "battito" }
   | { tipo: "fine"; posizione: number; interpretazione: string; ultima: boolean };
 
+/* Chi ha un account: `fase` `unione` → `token` in diretta → `fase` `guardia` (il testo resta) → forse `revisione` e
+ * `sostituisci` (tutto il testo al posto di quello visto; "" lo cancella) → `fase` `responso` → forse altri `token` →
+ * `fine`. Un `errore` dopo un testo già mostrato arriva dopo un `sostituisci` "". Chi non ha un account riceve i
+ * token solo dopo `fase` `responso` (l'anteprima). */
 export type EventoSintesi =
   | { tipo: "fase"; fase: string; guardia?: string }
   | { tipo: "battito" }
   | { tipo: "token"; testo: string }
+  | { tipo: "sostituisci"; testo: string }
   | { tipo: "errore"; messaggio: string }
   | {
       tipo: "fine";

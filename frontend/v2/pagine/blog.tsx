@@ -30,6 +30,7 @@ import { useLingua } from "@/v2/lib/lingua";
 import { R, indirizzoV2 } from "@/v2/lib/percorsi";
 import { useCarica, usePubblico } from "@/v2/lib/usa";
 import { useTraduzione } from "@/v2/lib/usa-traduzione";
+import { useLinguaTraduzione } from "@/v2/lib/lingua-traduzione";
 import { AvvisoTraduzione } from "@/v2/componenti/avviso-traduzione";
 import { nomeDi } from "./carte";
 
@@ -610,7 +611,7 @@ function forme(id: string, slugs: Record<string, string>) {
 }
 
 export function ArticoloDiario({ slug }: { slug: string }) {
-  const { t, locale, lingua } = useLingua();
+  const { t, locale } = useLingua();
   const b = t.blog;
   const a = useCarica(() => articolo(slug), [slug], { pubblico: true, iniziale: P.articolo(slug) });
   const [copiato, setCopiato] = useState(false);
@@ -620,7 +621,8 @@ export function ArticoloDiario({ slug }: { slug: string }) {
    * si traducono nella lingua del sito (`AvvisoTraduzione` lo dice e offre l'originale). */
   const testa = useRef<HTMLDivElement>(null);
   const corpo = useRef<HTMLDivElement>(null);
-  const traduzione = useTraduzione([testa, corpo], lingua, {
+  const linguaTraduzione = useLinguaTraduzione().lingua;
+  const traduzione = useTraduzione([testa, corpo], linguaTraduzione, {
     sorgente: a.dati?.lang ?? null,
     chiave: a.dati ? `${a.dati.slug}:${a.dati.aggiornato_il ?? a.dati.pubblicato_il ?? ""}` : undefined,
   });

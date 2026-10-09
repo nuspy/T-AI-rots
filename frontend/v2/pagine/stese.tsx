@@ -21,6 +21,7 @@ import { useLingua } from "@/v2/lib/lingua";
 import { R } from "@/v2/lib/percorsi";
 import { useCarica } from "@/v2/lib/usa";
 import { useTraduzione } from "@/v2/lib/usa-traduzione";
+import { useLinguaTraduzione } from "@/v2/lib/lingua-traduzione";
 import { ArticoliSu, DiarioNove } from "./blog";
 
 const ORDINE_STILI: Stile[] = ["tradizionale", "moderna", "tendenza"];
@@ -101,7 +102,8 @@ export function SchedaStesa({ id }: { id: string }) {
   const intro = useRef<HTMLParagraphElement>(null);
   const posizioni = useRef<HTMLOListElement>(null);
   const testo = useRef<HTMLDivElement>(null);
-  const traduzione = useTraduzione([intro, posizioni, testo], lingua, {
+  const linguaTraduzione = useLinguaTraduzione().lingua;
+  const traduzione = useTraduzione([intro, posizioni, testo], linguaTraduzione, {
     sorgente: linguaContenuti(lingua), chiave: stese.dati ? id : undefined,
   });
   if (stese.errore) return <section className="band band-tight"><p className="error">{stese.errore}</p></section>;
