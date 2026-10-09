@@ -15,7 +15,14 @@ import 'package:tarots/auth/sessione.dart';
 /// Una risposta finta.
 class RispostaFinta {
   /// Uno stato, un corpo (testo o pezzi di byte per lo streaming) e le intestazioni.
-  RispostaFinta(this.stato, {this.corpo = '', this.pezzi, this.intestazioni = const {}, this.ritardo = Duration.zero});
+  RispostaFinta(
+    this.stato, {
+    this.corpo = '',
+    this.pezzi,
+    this.flusso,
+    this.intestazioni = const {},
+    this.ritardo = Duration.zero,
+  });
 
   /// Dal JSON di un file di `test/fixtures/`.
   factory RispostaFinta.fixture(String nome, {int stato = 200}) =>
@@ -37,6 +44,9 @@ class RispostaFinta {
 
   /// Il corpo a pezzi (streaming SSE): se c'è, vince su [corpo].
   final List<List<int>>? pezzi;
+
+  /// Il corpo come flusso guidato dal test (un pezzo alla volta, quando il test lo decide): vince su tutto.
+  final Stream<List<int>>? flusso;
 
   /// Le intestazioni.
   final Map<String, List<String>> intestazioni;
@@ -72,6 +82,9 @@ class AdattatoreFinto implements HttpClientAdapter {
       return ResponseBody.fromString('{"detail":"Not Found"}', 404, headers: RispostaFinta._json);
     }
     final risposta = f(r);
+    if (risposta.flusso != null) {
+      return ResponseBody(risposta.flusso!.map(Uint8List.fromList), risposta.stato, headers: risposta.intestazioni);
+    }
     if (risposta.pezzi != null) {
       final controllore = StreamController<Uint8List>();
       unawaited(

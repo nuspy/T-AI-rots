@@ -51,16 +51,16 @@ class Battuta {
 }
 
 /// Un pulsante sotto il campo dell'intervista: manda il testo scritto e dice cosa viene dopo («Invia, basta con le
-/// domande», «Invia e fammi un'altra domanda», «Invia e voglio dire una cosa»). Con il campo vuoto vale
-/// [etichettaVuoto] (senza «Invia»); se manca, il pulsante aspetta che si scriva qualcosa.
+/// domande», «Invia e fammi un'altra domanda», «Invia e voglio dire una cosa»). Si tocca sempre, anche a campo vuoto
+/// (9/10/2026): allora vale [etichettaVuoto], che dice cosa succede senza testo («Saltiamo, basta con le domande»…).
 @immutable
 class InvioDialogo {
   /// Un invio.
   const InvioDialogo({
     required this.chiave,
     required this.etichetta,
+    required this.etichettaVuoto,
     required this.alInvio,
-    this.etichettaVuoto,
     this.primaria = false,
   });
 
@@ -70,13 +70,13 @@ class InvioDialogo {
   /// Il testo, con qualcosa scritto nel campo.
   final String etichetta;
 
-  /// Il testo a campo vuoto; null = il pulsante aspetta che si scriva.
-  final String? etichettaVuoto;
+  /// Il testo a campo vuoto.
+  final String etichettaVuoto;
 
   /// Cosa fa, col testo scritto (vuoto se non si è scritto nulla).
   final ValueChanged<String> alInvio;
 
-  /// Il pulsante principale (ottone).
+  /// Quello di Ctrl+Invio (i tre hanno lo stesso aspetto e lo stesso peso).
   final bool primaria;
 }
 
@@ -126,6 +126,7 @@ class _DialogoState extends State<Dialogo> {
   final TextEditingController _testo = TextEditingController();
   final Map<String, GlobalKey> _chiavi = {};
   final GlobalKey _chiaveScelte = GlobalKey(debugLabel: 'scelte');
+  final GlobalKey<_RispostaState> _campo = GlobalKey(debugLabel: 'risposta');
   String? _ultima;
 
   @override
@@ -168,7 +169,13 @@ class _DialogoState extends State<Dialogo> {
     if (!widget.fluido && widget.attesa && !vecchio.attesa) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _inFondo());
     }
+    // Si è appena scelto di dire qualcosa di libero: il campo prende il fuoco.
+    if (widget.libero && !vecchio.libero) _fuocoAlCampo();
   }
+
+  void _fuocoAlCampo() => WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) _campo.currentState?.prendiFuoco();
+  });
 
   @override
   void dispose() {
@@ -205,13 +212,15 @@ class _DialogoState extends State<Dialogo> {
 
   String get _pulito => _testo.text.trim();
 
-  bool _usabile(InvioDialogo i) => !widget.attesa && (_pulito.isNotEmpty || i.etichettaVuoto != null);
+  bool _usabile(InvioDialogo i) => !widget.attesa;
 
   void _invia(InvioDialogo? i) {
     if (i == null || !_usabile(i)) return;
     final pulito = _pulito;
     _testo.clear();
     i.alInvio(pulito);
+    // «Voglio dire una cosa» a campo vuoto: si scrive, il campo prende il fuoco.
+    if (pulito.isEmpty && i.chiave == 'dire') _fuocoAlCampo();
   }
 
   /// Ctrl+Invio: il pulsante principale, se si può usare; altrimenti il primo che si può usare.
@@ -263,21 +272,27 @@ class _DialogoState extends State<Dialogo> {
 
     final segnaposto = widget.libero ? t.lettura_libero_segnaposto : t.lettura_risposta_segnaposto;
     final campo = _Risposta(
+      key: _campo,
       controllore: _testo,
       segnaposto: segnaposto,
       attivo: !widget.attesa,
       fuocoSubito: widget.libero,
     );
-    // I tre invii, sempre visibili sotto il campo: ognuno manda il testo e dice cosa viene dopo. Sul telefono uno
-    // per riga, larghi quanto il campo; più largo affiancati.
+    // I tre invii, sempre visibili sotto il campo: ognuno manda il testo e dice cosa viene dopo. Stesso colore e stesso
+    // peso per tutti (prugna pieno, testo chiaro: contrasto oltre 12:1), alti almeno 48 px; si toccano sempre, e a
+    // campo vuoto l'etichetta dice cosa succede senza testo. Sul telefono uno per riga, larghi quanto il campo; più
+    // largo affiancati.
     final bottoni = [
       for (final i in widget.invii)
-        Bottone(
-          _pulito.isEmpty && i.etichettaVuoto != null ? i.etichettaVuoto! : i.etichetta,
-          variante: i.primaria ? Variante.ottone : Variante.quieto,
-          pieno: stretto,
-          an: 'intervista_${i.chiave}',
-          alTocco: _usabile(i) ? () => _invia(i) : null,
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Bottone(
+            _pulito.isEmpty ? i.etichettaVuoto : i.etichetta,
+            variante: Variante.prugna,
+            pieno: stretto,
+            an: 'intervista_${i.chiave}',
+            alTocco: _usabile(i) ? () => _invia(i) : null,
+          ),
         ),
     ];
     final invii = Semantics(
@@ -461,6 +476,7 @@ class _VoceBattutaState extends State<_VoceBattuta> with SingleTickerProviderSta
 /// `.risposta textarea`: il campo della risposta (alto almeno 52 px, due righe, cresce col testo).
 class _Risposta extends StatefulWidget {
   const _Risposta({
+    super.key,
     required this.controllore,
     required this.segnaposto,
     required this.attivo,
@@ -494,6 +510,9 @@ class _RispostaState extends State<_Risposta> {
     _fuoco.dispose();
     super.dispose();
   }
+
+  /// Il fuoco e la tastiera, chiesti dal dialogo.
+  void prendiFuoco() => mostraTastiera(_fuoco, _campo);
 
   @override
   Widget build(BuildContext context) {

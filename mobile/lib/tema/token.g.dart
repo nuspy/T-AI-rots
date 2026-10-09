@@ -75,7 +75,7 @@ abstract final class Token {
   static const MisuraFluida gutter = MisuraFluida(minimo: 12.8, vw: 4.0, massimo: 57.6);
 
   /// I punti di rottura del CSS (`@media (max-width: Npx)`), dal più stretto.
-  static const List<double> puntiDiRottura = [339.0, 430.0, 480.0, 560.0, 760.0, 1000.0, 1100.0];
+  static const List<double> puntiDiRottura = [355.0, 359.0, 374.0, 430.0, 480.0, 560.0, 760.0, 1000.0, 1100.0];
 
   /// `.button { border-radius: 3px }`
   static const double raggio = 3.0;
@@ -113,7 +113,7 @@ abstract final class Token {
   /// `@media (max-width: 760px) .primary-nav .nav-breve { font-size: 8px }`
   static const double etichettaTestataTelefono = 8.0;
 
-  /// `@media (max-width: 339px) .primary-nav .nav-breve { font-size: 7px }`
+  /// `@media (max-width: 359px) .primary-nav .nav-breve { font-size: 7px }`
   static const double etichettaTestataStretta = 7.0;
 
   /// `@media (max-width: 760px) .primary-nav .nav-icona { width: 20px }`

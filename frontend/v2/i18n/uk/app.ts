@@ -71,4 +71,9 @@ export const app: typeof Base = {
   lingua_errore: "Завантажити не вдалося (чи є інтернет?). Поки що матеріали лишаються англійською: спробуємо знову, коли ти їх відкриєш.",
   lingua_voce: "Мова читання: {lingua}",
   lingua_cambia: "Змінити",
+  /* 9/10/2026: la lingua dell'app alla prima apertura, e la proposta di passare alla lingua in cui si scrive */
+  lingua_app_titolo: "Оберіть мову",
+  lingua_app_accetta: "Прийняти",
+  lingua_offerta: "Ви пишете українською. Перемкнути застосунок на українську?",
+  lingua_offerta_passa: "Перемкнути",
 };

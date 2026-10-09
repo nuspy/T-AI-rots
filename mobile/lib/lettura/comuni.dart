@@ -147,7 +147,10 @@ class _RenderColonne extends RenderBox
     i = 0;
     figlio = firstChild;
     while (figlio != null) {
-      figlio.layout(BoxConstraints.tight(Size(larghezze[i], h)), parentUsesSize: true);
+      // Alta almeno quanto la più alta, non esattamente: con vincoli stretti la colonna diventerebbe un confine di
+      // ridisposizione, e un figlio che cresce dopo (il bordo del campo col fuoco, 1 → 2 px) traboccherebbe invece di
+      // far ridisporre le due colonne insieme.
+      figlio.layout(BoxConstraints(minWidth: larghezze[i], maxWidth: larghezze[i], minHeight: h), parentUsesSize: true);
       (figlio.parentData! as _DatiColonna).offset = Offset(x, 0);
       x += larghezze[i] + 1;
       figlio = childAfter(figlio);

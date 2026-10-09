@@ -21,6 +21,10 @@ abstract final class Icone {
 
   /// Entra.
   static const String entra = 'M10 17l5-5-5-5M15 12H3M14 4h5a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-5';
+
+  /// La lingua (un globo: sulla testata del telefono, sopra il codice «IT»).
+  static const String lingua =
+      'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM3.5 9h17M3.5 15h17M12 3c-2.4 2.5-3.6 5.5-3.6 9s1.2 6.5 3.6 9M12 3c2.4 2.5 3.6 5.5 3.6 9s-1.2 6.5-3.6 9';
 }
 
 /// Le sezioni del menu.

@@ -3,6 +3,8 @@
 /// tocco sullo sfondo chiudono, come Esc e il clic fuori nel sito; il fuoco entra nel dialogo (è una rotta).
 library;
 
+import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/widgets.dart';
@@ -19,6 +21,7 @@ Future<T?> apriModale<T>(
   bool scura = false,
   bool larga = false,
   bool chiudibile = true,
+  bool scorre = true,
 }) {
   return showGeneralDialog<T>(
     context: context,
@@ -30,6 +33,7 @@ Future<T?> apriModale<T>(
       titolo: titolo,
       scura: scura,
       larga: larga,
+      scorre: scorre,
       alChiudi: chiudibile ? () => Navigator.of(context).pop() : null,
       child: Builder(builder: costruisci),
     ),
@@ -47,6 +51,7 @@ class FinestraModale extends StatelessWidget {
     this.alChiudi,
     this.scura = false,
     this.larga = false,
+    this.scorre = true,
   });
 
   /// Il titolo (`<h2>`).
@@ -64,6 +69,11 @@ class FinestraModale extends StatelessWidget {
   /// Quasi tutta la larghezza (`.dialog-wide`).
   final bool larga;
 
+  /// Falso: il dialogo non scorre tutto insieme; il titolo resta fermo e il contenuto prende lo spazio che resta (alto
+  /// al massimo quanto lo schermo), così un elenco può scorrere nel suo riquadro e il pulsante sotto restare sempre in
+  /// vista. Il contenuto mette in un `Flexible` la parte che scorre.
+  final bool scorre;
+
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
@@ -72,6 +82,16 @@ class FinestraModale extends StatelessWidget {
     final titoloColore = scura ? Token.brassPale : Token.ink;
     final chiudiColore = scura ? const Color(0xFFFFF7E8) : Token.inkSoft;
     final imbottitura = w.clampVw(20, 4, 32);
+    final titoloWidget = Padding(
+      padding: const EdgeInsets.only(right: 40, bottom: 16),
+      child: Semantics(
+        header: true,
+        child: Text(titolo, style: Stile.serif(24, altezza: 1.25, colore: titoloColore)),
+      ),
+    );
+    final stileTesto = Stile.corpo.copyWith(color: scura ? const Color(0xFFF6ECDD) : Token.ink);
+    // Le zone sicure: la tacca e i bordi curvi ai lati, la barra dei gesti e la tastiera in basso.
+    final sotto = math.max(media.padding.bottom, media.viewInsets.bottom);
     return Stack(
       children: [
         // `.dialog-backdrop { background: rgba(32,16,38,.62); backdrop-filter: blur(3px) }`
@@ -86,10 +106,10 @@ class FinestraModale extends StatelessWidget {
         ),
         Padding(
           padding: EdgeInsets.fromLTRB(
-            16,
+            math.max(16, media.padding.left),
             16 + media.padding.top,
-            16,
-            media.padding.bottom > 16 ? media.padding.bottom : 16,
+            math.max(16, media.padding.right),
+            sotto > 16 ? sotto : 16,
           ),
           child: Center(
             child: ConstrainedBox(
@@ -104,26 +124,33 @@ class FinestraModale extends StatelessWidget {
                 ),
                 child: Stack(
                   children: [
-                    SingleChildScrollView(
-                      padding: EdgeInsets.all(imbottitura),
-                      child: DefaultTextStyle.merge(
-                        style: Stile.corpo.copyWith(color: scura ? const Color(0xFFF6ECDD) : Token.ink),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(right: 40, bottom: 16),
-                              child: Semantics(
-                                header: true,
-                                child: Text(titolo, style: Stile.serif(24, altezza: 1.25, colore: titoloColore)),
-                              ),
-                            ),
-                            child,
-                          ],
+                    if (scorre)
+                      SingleChildScrollView(
+                        padding: EdgeInsets.all(imbottitura),
+                        child: DefaultTextStyle.merge(
+                          style: stileTesto,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [titoloWidget, child],
+                          ),
+                        ),
+                      )
+                    else
+                      Padding(
+                        padding: EdgeInsets.all(imbottitura),
+                        child: DefaultTextStyle.merge(
+                          style: stileTesto,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              titoloWidget,
+                              Flexible(child: child),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
                     if (alChiudi != null)
                       Positioned(
                         top: 8,
@@ -149,4 +176,85 @@ class FinestraModale extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Un elenco da cui scegliere, per i dialoghi che non scorrono (`scorre: false`): sopra le parti ferme ([sopra]: un
+/// testo, la ricerca), poi le [voci] in un riquadro bordato che scorre da sé, e sotto i [comandi], sempre in vista. Al
+/// primo disegno la voce con la chiave [selezionata] si porta in vista dentro il riquadro.
+class RiquadroElenco extends StatefulWidget {
+  /// Un elenco nel suo riquadro.
+  const RiquadroElenco({
+    super.key,
+    required this.voci,
+    required this.comandi,
+    this.sopra = const [],
+    this.selezionata,
+    this.etichetta,
+  });
+
+  /// Le voci (una sotto l'altra).
+  final List<Widget> voci;
+
+  /// Sotto il riquadro: il pulsante (o l'attesa, o l'errore).
+  final Widget comandi;
+
+  /// Sopra il riquadro.
+  final List<Widget> sopra;
+
+  /// La chiave della voce scelta, da portare in vista.
+  final GlobalKey? selezionata;
+
+  /// Il nome dell'elenco per i lettori di schermo.
+  final String? etichetta;
+
+  @override
+  State<RiquadroElenco> createState() => _RiquadroElencoState();
+}
+
+class _RiquadroElencoState extends State<RiquadroElenco> {
+  final ScrollController _scorri = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = widget.selezionata?.currentContext;
+      if (!mounted || ctx == null) return;
+      unawaited(Scrollable.ensureVisible(ctx, alignment: .3));
+    });
+  }
+
+  @override
+  void dispose() {
+    _scorri.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      ...widget.sopra,
+      Flexible(
+        child: Semantics(
+          container: true,
+          label: widget.etichetta,
+          child: DecoratedBox(
+            decoration: BoxDecoration(border: Border.all(color: Token.line)),
+            child: RawScrollbar(
+              controller: _scorri,
+              thumbVisibility: true,
+              thickness: 4,
+              radius: const Radius.circular(2),
+              thumbColor: Token.brass,
+              child: ListView(controller: _scorri, shrinkWrap: true, padding: EdgeInsets.zero, children: widget.voci),
+            ),
+          ),
+        ),
+      ),
+      const SizedBox(height: 16),
+      widget.comandi,
+    ],
+  );
 }

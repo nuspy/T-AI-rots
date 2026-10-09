@@ -26,7 +26,8 @@ import 'tavolo.dart';
 
 /// Le carte svelate (v8.5): una per una, con la loro spiegazione, prima dell'interpretazione dell'insieme. Mentre le
 /// carte si girano la spiegazione arriva in streaming; la carta in arrivo ha il cursore. Dalla v8.6 le carte si
-/// girano tutte insieme e il lettore le legge con una chiamata sola: mentre legge, un solo avviso d'attesa per tutte.
+/// girano tutte insieme e il lettore le legge con una chiamata sola: mentre legge, un solo avviso d'attesa per tutte,
+/// che sparisce al primo pezzo di testo (dal 9/10/2026 il testo di ogni carta arriva in diretta, [inScrittura]).
 class CarteSvelate extends ConsumerWidget {
   /// Le carte [posate] della [stesa]; [attiva] mentre si girano; [lettoreLegge] mentre il lettore le legge.
   const CarteSvelate({
@@ -35,6 +36,9 @@ class CarteSvelate extends ConsumerWidget {
     required this.posate,
     required this.attiva,
     this.lettoreLegge = false,
+    this.inScrittura,
+    this.chiaveBordo,
+    this.posizioneBordo,
   });
 
   /// La stesa.
@@ -49,6 +53,16 @@ class CarteSvelate extends ConsumerWidget {
   /// Le carte sono girate e il lettore le sta leggendo tutte insieme: un solo avviso, nessun cursore.
   final bool lettoreLegge;
 
+  /// La posizione della carta il cui testo sta arrivando: ha il cursore.
+  final int? inScrittura;
+
+  /// Una chiave per la fine dell'ultima carta che ha ricevuto testo, [posizioneBordo] (la pagina della chat ne segue il
+  /// bordo; resta lì anche a carta finita, finché non comincia la successiva).
+  final GlobalKey? chiaveBordo;
+
+  /// La posizione della carta che porta [chiaveBordo].
+  final int? posizioneBordo;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = context.t;
@@ -56,8 +70,10 @@ class CarteSvelate extends ConsumerWidget {
     final rivelate = [...posate.where((p) => p.rivelata && p.carta != null)]
       ..sort((a, b) => a.posizione.compareTo(b.posizione));
     if (rivelate.isEmpty) return const SizedBox.shrink();
-    // Il cursore sta sulla prima carta ancora senza spiegazione (quella che sta arrivando), o sull'ultima.
-    final inArrivo = rivelate.where((p) => (p.interpretazione ?? '').isEmpty).firstOrNull ?? rivelate.last;
+    // Il cursore sta sulla carta che riceve il testo; prima del primo pezzo, sulla prima ancora senza spiegazione.
+    final inArrivo =
+        rivelate.where((p) => p.posizione == inScrittura).firstOrNull ??
+        rivelate.where((p) => (p.interpretazione ?? '').isEmpty).firstOrNull;
     final testo = Stile.sans(15.2, altezza: 1.55, colore: Token.inkSoft);
     return Semantics(
       liveRegion: true,
@@ -143,6 +159,9 @@ class CarteSvelate extends ConsumerWidget {
                             ),
                             style: testo,
                           ),
+                          // La fine del testo che cresce: il segno che la pagina della chat tiene in vista.
+                          if (chiaveBordo != null && p.posizione == posizioneBordo)
+                            SizedBox(key: chiaveBordo, height: 0),
                         ],
                       ),
                     ),
@@ -239,6 +258,39 @@ class _FaseResponsoState extends State<FaseResponso> with SingleTickerProviderSt
   }
 }
 
+/// Il responso è già tutto scritto e la guardia lo rilegge (o lo rivede): una riga discreta sotto il testo, che resta
+/// com'è (9/10/2026). Se la guardia lo riscrive, arriva `sostituisci`.
+class NotaFaseResponso extends StatelessWidget {
+  /// La nota della [fase] (`guardia` o `revisione`).
+  const NotaFaseResponso({super.key, required this.fase});
+
+  /// La fase.
+  final String fase;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.t;
+    return Semantics(
+      liveRegion: true,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 12.8),
+        child: Row(
+          children: [
+            const ExcludeSemantics(child: Puntini(colore: Token.brass)),
+            const SizedBox(width: 9.6),
+            Expanded(
+              child: Text(
+                fase == 'revisione' ? t.lettura_fasi_revisione : t.lettura_fasi_guardia,
+                style: Stile.serif(14.4, altezza: 1.5, stile: FontStyle.italic, colore: Token.inkSoft),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Il sigillo: due cerchi (ottone e verderame tratteggiato) e la stella di due triangoli prugna, su 100×100.
 class _Sigillo extends CustomPainter {
   const _Sigillo();
@@ -288,8 +340,12 @@ class _Sigillo extends CustomPainter {
 /// Il Markdown minimo del responso (`Markdown` di `frontend/lib/markdown.tsx`): blocchi separati da righe vuote, `##`
 /// e `#` titoli, `-`/`*` elenchi, `**grassetto**` e `*corsivo*`; nient'altro (il testo viene dal modello).
 class MarkdownResponso extends StatelessWidget {
-  /// Il [testo] nello stile [stile] (`.testo`: serif 1.04rem/1.75), coi titoli [stileTitolo].
-  const MarkdownResponso(this.testo, {super.key, required this.stile, required this.stileTitolo});
+  /// Il [testo] nello stile [stile] (`.testo`: serif 1.04rem/1.75), coi titoli [stileTitolo]; con [cursore] il testo
+  /// sta arrivando e finisce col cursore.
+  const MarkdownResponso(this.testo, {super.key, required this.stile, required this.stileTitolo, this.cursore = false});
+
+  /// Il testo sta arrivando: il cursore in fondo all'ultimo blocco.
+  final bool cursore;
 
   /// Il testo.
   final String testo;
@@ -333,9 +389,14 @@ class MarkdownResponso extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final blocchi = <Widget>[];
-    for (final grezzo in testo.split(RegExp(r'\n{2,}'))) {
-      final righe = grezzo.trim();
-      if (righe.isEmpty) continue;
+    final grezzi = [
+      for (final g in testo.split(RegExp(r'\n{2,}')))
+        if (g.trim().isNotEmpty) g.trim(),
+    ];
+    for (final (i, righe) in grezzi.indexed) {
+      // Il cursore va in coda all'ultimo testo (un titolo da solo resta senza).
+      final ultimo = cursore && i == grezzi.length - 1;
+      List<InlineSpan> conCursore(String s) => [..._inline(s), if (ultimo) spanCursore(stile)];
       if (righe.startsWith('## ') || righe.startsWith('# ')) {
         final tutte = righe.split('\n');
         final titolo = tutte.first.replaceFirst(RegExp(r'^#{1,2} '), '');
@@ -349,25 +410,30 @@ class MarkdownResponso extends StatelessWidget {
           blocchi.add(
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
-              child: Text.rich(TextSpan(children: _inline(tutte.skip(1).join(' '))), style: stile),
+              child: Text.rich(TextSpan(children: conCursore(tutte.skip(1).join(' '))), style: stile),
             ),
           );
         }
       } else if (RegExp(r'^[-*] ').hasMatch(righe)) {
+        final voci = righe.split('\n');
         blocchi.add(
           Padding(
             padding: const EdgeInsets.only(bottom: 16, left: 19.2),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                for (final r in righe.split('\n'))
+                for (final (k, r) in voci.indexed)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('•  ', style: stile),
                       Expanded(
                         child: Text.rich(
-                          TextSpan(children: _inline(r.replaceFirst(RegExp(r'^[-*] '), ''))),
+                          TextSpan(
+                            children: k == voci.length - 1
+                                ? conCursore(r.replaceFirst(RegExp(r'^[-*] '), ''))
+                                : _inline(r.replaceFirst(RegExp(r'^[-*] '), '')),
+                          ),
                           style: stile,
                         ),
                       ),
@@ -381,7 +447,7 @@ class MarkdownResponso extends StatelessWidget {
         blocchi.add(
           Padding(
             padding: const EdgeInsets.only(bottom: 16),
-            child: Text.rich(TextSpan(children: _inline(righe.replaceAll('\n', ' '))), style: stile),
+            child: Text.rich(TextSpan(children: conCursore(righe.replaceAll('\n', ' '))), style: stile),
           ),
         );
       }
@@ -411,6 +477,7 @@ class Responso extends StatefulWidget {
     required this.alCondividi,
     required this.alVai,
     this.alStampa,
+    this.scrive = false,
   });
 
   /// La lettura.
@@ -421,6 +488,9 @@ class Responso extends StatefulWidget {
 
   /// Arrivato tutto.
   final bool finito;
+
+  /// Il testo sta arrivando (in diretta): il cursore in fondo.
+  final bool scrive;
 
   /// L'avvertenza.
   final String disclaimer;
@@ -517,6 +587,7 @@ class _ResponsoState extends State<Responso> with SingleTickerProviderStateMixin
             widget.testo,
             stile: stile,
             stileTitolo: Stile.serif(20, colore: Token.plum),
+            cursore: widget.scrive,
           ),
           if (widget.finito && widget.anonimo)
             Container(

@@ -1,12 +1,11 @@
-/// La lingua del menu e quella del profilo (v9, Fase 2d), come `frontend/v2/lib/lingua-profilo.ts`: **vince l'ultima
-/// scelta**.
+/// La lingua del menu e quella del profilo (v9, Fase 2d; dal 9/10/2026 **vince l'account**).
 ///
-/// - Chi è dentro e cambia lingua dal selettore la cambia anche nel profilo (`PATCH /me/profile`, che segna
-///   `locale_scelta_il`): l'oracolo, le email e le notifiche la seguono. Il telefono ricorda quando l'ha scelta
-///   (`lingua_il`, la stessa chiave del sito).
-/// - **All'accesso** (una volta per persona e per avvio) si confrontano le due scelte: una scelta fatta qui più recente
-///   di quella del profilo va nel profilo; se no vince il profilo (l'app passa alla sua lingua); se nessuno ha mai
-///   scelto, la lingua in cui si sta leggendo va nel profilo.
+/// - Chi è dentro e cambia lingua (dal selettore in testata o nel piè di pagina, dal primo avvio, dall'invito a passare
+///   alla lingua in cui scrive) la cambia anche nel profilo (`PATCH /me/profile`, che segna `locale_scelta_il`):
+///   l'oracolo, le email e le notifiche la seguono. Il telefono ricorda quando l'ha scelta (`lingua_il`, come il sito).
+/// - **All'accesso** (una volta per persona e per avvio): se l'account ha una lingua scelta (`locale_scelta_il`), vince
+///   quella e l'app ci passa, qualunque cosa si sia scelta qui prima di entrare; se l'account non ha mai scelto, la
+///   lingua di qui va nel profilo.
 /// - Nessun ciclo: applicare la lingua del profilo non scrive nel profilo.
 library;
 
@@ -20,15 +19,12 @@ import '../api/errori.dart';
 import '../archivio.dart';
 import '../auth/sessione.dart';
 import '../modelli/account.dart';
+import '../traduzione/lingua_contenuti.dart';
+import '../traduzione/motore.dart';
 import 'lingua.dart';
 
 /// Quando la lingua è stata scelta qui (millisecondi): la stessa chiave del sito.
 const String chiaveLinguaIl = 'lingua_il';
-
-int? _numero(String? v) {
-  final n = int.tryParse(v ?? '');
-  return n != null && n > 0 ? n : null;
-}
 
 /// Ricorda che la lingua è stata scelta adesso (o al momento [quando]).
 Future<void> segnaScelta(Archivio archivio, [int? quando]) =>
@@ -58,10 +54,17 @@ Future<void> suggerisciDalPaese(WidgetRef ref) async {
   }
 }
 
-/// Il selettore della lingua: l'interfaccia cambia subito, poi la scelta va nel profilo (con un account).
+/// Il selettore della lingua: l'interfaccia cambia subito, poi la scelta va nel profilo (con un account). La lingua di
+/// lettura la segue (se non se n'è scelta un'altra): il suo modello di traduzione si scarica in silenzio, così la
+/// prossima pagina tradotta è già pronta (se non riesce, si riprova quando si apre un contenuto).
 Future<void> scegliLingua(WidgetRef ref, String lingua) async {
   await ref.read(linguaProvider.notifier).imposta(lingua);
   await segnaScelta(ref.read(archivioProvider));
+  final motore = ref.read(motoreTraduzioneProvider);
+  final contenuti = ref.read(linguaContenutiProvider);
+  if (motore.disponibile && contenuti != 'en' && lingueMlKit.contains(contenuti)) {
+    unawaited(motore.scarica(contenuti).then((_) {}, onError: (Object _) {}));
+  }
   if (ref.read(sessioneProvider).autenticata) await ref.read(_sincroniaProvider).salva(lingua);
 }
 
@@ -95,13 +98,12 @@ class SincroniaLingua {
     final delProfilo = comeLingua(profilo.locale);
     final qui = _ref.read(linguaProvider);
     final profiloIl = DateTime.tryParse(profilo.localeSceltaIl ?? '')?.millisecondsSinceEpoch;
-    final localeIl = _numero(archivio.leggi(chiaveLinguaIl));
-    if (localeIl != null && (profiloIl == null || localeIl > profiloIl)) {
-      if (delProfilo != qui) await salva(qui);
-    } else if (profiloIl != null && delProfilo != null) {
+    if (profiloIl != null && delProfilo != null) {
+      // L'account ha scelto: vince lui, qualunque cosa si sia scelta qui prima di entrare.
       await segnaScelta(archivio, profiloIl);
       if (delProfilo != qui) await _ref.read(linguaProvider.notifier).imposta(delProfilo);
-    } else if (delProfilo != qui) {
+    } else {
+      // L'account non ha mai scelto: prende la lingua di qui (e da allora la sua scelta c'è).
       await salva(qui);
     }
   }

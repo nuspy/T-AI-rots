@@ -19,8 +19,8 @@ abstract final class Rottura {
     orElse: () => throw StateError('v2.css non ha più @media (max-width: ${px}px): aggiornare lib/tema/tema.dart'),
   );
 
-  /// `@media (max-width: 339px)`: telefoni molto vecchi.
-  static final double minima = _punto(339);
+  /// `@media (max-width: 359px)`: telefoni molto vecchi (dal 9/10/2026, col codice della lingua in testata; prima 339).
+  static final double minima = _punto(359);
 
   /// `@media (max-width: 430px)`.
   static final double stretta = _punto(430);

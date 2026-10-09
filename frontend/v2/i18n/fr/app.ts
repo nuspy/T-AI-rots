@@ -82,4 +82,9 @@ export const app = {
   lingua_errore: "The download didn't work (are you online?). The contents stay in English for now: we'll try again when you open them.",
   lingua_voce: "Reading language: {lingua}",
   lingua_cambia: "Change",
+  /* 9/10/2026: la lingua dell'app alla prima apertura, e la proposta di passare alla lingua in cui si scrive */
+  lingua_app_titolo: "Choose your language",
+  lingua_app_accetta: "Accept",
+  lingua_offerta: "You're writing in {lingua}. Switch the app to {lingua}?",
+  lingua_offerta_passa: "Switch",
 };

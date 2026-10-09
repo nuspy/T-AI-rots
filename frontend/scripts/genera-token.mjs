@@ -37,7 +37,7 @@ const DERIVATI = [
   ["altezzaTestata", ".site-header", "min-height"],
   ["altezzaTestataTelefono", ".site-header", "min-height", "(max-width: 760px)"],
   ["etichettaTestataTelefono", ".primary-nav .nav-breve", "font-size", "(max-width: 760px)"],
-  ["etichettaTestataStretta", ".primary-nav .nav-breve", "font-size", "(max-width: 339px)"],
+  ["etichettaTestataStretta", ".primary-nav .nav-breve", "font-size", "(max-width: 359px)"],
   ["iconaTestataTelefono", ".primary-nav .nav-icona", "width", "(max-width: 760px)"],
   ["bersaglioMinimo", ".hdr-icon", "min-height"],
   ["bersaglioTestataTelefono", ".header-actions .hdr-icon", "min-height", "(max-width: 760px)"],

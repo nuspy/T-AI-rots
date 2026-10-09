@@ -382,6 +382,9 @@ abstract class PassoIntervista with _$PassoIntervista {
     int? poste,
     int? minDomande,
     int? maxDomande,
+
+    /// La lingua della lettura: una risposta piena in un'altra lingua la sposta (9/10/2026), e l'app la segue.
+    String? lang,
   }) = _PassoIntervista;
 
   /// Dal JSON dell'API.
@@ -510,10 +513,8 @@ abstract class TurnoChat with _$TurnoChat {
 @freezed
 abstract class ImpostazioniChat with _$ImpostazioniChat {
   /// Le impostazioni.
-  const factory ImpostazioniChat({
-    @Default(30) int proattivaMinutiInattivita,
-    @Default(3) int proattivaMaxPerVisita,
-  }) = _ImpostazioniChat;
+  const factory ImpostazioniChat({@Default(30) int proattivaMinutiInattivita, @Default(3) int proattivaMaxPerVisita}) =
+      _ImpostazioniChat;
 
   /// Dal JSON dell'API.
   factory ImpostazioniChat.fromJson(Map<String, dynamic> json) => _$ImpostazioniChatFromJson(json);

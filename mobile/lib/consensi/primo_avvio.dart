@@ -1,13 +1,13 @@
 /// Ciò che l'app chiede al primo avvio, sopra la pagina:
 ///
-/// 1. **i consensi** (il banner del sito, `banner-cookie.tsx`): un foglio in basso con gli stessi tre comandi con lo
+/// 1. **la lingua dell'app** (9/10/2026, `lingua/scelta_lingua_app.dart`): per prima, così il resto arriva nella lingua
+///    scelta; la lingua di lettura dei contenuti (la traduzione sul telefono) la segue, senza una domanda a parte;
+/// 2. **i consensi** (il banner del sito, `banner-cookie.tsx`): un foglio in basso con gli stessi tre comandi con lo
 ///    stesso peso — «Accept all», «Reject all», «Choose» — e, scegliendo, le categorie una per una con la nota sui
 ///    dati tecnici; finché non si sceglie la pagina resta usabile, come nel sito. Dove il banner parla di cookie e di
 ///    browser l'app ha testi suoi, sui dati del dispositivo (la sezione `app` dei dizionari, `frontend/v2/i18n/*/app.ts`);
-/// 2. **l'età minima** (`privacy-accesso.tsx`): «ho almeno N anni», in un dialogo; «Not now» lo chiude per questa
-///    volta;
-/// 3. **la lingua di lettura** (v9.5, `traduzione/scelta_lingua.dart`): in che lingua tradurre sul telefono articoli,
-///    carte e stese; solo dove il telefono sa tradurre, una volta.
+/// 3. **l'età minima** (`privacy-accesso.tsx`): «ho almeno N anni», in un dialogo; «Not now» lo chiude per questa
+///    volta.
 library;
 
 import 'dart:async';
@@ -21,11 +21,11 @@ import '../componenti/modale.dart';
 import '../componenti/oracolo.dart' show altezzaOracoloProvider;
 import '../componenti/premibile.dart';
 import '../l10n/testi.dart';
+import '../lingua/lingua.dart';
+import '../lingua/scelta_lingua_app.dart';
 import '../rotte/percorsi.dart';
 import '../rotte/router.dart';
 import '../tema/tema.dart';
-import '../traduzione/lingua_contenuti.dart';
-import '../traduzione/scelta_lingua.dart';
 import 'consensi.dart';
 import 'eta.dart';
 
@@ -43,7 +43,10 @@ class PrimoAvvio extends ConsumerWidget {
     final eta = ref.watch(etaProvider);
     final anni = ref.watch(etaMinimaProvider).value;
     final Widget? sopra;
-    if (consensi.daChiedere) {
+    if (ref.watch(linguaDaChiedereProvider)) {
+      // Per prima la lingua: consensi ed età arrivano poi nella lingua scelta.
+      sopra = const DialogoLinguaApp();
+    } else if (consensi.daChiedere) {
       // Sopra la barra dell'oracolo, come il banner del sito (`bottom: var(--oracolo-h)`).
       final barra = ref.watch(altezzaOracoloProvider);
       final media = MediaQuery.of(context);
@@ -60,8 +63,6 @@ class PrimoAvvio extends ConsumerWidget {
       );
     } else if (anni != null && eta.daChiedere(anni)) {
       sopra = DialogoEta(anni: anni);
-    } else if (ref.watch(linguaContenutiDaChiedereProvider)) {
-      sopra = const DialogoLinguaContenuti();
     } else {
       sopra = null;
     }

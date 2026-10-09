@@ -1123,6 +1123,30 @@ abstract class AppLocalizations {
   /// **'Don\'t translate automatically'**
   String get comune_traduzione_mai;
 
+  /// No description provided for @comune_traduzione_lingua.
+  ///
+  /// In en, this message translates to:
+  /// **'Translate into'**
+  String get comune_traduzione_lingua;
+
+  /// No description provided for @comune_lingua_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your language'**
+  String get comune_lingua_titolo;
+
+  /// No description provided for @comune_lingua_testo.
+  ///
+  /// In en, this message translates to:
+  /// **'You can change it at any time with the language code at the top of the page.'**
+  String get comune_lingua_testo;
+
+  /// No description provided for @comune_lingua_accetta.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get comune_lingua_accetta;
+
   /// No description provided for @home_meta_titolo.
   ///
   /// In en, this message translates to:
@@ -2778,6 +2802,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send, I want to say something else'**
   String get lettura_invia_dire_ancora;
+
+  /// No description provided for @lettura_salta_basta.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip — no more questions'**
+  String get lettura_salta_basta;
+
+  /// No description provided for @lettura_salta_altra.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'d rather not answer — ask me another'**
+  String get lettura_salta_altra;
+
+  /// No description provided for @lettura_salta_dire.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip — I want to say something else'**
+  String get lettura_salta_dire;
+
+  /// No description provided for @lettura_dire_ancora.
+  ///
+  /// In en, this message translates to:
+  /// **'I want to say something else'**
+  String get lettura_dire_ancora;
+
+  /// No description provided for @lettura_offerta_lingua.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re writing in {lingua}. Switch the site to {lingua}?'**
+  String lettura_offerta_lingua(Object lingua);
+
+  /// No description provided for @lettura_offerta_lingua_si.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch'**
+  String get lettura_offerta_lingua_si;
+
+  /// No description provided for @lettura_offerta_lingua_no.
+  ///
+  /// In en, this message translates to:
+  /// **'No, thanks'**
+  String get lettura_offerta_lingua_no;
 
   /// No description provided for @lettura_stampa_pdf.
   ///
@@ -9972,6 +10038,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Change'**
   String get app_lingua_cambia;
+
+  /// No description provided for @app_lingua_app_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your language'**
+  String get app_lingua_app_titolo;
+
+  /// No description provided for @app_lingua_app_accetta.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get app_lingua_app_accetta;
+
+  /// No description provided for @app_lingua_offerta.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re writing in {lingua}. Switch the app to {lingua}?'**
+  String app_lingua_offerta(Object lingua);
+
+  /// No description provided for @app_lingua_offerta_passa.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch'**
+  String get app_lingua_offerta_passa;
 
   /// No description provided for @notifiche_titolo.
   ///

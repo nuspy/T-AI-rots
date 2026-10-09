@@ -556,6 +556,18 @@ class AppLocalizationsIt extends AppLocalizations {
   String get comune_traduzione_mai => 'Non tradurre automaticamente';
 
   @override
+  String get comune_traduzione_lingua => 'Traduci in';
+
+  @override
+  String get comune_lingua_titolo => 'Scegli la tua lingua';
+
+  @override
+  String get comune_lingua_testo => 'Puoi cambiarla quando vuoi con il codice della lingua in cima alla pagina.';
+
+  @override
+  String get comune_lingua_accetta => 'Accetta';
+
+  @override
   String get home_meta_titolo => 'TAROTS chat — un rito vivo dei Tarocchi';
 
   @override
@@ -1436,6 +1448,29 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get lettura_invia_dire_ancora => 'Invia e voglio dire un\'altra cosa';
+
+  @override
+  String get lettura_salta_basta => 'Saltiamo, basta con le domande';
+
+  @override
+  String get lettura_salta_altra => 'Non voglio rispondere, fai un\'altra domanda';
+
+  @override
+  String get lettura_salta_dire => 'Saltiamo, voglio dire un\'altra cosa';
+
+  @override
+  String get lettura_dire_ancora => 'Voglio dire un\'altra cosa';
+
+  @override
+  String lettura_offerta_lingua(Object lingua) {
+    return 'Stai scrivendo in italiano. Vuoi il sito in italiano?';
+  }
+
+  @override
+  String get lettura_offerta_lingua_si => 'Passa all\'italiano';
+
+  @override
+  String get lettura_offerta_lingua_no => 'No, grazie';
 
   @override
   String get lettura_stampa_pdf => 'Stampa in PDF';
@@ -5580,6 +5615,20 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get app_lingua_cambia => 'Cambia';
+
+  @override
+  String get app_lingua_app_titolo => 'Scegli la lingua';
+
+  @override
+  String get app_lingua_app_accetta => 'Accetta';
+
+  @override
+  String app_lingua_offerta(Object lingua) {
+    return 'Stai scrivendo in italiano. Vuoi l\'app in italiano?';
+  }
+
+  @override
+  String get app_lingua_offerta_passa => 'Cambia lingua';
 
   @override
   String get notifiche_titolo => 'Notifiche';

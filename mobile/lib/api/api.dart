@@ -325,7 +325,8 @@ class Api {
   /// `POST /readings/{id}/interview`: una risposta, l'inizio (risposta assente) o «basta così» ([basta]).
   ///
   /// v9.5: dopo una risposta il server non fa subito un'altra domanda (`continua: false`) e risponde `scelta`; [altra]
-  /// chiede un'altra domanda anche oltre il minimo («Voglio rispondere a un'altra domanda»).
+  /// chiede un'altra domanda anche oltre il minimo («Voglio rispondere a un'altra domanda»). Dal 9/10/2026 [altra] senza
+  /// risposta, con una domanda che aspetta, la salta («Non voglio rispondere»); [basta] chiude sempre.
   Future<PassoIntervista> rispondi(String id, String? risposta, {bool basta = false, bool altra = false}) => _chiama(
     'POST',
     '/readings/${Uri.encodeComponent(id)}/interview',
@@ -340,11 +341,16 @@ class Api {
   );
 
   /// `POST /readings/{id}/addition` (v9.5): «Voglio dire qualcosa di libero». Il testo entra nell'interpretazione;
-  /// `crisi` e `messaggio` come nell'intervista.
-  Future<({bool crisi, String? messaggio})> aggiungiAllIntervista(String id, String testo) =>
+  /// `crisi` e `messaggio` come nell'intervista. Con una domanda che aspetta, il server la segna come saltata prima del
+  /// testo (9/10/2026); `lang` è la lingua della lettura, che un testo in un'altra lingua può aver spostato.
+  Future<({bool crisi, String? messaggio, String? lang})> aggiungiAllIntervista(String id, String testo) =>
       _chiama('POST', '/readings/${Uri.encodeComponent(id)}/addition', (d) {
         final m = _mappa(d);
-        return (crisi: m['crisi'] == true, messaggio: m['messaggio'] as String?);
+        return (
+          crisi: m['crisi'] == true,
+          messaggio: m['messaggio'] as String?,
+          lang: m['lang'] is String ? m['lang']! as String : null,
+        );
       }, corpo: {'testo': testo});
 
   /// `POST /readings/{id}/fan`: mescola e taglia (il [taglio] è dove si è toccato il mazzo, da 0 a 1).

@@ -2,7 +2,8 @@
 /// ordine del selettore.
 ///
 /// Chi decide, nell'ordine: la scelta salvata (chiave `lingua`, come nel browser), la lingua del telefono,
-/// l'inglese. La lingua della LETTURA è un'altra cosa (quella del quesito, decisa dal server), come nel sito.
+/// l'inglese. Finché nessuno l'ha scelta, il primo avvio la chiede (`scelta_lingua_app.dart`), con quella del telefono
+/// già segnata. La lingua della LETTURA è un'altra cosa (quella del quesito, decisa dal server), come nel sito.
 library;
 
 import 'dart:ui' show Locale, PlatformDispatcher, TextDirection;
@@ -91,8 +92,21 @@ class LinguaNotifier extends Notifier<String> {
     if (l == null) return;
     state = l;
     await ref.read(archivioProvider).scrivi(chiaveLingua, l);
+    ref.read(linguaDaChiedereProvider.notifier).chiesta();
   }
 }
 
 /// La lingua dell'interfaccia.
 final linguaProvider = NotifierProvider<LinguaNotifier, String>(LinguaNotifier.new);
+
+/// Vero finché nessuno ha scelto la lingua dell'app (né qui né dal profilo): il primo avvio la chiede per prima.
+class LinguaDaChiedere extends Notifier<bool> {
+  @override
+  bool build() => comeLingua(ref.read(archivioProvider).leggi(chiaveLingua)) == null;
+
+  /// La lingua è stata scelta: il dialogo del primo avvio si chiude.
+  void chiesta() => state = false;
+}
+
+/// Il primo avvio chiede la lingua dell'app.
+final linguaDaChiedereProvider = NotifierProvider<LinguaDaChiedere, bool>(LinguaDaChiedere.new);

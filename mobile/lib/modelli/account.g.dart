@@ -517,6 +517,7 @@ _PassoIntervista _$PassoIntervistaFromJson(Map<String, dynamic> json) =>
       poste: (json['poste'] as num?)?.toInt(),
       minDomande: (json['min_domande'] as num?)?.toInt(),
       maxDomande: (json['max_domande'] as num?)?.toInt(),
+      lang: json['lang'] as String?,
     );
 
 Map<String, dynamic> _$PassoIntervistaToJson(_PassoIntervista instance) =>
@@ -532,6 +533,7 @@ Map<String, dynamic> _$PassoIntervistaToJson(_PassoIntervista instance) =>
       'poste': ?instance.poste,
       'min_domande': ?instance.minDomande,
       'max_domande': ?instance.maxDomande,
+      'lang': ?instance.lang,
     };
 
 _Ventaglio _$VentaglioFromJson(Map<String, dynamic> json) => _Ventaglio(

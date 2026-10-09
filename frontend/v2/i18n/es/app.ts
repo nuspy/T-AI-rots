@@ -71,4 +71,9 @@ export const app: typeof Base = {
   lingua_errore: "La descarga no funcionó (¿tienes conexión?). Por ahora los contenidos siguen en inglés: lo intentaremos de nuevo cuando los abras.",
   lingua_voce: "Idioma de lectura: {lingua}",
   lingua_cambia: "Cambiar",
+  /* 9/10/2026: la lingua dell'app alla prima apertura, e la proposta di passare alla lingua in cui si scrive */
+  lingua_app_titolo: "Elige tu idioma",
+  lingua_app_accetta: "Aceptar",
+  lingua_offerta: "Estás escribiendo en español. ¿Cambiar la app a español?",
+  lingua_offerta_passa: "Cambiar",
 };

@@ -71,4 +71,9 @@ export const app: typeof Base = {
   lingua_errore: "A letöltés nem sikerült (van internet?). A tartalom egyelőre angolul marad: újra megpróbáljuk, amikor megnyitod.",
   lingua_voce: "Olvasási nyelv: {lingua}",
   lingua_cambia: "Módosítás",
+  /* 9/10/2026: la lingua dell'app alla prima apertura, e la proposta di passare alla lingua in cui si scrive */
+  lingua_app_titolo: "Válaszd ki a nyelvet",
+  lingua_app_accetta: "Elfogadom",
+  lingua_offerta: "Magyarul írsz. Átállítod az alkalmazást magyarra?",
+  lingua_offerta_passa: "Átállítom",
 };

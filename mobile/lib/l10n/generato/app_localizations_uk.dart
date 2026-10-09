@@ -556,6 +556,18 @@ class AppLocalizationsUk extends AppLocalizations {
   String get comune_traduzione_mai => 'Не перекладати автоматично';
 
   @override
+  String get comune_traduzione_lingua => 'Перекласти';
+
+  @override
+  String get comune_lingua_titolo => 'Обери мову';
+
+  @override
+  String get comune_lingua_testo => 'Її можна змінити будь-коли кодом мови вгорі сторінки.';
+
+  @override
+  String get comune_lingua_accetta => 'Прийняти';
+
+  @override
   String get home_meta_titolo => 'TAROTS chat — живий ритуал Таро';
 
   @override
@@ -1430,6 +1442,29 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get lettura_invia_dire_ancora => 'Надіслати, хочу сказати ще дещо';
+
+  @override
+  String get lettura_salta_basta => 'Пропустімо, досить питань';
+
+  @override
+  String get lettura_salta_altra => 'Не хочу відповідати, постав інше питання';
+
+  @override
+  String get lettura_salta_dire => 'Пропустімо, хочу сказати інше';
+
+  @override
+  String get lettura_dire_ancora => 'Хочу сказати ще дещо';
+
+  @override
+  String lettura_offerta_lingua(Object lingua) {
+    return 'Ти пишеш українською. Перемкнути сайт на українську?';
+  }
+
+  @override
+  String get lettura_offerta_lingua_si => 'Перемкнути';
+
+  @override
+  String get lettura_offerta_lingua_no => 'Ні, дякую';
 
   @override
   String get lettura_stampa_pdf => 'Друк у PDF';
@@ -5573,6 +5608,20 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get app_lingua_cambia => 'Змінити';
+
+  @override
+  String get app_lingua_app_titolo => 'Оберіть мову';
+
+  @override
+  String get app_lingua_app_accetta => 'Прийняти';
+
+  @override
+  String app_lingua_offerta(Object lingua) {
+    return 'Ви пишете українською. Перемкнути застосунок на українську?';
+  }
+
+  @override
+  String get app_lingua_offerta_passa => 'Перемкнути';
 
   @override
   String get notifiche_titolo => 'Сповіщення';

@@ -3,6 +3,7 @@
 // scelta, lo svelamento e il responso; la lettura anonima con l'età; il limite superato col condono; la lettura
 // gratuita già usata.
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -16,6 +17,7 @@ import 'package:tarots/lettura/responso.dart';
 import 'package:tarots/lettura/tavolo.dart';
 import 'package:tarots/lettura/variante.dart';
 import 'package:tarots/lettura/ventaglio.dart';
+import 'package:tarots/lingua/lingua.dart';
 import 'package:tarots/pagine/lettura.dart';
 import 'package:tarots/rotte/router.dart';
 
@@ -143,11 +145,10 @@ void main() {
       await attendi(tester);
     }
     expect(corpo(rete, '/readings/$idLettura/interview'), {'basta': true});
-    expect(find.text('Begin the shuffle'), findsOneWidget);
 
-    // Mescolata, interruzione, taglio, ventaglio.
-    await tester.tap(find.text('Begin the shuffle'));
-    await attendi(tester);
+    // A intervista finita il mazzo si mescola da sé (9/10/2026): niente «Avvia la mescolata». Restano i gesti di chi
+    // legge: interrompere, tagliare, scegliere.
+    expect(find.text('Begin the shuffle'), findsNothing);
     expect(find.byType(Mescolamento), findsOneWidget);
     await tester.tap(find.text('Interrupt the shuffle'));
     await attendi(tester);
@@ -158,20 +159,18 @@ void main() {
     expect(corpo(rete, '/readings/$idLettura/fan')['taglio'], isA<num>());
     expect(find.byType(Ventaglio), findsOneWidget);
 
-    // Tre carte scelte: volano sul tavolo; poi la rivelazione.
+    // Tre carte scelte: volano sul tavolo; posata l'ultima, svelamento (tre flussi) e responso (un flusso) partono da
+    // soli, senza il pulsante.
     for (final n in [3, 10, 16]) {
       premi(tester, 'Card $n');
       await attendi(tester);
     }
-    await attendi(tester, 800);
-    expect(find.text('Reveal the cards and receive the interpretation'), findsWidgets);
     expect(tester.widget<Tavolo>(find.byType(Tavolo)).posate, hasLength(3));
-
-    // Svelamento (tre flussi) e responso (un flusso).
-    await tester.tap(find.widgetWithText(Premibile, 'Reveal the cards and receive the interpretation').last);
-    for (var i = 0; i < 8; i++) {
+    for (var i = 0; i < 10; i++) {
       await attendi(tester, 100);
     }
+    expect(rete.richieste.where((r) => r.uri.path == '/readings/$idLettura/reveal/1'), hasLength(1));
+    expect(find.text('Reveal the cards and receive the interpretation'), findsNothing);
     expect(find.byType(CarteSvelate), findsOneWidget);
     expect(find.text('The interpretation'), findsOneWidget);
     expect(find.text('Share this reading'), findsOneWidget);
@@ -234,10 +233,9 @@ void main() {
       await attendi(tester);
       await attendi(tester);
     }
-    await tocca(tester, 'Begin the shuffle');
-    await attendi(tester);
-    // Il dialogo scuro del rito, con il mazzo che si mescola.
+    // Il dialogo scuro del rito, con il mazzo che si mescola da sé.
     expect(find.byType(Mescolamento), findsOneWidget);
+    expect(find.byType(FinestraModale), findsOneWidget);
     await tester.tap(find.text('Interrupt the shuffle'));
     await attendi(tester);
     await tester.tap(find.byType(Taglio));
@@ -247,11 +245,11 @@ void main() {
       premi(tester, 'Card $n');
       await attendi(tester);
     }
-    await attendi(tester, 800);
-    await tester.tap(find.widgetWithText(Premibile, 'Reveal the cards and receive the interpretation').last);
-    for (var i = 0; i < 10; i++) {
+    // Posata l'ultima carta il dialogo si chiude da sé e le carte si girano.
+    for (var i = 0; i < 12; i++) {
       await attendi(tester, 100);
     }
+    expect(find.byType(FinestraModale), findsNothing);
     expect(tester.takeException(), isNull);
     expect(find.byType(CarteSvelate), findsOneWidget);
     expect(find.text('The interpretation'), findsOneWidget);
@@ -350,7 +348,9 @@ void main() {
     finisci();
   });
 
-  testWidgets('l\'età da confermare (403) oltre quella del telefono: il dialogo, poi la lettura riparte', (tester) async {
+  testWidgets('l\'età da confermare (403) oltre quella del telefono: il dialogo, poi la lettura riparte', (
+    tester,
+  ) async {
     final rete = reteRito();
     var aperture = 0;
     rete.risposte['POST /readings/anonime'] = (_) {
@@ -384,7 +384,9 @@ void main() {
     finisci();
   });
 
-  testWidgets('le proprie carte: dopo l\'intervista niente mescolata, l\'interpretazione parte da sola', (tester) async {
+  testWidgets('le proprie carte: dopo l\'intervista niente mescolata, l\'interpretazione parte da sola', (
+    tester,
+  ) async {
     final rete = reteRito();
     // «Interpreta le mie carte»: la lettura nasce con le carte già posate (manuale), coperte e senza interpretazione.
     final lettura = fixture('lettura_completa.json')! as Map<String, Object?>;
@@ -493,23 +495,27 @@ void main() {
     expect(corpo(rete, '/readings')['variante'], 'chat');
     expect(corpo(rete, '/readings')['piattaforma'], anyOf('android', 'ios'));
 
-    // Sotto la prima domanda, subito, il campo e i tre invii; a campo vuoto aspettano il testo (la domanda attende
-    // una risposta), salvo «basta» quando il minimo (0) lo consente già.
+    // Sotto la prima domanda, subito, il campo e i tre invii, sempre toccabili: a campo vuoto (la domanda attende una
+    // risposta) dicono che la si salta.
     expect(find.text('How long has this been with you?'), findsOneWidget);
-    expect(find.text('Enough questions'), findsOneWidget);
-    expect(find.text('Send and ask me another question'), findsOneWidget);
-    expect(find.text('Send, I want to say something'), findsOneWidget);
+    expect(find.text('Skip — no more questions'), findsOneWidget);
+    expect(find.text("I'd rather not answer — ask me another"), findsOneWidget);
+    expect(find.text('Skip — I want to say something else'), findsOneWidget);
     expect(find.text('Answer'), findsNothing);
 
-    // «Invia e voglio dire una cosa»: la risposta è salvata senza chiedere la domanda dopo, e il campo resta per il
-    // testo libero.
+    // Scrivendo, le etichette cambiano subito.
     await tester.enterText(find.byType(EditableText).last, 'Started last month.');
     await tester.pump();
     expect(find.text('Send, no more questions'), findsOneWidget);
+    expect(find.text('Send and ask me another question'), findsOneWidget);
+    expect(find.text('Skip — no more questions'), findsNothing);
+
+    // «Invia e voglio dire una cosa»: la risposta è salvata senza chiedere la domanda dopo, e il campo resta per il
+    // testo libero.
     await tocca(tester, 'Send, I want to say something');
     await attendi(tester);
     expect(corpo(rete, '/readings/$idLettura/interview'), {'risposta': 'Started last month.', 'continua': false});
-    expect(find.text('Send, I want to say something else'), findsOneWidget);
+    expect(find.text('I want to say something freely'), findsOneWidget);
     expect(find.text('Ask me another question'), findsOneWidget);
 
     // «Invia, basta con le domande»: il testo libero va al server, poi l'intervista si chiude; il rito sta nella
@@ -520,8 +526,8 @@ void main() {
     await attendi(tester);
     expect(corpo(rete, '/readings/$idLettura/addition')['testo'], 'My team is new.');
     expect(corpo(rete, '/readings/$idLettura/interview')['basta'], isTrue);
-    await tocca(tester, 'Begin the shuffle');
-    await attendi(tester);
+    // Il mazzo si mescola da sé.
+    expect(find.text('Begin the shuffle'), findsNothing);
     expect(find.byType(Mescolamento), findsOneWidget);
     expect(find.byType(FinestraModale), findsNothing);
     await tester.tap(find.text('Interrupt the shuffle'));
@@ -585,6 +591,209 @@ void main() {
     expect(find.text('Send my question, and feel free to ask me'), findsOneWidget);
     finisci();
   });
+
+  testWidgets(
+    'a campo vuoto si salta la domanda: «Non voglio rispondere», poi «Saltiamo, voglio dire un\'altra cosa»',
+    (tester) async {
+      final rete = reteChat();
+      await montaApp(
+        tester,
+        rotta: '/read?question=Will%20my%20new%20project%20at%20work%20go%20well%3F&type=standard&spread=tre-carte',
+        larghezza: 1024,
+        altezza: 1366,
+        rete: rete,
+      );
+      await tocca(tester, 'Send my question, and feel free to ask me');
+      await attendi(tester);
+      await accetta(tester);
+      await attendi(tester);
+      await attendi(tester);
+      // «Non voglio rispondere, fai un'altra domanda» senza testo: niente risposta, il server segna la domanda come
+      // saltata e fa la prossima.
+      final prima = rete.richieste.length;
+      await tocca(tester, "I'd rather not answer — ask me another");
+      await attendi(tester);
+      expect(corpo(rete, '/readings/$idLettura/interview'), {'continua': false, 'altra': true});
+      expect(rete.richieste.length, greaterThan(prima));
+      expect(find.text('How long has this been with you?'), findsNWidgets(2));
+
+      // «Saltiamo, voglio dire un'altra cosa» senza testo: nessuna chiamata, il campo passa al testo libero.
+      final chiamate = rete.richieste.length;
+      await tocca(tester, 'Skip — I want to say something else');
+      await attendi(tester);
+      expect(rete.richieste.length, chiamate);
+      expect(find.text('I want to say something freely'), findsOneWidget);
+      expect(find.text('Write freely whatever comes to mind…'), findsOneWidget);
+      // Il prossimo invio va a /addition (il server segna la domanda come saltata), poi «basta» chiude.
+      await tester.enterText(find.byType(EditableText).last, 'My team is new.');
+      await tester.pump();
+      await tocca(tester, 'Send, no more questions');
+      await attendi(tester);
+      await attendi(tester);
+      expect(corpo(rete, '/readings/$idLettura/addition')['testo'], 'My team is new.');
+      expect(corpo(rete, '/readings/$idLettura/interview'), {'basta': true});
+      expect(find.byType(Mescolamento), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      finisci();
+    },
+  );
+
+  testWidgets('si scrive in un\'altra lingua: la lettura la segue e l\'app propone, una volta, di passarci', (
+    tester,
+  ) async {
+    final rete = reteChat();
+    // La risposta è in italiano: il server sposta la lingua della lettura e la rimanda.
+    rete.risposte['POST /readings/$idLettura/interview'] = (_) {
+      final c = jsonDecode(rete.corpi.last ?? '{}') as Map<String, Object?>;
+      const regole = {'min_domande': 0, 'max_domande': 2};
+      if (c['risposta'] != null) return RispostaFinta.json({'scelta': true, 'poste': 1, 'lang': 'it', ...regole});
+      return RispostaFinta.json({'domanda': 'How long has this been with you?', 'poste': 1, 'lang': 'en', ...regole});
+    };
+    final app = await montaApp(
+      tester,
+      rotta: '/read?question=Will%20my%20new%20project%20at%20work%20go%20well%3F&type=standard&spread=tre-carte',
+      larghezza: 1024,
+      altezza: 1366,
+      rete: rete,
+    );
+    await tocca(tester, 'Send my question, and feel free to ask me');
+    await attendi(tester);
+    await accetta(tester);
+    await attendi(tester);
+    await attendi(tester);
+    expect(find.textContaining('Vuoi l\'app in italiano?'), findsNothing);
+    await tester.enterText(find.byType(EditableText).last, 'È iniziato il mese scorso, con un nuovo gruppo.');
+    await tester.pump();
+    await tocca(tester, 'Send, I want to say something');
+    await attendi(tester);
+    // L'invito è scritto nella lingua in cui si scrive; niente cambia da solo.
+    expect(find.text('Stai scrivendo in italiano. Vuoi l\'app in italiano?'), findsOneWidget);
+    expect(app.read(linguaProvider), 'en');
+    await tocca(tester, 'Cambia lingua');
+    await attendi(tester);
+    expect(app.read(linguaProvider), 'it');
+    expect(app.read(archivioProvider).leggi('lingua'), 'it');
+    expect(find.text('Stai scrivendo in italiano. Vuoi l\'app in italiano?'), findsNothing);
+    expect(tester.takeException(), isNull);
+    finisci();
+  });
+
+  testWidgets(
+    'le carte e il responso in diretta: i pezzi si aggiungono, «sostituisci» rimpiazza, le fasi non cancellano',
+    (tester) async {
+      final rete = reteRito();
+      // Una lettura ripresa con le tre carte scelte e ancora coperte: le carte si girano da sé.
+      final lettura = fixture('lettura_completa.json')! as Map<String, Object?>;
+      lettura
+        ..['status'] = 'rivelazione'
+        ..['synthesis'] = null
+        ..['completed_at'] = null
+        ..['cards'] = [
+          for (final c in (lettura['cards']! as List<Object?>).cast<Map<String, Object?>>())
+            {...c, 'rivelata': false, 'interpretazione': null},
+        ];
+      rete.risposte['/me/readings/$idLettura'] = (_) => RispostaFinta.json(lettura);
+      final carte = StreamController<List<int>>();
+      final responso = StreamController<List<int>>();
+      // Chiusi senza aspettare: l'attesa di `close()` finisce solo quando chi ascolta ha letto tutto.
+      addTearDown(() {
+        unawaited(carte.close());
+        unawaited(responso.close());
+      });
+      const sse = {
+        'content-type': ['text/event-stream'],
+      };
+      rete.risposte['POST /readings/$idLettura/reveal-all'] = (_) =>
+          RispostaFinta(200, flusso: carte.stream, intestazioni: sse);
+      rete.risposte['POST /readings/$idLettura/synthesis'] = (_) =>
+          RispostaFinta(200, flusso: responso.stream, intestazioni: sse);
+      void evento(StreamController<List<int>> c, String nome, Map<String, Object?> dati) =>
+          c.add(utf8.encode('event: $nome\ndata: ${jsonEncode(dati)}\n\n'));
+      String testoCarta(int n) =>
+          tester
+              .widget<CarteSvelate>(find.byType(CarteSvelate))
+              .posate
+              .firstWhere((p) => p.posizione == n)
+              .interpretazione ??
+          '';
+
+      await montaApp(tester, rotta: '/read?id=$idLettura', larghezza: 1024, altezza: 1366, rete: rete);
+      await attendi(tester);
+      await attendi(tester);
+      expect(rete.richieste.where((r) => r.uri.path == '/readings/$idLettura/reveal-all'), hasLength(1));
+
+      // Le carte si girano, poi l'attesa del lettore, che sparisce al primo pezzo.
+      for (final n in [1, 2, 3]) {
+        final riga = File('test/fixtures/lettura/rivela_$n.sse').readAsLinesSync()[1];
+        final carta = jsonDecode(riga.substring('data: '.length)) as Map<String, Object?>;
+        evento(carte, 'carta', carta);
+      }
+      evento(carte, 'fase', {'fase': 'lettura'});
+      await attendi(tester);
+      expect(find.text('Your reader is reading the cards…'), findsOneWidget);
+      evento(carte, 'token', {'posizione': 1, 'testo': 'Hello '});
+      evento(carte, 'battito', {});
+      evento(carte, 'token', {'posizione': 1, 'testo': 'world'});
+      await attendi(tester);
+      expect(find.text('Your reader is reading the cards…'), findsNothing);
+      expect(testoCarta(1), 'Hello world');
+      expect(tester.widget<CarteSvelate>(find.byType(CarteSvelate)).inScrittura, 1);
+      // «sostituisci» rimpiazza tutto il testo della carta; vuoto lo cancella, e i pezzi ripartono.
+      evento(carte, 'sostituisci', {'posizione': 1, 'testo': 'Rewritten one.'});
+      evento(carte, 'token', {'posizione': 2, 'testo': 'Two'});
+      await attendi(tester);
+      expect(testoCarta(1), 'Rewritten one.');
+      expect(testoCarta(2), 'Two');
+      evento(carte, 'sostituisci', {'posizione': 2, 'testo': ''});
+      await attendi(tester);
+      expect(testoCarta(2), '');
+      evento(carte, 'token', {'posizione': 2, 'testo': 'Second.'});
+      await attendi(tester);
+      expect(testoCarta(2), 'Second.');
+      // `fine` è il testo definitivo.
+      evento(carte, 'fine', {'posizione': 2, 'interpretazione': 'Second card, final.', 'ultima': false});
+      evento(carte, 'token', {'posizione': 3, 'testo': 'Three.'});
+      evento(carte, 'fine', {'posizione': 3, 'interpretazione': 'Three.', 'ultima': true});
+      unawaited(carte.close());
+      await attendi(tester);
+      expect(testoCarta(1), 'Rewritten one.');
+      expect(testoCarta(2), 'Second card, final.');
+      expect(testoCarta(3), 'Three.');
+
+      // Il responso: i pezzi si vedono subito, la guardia non li toglie (solo una nota), «sostituisci» li rimpiazza.
+      expect(rete.richieste.where((r) => r.uri.path == '/readings/$idLettura/synthesis'), hasLength(1));
+      evento(responso, 'fase', {'fase': 'unione'});
+      evento(responso, 'token', {'testo': '## The picture\n\nFirst '});
+      evento(responso, 'token', {'testo': 'part.'});
+      await attendi(tester);
+      expect(find.byType(FaseResponso), findsNothing);
+      expect(find.textContaining('First part.'), findsOneWidget);
+      evento(responso, 'fase', {'fase': 'guardia'});
+      await attendi(tester);
+      expect(find.textContaining('First part.'), findsOneWidget);
+      expect(find.byType(NotaFaseResponso), findsOneWidget);
+      evento(responso, 'sostituisci', {'testo': 'Rewritten whole.'});
+      evento(responso, 'fase', {'fase': 'responso', 'guardia': 'riscritto'});
+      evento(responso, 'token', {'testo': ' Tail.'});
+      await attendi(tester);
+      expect(find.textContaining('First part.'), findsNothing);
+      expect(find.textContaining('Rewritten whole. Tail.'), findsOneWidget);
+      expect(find.byType(NotaFaseResponso), findsNothing);
+      evento(responso, 'fine', {
+        'disclaimer': 'This is a tarot reading.',
+        'guardia': 'riscritto',
+        'commitment': 'abc',
+        'deck_salt': 'def',
+        'saldo': 4,
+      });
+      unawaited(responso.close());
+      await attendi(tester);
+      expect(find.text('Share this reading'), findsOneWidget);
+      expect(find.textContaining('Rewritten whole. Tail.'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      finisci();
+    },
+  );
 
   testWidgets('chi ha un account torna alla versione del suo profilo, con gli stessi parametri', (tester) async {
     final rete = reteRito();

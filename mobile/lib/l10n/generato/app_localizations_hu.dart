@@ -554,6 +554,18 @@ class AppLocalizationsHu extends AppLocalizations {
   String get comune_traduzione_mai => 'Ne fordítson automatikusan';
 
   @override
+  String get comune_traduzione_lingua => 'Fordítás erre';
+
+  @override
+  String get comune_lingua_titolo => 'Válaszd ki a nyelvet';
+
+  @override
+  String get comune_lingua_testo => 'Bármikor megváltoztathatod az oldal tetején lévő nyelvkóddal.';
+
+  @override
+  String get comune_lingua_accetta => 'Elfogadom';
+
+  @override
   String get home_meta_titolo => 'TAROTS chat — élő tarot-rituálé';
 
   @override
@@ -1433,6 +1445,29 @@ class AppLocalizationsHu extends AppLocalizations {
 
   @override
   String get lettura_invia_dire_ancora => 'Küldés, szeretnék még valamit mondani';
+
+  @override
+  String get lettura_salta_basta => 'Kihagyom, elég a kérdésekből';
+
+  @override
+  String get lettura_salta_altra => 'Erre nem válaszolnék, kérdezz mást';
+
+  @override
+  String get lettura_salta_dire => 'Kihagyom, inkább mást mondanék';
+
+  @override
+  String get lettura_dire_ancora => 'Szeretnék még valamit mondani';
+
+  @override
+  String lettura_offerta_lingua(Object lingua) {
+    return 'Magyarul írsz. Átállítsuk az oldalt magyarra?';
+  }
+
+  @override
+  String get lettura_offerta_lingua_si => 'Átállítás';
+
+  @override
+  String get lettura_offerta_lingua_no => 'Nem, köszönöm';
 
   @override
   String get lettura_stampa_pdf => 'Nyomtatás PDF-be';
@@ -5569,6 +5604,20 @@ class AppLocalizationsHu extends AppLocalizations {
 
   @override
   String get app_lingua_cambia => 'Módosítás';
+
+  @override
+  String get app_lingua_app_titolo => 'Válaszd ki a nyelvet';
+
+  @override
+  String get app_lingua_app_accetta => 'Elfogadom';
+
+  @override
+  String app_lingua_offerta(Object lingua) {
+    return 'Magyarul írsz. Átállítod az alkalmazást magyarra?';
+  }
+
+  @override
+  String get app_lingua_offerta_passa => 'Átállítom';
 
   @override
   String get notifiche_titolo => 'Értesítések';

@@ -6,7 +6,8 @@
 ///   due righe, largo quanto la sua parola più lunga. Un'unica fila di icone equidistanti (4/10): menu e azioni
 ///   larghi uguale (`flex: 1 1 0`), mai meno della loro parola più lunga (`min-width: min-content`). Bordo 4 px,
 ///   voci alte 44 px. Sotto i 340 px le
-///   etichette scendono a 7 px. Fra 561 e 760 px c'è anche il nome del marchio e la lingua;
+///   etichette scendono a 7 px. Fra 561 e 760 px c'è anche il nome del marchio. In fondo alla riga, a ogni
+///   larghezza, la lingua (9/10/2026): un globo col codice «IT» sotto, larga come le altre voci;
 /// - **tablet e computer** (oltre 760 px): marchio e azioni in alto, il menu con le etichette lunghe sotto (fino a
 ///   1100 px) o in mezzo (oltre).
 library;
@@ -21,6 +22,7 @@ import '../analytics/tracciato.dart';
 import '../auth/sessione.dart';
 import '../dati/dati.dart';
 import '../l10n/testi.dart';
+import '../lingua/lingua.dart';
 import '../rotte/navigazione.dart';
 import '../rotte/percorsi.dart';
 import '../rotte/percorso.dart';
@@ -135,70 +137,119 @@ class _TestataTelefono extends ConsumerWidget {
     final scala = media.textScaler;
     final w = media.size.width;
     final a = _azioni(ref);
-    final minima = w <= Rottura.minima;
-
-    // Le misure del blocco «la testata sul telefono» di v2.css.
-    final etichetta = Stile.sans(
-      minima ? Token.etichettaTestataStretta : Token.etichettaTestataTelefono,
-      peso: FontWeight.w600,
-      altezza: 1.15,
-    );
-    final etichettaAzione = etichetta.copyWith(height: 1.1);
-    final crediti = Stile.sans(11.2, peso: FontWeight.w700, altezza: 1.1, colore: Token.brassPale);
-    final bottone = Stile.sans(minima ? 9.6 : 10.24, peso: FontWeight.w700, altezza: 1.08, em: .01);
     final nomeMarchio = w > Rottura.piccola;
-    final lingua = w > Rottura.piccola;
     final pl = math.max(4.0, media.padding.left);
     final pr = math.max(4.0, media.padding.right);
-
-    // Il marchio: segno 22×27, poi il nome (oltre 560 px), margine destro 2 px.
     final pxNome = w.stretto ? 14.4 : 16.0;
-    final larghezzaNome = nomeMarchio ? _misura('TAROTS chat', Stile.serif(pxNome, em: .04), scala).width + 6.4 : 0.0;
-    final larghezzaMarchio = 22 + larghezzaNome;
-
-    // «Start reading»: largo quanto la parola più lunga, imbottitura 3 px, bordo 1 px, margine sinistro 2 px.
     final testoBottone = t.comune_inizia_lettura;
-    final internoBottone = _parolaPiuLunga(testoBottone, bottone, scala).ceilToDouble();
-    final larghezzaBottone = internoBottone + 6 + 2;
+    final testoProfilo = a.autenticata ? t.comune_testata_profilo : t.comune_testata_entra;
+    final mostraProfilo = a.autenticata || a.pronta;
+    // La lingua (9/10/2026), ultima della riga dopo «Start reading»: un'icona come le altre, col codice («IT») al
+    // posto dell'etichetta, larga quanto le altre voci.
+    final codiceLingua = ref.watch(linguaProvider).toUpperCase();
 
-    // Le voci: il minimo di ciascuna è la sua parola più lunga (o l'icona, 20 px).
+    // Le misure della riga con le etichette strette (7 px, `minima`) o normali, col simbolo del marchio o senza.
+    ({
+      TextStyle etichetta,
+      TextStyle etichettaAzione,
+      TextStyle bottone,
+      double internoBottone,
+      List<double> menu,
+      List<double> az,
+      double eccesso,
+    })
+    misure({required bool minima, required bool marchio}) {
+      // Le misure del blocco «la testata sul telefono» di v2.css.
+      final etichetta = Stile.sans(
+        minima ? Token.etichettaTestataStretta : Token.etichettaTestataTelefono,
+        peso: FontWeight.w600,
+        altezza: 1.15,
+      );
+      final etichettaAzione = etichetta.copyWith(height: 1.1);
+      final crediti = Stile.sans(11.2, peso: FontWeight.w700, altezza: 1.1, colore: Token.brassPale);
+      final bottone = Stile.sans(minima ? 9.6 : 10.24, peso: FontWeight.w700, altezza: 1.08, em: .01);
+      // Il marchio: segno 22×27, poi il nome (oltre 560 px), margine destro 2 px.
+      final larghezzaNome = nomeMarchio ? _misura('TAROTS chat', Stile.serif(pxNome, em: .04), scala).width + 6.4 : 0.0;
+      final larghezzaMarchio = marchio ? 22 + larghezzaNome + 2 : 0.0;
+      // «Start reading»: largo quanto la parola più lunga, imbottitura 3 px, bordo 1 px, margine sinistro 2 px.
+      final internoBottone = _parolaPiuLunga(testoBottone, bottone, scala).ceilToDouble();
+      final larghezzaBottone = internoBottone + 6 + 2;
+      // Misure esatte, senza arrotondare: come il browser, che a 320 px fa stare la riga per un pixel. Il testo poi
+      // si dispone con lo stesso motore che l'ha misurato, quindi la riga più lunga ci sta (+.01 per gli
+      // arrotondamenti). Il minimo di ciascuna voce è la sua parola più lunga (o l'icona, 20 px).
+      double minimo(String testo, TextStyle s) => math.max(20.0, _parolaPiuLunga(testo, s, scala)) + 2.01;
+      final minimiMenu = [
+        for (final s in sezioni.where((s) => s.voce != Voce.leggi)) minimo(nomeBreve(t, s.voce), etichetta),
+      ];
+      final minimiAzioni = [
+        minimo(t.comune_testata_carrello, etichettaAzione),
+        a.saldo == null ? minimo(t.comune_testata_crediti, etichettaAzione) : minimo('${a.saldo}', crediti),
+        if (mostraProfilo) minimo(testoProfilo, etichettaAzione),
+        minimo(codiceLingua, etichettaAzione),
+      ];
+      // Un'unica fila di icone equidistanti, come il sito (4/10): menu e azioni larghi uguale (`flex: 1 1 0`), mai
+      // meno della loro parola più lunga (`min-width: min-content`); chi ha bisogno di più spazio lo prende, gli altri
+      // si dividono il resto in parti uguali.
+      final spazio = w - (pl + pr + larghezzaMarchio + larghezzaBottone + 2) - .1;
+      final larghe = _parti([...minimiMenu, ...minimiAzioni], spazio);
+      return (
+        etichetta: etichetta,
+        etichettaAzione: etichettaAzione,
+        bottone: bottone,
+        internoBottone: internoBottone,
+        menu: larghe.sublist(0, minimiMenu.length),
+        az: larghe.sublist(minimiMenu.length),
+        eccesso: larghe.fold(0.0, (s, x) => s + x) - spazio,
+      );
+    }
+
+    // Con la lingua in più, nelle lingue dalle parole lunghe (ungherese, russo, ucraino…) la riga può non starci:
+    // prima le etichette strette (come sotto i 340 px), poi, solo se non basta, il simbolo del marchio lascia il posto
+    // (la pagina iniziale resta a un gesto «indietro»). La riga non esce mai dal bordo.
+    final minimaPerLarghezza = w <= Rottura.minima;
+    final tentativi = [
+      (minima: minimaPerLarghezza, marchio: true),
+      (minima: true, marchio: true),
+      (minima: minimaPerLarghezza, marchio: false),
+      (minima: true, marchio: false),
+    ];
+    var scelta = tentativi.first;
+    var m = misure(minima: scelta.minima, marchio: scelta.marchio);
+    for (final prova in tentativi.skip(1)) {
+      if (m.eccesso <= .01) break;
+      scelta = prova;
+      m = misure(minima: prova.minima, marchio: prova.marchio);
+    }
+    final etichetta = m.etichetta;
+    final etichettaAzione = m.etichettaAzione;
+    final bottone = m.bottone;
+    final internoBottone = m.internoBottone;
+    final menu = m.menu;
+    final az = m.az;
     final voci = [
       for (final s in sezioni.where((s) => s.voce != Voce.leggi))
         (s: s, testo: nomeBreve(t, s.voce), stile: etichetta, menu: true),
     ];
-    final testoProfilo = a.autenticata ? t.comune_testata_profilo : t.comune_testata_entra;
-    final mostraProfilo = a.autenticata || a.pronta;
     final azioni = [
       (testo: t.comune_testata_carrello, stile: etichettaAzione),
       (
         testo: a.saldo == null ? t.comune_testata_crediti : '${a.saldo}',
-        stile: a.saldo == null ? etichettaAzione : crediti,
+        stile: a.saldo == null
+            ? etichettaAzione
+            : Stile.sans(11.2, peso: FontWeight.w700, altezza: 1.1, colore: Token.brassPale),
       ),
       if (mostraProfilo) (testo: testoProfilo, stile: etichettaAzione),
     ];
-    // Misure esatte, senza arrotondare: come il browser, che a 320 px fa stare la riga per un pixel. Il testo poi si
-    // dispone con lo stesso motore che l'ha misurato, quindi la riga più lunga ci sta (+.01 per gli arrotondamenti).
-    double minimo(String testo, TextStyle s) => math.max(20.0, _parolaPiuLunga(testo, s, scala)) + 2.01;
-    final minimiMenu = [for (final v in voci) minimo(v.testo, v.stile)];
-    final minimiAzioni = [for (final v in azioni) minimo(v.testo, v.stile)];
-    final larghezzaLingua = lingua ? 100.0 : 0.0;
-
-    // Un'unica fila di icone equidistanti, come il sito (4/10): menu e azioni larghi uguale (`flex: 1 1 0`), mai meno
-    // della loro parola più lunga (`min-width: min-content`); chi ha bisogno di più spazio lo prende, gli altri si
-    // dividono il resto in parti uguali.
-    final fisso = pl + pr + larghezzaMarchio + 2 + larghezzaBottone + 2 + larghezzaLingua;
-    final larghe = _parti([...minimiMenu, ...minimiAzioni], w - fisso - .1);
-    final menu = larghe.sublist(0, minimiMenu.length);
-    final az = larghe.sublist(minimiMenu.length);
 
     final contenuto = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         // Il marchio.
-        Padding(
-          padding: const EdgeInsets.only(right: 2),
-          child: _Marchio(nome: nomeMarchio, pxNome: pxNome, piccolo: true),
-        ),
+        if (scelta.marchio)
+          Padding(
+            padding: const EdgeInsets.only(right: 2),
+            child: _Marchio(nome: nomeMarchio, pxNome: pxNome, piccolo: true),
+          ),
         // Il menu.
         Semantics(
           label: t.comune_aria_nav,
@@ -238,7 +289,6 @@ class _TestataTelefono extends ConsumerWidget {
             alTocco: () => vai(context, R.carrello),
           ),
         ),
-        if (lingua) SizedBox(width: larghezzaLingua, child: const SelettoreLingua(larghezzaMassima: 100)),
         SizedBox(
           width: az[1],
           child: _VoceIcona(
@@ -275,6 +325,19 @@ class _TestataTelefono extends ConsumerWidget {
             stile: bottone,
             larghezzaTesto: internoBottone,
             imbottitura: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+          ),
+        ),
+        SizedBox(
+          width: az.last,
+          child: _VoceIcona(
+            icona: Icone.lingua,
+            etichetta: codiceLingua,
+            stile: etichettaAzione,
+            colore: Colori.iconaTestata,
+            distanza: 1.6,
+            attiva: false,
+            lungo: '${t.comune_aria_lingua}: ${datiLingua(ref.watch(linguaProvider)).nome}',
+            alTocco: () => unawaited(apriSceltaLingua(context, ref)),
           ),
         ),
       ],

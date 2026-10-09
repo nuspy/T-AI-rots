@@ -6021,7 +6021,8 @@ mixin _$PassoIntervista {
  bool get facoltativa;/// v9.5: dopo una risposta il server non chiede subito un'altra domanda: tocca a chi legge scegliere (i tre
 /// pulsanti).
  bool get scelta;/// v9.5: le domande poste finora, e il minimo e il massimo della console.
- int? get poste; int? get minDomande; int? get maxDomande;
+ int? get poste; int? get minDomande; int? get maxDomande;/// La lingua della lettura: una risposta piena in un'altra lingua la sposta (9/10/2026), e l'app la segue.
+ String? get lang;
 /// Create a copy of PassoIntervista
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -6035,20 +6036,20 @@ $PassoIntervistaCopyWith<PassoIntervista> get copyWith => _$PassoIntervistaCopyW
 @override
 bool operator ==(Object other) {
   final _this = this as PassoIntervista;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PassoIntervista&&(identical(other.completa, _this.completa) || other.completa == _this.completa)&&(identical(other.domanda, _this.domanda) || other.domanda == _this.domanda)&&(identical(other.ordine, _this.ordine) || other.ordine == _this.ordine)&&(identical(other.riassunto, _this.riassunto) || other.riassunto == _this.riassunto)&&(identical(other.crisi, _this.crisi) || other.crisi == _this.crisi)&&(identical(other.messaggio, _this.messaggio) || other.messaggio == _this.messaggio)&&(identical(other.facoltativa, _this.facoltativa) || other.facoltativa == _this.facoltativa)&&(identical(other.scelta, _this.scelta) || other.scelta == _this.scelta)&&(identical(other.poste, _this.poste) || other.poste == _this.poste)&&(identical(other.minDomande, _this.minDomande) || other.minDomande == _this.minDomande)&&(identical(other.maxDomande, _this.maxDomande) || other.maxDomande == _this.maxDomande));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PassoIntervista&&(identical(other.completa, _this.completa) || other.completa == _this.completa)&&(identical(other.domanda, _this.domanda) || other.domanda == _this.domanda)&&(identical(other.ordine, _this.ordine) || other.ordine == _this.ordine)&&(identical(other.riassunto, _this.riassunto) || other.riassunto == _this.riassunto)&&(identical(other.crisi, _this.crisi) || other.crisi == _this.crisi)&&(identical(other.messaggio, _this.messaggio) || other.messaggio == _this.messaggio)&&(identical(other.facoltativa, _this.facoltativa) || other.facoltativa == _this.facoltativa)&&(identical(other.scelta, _this.scelta) || other.scelta == _this.scelta)&&(identical(other.poste, _this.poste) || other.poste == _this.poste)&&(identical(other.minDomande, _this.minDomande) || other.minDomande == _this.minDomande)&&(identical(other.maxDomande, _this.maxDomande) || other.maxDomande == _this.maxDomande)&&(identical(other.lang, _this.lang) || other.lang == _this.lang));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as PassoIntervista;
-  return Object.hash(runtimeType,_this.completa,_this.domanda,_this.ordine,_this.riassunto,_this.crisi,_this.messaggio,_this.facoltativa,_this.scelta,_this.poste,_this.minDomande,_this.maxDomande);
+  return Object.hash(runtimeType,_this.completa,_this.domanda,_this.ordine,_this.riassunto,_this.crisi,_this.messaggio,_this.facoltativa,_this.scelta,_this.poste,_this.minDomande,_this.maxDomande,_this.lang);
 }
 
 @override
 String toString() {
   final _this = this as PassoIntervista;
-  return 'PassoIntervista(completa: ${_this.completa}, domanda: ${_this.domanda}, ordine: ${_this.ordine}, riassunto: ${_this.riassunto}, crisi: ${_this.crisi}, messaggio: ${_this.messaggio}, facoltativa: ${_this.facoltativa}, scelta: ${_this.scelta}, poste: ${_this.poste}, minDomande: ${_this.minDomande}, maxDomande: ${_this.maxDomande})';
+  return 'PassoIntervista(completa: ${_this.completa}, domanda: ${_this.domanda}, ordine: ${_this.ordine}, riassunto: ${_this.riassunto}, crisi: ${_this.crisi}, messaggio: ${_this.messaggio}, facoltativa: ${_this.facoltativa}, scelta: ${_this.scelta}, poste: ${_this.poste}, minDomande: ${_this.minDomande}, maxDomande: ${_this.maxDomande}, lang: ${_this.lang})';
 }
 
 
@@ -6059,7 +6060,7 @@ abstract mixin class $PassoIntervistaCopyWith<$Res>  {
   factory $PassoIntervistaCopyWith(PassoIntervista value, $Res Function(PassoIntervista) _then) = _$PassoIntervistaCopyWithImpl;
 @useResult
 $Res call({
- bool completa, String? domanda, int? ordine, String? riassunto, bool crisi, String? messaggio, bool facoltativa, bool scelta, int? poste, int? minDomande, int? maxDomande
+ bool completa, String? domanda, int? ordine, String? riassunto, bool crisi, String? messaggio, bool facoltativa, bool scelta, int? poste, int? minDomande, int? maxDomande, String? lang
 });
 
 
@@ -6076,7 +6077,7 @@ class _$PassoIntervistaCopyWithImpl<$Res>
 
 /// Create a copy of PassoIntervista
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? completa = null,Object? domanda = freezed,Object? ordine = freezed,Object? riassunto = freezed,Object? crisi = null,Object? messaggio = freezed,Object? facoltativa = null,Object? scelta = null,Object? poste = freezed,Object? minDomande = freezed,Object? maxDomande = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? completa = null,Object? domanda = freezed,Object? ordine = freezed,Object? riassunto = freezed,Object? crisi = null,Object? messaggio = freezed,Object? facoltativa = null,Object? scelta = null,Object? poste = freezed,Object? minDomande = freezed,Object? maxDomande = freezed,Object? lang = freezed,}) {
   return _then(PassoIntervista(
 completa: null == completa ? _self.completa : completa // ignore: cast_nullable_to_non_nullable
 as bool,domanda: freezed == domanda ? _self.domanda : domanda // ignore: cast_nullable_to_non_nullable
@@ -6089,7 +6090,8 @@ as bool,scelta: null == scelta ? _self.scelta : scelta // ignore: cast_nullable_
 as bool,poste: freezed == poste ? _self.poste : poste // ignore: cast_nullable_to_non_nullable
 as int?,minDomande: freezed == minDomande ? _self.minDomande : minDomande // ignore: cast_nullable_to_non_nullable
 as int?,maxDomande: freezed == maxDomande ? _self.maxDomande : maxDomande // ignore: cast_nullable_to_non_nullable
-as int?,
+as int?,lang: freezed == lang ? _self.lang : lang // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -6174,10 +6176,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool completa,  String? domanda,  int? ordine,  String? riassunto,  bool crisi,  String? messaggio,  bool facoltativa,  bool scelta,  int? poste,  int? minDomande,  int? maxDomande)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool completa,  String? domanda,  int? ordine,  String? riassunto,  bool crisi,  String? messaggio,  bool facoltativa,  bool scelta,  int? poste,  int? minDomande,  int? maxDomande,  String? lang)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PassoIntervista() when $default != null:
-return $default(_that.completa,_that.domanda,_that.ordine,_that.riassunto,_that.crisi,_that.messaggio,_that.facoltativa,_that.scelta,_that.poste,_that.minDomande,_that.maxDomande);case _:
+return $default(_that.completa,_that.domanda,_that.ordine,_that.riassunto,_that.crisi,_that.messaggio,_that.facoltativa,_that.scelta,_that.poste,_that.minDomande,_that.maxDomande,_that.lang);case _:
   return orElse();
 
 }
@@ -6195,10 +6197,10 @@ return $default(_that.completa,_that.domanda,_that.ordine,_that.riassunto,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool completa,  String? domanda,  int? ordine,  String? riassunto,  bool crisi,  String? messaggio,  bool facoltativa,  bool scelta,  int? poste,  int? minDomande,  int? maxDomande)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool completa,  String? domanda,  int? ordine,  String? riassunto,  bool crisi,  String? messaggio,  bool facoltativa,  bool scelta,  int? poste,  int? minDomande,  int? maxDomande,  String? lang)  $default,) {final _that = this;
 switch (_that) {
 case _PassoIntervista():
-return $default(_that.completa,_that.domanda,_that.ordine,_that.riassunto,_that.crisi,_that.messaggio,_that.facoltativa,_that.scelta,_that.poste,_that.minDomande,_that.maxDomande);case _:
+return $default(_that.completa,_that.domanda,_that.ordine,_that.riassunto,_that.crisi,_that.messaggio,_that.facoltativa,_that.scelta,_that.poste,_that.minDomande,_that.maxDomande,_that.lang);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -6215,10 +6217,10 @@ return $default(_that.completa,_that.domanda,_that.ordine,_that.riassunto,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool completa,  String? domanda,  int? ordine,  String? riassunto,  bool crisi,  String? messaggio,  bool facoltativa,  bool scelta,  int? poste,  int? minDomande,  int? maxDomande)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool completa,  String? domanda,  int? ordine,  String? riassunto,  bool crisi,  String? messaggio,  bool facoltativa,  bool scelta,  int? poste,  int? minDomande,  int? maxDomande,  String? lang)?  $default,) {final _that = this;
 switch (_that) {
 case _PassoIntervista() when $default != null:
-return $default(_that.completa,_that.domanda,_that.ordine,_that.riassunto,_that.crisi,_that.messaggio,_that.facoltativa,_that.scelta,_that.poste,_that.minDomande,_that.maxDomande);case _:
+return $default(_that.completa,_that.domanda,_that.ordine,_that.riassunto,_that.crisi,_that.messaggio,_that.facoltativa,_that.scelta,_that.poste,_that.minDomande,_that.maxDomande,_that.lang);case _:
   return null;
 
 }
@@ -6230,7 +6232,7 @@ return $default(_that.completa,_that.domanda,_that.ordine,_that.riassunto,_that.
 @JsonSerializable()
 
 class _PassoIntervista implements PassoIntervista {
-  const _PassoIntervista({this.completa = false, this.domanda, this.ordine, this.riassunto, this.crisi = false, this.messaggio, this.facoltativa = false, this.scelta = false, this.poste, this.minDomande, this.maxDomande});
+  const _PassoIntervista({this.completa = false, this.domanda, this.ordine, this.riassunto, this.crisi = false, this.messaggio, this.facoltativa = false, this.scelta = false, this.poste, this.minDomande, this.maxDomande, this.lang});
   factory _PassoIntervista.fromJson(Map<String, dynamic> json) => _$PassoIntervistaFromJson(json);
 
 @override@JsonKey() final  bool completa;
@@ -6248,6 +6250,8 @@ class _PassoIntervista implements PassoIntervista {
 @override final  int? poste;
 @override final  int? minDomande;
 @override final  int? maxDomande;
+/// La lingua della lettura: una risposta piena in un'altra lingua la sposta (9/10/2026), e l'app la segue.
+@override final  String? lang;
 
 /// Create a copy of PassoIntervista
 /// with the given fields replaced by the non-null parameter values.
@@ -6262,18 +6266,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PassoIntervista&&(identical(other.completa, completa) || other.completa == completa)&&(identical(other.domanda, domanda) || other.domanda == domanda)&&(identical(other.ordine, ordine) || other.ordine == ordine)&&(identical(other.riassunto, riassunto) || other.riassunto == riassunto)&&(identical(other.crisi, crisi) || other.crisi == crisi)&&(identical(other.messaggio, messaggio) || other.messaggio == messaggio)&&(identical(other.facoltativa, facoltativa) || other.facoltativa == facoltativa)&&(identical(other.scelta, scelta) || other.scelta == scelta)&&(identical(other.poste, poste) || other.poste == poste)&&(identical(other.minDomande, minDomande) || other.minDomande == minDomande)&&(identical(other.maxDomande, maxDomande) || other.maxDomande == maxDomande));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PassoIntervista&&(identical(other.completa, completa) || other.completa == completa)&&(identical(other.domanda, domanda) || other.domanda == domanda)&&(identical(other.ordine, ordine) || other.ordine == ordine)&&(identical(other.riassunto, riassunto) || other.riassunto == riassunto)&&(identical(other.crisi, crisi) || other.crisi == crisi)&&(identical(other.messaggio, messaggio) || other.messaggio == messaggio)&&(identical(other.facoltativa, facoltativa) || other.facoltativa == facoltativa)&&(identical(other.scelta, scelta) || other.scelta == scelta)&&(identical(other.poste, poste) || other.poste == poste)&&(identical(other.minDomande, minDomande) || other.minDomande == minDomande)&&(identical(other.maxDomande, maxDomande) || other.maxDomande == maxDomande)&&(identical(other.lang, lang) || other.lang == lang));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,completa,domanda,ordine,riassunto,crisi,messaggio,facoltativa,scelta,poste,minDomande,maxDomande);
+    return Object.hash(runtimeType,completa,domanda,ordine,riassunto,crisi,messaggio,facoltativa,scelta,poste,minDomande,maxDomande,lang);
 }
 
 @override
 String toString() {
-    return 'PassoIntervista(completa: $completa, domanda: $domanda, ordine: $ordine, riassunto: $riassunto, crisi: $crisi, messaggio: $messaggio, facoltativa: $facoltativa, scelta: $scelta, poste: $poste, minDomande: $minDomande, maxDomande: $maxDomande)';
+    return 'PassoIntervista(completa: $completa, domanda: $domanda, ordine: $ordine, riassunto: $riassunto, crisi: $crisi, messaggio: $messaggio, facoltativa: $facoltativa, scelta: $scelta, poste: $poste, minDomande: $minDomande, maxDomande: $maxDomande, lang: $lang)';
 }
 
 
@@ -6284,7 +6288,7 @@ abstract mixin class _$PassoIntervistaCopyWith<$Res> implements $PassoIntervista
   factory _$PassoIntervistaCopyWith(_PassoIntervista value, $Res Function(_PassoIntervista) _then) = __$PassoIntervistaCopyWithImpl;
 @override @useResult
 $Res call({
- bool completa, String? domanda, int? ordine, String? riassunto, bool crisi, String? messaggio, bool facoltativa, bool scelta, int? poste, int? minDomande, int? maxDomande
+ bool completa, String? domanda, int? ordine, String? riassunto, bool crisi, String? messaggio, bool facoltativa, bool scelta, int? poste, int? minDomande, int? maxDomande, String? lang
 });
 
 
@@ -6301,7 +6305,7 @@ class __$PassoIntervistaCopyWithImpl<$Res>
 
 /// Create a copy of PassoIntervista
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? completa = null,Object? domanda = freezed,Object? ordine = freezed,Object? riassunto = freezed,Object? crisi = null,Object? messaggio = freezed,Object? facoltativa = null,Object? scelta = null,Object? poste = freezed,Object? minDomande = freezed,Object? maxDomande = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? completa = null,Object? domanda = freezed,Object? ordine = freezed,Object? riassunto = freezed,Object? crisi = null,Object? messaggio = freezed,Object? facoltativa = null,Object? scelta = null,Object? poste = freezed,Object? minDomande = freezed,Object? maxDomande = freezed,Object? lang = freezed,}) {
   return _then(_PassoIntervista(
 completa: null == completa ? _self.completa : completa // ignore: cast_nullable_to_non_nullable
 as bool,domanda: freezed == domanda ? _self.domanda : domanda // ignore: cast_nullable_to_non_nullable
@@ -6314,7 +6318,8 @@ as bool,scelta: null == scelta ? _self.scelta : scelta // ignore: cast_nullable_
 as bool,poste: freezed == poste ? _self.poste : poste // ignore: cast_nullable_to_non_nullable
 as int?,minDomande: freezed == minDomande ? _self.minDomande : minDomande // ignore: cast_nullable_to_non_nullable
 as int?,maxDomande: freezed == maxDomande ? _self.maxDomande : maxDomande // ignore: cast_nullable_to_non_nullable
-as int?,
+as int?,lang: freezed == lang ? _self.lang : lang // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

@@ -555,6 +555,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get comune_traduzione_mai => 'Не переводить автоматически';
 
   @override
+  String get comune_traduzione_lingua => 'Перевести на';
+
+  @override
+  String get comune_lingua_titolo => 'Выбери язык';
+
+  @override
+  String get comune_lingua_testo => 'Его можно сменить в любой момент кодом языка вверху страницы.';
+
+  @override
+  String get comune_lingua_accetta => 'Принять';
+
+  @override
   String get home_meta_titolo => 'TAROTS chat — живой ритуал Таро';
 
   @override
@@ -1428,6 +1440,29 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get lettura_invia_dire_ancora => 'Отправить, хочу сказать ещё кое-что';
+
+  @override
+  String get lettura_salta_basta => 'Пропустим, хватит вопросов';
+
+  @override
+  String get lettura_salta_altra => 'Не хочу отвечать, задай другой вопрос';
+
+  @override
+  String get lettura_salta_dire => 'Пропустим, хочу сказать другое';
+
+  @override
+  String get lettura_dire_ancora => 'Хочу сказать ещё кое-что';
+
+  @override
+  String lettura_offerta_lingua(Object lingua) {
+    return 'Ты пишешь по-русски. Переключить сайт на русский?';
+  }
+
+  @override
+  String get lettura_offerta_lingua_si => 'Переключить';
+
+  @override
+  String get lettura_offerta_lingua_no => 'Нет, спасибо';
 
   @override
   String get lettura_stampa_pdf => 'Печать в PDF';
@@ -5570,6 +5605,20 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get app_lingua_cambia => 'Изменить';
+
+  @override
+  String get app_lingua_app_titolo => 'Выберите язык';
+
+  @override
+  String get app_lingua_app_accetta => 'Принять';
+
+  @override
+  String app_lingua_offerta(Object lingua) {
+    return 'Вы пишете по-русски. Переключить приложение на русский?';
+  }
+
+  @override
+  String get app_lingua_offerta_passa => 'Переключить';
 
   @override
   String get notifiche_titolo => 'Уведомления';

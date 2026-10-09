@@ -1,10 +1,14 @@
 // v9.5, la traduzione dei contenuti sul telefono (ML Kit): il markdown resta intero (collegamenti, scorciatoie,
-// immagini), l'articolo si legge tradotto col riquadro che lo dice e torna all'originale, la lingua di lettura si
-// sceglie al primo avvio solo dove il telefono sa tradurre (in inglese non si scarica nulla).
+// immagini), l'articolo si legge tradotto col riquadro che lo dice e torna all'originale; la lingua di lettura segue
+// quella dell'app, e una diversa scelta dal piè di pagina resta (in inglese non si scarica nulla).
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tarots/archivio.dart';
+import 'package:tarots/componenti/bottoni.dart';
+import 'package:tarots/componenti/modale.dart';
+import 'package:tarots/componenti/premibile.dart';
+import 'package:tarots/lingua/lingua.dart';
 import 'package:tarots/traduzione/lingua_contenuti.dart';
 import 'package:tarots/traduzione/motore.dart';
 import 'package:tarots/traduzione/scelta_lingua.dart';
@@ -121,29 +125,63 @@ void main() {
     finisciScena();
   });
 
-  testWidgets('al primo avvio si sceglie la lingua di lettura, e il modello si scarica', (tester) async {
+  testWidgets('la lingua di lettura segue l\'app, senza una domanda a parte al primo avvio', (tester) async {
     final motore = MotoreFinto();
-    final app = await montaApp(tester, rotta: '/', larghezza: 390, altezza: 844, motore: motore);
+    final app = await montaApp(tester, rotta: '/', larghezza: 390, altezza: 844, lingua: 'hu', motore: motore);
     await assesta(tester);
-    expect(find.byType(DialogoLinguaContenuti), findsOneWidget);
-    // In cima l'interfaccia (inglese); si cerca e si sceglie il magiaro.
-    await tester.enterText(find.byType(EditableText).last, 'magy');
-    await tester.pump();
-    await tester.tap(find.text('Magyar'));
-    await tester.pump();
-    await tester.ensureVisible(find.text('Continue'));
-    await tester.tap(find.text('Continue'));
-    await assesta(tester);
-    expect(motore.scaricati, ['hu']);
-    expect(find.byType(DialogoLinguaContenuti), findsNothing);
-    expect(app.read(archivioProvider).leggi(chiaveLinguaContenuti), 'hu');
+    expect(find.byType(SceltaLinguaContenuti), findsNothing);
+    expect(app.read(linguaContenutiProvider), 'hu');
+    expect(app.read(archivioProvider).leggi(chiaveLinguaContenuti), isNull);
     finisciScena();
   });
 
-  testWidgets('dove il telefono non sa tradurre, il primo avvio non chiede nulla', (tester) async {
+  testWidgets(
+    'dal piè di pagina un\'altra lingua di lettura: resta, e non segue più l\'app; il pulsante resta in vista',
+    (tester) async {
+      final motore = MotoreFinto();
+      final app = await montaApp(tester, rotta: '/', larghezza: 360, altezza: 640, motore: motore);
+      await assesta(tester);
+      final voce = find.byType(VoceLinguaContenuti);
+      await tester.ensureVisible(voce);
+      await tester.pump();
+      await tester.tap(voce);
+      await assesta(tester);
+      // L'elenco scorre nel suo riquadro, «Continua» resta sotto, dentro lo schermo.
+      expect(find.byType(RiquadroElenco), findsOneWidget);
+      final continua = tester.getRect(find.text('Continue'));
+      expect(continua.bottom, lessThanOrEqualTo(640));
+      expect(
+        tester.getRect(find.ancestor(of: find.text('Continue'), matching: find.byType(Bottone))).height,
+        greaterThanOrEqualTo(48),
+      );
+      await tester.enterText(find.byType(EditableText).last, 'deutsch');
+      await tester.pump();
+      await tester.tap(find.text('Deutsch'));
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await assesta(tester);
+      expect(motore.scaricati, ['de']);
+      expect(app.read(archivioProvider).leggi(chiaveLinguaContenuti), 'de');
+      // L'app cambia lingua: la lettura resta in tedesco.
+      await app.read(linguaProvider.notifier).imposta('it');
+      await assesta(tester);
+      expect(app.read(linguaContenutiProvider), 'de');
+      // Scegliere di nuovo la lingua dell'app torna a seguirla.
+      app.read(linguaContenutiProvider.notifier).scegli('it');
+      expect(app.read(archivioProvider).leggi(chiaveLinguaContenuti), isNull);
+      await app.read(linguaProvider.notifier).imposta('en');
+      await assesta(tester);
+      expect(app.read(linguaContenutiProvider), 'en');
+      expect(tester.takeException(), isNull);
+      finisciScena();
+    },
+  );
+
+  testWidgets('dove il telefono non sa tradurre, la voce del piè di pagina non c\'è', (tester) async {
     await montaApp(tester, rotta: '/', larghezza: 390, altezza: 844);
     await assesta(tester);
-    expect(find.byType(DialogoLinguaContenuti), findsNothing);
+    expect(find.byType(VoceLinguaContenuti), findsOneWidget);
+    expect(find.descendant(of: find.byType(VoceLinguaContenuti), matching: find.byType(Premibile)), findsNothing);
     finisciScena();
   });
 

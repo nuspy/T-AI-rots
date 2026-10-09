@@ -71,4 +71,9 @@ export const app: typeof Base = {
   lingua_errore: "Скачать не получилось (есть ли интернет?). Пока материалы остаются на английском: попробуем снова, когда ты их откроешь.",
   lingua_voce: "Язык чтения: {lingua}",
   lingua_cambia: "Изменить",
+  /* 9/10/2026: la lingua dell'app alla prima apertura, e la proposta di passare alla lingua in cui si scrive */
+  lingua_app_titolo: "Выберите язык",
+  lingua_app_accetta: "Принять",
+  lingua_offerta: "Вы пишете по-русски. Переключить приложение на русский?",
+  lingua_offerta_passa: "Переключить",
 };

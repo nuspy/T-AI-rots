@@ -56,6 +56,7 @@ import '../lettura/tavolo.dart';
 import '../lettura/variante.dart';
 import '../lettura/ventaglio.dart';
 import '../lingua/lingua.dart';
+import '../lingua/lingua_profilo.dart';
 import '../modelli/account.dart' hide Ventaglio;
 import '../modelli/carta.dart';
 import '../modelli/cassa.dart';
@@ -203,6 +204,21 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
   /// Le carte sono girate e il lettore le sta leggendo tutte insieme (una chiamata sola): un solo momento d'attesa.
   bool _lettoreLegge = false;
   bool _scegliendo = false;
+
+  /// La carta il cui testo sta arrivando (ha il cursore); l'ultima che ne ha ricevuto (nella chat la pagina segue la
+  /// sua fine, anche a carta finita, finché non comincia la prossima).
+  int? _inScrittura;
+  int? _ultimaScritta;
+
+  /// Nella chat, mentre il testo arriva: il bordo che cresce (la fine della carta che si scrive, poi il responso).
+  final GlobalKey _bordoCarta = GlobalKey(debugLabel: 'bordo-carta');
+  final GlobalKey _bordoResponso = GlobalKey(debugLabel: 'bordo-responso');
+  bool _seguitoPrenotato = false;
+
+  /// 9/10/2026: la lingua in cui chi legge scrive non è quella dell'app: l'invito a passarci (una volta per lettura,
+  /// mai da solo).
+  String? _offertaLingua;
+  bool _offertaFatta = false;
 
   /// v9.5, i tre pulsanti. L'oracolo fa la prima domanda da sé; dopo ogni risposta il campo si chiude e chi legge
   /// sceglie fra «Passa alla lettura», «Voglio dire qualcosa di libero» e «Voglio rispondere a un'altra domanda»
@@ -451,7 +467,9 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
       if (lt.status == 'intervista' && (ultima == null || ultima.ruolo == 'utente')) {
         await _passoIntervista(lt.id, null);
       }
-      _interpretaLeMieCarte();
+      // Ripresa a intervista finita: si va avanti da sé come senza interruzione (il mazzo si mescola, o le carte già
+      // scelte si girano).
+      _prosegui();
     } on ErroreApi {
       _set(() {
         _fase = FaseLettura.preparazione;
@@ -529,13 +547,15 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
           _maxDomande = passo.maxDomande!;
         }
         if (passo.poste != null) _poste = passo.poste!;
+        _seguiLingua(passo.lang);
         if (passo.crisi) {
           _aggiungi(Autore.sistema, passo.messaggio ?? '');
           _fase = FaseLettura.crisi;
         } else if (passo.completa) {
           _aggiungi(Autore.oracolo, passo.riassunto ?? '', titolo: '✦', macchina: true);
-          // Le proprie carte («Interpreta le mie carte»): già estratte e posate, niente mescolata né taglio. Il
-          // server è già passato alla rivelazione: l'interpretazione parte da sola.
+          // Il mazzo comincia a mescolarsi da sé (`_prosegui`). Le proprie carte («Interpreta le mie carte»): già
+          // estratte e posate, niente mescolata né taglio; il server è già passato alla rivelazione, e
+          // l'interpretazione parte da sola.
           _fase = _manuale ? FaseLettura.rivelazione : FaseLettura.prontoMescolare;
         } else if (passo.scelta) {
           _modo = _ModoIntervista.libero;
@@ -550,17 +570,40 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
     } finally {
       _set(() => _attesa = false);
     }
-    _interpretaLeMieCarte();
+    _prosegui();
   }
 
-  /// Le proprie carte, a intervista finita: niente da mescolare né da scegliere, si leggono subito (una volta: se
-  /// l'interpretazione non riesce resta il pulsante per riprovare).
-  bool _interpretazioneAvviata = false;
+  /// Il rito va avanti da sé dove non serve un gesto (9/10/2026): a intervista finita il mazzo comincia a mescolarsi
+  /// (restano di chi legge fermare la mescolata, tagliare, scegliere); posata l'ultima carta, o con le proprie carte a
+  /// intervista finita, le carte si girano e arriva l'interpretazione. Una volta per lettura: se qualcosa non riesce
+  /// restano l'errore e il pulsante per riprovare.
+  bool _mescolataAvviata = false;
+  bool _rivelazioneAvviata = false;
 
-  void _interpretaLeMieCarte() {
-    if (!_manuale || _fase != FaseLettura.rivelazione || _interpretazioneAvviata || !_vivo) return;
-    _interpretazioneAvviata = true;
-    unawaited(_rivelaTutto());
+  void _prosegui() {
+    if (!_vivo || _id == null) return;
+    if (_fase == FaseLettura.prontoMescolare && !_mescolataAvviata) {
+      _mescolataAvviata = true;
+      _mescola();
+    } else if (_fase == FaseLettura.rivelazione && !_rivelazioneAvviata) {
+      _rivelazioneAvviata = true;
+      unawaited(_rivelaTutto());
+    }
+  }
+
+  /// La lingua della lettura che il server rimanda a ogni passo (una risposta piena in un'altra lingua la sposta): la
+  /// si segue per i nomi di carte e stese; se non è quella dell'app, una volta per lettura si propone di passarci.
+  /// Da chiamare dentro `_set`.
+  void _seguiLingua(String? lang) {
+    final l = comeLingua(lang);
+    if (l == null) return;
+    _linguaLettura = l;
+    if (l == _lingua) {
+      _offertaLingua = null;
+    } else if (!_offertaFatta) {
+      _offertaFatta = true;
+      _offertaLingua = l;
+    }
   }
 
   /// Salva il testo scritto: la risposta alla domanda che aspetta (senza chiedere la successiva), o un testo libero.
@@ -581,6 +624,7 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
             _maxDomande = passo.maxDomande!;
           }
           if (passo.poste != null) _poste = passo.poste!;
+          _seguiLingua(passo.lang);
           if (passo.crisi) {
             _aggiungi(Autore.sistema, passo.messaggio ?? '');
             _fase = FaseLettura.crisi;
@@ -588,6 +632,7 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
         });
         return !passo.crisi;
       }
+      // Anche con una domanda che aspetta («Saltiamo, voglio dire un'altra cosa»): il server la segna come saltata.
       final esito = await ref.read(apiProvider).aggiungiAllIntervista(id, testo);
       if (esito.crisi) {
         _set(() {
@@ -596,6 +641,7 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
         });
         return false;
       }
+      _set(() => _seguiLingua(esito.lang));
       _traccia('interview_addition', {'n': _poste});
       return true;
     } on ErroreApi catch (e) {
@@ -617,6 +663,8 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
         _ => 'libero',
       },
       'n': _poste,
+      // A campo vuoto con una domanda che aspetta: la domanda è saltata (mai il testo).
+      if (testo.isEmpty && _modo == _ModoIntervista.risposta) 'saltata': true,
     });
     if (testo.isNotEmpty && !await _salvaTesto(id, testo)) return;
     if (dopo == 'dire') {
@@ -627,19 +675,20 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
     await _passoIntervista(id, null, basta: dopo == 'basta', altra: dopo == 'altra');
   }
 
-  /// Quali invii: «basta» quando le domande con risposta arrivano al minimo (a campo vuoto, solo se il minimo c'è già
-  /// senza la domanda che aspetta); «un'altra domanda» finché non si arriva al massimo (a campo vuoto solo se nessuna
-  /// domanda aspetta); «voglio dire una cosa» sempre, con un testo.
+  /// Quali invii: «basta» quando le domande poste arrivano al minimo (una domanda saltata conta come posta), «un'altra
+  /// domanda» finché non si arriva al massimo, «voglio dire una cosa» sempre. Si toccano sempre (9/10/2026): a campo
+  /// vuoto, con una domanda che aspetta, dicono che la si salta («Saltiamo, basta con le domande», «Non voglio
+  /// rispondere, fai un'altra domanda», «Saltiamo, voglio dire un'altra cosa»: il campo passa al testo libero e il
+  /// prossimo invio va a `/addition`); il server segna la domanda come saltata.
   List<InvioDialogo> _invii(AppLocalizations t) {
     if (_fase != FaseLettura.intervista || _id == null) return const [];
     final aspetta = _modo == _ModoIntervista.risposta;
-    final risposte = _poste - (aspetta ? 1 : 0);
     return [
       if (_poste >= _minDomande)
         InvioDialogo(
           chiave: 'basta',
           etichetta: t.lettura_invia_basta,
-          etichettaVuoto: risposte >= _minDomande ? t.lettura_basta_domande : null,
+          etichettaVuoto: aspetta ? t.lettura_salta_basta : t.lettura_basta_domande,
           primaria: true,
           alInvio: (testo) => unawaited(_inviaIntervista(testo, 'basta')),
         ),
@@ -647,12 +696,13 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
         InvioDialogo(
           chiave: 'altra',
           etichetta: t.lettura_invia_altra,
-          etichettaVuoto: aspetta ? null : t.lettura_altra_domanda,
+          etichettaVuoto: aspetta ? t.lettura_salta_altra : t.lettura_altra_domanda,
           alInvio: (testo) => unawaited(_inviaIntervista(testo, 'altra')),
         ),
       InvioDialogo(
         chiave: 'dire',
         etichetta: aspetta ? t.lettura_invia_dire : t.lettura_invia_dire_ancora,
+        etichettaVuoto: aspetta ? t.lettura_salta_dire : t.lettura_scelta_libero,
         alInvio: (testo) => unawaited(_inviaIntervista(testo, 'dire')),
       ),
     ];
@@ -822,18 +872,19 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
         _fase = FaseLettura.intervista;
         _modo = _ModoIntervista.risposta;
         _poste = 0;
+        _mescolataAvviata = false;
+        _rivelazioneAvviata = false;
+        _offertaLingua = null;
+        _offertaFatta = false;
       });
       ref.invalidate(contoProvider);
       ref.invalidate(profiloProvider);
       if (_saltaIntervista) {
-        // Senza domande: il quadro dalla sola domanda, poi subito la mescolata. Se il server rifiuta (il minimo è
-        // cambiato nel frattempo), si fa l'intervista.
+        // Senza domande: il quadro dalla sola domanda, poi subito la mescolata (parte da sé, `_prosegui`). Se il
+        // server rifiuta (il minimo è cambiato nel frattempo), si fa l'intervista.
         _traccia('interview_choice', {'scelta': 'salta', 'n': 0});
         await _passoIntervista(id, null, basta: true);
-        if (_fase == FaseLettura.prontoMescolare) {
-          _mescola();
-          return;
-        }
+        if (_fase != FaseLettura.intervista) return;
         _set(() => _errore = null);
       }
       await _passoIntervista(id, null);
@@ -997,8 +1048,12 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
         unawaited(_volo.vola(_scena.currentContext ?? context, r.posizione, partenza, arrivo));
       }
       if (r.tutteScelte) {
+        // Il tempo del volo dell'ultima carta, poi le carte si girano e arriva l'interpretazione, da sole.
         await Future<void>.delayed(const Duration(milliseconds: 700));
-        if (_vivo) _set(() => _fase = FaseLettura.rivelazione);
+        if (_vivo) {
+          _set(() => _fase = FaseLettura.rivelazione);
+          _prosegui();
+        }
       }
     } on ErroreApi catch (e) {
       _set(() => _errore = e.stato == 0 ? context.t.lettura_err_posa : e.messaggio(context.t));
@@ -1011,6 +1066,70 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
 
   void _aggiornaPosata(int posizione, Posata Function(Posata p) f) =>
       _set(() => _posate = [for (final p in _posate) p.posizione == posizione ? f(p) : p]);
+
+  /// Il testo di una carta mentre arriva: `token` si aggiunge in coda ([aggiungi]), `sostituisci` prende il posto di
+  /// tutto (vuoto: si cancella, e i pezzi possono ripartire). L'attesa «il lettore sta leggendo» sparisce al primo
+  /// pezzo, e il cursore va su questa carta.
+  void _scriviCarta(int posizione, String testo, {required bool aggiungi}) {
+    _preparaSeguito();
+    _set(() {
+      _lettoreLegge = false;
+      _inScrittura = posizione;
+      _ultimaScritta = posizione;
+      _posate = [
+        for (final p in _posate)
+          p.posizione == posizione ? p.copia(interpretazione: aggiungi ? (p.interpretazione ?? '') + testo : testo) : p,
+      ];
+    });
+  }
+
+  /// `fine` di una carta: il testo definitivo (se c'è) e il cursore che la lascia.
+  void _finisciCarta(int posizione, String interpretazione) {
+    _preparaSeguito();
+    _set(() {
+      _lettoreLegge = false;
+      if (_inScrittura == posizione) _inScrittura = null;
+      if (interpretazione.isNotEmpty) {
+        _posate = [for (final p in _posate) p.posizione == posizione ? p.copia(interpretazione: interpretazione) : p];
+      }
+    });
+  }
+
+  /// v9.5, la chat: mentre il testo arriva, la pagina segue il bordo che cresce (la fine della carta che si scrive, poi
+  /// il responso) solo se chi legge lo sta guardando: lo si misura PRIMA che il testo cresca, e dopo il disegno si
+  /// scorre quanto basta a tenerlo in vista. Chi è risalito a rileggere non viene spostato (il bordo era fuori vista).
+  void _preparaSeguito() {
+    if (!widget.inChat || _seguitoPrenotato || !_scorri.hasClients) return;
+    final oggetto = _oggettoBordo();
+    if (oggetto == null) return;
+    final viewport = RenderAbstractViewport.maybeOf(oggetto);
+    if (viewport == null) return;
+    final p = _scorri.position;
+    // Lo scorrimento a cui il bordo sta in fondo alla finestra; da lì a una finestra in più, il bordo si vede.
+    final inFondo = viewport.getOffsetToReveal(oggetto, 1).offset;
+    if (p.pixels < inFondo - 48 || p.pixels > inFondo + p.viewportDimension) return;
+    _seguitoPrenotato = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _seguitoPrenotato = false;
+      if (!_vivo || !_scorri.hasClients) return;
+      final ora = _oggettoBordo();
+      final vista = ora == null ? null : RenderAbstractViewport.maybeOf(ora);
+      if (ora == null || vista == null) return;
+      final pos = _scorri.position;
+      final meta = math.min(pos.maxScrollExtent, vista.getOffsetToReveal(ora, 1).offset + 16);
+      if (meta > pos.pixels + 1) _scorri.jumpTo(meta);
+    });
+  }
+
+  /// Il bordo che cresce: il responso durante la sintesi (o, prima del primo pezzo, la zona delle carte), se no la
+  /// fine della carta che si scrive.
+  RenderObject? _oggettoBordo() {
+    final contesto = _fase == FaseLettura.sintesi
+        ? (_bordoResponso.currentContext ?? _zonaResponso.currentContext)
+        : _bordoCarta.currentContext;
+    final oggetto = contesto?.findRenderObject();
+    return oggetto != null && oggetto.attached ? oggetto : null;
+  }
 
   /// Una carta si gira e la sua spiegazione arriva in streaming. Falso se qualcosa è andato storto.
   Future<bool> _rivelaCarta(String id, int posizione) async {
@@ -1035,23 +1154,23 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
                 interpretazione: '',
               ),
             );
-            _set(() => _lettoreLegge = true);
+            _set(() {
+              _lettoreLegge = true;
+              _inScrittura = posizione;
+            });
           case EventoToken():
-            _set(() => _lettoreLegge = false);
-            _aggiornaPosata(posizione, (p) => p.copia(interpretazione: (p.interpretazione ?? '') + ev.testo));
+            _scriviCarta(posizione, ev.testo, aggiungi: true);
           case EventoSostituisci():
-            _aggiornaPosata(posizione, (p) => p.copia(interpretazione: ev.testo));
+            _scriviCarta(posizione, ev.testo, aggiungi: false);
           case EventoErrore():
             _set(() {
               _lettoreLegge = false;
+              _inScrittura = null;
               _errore = ev.messaggio;
             });
             return false;
           case EventoFineRivelazione():
-            _set(() => _lettoreLegge = false);
-            if (ev.interpretazione.isNotEmpty) {
-              _aggiornaPosata(posizione, (p) => p.copia(interpretazione: ev.interpretazione));
-            }
+            _finisciCarta(posizione, ev.interpretazione);
           default:
             break;
         }
@@ -1064,7 +1183,10 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
       _set(() => _errore = context.t.lettura_err_giro);
       return false;
     } finally {
-      _set(() => _lettoreLegge = false);
+      _set(() {
+        _lettoreLegge = false;
+        _inScrittura = null;
+      });
     }
   }
 
@@ -1096,23 +1218,21 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
             );
           case EventoFase(fase: 'lettura'):
             _set(() => _lettoreLegge = true);
+          // In diretta (9/10/2026): molti pezzi per carta, in ordine; ognuno si aggiunge al testo della sua carta.
           case EventoToken(:final posizione?):
-            _set(() => _lettoreLegge = false);
-            _aggiornaPosata(posizione, (p) => p.copia(interpretazione: (p.interpretazione ?? '') + ev.testo));
+            _scriviCarta(posizione, ev.testo, aggiungi: true);
           case EventoSostituisci(:final posizione?):
-            _aggiornaPosata(posizione, (p) => p.copia(interpretazione: ev.testo));
+            _scriviCarta(posizione, ev.testo, aggiungi: false);
           case EventoErrore():
             // Una carta senza spiegazione (la ritroverà nel responso): le altre arrivano lo stesso.
             _set(() {
               _lettoreLegge = false;
+              if (ev.posizione != null && _inScrittura == ev.posizione) _inScrittura = null;
               _errore = ev.messaggio;
             });
             riuscita = false;
           case EventoFineRivelazione():
-            _set(() => _lettoreLegge = false);
-            if (ev.interpretazione.isNotEmpty) {
-              _aggiornaPosata(ev.posizione, (p) => p.copia(interpretazione: ev.interpretazione));
-            }
+            _finisciCarta(ev.posizione, ev.interpretazione);
           default:
             break;
         }
@@ -1126,7 +1246,10 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
       _set(() => _errore = context.t.lettura_err_giro);
       return false;
     } finally {
-      _set(() => _lettoreLegge = false);
+      _set(() {
+        _lettoreLegge = false;
+        _inScrittura = null;
+      });
     }
   }
 
@@ -1178,6 +1301,9 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
       _testoResponso = '';
       _errore = null;
     });
+    // In diretta (9/10/2026, con un account): i pezzi del responso si aggiungono mentre il modello scrive; le fasi
+    // (`guardia`, `revisione`, `responso`) non toccano il testo già mostrato (al più una nota discreta sotto), e
+    // `sostituisci` lo rimpiazza tutto (vuoto: lo cancella; arriva anche prima di un `errore`).
     try {
       await for (final ev in ref.read(apiProvider).sintesi(id)) {
         if (!_vivo) return;
@@ -1185,9 +1311,14 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
           case EventoFase():
             _set(() => _faseResponso = ev.fase);
           case EventoToken():
+            _preparaSeguito();
             _set(() => _testoResponso += ev.testo);
+          case EventoSostituisci():
+            _preparaSeguito();
+            _set(() => _testoResponso = ev.testo);
           case EventoErrore():
             _set(() {
+              _testoResponso = '';
               _errore = ev.messaggio;
               _fase = FaseLettura.rivelazione;
             });
@@ -1204,12 +1335,15 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
         }
       }
     } on ErroreApi catch (e) {
+      // Il flusso interrotto a metà: il testo a metà non resta come se fosse il responso.
       _set(() {
+        _testoResponso = '';
         _errore = e.stato == 0 ? context.t.lettura_err_responso : e.messaggio(context.t);
         _fase = FaseLettura.rivelazione;
       });
     } on FormatException {
       _set(() {
+        _testoResponso = '';
         _errore = context.t.lettura_err_responso;
         _fase = FaseLettura.rivelazione;
       });
@@ -1231,7 +1365,12 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
       _fine = null;
       _linguaLettura = null;
       _manuale = false;
-      _interpretazioneAvviata = false;
+      _mescolataAvviata = false;
+      _rivelazioneAvviata = false;
+      _inScrittura = null;
+      _ultimaScritta = null;
+      _offertaLingua = null;
+      _offertaFatta = false;
       _mazzoLetturaFatto = false;
       _caricata = true;
       _modo = _ModoIntervista.risposta;
@@ -1513,10 +1652,11 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
             ),
           ]
         : [
+            // I due invii con lo stesso colore e lo stesso peso (9/10/2026): nessuno dei due è «secondario».
             if (senzaMinimo)
               Bottone(
                 _inCorso && _saltaIntervista ? t.comune_carica : t.lettura_domanda_invia_mescola,
-                variante: Variante.ottone,
+                variante: Variante.prugna,
                 pieno: stretto,
                 an: 'rito',
                 anProprieta: const {'passo': 'inizia_mescola'},
@@ -1526,23 +1666,25 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
               ),
             Bottone(
               _inCorso && !_saltaIntervista ? t.comune_carica : t.lettura_domanda_invia_chiedi,
-              variante: senzaMinimo ? Variante.quieto : Variante.ottone,
+              variante: Variante.prugna,
               pieno: stretto,
               an: 'rito',
               anProprieta: const {'passo': 'inizia'},
               alTocco: bloccato || !domandaValida ? null : () => unawaited(_chiediInizio(categoria, domandaValida)),
             ),
           ];
+    // Alti almeno 48 px (il tocco), 8 px fra l'uno e l'altro.
+    final alti = [for (final b in bottoni) ConstrainedBox(constraints: const BoxConstraints(minHeight: 48), child: b)];
     return Padding(
       padding: const EdgeInsets.only(top: 12.8),
       child: stretto
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                for (final (k, b) in bottoni.indexed) ...[if (k > 0) const SizedBox(height: 8), b],
+                for (final (k, b) in alti.indexed) ...[if (k > 0) const SizedBox(height: 8), b],
               ],
             )
-          : Wrap(spacing: 8, runSpacing: 8, children: bottoni),
+          : Wrap(spacing: 8, runSpacing: 8, children: alti),
     );
   }
 
@@ -1760,6 +1902,20 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
           fluido: widget.inChat,
           alNovita: _segui,
         ),
+        if (_offertaLingua != null && _offertaLingua != lingua)
+          _OffertaLingua(
+            lingua: _offertaLingua!,
+            alPassa: () {
+              final l = _offertaLingua!;
+              _traccia('lingua_offerta', {'scelta': 'passa', 'lingua': l});
+              _set(() => _offertaLingua = null);
+              unawaited(scegliLingua(ref, l));
+            },
+            alChiudi: () {
+              _traccia('lingua_offerta', {'scelta': 'no', 'lingua': _offertaLingua!});
+              _set(() => _offertaLingua = null);
+            },
+          ),
         if (_errore != null && _fase == FaseLettura.intervista)
           Padding(
             padding: const EdgeInsets.only(top: 12.8),
@@ -1859,26 +2015,42 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
                       CarteSvelate(
                         stesa: stesa,
                         posate: _posate,
-                        attiva: _fase == FaseLettura.svelamento || _rivelazioneInCorso,
+                        attiva: _fase == FaseLettura.svelamento,
                         lettoreLegge: _lettoreLegge,
+                        inScrittura: _inScrittura,
+                        chiaveBordo: _bordoCarta,
+                        posizioneBordo: _ultimaScritta,
                       ),
+                      // Prima del primo pezzo del responso, il sigillo e la frase della fase; poi il testo, che resta.
                       if (_fase == FaseLettura.sintesi && _testoResponso.isEmpty) FaseResponso(fase: _faseResponso),
                       if (_testoResponso.isNotEmpty)
-                        Responso(
-                          id: _id!,
-                          testo: _testoResponso,
-                          finito: _fase == FaseLettura.completata,
-                          disclaimer: _fine?.disclaimer ?? _disclaimer ?? '',
-                          commitment: _fine?.commitment,
-                          saldo: _fine?.saldo,
-                          anonimo: _fine?.anonimo ?? !sessione.autenticata,
-                          omaggi: omaggi,
-                          alNuova: _nuova,
-                          alRegistrati: () => unawaited(_registrati()),
-                          alCondividi: () => unawaited(apriCondivisione(context, id: _id!)),
-                          alVai: (href) => vai(context, href),
-                          alStampa: () => unawaited(_stampa(_id!)),
+                        KeyedSubtree(
+                          key: _bordoResponso,
+                          child: Responso(
+                            id: _id!,
+                            testo: _testoResponso,
+                            finito: _fase == FaseLettura.completata,
+                            scrive:
+                                _fase == FaseLettura.sintesi &&
+                                _faseResponso != 'guardia' &&
+                                _faseResponso != 'revisione',
+                            disclaimer: _fine?.disclaimer ?? _disclaimer ?? '',
+                            commitment: _fine?.commitment,
+                            saldo: _fine?.saldo,
+                            anonimo: _fine?.anonimo ?? !sessione.autenticata,
+                            omaggi: omaggi,
+                            alNuova: _nuova,
+                            alRegistrati: () => unawaited(_registrati()),
+                            alCondividi: () => unawaited(apriCondivisione(context, id: _id!)),
+                            alVai: (href) => vai(context, href),
+                            alStampa: () => unawaited(_stampa(_id!)),
+                          ),
                         ),
+                      // Il testo è già tutto lì e la guardia lo rilegge: una nota discreta, il testo non sparisce.
+                      if (_fase == FaseLettura.sintesi &&
+                          _testoResponso.isNotEmpty &&
+                          (_faseResponso == 'guardia' || _faseResponso == 'revisione'))
+                        NotaFaseResponso(fase: _faseResponso),
                     ],
                   ),
                 ),
@@ -2125,6 +2297,71 @@ class _Istruzione extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
       ),
       child: scritta,
+    );
+  }
+}
+
+/// 9/10/2026: chi legge scrive in una lingua che non è quella dell'app: una riga discreta sotto la conversazione,
+/// scritta in quella lingua (l'inglese con il nome della lingua, dove i testi non sono ancora tradotti), con «Passa»
+/// e la ✕. Passare è come scegliere dal selettore; niente succede da solo.
+class _OffertaLingua extends StatelessWidget {
+  const _OffertaLingua({required this.lingua, required this.alPassa, required this.alChiudi});
+
+  final String lingua;
+  final VoidCallback alPassa;
+  final VoidCallback alChiudi;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = lookupAppLocalizations(Locale(lingua));
+    final testo = t.app_lingua_offerta(datiLingua(lingua).nome);
+    return Padding(
+      padding: const EdgeInsets.only(top: 12.8),
+      child: Semantics(
+        container: true,
+        liveRegion: true,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 4, 0, 4),
+          decoration: const BoxDecoration(
+            border: Border(left: BorderSide(color: Token.verdigris, width: 2)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    Text(testo, style: Stile.sans(14.4, altezza: 1.5, colore: Token.inkSoft)),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 48),
+                      child: Bottone(
+                        t.app_lingua_offerta_passa,
+                        piccolo: true,
+                        variante: Variante.quieto,
+                        alTocco: alPassa,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Premibile(
+                alTocco: alChiudi,
+                etichetta: t.comune_chiudi,
+                costruisci: (context, premuto) => SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: Center(
+                    child: Text('✕', style: Stile.sans(16, colore: premuto ? Token.ink : Token.inkSoft)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

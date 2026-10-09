@@ -70,7 +70,7 @@ class _ConTraduzioneState extends ConsumerState<ConTraduzione> {
   FaseTraduzione _fase = FaseTraduzione.nessuna;
   bool _vuoleOriginale = false;
   int _giro = 0;
-  ProviderSubscription<String?>? _lingua;
+  ProviderSubscription<String>? _lingua;
 
   @override
   void initState() {
@@ -105,13 +105,13 @@ class _ConTraduzioneState extends ConsumerState<ConTraduzione> {
     return true;
   }
 
-  String? get _a => ref.read(linguaContenutiProvider);
+  String get _a => ref.read(linguaContenutiProvider);
 
   Future<void> _avvia() async {
     final giro = ++_giro;
     final motore = ref.read(motoreTraduzioneProvider);
     final a = _a;
-    if (a == null || a == widget.da || !motore.disponibile) {
+    if (a == widget.da || !motore.disponibile) {
       if (mounted) setState(() => _fase = FaseTraduzione.nessuna);
       return;
     }
@@ -162,7 +162,7 @@ class _ConTraduzioneState extends ConsumerState<ConTraduzione> {
     final avviso = AvvisoTraduzioneApp(
       fase: _fase,
       da: widget.da,
-      a: _a ?? 'en',
+      a: _a,
       alOriginale: () => setState(() {
         _vuoleOriginale = true;
         _fase = FaseTraduzione.originale;
