@@ -80,12 +80,21 @@ data:
         proxy_read_timeout 300s;
         proxy_send_timeout 300s;
       }
+      # L'elenco e la creazione dei mazzi (`/api/admin/decks`, senza barra): senza questa
+      # riga nginx risponde al posto dell'API con un 301 verso `…/decks/` (regola delle
+      # location che finiscono con «/»), e la console mostra «Il servizio non risponde».
+      location = /api/admin/decks {
+        proxy_pass http://tarots-api:8100/admin/decks;
+      }
 
       # Le carte d'esempio dei candidati al voto: un'immagine per richiesta
       # (fino a 8 MB, come le immagini del blog).
       location /api/admin/voto/ {
         client_max_body_size 10m;
         proxy_pass http://tarots-api:8100/admin/voto/;
+      }
+      location = /api/admin/voto {
+        proxy_pass http://tarots-api:8100/admin/voto;
       }
 
       # La console di amministrazione: un'altra app Next.js, costruita con
