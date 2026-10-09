@@ -54,6 +54,20 @@ export function Fornitore() {
           Configura Stripe
         </Link>
       </section>
+      {/* Gli incassi della pubblicità hanno la loro pagina in Pubblicità → Google Ads → Pagamenti: da qui solo il
+       * rimando, così chi cerca «i pagamenti di Google Ads» fra i pagamenti li trova. */}
+      <section className={comuni.riquadro} aria-labelledby="google-ads-titolo">
+        <h2 id="google-ads-titolo" className={comuni.riquadroTitolo}>
+          Incassi della pubblicità (Google Ads)
+        </h2>
+        <p className={comuni.campoAiuto}>
+          Il profilo pagamenti di AdSense (beneficiario, metodo, soglia, dati fiscali, PIN): sono i soldi che Google
+          versa al sito per i banner. Si annota in Pubblicità → Google Ads → Pagamenti.
+        </p>
+        <Link href="/pubblicita/google/pagamenti" className={`${comuni.secondaria} ${stili.vai}`}>
+          Configura Google Ads
+        </Link>
+      </section>
     </>
   );
 }
