@@ -60,7 +60,9 @@ def test_il_prompt_unico_ha_tutte_le_regole_della_singola():
         assert riga in unica, riga
     assert "UNA PER UNA" in unica
     formato = interpretazione.PROMPT_INTERPRETAZIONE_UNICA_FORMATO
-    assert '{"carte": [{"posizione": 1, "orientamento": "dritta", "interpretazione": "…"}' in formato
+    assert "[[1 dritta]]" in formato and "[[2 rovesciata]]" in formato and "senza JSON" in formato
+    # L'esempio del formato si legge con lo stesso codice che legge le risposte.
+    assert [n for n, _o, _t, _c in interpretazione.blocchi_testo(formato)] == [1, 2]
     assert "«dritta» o «rovesciata»" in formato
     assert "non anticiparle" in formato
 
@@ -121,10 +123,19 @@ def _compiti(prompt_visti) -> list:
     return [v["compito"] for v in prompt_visti if v["compito"].startswith("interpretazione")]
 
 
+def _leggi(testo: str) -> list:
+    """La risposta unica in testo come lista di [posizione, orientamento, testo], da modificare nei test."""
+    return [[n, o, t.strip()] for n, o, t, _chiuso in interpretazione.blocchi_testo(testo)]
+
+
+def _scrivi(voci: list) -> str:
+    return "\n".join(f"[[{n} {o}]]\n{t}" for n, o, t in voci)
+
+
 @pytest.fixture
 def risposta_unica(monkeypatch):
     """Sostituisce la risposta del finto alla sola chiamata unica: `risposta_unica(funzione)`, dove la funzione
-    riceve il JSON che il finto avrebbe dato (come stringa) e restituisce quello da dare."""
+    riceve il testo che il finto avrebbe dato (intestazioni «[[N orientamento]]») e restituisce quello da dare."""
     originale = ModelloFinto._rispondi
 
     def imposta(trasforma):
@@ -182,9 +193,7 @@ async def test_carte_mancanti_tornano_alla_chiamata_singola_solo_per_quelle(
     client, session, catalogo, prompt_visti, risposta_unica,
 ):
     def senza_la_seconda(testo):
-        dati = json.loads(testo)
-        dati["carte"] = [c for c in dati["carte"] if c["posizione"] != 2]
-        return json.dumps(dati, ensure_ascii=False)
+        return _scrivi([v for v in _leggi(testo) if v[0] != 2])
 
     risposta_unica(senza_la_seconda)
     rid = await _fino_alla_rivelazione(client, session)
@@ -250,11 +259,11 @@ async def test_orientamento_scambiato_torna_alla_chiamata_singola(
     client, session, catalogo, prompt_visti, risposta_unica,
 ):
     def scambia_la_seconda(testo):
-        dati = json.loads(testo)
-        for c in dati["carte"]:
-            if c["posizione"] == 2:
-                c["orientamento"] = "dritta" if c["orientamento"] == "rovesciata" else "rovesciata"
-        return json.dumps(dati, ensure_ascii=False)
+        voci = _leggi(testo)
+        for v in voci:
+            if v[0] == 2:
+                v[1] = "dritta" if v[1] == "rovesciata" else "rovesciata"
+        return _scrivi(voci)
 
     risposta_unica(scambia_la_seconda)
     rid = await _fino_alla_rivelazione(client, session)
@@ -273,12 +282,12 @@ async def test_le_carte_dritte_dette_rovesciate_tornano_alla_singola(
     dritte = []
 
     def dice_rovesciata(testo):
-        dati = json.loads(testo)
-        for c in dati["carte"]:
-            if c["orientamento"] == "dritta":
-                dritte.append(c["posizione"])
-                c["interpretazione"] += " Qui la carta appare rovesciata."
-        return json.dumps(dati, ensure_ascii=False)
+        voci = _leggi(testo)
+        for v in voci:
+            if v[1] == "dritta":
+                dritte.append(v[0])
+                v[2] += " Qui la carta appare rovesciata."
+        return _scrivi(voci)
 
     risposta_unica(dice_rovesciata)
     rid = await _fino_alla_rivelazione(client, session, "croce-celtica", 10)
@@ -293,10 +302,10 @@ async def test_le_carte_dritte_dette_rovesciate_tornano_alla_singola(
 
 
 @richiede_database
-async def test_json_illeggibile_tutte_singole_e_la_chiamata_unica_non_si_ripete(
+async def test_risposta_illeggibile_tutte_singole_e_la_chiamata_unica_non_si_ripete(
     client, session, catalogo, prompt_visti, risposta_unica,
 ):
-    risposta_unica(lambda _testo: "non è un JSON")
+    risposta_unica(lambda _testo: "niente intestazioni, solo un testo qualunque")
     rid = await _fino_alla_rivelazione(client, session)
     prompt_visti.clear()
     for pos in (1, 2, 3):
@@ -331,13 +340,14 @@ async def test_svelamenti_durante_la_chiamata_unica_non_ne_avviano_un_altra(
     rid = await _fino_alla_rivelazione(client, session)
     prompt_visti.clear()
     via = asyncio.Event()
-    originale = ModelloFinto.complete_json
+    originale = ModelloFinto.stream
 
     async def lento(self, req):
         await via.wait()
-        return await originale(self, req)
+        async for pezzo in originale(self, req):
+            yield pezzo
 
-    monkeypatch.setattr(ModelloFinto, "complete_json", lento)
+    monkeypatch.setattr(ModelloFinto, "stream", lento)
     import uuid
 
     from tarot_core.llm.base import GenerationRequest
@@ -366,20 +376,19 @@ async def test_lo_stesso_task_per_la_stessa_lettura():
     chiamata unica non si ritenta (si torna alle singole)."""
     import uuid
 
-    from tarot_core.llm.base import GenerationRequest
+    from tarot_core.llm.base import GenerationRequest, StreamChunk
 
     rivelazione.dimentica()
     chiamate = []
     via = asyncio.Event()
 
     class Fornitore:
-        async def complete_json(self, req):
+        async def stream(self, req):
             chiamate.append(req)
             await via.wait()
-            return {"carte": [
-                {"posizione": 1, "orientamento": "dritta", "interpretazione": "Uno."},
-                {"posizione": 2, "orientamento": "dritta", "interpretazione": "Due."},
-            ]}
+            yield StreamChunk(text="[[1 dritta]]\nUno.\n[[2 dri")
+            yield StreamChunk(text="tta]]\nDue.")
+            yield StreamChunk(done=True)
 
     salvate = {}
 
@@ -428,12 +437,83 @@ async def test_svela_tutte_in_un_flusso(client, session, catalogo, prompt_visti)
     fini = [d for e, d in eventi if e == "fine"]
     assert [f["posizione"] for f in fini] == posizioni
     assert [f["ultima"] for f in fini] == [False] * (n - 1) + [True]
-    token = {d["posizione"]: d["testo"] for e, d in eventi if e == "token"}
-    assert token == {f["posizione"]: f["interpretazione"] for f in fini}
+    assert "sostituisci" not in nomi
+    token: dict = {}
+    for e, d in eventi:
+        if e == "token":
+            token[d["posizione"]] = token.get(d["posizione"], "") + d["testo"]
+    assert {p: t.strip() for p, t in token.items()} == {f["posizione"]: f["interpretazione"] for f in fini}
     assert _compiti(prompt_visti) == ["interpretazione_unica"]
     assert (await client.get(f"/me/readings/{rid}")).json()["status"] == "sintesi"
     assert (await client.post(f"/readings/{rid}/reveal-all")).status_code == 409
     assert eventi_sse((await client.post(f"/readings/{rid}/synthesis")).text)[-1][0] == "fine"
+
+
+def test_il_testo_in_diretta_non_mostra_le_intestazioni_a_meta():
+    orientamenti = {1: False, 2: True}
+    # L'intestazione della seconda carta è a metà: non finisce nel testo della prima, e la seconda non c'è ancora.
+    assert interpretazione.in_diretta("[[1 dritta]]\nIl Matto apre.\n[[2 rov", [1, 2], orientamenti=orientamenti) == {
+        1: ("Il Matto apre.\n", True),
+    }
+    visti = interpretazione.in_diretta(
+        "[[1 dritta]]\nIl Matto apre.\n[[2 rovesciata]]\nIl Mago", [1, 2], orientamenti=orientamenti,
+    )
+    assert visti == {1: ("Il Matto apre.\n", True), 2: ("Il Mago", True)}
+    # Orientamento sbagliato nell'intestazione: non si mostra niente di quella carta.
+    assert interpretazione.in_diretta("[[2 dritta]]\nIl Mago", [2], orientamenti=orientamenti) == {2: ("", False)}
+    # Una carta dritta detta rovesciata smette di valere.
+    assert interpretazione.in_diretta(
+        "[[1 dritta]]\nQui la carta appare rovesciata", [1], orientamenti=orientamenti,
+    )[1][1] is False
+
+
+def test_la_risposta_in_testo_si_divide_e_un_json_si_legge_ancora():
+    testo = "Preambolo da ignorare.\n[[1 dritta]]\n Il Matto apre. \n\n[[Posizione 2: rovesciata]]\nIl Mago trattiene."
+    assert interpretazione.dividi_testo(testo, [1, 2], orientamenti={1: False, 2: True}) == {
+        1: "Il Matto apre.", 2: "Il Mago trattiene.",
+    }
+    vecchio = json.dumps({"carte": [{"posizione": 1, "orientamento": "dritta", "interpretazione": "Uno."}]})
+    assert interpretazione.dividi_testo(vecchio, [1], orientamenti={1: False}) == {1: "Uno."}
+    assert interpretazione.dividi_testo("{non json", [1]) == {}
+    assert interpretazione.senza_ultimo_blocco("[[1 dritta]]\nUno.\n[[2 dritta]]\nDu") == "[[1 dritta]]\nUno.\n"
+
+
+@richiede_database
+async def test_svela_tutte_manda_il_testo_mentre_il_modello_scrive(client, session, catalogo, monkeypatch):
+    rid = await _fino_alla_rivelazione(client, session)
+    monkeypatch.setattr(ModelloFinto, "pausa", 0.002)
+    eventi = eventi_sse((await client.post(f"/readings/{rid}/reveal-all")).text)
+    nomi = [e for e, _ in eventi]
+    # Più pezzi per la stessa carta, e tutti prima della prima `fine`: il testo arriva mentre si scrive.
+    prima_fine = nomi.index("fine")
+    pezzi_prima = [d["posizione"] for e, d in eventi[:prima_fine] if e == "token"]
+    assert pezzi_prima.count(1) > 1 and set(pezzi_prima) == {1, 2, 3}
+    assert "sostituisci" not in nomi
+
+
+@richiede_database
+async def test_una_formula_proibita_si_ferma_in_diretta_e_si_sostituisce(
+    client, session, catalogo, risposta_unica, monkeypatch,
+):
+    from tarot_core.guards.lettura import uscita_proibita
+
+    proibita = "morirai presto"
+    assert uscita_proibita(proibita), "la frase di prova deve essere una formula proibita"
+
+    def con_formula(testo):
+        voci = _leggi(testo)
+        voci[1][2] = f"{voci[1][2]} Ma attenzione: {proibita}, dicono le carte."
+        return _scrivi(voci)
+
+    risposta_unica(con_formula)
+    monkeypatch.setattr(ModelloFinto, "pausa", 0.002)
+    rid = await _fino_alla_rivelazione(client, session)
+    eventi = eventi_sse((await client.post(f"/readings/{rid}/reveal-all")).text)
+    visto = "".join(d["testo"] for e, d in eventi if e == "token" and d["posizione"] == 2)
+    assert proibita not in visto
+    sostituito = [d for e, d in eventi if e == "sostituisci" and d["posizione"] == 2]
+    fine = next(d for e, d in eventi if e == "fine" and d["posizione"] == 2)
+    assert sostituito and sostituito[-1]["testo"] == fine["interpretazione"] and proibita not in fine["interpretazione"]
 
 
 @richiede_database

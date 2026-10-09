@@ -343,8 +343,17 @@ async def client(session_factory, principal_utente, monkeypatch):
     app.dependency_overrides[current_principal] = lambda: identita.principal
     app.dependency_overrides[current_principal_opzionale] = lambda: identita.principal
 
+    from tarot_core.api.routers.readings import attendi_sfondo
+
+    async def dopo_la_risposta(_risposta) -> None:
+        # I lavori in background di una risposta (la memoria dopo il responso) finiscono prima della richiesta dopo:
+        # qui le richieste condividono una connessione, in produzione no.
+        await attendi_sfondo()
+
     trasporto = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=trasporto, base_url="http://test") as c:
+    async with httpx.AsyncClient(
+        transport=trasporto, base_url="http://test", event_hooks={"response": [dopo_la_risposta]},
+    ) as c:
         c.identita = identita
         yield c
     deps.reset_dependencies()

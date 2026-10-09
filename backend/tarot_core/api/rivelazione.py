@@ -20,10 +20,16 @@ produzione l'API ha una replica (`deploy/k8s/tarots.yaml`); con più repliche, n
 stessa lettura su repliche diverse nello stesso istante, la chiamata unica si farebbe due volte (nessun dato perso: la
 seconda non sovrascrive i testi già scritti).
 
-**Ripieghi.** Risposta non JSON, errore del fornitore, carte mancanti o vuote: per le sole posizioni senza testo si
+**Ripieghi.** Risposta illeggibile, errore del fornitore, carte mancanti o vuote: per le sole posizioni senza testo si
 torna alla chiamata singola di prima, in streaming, quando quella posizione viene svelata. La chiamata unica si tenta
 una volta sola per lettura (`_TENTATE`): un ripiego non la ripete. Con una carta sola da leggere si usa direttamente la
 chiamata singola.
+
+**In diretta (9/10/2026).** La chiamata unica ora scrive testo con un'intestazione per carta
+(`interpretazione.PROMPT_INTERPRETAZIONE_UNICA_FORMATO`) e arriva in streaming: il task aggiorna una `Diretta` a ogni
+frammento, e `POST /readings/{id}/reveal-all` manda a chi guarda il testo di ogni carta mentre il modello lo scrive,
+invece di aspettare la fine. Il ragionamento non si mostra (`genera_flusso`). Una carta che si rivela sbagliata a metà
+(una formula proibita, una carta dritta detta rovesciata) smette di crescere sullo schermo e alla fine si sostituisce.
 """
 from __future__ import annotations
 
@@ -44,14 +50,55 @@ from ..tarot import interpretazione
 from ..tarot.conoscenza import speciale
 from ..tarot.intervista import trascrizione, turni_da
 from ..tarot.lettura import dignita_di, doppia_valenza, gia_rivelate, note_di_posizione
-from ..tarot.llm import genera_json, richiesta
+from ..tarot.llm import genera_flusso, richiesta
 from ..tarot.persone import Persone, blocco_persone
 from .deps import get_conoscenza, get_guardrail
 
 logger = logging.getLogger(__name__)
 
+
+class Diretta:
+    """Ciò che la chiamata unica ha scritto finora, carta per carta, leggibile da chi aspetta.
+
+    `testi`: posizione → il testo che si può già mostrare (cresce soltanto). Una carta in `fermate` non cresce più sullo
+    schermo: il testo scritto fin qui contiene una formula proibita o dice rovesciata una carta dritta; alla fine la si
+    sostituisce. `versione` cresce a ogni aggiornamento: chi aspetta (`aspetta`) si sveglia quando cambia."""
+
+    def __init__(self) -> None:
+        self.testi: Dict[int, str] = {}
+        self.fermate: set = set()
+        self.versione = 0
+        self._condizione = asyncio.Condition()
+
+    def aggiorna(self, visibili: Dict[int, Tuple[str, bool]]) -> None:
+        for n, (testo, valido) in visibili.items():
+            if n in self.fermate:
+                continue
+            if not valido or uscita_proibita(testo):
+                self.fermate.add(n)
+                continue
+            if len(testo) > len(self.testi.get(n, "")):
+                self.testi[n] = testo
+
+    async def segnala(self) -> None:
+        async with self._condizione:
+            self.versione += 1
+            self._condizione.notify_all()
+
+    async def aspetta(self, vista: int, timeout: float) -> bool:
+        """Vero se c'è qualcosa di nuovo rispetto alla `versione` `vista`, falso se passa `timeout` senza novità."""
+        async with self._condizione:
+            try:
+                await asyncio.wait_for(self._condizione.wait_for(lambda: self.versione != vista), timeout)
+                return True
+            except asyncio.TimeoutError:
+                return False
+
+
 #: Le chiamate uniche in corso, per lettura: chi arriva mentre una gira la aspetta invece di farne un'altra.
 _IN_CORSO: Dict[uuid.UUID, "asyncio.Task[Dict[int, str]]"] = {}
+#: La diretta di ogni chiamata unica avviata (anche finita: chi arriva dopo legge da lì). Stesso ricordo di `_TENTATE`.
+_DIRETTE: "OrderedDict[uuid.UUID, Diretta]" = OrderedDict()
 #: Le letture per cui la chiamata unica è già stata tentata (riuscita o no): dopo, solo chiamate singole. Un ricordo
 #: limitato: una lettura si svela in pochi minuti, cinquemila bastano a coprire quelle in corso.
 _TENTATE: "OrderedDict[uuid.UUID, None]" = OrderedDict()
@@ -175,7 +222,10 @@ def avvia(preparata: Preparata, provider: Any, fabbrica: Any) -> "Optional[async
     _TENTATE[rid] = None
     while len(_TENTATE) > _RICORDO_MASSIMO:
         _TENTATE.popitem(last=False)
-    task = asyncio.create_task(_genera_e_salva(preparata, provider, fabbrica))
+    diretta = _DIRETTE[rid] = Diretta()
+    while len(_DIRETTE) > _RICORDO_MASSIMO:
+        _DIRETTE.popitem(last=False)
+    task = asyncio.create_task(_genera_e_salva(preparata, provider, fabbrica, diretta))
     _IN_CORSO[rid] = task
     task.add_done_callback(lambda _t: _IN_CORSO.pop(rid, None))
     return task
@@ -183,6 +233,11 @@ def avvia(preparata: Preparata, provider: Any, fabbrica: Any) -> "Optional[async
 
 def in_corso(reading_id: uuid.UUID) -> "Optional[asyncio.Task[Dict[int, str]]]":
     return _IN_CORSO.get(reading_id)
+
+
+def diretta(reading_id: uuid.UUID) -> Optional[Diretta]:
+    """La diretta della chiamata unica di questa lettura, se è stata avviata."""
+    return _DIRETTE.get(reading_id)
 
 
 def risultato(task: "Optional[asyncio.Task[Dict[int, str]]]") -> Dict[int, str]:
@@ -196,21 +251,32 @@ def dimentica() -> None:
     """Svuota i ricordi del processo (per i test)."""
     _IN_CORSO.clear()
     _TENTATE.clear()
+    _DIRETTE.clear()
 
 
-async def _genera_e_salva(preparata: Preparata, provider: Any, fabbrica: Any) -> Dict[int, str]:
-    """La chiamata unica: genera, divide, filtra e scrive. Non solleva: un errore vuol dire «nessun testo», e le
-    posizioni si leggeranno con la chiamata singola."""
+async def _genera_e_salva(
+    preparata: Preparata, provider: Any, fabbrica: Any, diretta: Optional[Diretta] = None,
+) -> Dict[int, str]:
+    """La chiamata unica: genera in streaming (aggiornando la `diretta`), divide, filtra e scrive. Non solleva: un
+    errore vuol dire «nessun testo», e le posizioni si leggeranno con la chiamata singola."""
     rid = preparata.reading_id
+    diretta = diretta or Diretta()
+    orientamenti = {n: rovescio for n, (_carta, rovescio) in preparata.carte.items()}
+    grezzo = ""
     try:
-        dati = await genera_json(provider, preparata.req)
-    except Exception as exc:  # noqa: BLE001 - errori del fornitore, di rete, JSON illeggibile
+        async for pezzo in genera_flusso(provider, preparata.req):
+            grezzo += pezzo
+            diretta.aggiorna(interpretazione.in_diretta(
+                grezzo, preparata.posizioni, orientamenti=orientamenti, lang=preparata.lang,
+            ))
+            await diretta.segnala()
+    except Exception as exc:  # noqa: BLE001 - errori del fornitore e di rete
         logger.warning("Chiamata unica delle interpretazioni non riuscita (lettura %s): %s", rid, exc)
-        return {}
+        # Le carte già chiuse prima dell'errore valgono; l'ultima, a metà, no.
+        grezzo = interpretazione.senza_ultimo_blocco(grezzo)
     scarti: Dict[int, str] = {}
-    divise = interpretazione.dividi(
-        dati, preparata.posizioni, lang=preparata.lang, scarti=scarti,
-        orientamenti={n: rovescio for n, (_carta, rovescio) in preparata.carte.items()},
+    divise = interpretazione.dividi_testo(
+        grezzo, preparata.posizioni, lang=preparata.lang, scarti=scarti, orientamenti=orientamenti,
     )
     mancanti = [n for n in preparata.posizioni if n not in divise]
     if mancanti:

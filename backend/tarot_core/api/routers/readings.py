@@ -202,6 +202,24 @@ class Condivisione(BaseModel):
 # ---- utilità ----------------------------------------------------------------
 
 
+#: I lavori in background dopo una lettura (lo stato sintetico, la memoria). Tenuti qui finché girano: un task senza
+#: riferimenti può essere raccolto a metà. I test li aspettano (`attendi_sfondo`) prima della richiesta successiva,
+#: perché lì tutte le richieste condividono una connessione al database.
+_SFONDO: set = set()
+
+
+def _in_sfondo(coro) -> None:
+    task = asyncio.create_task(coro)
+    _SFONDO.add(task)
+    task.add_done_callback(_SFONDO.discard)
+
+
+async def attendi_sfondo() -> None:
+    """Aspetta che i lavori in background finiscano (per i test)."""
+    while _SFONDO:
+        await asyncio.gather(*list(_SFONDO), return_exceptions=True)
+
+
 def _sse(evento: str, dati: Dict[str, Any]) -> bytes:
     return f"event: {evento}\ndata: {json.dumps(dati, ensure_ascii=False)}\n\n".encode("utf-8")
 
@@ -1134,18 +1152,29 @@ async def rivela_tutte(
         for evento in eventi_carta:
             yield _sse("carta", evento)
         yield _sse("fase", {"fase": "lettura"})
+        mostrati: Dict[int, str] = {}
         if unica is not None:
-            async for battito in _attendi(unica):
-                yield battito
+            async for evento in _in_diretta(unica, rivelazione.diretta(reading_id), mostrati):
+                yield evento
         testi = {**rivelazione.risultato(unica), **pronte}
         mancanti = [c.posizione for c in coperte if c.posizione not in testi]
         testi.update(await rivelazione.leggi(fabbrica, reading_id, mancanti))
         for c, dati in voci:
             n = c.posizione
             testo = testi.get(n, "")
+            gia = mostrati.get(n, "")
             if testo:
-                yield _sse("token", {"posizione": n, "testo": testo})
+                # Il testo finale: il resto di ciò che si è visto in diretta, o tutto al posto di quello (una carta
+                # fermata a metà, o il testo prudente al posto di una formula proibita).
+                if testo.startswith(gia):
+                    if testo[len(gia):]:
+                        yield _sse("token", {"posizione": n, "testo": testo[len(gia):]})
+                elif gia.strip() != testo:
+                    yield _sse("sostituisci", {"posizione": n, "testo": testo})
             else:
+                if gia:
+                    # Quel che si è visto non vale: si cancella, e la carta si rilegge con la chiamata singola.
+                    yield _sse("sostituisci", {"posizione": n, "testo": ""})
                 esito: List[str] = []
                 async for evento in _interpreta_una(
                     provider_per(Compito.INTERPRETAZIONE, persone_lettura, lettura=reading_id),
@@ -1171,6 +1200,33 @@ def _evento_carta(conoscenza, carta, dati: Dict[str, Any]) -> Dict[str, Any]:
         "doppia_valenza": dati["doppia_valenza"],
         "dignita": dati["dignita"],
     }
+
+
+async def _in_diretta(task, diretta: Optional[rivelazione.Diretta], mostrati: Dict[int, str]) -> AsyncIterator[bytes]:
+    """Il testo di ogni carta mentre la chiamata unica lo scrive: un `token` (con `posizione`) per ogni pezzo nuovo, e
+    un `battito` ogni cinque secondi senza novità (il ragionamento, che non si mostra). In `mostrati` ciò che ha visto
+    chi guarda, per posizione. Il task non si annulla se il client se ne va: l'interpretazione si scrive comunque."""
+    if diretta is None:
+        async for battito in _attendi(task):
+            yield battito
+        return
+    while True:
+        vista = diretta.versione
+        for n in sorted(diretta.testi):
+            testo, gia = diretta.testi[n], mostrati.get(n, "")
+            if len(testo) > len(gia) and testo.startswith(gia):
+                yield _sse("token", {"posizione": n, "testo": testo[len(gia):]})
+                mostrati[n] = testo
+        if task.done():
+            return
+        # Ci si sveglia per un pezzo nuovo o per la fine del task, quello che arriva prima.
+        attesa = asyncio.ensure_future(diretta.aspetta(vista, 5))
+        try:
+            await asyncio.wait({attesa, task}, return_when=asyncio.FIRST_COMPLETED)
+        finally:
+            attesa.cancel()
+        if not task.done() and attesa.done() and not attesa.cancelled() and attesa.result() is False:
+            yield _sse("battito", {})
 
 
 async def _attendi(task) -> AsyncIterator[bytes]:
@@ -1244,10 +1300,11 @@ async def sintesi(
 ) -> StreamingResponse:
     """Il responso finale: CAG, poi guardrail, poi il testo all'utente.
 
-    Il responso **non** si mostra mentre il modello lo scrive: prima passa dal
-    giudice, e solo un testo approvato arriva allo schermo. Nel frattempo il
-    flusso manda eventi di fase, così la connessione resta viva e l'utente
-    vede che la lettura sta prendendo forma.
+    **Dal 9/10/2026 il responso si mostra mentre il modello lo scrive** (chi ha un account): `fase` `unione`, poi i
+    `token` man mano (il ragionamento non si vede; un `battito` ogni 5 s di silenzio), poi `fase` `guardia` sul testo
+    intero. Se la guardia fa riscrivere o blocca, `sostituisci` (`testo`) prende il posto di tutto ciò che si è visto;
+    un testo con una formula proibita smette di crescere sullo schermo appena la scrive. Poi `fase` `responso` e
+    `fine`. Prima il testo usciva solo dopo il giudice: l'attesa era l'intera generazione.
 
     **Per un visitatore anonimo (v6, Fase F)**: il responso vero si genera e si salva per intero
     (così il claim alla registrazione non deve ricalcolare nulla), ma ciò che arriva al client è
@@ -1327,22 +1384,57 @@ async def sintesi(
 
     tetto = _tetto_sintesi(stesa, categoria)
 
-    async def scrivi(vincoli: str = "") -> str:
-        return await genera_testo(autore, richiesta(
+    def _richiesta(vincoli: str = ""):
+        return richiesta(
             [prefisso], cag.parte_variabile(**argomenti, vincoli=vincoli),
             temperatura=0.75, max_tokens=tetto, cache_dopo=0,
-        ))
+        )
+
+    async def scrivi(vincoli: str = "") -> str:
+        return await genera_testo(autore, _richiesta(vincoli))
+
+    # Il responso in diretta (9/10/2026): chi ha un account lo legge mentre il modello lo scrive, e la guardia giudica
+    # alla fine; se boccia, il testo si sostituisce (`sostituisci`). Il controllo deterministico delle formule proibite
+    # lavora anche in diretta: appena ne compare una, il testo smette di crescere sullo schermo. Per un anonimo non
+    # cambia niente: riceve solo l'anteprima, mai il responso vero.
+    in_diretta = not is_anonimo
+    scritto: List[str] = []
+    novita = asyncio.Event()
+
+    async def scrivi_in_diretta() -> str:
+        async for pezzo in genera_flusso(autore, _richiesta()):
+            scritto.append(pezzo)
+            novita.set()
+        return "".join(scritto).strip()
 
     async def genera() -> AsyncIterator[bytes]:
         yield _sse("fase", {"fase": "unione"})
-        lavoro = asyncio.create_task(scrivi())
-        while not lavoro.done():
-            try:
-                await asyncio.wait_for(asyncio.shield(lavoro), timeout=5)
-            except asyncio.TimeoutError:
-                yield _sse("battito", {})
-            except Exception:  # noqa: BLE001 - l'errore si legge dal task
+        lavoro = asyncio.create_task(scrivi_in_diretta() if in_diretta else scrivi())
+        mostrato, letti, fermo = "", 0, False
+        while True:
+            finito = lavoro.done()
+            if len(scritto) > letti:
+                nuovi = "".join(scritto[letti:])
+                letti = len(scritto)
+                if not fermo and uscita_proibita(mostrato + nuovi):
+                    fermo = True
+                if not fermo:
+                    mostrato += nuovi
+                    yield _sse("token", {"testo": nuovi})
+            if finito:
                 break
+            novita.clear()
+            if len(scritto) > letti:
+                continue
+            # Ci si sveglia per un pezzo nuovo o per la fine, quello che arriva prima; un battito ogni 5 s di silenzio
+            # (il ragionamento, che non si mostra). Il task non si annulla se il client se ne va.
+            attesa = asyncio.ensure_future(novita.wait())
+            try:
+                fatti, _ = await asyncio.wait({attesa, lavoro}, timeout=5, return_when=asyncio.FIRST_COMPLETED)
+            finally:
+                attesa.cancel()
+            if not fatti:
+                yield _sse("battito", {})
         try:
             responso = lavoro.result()
             if not responso:
@@ -1354,6 +1446,9 @@ async def sintesi(
                 await analytics.evento(s, analytics.LETTURA_ERRORE, utente_id=user.id if user else None,
                                        proprieta={"stesa": stesa["id"], "categoria": categoria})
                 await s.commit()
+            if mostrato:
+                # Un testo a metà non resta sullo schermo.
+                yield _sse("sostituisci", {"testo": ""})
             yield _sse("errore", {"messaggio": in_lingua(RESPONSO_NON_GENERATO, lang)})
             return
 
@@ -1420,7 +1515,7 @@ async def sintesi(
             #
             # Lo stato sintetico: una chiamata breve, sempre senza ragionamento, sul quadro dell'intervista (non sulla
             # trascrizione né sul responso). Si aggiorna anche quando non entra nei prompt (interruttore della console).
-            asyncio.create_task(aggiorna_stato(
+            _in_sfondo(aggiorna_stato(
                 fabbrica, user.id, quesito=lettura.question, quadro=lettura.context_summary or "",
                 provider=provider_per(
                     Compito.MEMORIA_ESTRAZIONE, persone_lettura, lettura=reading_id, senza_ragionamento=True,
@@ -1429,7 +1524,7 @@ async def sintesi(
             ))
             if get_settings().memoria_embedding:
                 # La memoria di prima, solo se riaccesa (`TAROT_MEMORIA_EMBEDDING`).
-                asyncio.create_task(estrai_e_salva(
+                _in_sfondo(estrai_e_salva(
                     fabbrica, user.id, reading_id,
                     quesito=lettura.question, colloquio=argomenti["colloquio"], sintesi=responso,
                     provider_estrazione=provider_per(Compito.MEMORIA_ESTRAZIONE, persone_lettura, lettura=reading_id),
@@ -1438,6 +1533,20 @@ async def sintesi(
                 ))
 
         yield _sse("fase", {"fase": "responso", "guardia": esito})
+        if in_diretta:
+            # Quel che si è già visto resta; arriva il resto (se la diretta si era fermata su una formula che la guardia
+            # ha poi lasciato passare), o tutto il testo al posto di quello (riscritto o bloccato dalla guardia).
+            gia = mostrato.lstrip()
+            if responso == gia.rstrip():
+                pass
+            elif gia and responso.startswith(gia):
+                yield _sse("token", {"testo": responso[len(gia):]})
+            elif gia:
+                yield _sse("sostituisci", {"testo": responso})
+            else:
+                yield _sse("token", {"testo": responso})
+            yield _sse("fine", chiusura)
+            return
         # Il testo esce a frammenti: già approvato, ma lo si scrive davanti
         # all'utente come si gira una carta — un colpo solo sarebbe un muro. Per un anonimo è
         # l'anteprima che esce così, mai il responso vero.

@@ -28,11 +28,19 @@ visto, altrimenti l'interpretazione anticiperebbe carte ancora coperte.
 in una chiamata sola (`api/rivelazione.py`): stesse regole
 (`PROMPT_INTERPRETAZIONE_UNICA` le ricava da `PROMPT_INTERPRETAZIONE`), il
 contesto comune una volta e per ogni carta lo stesso blocco del messaggio
-singolo (`messaggio_unico`), risposta in JSON divisa dal codice (`dividi`). Il
-messaggio singolo (`messaggio`) resta per il ripiego.
+singolo (`messaggio_unico`). Il messaggio singolo (`messaggio`) resta per il
+ripiego.
+
+**Dal 9/10/2026 la risposta unica è testo, non JSON**: un'intestazione
+`[[N dritta]]` / `[[N rovesciata]]` per carta e sotto il testo, così ogni carta
+si mostra mentre il modello la scrive (`in_diretta`) e si divide alla fine
+(`dividi_testo`), con gli stessi controlli dell'orientamento. Un JSON non si può
+mostrare a metà. Se un modello risponde comunque in JSON, `dividi` lo legge
+ancora.
 """
 from __future__ import annotations
 
+import re
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from .lingue import istruzione_lingua, lingua
@@ -230,7 +238,7 @@ def _parti_chiusura(*, lang: str, registro: str) -> List[str]:
 # ---- la chiamata unica: tutte le carte della lettura in una risposta ------------------------------------------------
 
 #: Il tetto visibile della risposta per una carta (2-3 frasi stanno larghe in 500 token). Nella chiamata unica si
-#: moltiplica per le carte e si aggiunge la cornice del JSON. È un tetto, non un obiettivo; il margine per il
+#: moltiplica per le carte e si aggiunge la cornice (le intestazioni). È un tetto, non un obiettivo; il margine per il
 #: ragionamento lo aggiunge il fornitore (`llm/ragionamento.tetto_con_ragionamento`).
 TETTO_CARTA = 500
 TETTO_CORNICE_JSON = 200
@@ -270,13 +278,16 @@ valgono per tutte.
 - Ogni interpretazione deve reggersi da sola: non rimandare alle altre («come detto sopra») e non ripetere le stesse
   frasi da una carta all'altra.
 
-Formato della risposta: solo un oggetto JSON, senza testo prima o dopo e senza blocchi di codice:
-{"carte": [{"posizione": 1, "orientamento": "dritta", "interpretazione": "…"},
-           {"posizione": 2, "orientamento": "rovesciata", "interpretazione": "…"}]}
-Una voce per ogni blocco del messaggio, nell'ordine delle posizioni, con il numero della posizione scritto nel blocco.
-Nel campo «orientamento» ripeti, prima del testo, l'orientamento scritto nella riga «Orientamento:» del blocco di
-quella carta: «dritta» o «rovesciata», in italiano, qualunque sia la lingua della risposta.
-Nel campo «interpretazione» va solo il testo della lettura di quella carta, senza titoli né elenchi.
+Formato della risposta: testo semplice, senza JSON e senza blocchi di codice. Per ogni blocco del messaggio,
+nell'ordine delle posizioni, una riga di intestazione da sola e sotto il testo di quella carta:
+[[1 dritta]]
+Il testo della lettura della carta in posizione 1.
+[[2 rovesciata]]
+Il testo della lettura della carta in posizione 2.
+Nell'intestazione: il numero della posizione scritto nel blocco e, prima del testo, l'orientamento scritto nella riga
+«Orientamento:» del blocco di quella carta: «dritta» o «rovesciata», in italiano, qualunque sia la lingua della
+risposta. Nessun'altra riga fra doppie parentesi quadre. Sotto l'intestazione va solo il testo della lettura di quella
+carta, senza titoli né elenchi.
 """
 
 
@@ -384,3 +395,86 @@ def _orientamento_sbagliato(voce: Dict[str, Any], testo: str, rovescio: bool, la
     if not rovescio and dice_rovesciata(testo, lang):
         return "carta dritta detta rovesciata nel testo"
     return ""
+
+
+# ---- la risposta unica in testo: intestazioni [[N orientamento]] ------------------------------------------------------
+
+#: L'intestazione di una carta, su una riga da sola: «[[2 rovesciata]]» (anche «[[Posizione 2: rovesciata]]»).
+_INTESTAZIONE = re.compile(
+    r"^[ \t]*\[\[[ \t]*(?:posizione[ \t]+)?(\d+)[ \t]*[|,:\-–]?[ \t]*([^\]\n]*?)[ \t]*\]\][ \t]*$",
+    re.MULTILINE | re.IGNORECASE,
+)
+
+
+def blocchi_testo(grezzo: str) -> List[Tuple[int, str, str, bool]]:
+    """I blocchi della risposta unica scritti fin qui: (posizione, orientamento detto, testo, chiuso).
+
+    Un blocco è chiuso quando dopo c'è già l'intestazione del successivo; l'ultimo resta aperto (chi chiama sa se la
+    risposta è finita). Il testo prima della prima intestazione si ignora."""
+    trovate = list(_INTESTAZIONE.finditer(grezzo))
+    blocchi = []
+    for i, m in enumerate(trovate):
+        chiuso = i + 1 < len(trovate)
+        fine = trovate[i + 1].start() if chiuso else len(grezzo)
+        blocchi.append((int(m.group(1)), m.group(2).strip().lower(), grezzo[m.end():fine], chiuso))
+    return blocchi
+
+
+def senza_ultimo_blocco(grezzo: str) -> str:
+    """La risposta fino all'intestazione dell'ultimo blocco: quando lo streaming si interrompe, le carte chiuse
+    valgono e l'ultima, forse a metà, no."""
+    return grezzo[:max((m.start() for m in _INTESTAZIONE.finditer(grezzo)), default=0)]
+
+
+def _senza_coda(testo: str) -> str:
+    """Il testo di un blocco aperto senza l'ultima riga, se potrebbe essere un'intestazione a metà («[[3 dri»)."""
+    a_capo = testo.rfind("\n")
+    if testo[a_capo + 1:].lstrip().startswith("["):
+        return testo[:a_capo + 1] if a_capo >= 0 else ""
+    return testo
+
+
+def _voce(n: int, orientamento: str, testo: str) -> Dict[str, Any]:
+    return {"posizione": n, "orientamento": orientamento, "interpretazione": testo}
+
+
+def dividi_testo(
+    grezzo: str, attese: Iterable[int], *, orientamenti: Optional[Dict[int, bool]] = None, lang: str = "it",
+    scarti: Optional[Dict[int, str]] = None,
+) -> Dict[int, str]:
+    """Le interpretazioni della risposta unica finita, per posizione: le stesse regole di `dividi` (solo le attese, non
+    vuote, la prima se ripetute, orientamento coerente). Una risposta in JSON — un modello che non segue il formato —
+    passa a `dividi`."""
+    voci = [_voce(n, o, t) for n, o, t, _chiuso in blocchi_testo(grezzo)]
+    if not voci and grezzo.lstrip().startswith(("{", "[")):
+        from ..llm.json_mode import JsonNonInterpretabile, estrai_json
+
+        try:
+            return dividi(estrai_json(grezzo), attese, orientamenti=orientamenti, lang=lang, scarti=scarti)
+        except (JsonNonInterpretabile, ValueError):
+            return {}
+    return dividi(voci, attese, orientamenti=orientamenti, lang=lang, scarti=scarti)
+
+
+def in_diretta(
+    grezzo: str, attese: Iterable[int], *, orientamenti: Dict[int, bool], lang: str = "it",
+) -> Dict[int, Tuple[str, bool]]:
+    """Cosa si può mostrare di ogni carta mentre il modello scrive: posizione → (testo, ancora valido).
+
+    Un blocco si mostra solo se la posizione è attesa, è la prima volta che compare e l'intestazione dice
+    l'orientamento vero. «Non valido» (`False`) quando il testo scritto fin qui dice rovesciata una carta dritta: chi
+    mostra si ferma lì, e alla fine quella posizione torna alla chiamata singola. Le formule proibite le controlla chi
+    chiama (`guards.lettura.uscita_proibita`): qui solo il formato."""
+    attese = set(attese)
+    visti: Dict[int, Tuple[str, bool]] = {}
+    for n, detto, testo, chiuso in blocchi_testo(grezzo):
+        if n not in attese or n in visti:
+            continue
+        rovescio = orientamenti.get(n)
+        if rovescio is None or _ORIENTAMENTI.get(detto) != rovescio:
+            visti[n] = ("", False)
+            continue
+        mostrabile = (testo if chiuso else _senza_coda(testo)).lstrip()
+        valido = rovescio or not dice_rovesciata(mostrabile, lang)
+        visti[n] = (mostrabile, valido)
+    return visti

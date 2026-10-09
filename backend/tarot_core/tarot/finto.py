@@ -199,16 +199,12 @@ class ModelloFinto:
             return _interpreta(utente)
         if compito == "interpretazione_unica":
             # La chiamata unica: un blocco «## Carta in posizione N» per carta, la stessa lettura della chiamata
-            # singola per ciascuno, nel JSON chiesto dal prompt.
+            # singola per ciascuno, nel testo con le intestazioni «[[N orientamento]]» chiesto dal prompt.
             blocchi = re.split(r"^## Carta in posizione (\d+)$", utente, flags=re.MULTILINE)[1:]
-            return json.dumps({"carte": [
-                {
-                    "posizione": int(n),
-                    "orientamento": "rovesciata" if "Orientamento: rovesciata" in blocco else "dritta",
-                    "interpretazione": _interpreta(blocco),
-                }
+            return "\n".join(
+                f"[[{n} {'rovesciata' if 'Orientamento: rovesciata' in blocco else 'dritta'}]]\n{_interpreta(blocco)}"
                 for n, blocco in zip(blocchi[::2], blocchi[1::2])
-            ]}, ensure_ascii=False)
+            )
         if compito == "teaser":
             # L'anteprima per chi non ha un account: due o tre frasi, che si fermano prima del consiglio.
             return (
