@@ -48,6 +48,7 @@ import '../l10n/testi.dart';
 import '../lettura/comuni.dart';
 import '../lettura/condivisione.dart';
 import '../lettura/dialogo.dart';
+import '../lettura/domanda.dart';
 import '../lettura/persone.dart';
 import '../lettura/preparazione.dart';
 import '../lettura/responso.dart';
@@ -1696,7 +1697,7 @@ class _PaginaLetturaState extends ConsumerState<PaginaLettura> {
     final serveAccount = speciale && sessione.pronta && !sessione.autenticata;
     final stretto = MediaQuery.sizeOf(context).width.telefono;
     final sceltaInline = !stretto;
-    final domandaValida = speciale || _domanda.text.trim().length >= 3;
+    final domandaValida = speciale || domandaBasta(_domanda.text);
     final domandaPredefinita = speciale
         ? (categoria == 'coppia'
               ? t.lettura_domanda_coppia(_persone.nome.trim())

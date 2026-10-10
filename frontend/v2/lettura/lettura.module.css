@@ -194,12 +194,8 @@
 
 /* Ciò che si legge solo se si vuole: un riquadro a parte, chiuso. */
 .facoltativo { width: 100%; text-align: left; border: 1px solid rgba(214, 182, 109, .35); border-radius: 4px; background: rgba(255, 255, 255, .04); }
-.facoltativo > summary { min-height: 44px; display: flex; align-items: center; gap: .5rem; padding: .55rem .9rem; cursor: pointer; color: var(--brass-pale); font-size: .82rem; font-weight: 600; letter-spacing: .04em; list-style: none; }
-.facoltativo > summary::-webkit-details-marker { display: none; }
-.facoltativo > summary::before { content: "＋"; font-weight: 400; }
-.facoltativo[open] > summary::before { content: "－"; }
-.facoltativo > summary:focus-visible { outline: 2px solid var(--brass-pale); outline-offset: 2px; }
-.facoltativo > :not(summary) { margin: 0 .9rem .9rem; }
+.facoltativoTitolo { margin: 0; padding: .7rem .9rem .35rem; color: var(--brass-pale); font-family: inherit; font-size: .82rem; font-weight: 600; letter-spacing: .04em; line-height: 1.4; }
+.facoltativo > :not(.facoltativoTitolo) { margin: 0 .9rem .9rem; }
 
 /* Sul telefono, durante il rito: niente titolo del pannello né spiegazioni lunghe; il tavolo senza cornice e
  * l'istruzione corta (Taglia il mazzo, Scegli una carta…) subito sopra le carte; spazi verticali stretti. */

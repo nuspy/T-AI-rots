@@ -20,6 +20,7 @@ import { linguaContenuti } from "@/v2/lib/dati";
 import { useLingua } from "@/v2/lib/lingua";
 import { R, indirizzoV2 } from "@/v2/lib/percorsi";
 import { useCarica } from "@/v2/lib/usa";
+import { domandaBasta } from "./domanda";
 import { SceltaStesa } from "./preparazione";
 import { Tavolo, type Posata } from "./tavolo";
 import stili from "./lettura.module.css";
@@ -145,7 +146,7 @@ export function LetturaFisica() {
     [assegnazioni, carte.dati],
   );
   const nomeAttiva = attiva !== null && stesa ? nomePosizione(stesa.posizioni.find((p) => p.n === attiva)!, lingua) : "";
-  const pronta = !!stesa && mancano === 0 && domanda.trim().length >= 3;
+  const pronta = !!stesa && mancano === 0 && domandaBasta(domanda);
 
   const scegliStesa = (id: string) => {
     if (id === stesaId) return;

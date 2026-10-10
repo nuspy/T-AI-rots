@@ -57,7 +57,10 @@ export interface NuovoMazzo {
 
 export type ModificaMazzo = Partial<Omit<NuovoMazzo, "slug" | "predefinito" | "valuta">>;
 
-export const mazzi = (t: string) => chiamata<Mazzo[]>(t, "/admin/decks");
+/* `?elenco=1` (10/10/2026): fino al 9/10 il gateway rispondeva a `/api/admin/decks` con un 301 permanente verso un
+ * indirizzo `http://`, che i browser tengono in cache e la pagina https blocca («Il servizio non risponde.») anche dopo
+ * la correzione del gateway. Un indirizzo appena diverso non trova quel redirect in cache; l'API ignora il parametro. */
+export const mazzi = (t: string) => chiamata<Mazzo[]>(t, "/admin/decks?elenco=1");
 
 export const creaMazzo = (t: string, corpo: NuovoMazzo) =>
   chiamata<Mazzo>(t, "/admin/decks", { method: "POST", body: JSON.stringify(corpo) });

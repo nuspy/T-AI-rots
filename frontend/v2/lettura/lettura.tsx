@@ -45,6 +45,7 @@ import { useLinguaDaScegliere } from "@/v2/componenti/dialogo-lingua";
 import { R, indirizzoV2 } from "@/v2/lib/percorsi";
 import { useCarica, useStretto } from "@/v2/lib/usa";
 import { Dialogo, type Battuta, type Invio } from "./dialogo";
+import { domandaBasta } from "./domanda";
 import { FormPersone, partnerDa, personeDaProfilo, personeVuote, type DatiPersone } from "./persone";
 import { CarteSvelate } from "./carte-svelate";
 import { SceltaMazzo, SceltaStesa, SceltaTipo, StesaNellaConsole, nelTema, temaDi, type TemaLettura } from "./preparazione";
@@ -418,7 +419,9 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
   const domandaPredefinita = speciale
     ? f(categoria === "coppia" ? l.domanda_coppia : l.domanda_compat, { nome: nomeAltra })
     : "";
-  const domandaValida = speciale || domanda.trim().length >= 3;
+  /* Almeno due parole (10/10/2026, `domanda.ts`): prima i pulsanti d'invio restano spenti. Nelle letture speciali
+   * la domanda è facoltativa. */
+  const domandaValida = speciale || domandaBasta(domanda);
 
   const scegliTipo = (c: TemaLettura) => {
     setTema(c);
@@ -1085,8 +1088,7 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
                   />
                   {speciale && <p className="muted small">{l.domanda_facoltativa}</p>}
                   {/* I due invii, subito sotto la domanda: senza intervista (solo col minimo di domande a zero) o con.
-                    * Stesso aspetto e stesso peso (9/10); con una domanda troppo corta si possono toccare lo stesso, e
-                    * dicono perché non si parte. */}
+                    * Stesso aspetto e stesso peso (9/10); spenti finché la domanda non ha almeno due parole (10/10). */}
                   {!serveAccount && (
                     <div className={stili.inviiDomanda}>
                       {speciale && !personeFatte ? (
@@ -1097,12 +1099,12 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
                       ) : (
                         <>
                           {regole.min === 0 && (
-                            <button type="button" className="button" disabled={!stesaId || inCorso}
+                            <button type="button" className="button" disabled={!domandaValida || !stesaId || inCorso}
                               onClick={() => void chiediInizio(true)} data-an="rito" data-an-passo="inizia_mescola">
                               {inCorso && senzaIntervista ? t.comune.carica : l.domanda_invia_mescola}
                             </button>
                           )}
-                          <button type="button" className="button" disabled={!stesaId || inCorso}
+                          <button type="button" className="button" disabled={!domandaValida || !stesaId || inCorso}
                             onClick={() => void chiediInizio(false)} data-an="rito" data-an-passo="inizia">
                             {inCorso && !senzaIntervista ? t.comune.carica : l.domanda_invia_chiedi}
                           </button>
@@ -1155,18 +1157,19 @@ export function LetturaV2({ variante = "classica" }: { variante?: VarianteLettur
                 {/* Gli invii stanno sotto la domanda, nel pannello della conversazione. */}
                 <h2 id="titolo-rito" className="console-status">{l.console_attesa}</h2>
                 {!(stesa && fase === "preparazione" && !serveAccount) && <p className={stili.consoleTesto}>{l.console_attesa_testo}</p>}
-                {/* Ciò che si può leggere se si vuole: in riquadri a parte, chiusi, perché si capisca che è facoltativo. */}
+                {/* Ciò che si può leggere se si vuole: in riquadri a parte, sempre aperti (10/10/2026: non più
+                  * richiudibili, il «＋» faceva credere a un contenuto nascosto); il titolo dice che è facoltativo. */}
                 {stesa && fase === "preparazione" && !serveAccount && (
-                  <details className={stili.facoltativo}>
-                    <summary>{l.stesa_info}</summary>
+                  <section className={stili.facoltativo}>
+                    <h3 className={stili.facoltativoTitolo}>{l.stesa_info}</h3>
                     <StesaNellaConsole stesa={stesa} />
-                  </details>
+                  </section>
                 )}
                 {fase === "preparazione" && !serveAccount && (
-                  <details className={stili.facoltativo}>
-                    <summary>{l.vero_info}</summary>
+                  <section className={stili.facoltativo}>
+                    <h3 className={stili.facoltativoTitolo}>{l.vero_info}</h3>
                     <Dichiarazione breve />
-                  </details>
+                  </section>
                 )}
                 {senzaCrediti && (
                   <p className="notice dark">

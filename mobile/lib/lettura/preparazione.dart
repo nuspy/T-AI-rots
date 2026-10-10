@@ -447,23 +447,17 @@ class StesaNellaConsole extends ConsumerWidget {
 /// `.console-status`: la riga d'ottone maiuscola della console.
 TextStyle stileStatoConsole() => Stile.sans(11.52, peso: FontWeight.w700, em: .11, colore: Token.brassPale);
 
-/// `.facoltativo`: ciò che si legge solo se si vuole, in un riquadro chiuso con «＋» (aperto: «－»).
-class Facoltativo extends StatefulWidget {
+/// `.facoltativo`: ciò che si legge solo se si vuole, in un riquadro sempre aperto col suo titolo (10/10/2026: non più
+/// richiudibile, il «＋» faceva credere a un contenuto nascosto; il titolo dice che è facoltativo).
+class Facoltativo extends StatelessWidget {
   /// Un riquadro col [titolo] e il contenuto [child].
   const Facoltativo({super.key, required this.titolo, required this.child});
 
-  /// Il `<summary>`.
+  /// Il titolo (`.facoltativoTitolo`).
   final String titolo;
 
   /// Il contenuto.
   final Widget child;
-
-  @override
-  State<Facoltativo> createState() => _FacoltativoState();
-}
-
-class _FacoltativoState extends State<Facoltativo> {
-  bool _aperto = false;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -475,34 +469,17 @@ class _FacoltativoState extends State<Facoltativo> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Premibile(
-          alTocco: () => setState(() => _aperto = !_aperto),
-          etichetta: widget.titolo,
-          raggioFuoco: 4,
-          costruisci: (context, premuto) => Container(
-            constraints: const BoxConstraints(minHeight: 44),
-            padding: const EdgeInsets.symmetric(horizontal: 14.4, vertical: 8.8),
-            alignment: AlignmentDirectional.centerStart,
-            child: Row(
-              children: [
-                // `summary::before { content: "＋" }` (aperto «－»): disegnato, perché i caratteri a larghezza piena
-                // non sono in DM Sans.
-                CustomPaint(
-                  size: const Size(10, 10),
-                  painter: _PiuMeno(aperto: _aperto),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    widget.titolo,
-                    style: Stile.sans(13.12, peso: FontWeight.w600, em: .04, colore: Token.brassPale, altezza: 1.4),
-                  ),
-                ),
-              ],
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14.4, 11.2, 14.4, 5.6),
+          child: Semantics(
+            header: true,
+            child: Text(
+              titolo,
+              style: Stile.sans(13.12, peso: FontWeight.w600, em: .04, colore: Token.brassPale, altezza: 1.4),
             ),
           ),
         ),
-        if (_aperto) Padding(padding: const EdgeInsets.fromLTRB(14.4, 0, 14.4, 14.4), child: widget.child),
+        Padding(padding: const EdgeInsets.fromLTRB(14.4, 0, 14.4, 14.4), child: child),
       ],
     ),
   );
@@ -537,23 +514,4 @@ class DichiarazioneBreve extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Il «＋» (o il «－») del riquadro facoltativo.
-class _PiuMeno extends CustomPainter {
-  const _PiuMeno({required this.aperto});
-
-  final bool aperto;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final p = Paint()
-      ..color = Token.brassPale
-      ..strokeWidth = 1.2;
-    canvas.drawLine(Offset(0, size.height / 2), Offset(size.width, size.height / 2), p);
-    if (!aperto) canvas.drawLine(Offset(size.width / 2, 0), Offset(size.width / 2, size.height), p);
-  }
-
-  @override
-  bool shouldRepaint(_PiuMeno vecchio) => vecchio.aperto != aperto;
 }

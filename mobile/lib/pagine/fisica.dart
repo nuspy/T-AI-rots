@@ -30,6 +30,7 @@ import '../componenti/premibile.dart';
 import '../componenti/testi.dart';
 import '../l10n/testi.dart';
 import '../lettura/comuni.dart' show PannelliLettura;
+import '../lettura/domanda.dart';
 import '../lettura/immagine_condivisione.dart' show nomeCartaIn, nomePosizioneIn, nomeStesaIn;
 import '../lettura/tavolo.dart';
 import '../lingua/lingua.dart';
@@ -256,7 +257,7 @@ class _LetturaFisicaState extends ConsumerState<LetturaFisica> {
     final stesa = stese.value?.where((s) => s.id == _stesaId).firstOrNull;
     final daRiempire = stesa == null ? const <Posizione>[] : stesa.posizioni.where((p) => !p.calcolata).toList();
     final mancano = daRiempire.where((p) => !_assegnazioni.containsKey(p.n)).length;
-    final pronta = stesa != null && mancano == 0 && _domanda.text.trim().length >= 3;
+    final pronta = stesa != null && mancano == 0 && domandaBasta(_domanda.text);
     final posate = [
       for (final e in _assegnazioni.entries)
         Posata(
