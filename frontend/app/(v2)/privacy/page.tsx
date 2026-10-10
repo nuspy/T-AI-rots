@@ -7,9 +7,11 @@ import { metaV2, testiServer } from "@/v2/lib/meta";
 import { precarica } from "@/v2/lib/precarica";
 import { Privacy } from "@/v2/pagine/privacy";
 
+/* Dal 10/10/2026 il testo dell'informativa è solo in inglese (lo traduce il browser): in italiano il canonical va
+ * all'inglese, senza `hreflang`. Titolo e descrizione restano nella lingua del sito, come l'apertura della pagina. */
 export async function generateMetadata(): Promise<Metadata> {
   const t = await testiServer();
-  return metaV2(t.privacy.meta_titolo, t.privacy.meta_descrizione, "/privacy");
+  return metaV2(t.privacy.meta_titolo, t.privacy.meta_descrizione, "/privacy", { soloEn: true });
 }
 
 /* L'informativa esce dal server già con i dati del titolare e i fornitori dell'AI (v9, Fase 2c): li legge dall'API,

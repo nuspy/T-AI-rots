@@ -11,7 +11,7 @@ export function Piede() {
   const colonne: { titolo: string; voci: [string, string][] }[] = [
     { titolo: c.piede_leggi, voci: [[R.leggi, c.piede_leggi_gratis], [R.fisica, c.piede_tue_carte], [R.giorno, c.piede_giorno], [R.storia, c.piede_storia]] },
     { titolo: c.piede_esplora, voci: [[R.mazzi, c.piede_mazzi], [R.carte, c.piede_carte], [R.stese, c.piede_stese], [R.blog, c.piede_diario], [R.voto, c.piede_voto]] },
-    { titolo: c.piede_info, voci: [[R.prezzi, c.piede_prezzi], [R.negozio, c.piede_negozio], [R.privacy, c.piede_privacy]] },
+    { titolo: c.piede_info, voci: [[R.prezzi, c.piede_prezzi], [R.negozio, c.piede_negozio], [R.privacy, c.piede_privacy], [R.termini, c.piede_termini]] },
   ];
   return (
     <footer className="site-footer">

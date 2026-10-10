@@ -1,5 +1,5 @@
 /* La mappa del sito per i motori di ricerca (v8.5, la v2 è il sito): home, carte, stese, carta del giorno, mazzi,
- * prezzi, negozio, lettura con le proprie carte, esplora, privacy e blog, ciascuna con le sue alternative
+ * prezzi, negozio, lettura con le proprie carte, esplora, privacy, termini e blog, ciascuna con le sue alternative
  * (`hreflang`) quando esiste in due lingue. Gli elenchi del blog e le etichette sono la stessa lista in ogni lingua
  * (canonical all'inglese): compaiono solo in inglese; gli articoli solo nella loro lingua. `/old` non c'è. Si scrive
  * a ogni richiesta, perché l'elenco cambia e in fase di build l'API non c'è. */
@@ -77,7 +77,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...coppia(stessa("/shop"), 0.6, "monthly"),
     ...coppia(stessa("/physical-reading"), 0.6, "monthly"),
     ...coppia(stessa("/explore"), 0.5, "weekly"),
-    ...coppia(stessa("/privacy"), 0.2, "yearly"),
+    /* Informativa e termini sono solo in inglese (10/10/2026), qualunque sia la lingua: una voce sola, come il blog. */
+    ...coppia(soloEn("/privacy"), 0.2, "yearly"),
+    ...coppia(soloEn("/terms"), 0.2, "yearly"),
     ...((blog?.articoli ?? []).length ? coppia(soloEn("/blog"), 0.9, "weekly") : []),
     ...(blog?.sezioni ?? []).flatMap((s) =>
       coppia(conLingue(lingueSezione(s), `/blog/sezione/${s}`), 0.7, "weekly")),

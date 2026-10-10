@@ -9,17 +9,27 @@
  *
  * I dati del titolare (nome, indirizzo, codice fiscale, email per la privacy, DPO, hosting) e l'elenco dei fornitori
  * dell'AI vengono dalla console (v9, Fase 2c: `GET /privacy/titolare`, letto anche dal server per la prima pagina): i
- * {segnaposto} dei testi si riempiono qui, e un campo vuoto mostra una frase neutra, mai un segnaposto. */
+ * {segnaposto} dei testi si riempiono qui, e un campo vuoto mostra una frase neutra, mai un segnaposto.
+ *
+ * Dal 10/10/2026 il testo dell'informativa è solo in inglese (`en.privacy`), qualunque sia la lingua del sito, con
+ * `lang="en"`: dove il browser sa tradurre lo traduce sul dispositivo, come gli articoli del blog (`AvvisoTraduzione`,
+ * e la nota che vale l'originale inglese). Restano nella lingua del sito, e fuori dalla traduzione (`data-no-trad`),
+ * le parti che si usano: le caselle dei consensi, i pulsanti e i collegamenti al profilo. Paesi e fornitori si
+ * scrivono in inglese, perché il traduttore traduce la frase intera. */
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { TipoConsenso } from "@/lib/api";
+import { AvvisoTraduzione } from "@/v2/componenti/avviso-traduzione";
 import LinkV2 from "@/v2/componenti/link";
 import { cambiaSceltaAnnunciGoogle, usePubblicita } from "@/v2/componenti/pubblicita";
+import { en } from "@/v2/i18n/en";
 import { P } from "@/v2/lib/api-percorsi";
 import { useConsensi } from "@/v2/lib/consensi";
 import { useLingua } from "@/v2/lib/lingua";
+import { useLinguaTraduzione } from "@/v2/lib/lingua-traduzione";
 import { R } from "@/v2/lib/percorsi";
 import { usePubblico } from "@/v2/lib/usa";
+import { useTraduzione } from "@/v2/lib/usa-traduzione";
 
 /** Ciò che l'API dice del titolare (`/privacy/titolare`): un campo vuoto è `null`. */
 export interface TitolarePubblico {
@@ -67,13 +77,18 @@ export function hostingInLingua(hosting: string, lingua: string): string {
 
 export function Privacy() {
   const { t, lingua } = useLingua();
-  const k = t.privacy;
+  /* `k`: il testo dell'informativa, sempre inglese; `u`: le parti che si usano, nella lingua del sito. */
+  const k = en.privacy;
+  const u = t.privacy;
   const c = t.comune;
   const titolare = usePubblico<TitolarePubblico>(P.titolare()).dati;
   const valori = {
-    hosting: titolare?.hosting ? hostingInLingua(titolare.hosting, lingua) : k.hosting_vuoto,
-    fornitori_ai: titolare ? elencoFornitori(titolare.fornitori_ai, lingua, k.fornitori_ai_proprio, k.fornitori_ai_vuoto) : "…",
+    hosting: titolare?.hosting ? hostingInLingua(titolare.hosting, "en") : k.hosting_vuoto,
+    fornitori_ai: titolare ? elencoFornitori(titolare.fornitori_ai, "en", k.fornitori_ai_proprio, k.fornitori_ai_vuoto) : "…",
   };
+  const corpo = useRef<HTMLDivElement>(null);
+  const linguaTraduzione = useLinguaTraduzione().lingua;
+  const traduzione = useTraduzione([corpo], linguaTraduzione, { sorgente: "en", chiave: "privacy" });
   const consensi = useConsensi();
   const pubblicita = usePubblicita();
   const [salvando, setSalvando] = useState(false);
@@ -101,7 +116,9 @@ export function Privacy() {
 
   return (
     <section className="band band-tight">
-      <div className="profile-grid">
+      <AvvisoTraduzione stato={traduzione} />
+      <div ref={corpo} lang="en" className="profile-grid">
+        <p className="small muted privacy-originale">{en.termini.originale}</p>
         <section className="panel wide" aria-labelledby="pv-titolare">
           <h2 id="pv-titolare">{k.custode_titolo}</h2>
           {titolare ? (
@@ -117,7 +134,7 @@ export function Privacy() {
                 {titolare.email_privacy ? (
                   <>
                     {riempi(k.custode_email, { email: "" })}
-                    <a className="inline" href={`mailto:${titolare.email_privacy}`}>{titolare.email_privacy}</a>
+                    <a className="inline" href={`mailto:${titolare.email_privacy}`} translate="no">{titolare.email_privacy}</a>
                   </>
                 ) : k.custode_email_vuoto}
               </p>
@@ -132,9 +149,10 @@ export function Privacy() {
           )}
         </section>
 
-        <section className="panel wide" aria-labelledby="pv-scelte">
-          <h2 id="pv-scelte">{k.scelte_titolo}</h2>
-          <p className="small">{k.scelte_testo}</p>
+        {/* Le scelte si fanno qui: riquadro nella lingua del sito, che il traduttore non tocca. */}
+        <section className="panel wide" aria-labelledby="pv-scelte" lang={lingua} data-no-trad>
+          <h2 id="pv-scelte">{u.scelte_titolo}</h2>
+          <p className="small">{u.scelte_testo}</p>
           <ul className="list-plain consensi-elenco">
             {scelte.map((s) => (
               <li key={s.tipo}>
@@ -147,7 +165,7 @@ export function Privacy() {
             ))}
           </ul>
           {errore && <p className="error" role="alert">{c.err_operazione}</p>}
-          <p className="small">{k.scelte_account} <LinkV2 className="inline" href={`${R.profilo}#privacy`}>{k.scelte_account_cta}</LinkV2>.</p>
+          <p className="small">{u.scelte_account} <LinkV2 className="inline" href={`${R.profilo}#privacy`}>{u.scelte_account_cta}</LinkV2>.</p>
         </section>
 
         <section className="panel wide" aria-labelledby="pv-finalita">
@@ -167,7 +185,7 @@ export function Privacy() {
           <h2 id="pv-letture">{k.letture_titolo}</h2>
           <p className="small">{k.letture_testo}</p>
           <p className="small">{k.letture_accesso}</p>
-          <LinkV2 className="button button-quiet button-small" href={R.storia}>{k.letture_cta}</LinkV2>
+          <LinkV2 className="button button-quiet button-small" href={R.storia} lang={lingua} data-no-trad>{u.letture_cta}</LinkV2>
         </section>
         <section className="panel" aria-labelledby="pv-ai">
           <h2 id="pv-ai">{k.ai_titolo}</h2>
@@ -187,7 +205,7 @@ export function Privacy() {
           <p className="small">{k.social_perche}</p>
           <p className="small">{k.social_posizione}</p>
           <p className="small">{k.social_controllo}</p>
-          <LinkV2 className="button button-quiet button-small" href={`${R.profilo}#dati`}>{k.social_cta}</LinkV2>
+          <LinkV2 className="button button-quiet button-small" href={`${R.profilo}#dati`} lang={lingua} data-no-trad>{u.social_cta}</LinkV2>
         </section>
 
         <section className="panel wide" aria-labelledby="pv-stat">
@@ -197,7 +215,7 @@ export function Privacy() {
           <p className="small">{k.stat_esteso}</p>
           <p className="small">{k.stat_google}</p>
           <p className="small">{k.stat_conservazione}</p>
-          <p className="small">{k.stat_geo} <a className="inline" href="https://db-ip.com" rel="noopener" target="_blank">IP Geolocation by DB-IP</a> (CC BY 4.0)</p>
+          <p className="small">{k.stat_geo} <a className="inline" href="https://db-ip.com" rel="noopener" target="_blank" translate="no">IP Geolocation by DB-IP</a> (CC BY 4.0)</p>
         </section>
 
         {(pubblicita.attiva || annunci !== null) && (
@@ -207,8 +225,8 @@ export function Privacy() {
             {pubblicita.tcf.applica === true && (
               <>
                 <p className="small">{k.pubblicita_tcf}</p>
-                <button type="button" className="button button-quiet" onClick={cambiaSceltaAnnunciGoogle}>
-                  {k.pubblicita_tcf_cambia}
+                <button type="button" className="button button-quiet" onClick={cambiaSceltaAnnunciGoogle} lang={lingua} data-no-trad>
+                  {u.pubblicita_tcf_cambia}
                 </button>
               </>
             )}
@@ -235,9 +253,9 @@ export function Privacy() {
           <h2 id="pv-diritti">{k.diritti_titolo}</h2>
           <p className="small">{k.diritti_testo}</p>
           <p className="small">{k.diritti_come}</p>
-          <div className="button-row">
-            <LinkV2 className="button button-quiet button-small" href={`${R.profilo}#privacy`}>{k.diritti_cta_dati}</LinkV2>
-            <LinkV2 className="button button-quiet button-small" href={R.elimina}>{k.diritti_cta_elimina}</LinkV2>
+          <div className="button-row" lang={lingua} data-no-trad>
+            <LinkV2 className="button button-quiet button-small" href={`${R.profilo}#privacy`}>{u.diritti_cta_dati}</LinkV2>
+            <LinkV2 className="button button-quiet button-small" href={R.elimina}>{u.diritti_cta_elimina}</LinkV2>
           </div>
           <h3>{k.garante_titolo}</h3>
           <p className="small">{k.garante_testo}</p>
@@ -248,7 +266,10 @@ export function Privacy() {
           <p className="small">{k.eta_testo}</p>
         </section>
 
-        <p className="small muted privacy-versione">{k.versione}</p>
+        <p className="small privacy-versione">
+          <LinkV2 className="inline" href={R.termini}>{en.termini.meta_titolo}</LinkV2>
+          <span className="muted"> · {k.versione}</span>
+        </p>
       </div>
     </section>
   );

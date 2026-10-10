@@ -55,7 +55,11 @@ export function DialogoEta({
             <input id={`${id}-c`} type="checkbox" checked={spuntata} onChange={(e) => setSpuntata(e.target.checked)} />
             <span>{f(k.eta_dichiaro, { anni })}</span>
           </label>
-          <p className="small muted">{k.eta_perche} <LinkV2 className="inline" href={`${R.privacy}#pv-eta`}>{k.cookie_leggi}</LinkV2>.</p>
+          {/* Prima della prima lettura: accanto all'informativa, i termini di servizio (che la lettura fa accettare). */}
+          <p className="small muted">
+            {k.eta_perche} <LinkV2 className="inline" href={`${R.privacy}#pv-eta`}>{k.cookie_leggi}</LinkV2>
+            {" · "}<LinkV2 className="inline" href={R.termini}>{k.piede_termini}</LinkV2>
+          </p>
           <div className="button-row">
             <button type="button" className="button" disabled={!spuntata || inCorso} onClick={async () => {
               setInCorso(true);

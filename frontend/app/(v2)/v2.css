@@ -901,6 +901,11 @@ p, li, .section-intro, .lede, .faq-item p, .message { text-wrap: pretty; }
 .privacy-elenco { margin: .4rem 0 .8rem; padding-left: 1.2rem; }
 .privacy-elenco li + li { margin-top: .4rem; }
 .privacy-versione { grid-column: 1 / -1; margin: 0; }
+/* Termini di servizio e informativa in inglese (10/10/2026): la nota sull'originale e righe di lettura non troppo lunghe. */
+.termini-originale { max-width: 68ch; margin: .8rem 0 0; }
+.privacy-originale { grid-column: 1 / -1; max-width: 68ch; margin: 0; }
+.termini p { max-width: 72ch; }
+.termini-piede { margin: .8rem 0 0; }
 .elimina-passi { margin: 0 0 .8rem; padding-left: 1.2rem; }
 .elimina-passi li + li { margin-top: .35rem; }
 .elimina-account .field input { max-width: 16rem; text-transform: uppercase; }

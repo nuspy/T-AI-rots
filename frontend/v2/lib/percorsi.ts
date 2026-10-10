@@ -32,6 +32,8 @@ export const R = {
   blogTag: (slug: string) => `/blog/tag/${encodeURIComponent(slug)}`,
   profilo: "/profile",
   privacy: "/privacy",
+  /** I termini di servizio (10/10/2026): solo in inglese, stesso nome in tutte le lingue (`/terms`, `/it/terms`). */
+  termini: "/terms",
   /** La cancellazione dell'account (GDPR, Fase 1): una pagina pubblica, perché Google Play vuole un indirizzo da
    *  aprire anche senza l'app e senza essere entrati. */
   elimina: "/account/elimina",

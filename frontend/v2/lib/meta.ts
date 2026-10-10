@@ -5,7 +5,7 @@
 import type { Metadata } from "next";
 import { indicizzabile, type LinguaPubblica } from "@/lib/indirizzi";
 import { linguaPagina } from "@/lib/lingua-server";
-import { alternative, anteprima, titoloPagina, urlPubblico } from "@/lib/seo";
+import { alternative, anteprima, soloInglese, titoloPagina, urlPubblico } from "@/lib/seo";
 import { dizionarioPronto, type Dizionario } from "@/v2/i18n";
 
 export async function testiServer(): Promise<Dizionario> {
@@ -18,16 +18,19 @@ export const NOINDEX: Metadata["robots"] = { index: false, follow: false, google
  * Titolo, descrizione, canonical e anteprima di una pagina. `interno` è l'indirizzo interno (`/cards`, `/daily-card`):
  * se la pagina esiste uguale nelle due lingue basta quello; se lo slug cambia con la lingua si passa `interni`.
  * `assoluto`: il titolo porta già il marchio (la home), senza il modello del layout.
+ * `soloEn`: il contenuto è sempre in inglese, qualunque sia la lingua dell'indirizzo (termini di servizio,
+ * informativa privacy, 10/10/2026): niente `hreflang` e in italiano il canonical va all'inglese (`soloInglese`).
  */
 export async function metaV2(
   titolo: string,
   descrizione: string,
   interno: string,
-  { assoluto = false, interni, immagine, tipo }: {
+  { assoluto = false, interni, immagine, tipo, soloEn = false }: {
     assoluto?: boolean;
     interni?: Partial<Record<LinguaPubblica, string>>;
     immagine?: { url: string; width?: number; height?: number; alt?: string };
     tipo?: "website" | "article";
+    soloEn?: boolean;
   } = {},
 ): Promise<Metadata> {
   const lingua = await linguaPagina();
@@ -36,7 +39,8 @@ export async function metaV2(
   return {
     title: assoluto ? { absolute: titolo } : titoloPagina(titolo),
     description: descrizione,
-    alternates: pubblica ? alternative(lingua, pagine) : { canonical: urlPubblico(lingua, interno) },
+    alternates: !pubblica ? { canonical: urlPubblico(lingua, interno) }
+      : soloEn ? soloInglese(lingua, interno) : alternative(lingua, pagine),
     ...(pubblica ? {} : { robots: NOINDEX }),
     ...anteprima(lingua, { titolo, descrizione, url: urlPubblico(lingua, pagine[lingua] ?? interno), tipo, immagine }),
   };
