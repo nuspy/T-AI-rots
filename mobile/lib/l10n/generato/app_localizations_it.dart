@@ -4752,6 +4752,13 @@ class AppLocalizationsIt extends AppLocalizations {
       'Alcune pagine possono mostrare fino a tre spazi segnalati come «Pubblicità», riempiti da Google AdSense, un servizio di Google Ireland Ltd. Gli annunci si caricano solo se accetti qui o nel banner: Google imposta allora i suoi cookie (come __gads e __gpi) per servire gli annunci, limitare quante volte li vedi e misurarli, e può trattare i dati negli Stati Uniti nell\'ambito dell\'EU-US Data Privacy Framework. Gli annunci non sono personalizzati, salvo che questa pagina dica altrimenti. Se rifiuti, gli spazi non compaiono e da Google AdSense non si carica nulla.';
 
   @override
+  String get privacy_pubblicita_tcf =>
+      'Nell\'Unione europea, nel Regno Unito e in Svizzera la scelta sugli annunci la raccoglie e la conserva lo strumento di consenso di Google (certificato IAB TCF 2.2), che compare alla prima visita: vale quella, non le caselle di questa pagina.';
+
+  @override
+  String get privacy_pubblicita_tcf_cambia => 'Cambia la scelta sugli annunci';
+
+  @override
   String get privacy_social_titolo => 'Entrare con un social';
 
   @override

@@ -66,6 +66,8 @@ export const privacy: typeof Base = {
   stat_geo: "Geolocalización por IP:",
   pubblicita_titolo: "Publicidad",
   pubblicita_testo: "Algunas páginas pueden mostrar hasta tres espacios marcados como «Publicidad», que llena Google AdSense, un servicio de Google Ireland Ltd. Los anuncios solo se cargan si aceptas aquí o en el aviso: entonces Google instala sus propias cookies (como __gads y __gpi) para servir los anuncios, limitar cuántas veces los ves y medirlos, y puede tratar los datos en Estados Unidos en el marco del EU-US Data Privacy Framework. Los anuncios no son personalizados salvo que esta página indique lo contrario. Si no aceptas, los espacios no aparecen y no se carga nada de Google AdSense.",
+  pubblicita_tcf: "En la Unión Europea, el Reino Unido y Suiza tu elección sobre los anuncios la recoge y la guarda la herramienta de consentimiento de Google (certificada IAB TCF 2.2), que aparece en tu primera visita: vale esa elección, no las casillas de esta página.",
+  pubblicita_tcf_cambia: "Cambiar tu elección sobre los anuncios",
 
   social_titolo: "Entrar con una red social",
   social_account: "Una cuenta por persona: si entras con Google, Facebook, Apple, GitHub o LinkedIn con el mismo correo de una cuenta que ya existe, es la misma cuenta, con las mismas lecturas y los mismos créditos.",

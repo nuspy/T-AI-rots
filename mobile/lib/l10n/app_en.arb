@@ -2355,6 +2355,8 @@
   "privacy_stat_geo": "IP geolocation:",
   "privacy_pubblicita_titolo": "Advertising",
   "privacy_pubblicita_testo": "Some pages can show up to three spaces marked “Advertisement”, filled by Google AdSense, a service of Google Ireland Ltd. Ads load only if you accept here or in the banner: Google then sets its own cookies (such as __gads and __gpi) to deliver ads, limit how often you see them and measure them, and may process data in the United States under the EU-US Data Privacy Framework. Ads are not personalised unless this page says otherwise. If you decline, the spaces are not shown and nothing is loaded from Google AdSense.",
+  "privacy_pubblicita_tcf": "In the European Union, the United Kingdom and Switzerland your choice about ads is collected and stored by Google's consent tool (IAB TCF 2.2 certified), shown on your first visit: that choice applies, not the boxes on this page.",
+  "privacy_pubblicita_tcf_cambia": "Change your ad choices",
   "privacy_social_titolo": "Signing in with a social",
   "privacy_social_account": "One account per person: if you sign in with Google, Facebook, Apple, GitHub or LinkedIn using the same email as an existing account, it is the same account, with the same readings and credits.",
   "privacy_social_cosa": "From that account we receive what it shares with us: first and last name, email, profile picture, language and — only if you allow it on the provider's screen — date of birth, gender and city. We use them only to fill in the fields of your account that are still empty, never over what you wrote.",

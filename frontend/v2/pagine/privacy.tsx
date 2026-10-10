@@ -14,7 +14,7 @@
 import { useState } from "react";
 import type { TipoConsenso } from "@/lib/api";
 import LinkV2 from "@/v2/componenti/link";
-import { usePubblicita } from "@/v2/componenti/pubblicita";
+import { cambiaSceltaAnnunciGoogle, usePubblicita } from "@/v2/componenti/pubblicita";
 import { P } from "@/v2/lib/api-percorsi";
 import { useConsensi } from "@/v2/lib/consensi";
 import { useLingua } from "@/v2/lib/lingua";
@@ -83,7 +83,8 @@ export function Privacy() {
   const scelte: { tipo: TipoConsenso; titolo: string; testo: string; valore: string | null }[] = [
     { tipo: "statistiche", titolo: c.consenso_statistiche, testo: c.consenso_statistiche_testo, valore: dati?.statistiche ?? null },
     { tipo: "google_analytics", titolo: c.consenso_google, testo: c.consenso_google_testo, valore: dati?.google_analytics ?? null },
-    ...(pubblicita.attiva || annunci !== null
+    /* Dove decide il CMP di Google (TCF) la scelta sugli annunci si cambia lì (riquadro «Pubblicità» più sotto). */
+    ...((pubblicita.attiva || annunci !== null) && pubblicita.tcf.applica !== true
       ? [{ tipo: "pubblicita" as const, titolo: c.consenso_pubblicita, testo: c.consenso_pubblicita_testo, valore: annunci }] : []),
   ];
   const cambia = async (tipo: TipoConsenso, acceso: boolean) => {
@@ -203,6 +204,14 @@ export function Privacy() {
           <section className="panel wide" aria-labelledby="pv-pubblicita">
             <h2 id="pv-pubblicita">{k.pubblicita_titolo}</h2>
             <p className="small">{k.pubblicita_testo}</p>
+            {pubblicita.tcf.applica === true && (
+              <>
+                <p className="small">{k.pubblicita_tcf}</p>
+                <button type="button" className="button button-quiet" onClick={cambiaSceltaAnnunciGoogle}>
+                  {k.pubblicita_tcf_cambia}
+                </button>
+              </>
+            )}
           </section>
         )}
 

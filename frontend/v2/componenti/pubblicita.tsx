@@ -14,7 +14,10 @@
  *   spostando il DOM fuori da React.
  *
  * Nell'Unione europea, nel Regno Unito e in Svizzera Google chiede per AdSense una CMP certificata TCF: il banner
- * del sito non lo è. Prima di accendere la pubblicità per quei paesi va aggiunta (vedi la guida nella console). */
+ * del sito non lo è. Dal 10/10/2026, con la pubblicità accesa, si carica il CMP di Google («Privacy e messaggi» di
+ * AdSense, TCF 2.2, già tradotto): dove il TCF si applica (`gdprApplies`) è lui a chiedere il consenso agli annunci, e
+ * il banner del sito non fa più quella domanda; altrove resta il consenso del sito. Se il CMP non c'è (messaggio non
+ * pubblicato in AdSense, script bloccato) dopo 5 s vale il consenso del sito. */
 
 import { usePathname } from "next/navigation";
 import {
@@ -27,9 +30,17 @@ import {
   COOKIE_PUBBLICITA, SPENTA, esclusa, posizioniPer, type ImpostazioniPubblicita, type Posizione, type SpazioPubblicita,
 } from "@/v2/lib/pubblicita";
 
+/** I dati che il CMP passa a chi ascolta (`__tcfapi('addEventListener', 2, …)`): solo i campi che servono qui. */
+interface DatiTcf {
+  gdprApplies?: boolean;
+  eventStatus?: "tcloaded" | "cmpuishown" | "useractioncomplete";
+}
+
 declare global {
   interface Window {
     adsbygoogle?: unknown[] & { requestNonPersonalizedAds?: number };
+    __tcfapi?: (comando: string, versione: number, richiamo: (dati: DatiTcf | null, ok: boolean) => void) => void;
+    googlefc?: { callbackQueue?: unknown[]; showRevocationMessage?: () => void };
   }
 }
 
@@ -64,11 +75,70 @@ function ricorda(accettato: boolean): void {
     : `${COOKIE_PUBBLICITA}=; Path=/; Max-Age=0; SameSite=Lax${sicuro}`;
 }
 
-/** Le impostazioni degli spazi e il consenso di chi guarda (per il banner e la pagina privacy). */
-export function usePubblicita(): { attiva: boolean; consenso: ValoreConsenso | null | undefined } {
+/* ---- il CMP di Google (TCF 2.2), per UE, Regno Unito e Svizzera ---- */
+
+/** `applica`: `undefined` finché non si sa, `true` se il consenso agli annunci lo chiede il CMP, `false` se lo chiede il
+ *  sito. `pronto`: il CMP ha la scelta di chi guarda (o sa che non c'è da chiedere), gli annunci possono partire. */
+export interface StatoTcf { applica: boolean | undefined; pronto: boolean }
+
+const TCF_INIZIALE: StatoTcf = { applica: undefined, pronto: false };
+let tcf: StatoTcf = TCF_INIZIALE;
+let cmpCaricato = false;
+
+function impostaTcf(nuovo: StatoTcf): void {
+  if (nuovo.applica === tcf.applica && nuovo.pronto === tcf.pronto) return;
+  tcf = nuovo;
+  ascoltatori.forEach((f) => f());
+}
+
+/* Lo snippet di «Privacy e messaggi» di AdSense: lo script del CMP e l'iframe `googlefcPresent`, poi l'ascolto del
+ * TCF. Una volta sola per pagina. */
+function caricaCmp(editore: string): void {
+  if (cmpCaricato) return;
+  cmpCaricato = true;
+  const script = document.createElement("script");
+  script.async = true;
+  script.src = `https://fundingchoicesmessages.google.com/i/${encodeURIComponent(editore.replace(/^ca-/, ""))}?ers=1`;
+  document.head.appendChild(script);
+  const segnala = () => {
+    if ((window.frames as unknown as Record<string, unknown>).googlefcPresent) return;
+    if (!document.body) { window.setTimeout(segnala, 0); return; }
+    const cornice = document.createElement("iframe");
+    cornice.style.cssText = "width:0;height:0;border:none;z-index:-1000;left:-1000px;top:-1000px;display:none";
+    cornice.name = "googlefcPresent";
+    document.body.appendChild(cornice);
+  };
+  segnala();
+  const inizio = Date.now();
+  const ascolta = () => {
+    const api = window.__tcfapi;
+    if (typeof api === "function") {
+      api("addEventListener", 2, (dati, ok) => {
+        if (!ok || !dati) return;
+        const applica = dati.gdprApplies === true;
+        impostaTcf({ applica, pronto: !applica || dati.eventStatus === "tcloaded" || dati.eventStatus === "useractioncomplete" });
+      });
+      return;
+    }
+    /* Niente CMP dopo 5 s: vale il consenso del sito. */
+    if (Date.now() - inizio > 5000) impostaTcf({ applica: false, pronto: true });
+    else window.setTimeout(ascolta, 200);
+  };
+  ascolta();
+}
+
+/** Riapre il messaggio del CMP di Google, per cambiare la scelta sugli annunci (pagina privacy). */
+export function cambiaSceltaAnnunciGoogle(): void {
+  const fc = (window.googlefc = window.googlefc || {});
+  (fc.callbackQueue = fc.callbackQueue || []).push(() => window.googlefc?.showRevocationMessage?.());
+}
+
+/** Le impostazioni degli spazi, il consenso di chi guarda e se a chiederlo è il CMP di Google (banner, privacy). */
+export function usePubblicita(): { attiva: boolean; consenso: ValoreConsenso | null | undefined; tcf: StatoTcf } {
   const { impostazioni } = useContext(Contesto);
   const valore = useSyncExternalStore(iscriviti, () => consenso, () => undefined);
-  return { attiva: impostazioni.attiva, consenso: valore };
+  const statoTcf = useSyncExternalStore(iscriviti, () => tcf, () => TCF_INIZIALE);
+  return { attiva: impostazioni.attiva, consenso: valore, tcf: statoTcf };
 }
 
 /** Da chiamare dopo aver registrato la scelta sugli annunci (banner o pagina privacy): vale subito, senza ricaricare. */
@@ -90,13 +160,16 @@ const gtag = function gtag() {
 
 let scriptCaricato = false;
 
-function caricaAdSense(google: NonNullable<ImpostazioniPubblicita["google"]>): void {
-  /* Il consenso di questa persona vale per gli annunci; la personalizzazione solo se la console la accende. */
-  gtag("consent", "update", {
-    ad_storage: "granted",
-    ad_user_data: "granted",
-    ad_personalization: google.personalizzati ? "granted" : "denied",
-  });
+function caricaAdSense(google: NonNullable<ImpostazioniPubblicita["google"]>, daTcf = false): void {
+  /* Il consenso di questa persona vale per gli annunci; la personalizzazione solo se la console la accende. Dove
+   * decide il CMP (TCF), AdSense legge da sé la sua stringa di consenso: qui non si concede niente. */
+  if (!daTcf) {
+    gtag("consent", "update", {
+      ad_storage: "granted",
+      ad_user_data: "granted",
+      ad_personalization: google.personalizzati ? "granted" : "denied",
+    });
+  }
   const coda = (window.adsbygoogle = window.adsbygoogle || []);
   coda.requestNonPersonalizedAds = google.personalizzati ? 0 : 1;
   if (scriptCaricato) return;
@@ -129,7 +202,13 @@ function spegni(): void {
 export function ProviderPubblicita({ iniziale, children }: { iniziale?: StatoInizialePubblicita; children: React.ReactNode }) {
   const valore = iniziale ?? { impostazioni: SPENTA, ricordo: false };
   const attiva = valore.impostazioni.attiva;
+  const editore = valore.impostazioni.google?.editore;
   const sessione = useSessione();
+
+  /* Con la pubblicità accesa il CMP di Google si carica per tutti: è lui a sapere se il TCF si applica. */
+  useEffect(() => {
+    if (attiva && editore) caricaCmp(editore);
+  }, [attiva, editore]);
 
   useEffect(() => {
     if (!attiva || !sessione.pronta) return;
@@ -156,21 +235,27 @@ interface SpazioVisibile {
   spazio: SpazioPubblicita;
   google: NonNullable<ImpostazioniPubblicita["google"]>;
   confermato: boolean;
+  /** Il consenso lo gestisce il CMP di Google (TCF): AdSense lo legge da sé. */
+  daTcf: boolean;
 }
 
-/* Gli spazi di questa pagina che si vedono adesso: accesi in console, non esclusi, con il consenso. */
+/* Gli spazi di questa pagina che si vedono adesso: accesi in console, non esclusi, con il consenso (del sito, o del
+ * CMP di Google dove si applica il TCF). */
 function useSpazi(): (posizione: Posizione) => SpazioVisibile | null {
   const { impostazioni, ricordo } = useContext(Contesto);
   const valore = useSyncExternalStore(iscriviti, () => consenso, () => undefined);
+  const statoTcf = useSyncExternalStore(iscriviti, () => tcf, () => TCF_INIZIALE);
   const percorso = usePathname();
   return (posizione) => {
     const spazio = impostazioni.attiva ? impostazioni.posizioni?.[posizione] : undefined;
     const google = impostazioni.google;
     if (!spazio || !google || esclusa(percorso, impostazioni.pagine_escluse)) return null;
+    /* Dove decide il CMP lo spazio c'è appena il CMP ha la scelta; AdSense serve annunci secondo quella. */
+    if (statoTcf.applica === true) return statoTcf.pronto ? { spazio, google, confermato: true, daTcf: true } : null;
     /* Si vede con un consenso confermato, o — finché il server non ha risposto — col promemoria del cookie. */
     const confermato = valore === "accettato";
     if (!confermato && !(valore === undefined && ricordo)) return null;
-    return { spazio, google, confermato };
+    return { spazio, google, confermato, daTcf: false };
   };
 }
 
@@ -189,12 +274,13 @@ export function Pubblicita({ posizione, dentro = false }: { posizione: Posizione
 }
 
 function Annuncio({
-  posizione, spazio, google, confermato, dentro,
+  posizione, spazio, google, confermato, daTcf, dentro,
 }: {
   posizione: Posizione;
   spazio: SpazioPubblicita;
   google: NonNullable<ImpostazioniPubblicita["google"]>;
   confermato: boolean;
+  daTcf: boolean;
   dentro: boolean;
 }) {
   const { t } = useLingua();
@@ -203,7 +289,7 @@ function Annuncio({
 
   useEffect(() => {
     if (!confermato) return;
-    caricaAdSense(google);
+    caricaAdSense(google, daTcf);
     const el = ins.current;
     /* Una richiesta per spazio: il doppio effetto dello sviluppo non deve chiederne due. */
     if (!el || el.dataset.richiesto || el.dataset.adsbygoogleStatus) return;
@@ -213,7 +299,7 @@ function Annuncio({
     } catch {
       /* AdSense non ha accettato lo spazio (bloccato, già pieno): resta vuoto, con la sua altezza */
     }
-  }, [confermato, google]);
+  }, [confermato, daTcf, google]);
 
   return (
     <aside

@@ -45,11 +45,14 @@ export function BannerCookieV2() {
   if (!dati || nascosto || linguaDaScegliere) return null;
   const sceltaAnnunci = pubblicita.consenso !== undefined ? pubblicita.consenso : dati.pubblicita;
   const daRinnovareGa = dati.google_analytics === "accettato" && google.misurazione !== null && google.daRinnovare;
-  const chiedeAnnunci = pubblicita.attiva && sceltaAnnunci === null;
+  /* Gli annunci li chiede il sito solo dove non li chiede il CMP di Google (TCF: UE, Regno Unito, Svizzera), e solo
+   * quando si sa (`tcf.applica === false`). */
+  const annunciDelSito = pubblicita.attiva && pubblicita.tcf.applica === false;
+  const chiedeAnnunci = annunciDelSito && sceltaAnnunci === null;
   const chiede = dati.statistiche === null || dati.google_analytics === null || daRinnovareGa || chiedeAnnunci;
   if (!chiede) return null;
 
-  const categorie: Categoria[] = ["statistiche", "google_analytics", ...(pubblicita.attiva ? ["pubblicita" as const] : [])];
+  const categorie: Categoria[] = ["statistiche", "google_analytics", ...(annunciDelSito ? ["pubblicita" as const] : [])];
   const etichette: Record<Categoria, { titolo: string; testo: string }> = {
     statistiche: { titolo: k.consenso_statistiche, testo: k.consenso_statistiche_testo },
     google_analytics: { titolo: k.consenso_google, testo: k.consenso_google_testo },

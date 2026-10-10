@@ -4741,6 +4741,13 @@ class AppLocalizationsKo extends AppLocalizations {
       'Some pages can show up to three spaces marked “Advertisement”, filled by Google AdSense, a service of Google Ireland Ltd. Ads load only if you accept here or in the banner: Google then sets its own cookies (such as __gads and __gpi) to deliver ads, limit how often you see them and measure them, and may process data in the United States under the EU-US Data Privacy Framework. Ads are not personalised unless this page says otherwise. If you decline, the spaces are not shown and nothing is loaded from Google AdSense.';
 
   @override
+  String get privacy_pubblicita_tcf =>
+      'In the European Union, the United Kingdom and Switzerland your choice about ads is collected and stored by Google\'s consent tool (IAB TCF 2.2 certified), shown on your first visit: that choice applies, not the boxes on this page.';
+
+  @override
+  String get privacy_pubblicita_tcf_cambia => 'Change your ad choices';
+
+  @override
   String get privacy_social_titolo => 'Signing in with a social';
 
   @override

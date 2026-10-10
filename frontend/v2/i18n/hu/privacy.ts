@@ -66,6 +66,8 @@ export const privacy: typeof Base = {
   stat_geo: "IP-alapú helymeghatározás:",
   pubblicita_titolo: "Hirdetések",
   pubblicita_testo: "Egyes oldalakon legfeljebb három „Hirdetés” jelölésű hely jelenhet meg, amelyeket a Google AdSense, a Google Ireland Ltd. szolgáltatása tölt ki. A hirdetések csak akkor töltődnek be, ha itt vagy a sávban elfogadod: ekkor a Google saját sütiket (például __gads és __gpi) állít be a hirdetések megjelenítéséhez, gyakoriságuk korlátozásához és méréséhez, és az adatokat az EU–USA adatvédelmi keretrendszer alapján az Egyesült Államokban is kezelheti. A hirdetések nem személyre szabottak, hacsak ez az oldal másként nem jelzi. Ha elutasítod, a helyek nem jelennek meg, és a Google AdSense-ből semmi sem töltődik be.",
+  pubblicita_tcf: "Az Európai Unióban, az Egyesült Királyságban és Svájcban a hirdetésekkel kapcsolatos döntésedet a Google hozzájárulás-kezelő eszköze (IAB TCF 2.2 tanúsítvánnyal) kéri be és őrzi meg, az első látogatáskor jelenik meg: az számít, nem az ezen az oldalon lévő jelölőnégyzetek.",
+  pubblicita_tcf_cambia: "A hirdetési döntés módosítása",
 
   social_titolo: "Belépés közösségi fiókkal",
   social_account: "Egy fiók személyenként: ha Google-lal, Facebookkal, Apple-lel, GitHubbal vagy LinkedInnel egy már létező fiók e-mail-címével lépsz be, az ugyanaz a fiók, ugyanazokkal az olvasásokkal és kreditekkel.",

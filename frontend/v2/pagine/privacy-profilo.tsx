@@ -36,7 +36,8 @@ export function PrivacyProfilo({ onCambio }: { onCambio?: () => void }) {
   const voci: { tipo: Categoria; titolo: string; testo: string }[] = [
     { tipo: "statistiche", titolo: k.cons_statistiche, testo: k.cons_statistiche_testo },
     { tipo: "google_analytics", titolo: k.cons_google, testo: k.cons_google_testo },
-    ...(pubblicita.attiva || consensi.dati?.pubblicita
+    /* Dove decide il CMP di Google (TCF) la scelta sugli annunci si cambia dalla pagina privacy, nel suo messaggio. */
+    ...((pubblicita.attiva || consensi.dati?.pubblicita) && pubblicita.tcf.applica !== true
       ? [{ tipo: "pubblicita" as const, titolo: k.cons_pubblicita, testo: k.cons_pubblicita_testo }] : []),
     { tipo: "testi_statistiche", titolo: k.cons_testi, testo: k.cons_testi_testo },
     { tipo: "dati_particolari", titolo: k.cons_art9, testo: k.cons_art9_testo },

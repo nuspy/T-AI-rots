@@ -4741,6 +4741,13 @@ class AppLocalizationsHu extends AppLocalizations {
       'Egyes oldalakon legfeljebb három „Hirdetés” jelölésű hely jelenhet meg, amelyeket a Google AdSense, a Google Ireland Ltd. szolgáltatása tölt ki. A hirdetések csak akkor töltődnek be, ha itt vagy a sávban elfogadod: ekkor a Google saját sütiket (például __gads és __gpi) állít be a hirdetések megjelenítéséhez, gyakoriságuk korlátozásához és méréséhez, és az adatokat az EU–USA adatvédelmi keretrendszer alapján az Egyesült Államokban is kezelheti. A hirdetések nem személyre szabottak, hacsak ez az oldal másként nem jelzi. Ha elutasítod, a helyek nem jelennek meg, és a Google AdSense-ből semmi sem töltődik be.';
 
   @override
+  String get privacy_pubblicita_tcf =>
+      'Az Európai Unióban, az Egyesült Királyságban és Svájcban a hirdetésekkel kapcsolatos döntésedet a Google hozzájárulás-kezelő eszköze (IAB TCF 2.2 tanúsítvánnyal) kéri be és őrzi meg, az első látogatáskor jelenik meg: az számít, nem az ezen az oldalon lévő jelölőnégyzetek.';
+
+  @override
+  String get privacy_pubblicita_tcf_cambia => 'A hirdetési döntés módosítása';
+
+  @override
   String get privacy_social_titolo => 'Belépés közösségi fiókkal';
 
   @override
