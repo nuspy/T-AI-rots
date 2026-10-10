@@ -5,6 +5,10 @@
 /// I dati del titolare e i fornitori dell'AI vengono dalla console (`GET /privacy/titolare`, Fase 2c); se l'API non li
 /// sa dire la pagina usa i ripieghi del sito. «Le tue scelte» qui riguardano il telefono: i testi sono quelli dell'app
 /// (`app_scelte_*`, `app_consenso_*`); la pubblicità non c'è nell'app, quindi nemmeno la sua scelta e il suo paragrafo.
+///
+/// 10/10/2026: l'informativa è scritta solo in inglese (l'originale, come i termini di servizio): il testo viene sempre
+/// dall'inglese e il telefono lo traduce nella lingua di lettura, come articoli, carte e stese, con la nota che
+/// l'originale è l'inglese. Restano nella lingua dell'app le parti da usare: le scelte del telefono e i bottoni.
 library;
 
 import 'dart:async';
@@ -20,12 +24,12 @@ import '../componenti/premibile.dart';
 import '../componenti/testi.dart';
 import '../consensi/consensi.dart';
 import '../l10n/testi.dart';
-import '../lingua/lingua.dart';
 import '../modelli/privacy.dart';
 import '../profilo/comuni.dart';
 import '../profilo/dati_account.dart';
 import '../rotte/percorsi.dart';
 import '../tema/tema.dart';
+import '../traduzione/con_traduzione.dart';
 
 /// I nomi dei paesi dei fornitori dell'AI che si incontrano davvero (`Intl.DisplayNames` del sito, che Dart non ha),
 /// in inglese e in italiano; altrove il codice.
@@ -56,31 +60,19 @@ String elencoFornitori(List<FornitoreAi> fornitori, String lingua, String propri
       .join(', ');
 }
 
+/// I testi di privacy e termini: sempre quelli inglesi (l'originale), qualunque sia la lingua dell'app.
+AppLocalizations get testiInglesi => lookupAppLocalizations(const Locale('en'));
+
 /// La pagina della privacy.
-class PaginaPrivacy extends ConsumerWidget {
+class PaginaPrivacy extends ConsumerStatefulWidget {
   /// La pagina.
   const PaginaPrivacy({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = context.t;
-    return Pagina(
-      sezioni: [
-        Sottotitolo(eyebrow: t.privacy_eyebrow, titolo: t.privacy_titolo, intro: t.privacy_intro, compatta: true),
-        const _Informativa(),
-      ],
-    );
-  }
+  ConsumerState<PaginaPrivacy> createState() => _PaginaPrivacyState();
 }
 
-class _Informativa extends ConsumerStatefulWidget {
-  const _Informativa();
-
-  @override
-  ConsumerState<_Informativa> createState() => _InformativaState();
-}
-
-class _InformativaState extends ConsumerState<_Informativa> {
+class _PaginaPrivacyState extends ConsumerState<PaginaPrivacy> {
   bool _salvando = false;
   bool _errore = false;
 
@@ -100,264 +92,318 @@ class _InformativaState extends ConsumerState<_Informativa> {
 
   @override
   Widget build(BuildContext context) {
+    // `t` è la lingua dell'app (le scelte e i bottoni), `en` l'informativa, che passa da `tr`.
     final t = context.t;
-    final lingua = ref.watch(linguaProvider);
+    final en = testiInglesi;
     final titolare = ref.watch(titolareProvider).value;
     final consensi = ref.watch(consensiProvider);
     final piccolo = Stile.sans(13.44, colore: Token.ink, altezza: 1.6);
     final collegamento = Stile.sans(13.44, altezza: 1.6);
     final valori = (
-      hosting: (titolare?.hosting?.isNotEmpty ?? false) ? titolare!.hosting! : t.privacy_hosting_vuoto,
+      hosting: (titolare?.hosting?.isNotEmpty ?? false) ? titolare!.hosting! : en.privacy_hosting_vuoto,
       fornitori: titolare == null
           ? '…'
-          : elencoFornitori(titolare.fornitoriAi, lingua, t.privacy_fornitori_ai_proprio, t.privacy_fornitori_ai_vuoto),
+          : elencoFornitori(titolare.fornitoriAi, 'en', en.privacy_fornitori_ai_proprio, en.privacy_fornitori_ai_vuoto),
     );
 
     Widget bottone(String testo, String href) => Bottone(testo, href: href, variante: Variante.quieto, piccolo: true);
 
-    final celle = <CellaProfilo>[
-      (
-        widget: Sezione(
-          titolo: t.privacy_custode_titolo,
-          children: titolare == null
-              ? [TestoPiccolo(t.privacy_custode_testo_senza_nome, tenue: true, sotto: 0)]
-              : [
-                  TestoPiccolo(
-                    titolare.nome == null
-                        ? t.privacy_custode_testo_senza_nome
-                        : t.privacy_custode_testo(titolare.nome!),
-                  ),
-                  TestoPiccolo(
-                    titolare.indirizzo == null
-                        ? t.privacy_custode_indirizzo_vuoto
-                        : t.privacy_custode_indirizzo(titolare.indirizzo!),
-                  ),
-                  if (titolare.codiceFiscale != null) TestoPiccolo(t.privacy_custode_codice(titolare.codiceFiscale!)),
-                  if (titolare.emailPrivacy == null)
-                    TestoPiccolo(t.privacy_custode_email_vuoto)
-                  else
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 13.44),
-                      child: Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Text(t.privacy_custode_email(''), style: piccolo),
-                          _Esterno(
-                            testo: titolare.emailPrivacy!,
-                            url: 'mailto:${titolare.emailPrivacy}',
-                            stile: collegamento,
-                          ),
-                        ],
+    return conTestiRaccolti(
+      da: 'en',
+      pagina: (tr, avviso) {
+        final celle = <CellaProfilo>[
+          (
+            widget: Sezione(
+              titolo: tr(en.privacy_custode_titolo),
+              children: titolare == null
+                  ? [TestoPiccolo(tr(en.privacy_custode_testo_senza_nome), tenue: true, sotto: 0)]
+                  : [
+                      TestoPiccolo(
+                        tr(
+                          titolare.nome == null
+                              ? en.privacy_custode_testo_senza_nome
+                              : en.privacy_custode_testo(titolare.nome!),
+                        ),
                       ),
-                    ),
-                  TestoPiccolo(
-                    titolare.dpo.nominato && titolare.dpo.contatto != null
-                        ? t.privacy_custode_dpo(titolare.dpo.contatto!)
-                        : t.privacy_custode_dpo_no,
-                    sotto: 0,
+                      TestoPiccolo(
+                        tr(
+                          titolare.indirizzo == null
+                              ? en.privacy_custode_indirizzo_vuoto
+                              : en.privacy_custode_indirizzo(titolare.indirizzo!),
+                        ),
+                      ),
+                      if (titolare.codiceFiscale != null)
+                        TestoPiccolo(tr(en.privacy_custode_codice(titolare.codiceFiscale!))),
+                      if (titolare.emailPrivacy == null)
+                        TestoPiccolo(tr(en.privacy_custode_email_vuoto))
+                      else
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 13.44),
+                          child: Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              // Lo spazio fuori dalla traduzione: ML Kit lo perderebbe.
+                              Text('${tr(en.privacy_custode_email('').trim())} ', style: piccolo),
+                              CollegamentoEsterno(
+                                testo: titolare.emailPrivacy!,
+                                url: 'mailto:${titolare.emailPrivacy}',
+                                stile: collegamento,
+                              ),
+                            ],
+                          ),
+                        ),
+                      TestoPiccolo(
+                        tr(
+                          titolare.dpo.nominato && titolare.dpo.contatto != null
+                              ? en.privacy_custode_dpo(titolare.dpo.contatto!)
+                              : en.privacy_custode_dpo_no,
+                        ),
+                        sotto: 0,
+                      ),
+                    ],
+            ),
+            larga: true,
+          ),
+          // Le scelte del telefono: nella lingua dell'app, fuori dalla traduzione.
+          (
+            widget: Sezione(
+              titolo: t.app_scelte_titolo,
+              children: [
+                TestoPiccolo(t.app_scelte_testo),
+                Padding(
+                  padding: const EdgeInsets.only(top: 3.2, bottom: 12.8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final (i, s) in [
+                        ('statistiche', t.app_consenso_statistiche, t.app_consenso_statistiche_testo),
+                        ('google_analytics', t.app_consenso_google, t.app_consenso_google_testo),
+                      ].indexed)
+                        Container(
+                          decoration: i == 0
+                              ? null
+                              : const BoxDecoration(
+                                  border: Border(top: BorderSide(color: Token.line)),
+                                ),
+                          child: _Scelta(
+                            valore: consensi.accettato(s.$1),
+                            attiva: !_salvando,
+                            titolo: s.$2,
+                            testo: s.$3,
+                            alCambio: (v) => unawaited(_cambia(s.$1, v)),
+                          ),
+                        ),
+                    ],
                   ),
-                ],
-        ),
-        larga: true,
-      ),
-      (
-        widget: Sezione(
-          titolo: t.app_scelte_titolo,
-          children: [
-            TestoPiccolo(t.app_scelte_testo),
-            Padding(
-              padding: const EdgeInsets.only(top: 3.2, bottom: 12.8),
+                ),
+                if (_errore) Errore(t.comune_err_operazione, sopra: 0),
+                TestoPiccolo(
+                  t.privacy_scelte_account,
+                  sotto: 0,
+                  figlio: Collegamento('${t.privacy_scelte_account_cta}.', href: R.profilo, stile: collegamento),
+                ),
+              ],
+            ),
+            larga: true,
+          ),
+          (
+            widget: Sezione(
+              titolo: tr(en.privacy_finalita_titolo),
+              children: [
+                TestoPiccolo(tr(en.privacy_finalita_intro)),
+                // `.privacy-finalita`: una voce per uso, con la base giuridica tenue.
+                for (final v in en.privacyFinalita)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 11.2),
+                    padding: const EdgeInsets.only(bottom: 9.6),
+                    decoration: const BoxDecoration(
+                      border: Border(bottom: BorderSide(color: Token.line)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tr(v.cosa),
+                          style: Stile.sans(14.4, peso: FontWeight.w700, colore: Token.ink),
+                        ),
+                        const SizedBox(height: 3.2),
+                        Text.rich(
+                          TextSpan(
+                            style: piccolo,
+                            children: [
+                              TextSpan(text: '${tr(v.perche)} '),
+                              TextSpan(
+                                text: tr(v.base),
+                                style: const TextStyle(color: Token.inkSoft),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            larga: true,
+          ),
+          (
+            widget: Sezione(
+              titolo: tr(en.privacy_letture_titolo),
+              children: [
+                TestoPiccolo(tr(en.privacy_letture_testo)),
+                Align(alignment: AlignmentDirectional.centerStart, child: bottone(t.privacy_letture_cta, R.storia)),
+              ],
+            ),
+            larga: false,
+          ),
+          (
+            widget: Sezione(
+              titolo: tr(en.privacy_ai_titolo),
+              children: [TestoPiccolo(tr(en.privacy_ai_testo), sotto: 0)],
+            ),
+            larga: false,
+          ),
+          (
+            widget: Sezione(
+              titolo: tr(en.privacy_art9_titolo),
+              children: [TestoPiccolo(tr(en.privacy_art9_testo)), TestoPiccolo(tr(en.privacy_art9_crisi), sotto: 0)],
+            ),
+            larga: true,
+          ),
+          (
+            widget: Sezione(
+              titolo: tr(en.privacy_social_titolo),
+              children: [
+                TestoPiccolo(tr(en.privacy_social_account)),
+                TestoPiccolo(tr(en.privacy_social_cosa)),
+                TestoPiccolo(tr(en.privacy_social_perche)),
+                TestoPiccolo(tr(en.privacy_social_posizione)),
+                TestoPiccolo(tr(en.privacy_social_controllo)),
+                Align(alignment: AlignmentDirectional.centerStart, child: bottone(t.privacy_social_cta, R.profilo)),
+              ],
+            ),
+            larga: true,
+          ),
+          (
+            widget: Sezione(
+              titolo: tr(en.privacy_stat_titolo),
+              children: [
+                TestoPiccolo(tr(en.privacy_stat_anonime)),
+                TestoPiccolo(tr(en.privacy_stat_account)),
+                TestoPiccolo(tr(en.privacy_stat_esteso)),
+                TestoPiccolo(tr(en.privacy_stat_google)),
+                TestoPiccolo(tr(en.privacy_stat_conservazione)),
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text('${tr(en.privacy_stat_geo)} ', style: piccolo),
+                    CollegamentoEsterno(
+                      testo: 'IP Geolocation by DB-IP',
+                      url: 'https://db-ip.com',
+                      stile: collegamento,
+                    ),
+                    Text(' (CC BY 4.0)', style: piccolo),
+                  ],
+                ),
+              ],
+            ),
+            larga: true,
+          ),
+          (
+            widget: Sezione(
+              titolo: tr(en.privacy_responsabili_titolo),
+              children: [
+                TestoPiccolo(tr(en.privacy_responsabili_intro)),
+                Padding(
+                  padding: const EdgeInsets.only(top: 6.4, bottom: 12.8),
+                  child: ElencoPuntato(
+                    voci: [
+                      for (final r in en.privacyResponsabili(hosting: valori.hosting, fornitori_ai: valori.fornitori))
+                        TestoConGrassetto(grassetto: tr(r.chi), resto: ' — ${tr(r.cosa)}'),
+                    ],
+                  ),
+                ),
+                TestoPiccolo(tr(en.privacy_trasferimenti), sotto: 0),
+              ],
+            ),
+            larga: true,
+          ),
+          (
+            widget: Sezione(
+              titolo: tr(en.privacy_conservazione_titolo),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 6.4, bottom: 12.8),
+                  child: ElencoPuntato(voci: [for (final v in en.privacyConservazione) Text(tr(v), style: piccolo)]),
+                ),
+              ],
+            ),
+            larga: true,
+          ),
+          (
+            widget: Sezione(
+              titolo: tr(en.privacy_diritti_titolo),
+              children: [
+                TestoPiccolo(tr(en.privacy_diritti_testo)),
+                TestoPiccolo(tr(en.privacy_diritti_come)),
+                FilaBottoni(
+                  children: [
+                    bottone(t.privacy_diritti_cta_dati, R.profilo),
+                    bottone(t.privacy_diritti_cta_elimina, R.elimina),
+                  ],
+                ),
+                TitoloPannello(tr(en.privacy_garante_titolo)),
+                TestoPiccolo(tr(en.privacy_garante_testo), sotto: 0),
+              ],
+            ),
+            larga: true,
+          ),
+          (
+            widget: Sezione(
+              id: 'pv-eta',
+              titolo: tr(en.privacy_eta_titolo),
+              children: [TestoPiccolo(tr(en.privacy_eta_testo), sotto: 0)],
+            ),
+            larga: true,
+          ),
+          (widget: TestoPiccolo(tr(en.privacy_versione), tenue: true, sotto: 0), larga: true),
+        ];
+        return Pagina(
+          sezioni: [
+            Sottotitolo(
+              eyebrow: tr(en.privacy_eyebrow),
+              titolo: tr(en.privacy_titolo),
+              intro: tr(en.privacy_intro),
+              compatta: true,
+            ),
+            Fascia(
+              compatta: true,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  for (final (i, s) in [
-                    ('statistiche', t.app_consenso_statistiche, t.app_consenso_statistiche_testo),
-                    ('google_analytics', t.app_consenso_google, t.app_consenso_google_testo),
-                  ].indexed)
-                    Container(
-                      decoration: i == 0
-                          ? null
-                          : const BoxDecoration(
-                              border: Border(top: BorderSide(color: Token.line)),
-                            ),
-                      child: _Scelta(
-                        valore: consensi.accettato(s.$1),
-                        attiva: !_salvando,
-                        titolo: s.$2,
-                        testo: s.$3,
-                        alCambio: (v) => unawaited(_cambia(s.$1, v)),
-                      ),
-                    ),
+                  avviso,
+                  NotaOriginale(tr(en.termini_originale)),
+                  GrigliaProfilo(celle: celle),
                 ],
               ),
             ),
-            if (_errore) Errore(t.comune_err_operazione, sopra: 0),
-            TestoPiccolo(
-              t.privacy_scelte_account,
-              sotto: 0,
-              figlio: Collegamento('${t.privacy_scelte_account_cta}.', href: R.profilo, stile: collegamento),
-            ),
           ],
-        ),
-        larga: true,
-      ),
-      (
-        widget: Sezione(
-          titolo: t.privacy_finalita_titolo,
-          children: [
-            TestoPiccolo(t.privacy_finalita_intro),
-            // `.privacy-finalita`: una voce per uso, con la base giuridica tenue.
-            for (final v in t.privacyFinalita)
-              Container(
-                margin: const EdgeInsets.only(bottom: 11.2),
-                padding: const EdgeInsets.only(bottom: 9.6),
-                decoration: const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: Token.line)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      v.cosa,
-                      style: Stile.sans(14.4, peso: FontWeight.w700, colore: Token.ink),
-                    ),
-                    const SizedBox(height: 3.2),
-                    Text.rich(
-                      TextSpan(
-                        style: piccolo,
-                        children: [
-                          TextSpan(text: '${v.perche} '),
-                          TextSpan(
-                            text: v.base,
-                            style: const TextStyle(color: Token.inkSoft),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-        larga: true,
-      ),
-      (
-        widget: Sezione(
-          titolo: t.privacy_letture_titolo,
-          children: [
-            TestoPiccolo(t.privacy_letture_testo),
-            Align(alignment: AlignmentDirectional.centerStart, child: bottone(t.privacy_letture_cta, R.storia)),
-          ],
-        ),
-        larga: false,
-      ),
-      (
-        widget: Sezione(titolo: t.privacy_ai_titolo, children: [TestoPiccolo(t.privacy_ai_testo, sotto: 0)]),
-        larga: false,
-      ),
-      (
-        widget: Sezione(
-          titolo: t.privacy_art9_titolo,
-          children: [TestoPiccolo(t.privacy_art9_testo), TestoPiccolo(t.privacy_art9_crisi, sotto: 0)],
-        ),
-        larga: true,
-      ),
-      (
-        widget: Sezione(
-          titolo: t.privacy_social_titolo,
-          children: [
-            TestoPiccolo(t.privacy_social_account),
-            TestoPiccolo(t.privacy_social_cosa),
-            TestoPiccolo(t.privacy_social_perche),
-            TestoPiccolo(t.privacy_social_posizione),
-            TestoPiccolo(t.privacy_social_controllo),
-            Align(alignment: AlignmentDirectional.centerStart, child: bottone(t.privacy_social_cta, R.profilo)),
-          ],
-        ),
-        larga: true,
-      ),
-      (
-        widget: Sezione(
-          titolo: t.privacy_stat_titolo,
-          children: [
-            TestoPiccolo(t.privacy_stat_anonime),
-            TestoPiccolo(t.privacy_stat_account),
-            TestoPiccolo(t.privacy_stat_esteso),
-            TestoPiccolo(t.privacy_stat_google),
-            TestoPiccolo(t.privacy_stat_conservazione),
-            Wrap(
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text('${t.privacy_stat_geo} ', style: piccolo),
-                _Esterno(testo: 'IP Geolocation by DB-IP', url: 'https://db-ip.com', stile: collegamento),
-                Text(' (CC BY 4.0)', style: piccolo),
-              ],
-            ),
-          ],
-        ),
-        larga: true,
-      ),
-      (
-        widget: Sezione(
-          titolo: t.privacy_responsabili_titolo,
-          children: [
-            TestoPiccolo(t.privacy_responsabili_intro),
-            Padding(
-              padding: const EdgeInsets.only(top: 6.4, bottom: 12.8),
-              child: ElencoPuntato(
-                voci: [
-                  for (final r in t.privacyResponsabili(hosting: valori.hosting, fornitori_ai: valori.fornitori))
-                    TestoConGrassetto(grassetto: r.chi, resto: ' — ${r.cosa}'),
-                ],
-              ),
-            ),
-            TestoPiccolo(t.privacy_trasferimenti, sotto: 0),
-          ],
-        ),
-        larga: true,
-      ),
-      (
-        widget: Sezione(
-          titolo: t.privacy_conservazione_titolo,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 6.4, bottom: 12.8),
-              child: ElencoPuntato(voci: [for (final v in t.privacyConservazione) Text(v, style: piccolo)]),
-            ),
-          ],
-        ),
-        larga: true,
-      ),
-      (
-        widget: Sezione(
-          titolo: t.privacy_diritti_titolo,
-          children: [
-            TestoPiccolo(t.privacy_diritti_testo),
-            TestoPiccolo(t.privacy_diritti_come),
-            FilaBottoni(
-              children: [
-                bottone(t.privacy_diritti_cta_dati, R.profilo),
-                bottone(t.privacy_diritti_cta_elimina, R.elimina),
-              ],
-            ),
-            TitoloPannello(t.privacy_garante_titolo),
-            TestoPiccolo(t.privacy_garante_testo, sotto: 0),
-          ],
-        ),
-        larga: true,
-      ),
-      (
-        widget: Sezione(
-          id: 'pv-eta',
-          titolo: t.privacy_eta_titolo,
-          children: [TestoPiccolo(t.privacy_eta_testo, sotto: 0)],
-        ),
-        larga: true,
-      ),
-      (widget: TestoPiccolo(t.privacy_versione, tenue: true, sotto: 0), larga: true),
-    ];
-    return Fascia(compatta: true, child: GrigliaProfilo(celle: celle));
+        );
+      },
+    );
   }
+}
+
+/// «L'originale è l'inglese» (`termini.originale`, generico): sopra il testo di privacy e termini.
+class NotaOriginale extends StatelessWidget {
+  /// La nota, già tradotta.
+  const NotaOriginale(this.testo, {super.key});
+
+  /// Il testo.
+  final String testo;
+
+  @override
+  Widget build(BuildContext context) => TestoPiccolo(testo, tenue: true);
 }
 
 /// Una scelta del telefono: come le caselle del profilo, senza la riga dello stato (come la pagina del sito).
@@ -382,11 +428,17 @@ class _Scelta extends StatelessWidget {
 }
 
 /// Un collegamento fuori dall'app (la posta, un sito), sottolineato d'ottone come `a.inline`.
-class _Esterno extends StatelessWidget {
-  const _Esterno({required this.testo, required this.url, required this.stile});
+class CollegamentoEsterno extends StatelessWidget {
+  /// Un collegamento a [url].
+  const CollegamentoEsterno({super.key, required this.testo, required this.url, required this.stile});
 
+  /// Il testo.
   final String testo;
+
+  /// Dove porta (`mailto:`, `https:`).
   final String url;
+
+  /// Lo stile del testo.
   final TextStyle stile;
 
   @override

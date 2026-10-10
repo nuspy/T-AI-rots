@@ -52,6 +52,7 @@ class Piede extends StatelessWidget {
           (R.prezzi, t.comune_piede_prezzi),
           (R.negozio, t.comune_piede_negozio),
           (R.privacy, t.comune_piede_privacy),
+          (R.termini, t.comune_piede_termini),
         ],
       ),
     ];

@@ -41,6 +41,7 @@ import '../pagine/profilo.dart';
 import '../pagine/prova.dart';
 import '../pagine/stese.dart';
 import '../pagine/storia.dart';
+import '../pagine/termini.dart';
 import '../pagine/voto.dart';
 import 'indirizzi.dart';
 import 'percorsi.dart';
@@ -95,6 +96,7 @@ List<RouteBase> rotte() => [
       _rotta('${R.blog}/:slug', (s) => Articolo(slug: _p(s, 'slug'))),
       _rotta(R.profilo, (s) => PaginaProfilo(parametri: s.uri.queryParameters)),
       _rotta(R.privacy, (_) => const PaginaPrivacy()),
+      _rotta(R.termini, (_) => const PaginaTermini()),
       _rotta(R.elimina, (_) => const EliminaAccount()),
     ],
   ),

@@ -176,6 +176,21 @@ class _ConTraduzioneState extends ConsumerState<ConTraduzione> {
   }
 }
 
+/// [ConTraduzione] per una pagina coi testi scritti in un posto solo (privacy, termini): [pagina] si costruisce una
+/// prima volta con un `tr` che raccoglie i testi (quelli da tradurre, che [ConTraduzione] vuole prima) e poi con quello
+/// vero, così l'elenco non ne dimentica nessuno. In [pagina] `tr` va chiamato subito, non dentro un costruttore pigro.
+Widget conTestiRaccolti({
+  required String da,
+  required Widget Function(String Function(String testo) tr, Widget avviso) pagina,
+}) {
+  final testi = <String>[];
+  pagina((testo) {
+    testi.add(testo);
+    return testo;
+  }, const SizedBox.shrink());
+  return ConTraduzione(da: da, testi: testi, costruisci: (context, tr, avviso) => pagina(tr, avviso));
+}
+
 /// Il riquadro della traduzione (`AvvisoTraduzione` del sito).
 class AvvisoTraduzioneApp extends StatelessWidget {
   /// Il riquadro per la [fase].

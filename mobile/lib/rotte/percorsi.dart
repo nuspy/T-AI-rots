@@ -38,6 +38,10 @@ abstract final class R {
   static const String profilo = '/profile';
   static const String privacy = '/privacy';
 
+  /// I termini di servizio (10/10/2026): solo in inglese, tradotti sul telefono. Stesso nome in tutte le lingue,
+  /// come `/privacy` (`/it/terms` porta qui da sé).
+  static const String termini = '/terms';
+
   /// La cancellazione dell'account (GDPR, Fase 1).
   static const String elimina = '/account/elimina';
 }
