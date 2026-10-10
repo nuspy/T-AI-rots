@@ -49,6 +49,7 @@ export const comune: typeof Base = {
   piede_prezzi: "Pacchetti di letture",
   piede_negozio: "Mazzo e PDF",
   piede_privacy: "Metodo e privacy",
+  piede_termini: "Termini di servizio",
   piede_avvertenza: "I Tarocchi sono un linguaggio per riflettere. Nessuna lettura predice il futuro né sostituisce il parere di un professionista.",
 
   chiudi: "Chiudi",

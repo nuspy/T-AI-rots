@@ -47,6 +47,7 @@ export const comune = {
   piede_prezzi: "Reading packages",
   piede_negozio: "Deck & PDF",
   piede_privacy: "Method & privacy",
+  piede_termini: "Terms of service",
   piede_avvertenza: "Tarot is a language for reflection. No reading predicts the future or replaces professional advice.",
 
   chiudi: "Close",

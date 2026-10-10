@@ -49,6 +49,7 @@ export const comune: typeof Base = {
   piede_prezzi: "Пакеты раскладов",
   piede_negozio: "Колода и PDF",
   piede_privacy: "Метод и конфиденциальность",
+  piede_termini: "Условия использования",
   piede_avvertenza: "Таро — язык для размышления. Ни один расклад не предсказывает будущее и не заменяет совет специалиста.",
 
   chiudi: "Закрыть",

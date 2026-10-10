@@ -49,6 +49,7 @@ export const comune: typeof Base = {
   piede_prezzi: "Jóslás-csomagok",
   piede_negozio: "Pakli és PDF",
   piede_privacy: "Módszer és adatvédelem",
+  piede_termini: "Felhasználási feltételek",
   piede_avvertenza: "A tarot az elmélkedés nyelve. Egyetlen jóslás sem látja előre a jövőt, és nem helyettesít szakmai tanácsot.",
 
   chiudi: "Bezárás",

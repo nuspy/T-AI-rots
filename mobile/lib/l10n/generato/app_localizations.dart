@@ -391,6 +391,12 @@ abstract class AppLocalizations {
   /// **'Method & privacy'**
   String get comune_piede_privacy;
 
+  /// No description provided for @comune_piede_termini.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of service'**
+  String get comune_piede_termini;
+
   /// No description provided for @comune_piede_avvertenza.
   ///
   /// In en, this message translates to:
@@ -8940,6 +8946,378 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Version 3 — 3 October 2026.'**
   String get privacy_versione;
+
+  /// No description provided for @termini_meta_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of service'**
+  String get termini_meta_titolo;
+
+  /// No description provided for @termini_meta_descrizione.
+  ///
+  /// In en, this message translates to:
+  /// **'The agreement between you and TAROTS chat: what the service is and is not, credits, plans and purchases, your rights and ours.'**
+  String get termini_meta_descrizione;
+
+  /// No description provided for @termini_eyebrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of service'**
+  String get termini_eyebrow;
+
+  /// No description provided for @termini_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'The rules of the reading room.'**
+  String get termini_titolo;
+
+  /// No description provided for @termini_intro.
+  ///
+  /// In en, this message translates to:
+  /// **'These terms are the agreement between you and us when you use TAROTS chat — the website https://tarots.chat and the TAROTS chat apps. By creating an account, buying credits, a plan or a deck, or starting a reading, you accept them. If you do not, please do not use the service.'**
+  String get termini_intro;
+
+  /// No description provided for @termini_originale.
+  ///
+  /// In en, this message translates to:
+  /// **'The English text is the original. A translation shown by your browser or your phone is made automatically on your device, for convenience only: if they differ, the English text applies.'**
+  String get termini_originale;
+
+  /// No description provided for @termini_chi_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'Who we are'**
+  String get termini_chi_titolo;
+
+  /// No description provided for @termini_chi_testo.
+  ///
+  /// In en, this message translates to:
+  /// **'TAROTS chat is run by {titolare} (“we”, “us”).'**
+  String termini_chi_testo(Object titolare);
+
+  /// No description provided for @termini_chi_testo_senza_nome.
+  ///
+  /// In en, this message translates to:
+  /// **'TAROTS chat is run by the data controller named in the privacy policy (“we”, “us”).'**
+  String get termini_chi_testo_senza_nome;
+
+  /// No description provided for @termini_chi_indirizzo.
+  ///
+  /// In en, this message translates to:
+  /// **'Postal address: {indirizzo}.'**
+  String termini_chi_indirizzo(Object indirizzo);
+
+  /// No description provided for @termini_chi_codice.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax code or VAT number: {codice}.'**
+  String termini_chi_codice(Object codice);
+
+  /// No description provided for @termini_chi_email.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact: {email}'**
+  String termini_chi_email(Object email);
+
+  /// No description provided for @termini_chi_email_vuoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact: write to the address shown in the privacy policy.'**
+  String get termini_chi_email_vuoto;
+
+  /// No description provided for @termini_sezioni_0_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'What TAROTS chat is — and what it is not'**
+  String get termini_sezioni_0_titolo;
+
+  /// No description provided for @termini_sezioni_0_testi_0.
+  ///
+  /// In en, this message translates to:
+  /// **'TAROTS chat offers tarot readings in the tradition of the Thoth deck, interpreted by an artificial intelligence on the basis of your question, your answers and the cards you draw. It is meant for reflection, self-knowledge and entertainment.'**
+  String get termini_sezioni_0_testi_0;
+
+  /// No description provided for @termini_sezioni_0_testi_1.
+  ///
+  /// In en, this message translates to:
+  /// **'Tarot has no scientific validity. A reading is not a prediction and not a statement of fact, and it is not professional advice of any kind — medical, psychological, legal, financial or other. Do not use a reading to decide about your health, treatments, money, legal matters or your safety or anyone else\'s: ask a qualified professional.'**
+  String get termini_sezioni_0_testi_1;
+
+  /// No description provided for @termini_sezioni_0_testi_2.
+  ///
+  /// In en, this message translates to:
+  /// **'If you are in danger or thinking of harming yourself, contact your local emergency number straight away. When a reading detects that kind of message it stops and shows where to find help.'**
+  String get termini_sezioni_0_testi_2;
+
+  /// No description provided for @termini_sezioni_1_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'Texts written by the AI'**
+  String get termini_sezioni_1_titolo;
+
+  /// No description provided for @termini_sezioni_1_testi_0.
+  ///
+  /// In en, this message translates to:
+  /// **'Interpretations, questions and replies are generated by AI models. They can be inaccurate, incomplete or unexpected, even though we instruct the models carefully and check their answers with safety filters. They are not written or reviewed by a person before you read them.'**
+  String get termini_sezioni_1_testi_0;
+
+  /// No description provided for @termini_sezioni_1_testi_1.
+  ///
+  /// In en, this message translates to:
+  /// **'You decide what to do with a reading, and you remain responsible for your choices. How your words reach the AI, and what is kept, is explained in the privacy policy.'**
+  String get termini_sezioni_1_testi_1;
+
+  /// No description provided for @termini_sezioni_2_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'Age'**
+  String get termini_sezioni_2_titolo;
+
+  /// No description provided for @termini_sezioni_2_testi_0.
+  ///
+  /// In en, this message translates to:
+  /// **'You may use TAROTS chat on your own from the minimum age set out in the privacy policy (16; 14 in Italy and Spain; 15 in France). We ask you to confirm it before the first reading.'**
+  String get termini_sezioni_2_testi_0;
+
+  /// No description provided for @termini_sezioni_2_testi_1.
+  ///
+  /// In en, this message translates to:
+  /// **'To buy credits, plans, decks or any other product you must be an adult under the law of the country where you live, or have the consent of your parent or guardian.'**
+  String get termini_sezioni_2_testi_1;
+
+  /// No description provided for @termini_sezioni_3_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account'**
+  String get termini_sezioni_3_titolo;
+
+  /// No description provided for @termini_sezioni_3_testi_0.
+  ///
+  /// In en, this message translates to:
+  /// **'Give true details, keep your sign-in safe and do not share your account: one account per person. You are responsible for what is done with your account. If you sign in with Google, Apple, Facebook, GitHub or LinkedIn, their own terms also apply to that sign-in.'**
+  String get termini_sezioni_3_testi_0;
+
+  /// No description provided for @termini_sezioni_3_testi_1.
+  ///
+  /// In en, this message translates to:
+  /// **'You can delete your account at any time from your profile. Deleting it removes your readings, memory and chat for good; credits and included readings still unused are lost, unless the law gives you a right to a refund.'**
+  String get termini_sezioni_3_testi_1;
+
+  /// No description provided for @termini_sezioni_3_testi_2.
+  ///
+  /// In en, this message translates to:
+  /// **'We may suspend or close an account that seriously or repeatedly breaks these terms, telling you why when we can. If we close your account for reasons that are not your fault, we refund the credits you bought and have not used.'**
+  String get termini_sezioni_3_testi_2;
+
+  /// No description provided for @termini_sezioni_4_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'Credits, plans and purchases'**
+  String get termini_sezioni_4_titolo;
+
+  /// No description provided for @termini_sezioni_4_testi_0.
+  ///
+  /// In en, this message translates to:
+  /// **'Prices are shown before you pay, including VAT where it applies. The cost of a reading in credits is shown before you start it; if a reading fails for a technical reason, or is stopped for your safety, its credit is returned automatically.'**
+  String get termini_sezioni_4_testi_0;
+
+  /// No description provided for @termini_sezioni_4_testi_1.
+  ///
+  /// In en, this message translates to:
+  /// **'Credits you buy never expire. They are personal: they cannot be transferred, exchanged for money or resold, except where the law requires otherwise.'**
+  String get termini_sezioni_4_testi_1;
+
+  /// No description provided for @termini_sezioni_4_testi_2.
+  ///
+  /// In en, this message translates to:
+  /// **'Plans (subscriptions) include a number of readings for each period; included readings that you do not use expire at the end of their period. A plan renews automatically at the price shown, until you turn off automatic renewal in Profile → Subscription; it then stays active until the end of the period already paid. A free trial becomes a paid plan when it ends, unless you cancel before then.'**
+  String get termini_sezioni_4_testi_2;
+
+  /// No description provided for @termini_sezioni_4_testi_3.
+  ///
+  /// In en, this message translates to:
+  /// **'Card payments on the website are handled by Stripe: we never see your card number. Purchases made inside the apps through Google Play or the App Store are also governed by those stores\' terms, and subscriptions bought there are managed and cancelled in the store.'**
+  String get termini_sezioni_4_testi_3;
+
+  /// No description provided for @termini_sezioni_4_testi_4.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount codes, offers and gifts follow the conditions shown with them, including any expiry date. Unless stated otherwise they cannot be combined and have no cash value.'**
+  String get termini_sezioni_4_testi_4;
+
+  /// No description provided for @termini_sezioni_4_testi_5.
+  ///
+  /// In en, this message translates to:
+  /// **'We may change prices for the future. A price change never affects what you have already bought; for plans, we tell you at least 30 days before a renewal at a new price, and you can turn off renewal before it applies.'**
+  String get termini_sezioni_4_testi_5;
+
+  /// No description provided for @termini_sezioni_5_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'Your right of withdrawal'**
+  String get termini_sezioni_5_titolo;
+
+  /// No description provided for @termini_sezioni_5_testi_0.
+  ///
+  /// In en, this message translates to:
+  /// **'If you are a consumer in the European Union or the United Kingdom, you usually have 14 days to withdraw from a purchase made at a distance, without giving a reason.'**
+  String get termini_sezioni_5_testi_0;
+
+  /// No description provided for @termini_sezioni_5_testi_1.
+  ///
+  /// In en, this message translates to:
+  /// **'Credits, readings and downloadable decks are digital content supplied immediately. By buying them you ask us to supply them straight away and accept that you lose the right of withdrawal once supply has begun: for credits, when you use the first one; for a downloadable deck, when it is made available to you. Credits bought and never used can be withdrawn within 14 days.'**
+  String get termini_sezioni_5_testi_1;
+
+  /// No description provided for @termini_sezioni_5_testi_2.
+  ///
+  /// In en, this message translates to:
+  /// **'A plan is a service. You can withdraw within 14 days of buying it; if you have already used it, we refund the price minus a fair share for what you used.'**
+  String get termini_sezioni_5_testi_2;
+
+  /// No description provided for @termini_sezioni_5_testi_3.
+  ///
+  /// In en, this message translates to:
+  /// **'Printed and physical decks can be returned within 14 days of delivery. Tell us first, then send the deck back within 14 days of telling us; unless it is faulty, the cost of returning it is yours. We refund the price and the standard delivery cost within 14 days of receiving it back.'**
+  String get termini_sezioni_5_testi_3;
+
+  /// No description provided for @termini_sezioni_5_testi_4.
+  ///
+  /// In en, this message translates to:
+  /// **'To withdraw, write to us at the contact above with your order details; a model withdrawal form is available on request. Your legal guarantee for faulty goods and digital content that does not work as described is not affected.'**
+  String get termini_sezioni_5_testi_4;
+
+  /// No description provided for @termini_sezioni_6_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders and delivery'**
+  String get termini_sezioni_6_titolo;
+
+  /// No description provided for @termini_sezioni_6_testi_0.
+  ///
+  /// In en, this message translates to:
+  /// **'For physical products the delivery cost and the expected delivery time are shown before you pay. Outside the European Union, customs duties and local taxes may be charged by your country on delivery: they are not included in our price.'**
+  String get termini_sezioni_6_testi_0;
+
+  /// No description provided for @termini_sezioni_7_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'Fair use'**
+  String get termini_sezioni_7_titolo;
+
+  /// No description provided for @termini_sezioni_7_testi_0.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not use TAROTS chat to break the law, to harass, threaten or deceive anyone, or to obtain or share information about other people that you are not entitled to share. In readings about another person, write only what you have the right to tell us.'**
+  String get termini_sezioni_7_testi_0;
+
+  /// No description provided for @termini_sezioni_7_testi_1.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not try to get around security, limits or payments, do not overload the service, and do not copy it with automated tools (scraping) or reverse-engineer it beyond what the law allows. Do not resell readings or use them commercially without our written permission.'**
+  String get termini_sezioni_7_testi_1;
+
+  /// No description provided for @termini_sezioni_8_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'What you write'**
+  String get termini_sezioni_8_titolo;
+
+  /// No description provided for @termini_sezioni_8_testi_0.
+  ///
+  /// In en, this message translates to:
+  /// **'What you write remains yours. You allow us to use it only to provide the service to you — readings, memory, chat — in the ways explained in the privacy policy.'**
+  String get termini_sezioni_8_testi_0;
+
+  /// No description provided for @termini_sezioni_8_testi_1.
+  ///
+  /// In en, this message translates to:
+  /// **'If you share a reading through a public link, you decide what is visible, and you can withdraw the link at any time. Do not share content that belongs to someone else or that you do not have the right to publish.'**
+  String get termini_sezioni_8_testi_1;
+
+  /// No description provided for @termini_sezioni_9_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'Our content'**
+  String get termini_sezioni_9_titolo;
+
+  /// No description provided for @termini_sezioni_9_testi_0.
+  ///
+  /// In en, this message translates to:
+  /// **'The website, the apps, their texts, images, deck artwork and software belong to us or to those who licensed them to us. Readings are for your personal use. Printable and digital decks are for your personal, non-commercial use: do not sell, distribute or publish them.'**
+  String get termini_sezioni_9_testi_0;
+
+  /// No description provided for @termini_sezioni_10_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'Availability and changes to the service'**
+  String get termini_sezioni_10_titolo;
+
+  /// No description provided for @termini_sezioni_10_testi_0.
+  ///
+  /// In en, this message translates to:
+  /// **'We work to keep TAROTS chat available and working well, but we cannot promise it will always be uninterrupted or error-free: AI providers, payment providers and networks can fail. We may change, add or remove features; if we stop offering a paid service you have already paid for, we refund the unused part.'**
+  String get termini_sezioni_10_testi_0;
+
+  /// No description provided for @termini_sezioni_11_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'Liability'**
+  String get termini_sezioni_11_titolo;
+
+  /// No description provided for @termini_sezioni_11_testi_0.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing in these terms limits liability that the law does not allow us to limit, such as for death or personal injury caused by our negligence, for fraud, or your mandatory rights as a consumer.'**
+  String get termini_sezioni_11_testi_0;
+
+  /// No description provided for @termini_sezioni_11_testi_1.
+  ///
+  /// In en, this message translates to:
+  /// **'Within those limits, we are not liable for decisions you make on the basis of a reading, nor for indirect or unforeseeable losses, and our total liability to you is limited to what you paid us in the 12 months before the event.'**
+  String get termini_sezioni_11_testi_1;
+
+  /// No description provided for @termini_sezioni_12_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes to these terms'**
+  String get termini_sezioni_12_titolo;
+
+  /// No description provided for @termini_sezioni_12_testi_0.
+  ///
+  /// In en, this message translates to:
+  /// **'We may update these terms, for example when the service or the law changes. We tell you about important changes at least 15 days before they apply, by email or in the site and the apps. If you do not agree, you can close your account before they apply; where the law gives you the right, we refund the credits you bought and have not used.'**
+  String get termini_sezioni_12_testi_0;
+
+  /// No description provided for @termini_sezioni_13_titolo.
+  ///
+  /// In en, this message translates to:
+  /// **'Law and disputes'**
+  String get termini_sezioni_13_titolo;
+
+  /// No description provided for @termini_sezioni_13_testi_0.
+  ///
+  /// In en, this message translates to:
+  /// **'These terms are governed by Italian law. If you are a consumer, you also keep the protection of the mandatory rules of the country where you live, and you can bring a claim before the courts of that country.'**
+  String get termini_sezioni_13_testi_0;
+
+  /// No description provided for @termini_sezioni_13_testi_1.
+  ///
+  /// In en, this message translates to:
+  /// **'If something goes wrong, write to us first: most problems can be solved quickly.'**
+  String get termini_sezioni_13_testi_1;
+
+  /// No description provided for @termini_privacy_link.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy policy'**
+  String get termini_privacy_link;
+
+  /// No description provided for @termini_versione.
+  ///
+  /// In en, this message translates to:
+  /// **'Version 1 — 10 October 2026.'**
+  String get termini_versione;
 
   /// No description provided for @abbonamento_banner_etichetta.
   ///

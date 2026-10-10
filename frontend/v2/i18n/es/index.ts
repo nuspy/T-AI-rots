@@ -15,9 +15,10 @@ import { mazzi } from "./mazzi";
 import { negozio } from "./negozio";
 import { prezzi } from "./prezzi";
 import { privacy } from "./privacy";
+import { termini } from "./termini";
 import { profilo } from "./profilo";
 import { stese } from "./stese";
 import { storia } from "./storia";
 import { notifiche } from "./notifiche";
 
-export const es: typeof en = { comune, home, lettura, fisica, storia, condivisa, carte, giorno, stese, mazzi, negozio, prezzi, blog, profilo, privacy, abbonamento, app, notifiche };
+export const es: typeof en = { comune, home, lettura, fisica, storia, condivisa, carte, giorno, stese, mazzi, negozio, prezzi, blog, profilo, privacy, termini, abbonamento, app, notifiche };

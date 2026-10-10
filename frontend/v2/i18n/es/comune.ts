@@ -49,6 +49,7 @@ export const comune: typeof Base = {
   piede_prezzi: "Paquetes de lecturas",
   piede_negozio: "Mazo y PDF",
   piede_privacy: "Método y privacidad",
+  piede_termini: "Términos del servicio",
   piede_avvertenza: "El Tarot es un lenguaje para la reflexión. Ninguna lectura predice el futuro ni sustituye el consejo de un profesional.",
 
   chiudi: "Cerrar",

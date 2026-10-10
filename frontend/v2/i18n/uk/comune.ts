@@ -49,6 +49,7 @@ export const comune: typeof Base = {
   piede_prezzi: "Пакети читань",
   piede_negozio: "Колода і PDF",
   piede_privacy: "Метод і приватність",
+  piede_termini: "Умови використання",
   piede_avvertenza: "Таро — це мова для роздумів. Жодне читання не передбачає майбутнього і не замінює порад фахівця.",
 
   chiudi: "Закрити",
