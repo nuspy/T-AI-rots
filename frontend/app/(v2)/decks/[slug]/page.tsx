@@ -51,15 +51,24 @@ export default async function PaginaMazzo({ params }: { params: Promise<{ slug: 
       { nome: MAZZO.title(lingua), url: urlPubblico(lingua, "/decks") },
       { nome: mazzo.nome, url },
     ]),
-    {
-      "@type": "Product",
-      name: mazzo.nome,
-      description: mazzo.descrizione ?? undefined,
-      url,
-      brand: { "@type": "Brand", name: NOME_MARCHIO },
-      category: lingua === "it" ? "Mazzi di tarocchi" : "Tarot decks",
-      ...(offerte.length ? { offers: offerte } : {}),
-    },
+    offerte.length
+      ? {
+          "@type": "Product",
+          name: mazzo.nome,
+          description: mazzo.descrizione ?? undefined,
+          url,
+          brand: { "@type": "Brand", name: NOME_MARCHIO },
+          category: lingua === "it" ? "Mazzi di tarocchi" : "Tarot decks",
+          offers: offerte,
+        }
+      : {
+          // Senza prezzo niente "Product": Google richiede offers/review/aggregateRating
+          // e non vogliamo inventare un'offerta.
+          "@type": "CreativeWork",
+          name: mazzo.nome,
+          description: mazzo.descrizione ?? undefined,
+          url,
+        },
   );
   return (
     <DatiIniziali valori={valori}>

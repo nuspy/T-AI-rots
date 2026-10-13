@@ -42,6 +42,7 @@ const DALLA_V1 = new Map<string, string>([
   ["s", "shared"],
   ["interpreta", "physical-reading"],
   ["vota-mazzo", "vote"],
+  ["plans", "pricing"],
 ]);
 
 /** Le pagine personali o di servizio: non si indicizzano, e la lingua non la decide l'indirizzo da sola. */
@@ -65,7 +66,11 @@ export function normalizza(interno: string): string {
   const parti = percorso.split("/");
   const v2 = DALLA_V1.get(parti[1] ?? "");
   if (v2) parti[1] = v2;
-  if (parti[1] === "blog" && parti[2] === "section") parti[2] = "sezione";
+  /* Il vecchio blog (prima di `/old`): `/blog/section|sections/x` → `/blog/sezione/x`, `/blog/posts/x` →
+   * `/blog/x`, e le liste senza slug (`/blog/sections`, `/blog/tags`) che oggi stanno solo dentro `/blog`. */
+  if (parti[1] === "blog" && (parti[2] === "section" || parti[2] === "sections") && parti[3]) parti[2] = "sezione";
+  else if (parti[1] === "blog" && parti[2] === "posts" && parti[3]) parti.splice(2, 1);
+  else if (parti[1] === "blog" && ["posts", "sections", "tags"].includes(parti[2] ?? "") && !parti[3]) parti.length = 2;
   return parti.join("/") + coda;
 }
 
@@ -136,9 +141,11 @@ export function risolvi(percorso: string): Risolto {
     return verso(parti.join("/"));
   }
 
-  /* I nomi della v1 e `/blog/section/…`. Il vecchio `/mazzo` senza `/it` era, come `/carte`, la pagina italiana. */
+  /* I nomi della v1 e il vecchio blog (`/blog/section|sections|posts|tags/…`). Il vecchio `/mazzo` senza `/it`
+   * era, come `/carte`, la pagina italiana. */
   if (lingua === "en" && primo === "mazzo") return verso(normalizza(p), "it");
-  if (DALLA_V1.has(primo) || (primo === "blog" && parti[2] === "section")) return verso(normalizza(p));
+  const vecchioBlog = primo === "blog" && ["section", "sections", "posts", "tags"].includes(parti[2] ?? "");
+  if (DALLA_V1.has(primo) || vecchioBlog) return verso(normalizza(p));
 
   return { lingua, interno: p, pubblica: indicizzabile(p), reindirizza: null };
 }
