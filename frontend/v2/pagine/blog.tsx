@@ -7,7 +7,7 @@
  * Gli spazi pubblicitari (spenti per default): negli elenchi fra i blocchi della colonna (`ConPubblicita`), prima del
  * ponte verso la lettura; nell'articolo dentro il testo a un terzo e a due terzi, e alla fine prima del ponte. */
 
-import { Fragment, Suspense, useRef, useState } from "react";
+import { Fragment, Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { leggiApi, type Carta } from "@/lib/api";
 import {
@@ -146,9 +146,10 @@ function finestra(pagina: number, pagine: number, vicine: number): (number | nul
  *  conservata in ogni link; 25 non si scrive). Due righe di numeri: più ampia sul computer, più corta sul telefono
  *  (la prima, la corrente, l'ultima), così non si scorre mai di lato. `ancora` riporta all'elenco dopo il clic. */
 export function Pagine({
-  pagina, pagine, totale, base, q, per, ancora,
+  pagina, pagine, totale, base, q, per, ancora, colonne, onColonneChange,
 }: {
   pagina: number; pagine: number; totale: number; base: string; q?: string; per: number; ancora?: string;
+  colonne?: 2 | 3 | 4; onColonneChange?: (n: 2 | 3 | 4) => void;
 }) {
   const { t, prefissoIt } = useLingua();
   const b = t.blog;
@@ -195,6 +196,16 @@ export function Pagine({
           {SCELTE_PER_PAGINA.map((n) => <option key={n} value={n}>{n}</option>)}
         </select>
       </label>
+      {colonne && onColonneChange && (
+        <label className="paginatore-per">
+          <span>Colonne</span>
+          <select value={colonne} onChange={(e) => onColonneChange(Number(e.target.value) as 2 | 3 | 4)}>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+        </label>
+      )}
     </nav>
   );
 }
@@ -415,6 +426,20 @@ function DiarioContenuto() {
   const q = parametri.get("q") ?? "";
   const { pagina, per } = usePaginazione();
   const [testo, setTesto] = useState(q);
+  const [colonne, setColonne] = useState<2 | 3 | 4>(2);
+
+  // Leggi il cookie delle colonne al mount
+  useEffect(() => {
+    try {
+      const salvate = localStorage.getItem("journal-colonne");
+      if (salvate && ["2", "3", "4"].includes(salvate)) setColonne(Number(salvate) as 2 | 3 | 4);
+    } catch { /* niente */ }
+  }, []);
+
+  const salvaColonne = (n: 2 | 3 | 4) => {
+    setColonne(n);
+    try { localStorage.setItem("journal-colonne", String(n)); } catch { /* niente */ }
+  };
   const elenco = useCarica(() => articoli(lingua, { q, pagina, per_pagina: per }), [lingua, q, pagina, per], { pubblico: true, iniziale: P.articoli(lingua, { q, pagina, per_pagina: per }) });
   const evidenza = useCarica(() => (q || pagina > 1 ? Promise.resolve(null) : articoli(lingua, { evidenza: "true", per_pagina: 1 })), [lingua, q, pagina], { pubblico: true, iniziale: q || pagina > 1 ? null : P.articoli(lingua, { evidenza: "true", per_pagina: 1 }) });
   const primo = evidenza.dati?.articoli[0] ?? null;
@@ -443,8 +468,8 @@ function DiarioContenuto() {
             {lista.length > 0 && (
               <Fragment key="lista">
                 {!q && <p className="eyebrow">{b.ultimi}</p>}
-                <div className="journal-grid">{lista.map((a) => <Tessera key={a.slug} a={a} />)}</div>
-                {elenco.dati && <Pagine pagina={pagina} pagine={elenco.dati.pagine} totale={elenco.dati.totale} base={R.blog} q={q} per={per} />}
+                <div className={`journal-grid journal-grid-${colonne}`}>{lista.map((a) => <Tessera key={a.slug} a={a} />)}</div>
+                {elenco.dati && <Pagine pagina={pagina} pagine={elenco.dati.pagine} totale={elenco.dati.totale} base={R.blog} q={q} per={per} colonne={colonne} onColonneChange={salvaColonne} />}
               </Fragment>
             )}
             {!q && pagina === 1 && <SceltiACaso key="caso" percorso={P.nove({ recenti: recentiDiario(per), scelti: 10 })} escludi={[...lista, ...(primo ? [primo] : [])]} />}
@@ -466,6 +491,20 @@ function SezioneContenuto({ slug }: { slug: string }) {
   const { t, lingua } = useLingua();
   const b = t.blog;
   const { pagina, per } = usePaginazione();
+  const [colonne, setColonne] = useState<2 | 3 | 4>(2);
+
+  useEffect(() => {
+    try {
+      const salvate = localStorage.getItem("journal-colonne");
+      if (salvate && ["2", "3", "4"].includes(salvate)) setColonne(Number(salvate) as 2 | 3 | 4);
+    } catch { /* niente */ }
+  }, []);
+
+  const salvaColonne = (n: 2 | 3 | 4) => {
+    setColonne(n);
+    try { localStorage.setItem("journal-colonne", String(n)); } catch { /* niente */ }
+  };
+
   const s = useCarica(() => sezione(slug, lingua), [slug, lingua], { pubblico: true, iniziale: P.sezione(slug, lingua) });
   const elenco = useCarica(() => articoli(lingua, { sezione: slug, pagina, per_pagina: per }), [slug, lingua, pagina, per], { pubblico: true, iniziale: P.articoli(lingua, { sezione: slug, pagina, per_pagina: per }) });
   if (s.errore) return <section className="band band-tight"><p className="notice">{b.vuoto}</p></section>;
@@ -523,8 +562,8 @@ function SezioneContenuto({ slug }: { slug: string }) {
             {lista.length > 0 && (
               <Fragment key="lista">
                 <p className="eyebrow">{b.articoli}</p>
-                <div className="journal-grid">{lista.map((a) => <Tessera key={a.slug} a={a} />)}</div>
-                {elenco.dati && <Pagine pagina={pagina} pagine={elenco.dati.pagine} totale={elenco.dati.totale} base={R.blogSezione(slug)} per={per} />}
+                <div className={`journal-grid journal-grid-${colonne}`}>{lista.map((a) => <Tessera key={a.slug} a={a} />)}</div>
+                {elenco.dati && <Pagine pagina={pagina} pagine={elenco.dati.pagine} totale={elenco.dati.totale} base={R.blogSezione(slug)} per={per} colonne={colonne} onColonneChange={salvaColonne} />}
               </Fragment>
             )}
             {pagina === 1 && <SceltiACaso key="caso" percorso={P.nove({ sezione: slug, recenti: recentiDiario(per), scelti: 10, completa: false })} escludi={lista} />}
@@ -548,6 +587,20 @@ function EtichettaContenuto({ slug }: { slug: string }) {
   const { t, lingua } = useLingua();
   const b = t.blog;
   const { pagina, per } = usePaginazione();
+  const [colonne, setColonne] = useState<2 | 3 | 4>(2);
+
+  useEffect(() => {
+    try {
+      const salvate = localStorage.getItem("journal-colonne");
+      if (salvate && ["2", "3", "4"].includes(salvate)) setColonne(Number(salvate) as 2 | 3 | 4);
+    } catch { /* niente */ }
+  }, []);
+
+  const salvaColonne = (n: 2 | 3 | 4) => {
+    setColonne(n);
+    try { localStorage.setItem("journal-colonne", String(n)); } catch { /* niente */ }
+  };
+
   const tag = useCarica(etichette, [], { pubblico: true, iniziale: P.etichette() });
   const elenco = useCarica(() => articoli(lingua, { tag: slug, pagina, per_pagina: per }), [slug, lingua, pagina, per], { pubblico: true, iniziale: P.articoli(lingua, { tag: slug, pagina, per_pagina: per }) });
   const nome = tag.dati?.find((e) => e.slug === slug)?.nome ?? slug;
@@ -564,8 +617,8 @@ function EtichettaContenuto({ slug }: { slug: string }) {
           {elenco.dati && lista.length === 0 && <p className="notice">{b.vuoto}</p>}
           <ConPubblicita dentro>
             <Fragment key="lista">
-              <div className="journal-grid">{lista.map((a) => <Tessera key={a.slug} a={a} />)}</div>
-              {elenco.dati && <Pagine pagina={pagina} pagine={elenco.dati.pagine} totale={elenco.dati.totale} base={R.blogTag(slug)} per={per} />}
+              <div className={`journal-grid journal-grid-${colonne}`}>{lista.map((a) => <Tessera key={a.slug} a={a} />)}</div>
+              {elenco.dati && <Pagine pagina={pagina} pagine={elenco.dati.pagine} totale={elenco.dati.totale} base={R.blogTag(slug)} per={per} colonne={colonne} onColonneChange={salvaColonne} />}
             </Fragment>
             {pagina === 1 && <SceltiACaso key="caso" percorso={P.nove({ tag: slug, recenti: recentiDiario(per), scelti: 10, completa: false })} escludi={lista} />}
           </ConPubblicita>
