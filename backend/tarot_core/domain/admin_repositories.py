@@ -97,6 +97,13 @@ class AdminUserRepository(_ConAudit):
         )).scalars().all()
         return righe, totale
 
+    async def registra_creazione(self, utente: User) -> None:
+        """L'utente creato a mano dalla console. Nel registro finiscono l'email e il nome, mai la password."""
+        await self._registra(
+            "user.create", tipo="user", target_id=utente.id,
+            dopo={"email": utente.email, "display_name": utente.display_name},
+        )
+
     async def disattiva(self, utente: User) -> None:
         if utente.deleted_at is not None:
             return

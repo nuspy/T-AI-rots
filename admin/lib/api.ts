@@ -429,6 +429,18 @@ export const elencoUtenti = (
 export const dettaglioUtente = (t: string, id: number) =>
   chiamata<UtenteDettaglio>(t, `/admin/users/${id}`);
 
+/* Un account creato a mano: nasce in Keycloak con questa password (definitiva, email già verificata) e subito anche
+ * nel database, col piano gratuito. 409 se l'email è già usata, 400 se la password non rispetta la politica del
+ * realm. */
+export const creaUtente = (
+  t: string,
+  corpo: { email: string; password: string; nome?: string },
+) =>
+  chiamata<Omit<Utente, "saldo" | "piano">>(t, `/admin/users`, {
+    method: "POST",
+    body: JSON.stringify(corpo),
+  });
+
 export const impostaAttivo = (t: string, id: number, attivo: boolean) =>
   chiamata<Omit<Utente, "saldo" | "piano">>(t, `/admin/users/${id}`, {
     method: "PATCH",

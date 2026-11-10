@@ -36,4 +36,8 @@ abstract final class Config {
 
   /// La versione dell'app che compare nell'agente (`User-Agent`) delle statistiche.
   static const String versione = String.fromEnvironment('VERSIONE_APP', defaultValue: '1.0.0');
+
+  /// Google Play RSA public key per la verifica degli acquisti in-app (Fase 9).
+  static const String playPublicKey = String.fromEnvironment('PLAY_PUBLIC_KEY',
+      defaultValue: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzS/RaasS00iwTODrY1sMS2mLY1szh/E7P1kAmR74dntxE9cfvkmQ5akZIx9vw85xI8eZZnPFplphUW1UgiR0tmeT73Qzx1AZbFNGsg+oPWyaI4hIyK9fuZ2cdAdsvdN47XAgQELdlN48Ggz3GUcOydXj7VO6nJsjOuPPcykhXZgyc1aa2i44w00X4MLLOpo+vJvRLdi82nhGvhCbd366IHGUIQycdoGw3mPfOrpCRVjSQn3XRMnoce5rO0DDnhb0iYoba5LUy9I47susi5y/aNk5h6jkc+0Ep7eGE1eQaabWriBNRI8pxjYgFLJVs8S3J9Lf0jn7yos6OGDc5vVkawIDAQAB');
 }

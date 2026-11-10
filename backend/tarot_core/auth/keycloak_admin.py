@@ -9,7 +9,8 @@ account di servizio bastano due ruoli client di `realm-management` (vedi `deploy
 - `manage-identity-providers` — i provider social (`provider_identita`, `salva_provider`), compreso il segreto di
   Apple firmato dal backend (`tarot/accesso_apple.py`);
 - `manage-users` — la password che la persona sceglie dopo un'unione con un account mai verificato
-  (`imposta_password`, solo per sé stessa: vedi `api/routers/profile.py`); la lingua dell'utente
+  (`imposta_password`, solo per sé stessa: vedi `api/routers/profile.py`); gli account creati a mano dalla console
+  (`crea_utente`, `POST /admin/users`, e `cancella_utente` se poi il database fallisce); la lingua dell'utente
   (`imposta_lingua`); le identità social spostate con il codice di collegamento (`identita_federate`,
   `collega_identita`, `scollega_identita`, `disattiva_utente`: `tarot/collega_identita.py`).
 
@@ -51,6 +52,13 @@ class PasswordRifiutata(KeycloakAdminError):
     def __init__(self, chiave: str) -> None:
         super().__init__(f"password rifiutata: {chiave}", 400)
         self.chiave = chiave
+
+
+class UtenteEsistente(KeycloakAdminError):
+    """Esiste già un utente con quell'email (o nome utente) in Keycloak."""
+
+    def __init__(self, email: str) -> None:
+        super().__init__(f"esiste già un utente con l'email {email}", 409)
 
 
 #: Il passo del flusso di unione che collega in sicurezza (`deploy/keycloak/spi`, `UnioneSicuraAuthenticatorFactory.ID`).
@@ -330,6 +338,47 @@ class KeycloakAdmin:
             raise KeycloakAdminError(
                 f"PUT /users/…/reset-password rifiutata ({risposta.status_code})", risposta.status_code,
             )
+
+    async def crea_utente(self, email: str, password: str, *, nome: Optional[str] = None, lingua: str = "it") -> str:
+        """Crea un utente a mano (console) con la password già impostata, e ne restituisce l'id (la `sub`).
+
+        Il realm usa l'email come nome utente (`registrationEmailAsUsername`), quindi `username` è l'email. L'email
+        si segna come verificata: la persona non l'ha scritta lei, e il messaggio di verifica non servirebbe a
+        nessuno. La password è definitiva. Errori: `UtenteEsistente` (409), `PasswordRifiutata` (400 sulla
+        password), altrimenti `KeycloakAdminError`. La password non si scrive mai nei log né negli errori."""
+        corpo: Dict[str, Any] = {
+            "username": email, "email": email, "enabled": True, "emailVerified": True,
+            "attributes": {"locale": [lingua]},
+            "credentials": [{"type": "password", "value": password, "temporary": False}],
+        }
+        if nome:
+            corpo["firstName"] = nome
+        token = await self._token_valido()
+        try:
+            async with self._client() as client:
+                risposta = await client.post(
+                    f"{self._realm_admin}/users", json=corpo, headers={"Authorization": f"Bearer {token}"},
+                )
+        except httpx.HTTPError as exc:
+            raise KeycloakAdminError(f"Keycloak non raggiungibile ({type(exc).__name__})") from exc
+        if risposta.status_code == 409:
+            raise UtenteEsistente(email)
+        if risposta.status_code == 400:
+            try:
+                chiave = str(risposta.json().get("error") or risposta.json().get("errorMessage") or "")
+            except ValueError:
+                chiave = ""
+            # Con la password nel corpo, un 400 con la chiave `invalidPassword…` è la politica del realm.
+            if chiave.startswith("invalidPassword"):
+                raise PasswordRifiutata(chiave)
+            raise KeycloakAdminError(f"POST /users rifiutata (400): {chiave[:200]}", 400)
+        if risposta.status_code >= 400:
+            raise KeycloakAdminError(f"POST /users rifiutata ({risposta.status_code})", risposta.status_code)
+        posizione = risposta.headers.get("location", "")
+        sub = posizione.rstrip("/").rsplit("/", 1)[-1]
+        if not sub:
+            raise KeycloakAdminError("POST /users: Keycloak non ha indicato l'id dell'utente creato")
+        return sub
 
     async def chiudi_sessioni(self, utente_id: str) -> None:
         """Chiude ogni accesso dell'utente (GDPR, Fase 1: la richiesta di cancellazione dell'account).

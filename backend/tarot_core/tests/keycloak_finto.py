@@ -34,6 +34,8 @@ class KeycloakFinto:
         #: Fa fallire (500) il collegamento di un'identità a questo utente: per provare il ritorno allo stato di prima.
         self.collega_fallisce_per: Optional[str] = None
         self.giu = False
+        #: Fa fallire (500) la cancellazione di un utente.
+        self.cancella_fallisce = False
 
     def aggiungi_utente(self, sub: str, email: str, *, identita: Optional[List[Dict[str, Any]]] = None) -> None:
         self.utenti[sub] = {"id": sub, "username": email, "email": email, "enabled": True, "emailVerified": True,
@@ -99,6 +101,15 @@ class KeycloakFinto:
             self.provider[alias] = corpo
             return httpx.Response(204)
 
+        if resto == "/users" and metodo == "POST":
+            if any(u["email"] == corpo["email"] for u in self.utenti.values()):
+                return httpx.Response(409, json={"errorMessage": "User exists with same username"})
+            password = corpo["credentials"][0]["value"]
+            if len(password) < 6:
+                return httpx.Response(400, json={"error": "invalidPasswordMinLengthMessage"})
+            sub = f"sub-creato-{len(self.utenti) + 1}"
+            self.aggiungi_utente(sub, corpo["email"])
+            return httpx.Response(201, headers={"Location": f"http://kc.interno:8080{PREFISSO}/users/{sub}"})
         if resto.startswith("/sessions/"):
             return httpx.Response(204)
         if resto.startswith("/users/"):
@@ -112,6 +123,12 @@ class KeycloakFinto:
                     u = copy.deepcopy(self.utenti[sub])
                     u["federatedIdentities"] = copy.deepcopy(self.identita[sub])
                     return httpx.Response(200, json=u)
+                if metodo == "DELETE":
+                    if self.cancella_fallisce:
+                        return httpx.Response(500, json={"error": "unknown_error"})
+                    del self.utenti[sub]
+                    self.identita.pop(sub, None)
+                    return httpx.Response(204)
                 if metodo == "PUT":
                     if not corpo.get("email"):
                         return httpx.Response(400, json={"field": "email", "errorMessage": "error-user-attribute-required"})

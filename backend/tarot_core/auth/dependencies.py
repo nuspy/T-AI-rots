@@ -121,7 +121,7 @@ async def current_principal_opzionale(
 COOKIE_ANONIMO = "tarots_anon"
 
 
-async def accogli(session: AsyncSession, utente: User, request: Request) -> None:
+async def accogli(session: AsyncSession, utente: User, request: Optional[Request]) -> None:
     """Ciò che si fa una volta sola, alla nascita di un account: il piano gratuito, il regalo d'iscrizione, la
     lettura anonima da reclamare, l'evento delle analytics. Non fa commit: lo fa chi chiama.
 
@@ -142,7 +142,9 @@ async def accogli(session: AsyncSession, utente: User, request: Request) -> None
         )
     # Il reclamo della lettura anonima (v6, Fase F): non rigenera nulla, sposta solo
     # `owner_id` su una lettura già completa — il client la rilegge per intero.
-    anon_id = request.cookies.get(COOKIE_ANONIMO)
+    # Senza richiesta (l'account lo crea un amministratore dalla console) non c'è nessun cookie da reclamare: quello
+    # della richiesta sarebbe dell'amministratore, non della persona nuova.
+    anon_id = request.cookies.get(COOKIE_ANONIMO) if request is not None else None
     if anon_id:
         await ReadingRepository(session).reclama_anonima(anon_id, utente)
         # Le scelte del banner fatte prima di iscriversi valgono anche per l'account (GDPR, Fase 1): chi aveva

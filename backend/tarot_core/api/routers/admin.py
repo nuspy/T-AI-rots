@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import csv
 import io
+import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Literal, Optional
 
@@ -23,6 +24,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import Date, cast, distinct, func, select
 
 from ...auth.dependencies import CurrentUser, DbSession, require_role
+from ...auth.keycloak_admin import KeycloakAdmin, KeycloakAdminError, PasswordRifiutata, UtenteEsistente
 from ...billing.credits import RegistroCrediti
 from ...billing.plans import GestoreAbbonamenti
 from ...domain.admin_repositories import (
@@ -36,6 +38,8 @@ from ...llm.compiti import Compito
 from ...settings import get_settings
 from ...tarot.profilo_social import posizione_json
 from ..deps import aggiorna_assegnazioni, get_conoscenza, get_registro_modelli
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/admin", tags=["console"], dependencies=[Depends(require_role("admin"))],
@@ -88,6 +92,63 @@ async def utenti(
         dati["piano"] = abb.plan.slug if abb else None
         elenco.append(dati)
     return {"totale": totale, "utenti": elenco}
+
+
+class NuovoUtente(BaseModel):
+    #: Il realm usa l'email come nome utente: è anche ciò con cui la persona entra.
+    email: str = Field(pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$", max_length=254)
+    password: str = Field(min_length=1, max_length=128)
+    nome: Optional[str] = Field(default=None, max_length=100)
+
+
+@router.post("/users", status_code=201)
+async def crea_utente(
+    payload: NuovoUtente, request: Request, user: CurrentUser, session: DbSession,
+) -> Dict[str, Any]:
+    """Un account creato a mano: nasce in Keycloak (email verificata, password definitiva) e subito anche qui, con
+    il piano gratuito e il regalo d'iscrizione come per chi si iscrive da sé. Se la scrittura nel database fallisce,
+    l'utente appena creato in Keycloak si cancella: non resta un account senza riga né traccia nel registro. La
+    password non viene registrata da nessuna parte."""
+    from ...auth.dependencies import accogli
+    from ...auth.keycloak import Principal
+    from ...domain.repositories import UserRepository
+
+    email = payload.email.strip().lower()
+    nome = (payload.nome or "").strip() or None
+    kc = KeycloakAdmin()
+    try:
+        sub = await kc.crea_utente(email, payload.password, nome=nome)
+    except UtenteEsistente:
+        raise HTTPException(status_code=409, detail="Esiste già un utente con questa email")
+    except PasswordRifiutata as exc:
+        raise HTTPException(status_code=400, detail=f"Password non accettata dalla politica del realm ({exc.chiave})")
+    except KeycloakAdminError as exc:
+        dettaglio = str(exc)
+        if exc.stato == 403:
+            dettaglio += " — all'account di servizio di tarot-api manca il ruolo manage-users di realm-management"
+        raise HTTPException(status_code=502, detail=dettaglio)
+
+    try:
+        nuovo = await UserRepository(session).ensure(
+            Principal(subject=sub, email=email, display_name=nome, roles={"user"}),
+        )
+        if getattr(nuovo, "appena_creato", False):
+            await accogli(session, nuovo, None)
+        await AdminUserRepository(session, _contesto(user, request)).registra_creazione(nuovo)
+        await session.commit()
+    except Exception:
+        logger.exception("Utente creato in Keycloak ma non nel database: lo tolgo da Keycloak")
+        await session.rollback()
+        try:
+            await kc.cancella_utente(sub)
+            rimasto = ""
+        except KeycloakAdminError:
+            # Rimasto in Keycloak: la riga locale nascerebbe comunque al suo primo accesso, e si può cancellare dalla
+            # console di Keycloak. L'errore da riportare resta quello del database.
+            logger.error("Utente %s non cancellato da Keycloak dopo il fallimento del database", sub)
+            rimasto = f" L'utente è rimasto in Keycloak (id {sub}): si cancella dalla sua console."
+        raise HTTPException(status_code=500, detail=f"Utente non creato: errore nel database.{rimasto}")
+    return _utente_json(nuovo)
 
 
 @router.get("/users/{user_id}")

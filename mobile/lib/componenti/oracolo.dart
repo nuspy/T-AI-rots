@@ -16,6 +16,7 @@
 library;
 
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
@@ -30,6 +31,7 @@ import '../api/errori.dart';
 import '../archivio.dart';
 import '../auth/sessione.dart';
 import '../l10n/testi.dart';
+import '../lingua/lingua.dart';
 import '../modelli/account.dart';
 import '../rotte/navigazione.dart';
 import '../rotte/percorsi.dart';
@@ -37,6 +39,7 @@ import '../rotte/percorso.dart';
 import '../tema/tema.dart';
 import 'campi.dart' show Puntini;
 import 'premibile.dart';
+import 'selettore_lingua.dart';
 
 /// Le pagine senza la barra (la conversazione c'è già).
 const List<String> paginaSenzaOracolo = [R.leggi, R.letturaChat, R.letturaClassica, R.fisica, R.condivise];
@@ -482,6 +485,41 @@ class _Invia extends StatelessWidget {
   }
 }
 
+/// Dropdown della lingua a sinistra della barra (Android only).
+class _DropdownLinguaOracolo extends ConsumerWidget {
+  const _DropdownLinguaOracolo({required this.spazio});
+
+  final double spazio;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final codiceLingua = ref.watch(linguaProvider).toUpperCase();
+    final t = context.t;
+    return Padding(
+      padding: EdgeInsets.only(right: spazio),
+      child: Premibile(
+        alTocco: () => unawaited(apriSceltaLingua(context, ref)),
+        an: 'dock_lingua',
+        etichetta: '${t.comune_aria_lingua}: ${datiLingua(ref.watch(linguaProvider)).nome}',
+        raggioFuoco: 4,
+        costruisci: (context, premuto) => Container(
+          constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+          decoration: BoxDecoration(
+            color: premuto ? const Color(0x1FFFFFFF) : const Color(0x12FFFFFF),
+            border: Border.all(color: const Color(0x66D6B66D)),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            codiceLingua,
+            style: Stile.sans(14, peso: FontWeight.w700, altezza: 1.1, colore: const Color(0xFFFFF7E8)),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Chiusa: la proposta dell'oracolo al posto del campo; un tocco ovunque la apre.
 class _Chiusa extends StatelessWidget {
   const _Chiusa({required this.dentro, required this.proposta, required this.nuovo, required this.alTocco});
@@ -503,6 +541,7 @@ class _Chiusa extends StatelessWidget {
       costruisci: (context, premuto) => _Fondo(
         child: Row(
           children: [
+            if (Platform.isAndroid) _DropdownLinguaOracolo(spazio: spazio),
             _Segno(nuovo: nuovo),
             SizedBox(width: spazio),
             Expanded(

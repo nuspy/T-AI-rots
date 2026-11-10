@@ -45,3 +45,9 @@ skills/tarots-blog-publisher/cover/
 
 # Trascrizioni di sessione finite per errore dentro il repo.
 frontend/*-this-session-is-being-continued-*.txt
+
+# Esportazioni e credenziali locali dentro docs/ (Search Console, Google Play, chiavi di servizio, certificati): non si versionano.
+/docs/*.json
+/docs/*.csv
+/docs/*.zip
+/docs/pagine esportate.txt

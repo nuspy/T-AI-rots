@@ -22,7 +22,6 @@ import '../analytics/tracciato.dart';
 import '../auth/sessione.dart';
 import '../dati/dati.dart';
 import '../l10n/testi.dart';
-import '../lingua/lingua.dart';
 import '../rotte/navigazione.dart';
 import '../rotte/percorsi.dart';
 import '../rotte/percorso.dart';
@@ -144,9 +143,6 @@ class _TestataTelefono extends ConsumerWidget {
     final testoBottone = t.comune_inizia_lettura;
     final testoProfilo = a.autenticata ? t.comune_testata_profilo : t.comune_testata_entra;
     final mostraProfilo = a.autenticata || a.pronta;
-    // La lingua (9/10/2026), ultima della riga dopo «Start reading»: un'icona come le altre, col codice («IT») al
-    // posto dell'etichetta, larga quanto le altre voci.
-    final codiceLingua = ref.watch(linguaProvider).toUpperCase();
 
     // Le misure della riga con le etichette strette (7 px, `minima`) o normali, col simbolo del marchio o senza.
     ({
@@ -185,7 +181,6 @@ class _TestataTelefono extends ConsumerWidget {
         minimo(t.comune_testata_carrello, etichettaAzione),
         a.saldo == null ? minimo(t.comune_testata_crediti, etichettaAzione) : minimo('${a.saldo}', crediti),
         if (mostraProfilo) minimo(testoProfilo, etichettaAzione),
-        minimo(codiceLingua, etichettaAzione),
       ];
       // Un'unica fila di icone equidistanti, come il sito (4/10): menu e azioni larghi uguale (`flex: 1 1 0`), mai
       // meno della loro parola più lunga (`min-width: min-content`); chi ha bisogno di più spazio lo prende, gli altri
@@ -325,19 +320,6 @@ class _TestataTelefono extends ConsumerWidget {
             stile: bottone,
             larghezzaTesto: internoBottone,
             imbottitura: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
-          ),
-        ),
-        SizedBox(
-          width: az.last,
-          child: _VoceIcona(
-            icona: Icone.lingua,
-            etichetta: codiceLingua,
-            stile: etichettaAzione,
-            colore: Colori.iconaTestata,
-            distanza: 1.6,
-            attiva: false,
-            lungo: '${t.comune_aria_lingua}: ${datiLingua(ref.watch(linguaProvider)).nome}',
-            alTocco: () => unawaited(apriSceltaLingua(context, ref)),
           ),
         ),
       ],

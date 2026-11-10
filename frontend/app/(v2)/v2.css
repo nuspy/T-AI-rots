@@ -349,6 +349,11 @@ a.difference:first-child:hover { background: #1d7f7e; }
 .journal-layout { grid-template-columns: 1.3fr .7fr; }
 .journal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 1.1rem; }
 .journal-grid .article { min-height: 260px; }
+.journal-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.journal-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.journal-grid-4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 1200px) { .journal-grid-4 { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 760px) { .journal-grid-2, .journal-grid-3, .journal-grid-4 { grid-template-columns: 1fr; } }
 .article-featured { min-height: 380px; }
 .article-featured h3 { font-size: clamp(1.5rem, 2.8vw, 2.2rem); }
 .tree { display: grid; gap: .1rem; }

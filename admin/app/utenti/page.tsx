@@ -6,6 +6,7 @@ import { elencoUtenti } from "@/lib/api";
 import { giorno } from "@/lib/formato";
 import { useDati } from "@/lib/usa";
 import stili from "../comuni.module.css";
+import { NuovoUtente } from "./nuovo-utente";
 
 /* Gli utenti.
  *
@@ -22,7 +23,7 @@ export default function Utenti() {
   const [cercato, setCercato] = useState("");
   const [offset, setOffset] = useState(0);
 
-  const { dati, errore, inCorso } = useDati(
+  const { dati, errore, inCorso, ricarica } = useDati(
     useCallback(
       (t: string) => elencoUtenti(t, { q: cercato, limite: PER_PAGINA, offset }),
       [cercato, offset],
@@ -53,6 +54,16 @@ export default function Utenti() {
           </p>
         </div>
       </div>
+
+      <NuovoUtente
+        dopoCreazione={() => {
+          /* Il nuovo utente è il più recente: si riparte dalla prima pagina senza filtro, dove compare in cima. */
+          setScritto("");
+          setCercato("");
+          setOffset(0);
+          ricarica();
+        }}
+      />
 
       <form className={stili.riga} onSubmit={cerca} role="search" style={{ marginBottom: "1.25rem" }}>
         <label className={stili.campo} style={{ marginBottom: 0 }}>
